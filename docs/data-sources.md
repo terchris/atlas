@@ -632,13 +632,18 @@ Cross-promote "other ways to help" for users who can't commit to Red Cross. Org-
 
 ### 80. Frivillighet Norge
 - **URL**: https://www.frivillighetnorge.no/
-- **Format**: PDF / Excel (Frivillighetsbarometeret annually)
+- **Barometer microsite**: https://www.frivillighetnorge.no/rapport/frivillighetsbarometeret
+- **Nøkkelfakta**: https://www.frivillighetnorge.no/fakta/n%C3%B8kkelfakta-om-frivillighet
+- **Format**: HTML microsite + PDF / Excel (Frivillighetsbarometeret annually with Kantar)
 
-Participation, donations, trust trends. Narrative content, not data.
+Umbrella organisation for Norwegian NGOs (300+ member orgs, 50,000+ lag og foreninger). Publishes the annual Frivillighetsbarometer — the authoritative population survey on participation, motivations and barriers. 2025 headline: 61% of 15+ volunteered in past year, stable vs 2024, youth gap persists. See `sector-research.md` for the substantive findings.
 
 ### 81. Senter for forskning på sivilsamfunn og frivillig sektor
-- **URL**: https://samfunnsforskning.no/sentre/sfs/
-- Research on volunteer demographics/motivation. Editorial source.
+- **URL**: https://www.samfunnsforskning.no/sivilsamfunn/
+- **Rapporter**: https://www.samfunnsforskning.no/sivilsamfunn/publikasjoner/rapporter/
+- **Current programme**: Undersøkelser om frivillig innsats 2025–2029
+
+Research centre at Institutt for samfunnsforskning, funded by Kulturdepartementet. The academic authority on Norwegian civil society. Key recent reports: Solheim (2026) Frivillig innsats i Oslo; Sivesind et al. (2025) on women and immigrants in board seats; Stoltenberg & Sivesind (2025) on state grant regimes; Skiple & Eimhjellen (2025) on digital engagement. See `sector-research.md` for report-level detail and how each maps to personas.
 
 ### 82. Den norske kirke
 - **URL**: https://www.kirken.no/
