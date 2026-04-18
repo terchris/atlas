@@ -1,0 +1,9 @@
+# file: organizations/v1/branch-activity-list.yaml
+components:
+  schemas:
+    BranchActivityList:
+      type: array
+      description: List of activities implemented in a specific branch
+      maxItems: 100
+      items:
+        $ref: './branch-activity.yaml#/components/schemas/BranchActivity'

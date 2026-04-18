@@ -1,0 +1,17 @@
+# file: organizations/v1/branch-details.yaml
+components:
+  schemas:
+    BranchDetails:
+      type: object
+      required:
+        - organizationLevel
+      additionalProperties: false
+      properties:
+        description:
+          type: string
+          maxLength: 200
+          pattern: '^[a-zA-ZæøåÆØÅ0-9\s\-\.,!?()"'']+$'
+          description: Additional description of the branch (field omitted when not available)
+        organizationLevel:
+          $ref: '../../../schemas/fields/v1/organization-level.yaml#/components/schemas/OrganizationLevel'
+          

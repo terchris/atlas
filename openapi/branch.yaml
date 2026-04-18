@@ -1,0 +1,44 @@
+# file: organizations/v1/branch.yaml
+components:
+  schemas:
+    Branch:
+      description: |
+        Complete representation of a Red Cross organizational unit (branch).
+        This includes all branch details, location, personnel, activities,
+        and hierarchical relationships within the organization.
+        
+        The organizational hierarchy is strictly enforced:
+        - Lokalforening (Local Branch) must have a Distrikt (District) as parent
+        - Distrikt (District) must have Nasjonalkontor (National Office) as parent
+        - Nasjonalkontor (National Office) must not have a parent
+      allOf:
+        - $ref: '../../../schemas/schemas/v1/branch-base.yaml#/components/schemas/BranchBase'
+        - type: object
+          additionalProperties: true  # Required for allOf to work properly
+          required:
+            - organizationNumber
+            - branchStatus
+            - branchLocation
+            - branchContacts
+            - communicationChannels
+            - branchActivities
+          properties:
+            organizationNumber:
+              $ref: '../../../schemas/fields/v1/organization-number.yaml#/components/schemas/OrganizationNumber'
+            branchStatus:
+              $ref: './branch-status.yaml#/components/schemas/BranchStatus'
+            branchDetails:
+              $ref: './branch-details.yaml#/components/schemas/BranchDetails'
+            branchLocation:
+              $ref: './branch-location.yaml#/components/schemas/BranchLocation'
+            branchContacts:
+              $ref: './branch-contacts.yaml#/components/schemas/BranchContacts'
+            communicationChannels:
+              $ref: '../../../schemas/schemas/v1/communication-channels.yaml#/components/schemas/CommunicationChannels'
+            branchActivities:
+              $ref: './branch-activity-list.yaml#/components/schemas/BranchActivityList'
+            branchParent:
+              allOf:
+                - $ref: '../../../schemas/schemas/v1/branch-base.yaml#/components/schemas/BranchBase'
+                - type: object
+                  description: Parent branch information in organizational hierarchy (field omitted for top-level branches)

@@ -1,0 +1,119 @@
+# file: api/organizations/v1/openapi.yaml
+openapi: '3.0.3'
+info:
+  title: Organizations API
+  description: |
+    API for retrieving information about the Norwegian Red Cross organizations and their structures.
+    
+    This API provides detailed information about branches, including:
+    - Branch details and identification
+    - Organizational hierarchy
+    - Contact information
+    - Geographic location
+    - Leadership structure
+    - Activities and programs
+  version: '1.0.1'
+  contact:
+    name: Red Cross Integration Team
+    email: integration@redcross.no
+x-apim-portal:
+  products: 
+      - external-partners
+
+
+x-apim-policy: # API Level policies that goes into base.xml
+  logging:
+    template: "minimal"        # Minimal logging for the whole API
+  security:
+    template: "subscription-validation"  # Basic APIM subscription validation
+
+tags:
+  - name: Organizations
+    description: Organization management endpoints
+
+paths:
+  /v1/organizations:
+    get:
+      summary: List all organizations
+      description: |
+        Retrieves a list of all Red Cross organizations including their structure, 
+        contact information, leadership details, and activities.
+      operationId: getOrganizations
+      tags:
+        - Organizations
+      x-apim-policy:
+        backend:
+          type: "databricks"
+          sql: "SELECT * FROM raw_branch_leadership_and_hierarchy_json"
+      responses:
+        '200':
+          description: Successfully retrieved list of organizations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrganizationsResponse'
+        '401':
+          $ref: '../../../schemas/build/constants/openapi-defaults/responses.yaml#/components/responses/Error401'
+        '403':
+          $ref: '../../../schemas/build/constants/openapi-defaults/responses.yaml#/components/responses/Error403'
+
+  /v1/organizations/{branchId}:
+    get:
+      summary: Get organization by ID
+      description: Retrieves detailed information about a specific organization
+      operationId: getOrganization
+      tags:
+        - Organizations
+      parameters:
+        - name: branchId
+          in: path
+          required: true
+          schema:
+            $ref: '../../../schemas/fields/v1/branch-id.yaml#/components/schemas/BranchId'
+      x-apim-policy:
+        backend:
+          type: "databricks"
+          sql: "SELECT * FROM raw_branch_leadership_and_hierarchy_json WHERE branchId = '@(context.Request.UrlParameters[\"branchId\"])'"
+        security: # the security settings on endpoint/operation level overrides any above on api level
+          template: "subscription-group-validation"        
+          groups: 
+            - org-public-read-apps # only this group can access this endpoint
+        logging:
+          template: "audit" # overide the api level logging for this endpoint
+          customProperties: # makes it possible to pick variables to log
+            - name: "clientApp"
+              value: "context.Request.Headers['X-Client-App']"
+            - name: "subscriptionId"
+              value: "context.Subscription.Id"
+
+      responses:
+        '200':
+          description: Successfully retrieved organization
+          content:
+            application/json:
+              schema:
+                $ref: './branch.yaml#/components/schemas/Branch'
+        '401':
+          $ref: '../../../schemas/build/constants/openapi-defaults/responses.yaml#/components/responses/Error401'
+        '403':
+          $ref: '../../../schemas/build/constants/openapi-defaults/responses.yaml#/components/responses/Error403'
+
+components:
+  schemas:
+    OrganizationsResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: object
+          required:
+            - branches
+            - metadata
+          properties:
+            branches:
+              type: array
+              items:
+                $ref: './branch.yaml#/components/schemas/Branch'
+            metadata:
+               $ref: '../../../schemas/build/constants/openapi-defaults/components.yaml#/components/schemas/ResponseMetadata'

@@ -1,0 +1,66 @@
+# file: organizations/v1/branch-contacts.yaml
+components:
+  schemas:
+    BranchContact:
+      type: object
+      required:
+        - role
+        - firstName
+        - lastName
+        - isVolunteer
+        - isMember
+      properties:
+        role:
+          type: string
+          description: Official function or role in the organization
+          example: "Leder"
+          minLength: 1
+          maxLength: 100
+        firstName:
+          type: string
+          description: First name of the contact person or function description if privacy masked
+          example: "Kari"
+          maxLength: 100
+        lastName:
+          type: string
+          description: Last name of the contact person or additional identifier if privacy masked
+          example: "Strøm"
+          maxLength: 100
+        email:
+          allOf:
+            - $ref: '../../../schemas/fields/v1/email.yaml#/components/schemas/Email'
+            - type: string
+              description: Email address (field omitted when not available or privacy-protected)
+        phone:
+          allOf:
+            - $ref: '../../../schemas/fields/v1/norwegian-phone.yaml#/components/schemas/NorwegianPhoneNumber'
+            - type: string
+              description: Phone number (field omitted when not available or privacy-protected)
+        jobTitle:
+          type: string
+          description: Professional title if applicable (field omitted when not available)
+          example: "Frivillig"
+          maxLength: 100
+        isVolunteer:
+          $ref: '../../../schemas/fields/v1/volunteer-status.yaml#/components/schemas/VolunteerStatus'
+        isMember:
+          $ref: '../../../schemas/fields/v1/member-status.yaml#/components/schemas/MemberStatus'
+        memberNumber:
+          type: string
+          description: Member identification number (field omitted when not available)
+          example: "5516274"
+          maxLength: 20
+      description: |
+        Represents a contact person with a specific role in the branch.
+        For privacy reasons, some functions (like "Webredaktør") will have personal information
+        masked with function descriptions instead of actual names.
+
+    BranchContacts:
+      type: array
+      maxItems: 100
+      description: |
+        List of contact persons with their roles in the branch. 
+        The order reflects the organizational hierarchy, with key positions 
+        (like 'Leder' and 'Nestleder') typically appearing first.
+      items:
+        $ref: '#/components/schemas/BranchContact'

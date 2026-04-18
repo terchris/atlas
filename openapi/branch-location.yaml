@@ -1,0 +1,33 @@
+# file: organizations/v1/branch-location.yaml
+components:
+  schemas:
+    BranchLocation:
+      type: object
+      additionalProperties: false
+      required:
+        - municipality
+        - county
+        - postalAddress
+      properties:
+        municipality:
+          $ref: '../../../schemas/fields/v1/municipality.yaml#/components/schemas/Municipality'
+        county:
+          $ref: '../../../schemas/fields/v1/county.yaml#/components/schemas/County'
+        region:
+          type: string
+          description: Red Cross internal regional division (field omitted - reserved for future use)
+          example: "Region Øst"
+          maxLength: 50
+          pattern: '^[a-zA-ZæøåÆØÅ\s\-]+$'
+        postalAddress:
+          $ref: '../../../schemas/schemas/v1/address.yaml#/components/schemas/Address'
+        streetAddress:
+          allOf:
+            - $ref: '../../../schemas/schemas/v1/address.yaml#/components/schemas/Address'
+            - type: object
+              description: Physical visiting address (field omitted when no visiting address data exists)
+        geoLocation:
+          allOf:
+            - $ref: '../../../schemas/fields/v1/geo-location.yaml#/components/schemas/GeoLocation'
+            - type: object
+              description: Geographic coordinates in GeoJSON format (field omitted when coordinates are not available)

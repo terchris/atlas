@@ -1,0 +1,31 @@
+# file: organizations/v1/branch-status.yaml
+components:
+  schemas:
+    BranchStatus:
+      type: object
+      additionalProperties: false
+      required:
+        - isActive
+        - creationDate
+        - isTerminated
+      properties:
+        isActive:
+          type: boolean
+          description: Indicates if the branch is currently active
+          example: true
+        creationDate:
+          type: string
+          format: date
+          maxLength: 10
+          description: Date when the branch was established
+          example: "1971-01-19"
+        terminationDate:
+          type: string
+          format: date
+          maxLength: 10
+          description: Date when the branch was terminated (field omitted for active branches)
+          example: "2023-12-31"
+        isTerminated:
+          type: boolean
+          description: Indicates if the branch has been terminated
+          example: false
