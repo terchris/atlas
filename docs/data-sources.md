@@ -1,6 +1,6 @@
 # Data sources — Norwegian domestic + Red Cross ecosystem
 
-This document lists every Norwegian and Red Cross-ecosystem source we can draw on. International / humanitarian sources live in `data-sources-international.md`. Funding-specific sources live in `data-sources-funding.md`. The activity → indicator mapping lives in `activity-indicator-matrix.md`.
+This document lists every Norwegian and Red Cross-ecosystem source we can draw on. International / humanitarian sources live in `data-sources-international.md`. Funding-specific sources live in `redcross-data-sources-funding.md`. The activity → indicator mapping lives in `redcross-activity-indicator-matrix.md`.
 
 Verification: URLs were re-verified against live endpoints on **2026-04-18**. Where a source has moved or been deprecated since the prior research pass, the change is flagged inline and summarised in the "Moves and deprecations" section at the bottom.
 
@@ -18,7 +18,7 @@ Verification: URLs were re-verified against live endpoints on **2026-04-18**. Wh
 
 Complete hierarchy of every Red Cross organizational unit in Norway: National Office → 19 Districts → ~400 Local Chapters. Per-branch identity (`branchId`, `branchNumber`, `branchName`, `branchType`), Norwegian organization number, status, creation/termination dates, location, GeoJSON Point coordinates, contacts (with PII masking), activities (`globalActivityId` + local names), hierarchy via `branchParent`.
 
-The spine: coordinates enable maps, org numbers enable Brreg joins, branch names enable website scraping, `globalActivityId` enables cross-chapter aggregation. See `activities.md` for the canonical activity catalogue derived from this dump.
+The spine: coordinates enable maps, org numbers enable Brreg joins, branch names enable website scraping, `globalActivityId` enables cross-chapter aggregation. See `redcross-activities.md` for the canonical activity catalogue derived from this dump.
 
 ### 2. Norwegian Red Cross Design System
 
@@ -107,7 +107,7 @@ Current volunteer signup form (read-only without login). The full flat list of ~
 ### 9. rodekors.no donation page
 - **URL**: https://www.rodekors.no/stott-arbeidet/
 
-Overview of all donation paths. "Over 90% to cause" efficiency stat. Tax-deduction rules. Corporate partnership entry points. See `data-sources-funding.md` for deeper funding coverage.
+Overview of all donation paths. "Over 90% to cause" efficiency stat. Tax-deduction rules. Corporate partnership entry points. See `redcross-data-sources-funding.md` for deeper funding coverage.
 
 ### 10. nettbutikk.rodekors.no
 - **URL**: https://nettbutikk.rodekors.no/
@@ -729,7 +729,7 @@ For chapters lacking hero imagery, fallback to CC-licensed stock matched on komm
 | `fylkesnummer` (2 digits) | Red Cross API `branchLocation.county` → Klass 104 | SSB fylke tables, NRK RSS, klimaprofiler |
 | `geoLocation.coordinates` [lon, lat] | Red Cross API | met.no, NVE, Entur, Overpass, any map |
 | Chapter URL slug | rodekors.no path | Chapter page + image CDN |
-| `globalActivityId` (GUID) | Red Cross API `branchActivities` | Activity taxonomy (48 canonical — see `activities.md`) |
+| `globalActivityId` (GUID) | Red Cross API `branchActivities` | Activity taxonomy (48 canonical — see `redcross-activities.md`) |
 | Wikidata QID | Wikidata SPARQL | Commons images, Wikipedia summary, foreign-language labels |
 | Sentralitetsindeks (1–6) | SSB Klass 128 | Urban-rural structural signal |
 

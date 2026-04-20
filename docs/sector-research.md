@@ -82,7 +82,7 @@ The ISF centre publishes the most rigorous research on sector trends. Output fro
 **Stoltenberg, D.; Sivesind, K. H. (2025). Tilskuddsregimer for frivillig sektor. Statlige tilskudd i et feltperspektiv.**
 
 - Structural analysis of how state grants to the sector work in practice
-- Directly relevant to `data-sources-funding.md` — the academic complement to the Lottstift data
+- Directly relevant to `redcross-data-sources-funding.md` — the academic complement to the Lottstift data
 
 **Skiple, J. K.; Eimhjellen, I. (2025). Digitalt samfunnsengasjement. Omfang, utvikling og ulikskap.**
 
@@ -132,7 +132,7 @@ From SSB's satellittregnskap for frivillig sektor (most recent headline figures)
 - 17% kommune and fylke (grants, contracts)
 - 12% other private
 
-For Red Cross specifically (see `data-sources-funding.md`), the mix is weighted more toward state grants (2024: NOK 530m from state grants alone) and investment returns from the pre-2007 slot-machine portfolio. Relevant contrast for transparency storytelling.
+For Red Cross specifically (see `redcross-data-sources-funding.md`), the mix is weighted more toward state grants (2024: NOK 530m from state grants alone) and investment returns from the pre-2007 slot-machine portfolio. Relevant contrast for transparency storytelling.
 
 ---
 

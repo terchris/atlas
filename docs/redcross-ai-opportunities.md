@@ -1,6 +1,6 @@
 # AI opportunities
 
-This document explores where an AI (LLM) layer could fit into the app described in `goal.md`. It pairs with `ideas.md` (which catalogues features regardless of whether they use AI) and `personas.md` (who we're building for).
+This document explores where an AI (LLM) layer could fit into the app described in `goal.md`. It pairs with `redcross-ideas.md` (which catalogues features regardless of whether they use AI) and `personas.md` (who we're building for).
 
 The starting premise: the core of the app is a traditional Next.js + Design System experience — chapter finder, crisis band, engagement pathways. AI is not the main course. But AI-powered chat over structured data is a real, shipping pattern now, and the Organizations API plus scraped chapter content is a good shape for it. So: where does AI earn its place, and where is it just a demo?
 
@@ -126,7 +126,7 @@ On an activity page, a small "Forklar på…" control offers English, Arabic, Uk
 - Fit: **high-impact, high-risk.** Big win for Amira if it's accurate; actively harmful if it says the wrong meeting time. Would need human verification on critical fields (address, time, phone) before ship — probably render those fields from structured data and let the LLM only translate the prose around them.
 
 ### D. Transparency Q&A — "where does my money actually go?"
-**Chat over the funding data in `data-sources-funding.md` plus the Organizations API.**
+**Chat over the funding data in `redcross-data-sources-funding.md` plus the Organizations API.**
 
 Jonas asks: *"If I set up Grasrotandelen to my local chapter, where does the money end up?"* or *"How much of Vipps 2272 goes to administration?"* LLM answers with citations to tilskudd.lottstift.no, the årsrapport, and chapter org numbers.
 

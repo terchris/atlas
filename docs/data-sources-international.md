@@ -1,6 +1,6 @@
 # Data sources — international / humanitarian ecosystem
 
-This document lists international and global data sources that can enrich a Norway-focused Red Cross app with movement, humanitarian, and comparative context. The primary catalogue (Norwegian domestic + Red Cross ecosystem) is `data-sources.md`. The activity → indicator mapping is `activity-indicator-matrix.md`.
+This document lists international and global data sources that can enrich a Norway-focused Red Cross app with movement, humanitarian, and comparative context. The primary catalogue (Norwegian domestic + Red Cross ecosystem) is `data-sources.md`. The activity → indicator mapping is `redcross-activity-indicator-matrix.md`.
 
 Verification: URLs re-verified against live endpoints on **2026-04-18**. Moves and deprecations are summarised at the bottom.
 

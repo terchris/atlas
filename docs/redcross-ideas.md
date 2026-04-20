@@ -1,6 +1,6 @@
 # Ideas
 
-This document catalogs every app concept we've brainstormed for the Red Cross project, organized by theme. It pairs with `data-sources.md` and `data-sources-funding.md` — each idea lists the data sources it draws on.
+This document catalogs every app concept we've brainstormed for the Red Cross project, organized by theme. It pairs with `data-sources.md` and `redcross-data-sources-funding.md` — each idea lists the data sources it draws on.
 
 These are concepts, not commitments. Some are small and buildable in a day. Some are ambitious. Some could be combined into a single app. The point is to have the full option space visible before we pick.
 

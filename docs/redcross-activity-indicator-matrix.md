@@ -2,7 +2,7 @@
 
 For each canonical Red Cross activity, the open data indicators that signal where the humanitarian need is highest. Pairs with:
 
-- `activities.md` — the canonical activity catalogue (what each activity is, chapter footprint)
+- `redcross-activities.md` — the canonical activity catalogue (what each activity is, chapter footprint)
 - `data-sources.md` — verified Norwegian + Red Cross sources
 - `data-sources-international.md` — global/humanitarian framing sources
 

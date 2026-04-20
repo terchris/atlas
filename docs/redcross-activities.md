@@ -10,7 +10,7 @@ The canonical activities offered by Norwegian Red Cross chapters, derived from t
 
 ## Activities, by chapter footprint
 
-Ordered by how many chapter-activity entries match each canonical pattern. Descriptions draw on `ideas.md`, `personas.md`, and public Red Cross sources.
+Ordered by how many chapter-activity entries match each canonical pattern. Descriptions draw on `redcross-ideas.md`, `personas.md`, and public Red Cross sources.
 
 | Activity | Chapter-activity entries | What it is |
 |---|---:|---|
