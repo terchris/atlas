@@ -1,0 +1,47 @@
+version: 2
+
+models:
+  - name: indicators__ssb_08764
+    description: |
+      Per-source indicator passthrough for SSB 08764. One row per (region_code,
+      year, contents_code). Materialised as a table in the marts schema; feeds
+      the forthcoming indicator_values union.
+    columns:
+      - name: source_id
+        description: "Always 'ssb-08764'. Distinguishes this source once unioned with others."
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ['ssb-08764']
+      - name: region_code
+        description: "SSB region code. Join target for kommune_dim once that exists."
+        data_tests:
+          - not_null
+      - name: year
+        description: "Calendar year."
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 2000
+              max_value: 2040
+      - name: contents_code
+        description: "Metric within the SSB table."
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ['Personer', 'EUskala50', 'EUskala60', 'OECDskala50', 'OECDskala60']
+      - name: value
+        description: "Numeric value — count for Personer, percent for the others. NULL when suppressed (see status)."
+      - name: status
+        description: "SSB suppression marker. NULL when the cell has a plain numeric value."
+      - name: updated_at
+        description: "When the raw row was last loaded into raw.ssb_08764 by the ingest module."
+        data_tests:
+          - not_null
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - source_id
+            - region_code
+            - year
+            - contents_code

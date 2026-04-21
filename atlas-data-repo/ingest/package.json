@@ -1,0 +1,23 @@
+{
+  "name": "@atlas-data/ingest",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Atlas data ingestion — per-source TypeScript fetchers writing to raw.* in Postgres.",
+  "scripts": {
+    "migrate": "tsx --env-file=.env scripts/migrate.ts",
+    "ingest:ssb-08764": "tsx --env-file=.env src/sources/ssb-08764/index.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^22.7.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "dependencies": {
+    "postgres": "^3.4.9"
+  }
+}

@@ -1,0 +1,35 @@
+version: 2
+
+sources:
+  - name: raw
+    description: "Atlas landing layer. Tables here are written by the atlas-data ingest modules (TypeScript) and read by dbt."
+    schema: raw
+    tables:
+      - name: ssb_08764
+        description: |
+          SSB statistikkbanktabell 08764 — Personer under 18 år i husholdninger
+          med lavinntekt (EU- og OECD-skala). Annual, region-resolved.
+          Populated by atlas-data/ingest/src/sources/ssb-08764.
+        loaded_at_field: loaded_at
+        # Freshness thresholds: SSB publishes annually around February/March.
+        # We warn if the landing table hasn't been touched in 400 days, error
+        # at 800 days. These are intentionally generous; tightened once we
+        # have a scheduler deciding when to ingest.
+        freshness:
+          warn_after: {count: 400, period: day}
+          error_after: {count: 800, period: day}
+        columns:
+          - name: region_code
+            description: "SSB region code — kommune, fylke, nasjon, or historical variant."
+            data_tests:
+              - not_null
+          - name: year
+            description: "Calendar year (from SSB's Tid dimension)."
+            data_tests:
+              - not_null
+          - name: contents_code
+            description: "SSB ContentsCode — one of Personer / EUskala50 / EUskala60 / OECDskala50 / OECDskala60."
+            data_tests:
+              - not_null
+              - accepted_values:
+                  values: ['Personer', 'EUskala50', 'EUskala60', 'OECDskala50', 'OECDskala60']
