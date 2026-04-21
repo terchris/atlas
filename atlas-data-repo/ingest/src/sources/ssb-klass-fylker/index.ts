@@ -5,7 +5,7 @@
  */
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { fetchKlassCodesAt } from "../../lib/klass.js";
+import { fetchKlassCodesRange } from "../../lib/klass.js";
 import { logger } from "../../lib/logger.js";
 import { writeNdjson } from "../../lib/output.js";
 import { closeSql, getSql, upsert } from "../../lib/postgres.js";
@@ -18,12 +18,16 @@ type SsbKlassFylkerRow = {
   short_name: string | null;
   valid_from: string | null;
   valid_to: string | null;
+  valid_from_in_range: string;
+  valid_to_in_range: string | null;
   notes: string | null;
 };
 
 export const SOURCE_ID = "ssb-klass-fylker";
 const CLASSIFICATION_ID = "104";
 const TARGET_TABLE = "raw.ssb_klass_fylker";
+const HISTORY_FROM = "1960-01-01";
+const HISTORY_TO = "2100-01-01";
 const OUTPUT_PATH = resolve(
   dirname(fileURLToPath(import.meta.url)),
   "../../../output/ssb-klass-fylker.ndjson",
@@ -37,11 +41,13 @@ const WRITE_COLUMNS = [
   "short_name",
   "valid_from",
   "valid_to",
+  "valid_from_in_range",
+  "valid_to_in_range",
   "notes",
   "loaded_at",
 ] as const;
 
-const CONFLICT_KEYS = ["code"] as const;
+const CONFLICT_KEYS = ["code", "valid_from_in_range"] as const;
 
 export type SsbKlassFylkerSummary = {
   rowCount: number;
@@ -59,22 +65,29 @@ export async function run(): Promise<SsbKlassFylkerSummary> {
   const started = Date.now();
 
   const snapshotDate = new Date().toISOString().slice(0, 10);
-  const resp = await fetchKlassCodesAt({
+  const resp = await fetchKlassCodesRange({
     classificationId: CLASSIFICATION_ID,
-    date: snapshotDate,
+    from: HISTORY_FROM,
+    to: HISTORY_TO,
     language: "nb",
   });
 
-  const rows: SsbKlassFylkerRow[] = resp.codes.map((c) => ({
-    code: c.code,
-    name: c.name,
-    parent_code: c.parentCode,
-    level: c.level,
-    short_name: c.shortName || null,
-    valid_from: c.validFrom,
-    valid_to: c.validTo,
-    notes: c.notes || null,
-  }));
+  const rows: SsbKlassFylkerRow[] = resp.codes
+    .filter((c): c is typeof c & { validFromInRequestedRange: string } =>
+      c.validFromInRequestedRange !== null,
+    )
+    .map((c) => ({
+      code: c.code,
+      name: c.name,
+      parent_code: c.parentCode,
+      level: c.level,
+      short_name: c.shortName || null,
+      valid_from: c.validFrom,
+      valid_to: c.validTo,
+      valid_from_in_range: c.validFromInRequestedRange,
+      valid_to_in_range: c.validToInRequestedRange,
+      notes: c.notes || null,
+    }));
 
   await writeNdjson(OUTPUT_PATH, rows);
 

@@ -1,0 +1,71 @@
+version: 2
+
+models:
+  - name: fact_kommune_indicators
+    description: |
+      First cross-source mart. Long-format union of kommune-level indicators
+      joined to dim_kommune and dim_fylke. One row per
+      (source_id, kommune_nr, year, contents_code). Frontend and analyst
+      consumers should read from this table when they need kommune-level
+      indicator values regardless of which source produced them.
+
+      Currently includes ssb-08764 (child poverty EU/OECD) and ssb-06913
+      (population change). Sources with shape-mismatches (ssb-07459 by sex/age,
+      ssb-12944 by age_group/period) are not here yet — they need either
+      source-specific marts or an extended schema once use cases clarify.
+    columns:
+      - name: source_id
+        description: "Atlas source identifier, e.g. 'ssb-08764'."
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ['ssb-08764', 'ssb-06913']
+      - name: kommune_nr
+        description: "4-digit kommune code. FK to dim_kommune."
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_kommune')
+              field: kommune_nr
+      - name: kommune_name
+        description: "Joined from dim_kommune."
+        data_tests: [not_null]
+      - name: fylke_nr
+        description: "2-digit fylke code (derived from kommune_nr in dim_kommune). FK to dim_fylke."
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_fylke')
+              field: fylke_nr
+      - name: fylke_name
+        description: "Joined from dim_fylke. NULL if kommune's fylke_nr isn't in dim_fylke (rare — happens for codes like Svalbard 21xx without a matching fylke)."
+      - name: year
+        description: "Calendar year."
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 1900
+              max_value: 2050
+      - name: contents_code
+        description: "Source-specific ContentsCode verbatim from upstream (e.g. 'EUskala60', 'Folkemengde')."
+        data_tests: [not_null]
+      - name: contents_label
+        description: "Human-readable label for contents_code, verbatim from upstream."
+      - name: value
+        description: "Numeric value. Unit depends on (source_id, contents_code) — see the source's README. NULL when upstream suppressed the cell."
+      - name: status
+        description: "SSB suppression marker. NULL when value is present."
+      - name: kommune_is_active
+        description: "Whether the kommune is active today. False for historical kommune codes that only appear because the upstream retained them."
+        data_tests:
+          - not_null
+      - name: updated_at
+        description: "When the underlying raw row was last loaded."
+        data_tests: [not_null]
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - source_id
+            - kommune_nr
+            - year
+            - contents_code

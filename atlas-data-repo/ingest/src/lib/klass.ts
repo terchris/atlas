@@ -73,6 +73,73 @@ export async function fetchKlassCodesAt(
   return json;
 }
 
+/**
+ * Klass code-list response from the `/codes.json` endpoint. Adds two fields
+ * on top of the codesAt shape: `validFromInRequestedRange` /
+ * `validToInRequestedRange` — the window during which this version of the
+ * code was valid within the date range requested. These are the useful
+ * temporal fields; `validFrom` / `validTo` come back null on `/codes`.
+ */
+export type KlassCodeWithHistory = KlassCode & {
+  validFromInRequestedRange: string | null;
+  validToInRequestedRange: string | null;
+};
+
+export type KlassCodesRangeResponse = {
+  codes: KlassCodeWithHistory[];
+};
+
+export type KlassCodesRangeOptions = {
+  classificationId: string;
+  /** Start date (ISO). Include codes valid at any point from this date. */
+  from: string;
+  /** End date (ISO). Defaults to far future to capture projections. */
+  to?: string;
+  language?: "nb" | "nn" | "en";
+  signal?: AbortSignal;
+};
+
+/**
+ * Fetch the full history of a classification's codes within a date range.
+ * A single code may return multiple entries if its name or properties
+ * changed during the range (e.g. kommune renames, boundary adjustments).
+ */
+export async function fetchKlassCodesRange(
+  opts: KlassCodesRangeOptions,
+): Promise<KlassCodesRangeResponse> {
+  const {
+    classificationId,
+    from,
+    to = "2100-01-01",
+    language = "nb",
+    signal,
+  } = opts;
+  const url =
+    `${KLASS_BASE}/classifications/${classificationId}/codes.json` +
+    `?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}` +
+    `&language=${encodeURIComponent(language)}`;
+
+  logger.info("klass.range.start", { classificationId, from, to, url });
+  const started = Date.now();
+
+  const res = await fetchWithRetry(url, { signal });
+  if (!res.ok) {
+    const body = await res.text().catch(() => "<no body>");
+    throw new Error(
+      `Klass returned ${res.status} ${res.statusText} for classification ${classificationId}: ${body.slice(0, 500)}`,
+    );
+  }
+  const json = (await res.json()) as KlassCodesRangeResponse;
+  logger.info("klass.range.done", {
+    classificationId,
+    from,
+    to,
+    duration_ms: Date.now() - started,
+    code_count: json.codes.length,
+  });
+  return json;
+}
+
 async function fetchWithRetry(
   url: string,
   init: RequestInit,

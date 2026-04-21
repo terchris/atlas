@@ -29,3 +29,7 @@ models:
     dimensions:
       +materialized: table
       +schema: marts
+    # Application-shaped and cross-source marts.
+    marts:
+      +materialized: table
+      +schema: marts
