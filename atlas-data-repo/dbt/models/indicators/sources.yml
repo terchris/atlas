@@ -34,6 +34,54 @@ sources:
               - accepted_values:
                   values: ['Personer', 'EUskala50', 'EUskala60', 'OECDskala50', 'OECDskala60']
 
+      - name: ssb_06913
+        description: |
+          SSB statistikkbanktabell 06913 — Folkemengde 1. januar og endringer
+          i kalenderåret (folketilvekst, fødsler, dødsfall, inn/utflytting).
+          Annual, region-resolved, same 3-dimension shape as ssb_08764.
+          Populated by atlas-data/ingest/src/sources/ssb-06913.
+        loaded_at_field: loaded_at
+        freshness:
+          warn_after: {count: 400, period: day}
+          error_after: {count: 800, period: day}
+        columns:
+          - name: region_code
+            data_tests: [not_null]
+          - name: year
+            data_tests: [not_null]
+          - name: contents_code
+            data_tests: [not_null]
+
+      - name: ssb_07459
+        description: |
+          SSB statistikkbanktabell 07459 — Alders- og kjønnsfordeling i
+          kommuner, fylker og hele landets befolkning. Five dimensions
+          (Region × Kjonn × Alder × ContentsCode × Tid).
+          Populated by atlas-data/ingest/src/sources/ssb-07459.
+        loaded_at_field: loaded_at
+        freshness:
+          warn_after: {count: 400, period: day}
+          error_after: {count: 800, period: day}
+        columns:
+          - name: region_code
+            data_tests: [not_null]
+          - name: sex
+            description: "SSB Kjonn — '1' (Menn) or '2' (Kvinner)."
+            data_tests:
+              - not_null
+              - accepted_values:
+                  values: ['1', '2']
+          - name: age
+            description: "SSB Alder — '000'..'104' or '105+'."
+            data_tests: [not_null]
+          - name: year
+            data_tests: [not_null]
+          - name: contents_code
+            data_tests:
+              - not_null
+              - accepted_values:
+                  values: ['Personer1']
+
       - name: ssb_12944
         description: |
           SSB statistikkbanktabell 12944 — Personer i husholdninger med vedvarende

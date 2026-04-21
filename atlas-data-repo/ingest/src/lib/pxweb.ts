@@ -14,6 +14,20 @@ export type PxWebOptions = {
   lang?: "no" | "en";
   /** Optional signal for cancellation. */
   signal?: AbortSignal;
+  /**
+   * Per-dimension filter selections, serialised as `valuecodes[Dimension]=value`.
+   * Required for dimensions flagged `elimination=false` in the table metadata —
+   * the server rejects queries that don't explicitly select them.
+   *
+   * Accepted forms (each value is URL-encoded, keys are not):
+   *   "*"        — every code on that dimension
+   *   "TOP(N)"   — the latest N codes per SSB's built-in selection
+   *   "2024"     — a single literal code
+   *   ["a","b"]  — comma-separated codes
+   *
+   * Example: `{ Tid: "TOP(1)", Alder: "*", Kjonn: "*", Region: "*", ContentsCode: "*" }`
+   */
+  filters?: Record<string, string | readonly string[]>;
 };
 
 /**
@@ -25,8 +39,8 @@ export type PxWebOptions = {
 export async function fetchPxTableData(
   opts: PxWebOptions,
 ): Promise<JsonStat2Response> {
-  const { tableId, lang = "no", signal } = opts;
-  const url = `${PXWEB_BASE}/tables/${tableId}/data?lang=${lang}&outputFormat=json-stat2`;
+  const { tableId, lang = "no", signal, filters } = opts;
+  const url = buildDataUrl(tableId, lang, filters);
 
   logger.info("pxweb.fetch.start", { tableId, url });
   const started = Date.now();
@@ -217,4 +231,29 @@ function parseRetryAfter(header: string | null): number | null {
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Build a PxWebAPI v2 `/data` URL with optional per-dimension filters.
+ * Brackets in `valuecodes[Dim]` are URL-encoded (`%5B` / `%5D`) so curl / fetch
+ * don't mangle them.
+ */
+function buildDataUrl(
+  tableId: string,
+  lang: string,
+  filters: Record<string, string | readonly string[]> | undefined,
+): string {
+  const params: string[] = [
+    `lang=${encodeURIComponent(lang)}`,
+    `outputFormat=json-stat2`,
+  ];
+  if (filters) {
+    for (const [dim, raw] of Object.entries(filters)) {
+      const value = Array.isArray(raw) ? raw.join(",") : (raw as string);
+      params.push(
+        `valuecodes%5B${encodeURIComponent(dim)}%5D=${encodeURIComponent(value)}`,
+      );
+    }
+  }
+  return `${PXWEB_BASE}/tables/${tableId}/data?${params.join("&")}`;
 }

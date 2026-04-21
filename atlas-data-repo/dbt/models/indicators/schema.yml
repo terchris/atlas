@@ -46,6 +46,78 @@ models:
             - year
             - contents_code
 
+  - name: indicators__ssb_06913
+    description: |
+      Per-source indicator passthrough for SSB 06913 (population change).
+      Same Region × ContentsCode × Tid shape as indicators__ssb_08764.
+    columns:
+      - name: source_id
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ['ssb-06913']
+      - name: region_code
+        data_tests: [not_null]
+      - name: year
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 1900
+              max_value: 2050
+      - name: contents_code
+        data_tests: [not_null]
+      - name: updated_at
+        data_tests: [not_null]
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - source_id
+            - region_code
+            - year
+            - contents_code
+
+  - name: indicators__ssb_07459
+    description: |
+      Per-source indicator passthrough for SSB 07459 (population by region,
+      sex, and single-year age). Preserves sex and age dimensions.
+    columns:
+      - name: source_id
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ['ssb-07459']
+      - name: region_code
+        data_tests: [not_null]
+      - name: sex
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ['1', '2']
+      - name: age
+        data_tests: [not_null]
+      - name: year
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 1980
+              max_value: 2050
+      - name: contents_code
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ['Personer1']
+      - name: updated_at
+        data_tests: [not_null]
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - source_id
+            - region_code
+            - sex
+            - age
+            - year
+            - contents_code
+
   - name: indicators__ssb_12944
     description: |
       Per-source indicator passthrough for SSB 12944. One row per (region_code,
