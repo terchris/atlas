@@ -16,6 +16,7 @@
 select
   'ssb-12944'::text   as source_id,
   region_code,
+  case when region_code ~ '^[0-9]{4}$' then region_code end as kommune_nr,
   age_group,
   period,
   contents_code,

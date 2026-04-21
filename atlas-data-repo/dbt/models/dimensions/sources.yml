@@ -1,0 +1,24 @@
+version: 2
+
+sources:
+  - name: raw
+    schema: raw
+    tables:
+      - name: ssb_klass_kommuner
+        description: |
+          SSB Klass classification 131 (Kommuner) — the canonical active
+          kommune list. Source for dim_kommune. Populated by
+          atlas-data/ingest/src/sources/ssb-klass-kommuner.
+        loaded_at_field: loaded_at
+        freshness:
+          warn_after: {count: 90, period: day}
+          error_after: {count: 400, period: day}
+        columns:
+          - name: code
+            description: "4-digit kommune code, e.g. '0301' (Oslo)."
+            data_tests:
+              - not_null
+              - unique
+          - name: name
+            description: "Kommune name (bokmål), sometimes with Sámi variant."
+            data_tests: [not_null]

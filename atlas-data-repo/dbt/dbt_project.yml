@@ -25,3 +25,7 @@ models:
     indicators:
       +materialized: table
       +schema: marts
+    # Conformed dimensions live in models/dimensions/ and also land in marts.
+    dimensions:
+      +materialized: table
+      +schema: marts

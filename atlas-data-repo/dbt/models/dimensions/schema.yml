@@ -1,0 +1,43 @@
+version: 2
+
+models:
+  - name: dim_kommune
+    description: |
+      Canonical kommune dimension. One row per active 4-digit kommune code.
+      Sourced from SSB Klass classification 131. All marts-level indicators
+      that reference a kommune join to this table via kommune_nr.
+    columns:
+      - name: kommune_nr
+        description: "4-digit zero-padded kommune code, SSB canonical form (e.g. '0301' = Oslo)."
+        data_tests:
+          - not_null
+          - unique
+      - name: kommune_name
+        description: "Kommune name in bokmål; Sámi variant (if any) is stripped into kommune_name_sami."
+        data_tests: [not_null]
+      - name: kommune_name_sami
+        description: "Sámi variant of the kommune name, when Klass publishes one (e.g. 'Oslove', 'Guovdageaidnu'). NULL for kommuner without a Sámi variant."
+      - name: fylke_nr
+        description: "2-digit fylke code, derived from the first two digits of kommune_nr."
+        data_tests:
+          - not_null
+      - name: notes
+        description: "Verbatim notes from Klass — historical boundary changes, Sámi name details, etc. Not for user display."
+      - name: valid_from
+        description: "Date from which this kommune code is valid. NULL in a codesAt snapshot (means 'active at the snapshot date')."
+      - name: valid_to
+        description: "Date at which this code becomes inactive. NULL = still active."
+      - name: is_active
+        description: "Convenience boolean: true when valid_to is null or in the future."
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: [true, false]
+      - name: updated_at
+        description: "When the row was last loaded from upstream."
+        data_tests: [not_null]
+    data_tests:
+      - dbt_utils.expression_is_true:
+          expression: "length(kommune_nr) = 4"
+      - dbt_utils.expression_is_true:
+          expression: "length(fylke_nr) = 2"

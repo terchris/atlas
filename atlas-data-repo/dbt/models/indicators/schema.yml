@@ -14,9 +14,15 @@ models:
           - accepted_values:
               values: ['ssb-08764']
       - name: region_code
-        description: "SSB region code. Join target for kommune_dim once that exists."
+        description: "SSB region code, verbatim. Includes kommune, fylke, nasjon and historical variants — mixed levels. Use kommune_nr for kommune-only joins."
         data_tests:
           - not_null
+      - name: kommune_nr
+        description: "4-digit kommune code — populated only for kommune-level rows (NULL for fylke/nasjon/historical). Canonical join key to dim_kommune."
+        data_tests:
+          - relationships:
+              to: ref('dim_kommune')
+              field: kommune_nr
       - name: year
         description: "Calendar year."
         data_tests:
@@ -57,7 +63,20 @@ models:
           - accepted_values:
               values: ['ssb-06913']
       - name: region_code
+        description: "SSB region code with K_/F_/... prefix. Use kommune_nr for kommune joins."
         data_tests: [not_null]
+      - name: kommune_nr
+        description: "Kommune code extracted from K_xxxx prefixed rows. NULL for non-kommune rows."
+        data_tests:
+          # SSB 06913 retains historical kommune codes in its Region dimension
+          # (mergers 1960-2024). dim_kommune currently holds active-today codes
+          # only; extending it with history is tracked as a follow-up. Warn so
+          # we see the mismatch without failing CI.
+          - relationships:
+              to: ref('dim_kommune')
+              field: kommune_nr
+              config:
+                severity: warn
       - name: year
         data_tests:
           - not_null
@@ -87,7 +106,20 @@ models:
           - accepted_values:
               values: ['ssb-07459']
       - name: region_code
+        description: "SSB region code. Includes kommune, fylke, nasjon levels. Use kommune_nr for kommune joins."
         data_tests: [not_null]
+      - name: kommune_nr
+        description: "4-digit kommune code; NULL for fylke/nasjon rows."
+        data_tests:
+          # SSB 07459 covers 1986-2026 in its Region dimension so it retains
+          # ~593 historical 4-digit codes (old Østfold 01xx, etc.) with 0
+          # values for the current year. Warn instead of error until
+          # dim_kommune is extended with historical codes.
+          - relationships:
+              to: ref('dim_kommune')
+              field: kommune_nr
+              config:
+                severity: warn
       - name: sex
         data_tests:
           - not_null
@@ -132,9 +164,15 @@ models:
           - accepted_values:
               values: ['ssb-12944']
       - name: region_code
-        description: "SSB region code."
+        description: "SSB region code. Includes kommune, bydel, fylke, nasjon levels. Use kommune_nr for kommune joins."
         data_tests:
           - not_null
+      - name: kommune_nr
+        description: "4-digit kommune code; NULL for bydel/fylke/nasjon rows."
+        data_tests:
+          - relationships:
+              to: ref('dim_kommune')
+              field: kommune_nr
       - name: age_group
         description: "SSB Alder code."
         data_tests:
