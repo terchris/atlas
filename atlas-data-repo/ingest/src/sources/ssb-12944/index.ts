@@ -1,6 +1,6 @@
 /**
- * SSB table 08764 — Personer under 18 år i husholdninger med lavinntekt
- * (EU- og OECD-skala). See ./README.md for full source notes.
+ * SSB table 12944 — Personer i husholdninger med vedvarende lavinntekt
+ * (EU-60), 3-årsperiode. See ./README.md for full source notes.
  */
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -10,31 +10,29 @@ import { writeNdjson } from "../../lib/output.js";
 import { closeSql, getSql, upsert } from "../../lib/postgres.js";
 import type { PxRow } from "../../lib/types.js";
 
-/** Row shape for raw.ssb_08764. Region × ContentsCode × Tid cell. */
-type Ssb08764Row = {
+/** Row shape for raw.ssb_12944. Region × Alder × ContentsCode × Tid cell. */
+type Ssb12944Row = {
   region_code: string;
-  year: number;
+  age_group: string;
+  period: string;
   contents_code: string;
   contents_label: string;
   value: number | null;
   status: string | null;
 };
 
-export const SOURCE_ID = "ssb-08764";
-const TABLE_ID = "08764";
-const TARGET_TABLE = "raw.ssb_08764";
+export const SOURCE_ID = "ssb-12944";
+const TABLE_ID = "12944";
+const TARGET_TABLE = "raw.ssb_12944";
 const OUTPUT_PATH = resolve(
   dirname(fileURLToPath(import.meta.url)),
-  "../../../output/ssb-08764.ndjson",
+  "../../../output/ssb-12944.ndjson",
 );
 
-/**
- * The column order used when writing to raw.ssb_08764. Kept close to the
- * target table schema; `loaded_at` is added at the point of write.
- */
 const WRITE_COLUMNS = [
   "region_code",
-  "year",
+  "age_group",
+  "period",
   "contents_code",
   "contents_label",
   "value",
@@ -42,20 +40,20 @@ const WRITE_COLUMNS = [
   "loaded_at",
 ] as const;
 
-const CONFLICT_KEYS = ["region_code", "year", "contents_code"] as const;
+const CONFLICT_KEYS = ["region_code", "age_group", "period", "contents_code"] as const;
 
-export type Ssb08764Summary = {
+export type Ssb12944Summary = {
   rowCount: number;
   outputPath: string;
   wroteToPostgres: boolean;
   rowsWritten: number;
-  latestYear: number;
-  earliestYear: number;
+  periods: string[];
+  ageGroups: string[];
   contentsCodes: string[];
   regionCount: number;
 };
 
-export async function run(): Promise<Ssb08764Summary> {
+export async function run(): Promise<Ssb12944Summary> {
   logger.info("source.start", { source_id: SOURCE_ID, table_id: TABLE_ID });
   const started = Date.now();
 
@@ -63,20 +61,19 @@ export async function run(): Promise<Ssb08764Summary> {
   const pxRows = parseJsonStat2(resp);
   const rows = pxRows.map(toRow);
 
-  const years = new Set<number>();
+  const periods = new Set<string>();
+  const ageGroups = new Set<string>();
   const regions = new Set<string>();
   const contentsCodes = new Set<string>();
   for (const r of rows) {
-    years.add(r.year);
+    periods.add(r.period);
+    ageGroups.add(r.age_group);
     regions.add(r.region_code);
     contentsCodes.add(r.contents_code);
   }
-  const sortedYears = [...years].sort((a, b) => a - b);
 
   await writeNdjson(OUTPUT_PATH, rows);
 
-  // Postgres write is opt-in: if DATABASE_URL isn't set, we skip it. Lets
-  // developers run the ingest without any DB available for quick sanity checks.
   let rowsWritten = 0;
   const wroteToPostgres = Boolean(process.env["DATABASE_URL"]);
   if (wroteToPostgres) {
@@ -84,7 +81,8 @@ export async function run(): Promise<Ssb08764Summary> {
     const now = new Date();
     const pgRows = rows.map((r) => ({
       region_code: r.region_code,
-      year: r.year,
+      age_group: r.age_group,
+      period: r.period,
       contents_code: r.contents_code,
       contents_label: r.contents_label,
       value: r.value,
@@ -122,8 +120,8 @@ export async function run(): Promise<Ssb08764Summary> {
     wrote_to_postgres: wroteToPostgres,
     rows_written: rowsWritten,
     upstream_updated: resp.updated,
-    earliest_year: sortedYears[0] ?? 0,
-    latest_year: sortedYears[sortedYears.length - 1] ?? 0,
+    period_count: periods.size,
+    age_group_count: ageGroups.size,
     region_count: regions.size,
     contents_codes: [...contentsCodes],
   };
@@ -134,29 +132,27 @@ export async function run(): Promise<Ssb08764Summary> {
     outputPath: OUTPUT_PATH,
     wroteToPostgres,
     rowsWritten,
-    earliestYear: summary.earliest_year,
-    latestYear: summary.latest_year,
+    periods: [...periods].sort(),
+    ageGroups: [...ageGroups].sort(),
     contentsCodes: [...contentsCodes],
     regionCount: regions.size,
   };
 }
 
-function toRow(px: PxRow): Ssb08764Row {
+function toRow(px: PxRow): Ssb12944Row {
   const region = px.dimensions["Region"];
+  const age = px.dimensions["Alder"];
   const contents = px.dimensions["ContentsCode"];
   const tid = px.dimensions["Tid"];
-  if (!region || !contents || !tid) {
+  if (!region || !age || !contents || !tid) {
     throw new Error(
-      `Expected Region, ContentsCode, Tid dimensions; got ${Object.keys(px.dimensions).join(", ")}`,
+      `Expected Region, Alder, ContentsCode, Tid dimensions; got ${Object.keys(px.dimensions).join(", ")}`,
     );
-  }
-  const year = Number(tid.code);
-  if (!Number.isInteger(year)) {
-    throw new Error(`Unexpected non-integer year code: ${tid.code}`);
   }
   return {
     region_code: region.code,
-    year,
+    age_group: age.code,
+    period: tid.code,
     contents_code: contents.code,
     contents_label: contents.label,
     value: px.value,
@@ -164,7 +160,7 @@ function toRow(px: PxRow): Ssb08764Row {
   };
 }
 
-// Invoked directly via `npm run ingest:ssb-08764`.
+// Invoked directly via `npm run ingest:ssb-12944`.
 run().catch((err) => {
   logger.error("source.failed", {
     source_id: SOURCE_ID,

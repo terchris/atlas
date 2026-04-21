@@ -45,3 +45,53 @@ models:
             - region_code
             - year
             - contents_code
+
+  - name: indicators__ssb_12944
+    description: |
+      Per-source indicator passthrough for SSB 12944. One row per (region_code,
+      age_group, period, contents_code). Has an extra age_group dimension and
+      uses a period string instead of a numeric year; these carry through to
+      marts and will be handled by the downstream union/mart layer.
+    columns:
+      - name: source_id
+        description: "Always 'ssb-12944'."
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ['ssb-12944']
+      - name: region_code
+        description: "SSB region code."
+        data_tests:
+          - not_null
+      - name: age_group
+        description: "SSB Alder code."
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ['999A', '00-17', '18-34', '35-49', '50-66', '067+']
+      - name: period
+        description: "Three-year rolling period as upstream code text."
+        data_tests:
+          - not_null
+      - name: contents_code
+        description: "SSB ContentsCode."
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ['PersonerSeksti', 'EUskalaSeksti']
+      - name: value
+        description: "Numeric value — count for PersonerSeksti, percent for EUskalaSeksti. NULL when suppressed."
+      - name: status
+        description: "SSB suppression marker. NULL when the cell has a plain numeric value."
+      - name: updated_at
+        description: "When the raw row was last loaded."
+        data_tests:
+          - not_null
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - source_id
+            - region_code
+            - age_group
+            - period
+            - contents_code

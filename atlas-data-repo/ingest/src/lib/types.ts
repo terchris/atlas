@@ -48,18 +48,3 @@ export type PxRow = {
   value: number | null;
   status?: string;
 };
-
-/**
- * The row shape emitted by every Atlas ingestion module. Not DB-committed;
- * Postgres column mapping happens in the runner (not yet built).
- */
-export type IndicatorRow = {
-  source_id: string;
-  region_code: string;
-  year: number;
-  contents_code: string;
-  contents_label: string;
-  value: number | null;
-  /** SSB suppression marker or similar; null when cell has a plain value. */
-  status: string | null;
-};

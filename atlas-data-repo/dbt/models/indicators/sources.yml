@@ -33,3 +33,35 @@ sources:
               - not_null
               - accepted_values:
                   values: ['Personer', 'EUskala50', 'EUskala60', 'OECDskala50', 'OECDskala60']
+
+      - name: ssb_12944
+        description: |
+          SSB statistikkbanktabell 12944 — Personer i husholdninger med vedvarende
+          lavinntekt (EU-60), 3-årsperiode. Adds an age (Alder) dimension and
+          uses rolling three-year periods as the time axis.
+          Populated by atlas-data/ingest/src/sources/ssb-12944.
+        loaded_at_field: loaded_at
+        freshness:
+          warn_after: {count: 400, period: day}
+          error_after: {count: 800, period: day}
+        columns:
+          - name: region_code
+            description: "SSB region code."
+            data_tests:
+              - not_null
+          - name: age_group
+            description: "SSB Alder dimension — 999A (all ages), 00-17, 18-34, 35-49, 50-66, 067+."
+            data_tests:
+              - not_null
+              - accepted_values:
+                  values: ['999A', '00-17', '18-34', '35-49', '50-66', '067+']
+          - name: period
+            description: "Three-year rolling period, e.g. 2022-2024. Stored verbatim from upstream Tid."
+            data_tests:
+              - not_null
+          - name: contents_code
+            description: "SSB ContentsCode — PersonerSeksti (count) or EUskalaSeksti (percent EU-60)."
+            data_tests:
+              - not_null
+              - accepted_values:
+                  values: ['PersonerSeksti', 'EUskalaSeksti']

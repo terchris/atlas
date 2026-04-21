@@ -13,7 +13,8 @@ One folder per upstream data source. Each folder is a self-contained unit: the c
 
 | Source | Provider | What it is | Run | Notes |
 |---|---|---|---|---|
-| [ssb-08764](./ssb-08764/) | SSB | Persons under 18 in low-income households (EU/OECD scale), per kommune, annual | `npm run ingest:ssb-08764` | Default response = latest year only; see README for details |
+| [ssb-08764](./ssb-08764/) | SSB | Persons under 18 in low-income households (EU/OECD scale), per kommune, annual | `npm run ingest:ssb-08764` | Default response = latest year only; see README |
+| [ssb-12944](./ssb-12944/) | SSB | Persons in households with persistent low income (EU-60), 3-year rolling periods, broken down by age group | `npm run ingest:ssb-12944` | 4 dimensions (adds Alder); Tid stored as period text like "2022-2024" |
 
 ## Planned sources
 
