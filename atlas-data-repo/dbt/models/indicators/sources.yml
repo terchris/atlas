@@ -94,6 +94,64 @@ sources:
               - accepted_values:
                   values: ['SamletInntekt', 'InntSkatt', 'AntallHushold']
 
+      - name: ssb_09429
+        description: "SSB 09429 — educational attainment by kommune and sex (5 dims)."
+        loaded_at_field: loaded_at
+        freshness:
+          warn_after: {count: 400, period: day}
+          error_after: {count: 800, period: day}
+        columns:
+          - name: region_code
+            data_tests: [not_null]
+          - name: education_level
+            data_tests: [not_null]
+          - name: sex
+            data_tests: [not_null]
+          - name: year
+            data_tests: [not_null]
+
+      - name: ssb_12063
+        description: "SSB KOSTRA 12063 — municipal leisure services / voluntary youth associations."
+        loaded_at_field: loaded_at
+        freshness:
+          warn_after: {count: 400, period: day}
+          error_after: {count: 800, period: day}
+        columns:
+          - name: region_code
+            data_tests: [not_null]
+          - name: year
+            data_tests: [not_null]
+          - name: contents_code
+            data_tests: [not_null]
+
+      - name: ssb_12131
+        description: "SSB KOSTRA 12131 — social-assistance monthly rates."
+        loaded_at_field: loaded_at
+        freshness:
+          warn_after: {count: 400, period: day}
+          error_after: {count: 800, period: day}
+        columns:
+          - name: region_code
+            data_tests: [not_null]
+          - name: year
+            data_tests: [not_null]
+          - name: contents_code
+            data_tests: [not_null]
+
+      - name: ssb_12132
+        description: "SSB KOSTRA 12132 — welfare benefit-income rules."
+        loaded_at_field: loaded_at
+        freshness:
+          warn_after: {count: 400, period: day}
+          error_after: {count: 800, period: day}
+        columns:
+          - name: region_code
+            data_tests: [not_null]
+          - name: year
+            data_tests: [not_null]
+          - name: contents_code
+            data_tests: [not_null]
+
       - name: ssb_12292
         description: |
           SSB KOSTRA 12292 — nursing-home and home-care indicators. 49

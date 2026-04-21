@@ -171,6 +171,144 @@ models:
             - year
             - contents_code
 
+  - name: indicators__ssb_09429
+    description: "Per-source indicator passthrough for SSB 09429 (education level by kommune + sex)."
+    columns:
+      - name: source_id
+        data_tests:
+          - not_null
+          - accepted_values: {values: ['ssb-09429']}
+      - name: region_code
+        data_tests: [not_null]
+      - name: kommune_nr
+        data_tests:
+          - relationships:
+              to: ref('dim_kommune')
+              field: kommune_nr
+              config: {severity: warn}
+      - name: fylke_nr
+        data_tests:
+          - relationships:
+              to: ref('dim_fylke')
+              field: fylke_nr
+              config: {severity: warn}
+      - name: education_level
+        data_tests: [not_null]
+      - name: sex
+        data_tests:
+          - not_null
+          - accepted_values: {values: ['male', 'female', 'all']}
+      - name: year
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range: {min_value: 1970, max_value: 2050}
+      - name: contents_code
+        data_tests: [not_null]
+      - name: updated_at
+        data_tests: [not_null]
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [source_id, region_code, education_level, sex, year, contents_code]
+
+  - name: indicators__ssb_12063
+    description: "Per-source indicator passthrough for SSB KOSTRA 12063 (municipal leisure services)."
+    columns:
+      - name: source_id
+        data_tests:
+          - not_null
+          - accepted_values: {values: ['ssb-12063']}
+      - name: region_code
+        data_tests: [not_null]
+      - name: kommune_nr
+        data_tests:
+          - relationships:
+              to: ref('dim_kommune')
+              field: kommune_nr
+              config: {severity: warn}
+      - name: fylke_nr
+        data_tests:
+          - relationships:
+              to: ref('dim_fylke')
+              field: fylke_nr
+              config: {severity: warn}
+      - name: year
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
+      - name: contents_code
+        data_tests: [not_null]
+      - name: updated_at
+        data_tests: [not_null]
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [source_id, region_code, year, contents_code]
+
+  - name: indicators__ssb_12131
+    description: "Per-source indicator passthrough for SSB KOSTRA 12131 (social-assistance rates)."
+    columns:
+      - name: source_id
+        data_tests:
+          - not_null
+          - accepted_values: {values: ['ssb-12131']}
+      - name: region_code
+        data_tests: [not_null]
+      - name: kommune_nr
+        data_tests:
+          - relationships:
+              to: ref('dim_kommune')
+              field: kommune_nr
+              config: {severity: warn}
+      - name: fylke_nr
+        data_tests:
+          - relationships:
+              to: ref('dim_fylke')
+              field: fylke_nr
+              config: {severity: warn}
+      - name: year
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
+      - name: contents_code
+        data_tests: [not_null]
+      - name: updated_at
+        data_tests: [not_null]
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [source_id, region_code, year, contents_code]
+
+  - name: indicators__ssb_12132
+    description: "Per-source indicator passthrough for SSB KOSTRA 12132 (welfare benefit-income rules)."
+    columns:
+      - name: source_id
+        data_tests:
+          - not_null
+          - accepted_values: {values: ['ssb-12132']}
+      - name: region_code
+        data_tests: [not_null]
+      - name: kommune_nr
+        data_tests:
+          - relationships:
+              to: ref('dim_kommune')
+              field: kommune_nr
+              config: {severity: warn}
+      - name: fylke_nr
+        data_tests:
+          - relationships:
+              to: ref('dim_fylke')
+              field: fylke_nr
+              config: {severity: warn}
+      - name: year
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
+      - name: contents_code
+        data_tests: [not_null]
+      - name: updated_at
+        data_tests: [not_null]
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [source_id, region_code, year, contents_code]
+
   - name: indicators__ssb_12292
     description: "Per-source indicator passthrough for SSB KOSTRA 12292 (omsorgstjenester)."
     columns:

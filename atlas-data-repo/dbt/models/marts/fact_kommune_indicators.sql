@@ -101,6 +101,43 @@ ssb_12292 as (
   where kommune_nr is not null
 ),
 
+ssb_12063 as (
+  select
+    source_id, kommune_nr, year, contents_code, contents_label,
+    value, status, updated_at
+  from {{ ref('indicators__ssb_12063') }}
+  where kommune_nr is not null
+),
+
+ssb_12131 as (
+  select
+    source_id, kommune_nr, year, contents_code, contents_label,
+    value, status, updated_at
+  from {{ ref('indicators__ssb_12131') }}
+  where kommune_nr is not null
+),
+
+ssb_12132 as (
+  select
+    source_id, kommune_nr, year, contents_code, contents_label,
+    value, status, updated_at
+  from {{ ref('indicators__ssb_12132') }}
+  where kommune_nr is not null
+),
+
+ssb_09429 as (
+  -- Filter to sex='all' + generic education level so every kommune has a
+  -- single headline row per (region, year, contents_code). Consumers who
+  -- want the fine-grained breakdown read indicators__ssb_09429 directly.
+  select
+    source_id, kommune_nr, year,
+    (contents_code || '_' || education_level) as contents_code,
+    coalesce(contents_label, '') || ' (nivå ' || education_level || ')' as contents_label,
+    value, status, updated_at
+  from {{ ref('indicators__ssb_09429') }}
+  where kommune_nr is not null and sex = 'all'
+),
+
 all_indicators as (
   select * from ssb_08764
   union all
@@ -117,6 +154,14 @@ all_indicators as (
   select * from ssb_06083
   union all
   select * from ssb_12292
+  union all
+  select * from ssb_12063
+  union all
+  select * from ssb_12131
+  union all
+  select * from ssb_12132
+  union all
+  select * from ssb_09429
 )
 
 select

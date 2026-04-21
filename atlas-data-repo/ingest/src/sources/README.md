@@ -20,6 +20,10 @@ One folder per upstream data source. Each folder is a self-contained unit: the c
 | [ssb-07459](./ssb-07459/) | SSB | Population by region, sex and single-year age | `npm run ingest:ssb-07459` | 5 dims (adds Kjonn + Alder); ~210 k cells — largest pull so far |
 | [ssb-06947](./ssb-06947/) | SSB | Whole-population low income (EU/OECD) — complements ssb-08764 (children) | `npm run ingest:ssb-06947` | Same 5 content codes as 08764; 1 036 regions × 20 years |
 | [ssb-08764](./ssb-08764/) | SSB | Persons under 18 in low-income households (EU/OECD scale), per kommune, annual | `npm run ingest:ssb-08764` | Default response = latest year only; see README |
+| [ssb-09429](./ssb-09429/) | SSB | Educational attainment by kommune × sex × level | `npm run ingest:ssb-09429` | 5 dims (Nivaa + Kjonn); sex mapped to male/female/all |
+| [ssb-12063](./ssb-12063/) | SSB KOSTRA | Municipal leisure services / voluntary youth associations | `npm run ingest:ssb-12063` | KOSTRA pattern |
+| [ssb-12131](./ssb-12131/) | SSB KOSTRA | Social-assistance monthly rates | `npm run ingest:ssb-12131` | KOSTRA pattern |
+| [ssb-12132](./ssb-12132/) | SSB KOSTRA | Welfare benefit-income rules | `npm run ingest:ssb-12132` | KOSTRA pattern |
 | [ssb-12292](./ssb-12292/) | SSB KOSTRA | Omsorgstjenester — nursing home + home care indicators | `npm run ingest:ssb-12292` | 49 content codes, KOSTRA region dim |
 | [ssb-12944](./ssb-12944/) | SSB | Persons in households with persistent low income (EU-60), 3-year rolling periods, broken down by age group | `npm run ingest:ssb-12944` | 4 dims (adds Alder); Tid stored as period text like "2022-2024" |
 | [ssb-13995](./ssb-13995/) | SSB | Social-assistance cases, amounts paid, support duration — 34 content codes | `npm run ingest:ssb-13995` | KOSTRA table with `KOKkommuneregion0000` dim; 2022-2025 only |

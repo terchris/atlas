@@ -272,11 +272,13 @@ Update this table as sources complete. Shape:
 | `ssb-06947` | ✅ | Adult poverty (EU-60) — 5 180 rows; sibling of ssb-08764 |
 | `ssb-06083` | ✅ | Family types — 9 459 rows, 9 FamilieType codes |
 | `ssb-12292` | ✅ | Omsorgstjenester — 43 659 rows, 49 content codes; elder-care theme |
-| `ssb-12063` | 🔲 | Municipal youth leisure |
-| `ssb-09429` | 🔲 | Education level |
+| `ssb-12063` | ✅ | Municipal leisure — 13 365 rows |
+| `ssb-09429` | ✅ | Education level — 41 118 rows, 5 dims with sex mapped to male/female/all |
 | `ssb-13006` | ❌ | **Rejected** — SSB table 13006 returns 404 (no longer public via PxWebAPI). Samfunnspuls must have used a since-retired table id. If the indicator becomes valuable, revisit by searching SSB for an equivalent under a new id. |
-| `ssb-12131` | 🔲 | Social-assistance rates |
-| `ssb-12132` | 🔲 | Social-assistance benefit rules |
+| `ssb-12131` | ✅ | Social-assistance rates — 6 237 rows |
+| `ssb-12132` | ✅ | Welfare benefit-income rules — 13 365 rows |
+
+**Phase 1 complete**: 8 of 9 easy SSB sources ingested, 1 rejected. All in `fact_kommune_indicators`.
 
 ### Phase 2 — Bespoke SSB
 
