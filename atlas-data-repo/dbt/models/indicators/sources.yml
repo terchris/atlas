@@ -52,6 +52,25 @@ sources:
           - name: contents_code
             data_tests: [not_null]
 
+      - name: ssb_06083
+        description: |
+          SSB statistikkbanktabell 06083 — families by type (single parent,
+          couple with/without kids, etc.). Populated by
+          atlas-data/ingest/src/sources/ssb-06083.
+        loaded_at_field: loaded_at
+        freshness:
+          warn_after: {count: 400, period: day}
+          error_after: {count: 800, period: day}
+        columns:
+          - name: region_code
+            data_tests: [not_null]
+          - name: family_type
+            data_tests: [not_null]
+          - name: year
+            data_tests: [not_null]
+          - name: contents_code
+            data_tests: [not_null]
+
       - name: ssb_06944
         description: |
           SSB statistikkbanktabell 06944 — household income (median), income

@@ -218,6 +218,52 @@ models:
             - year
             - contents_code
 
+  - name: indicators__ssb_06083
+    description: |
+      Per-source indicator passthrough for SSB 06083 (families by type).
+      Preserves family_type column; downstream features filter to the
+      type they need (e.g. single-parent).
+    columns:
+      - name: source_id
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ['ssb-06083']
+      - name: region_code
+        data_tests: [not_null]
+      - name: kommune_nr
+        data_tests:
+          - relationships:
+              to: ref('dim_kommune')
+              field: kommune_nr
+              config:
+                severity: warn
+      - name: fylke_nr
+        data_tests:
+          - relationships:
+              to: ref('dim_fylke')
+              field: fylke_nr
+              config:
+                severity: warn
+      - name: family_type
+        data_tests: [not_null]
+      - name: year
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range: { min_value: 2000, max_value: 2050 }
+      - name: contents_code
+        data_tests: [not_null]
+      - name: updated_at
+        data_tests: [not_null]
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - source_id
+            - region_code
+            - family_type
+            - year
+            - contents_code
+
   - name: indicators__ssb_06947
     description: |
       Per-source indicator passthrough for SSB 06947 (whole-population
