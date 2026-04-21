@@ -72,6 +72,14 @@ ssb_13995 as (
   where kommune_nr is not null
 ),
 
+ssb_06947 as (
+  select
+    source_id, kommune_nr, year, contents_code, contents_label,
+    value, status, updated_at
+  from {{ ref('indicators__ssb_06947') }}
+  where kommune_nr is not null
+),
+
 all_indicators as (
   select * from ssb_08764
   union all
@@ -82,6 +90,8 @@ all_indicators as (
   select * from fhi_bor_alene
   union all
   select * from ssb_13995
+  union all
+  select * from ssb_06947
 )
 
 select

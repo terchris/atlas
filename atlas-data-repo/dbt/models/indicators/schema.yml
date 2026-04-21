@@ -218,6 +218,56 @@ models:
             - year
             - contents_code
 
+  - name: indicators__ssb_06947
+    description: |
+      Per-source indicator passthrough for SSB 06947 (whole-population
+      low income). Mirrors indicators__ssb_08764 structure.
+    columns:
+      - name: source_id
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ['ssb-06947']
+      - name: region_code
+        data_tests: [not_null]
+      - name: kommune_nr
+        description: "4-digit kommune code; NULL for XX99 aggregates / bydel / fylke / nasjon rows."
+        data_tests:
+          # Same pattern as ssb-06944 — includes historical + Svalbard + offshore codes.
+          - relationships:
+              to: ref('dim_kommune')
+              field: kommune_nr
+              config:
+                severity: warn
+      - name: fylke_nr
+        description: "2-digit fylke code; NULL otherwise."
+        data_tests:
+          - relationships:
+              to: ref('dim_fylke')
+              field: fylke_nr
+              config:
+                severity: warn
+      - name: year
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 2000
+              max_value: 2050
+      - name: contents_code
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ['Personer', 'EUskala50', 'EUskala60', 'OECDskala50', 'OECDskala60']
+      - name: updated_at
+        data_tests: [not_null]
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - source_id
+            - region_code
+            - year
+            - contents_code
+
   - name: indicators__ssb_07459
     description: |
       Per-source indicator passthrough for SSB 07459 (population by region,

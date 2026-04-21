@@ -92,6 +92,26 @@ sources:
           - name: contents_code
             data_tests: [not_null]
 
+      - name: ssb_06947
+        description: |
+          SSB statistikkbanktabell 06947 — whole-population low income
+          (EU/OECD scale). Same 5 ContentsCodes as ssb-08764 but for all
+          ages. Populated by atlas-data/ingest/src/sources/ssb-06947.
+        loaded_at_field: loaded_at
+        freshness:
+          warn_after: {count: 400, period: day}
+          error_after: {count: 800, period: day}
+        columns:
+          - name: region_code
+            data_tests: [not_null]
+          - name: year
+            data_tests: [not_null]
+          - name: contents_code
+            data_tests:
+              - not_null
+              - accepted_values:
+                  values: ['Personer', 'EUskala50', 'EUskala60', 'OECDskala50', 'OECDskala60']
+
       - name: ssb_07459
         description: |
           SSB statistikkbanktabell 07459 — Alders- og kjønnsfordeling i

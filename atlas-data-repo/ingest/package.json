@@ -10,6 +10,7 @@
     "ingest:ssb-06913": "tsx --env-file=.env src/sources/ssb-06913/index.ts",
     "ingest:ssb-06944": "tsx --env-file=.env src/sources/ssb-06944/index.ts",
     "ingest:ssb-07459": "tsx --env-file=.env src/sources/ssb-07459/index.ts",
+    "ingest:ssb-06947": "tsx --env-file=.env src/sources/ssb-06947/index.ts",
     "ingest:ssb-08764": "tsx --env-file=.env src/sources/ssb-08764/index.ts",
     "ingest:ssb-12944": "tsx --env-file=.env src/sources/ssb-12944/index.ts",
     "ingest:ssb-13995": "tsx --env-file=.env src/sources/ssb-13995/index.ts",
