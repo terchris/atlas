@@ -14,7 +14,9 @@ It's a living document. Some things are settled; others are deliberately open an
 
 ## What this project is
 
-A Norwegian web application that is **the single source of information about Norway's NGO sector** — activities, chapters, funding, people, and the humanitarian needs that shape them. It is organisation-neutral: it aggregates and normalises public data about every large NGO that has a meaningful chapter footprint or public-facing mission in Norway, not just one.
+**Atlas** — a Norwegian web application that is **the single source of information about Norway's NGO sector**: activities, chapters, funding, people, and the humanitarian needs that shape them. It is organisation-neutral: it aggregates and normalises public data about every large NGO that has a meaningful chapter footprint or public-facing mission in Norway, not just one.
+
+Launched as **atlas.helpers.no**, the first service from **Helpers** (helpers.no), whose purpose is helping the helpers — NGOs and the volunteers who work for them. The name pattern `<service>.helpers.no` is how other Helpers services will be added later.
 
 The goal is to be the place you land when you want to:
 
@@ -229,7 +231,7 @@ Things still to decide:
 
 1. **Public-facing first, or internal-staff first?** The current core scope is public-facing (Kari / Jonas / Amira / Lars / Tone / Ola). An alternative framing makes **Lisa (tilskuddsansvarlig)** the v1 wedge: build the Tilskuddsmatcher extension first, serving the internal staff at every Tier A NGO who already spend real hours on this job with no cross-agency tool. Arguments for Lisa-first: cleaner single-user demand signal, no competition with existing public-facing NGO sites, direct measurable value (applications filed, grants won), **data-availability research confirmed feasibility (2026-04-20) — ~80–90% of NGO-relevant funding volume reachable in ~2 weeks of integration via tilskudd.lottstift.no + EU SEDIA + 10 other machine-readable sources**. Arguments against: internal-staff wedges don't directly build public audience for future public-facing features. The data-gate no longer blocks the decision.
 2. **Which additional organisations land in v1** — candidates from the Tier A list in `ngo-landscape.md` (N.K.S., Nasjonalforeningen, Speiderforbundet, 4H, Frelsesarmeen, Kirkens Bymisjon, etc.). Reassess once two-org core is running.
-3. **Project name / domain.** "rc-explorer" was the working name when the project was Red Cross-specific. A generalised working name is needed. Decide before public launch.
+3. ~~**Project name / domain.**~~ **Resolved (2026-04-21):** service name is **Atlas**, launched at **atlas.helpers.no** under the Helpers umbrella (helpers.no). Repo to be renamed to `atlas`. "Atlas" chosen for the Helseatlas-style precedent in Norwegian info-products, neutral cross-feature framing (fits finder + funding + indicators + compare), and short clean subdomain.
 4. **Hosting and distribution** — a running site with a URL, a GitHub repo to clone, or both. Likely both eventually; starting with local dev plus GitHub.
 5. **Live API vs. mock-first for per-organisation data.** Red Cross's API needs a key. Other orgs are scrape-first. Mock-first gets us moving immediately; swap to live via env vars when ready.
 6. **Meld feil backend** — where do flagged errors go per organisation? Email to the chapter? Internal ticket into their system? GitHub issue on our repo? Decide per-organisation when each one's flow is built.

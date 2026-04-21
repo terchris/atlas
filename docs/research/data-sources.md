@@ -14,7 +14,7 @@ Verification: URLs were re-verified against live endpoints on **2026-04-18**. Wh
 - **Portal**: https://developer.redcross.no/api-details#api=organizations&operation=getOrganizations
 - **Auth**: Requires `Ocp-Apim-Subscription-Key` header (free, request via portal)
 - **Format**: JSON; single call returns all branches
-- **Local cache**: A real dump lives at `curl-api-dev-redcross-no-nrx-v1-organizations_full.json` (~1.1 MB)
+- **Local cache**: A real dump lives at `docs/research/api-getOrganizations-output-21apr26.json`
 
 Complete hierarchy of every Red Cross organizational unit in Norway: National Office → 19 Districts → ~400 Local Chapters. Per-branch identity (`branchId`, `branchNumber`, `branchName`, `branchType`), Norwegian organization number, status, creation/termination dates, location, GeoJSON Point coordinates, contacts (with PII masking), activities (`globalActivityId` + local names), hierarchy via `branchParent`.
 
