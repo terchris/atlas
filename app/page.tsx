@@ -28,6 +28,10 @@ export default function HomePage() {
             <a href="/kommuner/0301">Kommune-detaljvisning</a>{" "}
             — alle tilgjengelige indikatorer per kommune (eksempel: Oslo)
           </li>
+          <li>
+            <a href="/data">Data-utforsker</a>{" "}
+            — alle indikatorer på kartet, for datakvalitetskontroll
+          </li>
         </ul>
       </section>
 
