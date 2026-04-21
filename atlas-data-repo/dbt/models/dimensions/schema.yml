@@ -41,3 +41,37 @@ models:
           expression: "length(kommune_nr) = 4"
       - dbt_utils.expression_is_true:
           expression: "length(fylke_nr) = 2"
+
+  - name: dim_fylke
+    description: |
+      Canonical fylke dimension. 16 rows: 15 real fylker + residual '99 Uoppgitt'.
+      Sourced from SSB Klass classification 104.
+    columns:
+      - name: fylke_nr
+        description: "2-digit zero-padded fylke code (e.g. '03' = Oslo)."
+        data_tests:
+          - not_null
+          - unique
+      - name: fylke_name
+        description: "Fylke name in bokmål. Multi-variant Sámi/Kven names are split into fylke_name_alt."
+        data_tests: [not_null]
+      - name: fylke_name_alt
+        description: "Everything after the first ' - ' in the upstream name — typically one or more Sámi/Kven variants. NULL for fylker without alt names."
+      - name: notes
+        description: "Verbatim notes from Klass."
+      - name: valid_from
+        description: "Date from which this fylke code is valid. NULL in a codesAt snapshot."
+      - name: valid_to
+        description: "Date at which this code becomes inactive. NULL = still active."
+      - name: is_active
+        description: "True when valid_to is null or in the future."
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: [true, false]
+      - name: updated_at
+        description: "When the row was last loaded from upstream."
+        data_tests: [not_null]
+    data_tests:
+      - dbt_utils.expression_is_true:
+          expression: "length(fylke_nr) = 2"

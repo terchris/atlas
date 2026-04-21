@@ -48,6 +48,9 @@ Use these **exact names** when the concept is present. Never invent variants.
 | Valid-to date (temporal dims) | `valid_to` | `date` | null = still valid |
 | Boolean currently-active flag | `is_active` | `boolean` | computed from `valid_to` |
 | Geographic region code, mixed type | `region_code` | `text` | **Allowed only at mart level where mixing is intentional.** For kommune-only data use `kommune_nr`. |
+| Biological/administrative sex | `sex` | `text` | One of `"male"`, `"female"`. Map raw codes in the dbt model (e.g. SSB's `"1"`/`"2"` → `"male"`/`"female"`). |
+| Single-year age | `age` | `text` | Upstream codes preserved (`"000"` … `"105+"`). Consider `age_int` column when range queries are needed. |
+| Age band | `age_group` | `text` | Source-specific enum (varies per table). Enforce with `accepted_values`, no shared dim. |
 
 ## Never in marts
 
@@ -65,6 +68,8 @@ Forbidden names, and what to use instead.
 | `loaded_at` (when exposed beyond raw) | `updated_at` |
 | `id`, `recno`, `row_id` | don't expose; use the business key |
 | `created_by`, `modified_by` | don't expose unless the concept is user-facing |
+| SSB's raw sex codes `"1"` / `"2"` | `"male"` / `"female"` |
+| `kjonn`, `kjønn`, `gender` | `sex` |
 
 ---
 

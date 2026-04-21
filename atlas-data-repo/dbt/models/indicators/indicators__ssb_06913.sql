@@ -15,6 +15,7 @@ select
   -- and SSB uses "Rest" as a residual bucket that also ends up K_-prefixed in
   -- some tables. Match only K_ followed by exactly 4 digits.
   case when region_code ~ '^K_[0-9]{4}$' then substring(region_code, 3) end as kommune_nr,
+  case when region_code ~ '^F_[0-9]{2}$' then substring(region_code, 3) end as fylke_nr,
   year,
   contents_code,
   contents_label,

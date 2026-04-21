@@ -17,6 +17,7 @@ One folder per upstream data source. Each folder is a self-contained unit: the c
 | [ssb-07459](./ssb-07459/) | SSB | Population by region, sex and single-year age | `npm run ingest:ssb-07459` | 5 dims (adds Kjonn + Alder); ~210 k cells — largest pull so far |
 | [ssb-08764](./ssb-08764/) | SSB | Persons under 18 in low-income households (EU/OECD scale), per kommune, annual | `npm run ingest:ssb-08764` | Default response = latest year only; see README |
 | [ssb-12944](./ssb-12944/) | SSB | Persons in households with persistent low income (EU-60), 3-year rolling periods, broken down by age group | `npm run ingest:ssb-12944` | 4 dims (adds Alder); Tid stored as period text like "2022-2024" |
+| [ssb-klass-fylker](./ssb-klass-fylker/) | SSB Klass | Canonical active-fylker list (classification 104) | `npm run ingest:ssb-klass-fylker` | Dimension source; feeds `dim_fylke`. Includes residual `"99 Uoppgitt"`. |
 | [ssb-klass-kommuner](./ssb-klass-kommuner/) | SSB Klass | Canonical active-kommuner list (classification 131) | `npm run ingest:ssb-klass-kommuner` | Dimension source; feeds `dim_kommune`. REST API, not PxWebAPI. |
 
 ## Planned sources

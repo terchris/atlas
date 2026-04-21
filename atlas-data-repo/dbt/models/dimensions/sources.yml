@@ -22,3 +22,22 @@ sources:
           - name: name
             description: "Kommune name (bokmål), sometimes with Sámi variant."
             data_tests: [not_null]
+
+      - name: ssb_klass_fylker
+        description: |
+          SSB Klass classification 104 (Fylker) — the canonical active fylke
+          list plus residual '99 Uoppgitt'. Source for dim_fylke. Populated
+          by atlas-data/ingest/src/sources/ssb-klass-fylker.
+        loaded_at_field: loaded_at
+        freshness:
+          warn_after: {count: 90, period: day}
+          error_after: {count: 400, period: day}
+        columns:
+          - name: code
+            description: "2-digit fylke code, e.g. '03' (Oslo)."
+            data_tests:
+              - not_null
+              - unique
+          - name: name
+            description: "Fylke name (bokmål), sometimes with multi-variant Sámi/Kven names separated by ' - '."
+            data_tests: [not_null]
