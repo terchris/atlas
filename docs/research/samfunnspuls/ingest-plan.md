@@ -268,7 +268,7 @@ Update this table as sources complete. Shape:
 
 | Source | Status | Notes |
 |---|---|---|
-| `ssb-13995` | 🔲 | Social-assistance recipients |
+| `ssb-13995` | ✅ | Social-assistance cases/amounts/duration — 30 294 rows, 34 content codes |
 | `ssb-06947` | 🔲 | Adult poverty (EU-60) |
 | `ssb-06083` | 🔲 | Family types |
 | `ssb-12292` | 🔲 | Nursing home + home care |

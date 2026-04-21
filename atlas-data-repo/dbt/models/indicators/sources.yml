@@ -75,6 +75,23 @@ sources:
               - accepted_values:
                   values: ['SamletInntekt', 'InntSkatt', 'AntallHushold']
 
+      - name: ssb_13995
+        description: |
+          SSB statistikkbanktabell 13995 — Sosialhjelpstilfeller, utbetalt
+          beløp og stønadstid. 34 content codes × ~891 regions × 2022-2025.
+          Populated by atlas-data/ingest/src/sources/ssb-13995.
+        loaded_at_field: loaded_at
+        freshness:
+          warn_after: {count: 400, period: day}
+          error_after: {count: 800, period: day}
+        columns:
+          - name: region_code
+            data_tests: [not_null]
+          - name: year
+            data_tests: [not_null]
+          - name: contents_code
+            data_tests: [not_null]
+
       - name: ssb_07459
         description: |
           SSB statistikkbanktabell 07459 — Alders- og kjønnsfordeling i

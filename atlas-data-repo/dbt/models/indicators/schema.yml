@@ -171,6 +171,53 @@ models:
             - year
             - contents_code
 
+  - name: indicators__ssb_13995
+    description: |
+      Per-source indicator passthrough for SSB 13995 (social-assistance
+      cases, amounts, duration). 34 content codes passed through verbatim;
+      fact-layer picks the kommune-level headline ones.
+    columns:
+      - name: source_id
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ['ssb-13995']
+      - name: region_code
+        data_tests: [not_null]
+      - name: kommune_nr
+        description: "4-digit kommune code; NULL for XX99 aggregates / bydel / fylke / nasjon rows."
+        data_tests:
+          - relationships:
+              to: ref('dim_kommune')
+              field: kommune_nr
+              config:
+                severity: warn
+      - name: fylke_nr
+        description: "2-digit fylke code; NULL otherwise."
+        data_tests:
+          - relationships:
+              to: ref('dim_fylke')
+              field: fylke_nr
+              config:
+                severity: warn
+      - name: year
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 2000
+              max_value: 2050
+      - name: contents_code
+        data_tests: [not_null]
+      - name: updated_at
+        data_tests: [not_null]
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - source_id
+            - region_code
+            - year
+            - contents_code
+
   - name: indicators__ssb_07459
     description: |
       Per-source indicator passthrough for SSB 07459 (population by region,

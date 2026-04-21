@@ -64,6 +64,14 @@ fhi_bor_alene as (
     and age_group = '16_120'       -- all adults 16+; headline
 ),
 
+ssb_13995 as (
+  select
+    source_id, kommune_nr, year, contents_code, contents_label,
+    value, status, updated_at
+  from {{ ref('indicators__ssb_13995') }}
+  where kommune_nr is not null
+),
+
 all_indicators as (
   select * from ssb_08764
   union all
@@ -72,6 +80,8 @@ all_indicators as (
   select * from ssb_06944
   union all
   select * from fhi_bor_alene
+  union all
+  select * from ssb_13995
 )
 
 select
