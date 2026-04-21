@@ -4,9 +4,9 @@
   "private": true,
   "description": "Atlas — a Norwegian public-facing portal to the NGO sector. Next.js App Router app that reads marts.* from Postgres.",
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -p 4000",
     "build": "next build",
-    "start": "next start",
+    "start": "next start -p 4000",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
