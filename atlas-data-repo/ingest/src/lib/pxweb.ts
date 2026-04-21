@@ -98,6 +98,8 @@ export function parseJsonStat2(resp: JsonStat2Response): PxRow[] {
   }
 
   // For each dimension, build an array mapping position -> code.
+  // JSON-stat2 allows `category.index` to be a code→position object (SSB's
+  // convention) or a position-ordered array of codes (FHI's convention).
   const codeByPosition: string[][] = id.map((dimName) => {
     const dim = dimension[dimName];
     if (!dim) {
@@ -107,9 +109,22 @@ export function parseJsonStat2(resp: JsonStat2Response): PxRow[] {
     if (n === undefined) {
       throw new Error(`Dimension ${dimName} has no size entry.`);
     }
+    const idx = dim.category.index;
     const codes: string[] = new Array(n);
-    for (const [code, pos] of Object.entries(dim.category.index)) {
-      codes[pos] = code;
+    if (Array.isArray(idx)) {
+      // FHI form: index is an array of codes in position order.
+      for (let i = 0; i < idx.length; i++) {
+        const code = idx[i];
+        if (code === undefined) {
+          throw new Error(`Dimension ${dimName} array index has undefined at ${i}.`);
+        }
+        codes[i] = code;
+      }
+    } else {
+      // SSB form: index is a code→position mapping.
+      for (const [code, pos] of Object.entries(idx)) {
+        codes[pos] = code;
+      }
     }
     for (let i = 0; i < n; i++) {
       if (codes[i] === undefined) {
@@ -159,12 +174,23 @@ export function parseJsonStat2(resp: JsonStat2Response): PxRow[] {
       const label = dim?.category.label[code] ?? code;
       dims[dimName] = { code, label };
     }
+    // JSON-stat2 allows string sparse-markers inline in the value array
+    // (FHI's convention for "not available" / suppression). Coerce to
+    // (value:null, status:marker) so downstream consumers see a uniform
+    // shape regardless of provider.
+    const raw = value[flat];
+    let numericValue: number | null;
+    let rowStatus: string | undefined = status?.[String(flat)];
+    if (typeof raw === "string") {
+      numericValue = null;
+      rowStatus = rowStatus ?? raw;
+    } else {
+      numericValue = raw ?? null;
+    }
     rows[flat] = {
       dimensions: dims,
-      value: value[flat] ?? null,
-      ...(status?.[String(flat)] !== undefined
-        ? { status: status[String(flat)] }
-        : {}),
+      value: numericValue,
+      ...(rowStatus !== undefined ? { status: rowStatus } : {}),
     };
   }
   return rows;

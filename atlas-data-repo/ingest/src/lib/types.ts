@@ -16,8 +16,14 @@ export type JsonStat2Response = {
   size: number[];
   /** Metadata per dimension. */
   dimension: Record<string, PxDimension>;
-  /** Flat array of values; length = product of sizes. */
-  value: (number | null)[];
+  /**
+   * Flat array of values; length = product of sizes. JSON-stat2 allows
+   * string markers (e.g. `":"`, `"."`) to appear inline in this array for
+   * cells where a numeric value isn't available. SSB emits numbers and
+   * nulls; FHI emits inline string markers. `parseJsonStat2` normalises
+   * both forms into `{value: number|null, status?: string}`.
+   */
+  value: (number | string | null)[];
   /**
    * Sparse status codes (e.g. suppressed cells). Keys are stringified flat
    * indices into `value`.
@@ -33,8 +39,12 @@ export type JsonStat2Response = {
 export type PxDimension = {
   label: string;
   category: {
-    /** Code → position in the dimension. */
-    index: Record<string, number>;
+    /**
+     * JSON-stat2 allows `index` to be either a code→position object or a
+     * position-ordered array of codes. SSB uses the object form, FHI uses
+     * the array form. Both are spec-compliant; `parseJsonStat2` handles both.
+     */
+    index: Record<string, number> | string[];
     /** Code → human-readable label. */
     label: Record<string, string>;
     /** Optional unit info per content code. */

@@ -52,6 +52,29 @@ sources:
           - name: contents_code
             data_tests: [not_null]
 
+      - name: ssb_06944
+        description: |
+          SSB statistikkbanktabell 06944 — household income (median), income
+          tax, and household count by household type. Region × HusholdType
+          × ContentsCode × Tid. Includes bydeler (delområder) in Region.
+          Populated by atlas-data/ingest/src/sources/ssb-06944.
+        loaded_at_field: loaded_at
+        freshness:
+          warn_after: {count: 400, period: day}
+          error_after: {count: 800, period: day}
+        columns:
+          - name: region_code
+            data_tests: [not_null]
+          - name: household_type
+            data_tests: [not_null]
+          - name: year
+            data_tests: [not_null]
+          - name: contents_code
+            data_tests:
+              - not_null
+              - accepted_values:
+                  values: ['SamletInntekt', 'InntSkatt', 'AntallHushold']
+
       - name: ssb_07459
         description: |
           SSB statistikkbanktabell 07459 — Alders- og kjønnsfordeling i
@@ -81,6 +104,28 @@ sources:
               - not_null
               - accepted_values:
                   values: ['Personer1']
+
+      - name: fhi_bor_alene
+        description: |
+          FHI Folkehelsestatistikk table 187 (Personer som bor alene).
+          Region × AAR × ALDER × MEASURE_TYPE. First non-SSB source in
+          Atlas. Populated by atlas-data/ingest/src/sources/fhi-bor-alene.
+        loaded_at_field: loaded_at
+        freshness:
+          warn_after: {count: 400, period: day}
+          error_after: {count: 800, period: day}
+        columns:
+          - name: geo_code
+            data_tests: [not_null]
+          - name: aar_code
+            data_tests: [not_null]
+          - name: alder_code
+            data_tests: [not_null]
+          - name: measure_type
+            data_tests:
+              - not_null
+              - accepted_values:
+                  values: ['RATE', 'SMR', 'TELLER']
 
       - name: ssb_12944
         description: |

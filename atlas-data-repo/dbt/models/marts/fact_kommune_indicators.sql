@@ -21,47 +21,57 @@
 --   - Must join to an active kommune in dim_kommune (drops historical codes
 --     with zero values — they'd pollute the fact with merged-away kommuner)
 --
--- Sources excluded for now (different shape; will need source-specific marts):
---   - ssb-07459: has sex + single-year age dimensions; no natural roll-up to
---     one row per (kommune, year, contents)
---   - ssb-12944: has age_group + period (not year); the period text needs a
---     deliberate mapping to year before inclusion
+-- Sources included here pick a sensible kommune-level headline slice when the
+-- source has extra dimensions:
+--   - ssb-06944: filter to household_type='0000' (all households)
+--   - fhi-bor-alene: filter to age_group='16_120' (adults 16+)
 --
--- When those sources are integrated, either extend this mart with new columns
--- or (better) build a source-specific mart that aggregates them.
+-- Sources still excluded (different shape; will need source-specific marts):
+--   - ssb-07459: has sex + single-year age; no natural 1-row-per-contents roll-up
+--   - ssb-12944: period (not year) and age_group; needs a deliberate mapping
 
 with ssb_08764 as (
   select
-    source_id,
-    kommune_nr,
-    year,
-    contents_code,
-    contents_label,
-    value,
-    status,
-    updated_at
+    source_id, kommune_nr, year, contents_code, contents_label,
+    value, status, updated_at
   from {{ ref('indicators__ssb_08764') }}
   where kommune_nr is not null
 ),
 
 ssb_06913 as (
   select
-    source_id,
-    kommune_nr,
-    year,
-    contents_code,
-    contents_label,
-    value,
-    status,
-    updated_at
+    source_id, kommune_nr, year, contents_code, contents_label,
+    value, status, updated_at
   from {{ ref('indicators__ssb_06913') }}
   where kommune_nr is not null
+),
+
+ssb_06944 as (
+  select
+    source_id, kommune_nr, year, contents_code, contents_label,
+    value, status, updated_at
+  from {{ ref('indicators__ssb_06944') }}
+  where kommune_nr is not null
+    and household_type = '0000'   -- all households; headline
+),
+
+fhi_bor_alene as (
+  select
+    source_id, kommune_nr, year, contents_code,
+    contents_label, value, status, updated_at
+  from {{ ref('indicators__fhi_bor_alene') }}
+  where kommune_nr is not null
+    and age_group = '16_120'       -- all adults 16+; headline
 ),
 
 all_indicators as (
   select * from ssb_08764
   union all
   select * from ssb_06913
+  union all
+  select * from ssb_06944
+  union all
+  select * from fhi_bor_alene
 )
 
 select

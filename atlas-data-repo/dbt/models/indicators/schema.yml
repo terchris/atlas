@@ -110,6 +110,67 @@ models:
             - year
             - contents_code
 
+  - name: indicators__ssb_06944
+    description: |
+      Per-source indicator passthrough for SSB 06944 (household income by
+      household type). Preserves household_type column; consumers filter to
+      `household_type = '0000'` for the all-households headline.
+    columns:
+      - name: source_id
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ['ssb-06944']
+      - name: region_code
+        data_tests: [not_null]
+      - name: kommune_nr
+        description: "4-digit kommune code; NULL for bydel/fylke/nasjon/rest-of-fylke (XX99) rows."
+        data_tests:
+          # SSB 06944 includes Svalbard (21xx), Jan Mayen (22xx), continental
+          # shelf (23xx) kommune-like codes that aren't in Klass 131 mainland.
+          # Warn — same pattern as the fylke test below and 07459's historical.
+          - relationships:
+              to: ref('dim_kommune')
+              field: kommune_nr
+              config:
+                severity: warn
+      - name: fylke_nr
+        description: "2-digit fylke code; NULL otherwise."
+        data_tests:
+          # SSB uses special 2-digit codes outside Klass 104 for Svalbard (21),
+          # Jan Mayen (22), continental shelf (23), EU (25), abroad (26),
+          # unknown (88). Warn instead of error — legitimate SSB codes for
+          # aggregates beyond mainland Norway.
+          - relationships:
+              to: ref('dim_fylke')
+              field: fylke_nr
+              config:
+                severity: warn
+      - name: household_type
+        description: "SSB HusholdType code, '0000' = all households."
+        data_tests: [not_null]
+      - name: year
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 2000
+              max_value: 2050
+      - name: contents_code
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ['SamletInntekt', 'InntSkatt', 'AntallHushold']
+      - name: updated_at
+        data_tests: [not_null]
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - source_id
+            - region_code
+            - household_type
+            - year
+            - contents_code
+
   - name: indicators__ssb_07459
     description: |
       Per-source indicator passthrough for SSB 07459 (population by region,
@@ -173,6 +234,58 @@ models:
             - sex
             - age
             - year
+            - contents_code
+
+  - name: indicators__fhi_bor_alene
+    description: |
+      Per-source indicator passthrough for FHI table 187 (adults living alone).
+      Renames FHI dimensions to Atlas canonical names (GEO → region_code/
+      kommune_nr/fylke_nr, AAR → year + period, ALDER → age_group,
+      MEASURE_TYPE → contents_code).
+    columns:
+      - name: source_id
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ['fhi-bor-alene']
+      - name: region_code
+        data_tests: [not_null]
+      - name: kommune_nr
+        description: "4-digit kommune code; NULL for non-kommune rows. Joins to dim_kommune."
+        data_tests:
+          - relationships:
+              to: ref('dim_kommune')
+              field: kommune_nr
+      - name: fylke_nr
+        description: "2-digit fylke code; NULL otherwise."
+        data_tests:
+          - relationships:
+              to: ref('dim_fylke')
+              field: fylke_nr
+      - name: year
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 2000
+              max_value: 2050
+      - name: age_group
+        description: "FHI ALDER code in min_max form (e.g. '16_120')."
+        data_tests: [not_null]
+      - name: contents_code
+        description: "RATE | SMR | TELLER, from FHI MEASURE_TYPE."
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ['RATE', 'SMR', 'TELLER']
+      - name: updated_at
+        data_tests: [not_null]
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - source_id
+            - region_code
+            - period
+            - age_group
             - contents_code
 
   - name: indicators__ssb_12944

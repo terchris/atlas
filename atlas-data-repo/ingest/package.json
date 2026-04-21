@@ -6,7 +6,9 @@
   "description": "Atlas data ingestion — per-source TypeScript fetchers writing to raw.* in Postgres.",
   "scripts": {
     "migrate": "tsx --env-file=.env scripts/migrate.ts",
+    "ingest:fhi-bor-alene": "tsx --env-file=.env src/sources/fhi-bor-alene/index.ts",
     "ingest:ssb-06913": "tsx --env-file=.env src/sources/ssb-06913/index.ts",
+    "ingest:ssb-06944": "tsx --env-file=.env src/sources/ssb-06944/index.ts",
     "ingest:ssb-07459": "tsx --env-file=.env src/sources/ssb-07459/index.ts",
     "ingest:ssb-08764": "tsx --env-file=.env src/sources/ssb-08764/index.ts",
     "ingest:ssb-12944": "tsx --env-file=.env src/sources/ssb-12944/index.ts",
