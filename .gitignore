@@ -6,6 +6,8 @@
 /out/
 /build
 next-env.d.ts
+tsconfig.tsbuildinfo
+*.tsbuildinfo
 
 # node
 node_modules/
