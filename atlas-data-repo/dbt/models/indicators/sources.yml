@@ -94,6 +94,23 @@ sources:
               - accepted_values:
                   values: ['SamletInntekt', 'InntSkatt', 'AntallHushold']
 
+      - name: ssb_12292
+        description: |
+          SSB KOSTRA 12292 — nursing-home and home-care indicators. 49
+          ContentsCodes × ~891 regions × 2015-2024. Populated by
+          atlas-data/ingest/src/sources/ssb-12292.
+        loaded_at_field: loaded_at
+        freshness:
+          warn_after: {count: 400, period: day}
+          error_after: {count: 800, period: day}
+        columns:
+          - name: region_code
+            data_tests: [not_null]
+          - name: year
+            data_tests: [not_null]
+          - name: contents_code
+            data_tests: [not_null]
+
       - name: ssb_13995
         description: |
           SSB statistikkbanktabell 13995 — Sosialhjelpstilfeller, utbetalt

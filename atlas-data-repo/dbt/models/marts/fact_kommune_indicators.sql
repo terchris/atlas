@@ -80,6 +80,27 @@ ssb_06947 as (
   where kommune_nr is not null
 ),
 
+ssb_06083 as (
+  -- Pick all family types; consumers filter. Family_type column dropped
+  -- for the fact's narrower shape — gets one row per (region, year,
+  -- family_type × contents).
+  select
+    source_id, kommune_nr, year,
+    (contents_code || '_' || family_type) as contents_code,
+    coalesce(contents_label, '') || ' (' || family_type || ')' as contents_label,
+    value, status, updated_at
+  from {{ ref('indicators__ssb_06083') }}
+  where kommune_nr is not null
+),
+
+ssb_12292 as (
+  select
+    source_id, kommune_nr, year, contents_code, contents_label,
+    value, status, updated_at
+  from {{ ref('indicators__ssb_12292') }}
+  where kommune_nr is not null
+),
+
 all_indicators as (
   select * from ssb_08764
   union all
@@ -92,6 +113,10 @@ all_indicators as (
   select * from ssb_13995
   union all
   select * from ssb_06947
+  union all
+  select * from ssb_06083
+  union all
+  select * from ssb_12292
 )
 
 select

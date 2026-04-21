@@ -271,7 +271,7 @@ Update this table as sources complete. Shape:
 | `ssb-13995` | ✅ | Social-assistance cases/amounts/duration — 30 294 rows, 34 content codes |
 | `ssb-06947` | ✅ | Adult poverty (EU-60) — 5 180 rows; sibling of ssb-08764 |
 | `ssb-06083` | ✅ | Family types — 9 459 rows, 9 FamilieType codes |
-| `ssb-12292` | 🔲 | Nursing home + home care |
+| `ssb-12292` | ✅ | Omsorgstjenester — 43 659 rows, 49 content codes; elder-care theme |
 | `ssb-12063` | 🔲 | Municipal youth leisure |
 | `ssb-09429` | 🔲 | Education level |
 | `ssb-13006` | ❌ | **Rejected** — SSB table 13006 returns 404 (no longer public via PxWebAPI). Samfunnspuls must have used a since-retired table id. If the indicator becomes valuable, revisit by searching SSB for an equivalent under a new id. |
