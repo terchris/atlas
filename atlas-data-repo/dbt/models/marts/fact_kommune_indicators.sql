@@ -125,6 +125,20 @@ ssb_12132 as (
   where kommune_nr is not null
 ),
 
+fhi_trangbodd as (
+  -- Headline slice: overcrowded-housing share for all ages × all education
+  -- levels. Detailed breakdowns live in indicators__fhi_trangbodd.
+  select
+    source_id, kommune_nr, year,
+    contents_code, contents_label,
+    value, status, updated_at
+  from {{ ref('indicators__fhi_trangbodd') }}
+  where kommune_nr is not null
+    and age_group = '0_120'
+    and education_level = '0'
+    and housing_status = 'trangt'
+),
+
 ssb_09429 as (
   -- Filter to sex='all' + generic education level so every kommune has a
   -- single headline row per (region, year, contents_code). Consumers who
@@ -162,6 +176,8 @@ all_indicators as (
   select * from ssb_12132
   union all
   select * from ssb_09429
+  union all
+  select * from fhi_trangbodd
 )
 
 select

@@ -550,6 +550,49 @@ models:
             - year
             - contents_code
 
+  - name: indicators__fhi_trangbodd
+    description: "Per-source indicator passthrough for FHI 794 (overcrowded housing). Preserves education_level (UTDANN) and housing_status (BODD) dims."
+    columns:
+      - name: source_id
+        data_tests:
+          - not_null
+          - accepted_values: {values: ['fhi-trangbodd']}
+      - name: region_code
+        data_tests: [not_null]
+      - name: kommune_nr
+        data_tests:
+          - relationships:
+              to: ref('dim_kommune')
+              field: kommune_nr
+              config: {severity: warn}
+      - name: fylke_nr
+        data_tests:
+          - relationships:
+              to: ref('dim_fylke')
+              field: fylke_nr
+              config: {severity: warn}
+      - name: year
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
+      - name: age_group
+        data_tests: [not_null]
+      - name: education_level
+        data_tests: [not_null]
+      - name: housing_status
+        data_tests:
+          - not_null
+          - accepted_values: {values: ['trangt', 'uoppgitt']}
+      - name: contents_code
+        data_tests:
+          - not_null
+          - accepted_values: {values: ['RATE']}
+      - name: updated_at
+        data_tests: [not_null]
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [source_id, region_code, period, age_group, education_level, housing_status, contents_code]
+
   - name: indicators__fhi_bor_alene
     description: |
       Per-source indicator passthrough for FHI table 187 (adults living alone).

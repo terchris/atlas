@@ -236,6 +236,30 @@ sources:
               - accepted_values:
                   values: ['Personer1']
 
+      - name: fhi_trangbodd
+        description: "FHI 794 — overcrowded-housing share by region × age × education × housing-status."
+        loaded_at_field: loaded_at
+        freshness:
+          warn_after: {count: 400, period: day}
+          error_after: {count: 800, period: day}
+        columns:
+          - name: geo_code
+            data_tests: [not_null]
+          - name: aar_code
+            data_tests: [not_null]
+          - name: alder_code
+            data_tests: [not_null]
+          - name: utdann_code
+            data_tests: [not_null]
+          - name: bodd_code
+            data_tests:
+              - not_null
+              - accepted_values: {values: ['trangt', 'uoppgitt']}
+          - name: measure_type
+            data_tests:
+              - not_null
+              - accepted_values: {values: ['RATE', 'SMR', 'TELLER']}
+
       - name: fhi_bor_alene
         description: |
           FHI Folkehelsestatistikk table 187 (Personer som bor alene).

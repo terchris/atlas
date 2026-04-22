@@ -284,7 +284,10 @@ Update this table as sources complete. Shape:
 
 | Source | Status | Notes |
 |---|---|---|
-| `ssb-spesialbestilt-bosted-husholdning` | 🔶 | Needs investigation; may substitute with FHI `Trangbodd_*` |
+| `ssb-spesialbestilt-bosted-husholdning` | ❌→✅ | **Substituted** with `fhi-trangbodd` (FHI table 794). Probed SSB statbank for a public-API equivalent — none found. FHI publishes the underlying data openly with age × education × housing-status breakdown. Substitution means Atlas gets a richer view than Samfunnspuls had. |
+| `fhi-trangbodd` *(substitute)* | ✅ | Overcrowded housing share — 36 810 rows. Preserves UTDANN (5 edu levels) × ALDER × BODD breakdown; MEASURE filtered to RATE for cell-count ceiling. |
+
+**Phase 2 complete.**
 
 ### Phase 3a — Udir
 
