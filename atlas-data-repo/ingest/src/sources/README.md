@@ -14,7 +14,9 @@ One folder per upstream data source. Each folder is a self-contained unit: the c
 | Source | Provider | What it is | Run | Notes |
 |---|---|---|---|---|
 | [fhi-bor-alene](./fhi-bor-alene/) | FHI | Share of adults (16+) living alone, per region, annual | `npm run ingest:fhi-bor-alene` | First non-SSB source. POST-only data endpoint, json-stat2 response |
+| [fhi-mobbing](./fhi-mobbing/) | FHI | Bullying share, 7th and 10th grade, 3-year averages | `npm run ingest:fhi-mobbing` | Substitute for `udir-elevundersokelsen` (bullying); FHI 377 |
 | [fhi-trangbodd](./fhi-trangbodd/) | FHI | Overcrowded-housing share by region × age × education × housing-status | `npm run ingest:fhi-trangbodd` | Public substitute for Samfunnspuls's bespoke SSB extract; RATE measure only |
+| [fhi-vgs-gjennomforing](./fhi-vgs-gjennomforing/) | FHI | Upper-secondary completion rate by region × sex × parents-ed × immigration-cat | `npm run ingest:fhi-vgs-gjennomforing` | Substitute for `udir-sluttet-vgs`; dropout = 100 − completion |
 | [ssb-06083](./ssb-06083/) | SSB | Families by type (couple with/without kids, single parent, etc.) | `npm run ingest:ssb-06083` | 4 dims (adds FamilieType); single-parent share = vulnerability proxy |
 | [ssb-06913](./ssb-06913/) | SSB | Population change — folketilvekst, fødsler, dødsfall, flyttinger, per kommune/fylke, annual | `npm run ingest:ssb-06913` | 3 dims, 8 ContentsCodes, includes projections in future years |
 | [ssb-06944](./ssb-06944/) | SSB | Household income (median), income tax, household count by region × household type | `npm run ingest:ssb-06944` | First economy indicator; includes bydeler (delområder) |

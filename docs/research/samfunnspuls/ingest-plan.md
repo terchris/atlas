@@ -289,14 +289,20 @@ Update this table as sources complete. Shape:
 
 **Phase 2 complete.**
 
-### Phase 3a — Udir
+### Phase 3a — Udir (substituted with FHI where possible)
+
+Investigation found: Udir's Skoleporten publishes only as HTML pages — no public JSON API. Samfunnspuls uses R-script scrapers. FHI's Folkehelseprofil republishes some of the same indicators cleanly. Where an FHI substitute exists, Atlas uses it; the two that don't (`udir-fravar`, `udir-grunnskoler`) are deferred to a dedicated Udir-scraping session.
 
 | Source | Status | Notes |
 |---|---|---|
-| `udir-elevundersokelsen` | 🔲 | First Udir — builds `lib/udir.ts` |
-| `udir-fravar` | 🔲 | |
-| `udir-sluttet-vgs` | 🔲 | |
-| `udir-grunnskoler` | 🔲 | |
+| `udir-elevundersokelsen` | ❌→✅ | **Substituted** with `fhi-mobbing` (FHI 377) for the bullying slice. Other survey items (hjemmestøtte etc.) would need dedicated Udir scraping. |
+| `fhi-mobbing` *(substitute)* | ✅ | Bullying 7./10. klasse 3-year averages — 2 454 rows. |
+| `udir-sluttet-vgs` | ❌→✅ | **Substituted** with `fhi-vgs-gjennomforing` (FHI 360). Dropout = 100 − completion; FHI publishes completion per region × sex × parents' education × immigration category. |
+| `fhi-vgs-gjennomforing` *(substitute)* | ✅ | VGS completion rate — 24 540 rows. |
+| `udir-fravar` | 🟡 | **Deferred** — no FHI equivalent. Needs `lib/udir.ts` HTML scraper in a dedicated session. |
+| `udir-grunnskoler` | 🟡 | **Deferred** — could use Udir's NSR (National School Register) REST API at data-nsr.udir.no rather than HTML scraping. Also a dedicated session. |
+
+**Phase 3a partially complete**: 2 of 4 covered via FHI substitution. The 2 deferred need a dedicated Udir-scraping session (build `lib/udir.ts`/NSR client once, use for both).
 
 ### Phase 3b — IMDi
 

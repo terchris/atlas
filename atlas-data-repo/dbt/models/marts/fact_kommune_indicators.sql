@@ -125,6 +125,34 @@ ssb_12132 as (
   where kommune_nr is not null
 ),
 
+fhi_mobbing as (
+  -- Headline: both grades combined (TRINN='7' then '10'), RATE only.
+  -- Downstream can filter per grade via indicators__fhi_mobbing.
+  select
+    source_id, kommune_nr, year,
+    (contents_code || '_grade' || grade) as contents_code,
+    coalesce(contents_label, '') || ' (' || grade || '. trinn)' as contents_label,
+    value, status, updated_at
+  from {{ ref('indicators__fhi_mobbing') }}
+  where kommune_nr is not null
+    and contents_code = 'RATE'
+),
+
+fhi_vgs as (
+  -- Headline: sex='0' (all), parents_education='0' (all), innvkat='0' (all),
+  -- RATE only. Detailed slices still available in indicators__fhi_vgs_gjennomforing.
+  select
+    source_id, kommune_nr, year,
+    contents_code, contents_label,
+    value, status, updated_at
+  from {{ ref('indicators__fhi_vgs_gjennomforing') }}
+  where kommune_nr is not null
+    and sex_code = '0'
+    and parents_education = '0'
+    and immigration_category = '0'
+    and contents_code = 'RATE'
+),
+
 fhi_trangbodd as (
   -- Headline slice: overcrowded-housing share for all ages × all education
   -- levels. Detailed breakdowns live in indicators__fhi_trangbodd.
@@ -178,6 +206,10 @@ all_indicators as (
   select * from ssb_09429
   union all
   select * from fhi_trangbodd
+  union all
+  select * from fhi_mobbing
+  union all
+  select * from fhi_vgs
 )
 
 select

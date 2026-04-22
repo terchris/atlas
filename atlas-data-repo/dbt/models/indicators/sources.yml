@@ -236,6 +236,38 @@ sources:
               - accepted_values:
                   values: ['Personer1']
 
+      - name: fhi_mobbing
+        description: "FHI 377 — bullying share 7./10. klasse, 3-year averages."
+        loaded_at_field: loaded_at
+        freshness:
+          warn_after: {count: 400, period: day}
+          error_after: {count: 800, period: day}
+        columns:
+          - name: geo_code
+            data_tests: [not_null]
+          - name: aar_code
+            data_tests: [not_null]
+          - name: trinn_code
+            data_tests:
+              - not_null
+              - accepted_values: {values: ['7', '10']}
+          - name: measure_type
+            data_tests: [not_null]
+
+      - name: fhi_vgs_gjennomforing
+        description: "FHI 360 — upper-secondary completion rate, by region × sex × parents-education × immigration-category."
+        loaded_at_field: loaded_at
+        freshness:
+          warn_after: {count: 400, period: day}
+          error_after: {count: 800, period: day}
+        columns:
+          - name: geo_code
+            data_tests: [not_null]
+          - name: aar_code
+            data_tests: [not_null]
+          - name: measure_type
+            data_tests: [not_null]
+
       - name: fhi_trangbodd
         description: "FHI 794 — overcrowded-housing share by region × age × education × housing-status."
         loaded_at_field: loaded_at

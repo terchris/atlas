@@ -550,6 +550,80 @@ models:
             - year
             - contents_code
 
+  - name: indicators__fhi_mobbing
+    description: "Per-source passthrough for FHI 377 (bullying 7./10. klasse)."
+    columns:
+      - name: source_id
+        data_tests:
+          - not_null
+          - accepted_values: {values: ['fhi-mobbing']}
+      - name: region_code
+        data_tests: [not_null]
+      - name: kommune_nr
+        data_tests:
+          - relationships:
+              to: ref('dim_kommune')
+              field: kommune_nr
+              config: {severity: warn}
+      - name: fylke_nr
+        data_tests:
+          - relationships:
+              to: ref('dim_fylke')
+              field: fylke_nr
+              config: {severity: warn}
+      - name: year
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
+      - name: grade
+        data_tests:
+          - not_null
+          - accepted_values: {values: ['7', '10']}
+      - name: contents_code
+        data_tests:
+          - not_null
+          - accepted_values: {values: ['RATE', 'SMR', 'MEIS']}
+      - name: updated_at
+        data_tests: [not_null]
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [source_id, region_code, period, sex_code, grade, question_id, contents_code]
+
+  - name: indicators__fhi_vgs_gjennomforing
+    description: "Per-source passthrough for FHI 360 (VGS completion rate)."
+    columns:
+      - name: source_id
+        data_tests:
+          - not_null
+          - accepted_values: {values: ['fhi-vgs-gjennomforing']}
+      - name: region_code
+        data_tests: [not_null]
+      - name: kommune_nr
+        data_tests:
+          - relationships:
+              to: ref('dim_kommune')
+              field: kommune_nr
+              config: {severity: warn}
+      - name: fylke_nr
+        data_tests:
+          - relationships:
+              to: ref('dim_fylke')
+              field: fylke_nr
+              config: {severity: warn}
+      - name: year
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
+      - name: contents_code
+        data_tests:
+          - not_null
+          - accepted_values: {values: ['RATE', 'SMR', 'MEIS', 'TELLER']}
+      - name: updated_at
+        data_tests: [not_null]
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [source_id, region_code, period, sex_code, parents_education, immigration_category, contents_code]
+
   - name: indicators__fhi_trangbodd
     description: "Per-source indicator passthrough for FHI 794 (overcrowded housing). Preserves education_level (UTDANN) and housing_status (BODD) dims."
     columns:
