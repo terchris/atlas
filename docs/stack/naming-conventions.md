@@ -48,9 +48,30 @@ Use these **exact names** when the concept is present. Never invent variants.
 | Valid-to date (temporal dims) | `valid_to` | `date` | null = still valid |
 | Boolean currently-active flag | `is_active` | `boolean` | computed from `valid_to` |
 | Geographic region code, mixed type | `region_code` | `text` | **Allowed only at mart level where mixing is intentional.** For kommune-only data use `kommune_nr`. |
-| Biological/administrative sex | `sex` | `text` | One of `"male"`, `"female"`. Map raw codes in the dbt model (e.g. SSB's `"1"`/`"2"` → `"male"`/`"female"`). |
-| Single-year age | `age` | `text` | Upstream codes preserved (`"000"` … `"105+"`). Consider `age_int` column when range queries are needed. |
-| Age band | `age_group` | `text` | Source-specific enum (varies per table). Enforce with `accepted_values`, no shared dim. |
+| Biological/administrative sex | `sex` | `text` | One of `"male"`, `"female"`, `"all"`. Decode raw codes via the `{{ decode_sex(col) }}` macro in `dbt/macros/parse_codes.sql` (`'0'`→`'all'`, `'1'`→`'male'`, `'2'`→`'female'`). |
+| Single-year age | `age` | `text` | Upstream codes preserved (`"000"` … `"105+"`). |
+| Single-year age as integer | `age_int` | `integer` | NULL for the open-ended `"105+"` bucket. |
+| Floor of single-year age (incl. open-ended) | `age_min` | `integer` | `105` for `"105+"`; sortable, never NULL. |
+| Age band | `age_group` | `text` | Source-specific enum (varies per table); preserved verbatim. |
+| Age band lower bound | `age_group_min` | `integer` | Parsed from `age_group` via the `age_range_min(col, sep)` macro. NULL for cryptic codes (`"999A"`). |
+| Age band upper bound | `age_group_max` | `integer` | Same; NULL for open-ended (e.g. `"067+"`) and cryptic codes. |
+| Three-year rolling period start | `period_start_year` | `integer` | Parsed from `period` via `period_start_year(col)` macro. Handles both `"YYYY_YYYY"` (FHI) and `"YYYY-YYYY"` (SSB 12944). |
+| Three-year rolling period end | `period_end_year` | `integer` | Same. |
+| Family type (SSB FamilieType) | `family_type` | `text` | Codes `"001"`–`"009"`; must exist in `marts.ref_ssb_family_type`. |
+| Family type label (Norwegian) | `family_type_label_no` | `text` | From `ref_ssb_family_type`. |
+| Family type label (English) | `family_type_label_en` | `text` | From `ref_ssb_family_type`. |
+| Household type (SSB HusholdType) | `household_type` | `text` | Codes `"0000"`–`"0004"`; must exist in `marts.ref_ssb_household_type`. |
+| Household type label (Norwegian) | `household_type_label_no` | `text` | |
+| Household type label (English) | `household_type_label_en` | `text` | |
+| Education level — subject's own (SSB Nivaa NUS2000) | `education_level` | `text` | Codes from `marts.ref_ssb_nivaa`. **Use this only when the source measures the subject's own level.** For child-outcome tables stratified by parental education, use `parents_education`. |
+| Education level label (Norwegian) | `education_level_label_no` | `text` | From `ref_ssb_nivaa`. |
+| Education level label (English) | `education_level_label_en` | `text` | From `ref_ssb_nivaa`. |
+| Education level — parents' (FHI UTDANN) | `parents_education` | `text` | Codes `"0"`–`"4"`; must exist in `marts.ref_fhi_utdann`. Distinct vocabulary from SSB Nivaa — coarser scheme; the two are not interchangeable. |
+| Parents' education label (Norwegian) | `parents_education_label_no` | `text` | From `ref_fhi_utdann`. FHI publishes Norwegian only. |
+| Immigration category (FHI INNVKAT) | `immigration_category` | `text` | From `marts.ref_fhi_innvkat`. |
+| Immigration category label (Norwegian) | `immigration_category_label_no` | `text` | |
+| Housing status (FHI BODD) | `housing_status` | `text` | `"trangt"` / `"uoppgitt"`; readable as-is, no seed. |
+| School grade (FHI TRINN) | `grade` | `text` | `"7"` / `"10"` etc.; readable as-is, no seed. |
 
 ## Never in marts
 
@@ -68,8 +89,14 @@ Forbidden names, and what to use instead.
 | `loaded_at` (when exposed beyond raw) | `updated_at` |
 | `id`, `recno`, `row_id` | don't expose; use the business key |
 | `created_by`, `modified_by` | don't expose unless the concept is user-facing |
-| SSB's raw sex codes `"1"` / `"2"` | `"male"` / `"female"` |
-| `kjonn`, `kjønn`, `gender` | `sex` |
+| SSB's raw sex codes `"1"` / `"2"` / `"0"` | `"male"` / `"female"` / `"all"` (via `decode_sex` macro) |
+| `kjonn`, `kjønn`, `gender`, `kjonn_code`, `sex_code` | `sex` |
+| `aar_code` (FHI), `tid_code` | `period` (text); also `period_start_year` / `period_end_year` (int) |
+| `alder_code` (FHI) | `age_group` (text); also `age_group_min` / `age_group_max` (int) |
+| `utdann_code` (FHI) when source stratifies by parental education | `parents_education` (+ `parents_education_label_no`) |
+| `innvkat_code` | `immigration_category` (+ `immigration_category_label_no`) |
+| `bodd_code` | `housing_status` |
+| `trinn_code` | `grade` |
 
 ---
 
@@ -118,6 +145,18 @@ When a model is retired:
 - PR checklist (see `atlas-data-repo/CONTRIBUTING.md`) asks each contributor to check this file.
 - New columns that match a "Never in marts" entry → rename before merge.
 - If no canonical name exists for a concept you're introducing, **add it to the Canonical vocabulary table in this file** as part of the same PR. The vocabulary grows deliberately, not by accident.
+
+---
+
+## Decoding strategy reference
+
+The hybrid strategy for turning upstream codes into the canonical vocabulary above is documented in:
+
+- [`docs/ai-developer/plans/completed/INVESTIGATE-code-label-mapping.md`](../ai-developer/plans/backlog/INVESTIGATE-code-label-mapping.md) — the original investigation (kept in backlog as a living reference).
+- `atlas-data-repo/dbt/macros/parse_codes.sql` — `decode_sex`, `period_start_year`, `period_end_year`, `age_range_min(col, sep)`, `age_range_max(col, sep)`.
+- `atlas-data-repo/dbt/seeds/` — the five `marts.ref_*` lookup CSVs and their refresh policy ([`seeds/README.md`](../../atlas-data-repo/dbt/seeds/README.md)).
+
+When adding a new source with coded fields, follow the same hybrid pattern: small universal enums (`sex`, `housing_status`) inline; medium domain enums via a new `marts.ref_*` seed + left join; structured codes (period, age band) parsed into `_min/_max` or `_start/_end_year` integer columns alongside the raw text.
 
 ---
 

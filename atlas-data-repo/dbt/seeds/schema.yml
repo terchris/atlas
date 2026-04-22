@@ -1,0 +1,78 @@
+version: 2
+
+# Tests for the marts.ref_* reference seeds.
+# The CSVs themselves are the canonical code lists; the tests below catch
+# accidental edits (duplicate codes, missing labels, broken sort order).
+# Refresh policy and per-seed source notes live in seeds/README.md.
+
+seeds:
+  - name: ref_ssb_family_type
+    description: "SSB FamilieType labels for table 06083. 9 codes."
+    columns:
+      - name: code
+        data_tests: [not_null, unique]
+      - name: label_no
+        data_tests: [not_null]
+      - name: label_en
+        data_tests: [not_null]
+      - name: sort_order
+        data_tests:
+          - not_null
+          - unique
+          - dbt_utils.accepted_range: { min_value: 1, max_value: 9 }
+
+  - name: ref_ssb_household_type
+    description: "SSB HusholdType labels for table 06944. 5 codes."
+    columns:
+      - name: code
+        data_tests: [not_null, unique]
+      - name: label_no
+        data_tests: [not_null]
+      - name: label_en
+        data_tests: [not_null]
+      - name: sort_order
+        data_tests:
+          - not_null
+          - unique
+          - dbt_utils.accepted_range: { min_value: 1, max_value: 5 }
+
+  - name: ref_ssb_nivaa
+    description: "SSB Nivaa (NUS2000) education-level labels for table 09429. 7 codes; upstream order interleaves '11' (Fagskole) between '02a' and '03a'."
+    columns:
+      - name: code
+        data_tests: [not_null, unique]
+      - name: label_no
+        data_tests: [not_null]
+      - name: label_en
+        data_tests: [not_null]
+      - name: sort_order
+        data_tests:
+          - not_null
+          - unique
+          - dbt_utils.accepted_range: { min_value: 1, max_value: 7 }
+
+  - name: ref_fhi_utdann
+    description: "FHI UTDANN labels for tables 794 and 360 (parents' education). 5 codes. Norwegian only."
+    columns:
+      - name: code
+        data_tests: [not_null, unique]
+      - name: label_no
+        data_tests: [not_null]
+      - name: sort_order
+        data_tests:
+          - not_null
+          - unique
+          - dbt_utils.accepted_range: { min_value: 1, max_value: 5 }
+
+  - name: ref_fhi_innvkat
+    description: "FHI INNVKAT labels for table 360. Single-row seed today; future-proofed for additional immigration categories."
+    columns:
+      - name: code
+        data_tests: [not_null, unique]
+      - name: label_no
+        data_tests: [not_null]
+      - name: sort_order
+        data_tests:
+          - not_null
+          - unique
+          - dbt_utils.accepted_range: { min_value: 1, max_value: 1 }

@@ -148,6 +148,12 @@ models:
                 severity: warn
       - name: household_type
         description: "SSB HusholdType code, '0000' = all households."
+        data_tests:
+          - not_null
+          - relationships: { to: ref('ref_ssb_household_type'), field: code }
+      - name: household_type_label_no
+        data_tests: [not_null]
+      - name: household_type_label_en
         data_tests: [not_null]
       - name: year
         data_tests:
@@ -193,6 +199,13 @@ models:
               field: fylke_nr
               config: {severity: warn}
       - name: education_level
+        description: "SSB Nivaa NUS2000 code (subject's own level). Joined to ref_ssb_nivaa."
+        data_tests:
+          - not_null
+          - relationships: { to: ref('ref_ssb_nivaa'), field: code }
+      - name: education_level_label_no
+        data_tests: [not_null]
+      - name: education_level_label_en
         data_tests: [not_null]
       - name: sex
         data_tests:
@@ -417,6 +430,12 @@ models:
               config:
                 severity: warn
       - name: family_type
+        data_tests:
+          - not_null
+          - relationships: { to: ref('ref_ssb_family_type'), field: code }
+      - name: family_type_label_no
+        data_tests: [not_null]
+      - name: family_type_label_en
         data_tests: [not_null]
       - name: year
         data_tests:
@@ -520,13 +539,21 @@ models:
               config:
                 severity: warn
       - name: sex
-        description: "Biological/administrative sex. Mapped from SSB Kjonn: '1' -> 'male', '2' -> 'female'."
+        description: "Biological/administrative sex via decode_sex(). 'all' is possible if SSB ever ships an aggregate row in this table."
         data_tests:
           - not_null
-          - accepted_values:
-              values: ['male', 'female']
+          - accepted_values: { values: ['male', 'female', 'all'] }
       - name: age
         data_tests: [not_null]
+      - name: age_int
+        description: "age as integer; NULL for the open-ended '105+' bucket."
+        data_tests:
+          - dbt_utils.accepted_range: { min_value: 0, max_value: 110 }
+      - name: age_min
+        description: "Sortable floor of age; 105 for '105+'."
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range: { min_value: 0, max_value: 110 }
       - name: year
         data_tests:
           - not_null
@@ -575,6 +602,20 @@ models:
         data_tests:
           - not_null
           - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
+      - name: period
+        data_tests: [not_null]
+      - name: period_start_year
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
+      - name: period_end_year
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
+      - name: sex
+        data_tests:
+          - not_null
+          - accepted_values: {values: ['male', 'female', 'all']}
       - name: grade
         data_tests:
           - not_null
@@ -614,6 +655,34 @@ models:
         data_tests:
           - not_null
           - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
+      - name: period
+        data_tests: [not_null]
+      - name: period_start_year
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
+      - name: period_end_year
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
+      - name: sex
+        data_tests:
+          - not_null
+          - accepted_values: {values: ['male', 'female', 'all']}
+      - name: parents_education
+        description: "FHI UTDANN code (parents' education level). Joined to ref_fhi_utdann."
+        data_tests:
+          - not_null
+          - relationships: { to: ref('ref_fhi_utdann'), field: code }
+      - name: parents_education_label_no
+        data_tests: [not_null]
+      - name: immigration_category
+        description: "FHI INNVKAT code. Joined to ref_fhi_innvkat (single-row seed today; future-proofed)."
+        data_tests:
+          - not_null
+          - relationships: { to: ref('ref_fhi_innvkat'), field: code }
+      - name: immigration_category_label_no
+        data_tests: [not_null]
       - name: contents_code
         data_tests:
           - not_null
@@ -649,9 +718,32 @@ models:
         data_tests:
           - not_null
           - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
+      - name: period
+        data_tests: [not_null]
+      - name: period_start_year
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
+      - name: period_end_year
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
       - name: age_group
         data_tests: [not_null]
+      - name: age_group_min
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range: {min_value: 0, max_value: 120}
+      - name: age_group_max
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range: {min_value: 0, max_value: 120}
       - name: parents_education
+        description: "FHI UTDANN code (parents' education level). Joined to ref_fhi_utdann."
+        data_tests:
+          - not_null
+          - relationships: { to: ref('ref_fhi_utdann'), field: code }
+      - name: parents_education_label_no
         data_tests: [not_null]
       - name: housing_status
         data_tests:
@@ -699,9 +791,28 @@ models:
           - dbt_utils.accepted_range:
               min_value: 2000
               max_value: 2050
+      - name: period
+        description: "FHI AAR code, e.g. '2024_2024'."
+        data_tests: [not_null]
+      - name: period_start_year
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range: { min_value: 2000, max_value: 2050 }
+      - name: period_end_year
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range: { min_value: 2000, max_value: 2050 }
       - name: age_group
         description: "FHI ALDER code in min_max form (e.g. '16_120')."
         data_tests: [not_null]
+      - name: age_group_min
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range: { min_value: 0, max_value: 120 }
+      - name: age_group_max
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range: { min_value: 0, max_value: 120 }
       - name: contents_code
         description: "RATE | SMR | TELLER, from FHI MEASURE_TYPE."
         data_tests:
@@ -754,10 +865,26 @@ models:
           - not_null
           - accepted_values:
               values: ['999A', '00-17', '18-34', '35-49', '50-66', '067+']
+      - name: age_group_min
+        description: "Lower bound of age_group; NULL for cryptic 999A and any unparseable value."
+        data_tests:
+          - dbt_utils.accepted_range: { min_value: 0, max_value: 120 }
+      - name: age_group_max
+        description: "Upper bound of age_group; NULL for open-ended (067+) and 999A."
+        data_tests:
+          - dbt_utils.accepted_range: { min_value: 0, max_value: 120 }
       - name: period
         description: "Three-year rolling period as upstream code text."
         data_tests:
           - not_null
+      - name: period_start_year
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range: { min_value: 2000, max_value: 2050 }
+      - name: period_end_year
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range: { min_value: 2000, max_value: 2050 }
       - name: contents_code
         description: "SSB ContentsCode."
         data_tests:
