@@ -1,0 +1,23 @@
+# dbt connection profile for Atlas. Colocated with dbt_project.yml so dbt 1.5+
+# picks it up automatically — no DBT_PROFILES_DIR needed.
+#
+# Reads standard libpq env vars (PGHOST, PGPORT, PGUSER, PGPASSWORD, PGDATABASE).
+# Those live in ../ingest/.env alongside DATABASE_URL; run dbt via
+# `uv run --env-file ../ingest/.env dbt <command>`.
+
+atlas:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      host:     "{{ env_var('PGHOST') }}"
+      port:     "{{ env_var('PGPORT') | int }}"
+      user:     "{{ env_var('PGUSER') }}"
+      password: "{{ env_var('PGPASSWORD') }}"
+      dbname:   "{{ env_var('PGDATABASE') }}"
+      # Default schema used by models that don't declare their own.
+      schema: marts
+      threads: 4
+      keepalives_idle: 0
+      search_path: "marts,raw,public"
+      connect_timeout: 10

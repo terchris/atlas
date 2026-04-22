@@ -1,0 +1,35 @@
+name: atlas
+version: 0.0.0
+config-version: 2
+
+# Name of the profile block in profiles.yml (colocated in this directory).
+profile: atlas
+
+model-paths:     ["models"]
+analysis-paths:  ["analyses"]
+test-paths:      ["tests"]
+seed-paths:      ["seeds"]
+macro-paths:     ["macros"]
+snapshot-paths:  ["snapshots"]
+
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+models:
+  atlas:
+    # Default materialisation for any model we don't override.
+    +materialized: view
+    # Per-source indicator passthroughs live in models/indicators/ and are
+    # materialised as tables in the marts schema.
+    indicators:
+      +materialized: table
+      +schema: marts
+    # Conformed dimensions live in models/dimensions/ and also land in marts.
+    dimensions:
+      +materialized: table
+      +schema: marts
+    # Application-shaped and cross-source marts.
+    marts:
+      +materialized: table
+      +schema: marts

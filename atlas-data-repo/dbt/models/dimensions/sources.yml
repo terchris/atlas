@@ -1,0 +1,52 @@
+version: 2
+
+sources:
+  - name: raw
+    schema: raw
+    tables:
+      - name: ssb_klass_kommuner
+        description: |
+          SSB Klass classification 131 (Kommuner) — full history from 1960.
+          One row per (code, valid_from_in_range) — a single code has
+          multiple rows when it was renamed or had a boundary change.
+          Source for dim_kommune. Populated by
+          atlas-data/ingest/src/sources/ssb-klass-kommuner.
+        loaded_at_field: loaded_at
+        freshness:
+          warn_after: {count: 90, period: day}
+          error_after: {count: 400, period: day}
+        columns:
+          - name: code
+            description: "4-digit kommune code, e.g. '0301' (Oslo). Not unique: a code can appear multiple times with different validity windows."
+            data_tests: [not_null]
+          - name: name
+            description: "Kommune name (bokmål), sometimes with Sámi variant."
+            data_tests: [not_null]
+          - name: valid_from_in_range
+            description: "Start of this validity window within the ingest's date range."
+            data_tests: [not_null]
+        data_tests:
+          - dbt_utils.unique_combination_of_columns:
+              combination_of_columns: [code, valid_from_in_range]
+
+      - name: ssb_klass_fylker
+        description: |
+          SSB Klass classification 104 (Fylker) — full history from 1960.
+          One row per (code, valid_from_in_range). Source for dim_fylke.
+          Populated by atlas-data/ingest/src/sources/ssb-klass-fylker.
+        loaded_at_field: loaded_at
+        freshness:
+          warn_after: {count: 90, period: day}
+          error_after: {count: 400, period: day}
+        columns:
+          - name: code
+            description: "2-digit fylke code. Not unique: see ssb_klass_kommuner notes."
+            data_tests: [not_null]
+          - name: name
+            description: "Fylke name (bokmål), sometimes with multi-variant Sámi/Kven names separated by ' - '."
+            data_tests: [not_null]
+          - name: valid_from_in_range
+            data_tests: [not_null]
+        data_tests:
+          - dbt_utils.unique_combination_of_columns:
+              combination_of_columns: [code, valid_from_in_range]

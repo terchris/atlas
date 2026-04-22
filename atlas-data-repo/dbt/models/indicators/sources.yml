@@ -1,0 +1,347 @@
+version: 2
+
+sources:
+  - name: raw
+    description: "Atlas landing layer. Tables here are written by the atlas-data ingest modules (TypeScript) and read by dbt."
+    schema: raw
+    tables:
+      - name: ssb_08764
+        description: |
+          SSB statistikkbanktabell 08764 — Personer under 18 år i husholdninger
+          med lavinntekt (EU- og OECD-skala). Annual, region-resolved.
+          Populated by atlas-data/ingest/src/sources/ssb-08764.
+        loaded_at_field: loaded_at
+        # Freshness thresholds: SSB publishes annually around February/March.
+        # We warn if the landing table hasn't been touched in 400 days, error
+        # at 800 days. These are intentionally generous; tightened once we
+        # have a scheduler deciding when to ingest.
+        freshness:
+          warn_after: {count: 400, period: day}
+          error_after: {count: 800, period: day}
+        columns:
+          - name: region_code
+            description: "SSB region code — kommune, fylke, nasjon, or historical variant."
+            data_tests:
+              - not_null
+          - name: year
+            description: "Calendar year (from SSB's Tid dimension)."
+            data_tests:
+              - not_null
+          - name: contents_code
+            description: "SSB ContentsCode — one of Personer / EUskala50 / EUskala60 / OECDskala50 / OECDskala60."
+            data_tests:
+              - not_null
+              - accepted_values:
+                  values: ['Personer', 'EUskala50', 'EUskala60', 'OECDskala50', 'OECDskala60']
+
+      - name: ssb_06913
+        description: |
+          SSB statistikkbanktabell 06913 — Folkemengde 1. januar og endringer
+          i kalenderåret (folketilvekst, fødsler, dødsfall, inn/utflytting).
+          Annual, region-resolved, same 3-dimension shape as ssb_08764.
+          Populated by atlas-data/ingest/src/sources/ssb-06913.
+        loaded_at_field: loaded_at
+        freshness:
+          warn_after: {count: 400, period: day}
+          error_after: {count: 800, period: day}
+        columns:
+          - name: region_code
+            data_tests: [not_null]
+          - name: year
+            data_tests: [not_null]
+          - name: contents_code
+            data_tests: [not_null]
+
+      - name: ssb_06083
+        description: |
+          SSB statistikkbanktabell 06083 — families by type (single parent,
+          couple with/without kids, etc.). Populated by
+          atlas-data/ingest/src/sources/ssb-06083.
+        loaded_at_field: loaded_at
+        freshness:
+          warn_after: {count: 400, period: day}
+          error_after: {count: 800, period: day}
+        columns:
+          - name: region_code
+            data_tests: [not_null]
+          - name: family_type
+            data_tests: [not_null]
+          - name: year
+            data_tests: [not_null]
+          - name: contents_code
+            data_tests: [not_null]
+
+      - name: ssb_06944
+        description: |
+          SSB statistikkbanktabell 06944 — household income (median), income
+          tax, and household count by household type. Region × HusholdType
+          × ContentsCode × Tid. Includes bydeler (delområder) in Region.
+          Populated by atlas-data/ingest/src/sources/ssb-06944.
+        loaded_at_field: loaded_at
+        freshness:
+          warn_after: {count: 400, period: day}
+          error_after: {count: 800, period: day}
+        columns:
+          - name: region_code
+            data_tests: [not_null]
+          - name: household_type
+            data_tests: [not_null]
+          - name: year
+            data_tests: [not_null]
+          - name: contents_code
+            data_tests:
+              - not_null
+              - accepted_values:
+                  values: ['SamletInntekt', 'InntSkatt', 'AntallHushold']
+
+      - name: ssb_09429
+        description: "SSB 09429 — educational attainment by kommune and sex (5 dims)."
+        loaded_at_field: loaded_at
+        freshness:
+          warn_after: {count: 400, period: day}
+          error_after: {count: 800, period: day}
+        columns:
+          - name: region_code
+            data_tests: [not_null]
+          - name: education_level
+            data_tests: [not_null]
+          - name: sex
+            data_tests: [not_null]
+          - name: year
+            data_tests: [not_null]
+
+      - name: ssb_12063
+        description: "SSB KOSTRA 12063 — municipal leisure services / voluntary youth associations."
+        loaded_at_field: loaded_at
+        freshness:
+          warn_after: {count: 400, period: day}
+          error_after: {count: 800, period: day}
+        columns:
+          - name: region_code
+            data_tests: [not_null]
+          - name: year
+            data_tests: [not_null]
+          - name: contents_code
+            data_tests: [not_null]
+
+      - name: ssb_12131
+        description: "SSB KOSTRA 12131 — social-assistance monthly rates."
+        loaded_at_field: loaded_at
+        freshness:
+          warn_after: {count: 400, period: day}
+          error_after: {count: 800, period: day}
+        columns:
+          - name: region_code
+            data_tests: [not_null]
+          - name: year
+            data_tests: [not_null]
+          - name: contents_code
+            data_tests: [not_null]
+
+      - name: ssb_12132
+        description: "SSB KOSTRA 12132 — welfare benefit-income rules."
+        loaded_at_field: loaded_at
+        freshness:
+          warn_after: {count: 400, period: day}
+          error_after: {count: 800, period: day}
+        columns:
+          - name: region_code
+            data_tests: [not_null]
+          - name: year
+            data_tests: [not_null]
+          - name: contents_code
+            data_tests: [not_null]
+
+      - name: ssb_12292
+        description: |
+          SSB KOSTRA 12292 — nursing-home and home-care indicators. 49
+          ContentsCodes × ~891 regions × 2015-2024. Populated by
+          atlas-data/ingest/src/sources/ssb-12292.
+        loaded_at_field: loaded_at
+        freshness:
+          warn_after: {count: 400, period: day}
+          error_after: {count: 800, period: day}
+        columns:
+          - name: region_code
+            data_tests: [not_null]
+          - name: year
+            data_tests: [not_null]
+          - name: contents_code
+            data_tests: [not_null]
+
+      - name: ssb_13995
+        description: |
+          SSB statistikkbanktabell 13995 — Sosialhjelpstilfeller, utbetalt
+          beløp og stønadstid. 34 content codes × ~891 regions × 2022-2025.
+          Populated by atlas-data/ingest/src/sources/ssb-13995.
+        loaded_at_field: loaded_at
+        freshness:
+          warn_after: {count: 400, period: day}
+          error_after: {count: 800, period: day}
+        columns:
+          - name: region_code
+            data_tests: [not_null]
+          - name: year
+            data_tests: [not_null]
+          - name: contents_code
+            data_tests: [not_null]
+
+      - name: ssb_06947
+        description: |
+          SSB statistikkbanktabell 06947 — whole-population low income
+          (EU/OECD scale). Same 5 ContentsCodes as ssb-08764 but for all
+          ages. Populated by atlas-data/ingest/src/sources/ssb-06947.
+        loaded_at_field: loaded_at
+        freshness:
+          warn_after: {count: 400, period: day}
+          error_after: {count: 800, period: day}
+        columns:
+          - name: region_code
+            data_tests: [not_null]
+          - name: year
+            data_tests: [not_null]
+          - name: contents_code
+            data_tests:
+              - not_null
+              - accepted_values:
+                  values: ['Personer', 'EUskala50', 'EUskala60', 'OECDskala50', 'OECDskala60']
+
+      - name: ssb_07459
+        description: |
+          SSB statistikkbanktabell 07459 — Alders- og kjønnsfordeling i
+          kommuner, fylker og hele landets befolkning. Five dimensions
+          (Region × Kjonn × Alder × ContentsCode × Tid).
+          Populated by atlas-data/ingest/src/sources/ssb-07459.
+        loaded_at_field: loaded_at
+        freshness:
+          warn_after: {count: 400, period: day}
+          error_after: {count: 800, period: day}
+        columns:
+          - name: region_code
+            data_tests: [not_null]
+          - name: sex
+            description: "SSB Kjonn — '1' (Menn) or '2' (Kvinner)."
+            data_tests:
+              - not_null
+              - accepted_values:
+                  values: ['1', '2']
+          - name: age
+            description: "SSB Alder — '000'..'104' or '105+'."
+            data_tests: [not_null]
+          - name: year
+            data_tests: [not_null]
+          - name: contents_code
+            data_tests:
+              - not_null
+              - accepted_values:
+                  values: ['Personer1']
+
+      - name: fhi_mobbing
+        description: "FHI 377 — bullying share 7./10. klasse, 3-year averages."
+        loaded_at_field: loaded_at
+        freshness:
+          warn_after: {count: 400, period: day}
+          error_after: {count: 800, period: day}
+        columns:
+          - name: geo_code
+            data_tests: [not_null]
+          - name: aar_code
+            data_tests: [not_null]
+          - name: trinn_code
+            data_tests:
+              - not_null
+              - accepted_values: {values: ['7', '10']}
+          - name: measure_type
+            data_tests: [not_null]
+
+      - name: fhi_vgs_gjennomforing
+        description: "FHI 360 — upper-secondary completion rate, by region × sex × parents-education × immigration-category."
+        loaded_at_field: loaded_at
+        freshness:
+          warn_after: {count: 400, period: day}
+          error_after: {count: 800, period: day}
+        columns:
+          - name: geo_code
+            data_tests: [not_null]
+          - name: aar_code
+            data_tests: [not_null]
+          - name: measure_type
+            data_tests: [not_null]
+
+      - name: fhi_trangbodd
+        description: "FHI 794 — overcrowded-housing share by region × age × education × housing-status."
+        loaded_at_field: loaded_at
+        freshness:
+          warn_after: {count: 400, period: day}
+          error_after: {count: 800, period: day}
+        columns:
+          - name: geo_code
+            data_tests: [not_null]
+          - name: aar_code
+            data_tests: [not_null]
+          - name: alder_code
+            data_tests: [not_null]
+          - name: utdann_code
+            data_tests: [not_null]
+          - name: bodd_code
+            data_tests:
+              - not_null
+              - accepted_values: {values: ['trangt', 'uoppgitt']}
+          - name: measure_type
+            data_tests:
+              - not_null
+              - accepted_values: {values: ['RATE', 'SMR', 'TELLER']}
+
+      - name: fhi_bor_alene
+        description: |
+          FHI Folkehelsestatistikk table 187 (Personer som bor alene).
+          Region × AAR × ALDER × MEASURE_TYPE. First non-SSB source in
+          Atlas. Populated by atlas-data/ingest/src/sources/fhi-bor-alene.
+        loaded_at_field: loaded_at
+        freshness:
+          warn_after: {count: 400, period: day}
+          error_after: {count: 800, period: day}
+        columns:
+          - name: geo_code
+            data_tests: [not_null]
+          - name: aar_code
+            data_tests: [not_null]
+          - name: alder_code
+            data_tests: [not_null]
+          - name: measure_type
+            data_tests:
+              - not_null
+              - accepted_values:
+                  values: ['RATE', 'SMR', 'TELLER']
+
+      - name: ssb_12944
+        description: |
+          SSB statistikkbanktabell 12944 — Personer i husholdninger med vedvarende
+          lavinntekt (EU-60), 3-årsperiode. Adds an age (Alder) dimension and
+          uses rolling three-year periods as the time axis.
+          Populated by atlas-data/ingest/src/sources/ssb-12944.
+        loaded_at_field: loaded_at
+        freshness:
+          warn_after: {count: 400, period: day}
+          error_after: {count: 800, period: day}
+        columns:
+          - name: region_code
+            description: "SSB region code."
+            data_tests:
+              - not_null
+          - name: age_group
+            description: "SSB Alder dimension — 999A (all ages), 00-17, 18-34, 35-49, 50-66, 067+."
+            data_tests:
+              - not_null
+              - accepted_values:
+                  values: ['999A', '00-17', '18-34', '35-49', '50-66', '067+']
+          - name: period
+            description: "Three-year rolling period, e.g. 2022-2024. Stored verbatim from upstream Tid."
+            data_tests:
+              - not_null
+          - name: contents_code
+            description: "SSB ContentsCode — PersonerSeksti (count) or EUskalaSeksti (percent EU-60)."
+            data_tests:
+              - not_null
+              - accepted_values:
+                  values: ['PersonerSeksti', 'EUskalaSeksti']
