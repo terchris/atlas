@@ -1,0 +1,6 @@
+code,label_no,label_en,sort_order
+0000,Alle husholdninger,All households,1
+0001,Aleneboende,Living alone,2
+0002,Par uten barn,Couple without resident children,3
+0003,Par med barn 0-17 år,Couple with resident children 0-17 year,4
+0004,Enslig mor/far med barn 0-17 år,Single mother/father with children 0-17 year,5

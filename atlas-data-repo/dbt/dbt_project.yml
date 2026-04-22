@@ -33,3 +33,15 @@ models:
     marts:
       +materialized: table
       +schema: marts
+
+seeds:
+  atlas:
+    # Reference seeds (ref_*) decode coded fields from upstream sources into
+    # human-readable labels. They land in marts so indicator models can join
+    # them without cross-schema syntax. Refresh policy: see seeds/README.md.
+    +schema: marts
+    +column_types:
+      code: text
+      label_no: text
+      label_en: text
+      sort_order: integer

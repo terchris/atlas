@@ -4,11 +4,12 @@
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Backlog
+## Status: Completed
 
 **Goal**: Decide a per-field treatment for every coded field in Atlas's `raw.*` tables (sex, age, family_type, household_type, education_level, age_group, period, etc.) so consumers (Next.js, dbt analysts, the `/data` explorer) see human-readable labels rather than upstream codes — without inventing a heavyweight platform service.
 
 **Last Updated**: 2026-04-22
+**Completed**: 2026-04-22 — all three follow-up plans (PLAN-001/002/003) implemented. Hybrid approach is now the operating pattern; future sources with coded fields follow the same shape (small inline enum / seed lookup / structured parse).
 
 **Origin:** Atlas data layer. Atlas's upstream sources publish many dimensions as short codes (`"0"` for all sexes, `"0001"` for a family type, `"02a"` for an education level). The raw layer preserves them verbatim. The marts layer has been renaming **some** (kommune codes, sex in two sources) but leaving most as-is. That pushes the code-to-meaning problem onto every consumer. Flagged as an **open decision** in [`../../../stack/data-strategy.md`](../../../stack/data-strategy.md) (line 183, "dim_codes or dbt seeds for enum decoding").
 
@@ -218,9 +219,9 @@ For the canonical vocabulary table in [`../../../stack/naming-conventions.md`](.
 
 Following the [PLANS.md](../../PLANS.md) guidance on splitting investigations into ordered plans:
 
-- [ ] **PLAN-001-code-label-seed-tables.md** — Probe SSB and FHI metadata endpoints to fetch canonical labels per code. Write `dbt/seeds/` CSVs: `ref_ssb_family_type.csv`, `ref_ssb_household_type.csv`, `ref_ssb_nivaa.csv`, `ref_fhi_utdann.csv`, `ref_fhi_innvkat.csv`. Configure `seeds` in `dbt_project.yml`. Verify `dbt seed` runs clean.
-- [ ] **PLAN-002-code-label-apply-hybrid.md** — Apply the hybrid to every indicator model. CASE expressions for small universal enums. Parse age/period strings, add min/max int columns. Left-join seed tables for domain enums; expose `<field>_label` alongside the raw code. Consistently rename FHI cryptic columns at the marts boundary (`kjonn_code` → `sex`, `alder_code` → `age_group`, `aar_code` → `period`).
-- [ ] **PLAN-003-code-label-tests-and-docs.md** — Extend `schema.yml` `accepted_values` tests for cleaned-up columns. Update [`naming-conventions.md`](../../../stack/naming-conventions.md) with new canonical fields. Run `dbt run` + `dbt test` full suite — all 140+ tests should stay green (warns excluded). Document each seed in `dbt/seeds/README.md` with source and update policy.
+- [x] **PLAN-001-code-label-seed-tables.md** — Probe SSB and FHI metadata endpoints to fetch canonical labels per code. Write `dbt/seeds/` CSVs: `ref_ssb_family_type.csv`, `ref_ssb_household_type.csv`, `ref_ssb_nivaa.csv`, `ref_fhi_utdann.csv`, `ref_fhi_innvkat.csv`. Configure `seeds` in `dbt_project.yml`. Verify `dbt seed` runs clean. **(Completed 2026-04-22 — see [`../completed/PLAN-001-code-label-seed-tables.md`](../completed/PLAN-001-code-label-seed-tables.md). FHI workaround: `/metadata` returns prose only; refresh script uses `/query` + minimal `/data` POST instead.)**
+- [x] **PLAN-002-code-label-apply-hybrid.md** — Apply the hybrid to every indicator model. CASE expressions for small universal enums. Parse age/period strings, add min/max int columns. Left-join seed tables for domain enums; expose `<field>_label` alongside the raw code. Consistently rename FHI cryptic columns at the marts boundary (`kjonn_code` → `sex`, `alder_code` → `age_group`, `aar_code` → `period`). **(Completed 2026-04-22 — see [`../completed/PLAN-002-code-label-apply-hybrid.md`](../completed/PLAN-002-code-label-apply-hybrid.md). 9 of 17 indicator models touched; the others are region+year+contents only. FHI UTDANN aliased as `parents_education` in indicator models since the table breaks by parent's education, not subject's.)**
+- [x] **PLAN-003-code-label-tests-and-docs.md** — Extend `schema.yml` `accepted_values` tests for cleaned-up columns. Update [`naming-conventions.md`](../../../stack/naming-conventions.md) with new canonical fields. Run `dbt run` + `dbt test` full suite — all 140+ tests should stay green (warns excluded). Document each seed in `dbt/seeds/README.md` with source and update policy. **(Completed 2026-04-22 — see [`../completed/PLAN-003-code-label-tests-and-docs.md`](../completed/PLAN-003-code-label-tests-and-docs.md). Used `relationships` tests instead of duplicating `accepted_values` where a seed exists. Final `dbt build`: PASS=406, WARN=15 (unchanged), ERROR=0. Seeds README task was done in PLAN-001 — no-op here.)**
 
 Estimated total effort: 3–4 hours of focused work.
 

@@ -1,0 +1,10 @@
+code,label_no,label_en,sort_order
+001,Enpersonfamilie,One-person family,1
+002,Par med små barn (yngste barn 0-5 år),Couple with small children (youngest child 0-5 years),2
+003,Par med store barn (yngste barn 6-17 år),Couple with older children (youngest child 6-17 years),3
+004,Mor/far med små barn (yngste barn 0-5 år),Lone parent with small children (youngest child 0-5 years),4
+005,Mor/far med store barn (yngste barn 6-17 år),Lone parent with older children (youngest child 6-17 years),5
+006,Par uten barn,Couple without children,6
+007,Par med voksne barn (yngste barn 18 år og over),Couple with adult children (youngest child 18 years and over),7
+008,Mor/far med voksne barn (yngste barn 18 år og over),Lone parent with adult children (youngest child 18 years and over),8
+009,Andre familier,Other families,9
