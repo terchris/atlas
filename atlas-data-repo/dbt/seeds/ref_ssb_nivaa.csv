@@ -1,0 +1,8 @@
+code,label_no,label_en,sort_order
+00,Utdanningsnivå i alt,Total,1
+01,Grunnskolenivå,Basic school level,2
+02a,Videregående skolenivå,Upper secondary education,3
+11,Fagskolenivå,Tertiary vocational education,4
+03a,"Universitets- og høgskolenivå, kort","Higher education, short",5
+04a,"Universitets- og høgskolenivå, lang","Higher education, long",6
+09a,Uoppgitt eller ingen fullført utdanning,Unknown or no completed education,7

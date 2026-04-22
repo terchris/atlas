@@ -119,14 +119,34 @@ The full list of `ingest:*` scripts is in [`atlas-data-repo/ingest/package.json`
 
 ### dbt (`atlas-data-repo/dbt/`)
 
+dbt is run via **uv** with the project venv at `atlas-data-repo/dbt/.venv/` and credentials from the shared `ingest/.env`. Always invoke through this wrapper — do not call plain `dbt`, do not bypass with `psql`, do not create ad-hoc envs.
+
 ```bash
 cd atlas-data-repo/dbt
-pip install -r requirements.txt
-dbt deps                     # install dbt packages (dbt_utils, etc.)
-dbt run                      # build all models in marts.*
-dbt test                     # run schema tests (relationships, not_null, unique)
-dbt docs generate && dbt docs serve   # browse the lineage graph
+
+# One-time setup
+uv venv && uv pip install -r requirements.txt    # creates .venv/, installs pinned dbt-core + dbt-postgres
+uv run --env-file ../ingest/.env dbt deps        # install dbt packages (dbt_utils, etc.)
+
+# Day-to-day
+uv run --env-file ../ingest/.env dbt debug       # verify Postgres connection
+uv run --env-file ../ingest/.env dbt seed        # load reference CSVs (marts.ref_*)
+uv run --env-file ../ingest/.env dbt run         # build all models in marts.*
+uv run --env-file ../ingest/.env dbt run --select indicators__fhi_trangbodd
+uv run --env-file ../ingest/.env dbt test        # run schema tests (relationships, not_null, unique)
+uv run --env-file ../ingest/.env dbt show --inline "select ..."   # ad-hoc query — use this instead of psql
+uv run --env-file ../ingest/.env dbt docs generate && dbt docs serve
 ```
+
+How it's wired:
+
+- `uv` (Astral) manages the project-local Python 3.12 venv at `atlas-data-repo/dbt/.venv/`.
+- `--env-file ../ingest/.env` pulls `PGHOST/PGPORT/PGUSER/PGPASSWORD/PGDATABASE` from the same `.env` the TypeScript ingest uses — single source of truth for credentials.
+- `profiles.yml` lives next to `dbt_project.yml` (dbt 1.5+ auto-discovers it) and reads those env vars via `env_var()`.
+- Schema-name override macro at [`atlas-data-repo/dbt/macros/generate_schema_name.sql`](../../atlas-data-repo/dbt/macros/generate_schema_name.sql) means `+schema: marts` produces `marts`, not dbt's default `{target}_marts`.
+- In production (per [`docs/stack/suggested-stack.md`](../../docs/stack/suggested-stack.md)) dbt runs inside Dagster-spawned pods using the same uv-pinned environment — local and prod parity is preserved.
+
+Full reference: [`atlas-data-repo/dbt/README.md`](../../atlas-data-repo/dbt/README.md).
 
 ---
 
