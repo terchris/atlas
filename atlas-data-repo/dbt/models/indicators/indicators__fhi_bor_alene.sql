@@ -8,7 +8,7 @@
 -- Per-source indicator model for FHI table 187 (Personer som bor alene).
 -- Maps FHI dimension codes to Atlas canonical names. Exposes all age bands
 -- and all measure types so downstream features can pick what they need.
--- Headline for the Coverage-gap explorer is ALDER='16_120' (all adults)
+-- Headline for the Coverage-gap explorer is age_group='16_120' (all adults)
 -- with MEASURE_TYPE='RATE' — consumers filter.
 
 select
@@ -20,7 +20,11 @@ select
   -- match; the first is the canonical year. Multi-year averages keep period.
   (split_part(aar_code, '_', 1))::int as year,
   aar_code              as period,
+  {{ period_start_year('aar_code') }} as period_start_year,
+  {{ period_end_year('aar_code') }}   as period_end_year,
   alder_code            as age_group,
+  {{ age_range_min('alder_code', '_') }} as age_group_min,
+  {{ age_range_max('alder_code', '_') }} as age_group_max,
   measure_type          as contents_code,
   case measure_type
     when 'RATE'   then 'Andel (prosent)'

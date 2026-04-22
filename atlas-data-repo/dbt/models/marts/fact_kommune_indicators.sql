@@ -83,11 +83,12 @@ ssb_06947 as (
 ssb_06083 as (
   -- Pick all family types; consumers filter. Family_type column dropped
   -- for the fact's narrower shape — gets one row per (region, year,
-  -- family_type × contents).
+  -- family_type × contents). Synthetic contents_label uses the Norwegian
+  -- label from ref_ssb_family_type (joined upstream in indicators__ssb_06083).
   select
     source_id, kommune_nr, year,
     (contents_code || '_' || family_type) as contents_code,
-    coalesce(contents_label, '') || ' (' || family_type || ')' as contents_label,
+    coalesce(contents_label, '') || ' (' || family_type_label_no || ')' as contents_label,
     value, status, updated_at
   from {{ ref('indicators__ssb_06083') }}
   where kommune_nr is not null
@@ -139,23 +140,24 @@ fhi_mobbing as (
 ),
 
 fhi_vgs as (
-  -- Headline: sex='0' (all), parents_education='0' (all), innvkat='0' (all),
-  -- RATE only. Detailed slices still available in indicators__fhi_vgs_gjennomforing.
+  -- Headline: sex='all', parents_education='0' (all), immigration_category='0'
+  -- (all), RATE only. Detailed slices still available in
+  -- indicators__fhi_vgs_gjennomforing.
   select
     source_id, kommune_nr, year,
     contents_code, contents_label,
     value, status, updated_at
   from {{ ref('indicators__fhi_vgs_gjennomforing') }}
   where kommune_nr is not null
-    and sex_code = '0'
+    and sex = 'all'
     and parents_education = '0'
     and immigration_category = '0'
     and contents_code = 'RATE'
 ),
 
 fhi_trangbodd as (
-  -- Headline slice: overcrowded-housing share for all ages × all education
-  -- levels. Detailed breakdowns live in indicators__fhi_trangbodd.
+  -- Headline slice: overcrowded-housing share for all ages × all parental
+  -- education levels. Detailed breakdowns live in indicators__fhi_trangbodd.
   select
     source_id, kommune_nr, year,
     contents_code, contents_label,
@@ -163,7 +165,7 @@ fhi_trangbodd as (
   from {{ ref('indicators__fhi_trangbodd') }}
   where kommune_nr is not null
     and age_group = '0_120'
-    and education_level = '0'
+    and parents_education = '0'
     and housing_status = 'trangt'
 ),
 
@@ -171,10 +173,11 @@ ssb_09429 as (
   -- Filter to sex='all' + generic education level so every kommune has a
   -- single headline row per (region, year, contents_code). Consumers who
   -- want the fine-grained breakdown read indicators__ssb_09429 directly.
+  -- Synthetic contents_label uses the Norwegian Nivaa label.
   select
     source_id, kommune_nr, year,
     (contents_code || '_' || education_level) as contents_code,
-    coalesce(contents_label, '') || ' (nivå ' || education_level || ')' as contents_label,
+    coalesce(contents_label, '') || ' (' || education_level_label_no || ')' as contents_label,
     value, status, updated_at
   from {{ ref('indicators__ssb_09429') }}
   where kommune_nr is not null and sex = 'all'

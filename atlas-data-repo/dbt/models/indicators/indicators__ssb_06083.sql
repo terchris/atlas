@@ -7,18 +7,23 @@
 
 -- Per-source indicator model for SSB 06083 (families by type).
 -- Extra family_type column; fact-layer filters to a chosen headline value.
+-- Joined to ref_ssb_family_type for human-readable labels.
 
 select
   'ssb-06083'::text   as source_id,
-  region_code,
-  case when region_code ~ '^[0-9]{2}[0-9]{2}$' and right(region_code, 2) <> '99'
-       then region_code end as kommune_nr,
-  case when region_code ~ '^[0-9]{2}$' then region_code end as fylke_nr,
-  family_type,
-  year,
-  contents_code,
-  contents_label,
-  value,
-  status,
-  loaded_at           as updated_at
-from {{ source('raw', 'ssb_06083') }}
+  src.region_code,
+  case when src.region_code ~ '^[0-9]{2}[0-9]{2}$' and right(src.region_code, 2) <> '99'
+       then src.region_code end as kommune_nr,
+  case when src.region_code ~ '^[0-9]{2}$' then src.region_code end as fylke_nr,
+  src.family_type,
+  ref.label_no        as family_type_label_no,
+  ref.label_en        as family_type_label_en,
+  src.year,
+  src.contents_code,
+  src.contents_label,
+  src.value,
+  src.status,
+  src.loaded_at       as updated_at
+from {{ source('raw', 'ssb_06083') }} src
+left join {{ ref('ref_ssb_family_type') }} ref
+  on src.family_type = ref.code

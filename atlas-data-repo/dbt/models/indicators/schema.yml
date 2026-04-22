@@ -587,7 +587,7 @@ models:
         data_tests: [not_null]
     data_tests:
       - dbt_utils.unique_combination_of_columns:
-          combination_of_columns: [source_id, region_code, period, sex_code, grade, question_id, contents_code]
+          combination_of_columns: [source_id, region_code, period, sex, grade, question_id, contents_code]
 
   - name: indicators__fhi_vgs_gjennomforing
     description: "Per-source passthrough for FHI 360 (VGS completion rate)."
@@ -622,10 +622,10 @@ models:
         data_tests: [not_null]
     data_tests:
       - dbt_utils.unique_combination_of_columns:
-          combination_of_columns: [source_id, region_code, period, sex_code, parents_education, immigration_category, contents_code]
+          combination_of_columns: [source_id, region_code, period, sex, parents_education, immigration_category, contents_code]
 
   - name: indicators__fhi_trangbodd
-    description: "Per-source indicator passthrough for FHI 794 (overcrowded housing). Preserves education_level (UTDANN) and housing_status (BODD) dims."
+    description: "Per-source indicator passthrough for FHI 794 (overcrowded housing). Preserves parents_education (UTDANN, parents' level) and housing_status (BODD) dims."
     columns:
       - name: source_id
         data_tests:
@@ -651,7 +651,7 @@ models:
           - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
       - name: age_group
         data_tests: [not_null]
-      - name: education_level
+      - name: parents_education
         data_tests: [not_null]
       - name: housing_status
         data_tests:
@@ -665,7 +665,7 @@ models:
         data_tests: [not_null]
     data_tests:
       - dbt_utils.unique_combination_of_columns:
-          combination_of_columns: [source_id, region_code, period, age_group, education_level, housing_status, contents_code]
+          combination_of_columns: [source_id, region_code, period, age_group, parents_education, housing_status, contents_code]
 
   - name: indicators__fhi_bor_alene
     description: |

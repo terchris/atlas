@@ -1,5 +1,10 @@
 {{ config(materialized='table', schema='marts') }}
 
+-- Per-source indicator model for FHI 479 (Mobbing). FHI's KJONN code
+-- is decoded to canonical sex at the marts boundary; the original
+-- kjonn_code column is dropped (use sex). Period is parsed alongside
+-- the raw aar_code text.
+
 select
   'fhi-mobbing'::text   as source_id,
   geo_code              as region_code,
@@ -7,7 +12,9 @@ select
   case when geo_code ~ '^[0-9]{2}$' then geo_code end as fylke_nr,
   (split_part(aar_code, '_', 1))::int as year,
   aar_code              as period,
-  kjonn_code            as sex_code,
+  {{ period_start_year('aar_code') }} as period_start_year,
+  {{ period_end_year('aar_code') }}   as period_end_year,
+  {{ decode_sex('kjonn_code') }} as sex,
   trinn_code            as grade,
   spm_id_code           as question_id,
   measure_type          as contents_code,
