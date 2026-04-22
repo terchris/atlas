@@ -2,7 +2,7 @@
 
 Atlas is a Norwegian public-facing portal to the NGO sector. It consumes public data sources (24 Samfunnspuls-traced sources + broader catalogue in `docs/research/data-sources.md`), transforms them into a consumption-ready schema in Postgres, and serves them through a Next.js app. The data platform is deployed on the **Urbalurba Infrastructure Stack (UIS)** at [uis.sovereignsky.no](https://uis.sovereignsky.no/), maximising reuse of services already running there.
 
-This document has been **significantly narrowed** from its original "enterprise analytics stack" framing after investigating Atlas's actual data profile and source mix (see `docs/research/samfunnspuls/desktop-field-notes.md`, `docs/research/samfunnspuls/data-sources.md`, and `docs/stack/data-journey-ssb-08764.md`). Atlas's data is small — O(10⁴–10⁵) rows per source, mostly annually updating, consumed by one Next.js app with no auth requirements in v1. Most enterprise analytics components solve problems we don't have.
+This document has been **significantly narrowed** from its original "enterprise analytics stack" framing after investigating Atlas's actual data profile and source mix (see `docs/research/samfunnspuls/desktop-field-notes.md`, `docs/research/samfunnspuls/data-sources.md`, and `docs/ai-developer/plans/completed/INVESTIGATE-data-journey-pattern.md`). Atlas's data is small — O(10⁴–10⁵) rows per source, mostly annually updating, consumed by one Next.js app with no auth requirements in v1. Most enterprise analytics components solve problems we don't have.
 
 **Last narrowed**: 2026-04-21.
 
@@ -80,7 +80,7 @@ Each of these was in the original stack draft. Recording *why* we said no so we 
   Browser    (MapLibre map + Digdir Designsystemet UI)
 ```
 
-One end-to-end journey for one source is documented concretely in [data-journey-ssb-08764.md](data-journey-ssb-08764.md).
+One end-to-end journey for one source — the design that grounded this v1 stack before implementation — is documented in [`../ai-developer/plans/completed/INVESTIGATE-data-journey-pattern.md`](../ai-developer/plans/completed/INVESTIGATE-data-journey-pattern.md). For the live source pattern as currently implemented, see [`../../atlas-data-repo/ingest/src/sources/README.md`](../../atlas-data-repo/ingest/src/sources/README.md).
 
 ---
 

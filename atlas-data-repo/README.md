@@ -21,7 +21,7 @@ atlas-data/
 └── README.md
 ```
 
-The shape is motivated in `/docs/stack/data-journey-ssb-08764.md` and the supporting stack-narrowing conversations.
+The shape is motivated in `/docs/ai-developer/plans/completed/INVESTIGATE-data-journey-pattern.md` (the completed design investigation that grounded the v1 pattern) and the supporting stack-narrowing conversations.
 
 ## The contract with `atlas` (the frontend)
 
@@ -58,7 +58,7 @@ None of this needs to run end-to-end to be useful — it just has to be concrete
 
 Cross-referenced from the parent `atlas/` repo:
 
-- `/docs/stack/data-journey-ssb-08764.md` — end-to-end walkthrough
+- `/docs/ai-developer/plans/completed/INVESTIGATE-data-journey-pattern.md` — end-to-end walkthrough (completed design investigation)
 - `/docs/stack/suggested-stack.md` — broader stack context (Cube, Airbyte, etc. — mostly ruled out)
 - `/docs/research/samfunnspuls/data-source-schema.md` — source metadata schema
 - `/docs/research/samfunnspuls/data-sources.md` — the 24-source catalogue so far

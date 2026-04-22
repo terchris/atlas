@@ -118,4 +118,4 @@ Typical per-source effort: ~10 minutes.
 - **`kommune_indicators`** — joins `indicator_values` with `kommune_dim`. The single table the Coverage-gap explorer reads.
 - **dbt source freshness tied to Dagster** — once Dagster is wired in, freshness violations surface as red assets in the Dagster UI.
 
-See [`../../docs/stack/data-journey-ssb-08764.md`](../../docs/stack/data-journey-ssb-08764.md) for the full end-to-end picture.
+See [`../../docs/ai-developer/plans/completed/INVESTIGATE-data-journey-pattern.md`](../../docs/ai-developer/plans/completed/INVESTIGATE-data-journey-pattern.md) for the full end-to-end picture.

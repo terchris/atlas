@@ -5,7 +5,7 @@ Procedural rules for adding, changing, and reviewing data pipelines. Written to 
 **Prerequisites reading** before making changes:
 
 1. [`../docs/stack/naming-conventions.md`](../docs/stack/naming-conventions.md) — canonical vocabulary and naming rules
-2. [`../docs/stack/data-journey-ssb-08764.md`](../docs/stack/data-journey-ssb-08764.md) — end-to-end journey for one source
+2. [`../docs/ai-developer/plans/completed/INVESTIGATE-data-journey-pattern.md`](../docs/ai-developer/plans/completed/INVESTIGATE-data-journey-pattern.md) — end-to-end journey for one source (completed design investigation)
 3. [`../docs/research/samfunnspuls/data-source-schema.md`](../docs/research/samfunnspuls/data-source-schema.md) — per-source catalogue schema
 4. An existing source as reference — `ingest/src/sources/ssb-08764/` is the canonical example
 
@@ -271,7 +271,7 @@ Before opening a PR, verify every box. An LLM reviewer should reject a PR that f
 ### Task: "add a new source X"
 
 1. Read `docs/stack/naming-conventions.md` in full.
-2. Read `docs/stack/data-journey-ssb-08764.md` to understand the end-to-end flow.
+2. Read `docs/ai-developer/plans/completed/INVESTIGATE-data-journey-pattern.md` to understand the end-to-end flow.
 3. Read the nearest existing source that matches the new source's shape (3-dim SSB, 4-dim SSB, 5-dim SSB, HTML scrape, etc.) as the template.
 4. Execute Steps 1–11 in order.
 5. Walk through the PR checklist; fix any failures before proposing commit.

@@ -98,4 +98,4 @@ Deliberately deferred:
 - **CLI flags** — `--output`, `--dry-run`, `--year-filter`, etc. Add when a concrete need emerges.
 - **Retry/rate-limit tuning** — current backoff is conservative (4 attempts, exponential 500 ms base). SSB has been reliable; revisit if we see 429s or 5xx in prod.
 
-See `/docs/stack/data-journey-ssb-08764.md` in the parent Atlas repo for the full end-to-end flow this ingest module is one piece of.
+See `/docs/ai-developer/plans/completed/INVESTIGATE-data-journey-pattern.md` in the parent Atlas repo for the full end-to-end flow this ingest module is one piece of.

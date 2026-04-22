@@ -1,8 +1,29 @@
-# Data journey — SSB 08764 (child poverty, EU-60)
+# Investigate: End-to-end data journey pattern (worked example: SSB 08764)
 
-This document walks one dataset end-to-end, from upstream source to pixels on a user's screen. It exists to **ground the narrowed stack decisions** (see `suggested-stack.md` and the ongoing stack-narrowing conversation) in a single concrete example before we commit to the pattern for ~24 Samfunnspuls-traced sources and the broader Atlas catalogue.
+> **IMPLEMENTATION RULES:** Before implementing this plan, read and follow:
+> - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
+> - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-The source chosen — **`ssb-08764`**, "Antall barn og unge under 18 år som tilhører husholdninger med lavinntekt (EU-60)" — is:
+## Status: Completed
+
+**Goal**: Ground the narrowed Atlas v1 stack decisions in a single concrete end-to-end example — from upstream SSB source to pixels on a user's screen — before committing to the pattern across ~24 Samfunnspuls-traced sources and the broader Atlas catalogue.
+
+**Last Updated**: 2026-04-21
+**Completed**: 2026-04-22
+
+---
+
+> **Status note (2026-04-22):** This is a **completed design investigation**. The pattern walked through here was adopted and 19 sources have been built using it. For the **current source pattern** (folder layout, command names, conventions) see [`../../../../atlas-data-repo/ingest/src/sources/README.md`](../../../../atlas-data-repo/ingest/src/sources/README.md). This document is preserved for historical/onboarding reference — it shows the *why* behind the current shape.
+>
+> Specific drift to be aware of: the original walkthrough used `pnpm` and `src/ingest/sources/<id>.ts` (file per source); the implemented pattern uses `npm` and `src/sources/<id>/index.ts` (folder per source).
+
+---
+
+## What this investigation produced
+
+The pattern below was investigated, ratified, and is now the basis for all 19 implemented sources. Open items at the time of investigation (dbt confirmation, transformation layer pattern, observability shape) have all been closed.
+
+The source chosen for the worked example — **`ssb-08764`**, "Antall barn og unge under 18 år som tilhører husholdninger med lavinntekt (EU-60)" — is:
 
 - Already the worked example in `docs/research/samfunnspuls/data-source-schema.md`
 - Marked `atlas_decision: adopt_v1_core` in `docs/research/samfunnspuls/data-sources.md`
@@ -14,9 +35,9 @@ Most other Samfunnspuls-traced sources follow the same shape. Where this journey
 
 ---
 
-## Stack assumptions
+## Stack assumptions at the time of investigation
 
-What this journey assumes has been settled:
+What had been settled when this was written:
 
 - **TypeScript** for ingestion code
 - **Dagster** for orchestration (scheduling, freshness, dependencies, UI, alerts)
@@ -25,13 +46,11 @@ What this journey assumes has been settled:
 - No **Cube**, no **Airbyte**, no **Spark**, no **Authentik/Gravitee** on the v1 public path
 - Observability via UIS-native **Loki / Prometheus / Grafana**
 
-What this journey assumes is still provisional and should be confirmed before locking:
+What was provisional then, but has since been ratified:
 
-- **dbt** for the Postgres transformation layer (recommended during the Cube discussion; not explicitly ratified)
-- **MapLibre GL** for the map rendering (`goal.md` says "likely MapLibre or Leaflet")
-- **Kartverket** GeoJSON as the source of kommune boundary geometry (static build-time asset, not an ingestion source)
-
-Anything else new is flagged in-line below.
+- **dbt** for the Postgres transformation layer — ✅ now ratified, see "dbt scope" in [`../../../stack/suggested-stack.md`](../../../stack/suggested-stack.md)
+- **MapLibre GL** for the map rendering — 🟡 still open at time of completion (`goal.md` says "likely MapLibre or Leaflet"); see "Open items still to settle" in [`../../../stack/suggested-stack.md`](../../../stack/suggested-stack.md)
+- **Kartverket** GeoJSON as the source of kommune boundary geometry — 🟡 still open at time of completion
 
 ---
 
@@ -45,7 +64,7 @@ Anything else new is flagged in-line below.
   [Dagster asset: ssb_08764]
         │  scheduled run → Dagster Pipes
         ▼
-  [TypeScript: src/ingest/sources/ssb-08764.ts]
+  [TypeScript: src/sources/ssb-08764/index.ts]
         │  fetch + parse JSON-stat2 + normalise
         ▼
   [Postgres  raw.ssb_08764]                    ← raw landing
@@ -100,7 +119,7 @@ In the Atlas Dagster project, one `@asset` represents this table:
 )
 def ssb_08764(context: AssetExecutionContext):
     return pipes_subprocess_client.run(
-        command=["pnpm", "ingest:ssb-08764"],
+        command=["npm", "run", "ingest:ssb-08764"],
         context=context,
     ).get_results()
 ```
@@ -111,12 +130,12 @@ def ssb_08764(context: AssetExecutionContext):
 
 ## Stage 3 — TypeScript ingestion runs
 
-Dagster Pipes invokes `pnpm ingest:ssb-08764` which runs `src/ingest/sources/ssb-08764.ts`. Sketch:
+Dagster Pipes invokes `npm run ingest:ssb-08764` which runs `src/sources/ssb-08764/index.ts`. Sketch:
 
 ```typescript
-// src/ingest/sources/ssb-08764.ts
-import { fetchPxWebTable, parseJsonStat2 } from "../lib/pxweb";
-import { writeRawRows } from "../lib/postgres";
+// src/sources/ssb-08764/index.ts
+import { fetchPxWebTable, parseJsonStat2 } from "../../lib/pxweb";
+import { writeRawRows } from "../../lib/postgres";
 
 export const SOURCE_ID = "ssb-08764";
 
@@ -143,7 +162,7 @@ export async function run() {
 }
 ```
 
-- **Shared utilities** (`pxweb`, `postgres`) live in `src/ingest/lib/` — the 20-ish other SSB-backed sources differ only by table id and occasionally by dimension normalisation.
+- **Shared utilities** (`pxweb`, `postgres`) live in `src/lib/` — the 18-ish other sources differ only by table id and occasionally by dimension normalisation.
 - **Return value** is surfaced back to Dagster via Pipes as materialisation metadata: row count, latest year, source id.
 - **Duration**: typically 3–6 seconds for a full pull (network-dominated).
 
@@ -208,7 +227,7 @@ Every measurement source gets a model just like this — same columns, different
 {% endfor %}
 ```
 
-(In practice we'll use dbt's `dbt_utils.union_relations` macro for this.)
+(In practice we use dbt's `dbt_utils.union_relations` macro for this.)
 
 **(c) Join with kommune dimension:**
 
@@ -375,27 +394,28 @@ For the other 10 sources, there are deviations worth naming:
 - **Red Cross internal (×1)** — bespoke feed, access model TBD. Likely a CSV drop in object storage rather than a pull API. Parking.
 - **SSB bespoke extract (×1, covering 3 reports)** — no public table id; the source catalogue entry's `open_questions` flags finding a public-API equivalent.
 
-Adding a new source follows the same motions for any measurement-kind entry:
-
-1. Add a row to `docs/research/samfunnspuls/data-sources.md` (or `docs/research/data-sources.md` for broader sources)
-2. Create `src/ingest/sources/<id>.ts` exporting the standard `run()` function
-3. Create a `@asset` in `dagster/atlas/assets/<provider>.py`
-4. Create `dbt/models/indicators/indicators__<id>.sql` (20 lines)
-5. Add the new model name to `indicator_values.sql`'s union list
-6. Ship
+Adding a new source follows the same motions for any measurement-kind entry — see [`../../../../atlas-data-repo/ingest/src/sources/README.md`](../../../../atlas-data-repo/ingest/src/sources/README.md) for the current step-by-step.
 
 No new infra for each source. That's the point.
 
 ---
 
-## Open items this journey surfaces
+## Open items — at time of investigation
 
-Things we should confirm or revisit before locking the pattern:
+These were flagged as "to confirm before locking the pattern". Status as of completion (2026-04-22):
 
-1. **dbt**: recommended but not explicitly ratified. If we confirm, we commit to it as the transformation layer. If we defer, Stage 5 becomes raw SQL views and we lose tests/lineage — doable but weaker.
-2. **Map library**: MapLibre GL assumed. `goal.md` leaves it as TBD. Either works; decide once to avoid revisiting.
-3. **Kommune boundary source**: Kartverket GeoJSON as a static build-time asset assumed. Alternative (Geonorge WFS at runtime) is heavier and almost certainly not worth it.
-4. **Route-level caching**: Next.js `revalidate` tied to asset cadence, or Postgres listen/notify to invalidate on materialisation. Implementation detail — noting for later.
-5. **Attribution generation**: sidebar text generated from `om_tallene_kilde`. Requires the catalogue to be authoritative and readable at build time. Straightforward, but a tiny integration point.
+1. **dbt** — recommended but not explicitly ratified at time of investigation. ✅ **Now ratified** in [`../../../stack/suggested-stack.md`](../../../stack/suggested-stack.md) "dbt scope" section, with a deliberately narrow seven-pattern surface.
+2. **Map library** — MapLibre GL assumed. 🟡 **Still open** — see [`../../../stack/suggested-stack.md`](../../../stack/suggested-stack.md) "Open items still to settle".
+3. **Kommune boundary source** — Kartverket GeoJSON as a static build-time asset assumed. 🟡 **Still open**.
+4. **Route-level caching**: Next.js `revalidate` tied to asset cadence, or Postgres listen/notify to invalidate on materialisation. 🟡 **Implementation detail**, deferred.
+5. **Attribution generation**: sidebar text generated from `om_tallene_kilde`. ✅ **Pattern adopted**.
 
-None block Stage 1–4 getting built.
+---
+
+## What this investigation is not
+
+- Not a current source-pattern reference — see [`../../../../atlas-data-repo/ingest/src/sources/README.md`](../../../../atlas-data-repo/ingest/src/sources/README.md) for live conventions.
+- Not the v1 stack decision document — that lives in [`../../../stack/suggested-stack.md`](../../../stack/suggested-stack.md).
+- Not the data-strategy / scaling document — that lives in [`../../../stack/data-strategy.md`](../../../stack/data-strategy.md).
+
+This is the *historical record* of how the v1 stack was grounded in a concrete worked example before commitment.

@@ -1,21 +1,37 @@
-# Coded fields across sources — analysis
+# Investigate: Coded fields across sources — decoding strategy
 
-Atlas's upstream sources publish many dimensions as short codes (`"0"` for all sexes, `"0001"` for a family type, `"02a"` for an education level). The raw layer preserves them verbatim. The marts layer has been renaming **some** (kommune codes, sex in two sources) but leaving most as-is. That pushes the code-to-meaning problem onto every consumer — Next.js, dbt analysts, the `/data` explorer, anyone querying Postgres.
+> **IMPLEMENTATION RULES:** Before implementing this plan, read and follow:
+> - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
+> - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-This document:
+## Status: Backlog
 
-1. Inventories every coded field across our current 19 sources.
-2. Groups them by the kind of decoding they need.
-3. Lays out four architectural options.
-4. Recommends a hybrid and proposes a per-field treatment.
+**Goal**: Decide a per-field treatment for every coded field in Atlas's `raw.*` tables (sex, age, family_type, household_type, education_level, age_group, period, etc.) so consumers (Next.js, dbt analysts, the `/data` explorer) see human-readable labels rather than upstream codes — without inventing a heavyweight platform service.
+
+**Last Updated**: 2026-04-22
+
+**Origin:** Atlas data layer. Atlas's upstream sources publish many dimensions as short codes (`"0"` for all sexes, `"0001"` for a family type, `"02a"` for an education level). The raw layer preserves them verbatim. The marts layer has been renaming **some** (kommune codes, sex in two sources) but leaving most as-is. That pushes the code-to-meaning problem onto every consumer. Flagged as an **open decision** in [`../../../stack/data-strategy.md`](../../../stack/data-strategy.md) (line 183, "dim_codes or dbt seeds for enum decoding").
 
 ---
 
-## Inventory — every coded field, as it currently exists in Postgres
+## Questions to Answer
+
+1. Which architectural pattern fits best — **inline CASE** in dbt, **dbt seeds** as reference tables, a **universal `dim_codes`** lookup, or **dbt macros**? Or a **hybrid** matched per pattern?
+2. For each of the 19 currently-ingested sources, which coded fields need decoding and which architectural pattern fits each?
+3. Where do canonical labels come from — fetched once from upstream metadata and pinned in CSV (versioned, but drifts), or re-fetched on each `dbt seed` run (always fresh, but seeds stop being declarative)?
+4. Should we ship `label_no` (bokmål) only, or `label_no` + `label_en` from day 1 in case Atlas gets an English UI?
+5. How many seed files do we actually commit? (5 candidates listed below; one has only 1 value today.)
+6. What happens to consumers when an upstream code is retired — do we keep stale rows in our seed, or remove them and risk over-filtering?
+
+---
+
+## Current State
+
+### Inventory — every coded field, as it currently exists in Postgres
 
 Data below is probed directly from the `raw.*` tables (not guessed).
 
-### Universal concepts
+#### Universal concepts
 
 | Field | Source tables (raw) | Observed codes | Readable? |
 |---|---|---|---|
@@ -28,7 +44,7 @@ Data below is probed directly from the `raw.*` tables (not guessed).
 | `period` (FHI AAR, current col name `aar_code`) | all FHI | `"2024_2024"` (single-year) or `"2022_2024"` (3-year rolling) | ⚠️ needs parse |
 | `period` (SSB 12944) | `raw.ssb_12944` | `"2022-2024"` (hyphen, not underscore) | ⚠️ different range format |
 
-### Domain-specific SSB enums
+#### Domain-specific SSB enums
 
 | Field | Source table | Observed codes |
 |---|---|---|
@@ -37,7 +53,7 @@ Data below is probed directly from the `raw.*` tables (not guessed).
 | `education_level` (SSB Nivaa NUS-based) | `raw.ssb_09429` | `"00"`, `"01"`, `"02a"`, `"03a"`, `"04a"`, `"09a"`, `"11"` (7 codes) |
 | `grade` (FHI TRINN, current col name `trinn_code`) | `raw.fhi_mobbing` | `"7"`, `"10"` (self-explanatory) |
 
-### Domain-specific FHI enums
+#### Domain-specific FHI enums
 
 | Field | Source table | Observed codes |
 |---|---|---|
@@ -48,7 +64,7 @@ Data below is probed directly from the `raw.*` tables (not guessed).
 | `measure_type` (FHI MEASURE_TYPE) | all FHI | `"RATE"`, `"SMR"`, `"MEIS"`, `"TELLER"` (semi-cryptic) |
 | `contents_code` (varies per table) | every SSB + FHI | Wildly inconsistent — `Personer`, `EUskala60`, `Folkemengde`, `SamletInntekt`, `Folketilvekst`, `KOSFolkemengdeia0000`, `RATE`, `SMR`, etc. |
 
-### Region codes (separate problem, partially solved)
+#### Region codes (separate problem, partially solved)
 
 | Field | Observed | Current treatment |
 |---|---|---|
@@ -59,15 +75,13 @@ Data below is probed directly from the `raw.*` tables (not guessed).
 | 6-digit bydel codes | `"030101"` | 🟡 Preserved in raw, no `dim_bydel` yet |
 | Special codes (Svalbard, offshore, "Rest", "9999 Uoppgitt") | `"2111"`, `"9999"`, `"Rest"` | 🟡 Flagged with warn-severity tests |
 
-### Status / suppression markers
+#### Status / suppression markers
 
 | Field | Source | Values |
 |---|---|---|
 | `status` | all | `"."` (SSB suppressed), `":"` (FHI not available), or null. Handled uniformly by `parseJsonStat2`. ✅ |
 
----
-
-## What the codes actually mean
+### What the codes actually mean
 
 For concepts where the label is widely known (sex 0/1/2, overcrowding "trangt"/"uoppgitt"), meaning is obvious. For domain-specific enums, **we don't currently store the labels** — they're in upstream metadata that we fetch but discard. Specifically:
 
@@ -80,35 +94,23 @@ For concepts where the label is widely known (sex 0/1/2, overcrowding "trangt"/"
 
 The upstream response carries human labels in `dimension.<name>.category.label` alongside `index`. We parse `index` (the code list) but throw away `label`. Restoring the label flow is part of the fix.
 
----
-
-## Patterns across coded fields
+### Patterns across coded fields
 
 The codes split into four distinct patterns that want different architectural treatments:
 
-### Pattern 1 — **Small universal enum** (2–5 codes, mostly obvious meaning)
+**Pattern 1 — Small universal enum** (2–5 codes, mostly obvious meaning) — `sex`, `housing_status`, `grade`. Small, bounded, doesn't change. CASE expression in the dbt indicator model is enough; the "lookup table" would be more overhead than value.
 
-`sex`, `housing_status`, `grade`. Small, bounded, doesn't change. CASE expression in the dbt indicator model is enough; the "lookup table" would be more overhead than value.
+**Pattern 2 — Medium domain enum** (5–15 codes, needs a label lookup) — `family_type`, `household_type`, `education_level` (both SSB and FHI variants), `age_group` per source, `measure_type`. These benefit from a proper lookup: one seed file per `(provider, dimension)` pair with code + label_no + label_en + sort_order. Join once, expose label everywhere.
 
-### Pattern 2 — **Medium domain enum** (5–15 codes, needs a label lookup)
+**Pattern 3 — Per-table content code** (`contents_code`) — Every SSB/FHI table has its own vocabulary for the statistical variables it publishes. These are too numerous + table-specific for a central dim. Upstream already provides `contents_label` which we store — that's the right pattern: preserve label alongside code, no cross-source join needed.
 
-`family_type`, `household_type`, `education_level` (both SSB and FHI variants), `age_group` per source, `measure_type`. These benefit from a proper lookup: one seed file per `(provider, dimension)` pair with code + label_no + label_en + sort_order. Join once, expose label everywhere.
+**Pattern 4 — Structured parse, not a lookup** (`age`, `period`) — `"105+"`, `"105"`, `"2022_2024"`, `"0_17"` — these encode structure (single age vs range) that we parse, not look up. Extract numeric start/end year or min/max age, store alongside the raw code.
 
-### Pattern 3 — **Per-table content code** (`contents_code`)
-
-Every SSB/FHI table has its own vocabulary for the statistical variables it publishes. These are too numerous + table-specific for a central dim. Upstream already provides `contents_label` which we store — that's the right pattern: preserve label alongside code, no cross-source join needed.
-
-### Pattern 4 — **Structured parse, not a lookup** (`age`, `period`)
-
-`"105+"`, `"105"`, `"2022_2024"`, `"0_17"` — these encode structure (single age vs range) that we parse, not look up. Extract numeric start/end year or min/max age, store alongside the raw code.
-
-### Special case — region codes
-
-Already handled. `dim_kommune` + `dim_fylke` cover it. Bydel-level is the open gap.
+**Special case — region codes** — Already handled. `dim_kommune` + `dim_fylke` cover it. Bydel-level is the open gap.
 
 ---
 
-## Four architectural options
+## Options
 
 ### Option A — Inline CASE expressions in each indicator model
 
@@ -120,8 +122,8 @@ case sex
 end as sex
 ```
 
-**Pros**: simple, obvious, no new tables, works per-source. Explicit.
-**Cons**: Logic duplicated across N models. If FamilieType's 9 labels need to change, we edit 1+ places. Doesn't scale for big enums.
+**Pros:** simple, obvious, no new tables, works per-source. Explicit.
+**Cons:** Logic duplicated across N models. If FamilieType's 9 labels need to change, we edit 1+ places. Doesn't scale for big enums.
 
 ### Option B — dbt `seeds/` reference tables
 
@@ -129,15 +131,15 @@ One CSV per `(provider, dimension)`: `ref_ssb_family_type.csv`, `ref_ssb_nivaa.c
 
 Indicator models `left join ref_...` to expose `family_type_label`.
 
-**Pros**: clean separation. Labels versioned in git, editable without code changes, testable. One source of truth per enum.
-**Cons**: one more table per dimension. Extra join per model. Seeds need `dbt seed` step.
+**Pros:** clean separation. Labels versioned in git, editable without code changes, testable. One source of truth per enum.
+**Cons:** one more table per dimension. Extra join per model. Seeds need `dbt seed` step.
 
 ### Option C — Universal `dim_codes` lookup
 
 Single table: `marts.dim_codes(provider, dimension, code, label_no, label_en, sort_order)`. One filter gets you any dimension's labels.
 
-**Pros**: one table for all enums. Easy to query: *"all codes for FHI UTDANN"*. Ad-hoc research friendly.
-**Cons**: loose typing — everything's generic. Harder to use in joins (need 2-col filter). Not as clean as per-dim tables.
+**Pros:** one table for all enums. Easy to query: *"all codes for FHI UTDANN"*. Ad-hoc research friendly.
+**Cons:** loose typing — everything's generic. Harder to use in joins (need 2-col filter). Not as clean as per-dim tables.
 
 ### Option D — dbt macros that encode the CASE
 
@@ -146,8 +148,8 @@ Single table: `marts.dim_codes(provider, dimension, code, label_no, label_en, so
 {{ decode_ssb_family_type(family_type_code) }}
 ```
 
-**Pros**: DRY, centralised, testable, no new tables.
-**Cons**: macro proliferation if we have many enums. Scripts aren't as browseable as seed CSVs.
+**Pros:** DRY, centralised, testable, no new tables.
+**Cons:** macro proliferation if we have many enums. Scripts aren't as browseable as seed CSVs.
 
 ---
 
@@ -162,9 +164,7 @@ Match approach to pattern:
 | 3 — per-table content code | Preserve `contents_label` from upstream | Already works; no new architecture needed. |
 | 4 — structured parse (age, period) | Parse at ingest, store components | Store `period_start_year`, `period_end_year`, `age_min`, `age_max` alongside `period` and `age_group`. |
 
----
-
-## Proposed per-field treatment
+### Proposed per-field treatment
 
 Concrete decisions for every coded field currently in our raw tables:
 
@@ -189,7 +189,7 @@ Concrete decisions for every coded field currently in our raw tables:
 
 ### Naming-convention updates
 
-For the canonical vocabulary table in `naming-conventions.md`, add:
+For the canonical vocabulary table in [`../../../stack/naming-conventions.md`](../../../stack/naming-conventions.md), add:
 
 - `sex` with values `"male"` / `"female"` / `"all"`
 - `age` (text, single-year, `"000"` form or int)
@@ -205,58 +205,52 @@ For the canonical vocabulary table in `naming-conventions.md`, add:
 
 ---
 
-## Implementation plan
+## Open Questions
 
-If approved, 3-4 hours of focused work:
+1. **Which seed files do we actually commit?** The recommendation lists 5. Probably right, but `ref_fhi_innvkat` has only 1 value right now — might be overkill. Keep anyway for consistency?
+2. **Label languages.** `label_no` (bokmål) always; `label_en` for roles where Atlas might get an English UI. Worth the upfront cost, or bokmål-only until English UI is real?
+3. **How to handle codes that disappear upstream?** If SSB retires a FamilieType code, our seed file still has it. Consumers may over-filter. Probably acceptable; flag in a review once/year.
+4. **Where do seed labels come from?** Two honest options: (a) fetch once from upstream metadata and pin in CSV (versioned, but drifts from upstream); (b) re-fetch on each dbt seed run (always fresh, but seeds stop being declarative). Recommended: (a) with a manual "refresh seeds" script.
 
-### Step 1 — Build the seed tables (1 hour)
+---
 
-- Probe SSB and FHI metadata endpoints to fetch the canonical labels per code (not guess from memory).
-- Write `dbt/seeds/` CSVs: `ref_ssb_family_type.csv`, `ref_ssb_household_type.csv`, `ref_ssb_nivaa.csv`, `ref_fhi_utdann.csv`, `ref_fhi_innvkat.csv`.
-- Each has columns: `code`, `label_no`, `label_en`, `sort_order`, and optionally `parent_code` (for hierarchical enums like education level).
-- dbt `seeds` config in `dbt_project.yml`.
+## Next Steps
 
-### Step 2 — Apply the hybrid to every indicator model (1.5 hours)
+Following the [PLANS.md](../../PLANS.md) guidance on splitting investigations into ordered plans:
 
-- CASE expressions for small universal enums (sex, measure_type).
-- Parse age/period strings, add min/max int columns.
-- Left-join seed tables for domain enums; expose `<field>_label` alongside the raw code.
-- Consistently rename raw FHI cryptic columns at the marts boundary (`kjonn_code` → `sex`, `alder_code` → `age_group`, `aar_code` → `period`, etc.).
+- [ ] **PLAN-001-code-label-seed-tables.md** — Probe SSB and FHI metadata endpoints to fetch canonical labels per code. Write `dbt/seeds/` CSVs: `ref_ssb_family_type.csv`, `ref_ssb_household_type.csv`, `ref_ssb_nivaa.csv`, `ref_fhi_utdann.csv`, `ref_fhi_innvkat.csv`. Configure `seeds` in `dbt_project.yml`. Verify `dbt seed` runs clean.
+- [ ] **PLAN-002-code-label-apply-hybrid.md** — Apply the hybrid to every indicator model. CASE expressions for small universal enums. Parse age/period strings, add min/max int columns. Left-join seed tables for domain enums; expose `<field>_label` alongside the raw code. Consistently rename FHI cryptic columns at the marts boundary (`kjonn_code` → `sex`, `alder_code` → `age_group`, `aar_code` → `period`).
+- [ ] **PLAN-003-code-label-tests-and-docs.md** — Extend `schema.yml` `accepted_values` tests for cleaned-up columns. Update [`naming-conventions.md`](../../../stack/naming-conventions.md) with new canonical fields. Run `dbt run` + `dbt test` full suite — all 140+ tests should stay green (warns excluded). Document each seed in `dbt/seeds/README.md` with source and update policy.
 
-### Step 3 — Update tests, canonical vocabulary, and regression (45 min)
+Estimated total effort: 3–4 hours of focused work.
 
-- Extend `schema.yml` `accepted_values` tests for the cleaned-up columns.
-- Update `naming-conventions.md` with the new canonical fields.
-- Run `dbt run` + `dbt test` full suite — all 140+ tests should stay green (warns excluded).
-
-### Step 4 — Optionally, document what each seed covers (15 min)
-
-- `dbt/seeds/README.md` listing each seed, source, and update policy.
-
-### Not in scope for this cleanup
+### Not in scope for this investigation
 
 - Backfilling historical upstream labels (seeds use today's labels; old data that referred to a since-renamed code stays with the current label).
 - Per-content-code labelling across sources — each source already stores its own `contents_label`.
-- Bydel codes — separate dim_bydel work.
+- Bydel codes — separate `dim_bydel` work.
 
 ---
 
-## Open questions
+## Files to Modify
 
-1. **Which seed files do we actually commit?** The plan above lists 5. Probably right, but `ref_fhi_innvkat` has only 1 value right now — might be overkill. Keep anyway for consistency?
-2. **Label languages.** `label_no` (bokmål) always; `label_en` for roles where Atlas might get an English UI. Worth the upfront cost, or bokmål-only until English UI is real?
-3. **How to handle codes that disappear upstream?** If SSB retires a FamilieType code, our seed file still has it. Consumers may over-filter. Probably acceptable; flag in a review once/year.
-4. **Where do seed labels come from?** Two honest options: (a) fetch once from upstream metadata and pin in CSV (versioned, but drifts from upstream); (b) re-fetch on each dbt seed run (always fresh, but seeds stop being declarative). I'd pick (a) with a manual "refresh seeds" script.
+Atlas-side (in `atlas-data-repo/`):
+
+- `dbt/seeds/ref_ssb_family_type.csv` *(new)*
+- `dbt/seeds/ref_ssb_household_type.csv` *(new)*
+- `dbt/seeds/ref_ssb_nivaa.csv` *(new)*
+- `dbt/seeds/ref_fhi_utdann.csv` *(new)*
+- `dbt/seeds/ref_fhi_innvkat.csv` *(new)*
+- `dbt/seeds/README.md` *(new)*
+- `dbt/dbt_project.yml` — add `seeds` configuration
+- `dbt/models/indicators/indicators__*.sql` — apply CASE / join / parse per field per source (~19 models)
+- `dbt/models/indicators/schema.yml` — extend `accepted_values` tests
+- `docs/stack/naming-conventions.md` — add canonical vocabulary entries
 
 ---
 
-## Recommendation summary
+## Cross-references
 
-1. **Adopt the hybrid** — inline CASE for small enums, seeds for domain enums, parse for structured strings. Don't force everything into one pattern.
-2. **Commit the 5 seed files** with bokmål labels initially, English when there's a need.
-3. **Apply to all current indicator models** in one pass (makes tests and docs consistent).
-4. **Update `naming-conventions.md`** with the new canonical vocabulary.
-
-Then when we add new sources (Phase 3b IMDi, Phase 4 Brreg/NAV), the pattern is established — they follow it automatically.
-
-If you agree, I'll execute. Or push back — what would you change about the recommendation?
+- [`../../../stack/data-strategy.md`](../../../stack/data-strategy.md) — data integration strategy (this investigation is the field-dictionary sub-problem)
+- [`../../../stack/naming-conventions.md`](../../../stack/naming-conventions.md) — current field dictionary (will be extended by PLAN-003)
+- [`../../../stack/suggested-stack.md`](../../../stack/suggested-stack.md) — v1 stack (this work fits within the existing dbt scope)
