@@ -146,6 +146,8 @@ When a model is retired:
 - New columns that match a "Never in marts" entry → rename before merge.
 - If no canonical name exists for a concept you're introducing, **add it to the Canonical vocabulary table in this file** as part of the same PR. The vocabulary grows deliberately, not by accident.
 
+For a visual map of how these fields connect across `marts.*` (entities + relationships), see [`erd.md`](erd.md). It is regenerated from the same `relationships:` tests this file relies on.
+
 ---
 
 ## Decoding strategy reference
