@@ -468,6 +468,78 @@ User confirms phase is complete.
 
 ---
 
+## Decision-point IDs (`[Q<N>]`)
+
+Investigation files accumulate many enumerated lists — Questions to Answer, Options within sections, Open Questions, Decisions resolved during planning, phased PLAN proposals, etc. Without a stable reference scheme, "I agree with 1" is ambiguous because "1" exists in many places. The convention below makes every decision-point in a document referable by a short, unique ID.
+
+### The rule
+
+Every **decision-point** in an investigation or plan file gets a stable ID of the form `[Q<N>]`.
+
+A decision-point is anything the reader might say "yes/no" to or pick between options for. Specifically:
+
+- Topics in **"Questions to Answer"** at the top of an investigation
+- **Options** discussed within a section's body (Section B's "Option 1, 2, 3" treatment of alternatives)
+- **Rejected alternatives** (so they can be revisited later)
+- Items in **"Open Questions"**
+- Items in **"Decisions resolved during planning"**
+- The **PLANs** in a "Recommendation — phased plan" section (PLAN-A, PLAN-B, …)
+
+Pure narrative, SQL examples, and tables that aren't decision-options don't need IDs.
+
+### Format
+
+- `**[Q3]**` at the **start** of each decision-point item — markdown-bold + brackets so it stands out from prose.
+- **Sequential, document-wide-unique** numbering. Allocate in document order.
+- **Never reused.** When a question is resolved, its `[Q<N>]` keeps its number and travels with it (often moving from "Open Questions" to "Decisions resolved").
+- **Sub-options** use letter suffixes: `Q11a` vs `Q11b` for "pick A or B" within Q11.
+
+### Example
+
+In a section body:
+
+```markdown
+The right answer is both:
+
+1. **[Q11]** Org level (`dim_ngo`) — store the NGO's ICNPO codes from Brreg.
+2. **[Q12]** Service level (`ref_atlas_service_category`) — Atlas-curated 22-row vocabulary.
+3. **[Q13]** Activity catalogue (`dim_activity`) — replaces the crosswalk table.
+
+Rejected alternatives:
+- **[Q14]** ICNPO-only — too coarse for the UI Kari needs.
+- **[Q15]** Tag-based, no fixed taxonomy — Kari can't filter.
+```
+
+In Open Questions:
+
+```markdown
+1. **[Q70]** Does the Red Cross API require a key for live polls?
+2. ~~**[Q71]**~~ Should the service-category vocabulary be ~22 or ~40 rows? **Resolved** → 22, see Appendix A.
+3. **[Q72]** Where do `dim_ngo` rows come from initially?
+```
+
+### How to give feedback
+
+The reader can write things like:
+
+- *"Q11 yes, Q14 also worth keeping in the rejected list, Q70 = no key needed for v1, Q72 = hand-curated seed"*
+- *"Q11a not Q11b"* (picking a sub-option)
+- *"Q33 looks wrong because…"*
+
+Zero ambiguity, even in long files with many parallel numberings.
+
+### Allocating IDs
+
+For a brand-new investigation: number sequentially in document order as you write.
+
+For an existing investigation getting retro-tagged: walk through in document order, assign Q1, Q2, … to each decision-point.
+
+If you insert a new decision-point mid-document later, allocate the next free number and append it — don't renumber to keep IDs in document order. Stability of references matters more than visual ordering.
+
+This convention applies to both INVESTIGATE-*.md and PLAN-*.md files. PLANs typically have fewer decision-points (most decisions are resolved by the time a PLAN is drafted) but Acceptance Criteria, open implementation choices, and validation gates can still benefit from `[Q<N>]` IDs when feedback is wanted.
+
+---
+
 ## Best Practices
 
 1. **Investigate first** — spend time understanding the problem before planning the solution
