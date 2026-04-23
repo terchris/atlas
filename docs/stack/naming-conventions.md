@@ -72,6 +72,12 @@ Use these **exact names** when the concept is present. Never invent variants.
 | Immigration category label (Norwegian) | `immigration_category_label_no` | `text` | |
 | Housing status (FHI BODD) | `housing_status` | `text` | `"trangt"` / `"uoppgitt"`; readable as-is, no seed. |
 | School grade (FHI TRINN) | `grade` | `text` | `"7"` / `"10"` etc.; readable as-is, no seed. |
+| UN Sustainable Development Goal | `sdg_code` | `text` | `"1"`–`"17"`; must exist in `marts.ref_un_sdg`. |
+| ICNPO category code (Brreg) | `icnpo_code` | `text` | Frivillighetsregisteret's classification of NGOs. 1- or 2-digit codes are main groups; 4- or 5-digit codes are subgroups. Must exist in `marts.ref_brreg_icnpo`. |
+| Postal code | `postnummer` | `text` | 4 chars, zero-padded; must exist in `marts.dim_postnummer`. |
+| Postal-area name | `post_office` | `text` | From `dim_postnummer`; ALLCAPS as published by Bring. |
+| Free-text municipality name | `name` | `text` | Used in `marts.crosswalk_kommune_name` to resolve upstream text to `kommune_nr`. |
+| Kind of resolved name | `name_kind` | `text` | One of `"canonical"`, `"alternative"`, `"historical"` in `crosswalk_kommune_name`. |
 
 ## Never in marts
 
@@ -118,7 +124,7 @@ A process **MUST NOT** write to a schema it doesn't own. A consumer **MUST NOT**
 |---|---|---|
 | `dim_<concept>` | Conformed dimension. One row per natural key. Used as a join target by facts. Owner is implicit from context — no second token. | `dim_kommune`, `dim_fylke`, `dim_postnummer`, `dim_ngo`, `dim_country` |
 | `ref_<owner>_<concept>` | Reference taxonomy / controlled vocabulary / code-label decoder. **Owner is the second token** (`ssb`, `fhi`, `brreg`, `un`, `iso`, `atlas`, …); concept follows. Not the primary join target of any fact. | `ref_ssb_family_type`, `ref_fhi_utdann`, `ref_brreg_icnpo`, `ref_un_sdg`, `ref_atlas_service_category` |
-| `crosswalk_<from>_<to>` | Explicit many-to-many or alternative-key mapping between two reference systems. Suffix reads as the relationship. | `crosswalk_kommune_name` (alt names → kommune_nr), `crosswalk_activity_to_category` (NGO local activity → Atlas service category) |
+| `crosswalk_<from>_<to>` | Explicit many-to-many or alternative-key mapping between two reference systems. Suffix reads as the relationship. May be implemented as a **seed** (when authoritative or hand-curated) or as a **derived dbt model** (when a projection of existing reference tables is enough). | `crosswalk_kommune_name` (derived from `dim_kommune`), `crosswalk_activity_to_category` (curated seed: NGO local activity → Atlas service category) |
 | `indicators__<source_id>` | Per-source passthrough from raw. Double underscore. | `indicators__ssb_08764` |
 | `fact_<concept>` | Fact table joining multiple sources, FKs to dims. | `fact_kommune_indicators` |
 | `mart_<feature>` | Application-shaped marts sized to a specific feature. | `mart_coverage_gap_barnefattigdom` |
@@ -145,7 +151,7 @@ Reference and dimension tables fall into one of four refresh buckets. Pick at ta
 |---|---|---|---|
 | **Never** | Truly fixed standards | Pin once in CSV; comment "do not refresh"; no script | `ref_un_sdg` (17 goals fixed since 2015); ISO 3166/4217 |
 | **Rare** | Years between revisions | Manual via `refresh-seeds`-style script; review once per year | `ref_brreg_icnpo` (last revised 2009); the `ref_ssb_*` and `ref_fhi_*` decoders |
-| **Periodic** | Annual / quarterly / on admin reform | Scheduled (initially manual; automatable later via Dagster) | `dim_kommune`, `dim_fylke` (annual + at reforms); `dim_postnummer` (quarterly); `crosswalk_kommune_name` |
+| **Periodic** | Annual / quarterly / on admin reform | Scheduled (initially manual; automatable later via Dagster) | `dim_kommune`, `dim_fylke` (annual + at reforms); `dim_postnummer` (quarterly). Derived crosswalks like `crosswalk_kommune_name` inherit their parent's cadence — no separate refresh. |
 | **Curated** | When the team decides | Edit CSV in PR; no refresh script; review part of normal PR flow | `ref_atlas_service_category`; `crosswalk_activity_to_category` |
 
 ---

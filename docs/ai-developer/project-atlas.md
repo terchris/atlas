@@ -179,6 +179,12 @@ These are non-negotiable constraints. They are the things that take longer to un
 - `atlas-data-repo/` (ingest + dbt) **owns** `raw.*` and `marts.*`. The frontend never reaches into `raw.*`.
 - A schema change in `marts.*` is a breaking change to the frontend. Coordinate it explicitly.
 
+### Always run `dbt test` after pipeline changes
+
+- Any change touching dbt (models, seeds, schema.yml, macros, `dbt_project.yml`) **must** end with a clean `uv run --env-file ../ingest/.env dbt test` before commit. The suite runs in seconds; it catches regressions a code review or `git diff` can't see (broken `accepted_values`, dropped relationships, sort-order drift, etc.).
+- This includes pure refactors that should produce identical output (e.g. moving fetcher code between files). A byte-equivalent `git diff` proves the *output* is unchanged but not that the *pipeline* is still healthy. Run the tests anyway — they're free insurance.
+- For changes that touch seeds, prefer `dbt build` over `dbt test` — it runs `seed → run → test` end-to-end on a clean target and surfaces seed-loading errors that `dbt test` alone wouldn't.
+
 ### The atlas-data-repo split
 
 - `atlas-data-repo/` is structured as if it were already a separate repo. Imports do not cross the boundary in either direction except via the database.

@@ -76,3 +76,67 @@ seeds:
           - not_null
           - unique
           - dbt_utils.accepted_range: { min_value: 1, max_value: 1 }
+
+  - name: ref_un_sdg
+    description: "The 17 UN Sustainable Development Goals. Hand-curated; pin once. The 169 sub-targets are deferred to a future ref_un_sdg_target seed."
+    columns:
+      - name: code
+        description: "SDG number as text ('1'–'17') for consistency with other ref_* seeds."
+        data_tests: [not_null, unique]
+      - name: label_no
+        data_tests: [not_null]
+      - name: label_en
+        data_tests: [not_null]
+      - name: sort_order
+        data_tests:
+          - not_null
+          - unique
+          - dbt_utils.accepted_range: { min_value: 1, max_value: 17 }
+
+  - name: dim_postnummer
+    description: "Norwegian postnummer with primary kommune. ~5 122 rows. Source: Bring's weekly Postnummerregister (free TXT). Used to resolve upstream addresses (NGO branches, etc.) to a kommune_nr without name-matching ambiguity."
+    columns:
+      - name: postnummer
+        description: "4-digit postal code, leading zeros preserved (e.g. 0150 Oslo)."
+        data_tests: [not_null, unique]
+      - name: post_office
+        description: "Post-office name, ALLCAPS as published by Bring."
+        data_tests: [not_null]
+      - name: kommune_nr
+        description: "Primary kommune for the postnummer. A few postnummer span multiple kommuner; only the primary is recorded. Bring's file includes special extraterritorial codes (2100 Svalbard region, 2211 Jan Mayen / offshore) that aren't in dim_kommune; the relationships test warns rather than errors."
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_kommune')
+              field: kommune_nr
+              config:
+                severity: warn
+      - name: sort_order
+        data_tests:
+          - not_null
+          - unique
+          - dbt_utils.accepted_range: { min_value: 1, max_value: 5500 }
+
+  - name: ref_brreg_icnpo
+    description: "ICNPO categories from Brreg's Frivillighetsregister. 14 main groups + 32 subgroups = 46 rows (live as of 2026-04-23). Used both as a controlled vocabulary for ICNPO codes carried on dim_ngo and as a rollup axis for sector reporting (matches SSB's satellittregnskap categorisation)."
+    columns:
+      - name: code
+        description: "ICNPO code. 1- or 2-digit codes are main groups; 4- or 5-digit codes are subgroups."
+        data_tests: [not_null, unique]
+      - name: parent_code
+        description: "Parent main-group code for subgroups; empty string for main groups themselves."
+        data_tests:
+          - relationships:
+              to: ref('ref_brreg_icnpo')
+              field: code
+              config:
+                where: "parent_code != ''"
+      - name: label_no
+        data_tests: [not_null]
+      - name: label_en
+        description: "Empty — Brreg publishes Norwegian only. Populate later if/when Brreg ships English."
+      - name: sort_order
+        data_tests:
+          - not_null
+          - unique
+          - dbt_utils.accepted_range: { min_value: 1, max_value: 46 }

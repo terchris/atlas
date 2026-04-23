@@ -1,0 +1,47 @@
+code,parent_code,label_no,label_en,sort_order
+1,,Kultur- og rekreasjon,,1
+1100,1,Kunst og kultur,,2
+1200,1,Idrett,,3
+1300,1,Rekreasjon og sosiale foreninger,,4
+2,,Utdanning og forskning,,5
+2100,2,Grunn og videregående utdanning,,6
+2200,2,Høgskole og universitet,,7
+2300,2,Annen utdanning,,8
+2400,2,Forskning og utvikling,,9
+3,,Helse,,10
+3100,3,Sykehus og rehabilitering,,11
+3200,3,Sykehjem,,12
+3300,3,Psykiatriske institusjoner,,13
+3400,3,Andre helsetjenester,,14
+4,,Sosiale tjenester,,15
+4100,4,Sosiale tjenester,,16
+4200,4,Krisehjelp og støttearbeid,,17
+4300,4,Økonomisk og materiell støtte,,18
+5,,Natur- og miljøvern,,19
+5100,5,Natur- og miljøvern,,20
+5200,5,Dyrevern,,21
+6,,Bolig- og lokalmiljø,,22
+6100,6,Lokalsamfunnsutvikling,,23
+6200,6,Bolig- og lokalmiljø,,24
+6300,6,Arbeidsopplæring,,25
+7,,Politiske- og interesseorganisasjoner,,26
+7100,7,Interesseorganisasjoner,,27
+7200,7,Juridisk rådgivning,,28
+7300,7,Politiske organisasjoner,,29
+8,,Legater og fremme av frivillighet,,30
+8100,8,Pengeutdelende stiftelser,,31
+8200,8,Frivillighetssentraler,,32
+9,,Internasjonale organisasjoner,,33
+9100,9,Internasjonale organisasjoner,,34
+10,,Tros- og livssynsorganisasjoner,,35
+10100,10,Tros- og livssynsorganisasjoner,,36
+11,,Yrkes- og bransje- og fagforeninger,,37
+11100,11,Næringslivs- og arbeidsgiverorganisasjoner,,38
+11200,11,Yrkessammenslutninger,,39
+11300,11,Arbeidstakerorganisasjoner,,40
+12,,Andre,,41
+12100,12,Andre,,42
+13,,Barne- og ungdomsorganisasjoner,,43
+13100,13,Barne- og ungdomsorganisasjoner,,44
+14,,Mangfold og inkludering,,45
+14100,14,Mangfold og inkludering,,46
