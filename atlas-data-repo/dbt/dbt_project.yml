@@ -37,11 +37,23 @@ models:
 seeds:
   atlas:
     # Reference seeds (ref_*) decode coded fields from upstream sources into
-    # human-readable labels. They land in marts so indicator models can join
-    # them without cross-schema syntax. Refresh policy: see seeds/README.md.
+    # human-readable labels. Dimension seeds (dim_*) and crosswalks
+    # (crosswalk_*) carry conformed reference data joined to facts. All
+    # land in marts so consuming models can join them without cross-schema
+    # syntax. Refresh policy: see seeds/README.md.
     +schema: marts
+    # Pin types so dbt's CSV sniffing doesn't strip leading zeros from
+    # codes that look numeric (e.g. ICNPO "1100", postnummer "0150").
+    # A column type listed here is only applied if the CSV has that column;
+    # extra entries are harmless.
     +column_types:
       code: text
+      parent_code: text
       label_no: text
       label_en: text
       sort_order: integer
+      postnummer: text
+      post_office: text
+      kommune_nr: text
+      name: text
+      name_kind: text

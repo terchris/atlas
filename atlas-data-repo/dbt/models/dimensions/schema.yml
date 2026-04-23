@@ -75,3 +75,38 @@ models:
     data_tests:
       - dbt_utils.expression_is_true:
           expression: "length(fylke_nr) = 2"
+
+  - name: crosswalk_kommune_name
+    description: |
+      Name → kommune_nr lookup for resolving free-text municipality strings
+      (NGO branch addresses, scrapes, upstream sources that publish names
+      not codes) to a canonical kommune_nr.
+
+      Derived from dim_kommune; not a seed. Three views unioned:
+        canonical    — every active kommune's bokmål name
+        alternative  — Sami variants where dim_kommune carries kommune_name_alt
+        historical   — pre-2020-reform names from inactive kommune codes;
+                       kommune_nr points to the OLD code, not the merged-into
+                       successor (v1 limitation).
+
+      Norwegian place names collide ("Os" was both Os/Innlandet and
+      Os/Hordaland pre-2020); the lookup is intrinsically not unique by name.
+      Consumers handling ambiguous matches must apply additional context
+      (postal code, fylke).
+    columns:
+      - name: name
+        description: "The free-text municipality name to resolve."
+        data_tests: [not_null]
+      - name: name_kind
+        description: "Where this name comes from: canonical (current), alternative (Sami variant), or historical (pre-merger)."
+        data_tests:
+          - not_null
+          - accepted_values: { values: ['canonical', 'alternative', 'historical'] }
+      - name: kommune_nr
+        description: "Resolved kommune_nr. For historical rows this is the OLD code, not the modern successor. Both active and historical codes appear; relationships test passes against dim_kommune which carries both."
+        data_tests:
+          - not_null
+          - relationships: { to: ref('dim_kommune'), field: kommune_nr }
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [name, name_kind, kommune_nr]
