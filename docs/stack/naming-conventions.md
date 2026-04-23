@@ -78,6 +78,12 @@ Use these **exact names** when the concept is present. Never invent variants.
 | Postal-area name | `post_office` | `text` | From `dim_postnummer`; ALLCAPS as published by Bring. |
 | Free-text municipality name | `name` | `text` | Used in `marts.crosswalk_kommune_name` to resolve upstream text to `kommune_nr`. |
 | Kind of resolved name | `name_kind` | `text` | One of `"canonical"`, `"alternative"`, `"historical"` in `crosswalk_kommune_name`. |
+| NGO Brreg organisasjonsnummer | `ngo_orgnr` | `text` | 9 chars; must exist in `marts.dim_ngo`. Same shape as `orgnr` but namespaced when used as a foreign key in supply-side facts/dims. |
+| NGO URL slug | `ngo_slug` | `text` | kebab-case, lowercase, unique in `dim_ngo`. URL-friendly; what filters and routes use (`'redcross'`, `'kirkens-bymisjon'`, `'sanitetskvinnene'`). |
+| NGO structural-fit tier | `tier` | `text` | One of `"A"`, `"B"`, `"B-minus"`, `"C-donor"`, `"C-petition"`, `"C-industry"`, `"C-quasigovernmental"` (per `docs/research/ngo-landscape.md`). |
+| NGO chapter-data shape | `chapter_data_shape` | `text` | One of `"api_canonical"`, `"cms_bins"`, `"programme_only"`, `"no_structure"`. Drives ingest pattern. |
+| NGO primary focus | `primary_focus` | `text` | One of `"humanitarian"`, `"health"`, `"social"`, `"youth"`, `"environment"`, `"civic"`, `"patient_support"`, `"faith_adjacent"`, `"service_club"`. |
+| Atlas service category | `service_category_code` | `text` | snake_case identifier; must exist in `marts.ref_atlas_service_category`. The cross-NGO connector — every `dim_activity` row points at one category. |
 
 ## Never in marts
 

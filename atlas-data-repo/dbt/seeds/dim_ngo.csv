@@ -1,0 +1,12 @@
+orgnr,slug,name,brand_name,website_url,tier,chapter_data_shape,has_chapters,primary_focus,icnpo_code_1,icnpo_code_2,icnpo_code_3
+970169113,diabetesforbundet,Diabetesforbundet,,https://www.diabetes.no,A,cms_bins,true,patient_support,,,
+943838240,fire-h,4H Norge,,https://www.4h.no,A,cms_bins,true,youth,,,
+871033552,folkehjelp,Norsk Folkehjelp,,https://www.folkehjelp.no,A,cms_bins,true,humanitarian,,,
+938498318,frelsesarmeen,Frelsesarmeen,,https://www.frelsesarmeen.no,A,cms_bins,true,social,,,
+944384448,kirkens-bymisjon,Stiftelsen Kirkens Bymisjon,Kirkens Bymisjon,https://kirkensbymisjon.no,A,cms_bins,true,social,,,
+940190738,lhl,Landsforeningen for hjerte- og lungesyke,LHL,https://www.lhl.no,A,cms_bins,true,patient_support,,,
+971322926,mental-helse,Mental Helse,,https://mentalhelse.no,A,cms_bins,true,patient_support,,,
+938429863,nasjonalforeningen,Nasjonalforeningen for folkehelsen,Nasjonalforeningen,https://nasjonalforeningen.no,A,programme_only,true,health,,,
+864139442,redcross,Norges Røde Kors,Røde Kors,https://www.rodekors.no,A,api_canonical,true,humanitarian,,,
+970168001,sanitetskvinnene,Norske Kvinners Sanitetsforening,Sanitetskvinnene,https://sanitetskvinnene.no,A,cms_bins,true,social,,,
+954877841,speiderforbundet,Norges Speiderforbund,,https://speiding.no,A,cms_bins,true,youth,,,

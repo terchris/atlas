@@ -34,6 +34,8 @@ codes.
 | `ref_un_sdg.csv` | UN | Sustainable Development Goals | UN sdgs.un.org | 17 | yes | **never** (hand-curated, no script) |
 | `ref_brreg_icnpo.csv` | Brreg | ICNPO categories (14+32 hierarchy) | `data.brreg.no/frivillighetsregisteret/api/icnpo-kategorier` | 46 | no | rare (`refresh:brreg-icnpo`) |
 | `dim_postnummer.csv` | Bring | Norwegian postal codes → primary kommune | `bring.no/postnummerregister-ansi.txt` (Windows-1252 TSV) | 5 122 | n/a | periodic (`refresh:bring-postnummer`) |
+| `ref_atlas_service_category.csv` | Atlas | Cross-NGO service categories (UI-ready) | hand-curated (Appendix A of INVESTIGATE-ngo-supply-data-model.md) | 22 | yes | curated (edit CSV in PR) |
+| `dim_ngo.csv` | Atlas | NGO catalogue (orgnr, slug, tier, chapter_data_shape, …) | curated landscape.json under `ingest/src/seed-sources/atlas-ngo-landscape/` | 11 | n/a | curated (`refresh:atlas-ngo-landscape`) |
 
 FHI UTDANN is a coarser scheme than SSB Nivaa — FHI collapses
 fagskole + university into a single "universitet/ høgskole" code. The
