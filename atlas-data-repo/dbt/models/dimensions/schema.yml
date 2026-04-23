@@ -110,3 +110,84 @@ models:
     data_tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns: [name, name_kind, kommune_nr]
+
+  - name: dim_chapter
+    description: |
+      Conformed chapter dimension across all ingested NGOs. One row per chapter
+      at any organisational level. UNION of supply__<ngo_slug>_branches
+      staging models; PLAN-002 lands the first (Red Cross). Coverage-gap and
+      "find providers near me" queries filter to chapter_level = 'local' AND
+      is_active = true (per Q44 + Q48 of INVESTIGATE-ngo-supply-data-model).
+    columns:
+      - name: chapter_id
+        description: "Composite slug, namespaced by NGO. Stable across refreshes."
+        data_tests: [not_null, unique]
+      - name: ngo_orgnr
+        description: "FK to dim_ngo.orgnr."
+        data_tests:
+          - not_null
+          - relationships: { to: ref('dim_ngo'), field: orgnr }
+      - name: chapter_level
+        description: "national / regional / local per Q46. Coverage-gap supply queries filter to local."
+        data_tests:
+          - not_null
+          - accepted_values: { values: ['national', 'regional', 'local'] }
+      - name: parent_chapter_id
+        description: "Self-FK to chapter_id (e.g. local → regional → national). NULL for top-level (national) and orphan (Ukjent) rows."
+        data_tests:
+          - relationships:
+              to: ref('dim_chapter')
+              field: chapter_id
+              config: { where: "parent_chapter_id is not null" }
+      - name: chapter_orgnr
+        description: "Brreg orgnr if the chapter is separately registered (e.g. Red Cross local branches each have their own). NULL otherwise."
+      - name: name
+        data_tests: [not_null]
+      - name: kommune_nr
+        description: "Resolved via dim_postnummer. NULL for branches that span multiple kommuner (regional, national)."
+        data_tests:
+          - relationships:
+              to: ref('dim_kommune')
+              field: kommune_nr
+              config: { severity: warn }
+      - name: is_active
+        data_tests:
+          - not_null
+          - accepted_values: { values: [true, false] }
+      - name: updated_at
+        data_tests: [not_null]
+
+  - name: dim_activity
+    description: |
+      Activity catalog — one row per (NGO, NGO-canonical activity name).
+      Replaces the originally-proposed crosswalk_activity_to_category table
+      (per Q22 of INVESTIGATE-ngo-supply-data-model). Carries
+      service_category_code directly; cross-NGO Coverage-gap queries pivot
+      on this column. Per-NGO reporting pivots on canonical_name.
+
+      Built by SELECT DISTINCT from per-NGO supply__<ngo>_branch_activities
+      filtered to is_service = true. PLAN-002 lands the first staging model
+      (Red Cross). PLAN-003 will UNION ALL Folkehjelp.
+    columns:
+      - name: activity_id
+        description: "Composite slug, e.g. 'redcross-besokstjeneste'. Stable across refreshes."
+        data_tests: [not_null, unique]
+      - name: ngo_orgnr
+        data_tests:
+          - not_null
+          - relationships: { to: ref('dim_ngo'), field: orgnr }
+      - name: canonical_name
+        description: "NGO's own canonical activity name. Used for per-NGO reporting and display."
+        data_tests: [not_null]
+      - name: service_category_code
+        description: "Atlas cross-NGO category. Used for cross-NGO Coverage-gap queries."
+        data_tests:
+          - not_null
+          - relationships: { to: ref('ref_atlas_service_category'), field: code }
+      - name: is_active
+        data_tests:
+          - not_null
+          - accepted_values: { values: [true, false] }
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [ngo_orgnr, canonical_name]

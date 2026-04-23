@@ -69,3 +69,53 @@ models:
             - kommune_nr
             - year
             - contents_code
+
+  - name: fact_chapter_activities
+    description: |
+      The supply-side fact: one row per (chapter, activity) for every NGO in
+      dim_ngo. Cross-NGO Coverage-gap queries join this to dim_activity (for
+      service_category_code) and to dim_chapter (for is_active, chapter_level,
+      kommune_nr filters).
+
+      v1 contains Red Cross only; PLAN-003 adds Folkehjelp via a UNION ALL in
+      the source CTE. Per-activity dormancy is not modelled in v1 — is_active
+      inherits from the chapter; if Atlas later needs per-activity dormancy
+      (Red Cross local active but its Norsktrening on hold), add a separate
+      flag in supply__* and propagate.
+    columns:
+      - name: chapter_id
+        data_tests:
+          - not_null
+          - relationships: { to: ref('dim_chapter'), field: chapter_id }
+      - name: activity_id
+        data_tests:
+          - not_null
+          - relationships: { to: ref('dim_activity'), field: activity_id }
+      - name: ngo_orgnr
+        description: "Denormalised from dim_chapter for query convenience."
+        data_tests:
+          - not_null
+          - relationships: { to: ref('dim_ngo'), field: orgnr }
+      - name: kommune_nr
+        description: "Denormalised from dim_chapter. NULL for non-local chapters (regional, national)."
+        data_tests:
+          - relationships:
+              to: ref('dim_kommune')
+              field: kommune_nr
+              config: { severity: warn }
+      - name: local_activity_name
+        description: "NGO's local display string for the activity at this chapter (e.g. 'Modum Røde Kors Hjelpekorps')."
+      - name: canonical_name
+        description: "Denormalised from dim_activity for query convenience."
+        data_tests: [not_null]
+      - name: is_active
+        data_tests:
+          - not_null
+          - accepted_values: { values: [true, false] }
+      - name: source_id
+        data_tests: [not_null]
+      - name: updated_at
+        data_tests: [not_null]
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [chapter_id, activity_id]

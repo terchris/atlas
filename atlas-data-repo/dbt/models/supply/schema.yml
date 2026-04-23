@@ -1,0 +1,73 @@
+version: 2
+
+models:
+  - name: supply__redcross_branches
+    description: |
+      Per-source staging model: reshapes raw.redcross_branches into the shared
+      dim_chapter shape. Materialised as a view (cheap; just column mapping +
+      a postnummer lookup). dim_chapter UNIONs this with sister supply__*
+      models for other NGOs.
+    columns:
+      - name: chapter_id
+        description: "'redcross-' || branch_id; namespaced for cross-NGO uniqueness."
+        data_tests: [not_null, unique]
+      - name: ngo_orgnr
+        description: "Hardcoded '864139442' (Norges Røde Kors)."
+        data_tests:
+          - not_null
+          - relationships: { to: ref('dim_ngo'), field: orgnr }
+      - name: chapter_level
+        data_tests:
+          - not_null
+          - accepted_values: { values: ['national', 'regional', 'local'] }
+      - name: parent_chapter_id
+        description: "Self-FK to chapter_id. NULL for HQ and Ukjent."
+      - name: kommune_nr
+        description: "Resolved via dim_postnummer.postnummer → kommune_nr lookup. NULL for branches without a postal code (HQ, some Distrikt, Ukjent)."
+        data_tests:
+          - relationships:
+              to: ref('dim_kommune')
+              field: kommune_nr
+              config: { severity: warn }
+      - name: is_active
+        data_tests:
+          - not_null
+          - accepted_values: { values: [true, false] }
+
+  - name: supply__redcross_branch_activities
+    description: |
+      Per-source staging: reshapes raw.redcross_branch_activities into a per-
+      (chapter, activity) row with service_category_code resolved via a
+      50→22 CASE WHEN. is_service flags the 14 admin/governance/recruitment
+      activities — those rows still exist for audit but won't surface in
+      dim_activity or fact_chapter_activities.
+    columns:
+      - name: chapter_id
+        description: "'redcross-' || branch_id."
+        data_tests:
+          - not_null
+          - relationships: { to: ref('dim_chapter'), field: chapter_id }
+      - name: ngo_orgnr
+        data_tests:
+          - not_null
+          - relationships: { to: ref('dim_ngo'), field: orgnr }
+      - name: canonical_name
+        description: "Red Cross's globalActivityName, verbatim."
+        data_tests: [not_null]
+      - name: service_category_code
+        description: "From the 50→22 CASE WHEN. NULL only if a new globalActivityName appeared in raw that the CASE doesn't cover (catches drift loudly via the not_null filter applied at dim_activity/fact_chapter_activities — those filter is_service = true; a new unmapped service-type activity would still be is_service = true with NULL category, surfacing the gap)."
+        data_tests:
+          - relationships:
+              to: ref('ref_atlas_service_category')
+              field: code
+              config: { where: "service_category_code is not null" }
+      - name: is_service
+        data_tests:
+          - not_null
+          - accepted_values: { values: [true, false] }
+    data_tests:
+      # Catches the drift case: any NEW global_activity_name that wasn't in
+      # the CASE, AND wasn't filtered out as is_service = false, will fail
+      # this test. Loud signal that the curation needs updating.
+      - dbt_utils.expression_is_true:
+          expression: "(is_service = false) or (service_category_code is not null)"

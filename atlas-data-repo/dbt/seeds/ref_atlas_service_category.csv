@@ -1,0 +1,23 @@
+code,label_no,label_en,description,sort_order
+rescue_corps,Hjelpekorps,Rescue corps,"Search and rescue, terrain/water",1
+first_aid_standby,Beredskapsvakt,First aid standby,Event medical presence,2
+first_aid_training,Førstehjelpskurs,First aid training,Courses for the public,3
+elderly_visiting,Besøkstjeneste,Elderly visiting,1-to-1 visiting/companionship,4
+language_practice,Norsktrening,Norwegian language practice,Norwegian conversation groups,5
+homework_help,Leksehjelp,Homework help,School-aged tutoring,6
+migrant_mentoring,Flyktningguide,Refugee mentoring,1-to-1 mentoring for newcomers,7
+youth_drop_in,Treffpunkt for ungdom,Youth drop-in centre,Open youth meeting places,8
+youth_activity_groups,Ungdomsgruppe,Youth activity groups,Organised youth activities,9
+holiday_camps_low_income,Ferie for alle,Holiday camps for low-income families,Free camps and trips for low-income kids,10
+crisis_helpline,Hjelpetelefon,Crisis helpline,Phone/chat crisis support,11
+crisis_shelter,Krisesenter,Crisis shelter,Women's shelters etc.,12
+bullying_prevention,Mobbeforebygging,Anti-bullying,School/community anti-bullying,13
+legal_witness_support,Vitnestøtte,Court witness support,Court witness accompaniment,14
+prison_reintegration,Nettverk etter soning,Prison reintegration,Post-release support,15
+street_mediation,Gatemegling,Street mediation,Restorative-justice for youth,16
+food_distribution,Matutdeling,Food distribution,"Food banks, meal programmes",17
+housing_outreach,Boligoppsøking,Housing outreach,"Street outreach, housing-first",18
+family_support,Familiesenter,Family support centre,Practical/social support to families,19
+health_information,Helseopplysning,Health information,"Disease-awareness, health education",20
+thrift_shop,Bruktbutikk,Thrift shop,Resale + community presence,21
+political_advocacy,Politisk påvirkning,Political advocacy,"Petition, campaign action",22

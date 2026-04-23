@@ -78,6 +78,19 @@ Use these **exact names** when the concept is present. Never invent variants.
 | Postal-area name | `post_office` | `text` | From `dim_postnummer`; ALLCAPS as published by Bring. |
 | Free-text municipality name | `name` | `text` | Used in `marts.crosswalk_kommune_name` to resolve upstream text to `kommune_nr`. |
 | Kind of resolved name | `name_kind` | `text` | One of `"canonical"`, `"alternative"`, `"historical"` in `crosswalk_kommune_name`. |
+| NGO Brreg organisasjonsnummer | `ngo_orgnr` | `text` | 9 chars; must exist in `marts.dim_ngo`. Same shape as `orgnr` but namespaced when used as a foreign key in supply-side facts/dims. |
+| NGO URL slug | `ngo_slug` | `text` | kebab-case, lowercase, unique in `dim_ngo`. URL-friendly; what filters and routes use (`'redcross'`, `'kirkens-bymisjon'`, `'sanitetskvinnene'`). |
+| NGO structural-fit tier | `tier` | `text` | One of `"A"`, `"B"`, `"B-minus"`, `"C-donor"`, `"C-petition"`, `"C-industry"`, `"C-quasigovernmental"` (per `docs/research/ngo-landscape.md`). |
+| NGO chapter-data shape | `chapter_data_shape` | `text` | One of `"api_canonical"`, `"cms_bins"`, `"programme_only"`, `"no_structure"`. Drives ingest pattern. |
+| NGO primary focus | `primary_focus` | `text` | One of `"humanitarian"`, `"health"`, `"social"`, `"youth"`, `"environment"`, `"civic"`, `"patient_support"`, `"faith_adjacent"`, `"service_club"`. |
+| Atlas service category | `service_category_code` | `text` | snake_case identifier; must exist in `marts.ref_atlas_service_category`. The cross-NGO connector — every `dim_activity` row points at one category. |
+| Chapter id (cross-NGO) | `chapter_id` | `text` | Composite slug, e.g. `'redcross-L098'`. Namespaced by NGO so PKs don't collide. Must exist in `marts.dim_chapter`. |
+| Chapter level | `chapter_level` | `text` | One of `"national"`, `"regional"`, `"local"`. Coverage-gap supply queries filter to `'local'`. |
+| Parent chapter id | `parent_chapter_id` | `text` | Self-FK on `dim_chapter`. NULL for top-level (national) and orphan (Ukjent) rows. |
+| Chapter's own Brreg orgnr | `chapter_orgnr` | `text` | Optional 9-digit orgnr if the chapter is separately registered with Brreg (e.g. Red Cross local branches each have own). NULL otherwise. |
+| Activity id (cross-NGO) | `activity_id` | `text` | Composite slug `<ngo_slug>-<canonical_slug>`, e.g. `'redcross-besokstjeneste'`. Must exist in `marts.dim_activity`. |
+| NGO's canonical activity name | `canonical_name` | `text` | The NGO's own canonical term, verbatim (e.g. Red Cross's `globalActivityName = "Besøkstjeneste"`). Per-NGO reporting pivots on this. |
+| NGO's local activity display string | `local_activity_name` | `text` | Per-chapter display string (e.g. `"Modum Røde Kors Besøkstjeneste"`). On `fact_chapter_activities` only. |
 
 ## Never in marts
 

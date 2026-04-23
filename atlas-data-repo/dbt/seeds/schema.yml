@@ -117,6 +117,94 @@ seeds:
           - unique
           - dbt_utils.accepted_range: { min_value: 1, max_value: 5500 }
 
+  - name: dim_ngo
+    description: "Atlas's NGO catalogue. One row per NGO. Source: hand-curated landscape.json under ingest/src/seed-sources/atlas-ngo-landscape/. v1 holds ~11 Tier A federations from docs/research/ngo-landscape.md; expanded as new NGOs ingest. orgnr is the Brreg primary key; slug is the URL-friendly identifier."
+    columns:
+      - name: orgnr
+        description: "9-digit Brreg organisasjonsnummer (legacy orgs may have leading zeros — preserved as text)."
+        data_tests:
+          - not_null
+          - unique
+      - name: slug
+        description: "kebab-case identifier; URL-friendly (e.g. 'redcross', 'kirkens-bymisjon')."
+        data_tests:
+          - not_null
+          - unique
+      - name: name
+        description: "Legal name from Brreg."
+        data_tests: [not_null]
+      - name: brand_name
+        description: "Common brand name when distinct from legal name (e.g. 'Sanitetskvinnene' vs N.K.S.). Empty if same as name."
+      - name: website_url
+        data_tests: [not_null]
+      - name: tier
+        description: "Structural-fit tier from ngo-landscape.md."
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ['A', 'B', 'B-minus', 'C-donor', 'C-petition', 'C-industry', 'C-quasigovernmental']
+      - name: chapter_data_shape
+        description: "How this NGO's per-chapter activity data is shaped — drives ingest pattern."
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ['api_canonical', 'cms_bins', 'programme_only', 'no_structure']
+      - name: has_chapters
+        description: "True if NGO has chapters/lokallag/korps that ingest into dim_chapter."
+        data_tests:
+          - not_null
+      - name: primary_focus
+        description: "Sector classification from ngo-landscape.md."
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ['humanitarian', 'health', 'social', 'youth', 'environment', 'civic', 'patient_support', 'faith_adjacent', 'service_club']
+      - name: icnpo_code_1
+        description: "Primary ICNPO code from Brreg Frivillighetsregister, ranked by activity scope. Empty in v1 — populated by future refresh:brreg-frivillighet enrichment."
+        data_tests:
+          - relationships:
+              to: ref('ref_brreg_icnpo')
+              field: code
+              config: { where: "icnpo_code_1 != ''" }
+      - name: icnpo_code_2
+        data_tests:
+          - relationships:
+              to: ref('ref_brreg_icnpo')
+              field: code
+              config: { where: "icnpo_code_2 != ''" }
+      - name: icnpo_code_3
+        data_tests:
+          - relationships:
+              to: ref('ref_brreg_icnpo')
+              field: code
+              config: { where: "icnpo_code_3 != ''" }
+    data_tests:
+      - dbt_utils.expression_is_true:
+          expression: "length(orgnr) = 9"
+      - dbt_utils.expression_is_true:
+          expression: "slug = lower(slug)"
+
+  - name: ref_atlas_service_category
+    description: "Atlas's curated cross-NGO service-category vocabulary. 22 rows. Each NGO's dim_activity row points at one category code; cross-NGO queries (Coverage-gap, 'find X near me') filter on category_code. Threshold rule: a category exists if at least 2 NGOs offer programmes in it. See Appendix A in INVESTIGATE-ngo-supply-data-model.md for the curation rationale."
+    columns:
+      - name: code
+        description: "snake_case identifier; stable across seed updates."
+        data_tests: [not_null, unique]
+      - name: label_no
+        description: "Norwegian (bokmål) label suitable for UI display."
+        data_tests: [not_null]
+      - name: label_en
+        description: "English label."
+        data_tests: [not_null]
+      - name: description
+        description: "One-line summary of what services in this category typically include."
+        data_tests: [not_null]
+      - name: sort_order
+        data_tests:
+          - not_null
+          - unique
+          - dbt_utils.accepted_range: { min_value: 1, max_value: 22 }
+
   - name: ref_brreg_icnpo
     description: "ICNPO categories from Brreg's Frivillighetsregister. 14 main groups + 32 subgroups = 46 rows (live as of 2026-04-23). Used both as a controlled vocabulary for ICNPO codes carried on dim_ngo and as a rollup axis for sector reporting (matches SSB's satellittregnskap categorisation)."
     columns:

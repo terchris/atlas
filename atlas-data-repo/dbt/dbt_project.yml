@@ -51,9 +51,21 @@ seeds:
       parent_code: text
       label_no: text
       label_en: text
+      description: text
       sort_order: integer
       postnummer: text
       post_office: text
       kommune_nr: text
       name: text
       name_kind: text
+      orgnr: text
+      slug: text
+      brand_name: text
+      website_url: text
+      tier: text
+      chapter_data_shape: text
+      has_chapters: boolean
+      primary_focus: text
+      icnpo_code_1: text
+      icnpo_code_2: text
+      icnpo_code_3: text

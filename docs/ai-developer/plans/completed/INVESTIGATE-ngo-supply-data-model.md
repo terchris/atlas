@@ -4,15 +4,30 @@
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Backlog
+## Status: Completed
 
 **Goal**: Decide how Atlas should ingest, store, and query "what each NGO offers, where" — turning a heterogeneous mix of NGO data sources (live APIs, HTML scrapes, JSON blobs, no per-chapter data at all) into queryable `marts.*` tables that can be joined with the demand-side indicators we already ingest, so the **Coverage-gap explorer** (Signe / Arne / Ola in [`personas.md`](../../../research/personas.md)) can answer "where is the need high and the supply absent?".
 
-**Last Updated**: 2026-04-23 (data-model design refined in conversation; see "Decisions resolved during planning" near the bottom)
+**Last Updated**: 2026-04-23
+**Completed**: 2026-04-23 — foundation + Red Cross delivered via PLAN-001 + PLAN-002. Each future NGO ingest gets its own investigation (see Scope below).
+
+## Scope of this investigation
+
+**In scope and shipped:**
+
+- The cross-NGO **data model** (sections A–F): `dim_ngo`, `dim_chapter`, `dim_activity`, `fact_chapter_activities`, `ref_atlas_service_category`, the 22-row vocabulary, the chapter-hierarchy `chapter_level` + `parent_chapter_id`, the per-NGO + cross-NGO reporting pivots.
+- The **first NGO ingest** (Red Cross) — chosen as the reference case because it's the only NGO with a real API and the data model needed real data to ground it.
+
+**Moved out of scope** (each gets its own investigation when picked up):
+
+- **Folkehjelp ingest** (was Q27 / PLAN-C) — HTML scraping with very different mechanics from Red Cross's clean API. Needs its own investigation covering scrape probing, snapshot vs live-scrape, the kommune_nr-from-name resolution challenge, the 6-bin CMS shape. Sample-scrape research already done in [`docs/research/norskfolkehjelp-activities.md`](../../../research/norskfolkehjelp-activities.md). Future investigation: `INVESTIGATE-folkehjelp-ingest.md`.
+- **Each subsequent NGO** (NKS, Frelsesarmeen, Kirkens Bymisjon, Speiderforbundet, etc.) — same pattern: one investigation per NGO, each covering that NGO's source mechanics. Future investigations: `INVESTIGATE-<ngo>-ingest.md`.
+- **Coverage-gap mart materialisation** (was Q28 / PLAN-D) — pre-computed (need × supply) gap mart. Not really NGO-specific; depends on at least 2 NGOs being ingested AND a real performance signal that the on-the-fly query against `fact_chapter_activities` is too slow. Future investigation: `INVESTIGATE-coverage-gap-mart.md`.
+- **Red Cross institution sub-array** (was Q43) — Red Cross doesn't have institutions in the formal sense; NKS / Frelsesarmeen / Kirkens Bymisjon do. Picked up in whichever of those NGOs ingests first.
 
 **Origin**: The Norwegian Red Cross Organizations API dump at [`docs/research/api-getOrganizations-output-21apr26.json`](../../../research/api-getOrganizations-output-21apr26.json) (1.0 MB, 392 branches, 50 unique global activities) was originally fetched for Red Cross-specific UI. It now serves as the **best-case reference shape** for one of ~11+ NGOs Atlas needs to cover. The product-side data model already exists at [`docs/research/common-schema.md`](../../../research/common-schema.md). This investigation closes the gap between that conceptual model and Atlas's `marts.*` data layer — the place where supply (NGO presence) finally meets demand (the 19 already-ingested sources).
 
-**Decision-point IDs**: This file uses the `[Q<N>]` convention from [`PLANS.md`](../../PLANS.md#decision-point-ids-qn). Reference any decision by its ID — e.g. *"Q11 yes, Q40 = hand-curated seed for v1, Q46 yes"* — and there's no ambiguity. Q1–Q7 are the discovery questions at the top. Q8–Q24 are options/decisions inside the section bodies. Q25–Q28 are the proposed PLANs. Q29–Q38 are decisions resolved during the planning conversation. Q39–Q48 are open questions (most now Resolved with strikethrough — only Q43 institutions remains parked, deferred to a future NGO ingest).
+**Decision-point IDs**: This file uses the `[Q<N>]` convention from [`PLANS.md`](../../PLANS.md#decision-point-ids-qn). Reference any decision by its ID — e.g. *"Q11 yes, Q40 = hand-curated seed for v1, Q46 yes"* — and there's no ambiguity. Q1–Q7 are the discovery questions at the top. Q8–Q24 are options/decisions inside the section bodies. Q25–Q28 are the proposed PLANs (Q25/Q26 shipped; Q27/Q28 moved to separate investigations). Q29–Q38 are decisions resolved during the planning conversation. Q39–Q48 are open questions (most now Resolved with strikethrough).
 
 ---
 
@@ -186,7 +201,7 @@ Recommendation: Q22. Postal code is the deterministic primary; SSB Klass histori
 
 This **mirrors the existing pattern** — see [`docs/ai-developer/plans/completed/INVESTIGATE-data-journey-pattern.md`](../completed/INVESTIGATE-data-journey-pattern.md) for the worked end-to-end pattern from a single source.
 
-**[Q24]** Open question: **how many NGOs in v1?** Red Cross alone proves the framework. Adding Norsk Folkehjelp tests the cms_bins shape. Adding Nasjonalforeningen tests programme_only. The sequence is settled in [`goal.md`](../../../research/goal.md): Red Cross + Norsk Folkehjelp first as proof of generalisation; then add Tier A federations one at a time.
+~~**[Q24]**~~ **Resolved (2026-04-23)**: This investigation covers Red Cross only (the foundation + first NGO). Each subsequent NGO gets its own investigation per the scope split documented at the top of this file. Ingest order beyond Red Cross is whichever NGO the team picks up next; the foundation is now stable enough that any of the 11 Tier A NGOs in `dim_ngo` can be ingested independently.
 
 ### E. What does the supply-vs-demand query look like?
 
@@ -251,6 +266,8 @@ where da.service_category_code = 'language_practice'
 ### F. Reporting questions by persona
 
 The point of the two-level identity (Section B) is that it answers very different questions cleanly. Here are real questions each persona would ask, mapped to which level the SQL pivots on. From [`docs/research/personas.md`](../../../research/personas.md).
+
+**A note on scope of these examples**: the queries below reference Folkehjelp, NKS and other NGOs alongside Red Cross to illustrate how the two-level model works at scale. Today, only Red Cross is loaded (PLAN-002 shipped); the other NGOs become real rows only once their respective `INVESTIGATE-<ngo>-ingest.md` lands. Until then, these queries return Red Cross-only results — but the SQL shape is correct and won't change as new NGOs ingest.
 
 #### Kari ("I want to help, somehow") — cross-NGO
 
@@ -446,7 +463,7 @@ Table names follow the convention in [`docs/stack/naming-conventions.md`](../../
 
 Three concrete plans, one per Tier A NGO milestone, plus one for the cross-cutting infra.
 
-### **[Q25]** PLAN-A — Supply-side foundation (cross-cutting)
+### ~~**[Q25]**~~ PLAN-001 (was PLAN-A) — Supply-side foundation — DONE
 
 The plumbing every NGO ingest will need. Build once, reuse N times.
 
@@ -460,9 +477,9 @@ Already exists from PLAN-foundation-reference-tables (no work needed): `dim_post
 
 **Not built in PLAN-A**: `fact_chapter_activities` (waits for the first ingest in PLAN-B); `fact_kommune_supply` aggregate (deferred until query performance demands it).
 
-Estimated ~3–4h.
+Estimated ~3–4h. **Shipped as [PLAN-001-ngo-supply-foundation.md](../completed/PLAN-001-ngo-supply-foundation.md)** (2026-04-23).
 
-### **[Q26]** PLAN-B — First NGO ingest: Red Cross
+### ~~**[Q26]**~~ PLAN-002 (was PLAN-B) — First NGO ingest: Red Cross — DONE
 
 The clean case. Validates the foundation against real data.
 
@@ -473,26 +490,19 @@ The clean case. Validates the foundation against real data.
 - `marts.supply__redcross_branches` — per-source dbt passthrough/staging (mirrors `indicators__*` pattern).
 - Smoke tests: every `dim_activity` row has a `service_category_code` from the v1 list; every `dim_chapter` row has a valid `kommune_nr`; every `fact_chapter_activities` row resolves to one of the 50 activities.
 
-Estimated ~3–4h.
+Estimated ~3–4h. **Shipped as [PLAN-002-redcross-ingest.md](../completed/PLAN-002-redcross-ingest.md)** (2026-04-23). Final numbers: 391 chapters, 35 activities, 1 941 fact rows. See the PLAN's "Plan deviations" for two real findings during implementation (dump-data quirk + appendix bookkeeping off-by-one).
 
-### **[Q27]** PLAN-C — Second NGO ingest: Norsk Folkehjelp (cms_bins shape)
+### ~~**[Q27]**~~ PLAN-003 — Second NGO ingest: Folkehjelp — moved to separate investigation
 
-Validates that the `chapter_data_shape` abstraction works with a non-API source.
+Per the scope split documented at the top: each NGO's ingest is qualitatively different (Red Cross has an API; Folkehjelp is HTML scraping; NKS has institutions; etc.). Folkehjelp-specific decisions (snapshot vs live-scrape, the kommune_nr-from-name resolution challenge, the 6-bin CMS shape, fragility handling) belong in a dedicated investigation, not at the bottom of this one.
 
-- `ingest/src/sources/folkehjelp-chapters/index.ts` — HTML scrape of folkehjelp.no/lokallag.
-- `raw.folkehjelp_chapters` and `raw.folkehjelp_chapter_activities` (one per CMS bin).
-- **Adds ~6 rows to `marts.dim_activity`** (one per Folkehjelp CMS bin, each tagged with a v1 service category).
-- **Adds ~120 chapters to `marts.dim_chapter`** and the corresponding `fact_chapter_activities` rows.
-- `marts.supply__folkehjelp_chapters` per-source staging.
-- Cross-NGO smoke test: pick a kommune that has both a Red Cross local and a Folkehjelp lokallag; verify both appear in a single category-filtered query.
+Future investigation: `INVESTIGATE-folkehjelp-ingest.md` (when picked up). Sample-scrape research already done in [`docs/research/norskfolkehjelp-activities.md`](../../../research/norskfolkehjelp-activities.md) confirms: 108 lokallag, 6 fixed CMS bins (Førstehjelp og redningstjeneste, Sanitetsungdom, Samfunnsarbeid, Flyktning og inkludering, Internasjonale spørsmål, Solidaritetsungdom), Craft CMS render pattern.
 
-Estimated ~4–5h (HTML scraping is bumpier than API fetching).
+### ~~**[Q28]**~~ PLAN-D — Coverage-gap mart materialisation — moved to separate investigation
 
-### **[Q28]** PLAN-D — Coverage-gap mart materialisation
+Once at least 2 NGOs are ingested AND the on-the-fly Coverage-gap query against `fact_chapter_activities` is shown to be too slow, build a `mart_coverage_gap` that pre-computes "high-need + low-supply" combinations.
 
-Once supply has at least two NGOs, build a `mart_coverage_gap` that pre-computes "high-need + low-supply" combinations for the top N (need-indicator × service-category) pairs the Coverage-gap explorer surfaces.
-
-Defer until PLAN-B and PLAN-C are live and we can see whether the on-the-fly query against `fact_chapter_activities` is fast enough on its own.
+Future investigation: `INVESTIGATE-coverage-gap-mart.md` (when a real performance need surfaces).
 
 ---
 
@@ -542,47 +552,50 @@ The data model was discussed and refined in a planning conversation. Decisions l
 
 ## Next Steps
 
-- [ ] **PLAN-A-supply-foundation.md** — `dim_ngo`, `dim_postnummer`, `crosswalk_kommune_name`, `ref_atlas_service_category` seeds + the empty `fact_kommune_supply` shell.
-- [ ] **PLAN-B-redcross-ingest.md** — first NGO source ingest + crosswalk for 50 Red Cross activities, populating `fact_kommune_supply`.
-- [ ] **PLAN-C-folkehjelp-ingest.md** — second NGO ingest validating the cms_bins shape.
-- [ ] **PLAN-D-coverage-gap-mart.md** — pre-computed supply×demand gap mart for the explorer UI. Deferred until B+C exist.
-
-Estimated total effort across A–C: ~12–16h focused. PLAN-D depends on what's expensive in queries against the union table.
+- [x] **PLAN-001-ngo-supply-foundation.md** — `ref_atlas_service_category` seed (22 rows) + `dim_ngo` seed (11 Tier A NGOs). Shipped as commit `bd378e7`. (Was PLAN-A in the original sketch.)
+- [x] **PLAN-002-redcross-ingest.md** — Red Cross dump-based ingest, 391 chapters + 1941 fact rows + 35 activities. Built `dim_chapter`, `dim_activity`, `fact_chapter_activities`. (Was PLAN-B in the original sketch.)
+- [ ] **INVESTIGATE-folkehjelp-supply.md** — separate investigation per NGO. Folkehjelp's data shape (cms_bins page-list) differs enough from Red Cross's API JSON that we want to scope it on its own. (Was PLAN-C in the original sketch.)
+- [ ] **INVESTIGATE-coverage-gap-mart.md** — pre-computed supply×demand gap mart for the explorer UI. Deferred until at least 2 NGOs are ingested so the cross-NGO joins can be validated. (Was PLAN-D in the original sketch.)
 
 ### Not in scope for this investigation
 
-- Tier C profile ingest (NRC, Kirkens Nødhjelp, etc.) — they have no chapters; their data is the `Profile` entity from `common-schema.md`, lives in `marts.dim_ngo` payload columns, no `fact_kommune_supply` rows.
+- Folkehjelp ingest and any other NGO beyond Red Cross — each NGO gets its own investigation, since data shapes vary materially (Red Cross has a clean JSON API; Folkehjelp has cms_bins page lists; Tier A NGOs vary further).
+- Tier C profile ingest (NRC, Kirkens Nødhjelp, etc.) — they have no chapters; their data is the `Profile` entity from `common-schema.md`, lives in `dim_ngo` payload columns, no chapter/activity rows.
 - Funding data (Lottstift, Innsamlingskontrollen) — separate investigation, separate fact table.
 - Tilskuddsmatcher — its own investigation, [`tilskuddsmatcher-data-availability.md`](../../../research/tilskuddsmatcher-data-availability.md) covers the data side.
 - Live API access for Red Cross — dump-based ingest is sufficient for v1; access conversation is a separate workstream.
 
 ---
 
-## Files this investigation will produce (when promoted to PLANs)
+## Files this investigation produced
 
-New tables (across PLAN-A through PLAN-D):
-- **From PLAN-foundation-reference-tables (already shipped)**: `dim_postnummer`, `crosswalk_kommune_name`, `ref_brreg_icnpo`, `ref_un_sdg`. Reused, not rebuilt.
+**Reused from PLAN-foundation-reference-tables (already shipped earlier):**
+- `dim_postnummer`, `crosswalk_kommune_name`, `ref_brreg_icnpo`, `ref_un_sdg`.
+
+**New tables built by PLAN-001 + PLAN-002:**
+- `marts.ref_atlas_service_category` (seed, 22 rows — Atlas-curated cross-NGO vocabulary)
+- `marts.dim_ngo` (seed, 11 Tier A NGOs with `slug`; ICNPO codes left null pending Brreg lookup)
 - `raw.redcross_branches`, `raw.redcross_branch_activities`
-- `raw.folkehjelp_chapters`, `raw.folkehjelp_chapter_activities`
-- `marts.dim_ngo` (with `slug` + up-to-3 ICNPO codes per NGO from Brreg)
-- `marts.dim_chapter`
-- `marts.dim_activity`
-- `marts.ref_atlas_service_category` (seed — Atlas-curated 22 rows, each optionally tagged with ICNPO subgroup + SDG goal numbers)
-- `marts.fact_chapter_activities`
-- `marts.supply__redcross_branches`, `marts.supply__folkehjelp_chapters` (per-source staging models)
-- `marts.fact_kommune_supply` (deferred aggregate — only built if needed)
-- `marts.mart_coverage_gap` (deferred)
+- `marts.supply__redcross_branches`, `marts.supply__redcross_branch_activities` (Red Cross staging)
+- `marts.dim_chapter` (Red Cross only in v1; future NGOs UNION ALL into the model)
+- `marts.dim_activity` (Red Cross only in v1; carries `service_category_code` directly)
+- `marts.fact_chapter_activities` (1941 rows for Red Cross alone)
 
 **Dropped from the original sketch:**
-- ~~`marts.crosswalk_activity_to_category`~~ — replaced by `dim_activity.service_category_code` column.
+- ~~`marts.crosswalk_activity_to_category`~~ — replaced by `dim_activity.service_category_code` column (resolved via [Q22]).
+- ~~`marts.fact_kommune_supply`~~ — deferred to the future Coverage-gap investigation; current `fact_chapter_activities` covers v1 needs.
 
-New ingest folders:
-- `atlas-data-repo/ingest/src/sources/redcross-branches/`
-- `atlas-data-repo/ingest/src/sources/folkehjelp-chapters/`
+**Deferred to separate investigations:**
+- Folkehjelp tables — `INVESTIGATE-folkehjelp-supply.md` (not yet written).
+- `marts.mart_coverage_gap` — `INVESTIGATE-coverage-gap-mart.md` (not yet written).
 
-Documentation impact (PLAN-A):
-- Extend [`docs/stack/naming-conventions.md`](../../../stack/naming-conventions.md) with the new vocabulary: `ngo_orgnr`, `ngo_slug`, `chapter_id`, `chapter_orgnr`, `activity_id`, `canonical_name`, `local_activity_name`, `service_category_code`, `is_active`.
-- The auto-generated [`docs/stack/erd.md`](../../../stack/erd.md) will pick up the new entities and edges automatically (no manual ERD work).
+**New ingest folders:**
+- `atlas-data-repo/ingest/src/seed-sources/atlas-ngo-landscape/` (PLAN-001)
+- `atlas-data-repo/ingest/src/sources/redcross-branches/` (PLAN-002)
+
+**Documentation impact:**
+- Extended [`docs/stack/naming-conventions.md`](../../../stack/naming-conventions.md) with the new vocabulary: `ngo_orgnr`, `ngo_slug`, `tier`, `chapter_data_shape`, `primary_focus`, `service_category_code`, `chapter_id`, `chapter_level`, `parent_chapter_id`, `chapter_orgnr`, `activity_id`, `canonical_name`, `local_activity_name`.
+- The auto-generated [`docs/stack/erd.md`](../../../stack/erd.md) picked up the new entities and edges automatically (36 entities, 62 relationships post-PLAN-002).
 
 ---
 
