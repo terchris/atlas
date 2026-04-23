@@ -1,0 +1,13 @@
+version: 2
+
+sources:
+  - name: raw
+    description: "raw.* schema — landing tables for NGO supply ingests."
+    schema: raw
+    tables:
+      - name: redcross_branches
+        description: "Norges Røde Kors branches (HQ + Distrikt + Lokalforening + Ukjent). Loaded by atlas-data/ingest/src/sources/redcross-branches from a static API dump (live polling deferred — see INVESTIGATE-ngo-supply Q39)."
+        loaded_at_field: loaded_at
+      - name: redcross_branch_activities
+        description: "Per-branch activities for Røde Kors. global_activity_name is Red Cross's canonical term (50 distinct values)."
+        loaded_at_field: loaded_at
