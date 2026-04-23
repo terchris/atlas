@@ -116,14 +116,37 @@ A process **MUST NOT** write to a schema it doesn't own. A consumer **MUST NOT**
 
 | Pattern | Use | Example |
 |---|---|---|
-| `dim_<concept>` | Conformed dimension. One per concept, never per source. | `dim_kommune`, `dim_fylke`, `dim_periode`, `dim_orgnr` |
+| `dim_<concept>` | Conformed dimension. One row per natural key. Used as a join target by facts. Owner is implicit from context — no second token. | `dim_kommune`, `dim_fylke`, `dim_postnummer`, `dim_ngo`, `dim_country` |
+| `ref_<owner>_<concept>` | Reference taxonomy / controlled vocabulary / code-label decoder. **Owner is the second token** (`ssb`, `fhi`, `brreg`, `un`, `iso`, `atlas`, …); concept follows. Not the primary join target of any fact. | `ref_ssb_family_type`, `ref_fhi_utdann`, `ref_brreg_icnpo`, `ref_un_sdg`, `ref_atlas_service_category` |
+| `crosswalk_<from>_<to>` | Explicit many-to-many or alternative-key mapping between two reference systems. Suffix reads as the relationship. | `crosswalk_kommune_name` (alt names → kommune_nr), `crosswalk_activity_to_category` (NGO local activity → Atlas service category) |
 | `indicators__<source_id>` | Per-source passthrough from raw. Double underscore. | `indicators__ssb_08764` |
 | `fact_<concept>` | Fact table joining multiple sources, FKs to dims. | `fact_kommune_indicators` |
 | `mart_<feature>` | Application-shaped marts sized to a specific feature. | `mart_coverage_gap_barnefattigdom` |
 
-- **MUST NOT** prefix models by team, owner, or date.
+- **MUST NOT** prefix models by team or date (owner is encoded only in `ref_*`, where it's the source-of-truth distinction).
 - **MUST NOT** create variants like `dim_kommune_v2` — fix the original, deprecate only as a last resort.
 - **SHOULD** keep mart names short; the schema prefix (`marts.`) carries the rest.
+
+### Choosing between `dim_*` and `ref_*`
+
+When in doubt:
+
+- If facts will join to it as a dimension (FK relationship enforced by `relationships:` tests), it's `dim_*`. Carries identity + descriptive attributes (e.g. `dim_kommune.kommune_name`, `dim_postnummer.post_office`).
+- If it's a controlled list of codes that decodes upstream values or rolls indicators up to a standard taxonomy (ICNPO, SDG, NUS2000, …), it's `ref_<owner>_<concept>`.
+- If it bridges two reference systems with a non-1:1 relationship (alt names → canonical, local term → Atlas vocabulary), it's `crosswalk_<from>_<to>`.
+
+---
+
+## Reference table refresh cadence
+
+Reference and dimension tables fall into one of four refresh buckets. Pick at table creation; document in the table's `seeds/README.md` entry (for seeds) or in the model description (for non-seed dims).
+
+| Bucket | When values change | Mechanism | Examples |
+|---|---|---|---|
+| **Never** | Truly fixed standards | Pin once in CSV; comment "do not refresh"; no script | `ref_un_sdg` (17 goals fixed since 2015); ISO 3166/4217 |
+| **Rare** | Years between revisions | Manual via `refresh-seeds`-style script; review once per year | `ref_brreg_icnpo` (last revised 2009); the `ref_ssb_*` and `ref_fhi_*` decoders |
+| **Periodic** | Annual / quarterly / on admin reform | Scheduled (initially manual; automatable later via Dagster) | `dim_kommune`, `dim_fylke` (annual + at reforms); `dim_postnummer` (quarterly); `crosswalk_kommune_name` |
+| **Curated** | When the team decides | Edit CSV in PR; no refresh script; review part of normal PR flow | `ref_atlas_service_category`; `crosswalk_activity_to_category` |
 
 ---
 
@@ -159,6 +182,8 @@ The hybrid strategy for turning upstream codes into the canonical vocabulary abo
 - `atlas-data-repo/dbt/seeds/` — the five `marts.ref_*` lookup CSVs and their refresh policy ([`seeds/README.md`](../../atlas-data-repo/dbt/seeds/README.md)).
 
 When adding a new source with coded fields, follow the same hybrid pattern: small universal enums (`sex`, `housing_status`) inline; medium domain enums via a new `marts.ref_*` seed + left join; structured codes (period, age band) parsed into `_min/_max` or `_start/_end_year` integer columns alongside the raw text.
+
+The `ref_<owner>_<concept>` and `crosswalk_<from>_<to>` patterns extend to **all** reference tables Atlas adds going forward — see [Model naming](#model-naming) above and [INVESTIGATE-reference-tables-convention.md](../ai-developer/plans/backlog/INVESTIGATE-reference-tables-convention.md) for the convention's rationale.
 
 ---
 
