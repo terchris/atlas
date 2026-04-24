@@ -139,7 +139,7 @@ The private deployment's Postgres holds three classes of data, each with its own
 | Layer | Schema | Shape owned by | Data ingested by | Example tables |
 |---|---|---|---|---|
 | **L1 — Public open data** | `marts.*` | atlas.helpers.no | atlas.helpers.no (restored via [Q1] data contract) | `dim_kommune`, `dim_chapter`, `fact_kommune_indicators` |
-| **L2 — Conformed private** | `private_marts.*` | atlas.helpers.no (shape contract in [`private-marts-shapes.md`](../../../stack/private-marts-shapes.md)) | The NGO from their own systems | `dim_resource_type`, `fact_chapter_resources`, `dim_org_unit` |
+| **L2 — Conformed private** | `private_marts.*` | atlas.helpers.no (shape contract in [`private-marts-shapes.md`](../../../stack/private-marts-shapes.md)) | The NGO from their own systems | `fact_resources` (FRR-aligned, includes org units as `ressurstype='organisatorisk enhet'`), `fact_resource_position`, `fact_resource_status`, `dim_resource_phone` |
 | **L3 — NGO-specific private** | `private_marts_<ngo>.*` (e.g. `private_marts_redcross.*`) | The NGO | The NGO from their own systems | `private_marts_redcross.fact_beredskap_excercises` |
 
 Plus one staging schema:
@@ -363,9 +363,10 @@ Some categories of private data exist at every operational NGO: equipment regist
 
 **Initial shape catalog** (in the contract doc, expanded as new categories emerge):
 
-- `private_marts.dim_resource_type` — Atlas-curated vocabulary for resource categories
-- `private_marts.fact_chapter_resources` — aggregated resources per chapter per type (no per-item identity)
-- `private_marts.dim_org_unit` — internal org units, parallel to `dim_chapter`
+- **Resources — FRR-aligned**: Atlas adopts FRR's schema verbatim (it's a Norwegian government standard the FORF NGOs all use). Tables: `private_marts.fact_resources` (one row per FRR resource, denormalised current state — *includes org units as `ressurstype='organisatorisk enhet'`*), `fact_resource_position` (history), `fact_resource_status` (history), `dim_resource_phone` (PII-redacted in place).
+- **Org units** are NOT a separate Layer 2 shape — for FRR-participating NGOs they're already in `fact_resources`. NGOs not in FRR who want internal-org-unit display surfaces use Layer 3 (`private_marts_<ngo>.*`); no Atlas Layer 2 contract for it.
+
+**Doctrine for new shapes** (codified in [`private-marts-shapes.md`](../../../stack/private-marts-shapes.md) "Adding new shapes"): always check for an external standard first. Adopt verbatim if it exists. Invent an Atlas-defined shape only when no external standard does the job.
 
 **Where the dbt files live — [Q-priv-18] Resolved (Option B)**: all Layer 2 dbt files (per-NGO stagings, the `private_marts.*` UNION-ALL models, `schema.yml` tests, vocabulary seed CSVs) live **entirely in the NGO's private repo** under `atlas-private-data-repo/<ngo>/dbt/`. Nothing lives in `atlas-data-repo/`. The Atlas-owned thing is the **shape** (in the contract doc), not the SQL. Reasons: each NGO's private dbt project stays self-contained and runnable; the public dbt build never has to gate or skip private models; the UNION-ALL files are tiny boilerplate (~5 lines per shape) that NGOs copy from the contract doc. Alternatives (UNION-ALL files in `atlas-data-repo/dbt/models/private_marts/` gated by `var()`; a shared `atlas-private-marts` dbt package) were considered and rejected for v1.
 
