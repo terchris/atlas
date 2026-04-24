@@ -15,6 +15,8 @@ Procedural rules for adding, changing, and reviewing data pipelines. Written to 
 - [`ingest/src/sources/README.md`](ingest/src/sources/README.md) — section "**Scraping sources — additional convention**" covers the extended folder layout (`discover.ts`, `parse.ts`, `__tests__/fixtures/`), the §C.5 mandatory raw columns, and the new-scraper checklist.
 - The completed PLAN that shipped this toolkit — `docs/ai-developer/plans/completed/PLAN-001-scraping-infrastructure.md` — shows exactly what code lives in `src/lib/scraping/` and what env vars the ingest job reads.
 
+**If you're covering a new NGO with Brreg data** (legal-entity metadata for an NGO Atlas tracks), you do **not** add a new ingest source — the generic `refresh:brreg-enheter` already handles every NGO. Add a `brreg_query` block (`navn`, `organisasjonsform`, `nameStartsWith`) to the NGO's entry in [`ingest/src/seed-sources/atlas-ngo-landscape/landscape.json`](ingest/src/seed-sources/atlas-ngo-landscape/landscape.json), then re-run `npm run refresh:brreg-enheter`. The rows land in the shared `raw.brreg_enheter` table. See [`ingest/src/seed-sources/brreg-enheter/README.md`](ingest/src/seed-sources/brreg-enheter/README.md) and [`ingest/src/lib/brreg/README.md`](ingest/src/lib/brreg/README.md) for the typed-client pattern (openapi-typescript + openapi-fetch against `github.com/brreg/openAPI`).
+
 ---
 
 ## Workflow: add a new upstream source

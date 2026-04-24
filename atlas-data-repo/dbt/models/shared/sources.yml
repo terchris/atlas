@@ -11,3 +11,6 @@ sources:
       - name: sitemap_log
         description: "Per-URL discovery log, one row per (source_slug, url) across all scraping sources. Stores sitemap <lastmod> (NULL for HTML-index sources) and first/last seen timestamps. Drives fetch-skip and orphan detection per INVESTIGATE-ngo-scraping-infrastructure §C.2."
         loaded_at_field: last_seen_at
+      - name: brreg_enheter
+        description: "Cross-NGO Brreg Enhetsregister landing. Populated by ingest/src/seed-sources/brreg-enheter/ which iterates every NGO in landscape.json that has a `brreg_query` block and upserts matching enheter into this shared table. Status columns (konkurs, under_avvikling, under_tvangsavvikling) come straight from Brreg; downstream 'active NGO' queries filter on those rather than expecting a synthetic is_active. See PLAN-001-brreg-enheter."
+        loaded_at_field: loaded_at
