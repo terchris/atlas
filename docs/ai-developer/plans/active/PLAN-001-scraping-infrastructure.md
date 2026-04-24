@@ -78,20 +78,14 @@ User confirms phase is complete.
 
 ---
 
-## Phase 2: Migrations for `raw.ingest_runs` and `raw.sitemap_log`
+## Phase 2: Migrations for `raw.ingest_runs` and `raw.sitemap_log` — DONE
 
 ### Tasks
 
-- [ ] 2.1 Create `atlas-data-repo/migrations/023_raw_ingest_runs.sql` with the schema from §E.3 of the investigation. Add a partial unique index to make the concurrent-run lock (§E.3.1) a database-enforced constraint, not just an application-layer check:
-  ```sql
-  CREATE UNIQUE INDEX raw_ingest_runs_one_inprogress_per_source
-      ON raw.ingest_runs (source_slug)
-   WHERE finished_at IS NULL;
-  ```
-  Include this index in the migration so a second concurrent `INSERT` is rejected at the DB layer (defense in depth against a race between the SELECT and the INSERT).
-- [ ] 2.2 Create `atlas-data-repo/migrations/024_raw_sitemap_log.sql` with the schema from §C.2. The PK on `(source_slug, url)` is the only index needed for v1.
-- [ ] 2.3 Run `npm run migrate` from `atlas-data-repo/ingest/`. Confirm both tables exist and are empty.
-- [ ] 2.4 Add source entries for both tables to a new `atlas-data-repo/dbt/models/shared/sources.yml` (per [P1S.Q1]) — infrastructure tables aren't supply or indicators, so they get their own folder. Create the `shared/` folder if it doesn't exist.
+- [x] 2.1 Created `023_raw_ingest_runs.sql` with schema + partial unique index `raw_ingest_runs_one_inprogress_per_source` on `(source_slug) WHERE finished_at IS NULL`. Made `finished_at` and `exit_code` nullable so the row can be inserted at run-start with `finished_at = NULL` (in-progress marker).
+- [x] 2.2 Created `024_raw_sitemap_log.sql` with composite PK `(source_slug, url)` and the sitemap_log schema from §C.2. Table comment notes that HTML-index sources also use this table with `lastmod = NULL`.
+- [x] 2.3 `npm run migrate` applied both (023 in 10ms, 024 in 4ms). `file_count: 24` total.
+- [x] 2.4 Created new `atlas-data-repo/dbt/models/shared/sources.yml` with both tables. dbt now sees 23 sources (was 21); `dbt parse` clean.
 
 ### Validation
 
