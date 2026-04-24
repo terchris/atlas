@@ -54,17 +54,17 @@ Six phases, estimated **~10–12 h**. The investigation's 6–8h estimate pre-da
 
 ---
 
-## Phase 1: Dependencies and scaffolding — IN PROGRESS
+## Phase 1: Dependencies and scaffolding — DONE
 
 ### Tasks
 
-- [ ] 1.1 Install runtime deps: `cd atlas-data-repo/ingest && npm install crawlee fast-json-stable-stringify`. Pin major versions in `package.json`.
-- [ ] 1.2 Install dev deps: `npm install --save-dev vitest pg-mem`.
-- [ ] 1.3 Add an npm script: `"test": "vitest run"` (and optionally `"test:watch": "vitest"`). Place alongside the existing `"typecheck"` script in `package.json`.
-- [ ] 1.4 Create a minimal `vitest.config.ts` in `atlas-data-repo/ingest/` — no special config needed beyond defaults, but the file makes the test root explicit and keeps Vitest out of non-test tsx invocations. Contents: `import { defineConfig } from 'vitest/config'; export default defineConfig({ test: { include: ['src/**/*.test.ts', 'src/**/__tests__/**/*.test.ts'] } });`.
-- [ ] 1.5 Create the empty shared-library folder and stub `index.ts`: `mkdir -p atlas-data-repo/ingest/src/lib/scraping/__tests__ && touch atlas-data-repo/ingest/src/lib/scraping/index.ts`. Leave `index.ts` empty for now; Phase 3 and 4 fill it with re-exports.
-- [ ] 1.6 Add `.crawlee-cache/` to `atlas-data-repo/ingest/.gitignore` (create the file if it doesn't exist).
-- [ ] 1.7 Create `atlas-data-repo/ingest/README.md` documenting the three env vars per §F of the investigation — `ATLAS_SCRAPE_CONTACT_EMAIL`, `CRAWLEE_STORAGE_DIR`, `CRAWLEE_LOG_LEVEL`. Include dev defaults, prod defaults, and the hard-fail behavior for the contact email.
+- [x] 1.1 Install runtime deps: `crawlee ^3.16.0`, `fast-json-stable-stringify ^2.1.0`. Major-pinned via caret per existing project convention.
+- [x] 1.2 Install dev deps: `vitest ^4.1.5`, `pg-mem ^3.0.14`.
+- [x] 1.3 Added `"test": "vitest run --passWithNoTests"` and `"test:watch": "vitest"` to `package.json` scripts. The `--passWithNoTests` flag makes the empty-suite interim state (pre-Phase 3) a clean exit-0 instead of exit-1.
+- [x] 1.4 Created `atlas-data-repo/ingest/vitest.config.ts` with the include glob from the PLAN.
+- [x] 1.5 Created `src/lib/scraping/` + `__tests__/` subfolder + `index.ts` stub. Stub contains only a module-level comment listing the Phase 3/4 exports to land here + `export {};` to keep TypeScript happy until real exports land.
+- [x] 1.6 Added `.crawlee-cache/` to `atlas-data-repo/ingest/.gitignore` (file already existed; appended the new entry).
+- [x] 1.7 Extended the **existing** `atlas-data-repo/ingest/README.md` with an "Environment variables" section (inserted between "Install" and "Run one source"). **Deviation from plan**: the PLAN said "create" but the README already existed with substantive content describing the current ingest flow — extending it was the correct action. Env-var table matches §F of the investigation, with a clarifying note that non-scraper modules (SSB, FHI, Brreg, Red Cross API) don't read these variables.
 
 ### Validation
 
