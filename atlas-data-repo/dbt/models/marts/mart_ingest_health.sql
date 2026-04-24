@@ -18,8 +18,11 @@
 -- raw.ingest_runs. An empty `select *` is not a wiring bug — it's the correct
 -- reflection of "no scrapers have run yet."
 
+-- Raw tables use `source_slug` (matches ingest folder/npm conventions);
+-- marts rename to `source_id` per naming-conventions.md "rename at the
+-- dbt passthrough" rule.
 select distinct on (source_slug)
-  source_slug,
+  source_slug                                        as source_id,
   finished_at                                        as last_run_at,
   case when exit_code = 0 then 'ok' else 'fail' end  as last_status
 from {{ source('raw', 'ingest_runs') }}

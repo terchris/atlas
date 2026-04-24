@@ -130,8 +130,8 @@ models:
       haven't refreshed recently?". Empty until the first scraper writes
       to raw.ingest_runs.
     columns:
-      - name: source_slug
-        description: "Source identifier matching raw.ingest_runs.source_slug and the npm ingest:<slug> script."
+      - name: source_id
+        description: "Source identifier in Atlas catalogue form (e.g. 'redcross-branches'). Renamed from raw.ingest_runs.source_slug at the mart boundary."
         data_tests:
           - not_null
           - unique

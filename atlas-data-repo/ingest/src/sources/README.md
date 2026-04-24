@@ -32,6 +32,7 @@ One folder per upstream data source. Each folder is a self-contained unit: the c
 | [ssb-13995](./ssb-13995/) | SSB | Social-assistance cases, amounts paid, support duration — 34 content codes | `npm run ingest:ssb-13995` | KOSTRA table with `KOKkommuneregion0000` dim; 2022-2025 only |
 | [ssb-klass-fylker](./ssb-klass-fylker/) | SSB Klass | Canonical active-fylker list (classification 104) | `npm run ingest:ssb-klass-fylker` | Dimension source; feeds `dim_fylke`. Includes residual `"99 Uoppgitt"`. |
 | [ssb-klass-kommuner](./ssb-klass-kommuner/) | SSB Klass | Canonical active-kommuner list (classification 131) | `npm run ingest:ssb-klass-kommuner` | Dimension source; feeds `dim_kommune`. REST API, not PxWebAPI. |
+| [redcross-branches](./redcross-branches/) | Red Cross Organizations API | Branches (HQ + Distrikt + Lokalforening) with per-branch activities | `npm run ingest:redcross-branches` | First NGO supply source; static JSON dump in v1, live API deferred |
 
 ## Planned sources
 
@@ -46,4 +47,73 @@ The full roadmap of sources Atlas expects to ingest lives in [`docs/research/sam
 5. Add `"ingest:<source-id>": "tsx src/sources/<source-id>/index.ts"` to `package.json`.
 6. Ensure the corresponding catalogue entry in `docs/research/samfunnspuls/data-sources.md` is up to date.
 
-Typical per-source effort for an SSB table: ~30 minutes. HTML-scrape sources (Udir, IMDi) will need custom parsing and take longer.
+Typical per-source effort for an SSB table: ~30 minutes. API ingests from NGOs (e.g. Red Cross) land on a similar effort. Scraping ingests (Folkehjelp and other NGOs without an API) follow a separate folder convention — see below.
+
+---
+
+## Scraping sources — additional convention
+
+NGO scraping sources (those that fetch and parse HTML) follow an **extended folder layout** on top of the baseline above. Design rationale and the full decision log live in [`INVESTIGATE-ngo-scraping-infrastructure.md`](../../../../docs/ai-developer/plans/backlog/INVESTIGATE-ngo-scraping-infrastructure.md); this section is the practical checklist.
+
+### Folder layout
+
+```
+sources/<source-slug>/
+├── README.md          — source overview, refresh cadence, owner contact, known quirks
+├── index.ts           — orchestration: ingest_runs start/end, Crawlee, discover → parse → upsertRecord
+├── discover.ts        — sitemap or HTML-index enumeration; reads/writes raw.sitemap_log; returns fetch/skip decisions and orphans
+├── parse.ts           — **pure function** `(html, url) → Record`; NFC normalization here; no I/O
+├── overrides.json     — manual overrides (slug → kommune, name → orgnr, etc.)
+├── types.ts           — TS types for the source's record shape
+└── __tests__/
+    ├── parse.test.ts  — golden-file tests: `parse(fixture.html)` deep-equals `fixture.expected.json`
+    └── fixtures/
+        ├── <case-a>.html
+        ├── <case-a>.expected.json
+        └── …          — aim for 2–3 fixtures per source (§G.3 of the investigation)
+```
+
+### File responsibilities (from §B.3 / [Q25])
+
+- **`parse.ts`** is pure: no DB, no HTTP, no filesystem. Takes raw HTML + URL, returns a typed record. All Unicode NFC normalization (§C.3 / [Q21]) happens here at the parser boundary.
+- **`discover.ts`** owns discovery I/O: fetches sitemap(s) or HTML index; calls `readPriorState` and `upsertDiscovered` against `raw.sitemap_log`; returns the list of URLs to fetch and the list of orphans.
+- **`index.ts`** orchestrates end-to-end: `startRun` to acquire the concurrent-run lock, creates the Crawlee crawler, drives discover → Crawlee fetch loop → `parse.ts` → `upsertRecord` (from `src/lib/scraping/`), propagates orphans to `is_active=false`, writes the `finishRun` row.
+- **`overrides.json`** and **`types.ts`** carry source-specific configuration and types.
+
+### Mandatory raw-table columns (§C.5 / [Q20])
+
+Every scraper's `raw.<source>_*` **parent** table must include these columns on top of source-specific fields:
+
+| Column | Type | Purpose |
+|---|---|---|
+| `url` | `TEXT NOT NULL UNIQUE` (or PK) | Join key against `raw.sitemap_log.url`. Store verbatim; no normalization. |
+| `record_hash` | `TEXT NOT NULL` | sha256 of canonical JSON of the extracted record. Skip signal. |
+| `html_raw_hash` | `TEXT` (nullable) | Audit-only; for template-drift forensics via `mart_ingest_health`. |
+| `is_active` | `BOOLEAN NOT NULL DEFAULT true` | Flipped to `false` on fetch-time 404 or sitemap orphan. |
+| `loaded_at` | `TIMESTAMPTZ NOT NULL DEFAULT now()` | Project convention; see [`CONTRIBUTING.md`](../../../CONTRIBUTING.md). |
+
+Child tables (activities under a chapter, sub-locations under a branch) do **not** carry these columns — they're owned by the parent row and delete-and-reinserted when the parent's `record_hash` changes.
+
+### Migration naming
+
+- Per-source tables: `NNN_raw_<source_slug>.sql` — e.g. `NNN_raw_folkehjelp_chapters.sql`.
+- Shared infrastructure tables already live at `raw.ingest_runs` and `raw.sitemap_log`. Don't re-create them.
+- NNN is a repository-wide sequential counter; take the next free number (see `ls atlas-data-repo/migrations/`).
+
+### Environment variables
+
+Scraping sources read three env vars from the ingest `.env` — documented in [`../../README.md`](../../README.md) under "Environment variables":
+
+- `ATLAS_SCRAPE_CONTACT_EMAIL` (required; hard-fails if unset)
+- `CRAWLEE_STORAGE_DIR` (optional; dev uses repo-local `.crawlee-cache/`, prod uses an ephemeral in-pod path)
+- `CRAWLEE_LOG_LEVEL` (optional; dev `INFO`, prod `WARNING`, `DEBUG` for troubleshooting)
+
+### Checklist for a new scraping source
+
+1. Confirm the investigation doctrine: check native API → check sitemap → check `robots.txt` → optional outreach email (§A).
+2. Create the folder under `src/sources/<slug>/` with the layout above.
+3. Add the migration `NNN_raw_<slug>.sql`; include the mandatory columns.
+4. Build the Crawlee-based pipeline using the shared library at `src/lib/scraping/` (UA, hashers, robots, sitemap_log, ingest_runs, upsertRecord, kv).
+5. Add 2–3 golden-file fixtures under `__tests__/fixtures/`; the parser test runs via `vitest`.
+6. Add an `"ingest:<slug>"` script to `package.json`; add a row to the table above.
+7. The corresponding `supply__<slug>_*.sql` dbt staging model is outside this PLAN — each per-NGO PLAN handles its own staging and activity-to-category mapping.

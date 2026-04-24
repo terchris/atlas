@@ -4,11 +4,12 @@
 > - [WORKFLOW.md](../../WORKFLOW.md) — The implementation process
 > - [PLANS.md](../../PLANS.md) — Plan structure and best practices
 
-## Status: Active
+## Status: Completed
 
 **Goal**: Ship the shared scraping toolkit defined in [INVESTIGATE-ngo-scraping-infrastructure.md](../backlog/INVESTIGATE-ngo-scraping-infrastructure.md) — Crawlee dependency, two raw tables (`raw.ingest_runs`, `raw.sitemap_log`), the shared TypeScript library under `ingest/src/lib/scraping/` with test coverage, the minimal `mart_ingest_health` dbt view, env-var conventions, and the per-source folder convention. After this plan, per-NGO scrape PLANs (Folkehjelp first) can implement sources against a stable foundation without re-litigating infrastructure.
 
 **Last Updated**: 2026-04-24
+**Completed**: 2026-04-24 — all 6 phases done in one session. Crawlee + `fast-json-stable-stringify` deps added; `raw.ingest_runs` and `raw.sitemap_log` migrations (023 + 024) applied with the partial unique index enforcing the concurrent-run lock; shared library under `src/lib/scraping/` with 8 modules (ua, record_hash, html_raw_hash, robots, sitemap_log, ingest_runs, upsert_record, kv) and 49 pure-function tests; `mart_ingest_health` shipped as a 3-column dbt view with 5 passing data tests; README, naming-conventions, and CONTRIBUTING all cross-referenced. Final gates: `npm run typecheck` clean, `npm test` 49/49, `npm run migrate` idempotent, `dbt build` PASS=526 WARN=19 ERROR=0 TOTAL=545.
 
 **Investigation**: [INVESTIGATE-ngo-scraping-infrastructure.md](../backlog/INVESTIGATE-ngo-scraping-infrastructure.md) — 25 resolved Q's, zero open.
 **Prerequisites**: none (all foundation already in place — Postgres, dbt, ingest repo, migrate runner).
@@ -172,29 +173,19 @@ Empty result is expected (no scrapers have written to `raw.ingest_runs` yet). `d
 
 ---
 
-## Phase 6: Per-source documentation and wrap-up
+## Phase 6: Per-source documentation and wrap-up — DONE
 
 ### Tasks
 
-- [ ] 6.1 Create `atlas-data-repo/ingest/src/sources/README.md` documenting the per-source folder convention from §B.3 — the folder listing, the **File responsibilities** paragraph (Q25), migration naming pattern, npm script naming pattern. Include a "checklist for adding a new scraper source" section mirroring PLAN-002's Red Cross source README style.
-- [ ] 6.2 Extend [`docs/stack/naming-conventions.md`](../../../stack/naming-conventions.md) with sections for:
-  - `source_slug` (identifier format, kebab-case, matches npm script suffix)
-  - `record_hash` + `html_raw_hash` (column semantics)
-  - `url` (verbatim sitemap URL, no normalization)
-  - `raw.ingest_runs`, `raw.sitemap_log` (shared infrastructure tables)
-- [ ] 6.3 Add a short "Scraping infrastructure" cross-reference to [`atlas-data-repo/CONTRIBUTING.md`](../../../../atlas-data-repo/CONTRIBUTING.md) pointing to the investigation doc and this plan, so the existing CONTRIBUTING's raw-table convention guidance is discoverable from scraper authoring.
-- [ ] 6.4 Final check: run all gates.
-  ```bash
-  cd atlas-data-repo/ingest
-  npm run typecheck
-  npm test
-
-  npm run migrate   # should be a no-op after Phase 2
-
-  cd ../dbt
-  uv run --env-file ../ingest/.env dbt build
-  ```
-- [ ] 6.5 Move this plan to `docs/ai-developer/plans/completed/PLAN-001-scraping-infrastructure.md`; update Status to `Completed` with the completion date and a one-line summary of what shipped.
+- [x] 6.1 Extended the existing `atlas-data-repo/ingest/src/sources/README.md` with a new **"Scraping sources — additional convention"** section covering the extended folder layout (`discover.ts` / `parse.ts` / `overrides.json` / `types.ts` / `__tests__/fixtures/`), file responsibilities (Q25), the §C.5 mandatory raw-table columns, migration naming, env vars, and a 7-step new-scraper checklist. Also added the missing `redcross-branches` row to the implemented-sources table.
+- [x] 6.2 Extended [`docs/stack/naming-conventions.md`](../../../stack/naming-conventions.md) with a new **"Raw-schema scraper conventions"** section covering `source_slug`, `url`, `record_hash`, `html_raw_hash`, `is_active`, `lastmod`, and the two shared cross-source tables. Noted on the existing `source_id` canonical row that it's renamed from `raw.*.source_slug` at the dbt passthrough — which caught a small inconsistency in `mart_ingest_health` that was then fixed (the mart now exposes `source_id`, renamed at the view boundary).
+- [x] 6.3 Added a scraper-specific sub-block to the "Prerequisites reading" list in [`atlas-data-repo/CONTRIBUTING.md`](../../../../atlas-data-repo/CONTRIBUTING.md) pointing at the investigation, the sources/README scraper section, and this PLAN's completed copy.
+- [x] 6.4 All four gates green:
+  - `npm run typecheck` — clean
+  - `npm test` — 49 passing, 0 skipped, 0 failing (487ms)
+  - `npm run migrate` — idempotent (24 files, no-op on re-run)
+  - `dbt build` — PASS=526 WARN=19 ERROR=0 SKIP=0 TOTAL=545
+- [x] 6.5 Plan moved to `plans/completed/`; status set to `Completed` with completion date and one-line summary.
 
 ### Validation
 
