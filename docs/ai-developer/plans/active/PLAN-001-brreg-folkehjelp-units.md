@@ -1,4 +1,7 @@
-# Plan 001: Brreg-folkehjelp-units — the legal-entity backbone for Folkehjelp
+# Plan 001: Brreg enheter — generic cross-NGO legal-entity ingest
+
+*(Originally drafted as "Brreg-folkehjelp-units", NF-specific. Revised 2026-04-24 mid-Phase-2 per user feedback: generic across all NGOs from day one. Query params live in `landscape.json` per NGO; one shared `raw.brreg_enheter` table.)*
+
 
 > **IMPLEMENTATION RULES:** Before implementing this plan, read and follow:
 > - [WORKFLOW.md](../../WORKFLOW.md) — The implementation process
@@ -6,17 +9,17 @@
 
 ## Status: Active
 
-**Goal**: Land the Brreg Enhetsregister ingest that fetches all Norsk Folkehjelp legal entities (`navn=norsk+folkehjelp&organisasjonsform=FLI`, ~121 rows) into `raw.brreg_folkehjelp_units`. Along the way, establish the **shared Brreg typed client** at `atlas-data-repo/ingest/src/lib/brreg/` — codegen from the official OpenAPI spec (`brreg/openAPI`) using `openapi-typescript` + `openapi-fetch`, so both this PLAN and future Brreg-fetching code (including the existing `brreg-icnpo` seed, retrofit deferred) speak one typed client. After this plan, the Folkehjelp scrape PLAN (PLAN-002) can match chapter slugs against the Brreg-sourced orgnr list.
+**Goal**: Land a **generic cross-NGO** Brreg Enhetsregister ingest. One shared table `raw.brreg_enheter`, one ingest script `refresh:brreg-enheter`, one shared typed client at `src/lib/brreg/`. Per-NGO query parameters (`navn`, `organisasjonsform`, `nameStartsWith`) live in `landscape.json` — the existing per-NGO source-of-truth file that drives `dim_ngo`. Adding a new NGO is a JSON edit; no new migration, no new script. For v1, only Folkehjelp has a `brreg_query` block in `landscape.json`; ~122 rows populate the shared table. After this plan, the Folkehjelp scrape PLAN (PLAN-002) can match chapter slugs against the Brreg-sourced orgnr list, and future NGOs get Brreg coverage via a landscape.json edit only.
 
 **Last Updated**: 2026-04-24
 
-**Investigation**: [INVESTIGATE-folkehjelp-supply.md](../backlog/INVESTIGATE-folkehjelp-supply.md) §B.2 — NF-specific seed-source `brreg-folkehjelp-units` that writes to `raw.brreg_folkehjelp_units`.
+**Investigation**: [INVESTIGATE-folkehjelp-supply.md](../backlog/INVESTIGATE-folkehjelp-supply.md) §B.2 — proposed an NF-specific `brreg-folkehjelp-units` seed-source. Investigation [Q4] deferred the "generalise to parameterised" question to the third NGO; user pulled that forward to day-one during Phase 2 of this PLAN. The generic table + per-NGO `landscape.json` `brreg_query` approach supersedes the investigation's NF-specific schema.
 
 **Prerequisites**:
 - [PLAN-001-scraping-infrastructure](../completed/PLAN-001-scraping-infrastructure.md) — shipped; unrelated to this plan in terms of code (Brreg is API-sourced, not a scrape) but the broader ingest repo conventions (`src/lib/`, `src/sources/`, `src/seed-sources/`) are in place.
 - PLAN-001-multi-ngo-supply-model-extensions — **not merged yet** (on `feature/multi-ngo-supply-model-extensions` local branch at drafting time, hasn't shipped). Branched parallel sequence. This brreg PLAN has **no code dependency** on the multi-ngo changes: this PLAN adds a raw API-sourced table; multi-ngo adds `dim_chapter.chapter_subtype` + `chapter_kommune_coverage`. Neither touches files the other touches. The "sequence" is a PLAN-level ordering, not a code-level blocker. This PLAN can ship against main without waiting.
 
-**Blocks**: `PLAN-002-folkehjelp-scrape-and-ingest.md` (not yet drafted) — PLAN-002's `supply__folkehjelp_chapters` model joins `raw.folkehjelp_chapters` to `raw.brreg_folkehjelp_units` on normalised name, which is why Brreg ships first.
+**Blocks**: `PLAN-002-folkehjelp-scrape-and-ingest.md` (not yet drafted) — PLAN-002's `supply__folkehjelp_chapters` model joins `raw.folkehjelp_chapters` to `raw.brreg_enheter` (filtered by `navn ILIKE 'Norsk Folkehjelp%'`) on normalised name, which is why Brreg ships first.
 
 **Priority**: Medium
 
@@ -34,13 +37,15 @@ Four phases, estimated **~3 h**.
   - `README.md` — how it works, how to regenerate schema.
   - New dev dep: `openapi-typescript`. New runtime dep: `openapi-fetch`.
   - New npm script: `refresh:brreg-schema` for schema regeneration.
-- **Migration**: `NNN_raw_brreg_folkehjelp_units.sql` — the raw landing table. API-sourced (§C.5 scraper conventions don't apply; follows existing `raw.<source>` shape per `CONTRIBUTING.md`).
-- **Ingest module** at `atlas-data-repo/ingest/src/seed-sources/brreg-folkehjelp-units/`:
-  - `index.ts` — uses the typed client to page through `/enhetsregisteret/api/enheter?navn=norsk+folkehjelp&organisasjonsform=FLI`, upserts to `raw.brreg_folkehjelp_units` by orgnr.
-  - `README.md` — source description, refresh cadence note.
-  - New npm script: `refresh:brreg-folkehjelp-units`.
-- **dbt source declaration** — `raw.brreg_folkehjelp_units` registered (location TBD in Phase 3; likely `dbt/models/supply/sources.yml` since it's a per-NGO raw table, not generic infrastructure).
-- **Docs update** — extend `atlas-data-repo/ingest/src/sources/README.md` (or `seed-sources/README.md` if one exists) with a row for the new refresh source; add a short note in `CONTRIBUTING.md` about the typed-client pattern for Brreg ingests.
+- **Migration**: `025_raw_brreg_enheter.sql` — the shared cross-NGO raw landing table. Columns: `orgnr` PK, `navn`, `organisasjonsform`, `registrert_dato`, `i_frivillighetsreg`, `antall_ansatte`, `konkurs`, `under_avvikling`, `under_tvangsavvikling`, `raw_payload` (full Enhet JSON), `loaded_at`. No `ngo_slug` column — navn/orgnr self-identify. API-sourced (§C.5 scraper conventions don't apply).
+- **Generic fetch**: `src/lib/brreg/ngo-units.ts` — `fetchNgoUnits({ navn, organisasjonsform, nameStartsWith })` wraps the typed client + pagination + exact-prefix post-filter. Reusable by any ingest that needs Brreg enheter for a named NGO.
+- **Ingest module** at `atlas-data-repo/ingest/src/seed-sources/brreg-enheter/`:
+  - `index.ts` — reads `../atlas-ngo-landscape/landscape.json`, iterates every NGO that has a `brreg_query` block, calls `fetchNgoUnits()` for each, upserts to `raw.brreg_enheter` on `orgnr`.
+  - `README.md` — source description, refresh cadence note, new-NGO checklist.
+  - New npm script: `refresh:brreg-enheter` (generic, not per-NGO).
+- **landscape.json edit** — add `brreg_query: { navn, organisasjonsform, nameStartsWith }` to Folkehjelp's entry. The `refresh:atlas-ngo-landscape` script ignores this field (it only copies marts-facing columns to `dim_ngo.csv`); it's ingest-only metadata.
+- **dbt source declaration** — `raw.brreg_enheter` registered. Location: `dbt/models/shared/sources.yml` alongside `ingest_runs` + `sitemap_log` (this is cross-NGO shared infrastructure, not per-NGO supply).
+- **Docs update** — extend `atlas-data-repo/ingest/src/sources/README.md` with a row pointing at the generic `brreg-enheter` refresh; add a short note in `CONTRIBUTING.md` about the typed-client pattern + the `landscape.json` `brreg_query` convention.
 
 **NOT built in PLAN-001:**
 
