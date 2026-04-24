@@ -1,6 +1,6 @@
 # Plan 001: Brreg enheter — generic cross-NGO legal-entity ingest
 
-*(Originally drafted as "Brreg-folkehjelp-units", NF-specific. Revised 2026-04-24 mid-Phase-2 per user feedback: generic across all NGOs from day one. Query params live in `landscape.json` per NGO; one shared `raw.brreg_enheter` table.)*
+*(Revised 2026-04-24 mid-Phase-2: the original draft was NF-specific; generalised to cross-NGO per user feedback. Query params live in `landscape.json` per NGO; one shared `raw.brreg_enheter` table.)*
 
 
 > **IMPLEMENTATION RULES:** Before implementing this plan, read and follow:
@@ -14,7 +14,7 @@
 **Last Updated**: 2026-04-24
 **Completed**: 2026-04-24 — four phases done in one session. Generic `raw.brreg_enheter` + `src/lib/brreg/ngo-units.ts` (reusable `fetchNgoUnits()` helper) + `src/seed-sources/brreg-enheter/` (reads landscape.json, one script for all NGOs) + `src/lib/brreg/` typed client (openapi-typescript + openapi-fetch against `github.com/brreg/openAPI`). Folkehjelp `brreg_query` added to `landscape.json`; 122 rows land (108 in Frivillighetsregisteret, 0 konkurs/avvikling — matches the research). Scope revised mid-Phase-2: originally NF-specific per investigation [Q4]; pulled forward to generic-from-day-one per user feedback. `CONTRIBUTING.md` now documents the Brreg typed-client + landscape.json convention. Final gates: `npm run typecheck` clean, `npm test` 49/49, `npm run migrate` idempotent, `dbt build` PASS=526 WARN=19 ERROR=0 TOTAL=545 (unchanged — sources don't count as PASS items).
 
-**Investigation**: [INVESTIGATE-folkehjelp-supply.md](../backlog/INVESTIGATE-folkehjelp-supply.md) §B.2 — proposed an NF-specific `brreg-folkehjelp-units` seed-source. Investigation [Q4] deferred the "generalise to parameterised" question to the third NGO; user pulled that forward to day-one during Phase 2 of this PLAN. The generic table + per-NGO `landscape.json` `brreg_query` approach supersedes the investigation's NF-specific schema.
+**Investigation**: [INVESTIGATE-folkehjelp-supply.md](../backlog/INVESTIGATE-folkehjelp-supply.md) §B.2 — proposed an NF-specific `brreg-enheter` seed-source. Investigation [Q4] deferred the "generalise to parameterised" question to the third NGO; user pulled that forward to day-one during Phase 2 of this PLAN. The generic table + per-NGO `landscape.json` `brreg_query` approach supersedes the investigation's NF-specific schema.
 
 **Prerequisites**:
 - [PLAN-001-scraping-infrastructure](../completed/PLAN-001-scraping-infrastructure.md) — shipped; unrelated to this plan in terms of code (Brreg is API-sourced, not a scrape) but the broader ingest repo conventions (`src/lib/`, `src/sources/`, `src/seed-sources/`) are in place.
@@ -30,7 +30,7 @@
 
 Four phases, estimated **~3 h**.
 
-**Built in PLAN-001-brreg-folkehjelp-units:**
+**Built in PLAN-001-brreg-enheter:**
 
 - **Shared Brreg typed client** at `atlas-data-repo/ingest/src/lib/brreg/`:
   - `schema.ts` — codegen'd from `brreg/openAPI/specs/enhetsregisteret.json`. Typed `paths`, `components`, responses.
@@ -50,7 +50,7 @@ Four phases, estimated **~3 h**.
 
 **NOT built in PLAN-001:**
 
-- **`dim_folkehjelp_units` or similar mart** — this PLAN lands raw only. The Folkehjelp scrape PLAN-002 joins `raw.brreg_folkehjelp_units` to `raw.folkehjelp_chapters` during the `supply__folkehjelp_chapters` staging; no standalone mart.
+- **`dim_folkehjelp_units` or similar mart** — this PLAN lands raw only. The Folkehjelp scrape PLAN-002 joins `raw.brreg_enheter` to `raw.folkehjelp_chapters` during the `supply__folkehjelp_chapters` staging; no standalone mart.
 - **`brreg-icnpo` retrofit to the shared client** — deliberately deferred. `brreg-icnpo` already works against `data.brreg.no` via hand-rolled fetch; switching it to the typed client is a small consistency win, not a correctness fix. File a follow-up "Retrofit brreg-icnpo to the shared typed client" PLAN if/when the pattern proves itself.
 - **Live-API polling of Red Cross** (separate workstream; see Folkehjelp investigation §B.2 rationale — Red Cross is still a static JSON dump ingest; swapping it to the Brreg client would be a different effort against a different Brreg API surface).
 - **Generalizing to `brreg-ngo-units` parameterised by NGO slug** — per investigation [Q4], NF-specific for v1; generalise when the third NGO needs Brreg unit lookups.
@@ -130,22 +130,22 @@ User confirms: `src/lib/brreg/schema.ts` exists and is ~thousands-of-lines-of-ty
 
 ---
 
-## Phase 2: `raw.brreg_folkehjelp_units` migration + ingest
+## Phase 2: `raw.brreg_enheter` migration + ingest
 
 ### Tasks
 
-- [ ] 2.1 Check next free migration number with `ls atlas-data-repo/migrations/ | tail -3` (expected 025, but confirm — multi-agent repo). Create `atlas-data-repo/migrations/NNN_raw_brreg_folkehjelp_units.sql`:
+- [ ] 2.1 Check next free migration number with `ls atlas-data-repo/migrations/ | tail -3` (expected 025, but confirm — multi-agent repo). Create `atlas-data-repo/migrations/025_raw_brreg_enheter.sql`:
   ```sql
-  -- raw.brreg_folkehjelp_units — all Norsk Folkehjelp legal entities
+  -- raw.brreg_enheter — all Norsk Folkehjelp legal entities
   -- from Brreg's Enhetsregister, filtered to organisasjonsform = 'FLI'.
   --
   -- API-sourced (not a scrape); §C.5 mandatory scraper columns do NOT
   -- apply. Follows the existing raw.<source> convention.
   --
-  -- Populated by atlas-data-repo/ingest/src/seed-sources/brreg-folkehjelp-units/.
+  -- Populated by atlas-data-repo/ingest/src/seed-sources/brreg-enheter/.
   -- Expected ~121 rows based on 2026-04-23 research.
 
-  create table if not exists raw.brreg_folkehjelp_units (
+  create table if not exists raw.brreg_enheter (
     orgnr               text        primary key,
     navn                text        not null,
     organisasjonsform   text        not null,        -- 'FLI' for all rows here
@@ -156,34 +156,34 @@ User confirms: `src/lib/brreg/schema.ts` exists and is ~thousands-of-lines-of-ty
     loaded_at           timestamptz not null default now()
   );
 
-  comment on table raw.brreg_folkehjelp_units is
-    'All Norsk Folkehjelp legal entities (organisasjonsform=FLI) from Brreg Enhetsregister. Written by ingest/src/seed-sources/brreg-folkehjelp-units via the shared typed client at src/lib/brreg/.';
+  comment on table raw.brreg_enheter is
+    'All Norsk Folkehjelp legal entities (organisasjonsform=FLI) from Brreg Enhetsregister. Written by ingest/src/seed-sources/brreg-enheter via the shared typed client at src/lib/brreg/.';
   ```
 - [ ] 2.2 Run `npm run migrate`. Verify the table exists and is empty.
-- [ ] 2.3 Create `atlas-data-repo/ingest/src/seed-sources/brreg-folkehjelp-units/index.ts`:
+- [ ] 2.3 Create `atlas-data-repo/ingest/src/seed-sources/brreg-enheter/index.ts`:
   - Imports `brregClient` + `paginate` from `../../lib/brreg/client.js`.
   - Query: `GET /enheter?navn=norsk+folkehjelp&organisasjonsform=FLI&size=100` (paginated).
   - For each `Enhet`, map to the raw schema (use typed response fields; store the full entity as `raw_payload`).
   - Upsert on `orgnr` via `upsert()` helper from `src/lib/postgres.ts` (existing pattern).
   - Logging via the existing `createLogger` helper — `info` on start, page boundaries, and end with row-count summary.
-- [ ] 2.4 Create `atlas-data-repo/ingest/src/seed-sources/brreg-folkehjelp-units/README.md`:
+- [ ] 2.4 Create `atlas-data-repo/ingest/src/seed-sources/brreg-enheter/README.md`:
   - Source: Brreg Enhetsregister (`data.brreg.no`).
   - Query: `navn=norsk+folkehjelp&organisasjonsform=FLI`.
   - Expected rows: ~121 (121 Brreg rows observed 2026-04-23; 88% in Frivillighetsregisteret).
   - Refresh cadence: manual; no daily polling. Brreg changes slow, few new Folkehjelp lokallag per year.
   - How the typed client works (link to `src/lib/brreg/README.md`).
-- [ ] 2.5 Add npm script `refresh:brreg-folkehjelp-units` to `package.json`:
+- [ ] 2.5 Add npm script `refresh:brreg-enheter` to `package.json`:
   ```json
-  "refresh:brreg-folkehjelp-units": "tsx --env-file=.env src/seed-sources/brreg-folkehjelp-units/index.ts"
+  "refresh:brreg-enheter": "tsx --env-file=.env src/seed-sources/brreg-enheter/index.ts"
   ```
-- [ ] 2.6 Run `npm run refresh:brreg-folkehjelp-units`. Verify row count: `dbt show --inline "select count(*), count(*) filter (where i_frivillighetsreg) as in_frivreg from raw.brreg_folkehjelp_units"`. Expect ~121 total; ~107 in Frivillighetsregisteret (88%).
+- [ ] 2.6 Run `npm run refresh:brreg-enheter`. Verify row count: `dbt show --inline "select count(*), count(*) filter (where i_frivillighetsreg) as in_frivreg from raw.brreg_enheter"`. Expect ~121 total; ~107 in Frivillighetsregisteret (88%).
 
 ### Validation
 
 ```bash
 cd atlas-data-repo/ingest
 npm run migrate
-npm run refresh:brreg-folkehjelp-units
+npm run refresh:brreg-enheter
 
 cd ../dbt
 uv run --env-file ../ingest/.env dbt show --inline "
@@ -191,7 +191,7 @@ uv run --env-file ../ingest/.env dbt show --inline "
          count(*) filter (where i_frivillighetsreg) as in_frivreg,
          min(registrert_dato) as first_registered,
          max(registrert_dato) as last_registered
-  from raw.brreg_folkehjelp_units
+  from raw.brreg_enheter
 "
 ```
 
@@ -204,7 +204,7 @@ User confirms: ~121 total rows; ~107 in Frivillighetsregisteret; date range plau
 ### Tasks
 
 - [ ] 3.1 Decide sources.yml location. Recommended: add to `atlas-data-repo/dbt/models/supply/sources.yml` alongside `raw.redcross_branches` — it's a per-NGO raw table, same category. Alternative: a new `dbt/models/brreg/sources.yml` if we expect multiple Brreg-sourced tables per NGO. Default to `supply/` for v1; revisit if pattern grows.
-- [ ] 3.2 Add source entry for `raw.brreg_folkehjelp_units`:
+- [ ] 3.2 Add source entry for `raw.brreg_enheter`:
   - `loaded_at_field: loaded_at`
   - description: brief sentence pointing at the seed source and the shared typed client
 - [ ] 3.3 Run `uv run --env-file ../ingest/.env dbt parse` — confirm the source is recognised.
@@ -217,7 +217,7 @@ uv run --env-file ../ingest/.env dbt parse
 uv run --env-file ../ingest/.env dbt show --inline "
   select column_name, data_type
   from information_schema.columns
-  where table_schema = 'raw' and table_name = 'brreg_folkehjelp_units'
+  where table_schema = 'raw' and table_name = 'brreg_enheter'
   order by ordinal_position
 "
 ```
@@ -232,9 +232,9 @@ User confirms: dbt source list grew by 1; column listing matches the migration s
 
 - [ ] 4.1 Document the new source in the sources catalogue:
   - If `atlas-data-repo/ingest/src/seed-sources/README.md` exists, add a row.
-  - Otherwise, extend `atlas-data-repo/ingest/src/sources/README.md` with a "Seed sources (refresh-*)" section if one doesn't exist, and add a row for `brreg-folkehjelp-units`.
+  - Otherwise, extend `atlas-data-repo/ingest/src/sources/README.md` with a "Seed sources (refresh-*)" section if one doesn't exist, and add a row for `brreg-enheter`.
 - [ ] 4.2 Extend [`atlas-data-repo/CONTRIBUTING.md`](../../../../atlas-data-repo/CONTRIBUTING.md) with a short note under "Workflow: add a new upstream source" mentioning that Brreg-sourced ingests should use the shared typed client at `ingest/src/lib/brreg/` rather than hand-rolling fetch + type mapping.
-- [ ] 4.3 Update the talk.md coordination channel (once, at closeout): append a short Message noting that `raw.brreg_folkehjelp_units` landed and the shared typed-client pattern is available. Purely informational; doesn't touch anything redcross owns.
+- [ ] 4.3 Update the talk.md coordination channel (once, at closeout): append a short Message noting that `raw.brreg_enheter` landed and the shared typed-client pattern is available. Purely informational; doesn't touch anything redcross owns.
 - [ ] 4.4 Final gates:
   ```bash
   cd atlas-data-repo/ingest && npm run typecheck && npm test
@@ -245,7 +245,7 @@ User confirms: dbt source list grew by 1; column listing matches the migration s
 
 ### Validation
 
-All gates pass. User confirms the ingest is runnable from a clean checkout via `npm run refresh:brreg-folkehjelp-units`.
+All gates pass. User confirms the ingest is runnable from a clean checkout via `npm run refresh:brreg-enheter`.
 
 ---
 
@@ -254,8 +254,8 @@ All gates pass. User confirms the ingest is runnable from a clean checkout via `
 - [ ] `src/lib/brreg/schema.ts` is present and generated from `brreg/openAPI`.
 - [ ] `src/lib/brreg/client.ts` exports a typed `brregClient` + `paginate` helper.
 - [ ] `npm run refresh:brreg-schema` regenerates the schema without errors.
-- [ ] `npm run refresh:brreg-folkehjelp-units` populates `raw.brreg_folkehjelp_units` with ~121 rows.
-- [ ] `raw.brreg_folkehjelp_units` is registered as a dbt source.
+- [ ] `npm run refresh:brreg-enheter` populates `raw.brreg_enheter` with ~121 rows.
+- [ ] `raw.brreg_enheter` is registered as a dbt source.
 - [ ] `npm run typecheck` clean; `npm test` 49/49; `dbt build` clean (no regressions).
 - [ ] The shared typed-client pattern is documented so the Folkehjelp scrape PLAN and future Brreg ingests reuse it.
 - [ ] No retrofit of `brreg-icnpo` in this PLAN — deferred to a follow-up.
@@ -280,12 +280,12 @@ All gates pass. User confirms the ingest is runnable from a clean checkout via `
 - `atlas-data-repo/ingest/src/lib/brreg/schema.ts` (codegen output)
 - `atlas-data-repo/ingest/src/lib/brreg/client.ts`
 - `atlas-data-repo/ingest/src/lib/brreg/README.md`
-- `atlas-data-repo/migrations/NNN_raw_brreg_folkehjelp_units.sql`
-- `atlas-data-repo/ingest/src/seed-sources/brreg-folkehjelp-units/index.ts`
-- `atlas-data-repo/ingest/src/seed-sources/brreg-folkehjelp-units/README.md`
+- `atlas-data-repo/migrations/025_raw_brreg_enheter.sql`
+- `atlas-data-repo/ingest/src/seed-sources/brreg-enheter/index.ts`
+- `atlas-data-repo/ingest/src/seed-sources/brreg-enheter/README.md`
 
 **Modified files:**
-- `atlas-data-repo/ingest/package.json` — new deps (`openapi-fetch`, `openapi-typescript` dev) + two new scripts (`refresh:brreg-schema`, `refresh:brreg-folkehjelp-units`).
+- `atlas-data-repo/ingest/package.json` — new deps (`openapi-fetch`, `openapi-typescript` dev) + two new scripts (`refresh:brreg-schema`, `refresh:brreg-enheter`).
 - `atlas-data-repo/ingest/package-lock.json` — drift from the installs.
 - `atlas-data-repo/dbt/models/supply/sources.yml` — new source entry (or `shared/` if Phase 3.1 picks differently).
 - `atlas-data-repo/ingest/src/sources/README.md` or `seed-sources/README.md` — catalogue row.
@@ -293,7 +293,7 @@ All gates pass. User confirms the ingest is runnable from a clean checkout via `
 
 ---
 
-## Decision-points specific to PLAN-001-brreg-folkehjelp-units
+## Decision-points specific to PLAN-001-brreg-enheter
 
 Three implementation-level choices the plan leaves to the implementer:
 
@@ -307,5 +307,5 @@ Three implementation-level choices the plan leaves to the implementer:
 
 The Folkehjelp investigation explicitly names two downstream PLANs:
 
-1. **PLAN-002-folkehjelp-scrape-and-ingest** (~7–10h) — the HTML scraper that consumes `raw.brreg_folkehjelp_units` via a normalised-name match, plus the dbt staging that UNIONs into the shared `dim_chapter` / `dim_activity` / `fact_chapter_activities`.
+1. **PLAN-002-folkehjelp-scrape-and-ingest** (~7–10h) — the HTML scraper that consumes `raw.brreg_enheter` via a normalised-name match, plus the dbt staging that UNIONs into the shared `dim_chapter` / `dim_activity` / `fact_chapter_activities`.
 2. **PLAN-003-folkehjelp-frontend** (not-yet-drafted; implied by talk.md Message 2) — mirror the `app/ngo/redcross/...` pattern for Folkehjelp, once the marts have data.

@@ -31,7 +31,7 @@ Both companion infrastructure PLANs are prerequisites for the Folkehjelp scrape 
 - NF-specific Craft GraphQL probe + outreach.
 - Chapter identity: reconciling Brreg orgnr with web slug; non-geographic chapters.
 - Activity extraction (CSS selectors) and 6 → 22 NF → Atlas category mapping.
-- NF-specific `raw.folkehjelp_*` and `raw.brreg_folkehjelp_units` schemas.
+- NF-specific `raw.folkehjelp_*` schemas. Brreg-side data uses the shared cross-NGO `raw.brreg_enheter` (see §B.2 + [PLAN-001-brreg-enheter](../completed/PLAN-001-brreg-enheter.md)), filtered by `navn ILIKE 'Norsk Folkehjelp%'`.
 
 **Out of scope (covered elsewhere — see Companion investigations above):**
 - Generic scraper toolkit, cache, change detection, ethical defaults, failure modes.
@@ -139,16 +139,18 @@ So NF has not enabled the public GraphQL endpoint (or has routed it to a non-def
 
 Both required. Brreg gives us the legal-entity backbone (121 lokallag, 88% in Frivillighetsregisteret per the research); web gives us the URL + activities + active/inactive signal. Match on normalised name.
 
-### B.2 Brreg ingest — new seed-source `brreg-folkehjelp-units`
+### B.2 Brreg ingest — use the generic `brreg-enheter` source
 
-Following the per-source seed pattern from [`reference-tables-convention`](../completed/INVESTIGATE-reference-tables-convention.md):
+**Superseded by PLAN-001-brreg-enheter (2026-04-24).** What this investigation originally proposed here — an NF-specific `brreg-folkehjelp-units` seed-source writing to an NF-specific `raw.brreg_folkehjelp_units` table — is *not* what shipped. During implementation the scope was pulled forward to cross-NGO from day one (see [Q4] below). For Folkehjelp, the concrete shape is:
 
-- Folder: `atlas-data-repo/ingest/src/seed-sources/brreg-folkehjelp-units/`
-- Script: `npm run refresh:brreg-folkehjelp-units`
-- Fetches all `enheter` matching `navn=norsk+folkehjelp&organisasjonsform=FLI` (~121 rows), paginated.
-- Writes to `raw.brreg_folkehjelp_units` (see D.3).
+- Use the existing generic ingest at [`atlas-data-repo/ingest/src/seed-sources/brreg-enheter/`](../../../../atlas-data-repo/ingest/src/seed-sources/brreg-enheter/README.md).
+- Run `npm run refresh:brreg-enheter`.
+- It reads [`landscape.json`](../../../../atlas-data-repo/ingest/src/seed-sources/atlas-ngo-landscape/landscape.json), iterates every NGO with a `brreg_query` block, fetches each via the shared typed Brreg client ([`src/lib/brreg/`](../../../../atlas-data-repo/ingest/src/lib/brreg/README.md)), and upserts all matches into the shared `raw.brreg_enheter` table.
+- Folkehjelp's `brreg_query` block (committed 2026-04-24) is `{ navn: "norsk folkehjelp", organisasjonsform: "FLI", nameStartsWith: "Norsk Folkehjelp" }`. Verified: 122 rows, 108 in Frivillighetsregisteret — matches this investigation's baseline.
 
-**[Q4]** Should this be `brreg-folkehjelp-units` (NF-specific) or a more general `brreg-ngo-units` parameterised by NGO slug? Recommendation: NF-specific for v1 (matches the per-source pattern); generalise to a parameterised script when the third NGO needs Brreg unit lookups.
+Adding a new NGO's Brreg data is a `landscape.json` edit, not a new script/migration. No NF-specific code path anywhere.
+
+~~**[Q4]**~~ ~~Should this be `brreg-folkehjelp-units` (NF-specific) or a more general parameterised script? Recommendation was NF-specific for v1.~~ **Resolved 2026-04-24: generic from day one.** The NF-specific recommendation in this investigation was reversed during PLAN-001 execution; the generic cross-NGO pattern shipped instead. See [PLAN-001-brreg-enheter](../completed/PLAN-001-brreg-enheter.md) for the landed shape.
 
 ### B.3 Sitemap-driven chapter discovery
 
@@ -355,7 +357,7 @@ Generic conventions (column patterns, hashes, `raw.ingest_runs`, `raw.sitemap_lo
 
 - **`raw.folkehjelp_chapters`** is scraper-sourced + parent → carries the §C.5 column set.
 - **`raw.folkehjelp_chapter_activities`** is a scraper-sourced **child** → does *not* carry §C.5 columns; deletes-and-reinserts when the parent's `record_hash` changes.
-- **`raw.brreg_folkehjelp_units`** is **API-sourced** (Brreg JSON API, not HTML scrape) → §C.5 explicitly does *not* apply; follows existing `raw.<source>` conventions.
+- **`raw.brreg_enheter`** (shared, shipped by PLAN-001-brreg-enheter) is **API-sourced** (Brreg JSON API, not HTML scrape) → §C.5 explicitly does *not* apply; follows existing `raw.<source>` conventions. Not NF-specific — every NGO's Brreg data lands here.
 
 ### D.1 `raw.folkehjelp_chapters` — scraper parent
 
@@ -401,23 +403,31 @@ CREATE TABLE raw.folkehjelp_chapter_activities (
 
 `activity_label` must be UTF-8 NFC-normalised at the parser boundary per [scraping infra §C.3](../completed/INVESTIGATE-ngo-scraping-infrastructure.md#c3-record-level-change-detection--q7--q18--q21) — cheerio sometimes returns Norwegian characters in NFD form, which would silently flip the parent's `record_hash` between runs.
 
-### D.3 `raw.brreg_folkehjelp_units` — API-sourced
+### D.3 `raw.brreg_enheter` — API-sourced, cross-NGO shared
 
-Brreg is fetched via JSON API, not scraped. §C.5 does not apply. Follows the existing `raw.<source>` convention used by other API ingests (`raw.ssb_*`, `raw.fhi_*`).
+**Superseded shape landed 2026-04-24 via [PLAN-001-brreg-enheter](../completed/PLAN-001-brreg-enheter.md).** What this investigation originally proposed — an NF-specific `raw.brreg_folkehjelp_units` table — shipped instead as a shared cross-NGO `raw.brreg_enheter` table. Same API source (Brreg Enhetsregister via `data.brreg.no`); same JSON-API-not-scrape classification (§C.5 scraper column conventions don't apply); but one table serves every NGO, discriminated by `navn` prefix (`navn ILIKE 'Norsk Folkehjelp%'` for NF's rows).
+
+Final shipped shape in [`atlas-data-repo/migrations/025_raw_brreg_enheter.sql`](../../../../atlas-data-repo/migrations/025_raw_brreg_enheter.sql):
 
 ```sql
--- migration NNN_raw_brreg_folkehjelp_units.sql
-CREATE TABLE raw.brreg_folkehjelp_units (
-  orgnr               TEXT PRIMARY KEY,
-  navn                TEXT NOT NULL,
-  organisasjonsform   TEXT NOT NULL,              -- 'FLI' for our targets
-  registrert_dato     DATE,
-  i_frivillighetsreg  BOOLEAN NOT NULL,
-  antall_ansatte      INT,
-  raw_payload         JSONB NOT NULL,             -- full Brreg response for audit
-  loaded_at           TIMESTAMPTZ NOT NULL DEFAULT now()
+CREATE TABLE raw.brreg_enheter (
+  orgnr                  TEXT PRIMARY KEY,
+  navn                   TEXT NOT NULL,
+  organisasjonsform      TEXT NOT NULL,           -- 'FLI' for NGO foreninger
+  registrert_dato        DATE,
+  i_frivillighetsreg     BOOLEAN NOT NULL DEFAULT false,
+  antall_ansatte         INTEGER,
+  konkurs                BOOLEAN NOT NULL DEFAULT false,
+  under_avvikling        BOOLEAN NOT NULL DEFAULT false,
+  under_tvangsavvikling  BOOLEAN NOT NULL DEFAULT false,  -- underTvangsavviklingEllerTvangsopplosning
+  raw_payload            JSONB NOT NULL,          -- full Brreg Enhet entity
+  loaded_at              TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 ```
+
+Three additions vs this investigation's original D.3: `konkurs`, `under_avvikling`, `under_tvangsavvikling`. They come verbatim from the Brreg Enhet response and replace any synthetic "is_active" we'd have had to build — Brreg owns the concept, we just carry the flags.
+
+For PLAN-002 (Folkehjelp scrape): when joining raw chapters to Brreg, filter via `where navn ilike 'Norsk Folkehjelp%'` (or whichever prefix matches the NGO's `brreg_query.nameStartsWith` in `landscape.json`).
 
 ### D.4 Source-specific scraper config
 
@@ -461,7 +471,7 @@ Each test reads the fixture HTML, calls `parse(html, url)`, deep-equals against 
 ## Open Questions
 
 1. **[Q2]** Outreach to NF asking for a read-only Public GraphQL schema (see A.4). Email proposed; track response. Scrape PLAN ships regardless; positive response would replace the parser with a thinner GraphQL client.
-2. **[Q4]** `brreg-folkehjelp-units` (NF-specific) vs `brreg-ngo-units` (parameterised). Recommendation: NF-specific for v1; generalise on third NGO.
+2. ~~**[Q4]**~~ `brreg-folkehjelp-units` (NF-specific) vs parameterised. **Resolved 2026-04-24 during PLAN-001-brreg-enheter implementation: generic from day one.** See §B.2 above.
 3. **[Q5]** Levenshtein threshold for fuzzy name match (proposed: ≤ 2). Tune against actual data during PLAN.
 4. **[Q6]** Initial contents of the override file. Discoverable only by running the algorithmic match against real data.
 5. **[Q11]** Scrape cadence — manual / weekly / monthly? Recommendation: **manual via npm script for v1**. NF chapter changes are slow (founding dates suggest ~1–2 new chapters/year); weekly is overkill. Add a CronCreate-based schedule when Atlas has a job-runner.
@@ -477,12 +487,9 @@ Each test reads the fixture HTML, calls `parse(html, url)`, deep-equals against 
 - [ ] PLAN-001 from [`INVESTIGATE-ngo-scraping-infrastructure.md`](../completed/INVESTIGATE-ngo-scraping-infrastructure.md) — Crawlee toolkit + `raw.ingest_runs` + per-source folder convention.
 - [ ] PLAN-001 from [`INVESTIGATE-multi-ngo-supply-model-extensions.md`](./INVESTIGATE-multi-ngo-supply-model-extensions.md) — `dim_chapter.source_url`, `dim_chapter.chapter_subtype`, `chapter_kommune_coverage` table, plus Red Cross retro backfill.
 
-**Folkehjelp-specific PLANs**, total estimated effort ~10–13h focused:
+**Folkehjelp-specific PLANs**:
 
-- [ ] **PLAN-001-brreg-folkehjelp-units.md** (~3h)
-  - New seed-source `brreg-folkehjelp-units` (`refresh:brreg-folkehjelp-units`).
-  - Migration `NNN_raw_brreg_folkehjelp_units.sql` (API-sourced; §C.5 not applicable).
-  - Tests: row count ≥ 100, `organisasjonsform='FLI'` 100%.
+- [x] **[PLAN-001-brreg-enheter.md](../completed/PLAN-001-brreg-enheter.md)** — **shipped 2026-04-24**. Generic cross-NGO Brreg ingest (shared `raw.brreg_enheter` table, `refresh:brreg-enheter` script, per-NGO query config in `landscape.json`). Folkehjelp row: 122 enheter, 108 in Frivillighetsregisteret. Scope pulled forward from the originally-proposed NF-specific "brreg-folkehjelp-units" to cross-NGO from day one (see §B.2 + [Q4]).
 - [ ] **PLAN-002-folkehjelp-scrape-and-ingest.md** (~7–10h)
   - Migration `NNN_raw_folkehjelp_chapters.sql` + `raw.folkehjelp_chapter_activities` carrying the §C.5 mandatory columns on the parent (D.1) and child shape from D.2.
   - Scraper at `ingest/src/sources/folkehjelp-chapters/` following the [per-source folder convention](../completed/INVESTIGATE-ngo-scraping-infrastructure.md#b3-per-source-folder-convention): `index.ts`, `discover.ts`, `parse.ts`, `overrides.json`, `types.ts`, `README.md`, `__tests__/`.
@@ -517,15 +524,15 @@ Each PLAN ends with `dbt run && dbt test` per the always-run-tests rule in [`pro
 - `raw.folkehjelp_chapters` — parent, full §C.5 column set (PLAN-002)
 - `raw.folkehjelp_chapter_activities` — child, no §C.5 columns (PLAN-002)
 
-**New API-sourced tables (§C.5 not applicable):**
-- `raw.brreg_folkehjelp_units` (PLAN-001)
+**Shared cross-NGO API-sourced tables (§C.5 not applicable):**
+- `raw.brreg_enheter` — shipped by [PLAN-001-brreg-enheter](../completed/PLAN-001-brreg-enheter.md); Folkehjelp rows filter via `navn ILIKE 'Norsk Folkehjelp%'`.
 
 **New dbt models:**
 - `marts.supply__folkehjelp_chapters`, `marts.supply__folkehjelp_chapter_activities`, `marts.supply__folkehjelp_chapter_kommune_coverage` (PLAN-002)
 
 **New ingest folders:**
-- `atlas-data-repo/ingest/src/sources/folkehjelp-chapters/` (with `__tests__/fixtures/`)
-- `atlas-data-repo/ingest/src/seed-sources/brreg-folkehjelp-units/`
+- `atlas-data-repo/ingest/src/sources/folkehjelp-chapters/` — PLAN-002; new scraper with `__tests__/fixtures/`.
+- ~~`atlas-data-repo/ingest/src/seed-sources/brreg-folkehjelp-units/`~~ — **not created**; PLAN-001 shipped the generic `src/seed-sources/brreg-enheter/` instead, driven by `landscape.json`.
 
 ---
 
