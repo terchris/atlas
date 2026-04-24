@@ -39,6 +39,7 @@
   "exclude": [
     "node_modules",
     "atlas-data-repo",
+    "atlas-private-data-repo",
     "docs"
   ]
 }
