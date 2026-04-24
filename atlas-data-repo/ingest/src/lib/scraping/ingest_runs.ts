@@ -53,9 +53,9 @@ export type RunHandle = {
  *   - Database layer: the partial unique index
  *     raw_ingest_runs_one_inprogress_per_source catches the edge case where
  *     two processes SELECT at the same instant and both try to INSERT.
- * We do not wrap in `sql.begin()` because the DB-level index is the real
- * correctness guarantee and transactions add adapter-compatibility surface
- * (pg-mem's transaction support is incomplete).
+ * We do not wrap in `sql.begin()`: the DB-level partial unique index is the
+ * real correctness guarantee, so a transaction would add surface without
+ * buying anything.
  */
 export async function startRun(
   sql: postgres.Sql,

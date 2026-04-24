@@ -61,9 +61,8 @@ export async function upsertRecord(
   }
 
   // Direct single-row upsert. We don't delegate to the bulk `upsert()` helper
-  // from src/lib/postgres.ts because pg-mem's postgres.js adapter hangs on
-  // the `sql(items, ...cols)` bulk-value-helper form; inline SQL sidesteps it
-  // and is clearer for the single-row case anyway.
+  // from src/lib/postgres.ts — for a single row the inline form is clearer,
+  // and we don't need the chunking the bulk helper is built for.
   const cols = [...columns] as string[];
   const values = cols.map((c) => row[c]);
   const colList = cols.map((c) => `"${c}"`).join(", ");

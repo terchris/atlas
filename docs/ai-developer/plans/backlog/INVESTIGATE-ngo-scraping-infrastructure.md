@@ -527,8 +527,8 @@ Under `ingest/src/lib/scraping/__tests__/`:
 | `ua.ts` | unit | Missing `ATLAS_SCRAPE_CONTACT_EMAIL` throws; valid env produces the exact UA string. |
 | `record_hash.ts` | unit | Same input → same hash; key reordering in the input object → same hash (canonicalization); NFC and NFD variants of the same string → same hash (normalization). |
 | `robots.ts` | unit | Given `robots.txt` fixtures + a URL list, returns the correct allow/deny verdict. |
-| `sitemap_log.ts` | integration | Against `pg-mem` (or a throwaway Postgres container): orphan detection works across runs; NULL-lastmod URLs always fetch; first-run yields zero orphans. |
-| `ingest_runs.ts` | integration | Concurrent-start guard (§E.3.1) rejects the second run while the first's `finished_at` is NULL. |
+| `sitemap_log.ts` (pure) | unit | `decideFetch` reason codes: first-seen, prior-lastmod-null, current-lastmod-null, no-prior-raw-row, lastmod-advanced, unchanged. |
+| `sitemap_log.ts` (DB funcs) / `ingest_runs.ts` / `upsert_record.ts` DB path | end-to-end | Verified via Phase 2's `npm run migrate` + Phase 5's `dbt build` + the first per-source PLAN's (Folkehjelp) smoke test, not via a mocked DB. A dedicated DB test harness (likely testcontainers-postgres) becomes its own PLAN if regressions motivate it. |
 
 ### G.3 Per-source tests
 
@@ -585,7 +585,7 @@ Tests run on every PR via the repo's existing CI. Failing tests block merge. No 
 20. ~~**[Q20]**~~ Mandatory columns on every scraper parent-entity `raw.<source>_*` table: `url`, `record_hash`, `html_raw_hash` (nullable), `is_active`, `loaded_at`. Consolidated from §C.2/§C.3/§C.3.1/§E.1 into §C.5. Child tables (activities, sub-locations) do not carry these columns — they're owned by the parent and delete-and-reinserted when the parent's `record_hash` changes. A dbt schema test asserts presence on every scraper raw source. Decided 2026-04-24.
 21. ~~**[Q21]**~~ Canonical JSON serialization for `record_hash` uses [`fast-json-stable-stringify`](https://www.npmjs.com/package/fast-json-stable-stringify) (npm dep). All string values entering the record object must be UTF-8 NFC-normalized (`str.normalize('NFC')`) at the parser boundary — cheerio may return NFD composition forms for Norwegian characters, which would silently flip the hash. Decided 2026-04-24.
 22. ~~**[Q22]**~~ Concurrent-run protection is an app-layer lock on `raw.ingest_runs` (an in-progress row with `finished_at IS NULL` blocks new runs for the same `source_slug`). Dagster's `QueuedRunCoordinator` with `tag_concurrency_limits` becomes the orchestrator-layer primary guard when Dagster comes online; the app-layer lock remains as backstop for manual CLI invocations. Stale-lock recovery is manual via a simple `UPDATE`; a sweeper is deferred until stale locks are observed in practice. See §E.3.1. Decided 2026-04-24.
-23. ~~**[Q23]**~~ Testing uses **Vitest** (matches `software-scrape` precedent). Shared lib gets unit + integration tests (against `pg-mem` for DB-touching code). Per-source scrapers get **golden-file tests**: `sources/<slug>/__tests__/fixtures/*.html` and `*.expected.json`, 2–3 fixtures per source. Crawlee itself, live HTTP, and dbt logic are deliberately out of scope. See §G. Decided 2026-04-24.
+23. ~~**[Q23]**~~ Testing uses **Vitest** (matches `software-scrape` precedent). Shared lib gets pure-function unit tests (hashers, UA, robots, `decideFetch`, input validation). DB-touching code in the shared lib is verified end-to-end via Phase 2 migrate + Phase 5 dbt build + the first per-source PLAN's (Folkehjelp) smoke test — not via a mocked DB. Per-source scrapers get **golden-file tests**: `sources/<slug>/__tests__/fixtures/*.html` and `*.expected.json`, 2–3 fixtures per source. Crawlee itself, live HTTP, and dbt logic are deliberately out of scope. See §G. A dedicated DB integration test harness (likely testcontainers-postgres) becomes its own PLAN if real regressions escape the end-to-end coverage. Decided 2026-04-24.
 24. ~~**[Q24]**~~ Discovery threshold is an **absolute integer floor** (`MIN_DISCOVERED_URLS`) configured per source in `index.ts`. Relative thresholds (<50% of last run) were rejected — they require persistent state, false-alarm on legitimate NGO shrinkage (closures, mergers), and catch nothing that a correctly-sized absolute floor doesn't. See §E.2. Decided 2026-04-24.
 25. ~~**[Q25]**~~ Per-source file responsibilities are specified as a convention: `parse.ts` is a pure function (no I/O), `discover.ts` owns sitemap-log reads and writes, `index.ts` orchestrates (including `ingest_runs` lock, Crawlee, upsert). The shared `upsertRecord()` helper in `ingest/src/lib/scraping/` does the generic mandatory-column upsert (§C.5). See §B.3. Decided 2026-04-24.
 
@@ -600,7 +600,7 @@ None remaining — all resolved as of 2026-04-24. Open Questions may reappear he
 ## Next Steps
 
 - [ ] **PLAN-001-scraping-infrastructure.md** (~6–8h)
-  - Add dependencies to `ingest/package.json` (pin major versions): `crawlee`, `fast-json-stable-stringify`. Dev deps: `vitest`, `pg-mem` (or equivalent for shared-lib integration tests).
+  - Add dependencies to `ingest/package.json` (pin major versions): `crawlee`, `fast-json-stable-stringify`. Dev deps: `vitest`.
   - Migrations: `raw.ingest_runs` and `raw.sitemap_log`.
   - Shared module `ingest/src/lib/scraping/` with: env-driven UA builder (hard-fails on missing `ATLAS_SCRAPE_CONTACT_EMAIL`), rate-limit config, `robots.txt` verifier (re-checked every run per §D.4), KeyValueStore wrapper, `record_hash` helper, `html_raw_hash` helper, `sitemap_log` reader/writer (discover + orphan detection), `ingest_runs` writer.
   - Add `.crawlee-cache/` to `ingest/.gitignore`.

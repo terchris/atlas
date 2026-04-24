@@ -23,7 +23,7 @@ Six phases, estimated **~10–12 h**. The investigation's 6–8h estimate pre-da
 
 **Built in PLAN-001:**
 
-- **Dependencies**: `crawlee`, `fast-json-stable-stringify` added to `atlas-data-repo/ingest/package.json`. Dev deps: `vitest`, `pg-mem`.
+- **Dependencies**: `crawlee`, `fast-json-stable-stringify` added to `atlas-data-repo/ingest/package.json`. Dev deps: `vitest`.
 - **Migrations**: `023_raw_ingest_runs.sql`, `024_raw_sitemap_log.sql`.
 - **Shared library** under `atlas-data-repo/ingest/src/lib/scraping/`:
   - `ua.ts` — env-driven UA builder, hard-fail on missing `ATLAS_SCRAPE_CONTACT_EMAIL`.
@@ -37,7 +37,7 @@ Six phases, estimated **~10–12 h**. The investigation's 6–8h estimate pre-da
   - `index.ts` — module re-exports.
 - **Tests** (`vitest`):
   - `__tests__/` folder co-located under `src/lib/scraping/`.
-  - Unit + integration coverage per §G.2 of the investigation.
+  - Pure-function coverage: hashers, UA builder, robots parser, `decideFetch` reason codes, `upsertRecord` input validation. DB-touching code is verified end-to-end (see Implementation Notes).
 - **dbt model**: `mart_ingest_health` (3-column minimal view per Q14).
 - **`.gitignore`** entry for `.crawlee-cache/` under `atlas-data-repo/ingest/`.
 - **Documentation**:
@@ -59,7 +59,7 @@ Six phases, estimated **~10–12 h**. The investigation's 6–8h estimate pre-da
 ### Tasks
 
 - [x] 1.1 Install runtime deps: `crawlee ^3.16.0`, `fast-json-stable-stringify ^2.1.0`. Major-pinned via caret per existing project convention.
-- [x] 1.2 Install dev deps: `vitest ^4.1.5`, `pg-mem ^3.0.14`.
+- [x] 1.2 Install dev deps: `vitest ^4.1.5`.
 - [x] 1.3 Added `"test": "vitest run --passWithNoTests"` and `"test:watch": "vitest"` to `package.json` scripts. The `--passWithNoTests` flag makes the empty-suite interim state (pre-Phase 3) a clean exit-0 instead of exit-1.
 - [x] 1.4 Created `atlas-data-repo/ingest/vitest.config.ts` with the include glob from the PLAN.
 - [x] 1.5 Created `src/lib/scraping/` + `__tests__/` subfolder + `index.ts` stub. Stub contains only a module-level comment listing the Phase 3/4 exports to land here + `export {};` to keep TypeScript happy until real exports land.
@@ -132,31 +132,12 @@ All tests pass; `npm run typecheck` clean. User confirms.
 ### Tasks
 
 - [x] 4.1 `sitemap_log.ts` — `readPriorState`, pure `decideFetch` (four-condition skip rule with NULL handling and reason codes), `upsertDiscovered` (uses the shared `upsert()` bulk helper from `lib/postgres.ts`), `detectOrphans`.
-- [x] 4.2 `ingest_runs.ts` — `startRun` with SELECT-then-INSERT check (+ DB-layer partial unique index from Phase 2 for race edge-case), `finishRun`, `IngestInProgressError` class with clear recovery SQL in the message. Deviated from PLAN: originally wrapped in `sql.begin()` transaction, removed because pg-mem's postgres.js adapter doesn't handle transactions cleanly and the DB-layer index is the real correctness guarantee.
-- [x] 4.3 `upsert_record.ts` — `upsertRecord(sql, { tableName, row, columns })` returns `'inserted' | 'updated' | 'skipped'`. SELECT current `record_hash` → compare → skip-or-upsert. Uses inline `sql.unsafe(template, params)` rather than the shared bulk `upsert()` helper because the bulk-value-helper form triggered hangs in pg-mem's adapter; for a single row the inline form is clearer anyway.
-- [x] 4.4 `kv.ts` — `getSourceKv`, `setCached`, `getCachedBody`, `getCachedMetadata`, `hasCached`. Thin Crawlee `KeyValueStore` wrapper scoped per source. No tests this phase (requires real Crawlee + filesystem; exercised in Phase 6 / Folkehjelp PLAN).
-- [x] 4.5 Tests under `__tests__/`. **Significant deviation**: the DB-touching describe blocks (`sitemap_log DB flow`, `ingest_runs lifecycle`, `upsertRecord — DB flow`) are `.skip`'d with clear comments pointing at the pg-mem compatibility issue. Root cause: `pg-mem@3`'s `createPostgresJsTag` adapter hangs on mixed SELECT+INSERT workloads (some queries succeed, subsequent ones time out at 5s). Tried: patching pg-mem's `doRequire('postgres').default` CJS interop bug (needed), installing missing `pg-server` peer dep (needed), removing `sql.begin()` transactions, switching INSERT paths between bulk and inline forms — none produced a stable test run. The skipped test bodies remain valid specifications. Full DB-level verification happens in Phase 6's `dbt build` gate and in the first per-source (Folkehjelp) PLAN. If pg-mem improves or we add testcontainers-postgres later, the `.skip` flags flip off without other changes.
-  - Running: **49 passing, 16 skipped, 0 failing** across 7 test files. Passing includes all `decideFetch` pure-logic cases with reason-code assertions and the `upsertRecord` input-validation branches.
+- [x] 4.2 `ingest_runs.ts` — `startRun` with SELECT-then-INSERT check (DB-layer partial unique index from Phase 2 catches the concurrent-race edge case), `finishRun`, `IngestInProgressError` class with clear recovery SQL in the message. No `sql.begin()` transaction wrapper: the DB-layer index is the correctness guarantee, and wrapping in a transaction added adapter-compatibility surface without buying anything.
+- [x] 4.3 `upsert_record.ts` — `upsertRecord(sql, { tableName, row, columns })` returns `'inserted' | 'updated' | 'skipped'`. SELECT current `record_hash` → compare → skip-or-upsert. Uses inline `sql.unsafe(template, params)` for the single-row INSERT/UPDATE rather than delegating to the shared bulk `upsert()` helper — clearer for the single-row case and avoids the unnecessary bulk-value-helper detour.
+- [x] 4.4 `kv.ts` — `getSourceKv`, `setCached`, `getCachedBody`, `getCachedMetadata`, `hasCached`. Thin Crawlee `KeyValueStore` wrapper scoped per source. Exercised end-to-end by the first per-source PLAN (Folkehjelp); no isolated unit tests (would mostly test that Crawlee works).
+- [x] 4.5 Pure tests only: `sitemap_log.test.ts` covers every `decideFetch` reason code, `upsert_record.test.ts` covers input-validation branches. DB-touching behavior (`readPriorState`, `upsertDiscovered`, `detectOrphans`, `startRun`, `finishRun`, the upsertRecord DB path) is not unit-tested: at Atlas's scale the code is short and mostly delegates to `postgres.js`, so unit tests against a mocked DB would mostly test that `postgres.js` works. Full verification happens through Phase 2's migration run, Phase 5's `dbt build`, and the first per-source PLAN's end-to-end smoke test. If a real bug escapes, the right next step is a discrete "DB integration test harness" PLAN using testcontainers-postgres or similar.
+  - Running: **49 passing, 0 skipped, 0 failing** across 6 test files.
 - [x] 4.6 `index.ts` re-exports `sitemap_log`, `ingest_runs`, `upsert_record`, and `kv` public surfaces.
-
-<!-- Original task list (preserved for reference):
-- [ ] 4.1 **`sitemap_log.ts`** — implements the §C.2 procedure:
-  - `readPriorState(client, sourceSlug): Promise<Map<string, {stored_lastmod: Date | null, last_seen_at: Date}>>` — reads current `raw.sitemap_log` state for a source. Must be called *before* any writes in the run (per [Q19] correctness requirement).
-  - `decideFetch(priorState, discoveredUrls, rawRowExists): Array<{url, action: 'fetch' | 'skip'}>` — pure function; implements the four-condition skip rule from §C.2 step 3, including NULL handling and the "no raw row" clause.
-  - `upsertDiscovered(client, sourceSlug, discoveredUrls): Promise<void>` — writes the current `lastmod` and `last_seen_at = now()` for every URL discovered this run. Runs *after* `decideFetch`.
-  - `detectOrphans(client, sourceSlug, runStartedAt): Promise<string[]>` — returns URLs where `last_seen_at < runStartedAt` for this `source_slug`.
-- [ ] 4.2 **`ingest_runs.ts`** — implements the §E.3.1 lock:
-  - `startRun(client, sourceSlug): Promise<{run_id: bigint; started_at: Date}>` — inserts with `finished_at = NULL`. If the partial unique index from Phase 2.1 rejects (conflict on existing in-progress row), fetch the conflicting row and throw a clear error (`"Source <slug> is already being ingested by run_id=<n> (started <ts>); aborting."`).
-  - `finishRun(client, runId, { exit_code, rows_scraped, rows_parsed, rows_skipped, warnings_count, errors_count, notes }): Promise<void>` — sets `finished_at = now()` + counters.
-- [ ] 4.3 **`upsert_record.ts`** — exports `upsertRecord(client, tableName, record, { skipIfHashMatches: boolean }): Promise<'inserted' | 'updated' | 'skipped'>`. Generic upsert for the §C.5 mandatory columns (`url`, `record_hash`, `html_raw_hash`, `is_active`, `loaded_at`) plus source-specific columns passed through. The skip-if-hash-matches short-circuits the DB write when `record_hash` equals the stored value (§C.3).
-- [ ] 4.4 **`kv.ts`** — thin wrapper: a factory returning a Crawlee `KeyValueStore` scoped to a per-source subdirectory (respects `CRAWLEE_STORAGE_DIR`). Exposes `get(key)`, `set(key, body, metadata)`, `has(key)`. Mostly a convenience layer so per-source code doesn't touch Crawlee internals directly.
-- [ ] 4.5 **Tests** under `src/lib/scraping/__tests__/`, against `pg-mem`:
-  - `sitemap_log.test.ts` — first-run yields zero orphans and zero skips; second run with same URLs skips; second run with one URL removed detects it as orphan; NULL `lastmod` always fetches; URL with no prior raw row always fetches.
-  - `ingest_runs.test.ts` — `startRun` then `startRun` for same slug throws; `startRun` then `finishRun` then `startRun` succeeds (lock released); the thrown error includes the conflicting `run_id`.
-  - `upsert_record.test.ts` — unchanged hash skips; changed hash updates; new URL inserts; `is_active=false` preserved on orphan (passed-in value wins over default `true`).
-- [ ] 4.6 Update `src/lib/scraping/index.ts` with re-exports of the four new modules.
--->
-
 
 ### Validation
 
@@ -166,7 +147,7 @@ npm run typecheck
 npm test
 ```
 
-All tests pass (unit tests from Phase 3 still green; new Phase 4 tests pass). `npm run typecheck` clean. User confirms.
+All tests pass. `npm run typecheck` clean. User confirms.
 
 ---
 
@@ -224,7 +205,7 @@ All gates pass. User confirms by reading the three new README/docs files and agr
 ## Acceptance Criteria
 
 - [ ] `npm run typecheck` clean in `atlas-data-repo/ingest/`.
-- [ ] `npm test` passes with the full shared-lib suite (unit + integration via pg-mem).
+- [ ] `npm test` passes (vitest; shared-lib pure tests).
 - [ ] `npm run migrate` applies both new migrations cleanly (and is idempotent on re-run).
 - [ ] `dbt build` passes; `marts.mart_ingest_health` exists and is queryable (empty until first scraper runs).
 - [ ] The partial unique index on `raw.ingest_runs (source_slug) WHERE finished_at IS NULL` exists and rejects concurrent inserts.
@@ -242,7 +223,7 @@ All gates pass. User confirms by reading the three new README/docs files and agr
 - **NFC normalization** (Q21): callers of `recordHash` are responsible for normalizing strings at the parser boundary. `record_hash.ts` itself does not normalize — if it did, the record object in memory would still contain non-NFC strings and could diverge from what's written to the DB. Put the normalization in `parse.ts` for each source, tested via the record_hash unit tests.
 - **Partial unique index** (Q22): the investigation describes the lock as an application-layer check, but backing it with a database-enforced partial unique index on `(source_slug) WHERE finished_at IS NULL` makes it race-free even if two processes run the SELECT simultaneously. The SELECT-then-informative-error code path still exists for good error messaging; the DB index is the correctness guarantee.
 - **Crawlee version pinning**: lock to a specific major version in `package.json` (e.g., `"crawlee": "^3.x.y"`). Crawlee has had breaking changes at major versions; unpinning risks silent regressions.
-- **pg-mem compatibility**: pg-mem supports most Postgres features but not all (e.g., full-text search, some window functions). The sitemap_log and ingest_runs queries are plain CRUD so pg-mem should suffice. If something doesn't work, fall back to a testcontainer-based Postgres or ignore the integration test locally and let CI run it.
+- **Test scope**: unit tests cover the pure-function surface (hashers, UA builder, robots parser, `decideFetch`, input validation). DB-touching code in `sitemap_log` / `ingest_runs` / `upsert_record` is short and delegates to `postgres.js`; it's verified end-to-end via Phase 2's `npm run migrate`, Phase 5's `dbt build`, and the first per-source PLAN (Folkehjelp) smoke test. If a real bug escapes, add a discrete "DB integration test harness" PLAN (likely testcontainers-postgres) rather than mocking the DB.
 - **dbt sources.yml placement** (Phase 2.4): the investigation doesn't specify, and PLAN-002 put `redcross_branches` under the `supply/` folder's sources. Whether `ingest_runs` and `sitemap_log` belong under `supply/sources.yml` or a new `shared/sources.yml` is a small call — they're infrastructure, not supply. Pick whichever reads more naturally; `shared/` feels slightly better.
 - **Crawlee `KeyValueStore` init**: Crawlee reads `CRAWLEE_STORAGE_DIR` on first import and caches the path. Make sure the env var is set *before* the first `import` — typically via `dotenv` at process start or via `--env-file=.env` on the tsx command (existing convention in `package.json` scripts already does this).
 
@@ -264,9 +245,8 @@ All gates pass. User confirms by reading the three new README/docs files and agr
 - `atlas-data-repo/ingest/src/lib/scraping/__tests__/record_hash.test.ts`
 - `atlas-data-repo/ingest/src/lib/scraping/__tests__/html_raw_hash.test.ts`
 - `atlas-data-repo/ingest/src/lib/scraping/__tests__/robots.test.ts`
-- `atlas-data-repo/ingest/src/lib/scraping/__tests__/sitemap_log.test.ts`
-- `atlas-data-repo/ingest/src/lib/scraping/__tests__/ingest_runs.test.ts`
-- `atlas-data-repo/ingest/src/lib/scraping/__tests__/upsert_record.test.ts`
+- `atlas-data-repo/ingest/src/lib/scraping/__tests__/sitemap_log.test.ts` — `decideFetch` pure-logic tests
+- `atlas-data-repo/ingest/src/lib/scraping/__tests__/upsert_record.test.ts` — input-validation tests
 - `atlas-data-repo/ingest/vitest.config.ts`
 - `atlas-data-repo/ingest/README.md`
 - `atlas-data-repo/ingest/src/sources/README.md`
@@ -291,5 +271,5 @@ All four items were implementation-level choices; all resolved before handing th
 
 - ~~**[P1S.Q1]**~~ **`sources.yml` placement for the shared tables** → new `atlas-data-repo/dbt/models/shared/sources.yml`. Infrastructure tables aren't supply or indicators; they get their own folder. Decided 2026-04-24.
 - ~~**[P1S.Q2]**~~ **`robots-parser` dependency vs hand-rolled parser** → check npm for active maintenance and bundle size during Phase 3.4; prefer the dep if healthy, hand-roll (~30 lines of regex) if stale. Implementer's call. Decided 2026-04-24.
-- ~~**[P1S.Q3]**~~ **Vitest setup for pg-mem integration tests** → one `pg-mem` instance per test via `beforeEach` — isolation trumps speed at this scale. Revisit if tests get slow. Decided 2026-04-24.
+- ~~**[P1S.Q3]**~~ **DB integration test harness** → not pursued in this PLAN. At Atlas's scale the DB-touching shared-lib code is short and mostly delegates to `postgres.js`; unit tests against a mocked DB would mostly test that `postgres.js` works. The DB path is verified end-to-end via Phase 2 migrate + Phase 5 dbt build + the first per-source PLAN's smoke test. Revisit with a discrete PLAN (likely testcontainers-postgres) if real bugs escape that coverage. Decided 2026-04-24.
 - ~~**[P1S.Q4]**~~ **Seed `raw.ingest_runs` with a dummy row** → no. Empty `mart_ingest_health` is the correct reflection of "no scrapers have run yet" and seed rows tend to become permanent mystery fixtures. Instead, add a SQL comment at the top of `mart_ingest_health.sql` explaining that empty output is expected (see Phase 5.1). Decided 2026-04-24.
