@@ -4,11 +4,12 @@
 > - [WORKFLOW.md](../../WORKFLOW.md) — The implementation process
 > - [PLANS.md](../../PLANS.md) — Plan structure and best practices
 
-## Status: Active
+## Status: Completed
 
 **Goal**: Land two data-model extensions on the supply side — `dim_chapter.chapter_subtype` and the new `marts.chapter_kommune_coverage` link table — plus retro-backfill the coverage table for Red Cross so the table has real data on day one. After this plan, the Folkehjelp scrape PLAN can populate `chapter_subtype` for its non-geographic chapters (Solidaritetsungdom, Studentgruppe, Sanitet Haukeland, Sentralt) and write its 14 regional chapters' kommune coverage without any schema work.
 
 **Last Updated**: 2026-04-24
+**Completed**: 2026-04-24 — three phases done in one session. `dim_chapter.chapter_subtype` added (NULL for all Red Cross rows; Folkehjelp PLAN-002 first populator). `marts.chapter_kommune_coverage` shipped with 270 inferred rows across 18 Red Cross distrikter. naming-conventions.md extended; ERD regenerated (39 tables, 64 relationships). Final gates: `npm run typecheck` clean, `npm test` 49/49, `dbt build` PASS=535 WARN=20 ERROR=0 TOTAL=555 (+9 from the 526 baseline: 2 new models + 7 new tests).
 
 **Investigation**: [INVESTIGATE-multi-ngo-supply-model-extensions.md](../backlog/INVESTIGATE-multi-ngo-supply-model-extensions.md) — 5 design decisions resolved, 3 open items deferred (polish, revisit after 3+ NGOs ingest).
 
@@ -42,7 +43,7 @@ Three phases, estimated **~1.5–2 h**. The investigation's design work is done;
 
 ---
 
-## Phase 1: `dim_chapter.chapter_subtype` — IN PROGRESS
+## Phase 1: `dim_chapter.chapter_subtype` — DONE
 
 ### Tasks
 
@@ -63,7 +64,7 @@ User confirms: the column exists on `dim_chapter`, all values NULL.
 
 ---
 
-## Phase 2: `chapter_kommune_coverage` link table
+## Phase 2: `chapter_kommune_coverage` link table — DONE
 
 ### Tasks
 
@@ -144,7 +145,7 @@ User confirms: coverage rows exist for Red Cross distrikter.
 
 ---
 
-## Phase 3: Docs, ERD, wrap-up
+## Phase 3: Docs, ERD, wrap-up — DONE
 
 ### Tasks
 

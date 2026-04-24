@@ -88,6 +88,7 @@ Use these **exact names** when the concept is present. Never invent variants.
 | Chapter level | `chapter_level` | `text` | One of `"national"`, `"regional"`, `"local"`. Coverage-gap supply queries filter to `'local'`. |
 | Parent chapter id | `parent_chapter_id` | `text` | Self-FK on `dim_chapter`. NULL for top-level (national) and orphan (Ukjent) rows. |
 | Chapter's own Brreg orgnr | `chapter_orgnr` | `text` | Optional 9-digit orgnr if the chapter is separately registered with Brreg (e.g. Red Cross local branches each have own). NULL otherwise. |
+| Chapter subtype (non-geographic) | `chapter_subtype` | `text` | NULL = normal geographic chapter. Optional vocabulary for structurally distinct chapters: `"youth-political"` (e.g. NF Solidaritetsungdom), `"youth-health"` (NF Sanitetsungdom / RC RØFF), `"student"`, `"hospital"`, `"umbrella"`. Free-text in v1; promoted to `accepted_values` once 3+ NGOs populate it consistently. Used by frontend to filter chapter-finder maps to `chapter_subtype IS NULL` (kommune-anchored supply) vs structurally-distinct rows. |
 | Activity id (cross-NGO) | `activity_id` | `text` | Composite slug `<ngo_slug>-<canonical_slug>`, e.g. `'redcross-besokstjeneste'`. Must exist in `marts.dim_activity`. |
 | NGO's canonical activity name | `canonical_name` | `text` | The NGO's own canonical term, verbatim (e.g. Red Cross's `globalActivityName = "Besøkstjeneste"`). Per-NGO reporting pivots on this. |
 | NGO's local activity display string | `local_activity_name` | `text` | Per-chapter display string (e.g. `"Modum Røde Kors Besøkstjeneste"`). On `fact_chapter_activities` only. |
@@ -155,6 +156,7 @@ A process **MUST NOT** write to a schema it doesn't own. A consumer **MUST NOT**
 | `indicators__<source_id>` | Per-source passthrough from raw. Double underscore. | `indicators__ssb_08764` |
 | `fact_<concept>` | Fact table joining multiple sources, FKs to dims. | `fact_kommune_indicators` |
 | `mart_<feature>` | Application-shaped marts sized to a specific feature. | `mart_coverage_gap_barnefattigdom` |
+| `<entity>_kommune_coverage` | Link table declaring which kommuner a non-local entity serves. Rows are `(entity_id, kommune_nr, source)` with `source IN ('declared','inferred')`. Built by UNIONing per-source `supply__<ngo>_<entity>_kommune_coverage` staging models. | `chapter_kommune_coverage` (regional NGO chapters → kommuner) |
 
 - **MUST NOT** prefix models by team or date (owner is encoded only in `ref_*`, where it's the source-of-truth distinction).
 - **MUST NOT** create variants like `dim_kommune_v2` — fix the original, deprecate only as a last resort.
