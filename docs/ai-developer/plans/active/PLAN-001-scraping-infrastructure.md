@@ -151,14 +151,14 @@ All tests pass. `npm run typecheck` clean. User confirms.
 
 ---
 
-## Phase 5: `mart_ingest_health` dbt model
+## Phase 5: `mart_ingest_health` dbt model — DONE
 
 ### Tasks
 
-- [ ] 5.1 Create `atlas-data-repo/dbt/models/marts/mart_ingest_health.sql` with the 3-column view from §E.3 of the investigation (`source_slug`, `last_run_at`, `last_status`). Use `distinct on (source_slug)` ordered by `finished_at desc` to return the most-recent finished row per source. **Add a SQL comment at the top** (per [P1S.Q4]) noting that an empty result is expected until the first scraper writes to `raw.ingest_runs` — something like `-- NOTE: empty until the first scraper writes to raw.ingest_runs. Empty output is correct, not a wiring bug.`
-- [ ] 5.2 Add a schema.yml entry for the new mart. Columns: `source_slug` (not_null, unique), `last_run_at` (not_null), `last_status` (accepted_values: `['ok', 'fail']`).
-- [ ] 5.3 Add the mart to the ERD file at [`docs/stack/erd.md`](../../../stack/erd.md) (per the "surfaces in docs/stack/erd.md once built" note in the Files-produced list).
-- [ ] 5.4 Run `dbt build` and verify PASS count increased by the expected number of new tests (+3 for the three assertions above). Zero errors.
+- [x] 5.1 `mart_ingest_health.sql` created as a **view** materialized in `marts.*`. Selects `distinct on (source_slug)` ordered by `finished_at desc` with a `where finished_at is not null` clause so in-progress rows never leak through. SQL comment at the top documents the empty-state expectation per [P1S.Q4].
+- [x] 5.2 schema.yml entry added. Five data tests: `not_null` + `unique` on `source_slug`, `not_null` on `last_run_at`, `not_null` + `accepted_values: ['ok', 'fail']` on `last_status`. Went slightly beyond the PLAN's "+3" estimate to cover presence of all three columns, not just three assertions.
+- [x] 5.3 ERD regenerated via `atlas-data-repo/dbt/regenerate-erd.sh`. `docs/stack/erd.md` now contains `MODEL.ATLAS.MART_INGEST_HEALTH` with all three columns. ERD entity count: 36 → 37.
+- [x] 5.4 `dbt build` clean: **PASS=526 WARN=19 ERROR=0 SKIP=0 TOTAL=545** (was 520 baseline from PLAN-002 + 1 model + 5 tests = 526 ✓). `dbt show --inline "select * from marts.mart_ingest_health"` returns empty — expected.
 
 ### Validation
 

@@ -119,3 +119,29 @@ models:
     data_tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns: [chapter_id, activity_id]
+
+  - name: mart_ingest_health
+    description: |
+      Per-source ingest-run health. One row per scraper or API-source,
+      showing the most recent COMPLETED run (finished_at IS NOT NULL).
+      Minimal v1 surface per Q14 of
+      INVESTIGATE-ngo-scraping-infrastructure.md — just the three columns
+      needed to answer "which sources are failing?" and "which sources
+      haven't refreshed recently?". Empty until the first scraper writes
+      to raw.ingest_runs.
+    columns:
+      - name: source_slug
+        description: "Source identifier matching raw.ingest_runs.source_slug and the npm ingest:<slug> script."
+        data_tests:
+          - not_null
+          - unique
+      - name: last_run_at
+        description: "finished_at of the most recent completed run for this source."
+        data_tests:
+          - not_null
+      - name: last_status
+        description: "'ok' when exit_code = 0, otherwise 'fail'."
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ['ok', 'fail']
