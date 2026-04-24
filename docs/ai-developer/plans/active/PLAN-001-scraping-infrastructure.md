@@ -4,15 +4,15 @@
 > - [WORKFLOW.md](../../WORKFLOW.md) — The implementation process
 > - [PLANS.md](../../PLANS.md) — Plan structure and best practices
 
-## Status: Backlog
+## Status: Active
 
-**Goal**: Ship the shared scraping toolkit defined in [INVESTIGATE-ngo-scraping-infrastructure.md](./INVESTIGATE-ngo-scraping-infrastructure.md) — Crawlee dependency, two raw tables (`raw.ingest_runs`, `raw.sitemap_log`), the shared TypeScript library under `ingest/src/lib/scraping/` with test coverage, the minimal `mart_ingest_health` dbt view, env-var conventions, and the per-source folder convention. After this plan, per-NGO scrape PLANs (Folkehjelp first) can implement sources against a stable foundation without re-litigating infrastructure.
+**Goal**: Ship the shared scraping toolkit defined in [INVESTIGATE-ngo-scraping-infrastructure.md](../backlog/INVESTIGATE-ngo-scraping-infrastructure.md) — Crawlee dependency, two raw tables (`raw.ingest_runs`, `raw.sitemap_log`), the shared TypeScript library under `ingest/src/lib/scraping/` with test coverage, the minimal `mart_ingest_health` dbt view, env-var conventions, and the per-source folder convention. After this plan, per-NGO scrape PLANs (Folkehjelp first) can implement sources against a stable foundation without re-litigating infrastructure.
 
 **Last Updated**: 2026-04-24
 
-**Investigation**: [INVESTIGATE-ngo-scraping-infrastructure.md](./INVESTIGATE-ngo-scraping-infrastructure.md) — 25 resolved Q's, zero open.
+**Investigation**: [INVESTIGATE-ngo-scraping-infrastructure.md](../backlog/INVESTIGATE-ngo-scraping-infrastructure.md) — 25 resolved Q's, zero open.
 **Prerequisites**: none (all foundation already in place — Postgres, dbt, ingest repo, migrate runner).
-**Blocks**: [INVESTIGATE-folkehjelp-supply.md](./INVESTIGATE-folkehjelp-supply.md)'s scrape PLAN — the first per-NGO consumer of this infrastructure.
+**Blocks**: [INVESTIGATE-folkehjelp-supply.md](../backlog/INVESTIGATE-folkehjelp-supply.md)'s scrape PLAN — the first per-NGO consumer of this infrastructure.
 **Priority**: Medium
 
 ---
@@ -54,7 +54,7 @@ Six phases, estimated **~10–12 h**. The investigation's 6–8h estimate pre-da
 
 ---
 
-## Phase 1: Dependencies and scaffolding
+## Phase 1: Dependencies and scaffolding — IN PROGRESS
 
 ### Tasks
 
