@@ -22,7 +22,7 @@ NGO chapter pages typically expose a **shallow** activity taxonomy. For Norsk Fo
 
 For the Coverage-gap explorer's MVP we accept the shallow-taxonomy loss (see [`INVESTIGATE-folkehjelp-supply.md`](./INVESTIGATE-folkehjelp-supply.md) Section C for the rationale). This file collects the future-work ideas so we don't lose them.
 
-Anything that materialises from this investigation builds on the toolkit defined in [`INVESTIGATE-ngo-scraping-infrastructure.md`](./INVESTIGATE-ngo-scraping-infrastructure.md) — Crawlee + per-source folder convention + `raw.sitemap_log` + `raw.ingest_runs` apply equally to events/minisites scrapes.
+Anything that materialises from this investigation builds on the toolkit defined in [`INVESTIGATE-ngo-scraping-infrastructure.md`](../completed/INVESTIGATE-ngo-scraping-infrastructure.md) — Crawlee + per-source folder convention + `raw.sitemap_log` + `raw.ingest_runs` apply equally to events/minisites scrapes.
 
 ---
 
@@ -40,12 +40,12 @@ Anything that materialises from this investigation builds on the toolkit defined
 
 ## Ideas to capture (not yet structured)
 
-- **Pull instructor/contact info** — many event pages list a kontaktperson with email/phone. Useful for "find the nearest språkkafé" but PII-sensitive. **Tension with [scraping infra §D.3](./INVESTIGATE-ngo-scraping-infrastructure.md#d3-no-pii--contact-information)** ("we do not store this"). Promotion to active requires a privacy review and likely a deliberate carve-out from the no-PII policy; default position is "don't ingest".
+- **Pull instructor/contact info** — many event pages list a kontaktperson with email/phone. Useful for "find the nearest språkkafé" but PII-sensitive. **Tension with [scraping infra §D.3](../completed/INVESTIGATE-ngo-scraping-infrastructure.md#d3-no-pii--contact-information)** ("we do not store this"). Promotion to active requires a privacy review and likely a deliberate carve-out from the no-PII policy; default position is "don't ingest".
 - **Schedule / opening hours** — recurring event series ("hver onsdag 18:00-20:00") could populate a `chapter_schedule` table.
 - **Capacity signals** — events that say "fullt" or "venteliste" are a demand signal Atlas could surface.
 - **Cross-link to Lottstift / funding** — if a chapter receives Lottstift earmarked for a specific activity, that's a verification signal that the activity actually runs.
 - **Geocoding events** — events sometimes happen at a venue that isn't the chapter's main address (school, library, Frivillighetssentral). Per-event geocoding could improve "nearest" queries.
-- **AI summary of long-form chapter text** — chapter "Om oss" sections are free-text Norwegian. A small LLM pass per chapter could extract: focus areas not captured in the bin taxonomy, target-population descriptions, frequency of activity. Cost: ~$0.01/chapter via Haiku; ~$1 for 100 NGO total. **Tension with [scraping infra Q16](./INVESTIGATE-ngo-scraping-infrastructure.md#why-this-exists)** ("LLM involvement at this scale, if any, stays at authoring time, not in the runtime path"). If pursued, this is an authoring-time enrichment one-shot, not a per-run extraction step.
+- **AI summary of long-form chapter text** — chapter "Om oss" sections are free-text Norwegian. A small LLM pass per chapter could extract: focus areas not captured in the bin taxonomy, target-population descriptions, frequency of activity. Cost: ~$0.01/chapter via Haiku; ~$1 for 100 NGO total. **Tension with [scraping infra Q16](../completed/INVESTIGATE-ngo-scraping-infrastructure.md#why-this-exists)** ("LLM involvement at this scale, if any, stays at authoring time, not in the runtime path"). If pursued, this is an authoring-time enrichment one-shot, not a per-run extraction step.
 - **Verification-by-event-presence** — a chapter listing "Flyktning og inkludering" but having no events in that area for 6+ months might be effectively dormant on that activity. Compute a `last_event_at` per (chapter, activity).
 
 ---
