@@ -40,3 +40,71 @@ export type FactKommuneIndicator = {
   kommune_is_active: boolean;
   updated_at: Date;
 };
+
+// ────────────────────────────────────────────────────────────────────────────
+// Supply side: dim_ngo, dim_chapter, dim_activity, fact_chapter_activities,
+// ref_atlas_service_category. See atlas-data-repo/dbt/seeds/ + dimensions/ +
+// supply/ for authoritative definitions.
+
+export type DimNgo = {
+  orgnr: string;
+  slug: string;
+  name: string;
+  brand_name: string | null;
+  website_url: string | null;
+  tier: string;
+  chapter_data_shape: "api_canonical" | "cms_bins" | "programme_only" | "no_structure";
+  has_chapters: boolean;
+  primary_focus: string | null;
+  icnpo_code_1: string | null;
+  icnpo_code_2: string | null;
+  icnpo_code_3: string | null;
+};
+
+export type ChapterLevel = "national" | "regional" | "local";
+
+export type DimChapter = {
+  chapter_id: string;
+  ngo_orgnr: string;
+  chapter_level: ChapterLevel;
+  parent_chapter_id: string | null;
+  chapter_orgnr: string | null;
+  name: string;
+  kommune_nr: string | null;
+  is_active: boolean;
+  postal_address_line1: string | null;
+  postal_code: string | null;
+  post_office: string | null;
+  phone: string | null;
+  email: string | null;
+  web: string | null;
+  updated_at: Date;
+};
+
+export type DimActivity = {
+  activity_id: string;
+  ngo_orgnr: string;
+  canonical_name: string;
+  service_category_code: string;
+  is_active: boolean;
+};
+
+export type FactChapterActivity = {
+  chapter_id: string;
+  activity_id: string;
+  ngo_orgnr: string;
+  kommune_nr: string | null;
+  local_activity_name: string | null;
+  canonical_name: string;
+  is_active: boolean;
+  source_id: string;
+  updated_at: Date;
+};
+
+export type RefAtlasServiceCategory = {
+  code: string;
+  label_no: string;
+  label_en: string;
+  description: string | null;
+  sort_order: number;
+};

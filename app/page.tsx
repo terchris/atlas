@@ -29,6 +29,10 @@ export default function HomePage() {
             — alle tilgjengelige indikatorer per kommune (eksempel: Oslo)
           </li>
           <li>
+            <a href="/ngo">Tilbud per organisasjon</a>{" "}
+            — oversikt over de 11 organisasjonene Atlas følger, og hva de tilbyr
+          </li>
+          <li>
             <a href="/data">Data-utforsker</a>{" "}
             — alle indikatorer på kartet, for datakvalitetskontroll
           </li>

@@ -1,0 +1,20 @@
+{
+  "tokenSetOrder": [
+    "primitives/globals",
+    "primitives/modes/size/small",
+    "primitives/modes/size/medium",
+    "primitives/modes/size/large",
+    "primitives/modes/size/global",
+    "primitives/modes/typography/size/small",
+    "primitives/modes/typography/size/medium",
+    "primitives/modes/typography/size/large",
+    "primitives/modes/typography/primary/atlas",
+    "primitives/modes/typography/secondary/atlas",
+    "primitives/modes/color-scheme/dark/atlas",
+    "primitives/modes/color-scheme/light/atlas",
+    "themes/atlas",
+    "semantic/color",
+    "semantic/modes/main-color/accent",
+    "semantic/style"
+  ]
+}

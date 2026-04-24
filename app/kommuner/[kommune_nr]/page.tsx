@@ -1,5 +1,7 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { sql } from "@/lib/db";
+import { listChaptersInKommune } from "@/lib/supply";
 import type { DimKommune, DimFylke, FactKommuneIndicator } from "@/lib/types";
 
 type PageProps = {
@@ -15,7 +17,7 @@ export default async function KommunePage({ params }: PageProps) {
     notFound();
   }
 
-  const [kommune, fylke, indicators] = await Promise.all([
+  const [kommune, fylke, indicators, supplyRows] = await Promise.all([
     sql<DimKommune[]>`
       select *
       from marts.dim_kommune
@@ -35,6 +37,7 @@ export default async function KommunePage({ params }: PageProps) {
       where kommune_nr = ${kommune_nr}
       order by source_id, contents_code
     `,
+    listChaptersInKommune(kommune_nr),
   ]);
 
   if (!kommune) notFound();
@@ -171,7 +174,107 @@ export default async function KommunePage({ params }: PageProps) {
           </section>
         ))
       )}
+
+      <SupplySection kommuneNr={kommune_nr} kommuneName={kommune.kommune_name} rows={supplyRows} />
     </main>
+  );
+}
+
+// Org-neutral "Lokale tilbud" section appended to the kommune view.
+// Today only Red Cross has supply; this grows organically as more NGOs ingest.
+type SupplyRow = Awaited<ReturnType<typeof listChaptersInKommune>>[number];
+
+function SupplySection({
+  kommuneNr,
+  kommuneName,
+  rows,
+}: {
+  kommuneNr: string;
+  kommuneName: string;
+  rows: SupplyRow[];
+}) {
+  // Group by service_category_label_no for display.
+  const grouped = new Map<string, SupplyRow[]>();
+  for (const r of rows) {
+    const key = r.service_category_label_no;
+    const arr = grouped.get(key) ?? [];
+    arr.push(r);
+    grouped.set(key, arr);
+  }
+
+  return (
+    <section
+      style={{
+        marginTop: "3rem",
+        marginBottom: "2rem",
+        paddingTop: "2rem",
+        borderTop: "2px solid #e5e5e5",
+      }}
+    >
+      <h2 style={{ fontSize: "1.15rem", margin: "0 0 0.25rem" }}>
+        Lokale tilbud i {kommuneName}
+      </h2>
+      <p style={{ fontSize: "0.85rem", color: "#666", margin: "0 0 1rem" }}>
+        Aktiviteter fra organisasjoner Atlas følger. Voksende etter hvert som
+        flere organisasjoner blir importert.
+      </p>
+
+      {rows.length === 0 ? (
+        <p style={{ fontSize: "0.95rem", color: "#555" }}>
+          <em>
+            Ingen ingestede organisasjoner har lokale tilbud i {kommuneName}.
+          </em>
+        </p>
+      ) : (
+        <div>
+          {[...grouped.entries()].map(([categoryLabel, catRows]) => {
+            // Dedupe chapters within this category (one chapter may map to
+            // a category through multiple activity rows).
+            const seen = new Map<string, SupplyRow>();
+            for (const r of catRows) seen.set(r.chapter_id, r);
+            const chapters = [...seen.values()].sort((a, b) =>
+              a.name.localeCompare(b.name, "nb"),
+            );
+            return (
+              <div key={categoryLabel} style={{ marginBottom: "1.25rem" }}>
+                <h3
+                  style={{
+                    fontSize: "0.95rem",
+                    margin: "0 0 0.25rem",
+                    color: "#222",
+                  }}
+                >
+                  {categoryLabel}
+                </h3>
+                <ul style={{ margin: 0, paddingLeft: "1.25rem" }}>
+                  {chapters.map((c) => (
+                    <li
+                      key={c.chapter_id}
+                      style={{ fontSize: "0.9rem", margin: "0.15rem 0" }}
+                    >
+                      <Link
+                        href={`/ngo/redcross/chapters/${c.chapter_id}`}
+                        style={{ color: "#0062BA" }}
+                      >
+                        {c.name}
+                      </Link>
+                      <span style={{ color: "#888", marginLeft: "0.5rem" }}>
+                        ({c.ngo_brand_name ?? c.ngo_name})
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      <p style={{ fontSize: "0.8rem", color: "#777", marginTop: "1rem" }}>
+        Se også: <Link href={`/ngo`}>alle organisasjoner</Link>
+        {kommuneNr ? " · " : ""}
+      </p>
+    </section>
   );
 }
 
