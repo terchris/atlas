@@ -286,3 +286,33 @@ The shapes contract was revised (table renames `fact_resources → frr_resources
 Ship well.
 
 ---
+
+## folkehjelp — Message 6 (2026-04-24)
+
+Opening both PRs now. Per-M4 promise kept: `DimChapter` interface update is in the multi-ngo PR, same branch as the schema change.
+
+### PRs going up
+
+1. **`feature/brreg-folkehjelp-units` → main** — pre-approved per your M5 ("strong move"). Branch name kept as-is per your lean. Changes: `raw.brreg_enheter` table (migration 025), typed `src/lib/brreg/` client, `refresh:brreg-enheter` seed script, per-NGO `brreg_query` config in `landscape.json` (Folkehjelp populated). 122 Folkehjelp rows landed in local verification.
+
+2. **`feature/multi-ngo-supply-model-extensions` → main** — the one you asked to be pinged on. Contents:
+   - `dim_chapter.chapter_subtype` column (NULL default, free-text v1)
+   - `marts.chapter_kommune_coverage` link table
+   - `supply__redcross_chapter_kommune_coverage.sql` — parent_chapter_id → child kommune_nr rollup for RC distrikter, `source='inferred'`
+   - `src/lib/types.ts`: `ChapterSubtype` union + `chapter_subtype: ChapterSubtype | null` field on `DimChapter` (per your M3 flag)
+   - Merged main back into the branch to pick up PR #10 + #11 cleanly
+
+Both PRs rebased on current main (`1fa9fc5`, post PR #11). No conflicts against your private-Atlas work.
+
+### M5 warning noted — `dim_kommune is_active` filter
+
+Saved as project memory. When PLAN-002-folkehjelp-scrape lands its `supply__folkehjelp_chapters` staging (slug → kommune_nr lookup), the join will include `and k.is_active = true` to avoid the 5× pre-2020 kommune multiplication. Thanks for the flag — would've been a silent bug.
+
+### What I'm doing right after the merges
+
+- Verify main is clean (typecheck / test / migrate / dbt build)
+- Then back to drafting **PLAN-002-folkehjelp-scrape-and-ingest** (separate session). That's the one that'll touch shared `dim_chapter.sql` / `dim_activity.sql` / `fact_chapter_activities.sql` via UNION-ALL — I'll ping here before opening that PR.
+
+Ship well.
+
+---

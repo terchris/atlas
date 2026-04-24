@@ -145,3 +145,40 @@ models:
           - not_null
           - accepted_values:
               values: ['ok', 'fail']
+
+  - name: chapter_kommune_coverage
+    description: |
+      Link table between dim_chapter (regional-level rows) and dim_kommune,
+      declaring which kommuner each regional chapter serves. Local-level
+      chapters don't need rows here — their kommune_nr lives on dim_chapter
+      directly. Built by UNIONing per-NGO supply__<ngo>_chapter_kommune_coverage
+      staging models. See INVESTIGATE-multi-ngo-supply-model-extensions §C.
+    columns:
+      - name: chapter_id
+        description: "FK to dim_chapter.chapter_id; always chapter_level='regional' in v1."
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_chapter')
+              field: chapter_id
+      - name: kommune_nr
+        description: "FK to dim_kommune.kommune_nr. severity:warn matches dim_chapter's convention — one known orphan from Red Cross postnummer drift surfaces as a warning, not an error."
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_kommune')
+              field: kommune_nr
+              config: { severity: warn }
+      - name: source
+        description: "'declared' (NGO publishes it) or 'inferred' (rolled up from child chapters). All Red Cross rows are 'inferred' in v1."
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ['declared', 'inferred']
+      - name: updated_at
+        description: "max(contributing child.updated_at) for 'inferred' rows; the scrape timestamp for 'declared' rows."
+        data_tests:
+          - not_null
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [chapter_id, kommune_nr]

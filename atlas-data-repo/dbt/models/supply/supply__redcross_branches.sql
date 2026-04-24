@@ -45,6 +45,7 @@ select
   src.phone,
   src.email,
   src.web,
+  null::text                                                                as chapter_subtype,
   src.loaded_at                                                             as updated_at
 from src
 left join {{ ref('dim_postnummer') }} pn

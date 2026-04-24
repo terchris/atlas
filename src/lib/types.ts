@@ -63,6 +63,22 @@ export type DimNgo = {
 
 export type ChapterLevel = "national" | "regional" | "local";
 
+/**
+ * Optional subtype for non-geographic / structurally distinct chapters.
+ * NULL for normal geographic chapters. Free-text in v1; promoted to
+ * accepted_values test in dbt once 3+ NGOs populate it consistently
+ * (per INVESTIGATE-multi-ngo-supply-model-extensions Q1).
+ *
+ * Current v1 vocabulary: 'youth-political', 'youth-health', 'student',
+ * 'hospital', 'umbrella'.
+ */
+export type ChapterSubtype =
+  | "youth-political"
+  | "youth-health"
+  | "student"
+  | "hospital"
+  | "umbrella";
+
 export type DimChapter = {
   chapter_id: string;
   ngo_orgnr: string;
@@ -78,6 +94,8 @@ export type DimChapter = {
   phone: string | null;
   email: string | null;
   web: string | null;
+  /** NULL for normal geographic chapters. See ChapterSubtype above. */
+  chapter_subtype: ChapterSubtype | null;
   updated_at: Date;
 };
 

@@ -154,6 +154,15 @@ models:
         data_tests:
           - not_null
           - accepted_values: { values: [true, false] }
+      - name: chapter_subtype
+        description: |
+          Optional subtype for non-geographic or structurally distinct chapters.
+          NULL = normal geographic chapter. Vocabulary (free-text in v1):
+          'youth-political' (e.g. NF Solidaritetsungdom), 'youth-health' (NF
+          Sanitetsungdom when separately registered, RC RØFF), 'student' (NF
+          Studentgruppe), 'hospital' (NF Sanitet Haukeland), 'umbrella' (NF
+          Sentralt). Promoted to an accepted_values test once 3+ NGOs populate
+          it consistently (per INVESTIGATE-multi-ngo-supply-model-extensions Q1).
       - name: updated_at
         data_tests: [not_null]
 
