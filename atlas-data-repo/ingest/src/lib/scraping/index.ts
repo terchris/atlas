@@ -12,6 +12,37 @@ export {
   type RobotsGroup,
 } from "./robots.js";
 
-// Phase 4 will add:
-//   sitemap_log API, ingest_runs writer, upsertRecord helper, KeyValueStore
-//   wrapper.
+export {
+  readPriorState,
+  decideFetch,
+  upsertDiscovered,
+  detectOrphans,
+  type DiscoveredUrl,
+  type PriorState,
+  type PriorStateEntry,
+  type FetchDecision,
+  type FetchAction,
+} from "./sitemap_log.js";
+
+export {
+  startRun,
+  finishRun,
+  IngestInProgressError,
+  type RunHandle,
+  type FinishRunArgs,
+} from "./ingest_runs.js";
+
+export {
+  upsertRecord,
+  type UpsertRecordOpts,
+  type UpsertRecordResult,
+} from "./upsert_record.js";
+
+export {
+  getSourceKv,
+  setCached,
+  getCachedBody,
+  getCachedMetadata,
+  hasCached,
+  type CacheMetadata,
+} from "./kv.js";
