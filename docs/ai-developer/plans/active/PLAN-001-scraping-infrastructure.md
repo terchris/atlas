@@ -101,20 +101,19 @@ Both tables exist, the partial unique index exists. User confirms phase is compl
 
 ---
 
-## Phase 3: Shared library — UA, hashers, robots
+## Phase 3: Shared library — UA, hashers, robots — DONE
 
 ### Tasks
 
-- [ ] 3.1 **`ua.ts`** — exports `buildUserAgent(): string` and a cached `USER_AGENT` constant. Reads `process.env.ATLAS_SCRAPE_CONTACT_EMAIL`; throws a descriptive error if unset or empty (per [Q13]). Format: `Atlas/0.1 (https://github.com/terchris/atlas; <email>)`. Hard-code the version `0.1` and repo URL as module constants.
-- [ ] 3.2 **`record_hash.ts`** — exports `recordHash(record: unknown): string`. Uses `fast-json-stable-stringify` for canonical serialization, then `node:crypto` `createHash('sha256')` → hex digest. 64 hex chars (per [Q18] / [Q21]).
-- [ ] 3.3 **`html_raw_hash.ts`** — exports `htmlRawHash(body: string): string`. Canonicalization: strip `<head>…</head>`, strip known per-render attributes (CSRF `<meta>` tokens, nonce attributes), collapse whitespace runs. Then sha256. Per §C.3.1. Keep the canonicalization conservative; remember this is an audit-only signal so perfect determinism isn't required.
-- [ ] 3.4 **`robots.ts`** — exports `fetchRobots(host: string): Promise<RobotsRules>` and `isAllowed(rules: RobotsRules, url: string, userAgent: string): boolean`. Use a simple parser (or a tiny dep like `robots-parser` — check npm for active maintenance before adding). Per §A.3 + §D.4 the investigation requires re-checking robots.txt on every run, so this module gets called from `discover.ts` in per-source folders.
-- [ ] 3.5 **Tests** under `src/lib/scraping/__tests__/`:
-  - `ua.test.ts` — throws on missing env; produces exact UA string on valid env.
-  - `record_hash.test.ts` — same input → same hash; key reordering in source object → same hash (canonicalization); NFC vs NFD strings in the record → same hash (spec via test: `recordHash({name: 'Oslo'.normalize('NFD')}) === recordHash({name: 'Oslo'.normalize('NFC')})` after the parser's own NFC normalization; documents why the normalize-before-hash convention exists).
-  - `html_raw_hash.test.ts` — whitespace differences → same hash; CSRF/nonce attributes → same hash; genuine content difference → different hash.
-  - `robots.test.ts` — given fixture robots.txt files, verifies allow/deny for representative URLs; `Crawl-Delay` parsing if we implement it.
-- [ ] 3.6 Update `src/lib/scraping/index.ts` with re-exports of the four modules.
+- [x] 3.1 `ua.ts` — exports `buildUserAgent()` (function, not cached constant — lazy reads env so tests can exercise missing-env case without module-reset gymnastics) + a named `MissingContactEmailError` class. Throws on unset/empty/whitespace-only env, with a descriptive message citing §D.1.
+- [x] 3.2 `record_hash.ts` — exports `recordHash(record: unknown): string`. Uses `fast-json-stable-stringify` + node:crypto sha256. Explicit comment documents that NFC normalization is the caller's responsibility (Q21 contract).
+- [x] 3.3 `html_raw_hash.ts` — exports `htmlRawHash(body)` plus `canonicalizeHtmlBody(body)` (exported for tests). Canonicalization: strip `<head>...</head>`, strip CSRF meta tags and nonce attributes (both quote styles), collapse whitespace runs.
+- [x] 3.4 `robots.ts` — **hand-rolled** parser (per [P1S.Q2] — kept the dep list small; robots.txt syntax is simple). Supports User-agent blocks + Disallow + Allow + Crawl-Delay + `*` path wildcards + `$` end-anchor. Longest-match-wins semantics with Allow breaking ties.
+- [x] 3.5 Tests for all four modules under `__tests__/`. **Three real bugs caught during test runs**:
+  - robots.ts: `*` wildcard regex conversion was broken (the escape-then-un-escape dance never fired because `*` wasn't in the first regex-special class). Fixed — now escapes specials, then converts `*` → `.*` in a clean second pass.
+  - record_hash test: initial test used `ø` which is atomic in Unicode (no canonical decomposition). Replaced with `å` (U+00E5 ↔ U+0061 U+030A) which actually has an NFC/NFD split.
+  - html_raw_hash test: initial whitespace test expected identical output after canonicalizing inputs with different tag-adjacent whitespace. Tightened the test to cover the actual contract (inter-token whitespace runs collapse to single space).
+- [x] 3.6 `src/lib/scraping/index.ts` updated with re-exports for all four modules.
 
 ### Validation
 
