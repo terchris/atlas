@@ -16,6 +16,20 @@ cd atlas-data-repo/ingest
 pnpm install
 ```
 
+## Environment variables
+
+The ingest modules read environment variables from `.env` (dev) or from the K8s manifest (prod). Scraping modules (Folkehjelp, NKS, etc. — the sources added by the per-NGO PLANs that follow PLAN-001-scraping-infrastructure) read three variables in addition to `DATABASE_URL`:
+
+| Variable | Purpose | Dev default | Prod default | Required? |
+|---|---|---|---|---|
+| `ATLAS_SCRAPE_CONTACT_EMAIL` | Contact email embedded in the scraper's User-Agent so site operators can reach us if our scrapes cause problems. | `terje@helpers.no` | `terje@helpers.no` | **Yes — hard failure at startup if unset.** Anonymous scrapes breach the ethical contract. |
+| `CRAWLEE_STORAGE_DIR` | Path for Crawlee's KeyValueStore (the fetched-HTML cache). Ephemeral in prod — the cache doesn't need to survive pod restarts (see change-detection notes below). | `./.crawlee-cache/` (relative to `atlas-data-repo/ingest/`, gitignored) | `/tmp/crawlee-cache/` or an `emptyDir` volume | No — Crawlee default (`./storage`) works; explicit value preferred. |
+| `CRAWLEE_LOG_LEVEL` | Crawlee logger verbosity. | `INFO` | `WARNING` | No. `DEBUG` is a troubleshooting knob when investigating a specific scraper, not a normal-operation value. |
+
+Rationale and change-detection design live in [`INVESTIGATE-ngo-scraping-infrastructure.md`](../../docs/ai-developer/plans/backlog/INVESTIGATE-ngo-scraping-infrastructure.md) — in particular §D.1 (User-Agent), §C.1 (cache), §F (env-var summary), and Q15 (log level).
+
+Non-scraper modules (the existing SSB, FHI, Brreg, Red Cross API ingests) do not read these variables.
+
 ## Run one source
 
 ```bash

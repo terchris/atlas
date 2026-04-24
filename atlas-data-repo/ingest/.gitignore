@@ -1,6 +1,7 @@
 node_modules/
 dist/
 output/
+.crawlee-cache/
 .DS_Store
 *.log
 .env

@@ -38,7 +38,7 @@ Use these **exact names** when the concept is present. Never invent variants.
 | Calendar year as integer | `year` | `integer` | 1900–2100 |
 | Three-year rolling period | `period` | `text` | e.g. `"2022-2024"` |
 | 9-digit Brreg org number | `orgnr` | `text` | |
-| Atlas source identifier | `source_id` | `text` | `"ssb-08764"` form, matches catalogue |
+| Atlas source identifier | `source_id` | `text` | `"ssb-08764"` form, matches catalogue. Renamed from `raw.*.source_slug` at the dbt passthrough — see Raw-schema scraper conventions below. |
 | Source-specific variable code | `contents_code` | `text` | verbatim from upstream |
 | Human-readable label for `contents_code` | `contents_label` | `text` | verbatim from upstream |
 | Upstream numeric value | `value` | `numeric` | null when suppressed |
@@ -91,6 +91,20 @@ Use these **exact names** when the concept is present. Never invent variants.
 | Activity id (cross-NGO) | `activity_id` | `text` | Composite slug `<ngo_slug>-<canonical_slug>`, e.g. `'redcross-besokstjeneste'`. Must exist in `marts.dim_activity`. |
 | NGO's canonical activity name | `canonical_name` | `text` | The NGO's own canonical term, verbatim (e.g. Red Cross's `globalActivityName = "Besøkstjeneste"`). Per-NGO reporting pivots on this. |
 | NGO's local activity display string | `local_activity_name` | `text` | Per-chapter display string (e.g. `"Modum Røde Kors Besøkstjeneste"`). On `fact_chapter_activities` only. |
+
+## Raw-schema scraper conventions
+
+These names are raw-schema only (per the "raw follows upstream" scope rule above, with an exception here because scraper raw tables share a consistent column set across all sources — see INVESTIGATE-ngo-scraping-infrastructure §C.5). Listed here so a new scraper author doesn't have to chase them across multiple files.
+
+| Concept | Name in `raw.*` | Type | Rules |
+|---|---|---|---|
+| Source ingest identity | `source_slug` | `text` | Matches the `src/sources/<slug>/` folder name and the `npm run ingest:<slug>` script. kebab-case. Cross-source shared tables (`raw.ingest_runs`, `raw.sitemap_log`) use this; per-source raw tables don't (their name already scopes the source). **Renamed to `source_id` at the marts boundary.** |
+| Scraped-page URL | `url` | `text not null unique` | Verbatim sitemap URL; no normalization. Join key against `raw.sitemap_log.url` for orphan detection and fetch-skip. Every scraper raw **parent** table must carry it. |
+| Extracted-record hash | `record_hash` | `text not null` | sha256 of canonical JSON (`fast-json-stable-stringify` + NFC). 64 hex chars. Skip signal for upsert: equal hash = no DB write. |
+| HTML body hash (audit) | `html_raw_hash` | `text` (nullable) | sha256 of canonicalized body. Audit-only — template-drift forensics via `mart_ingest_health`. Not a skip signal. |
+| Row active flag | `is_active` | `boolean not null default true` | Set `false` on fetch-time 404 or sitemap orphan. Preserves history instead of deleting the row. |
+| Sitemap lastmod | `lastmod` | `timestamptz` (nullable) | NULL when the sitemap omits `<lastmod>` or the source uses HTML-index discovery. NULL is never a trustworthy skip signal (see §C.2 step 3 of the investigation). |
+| Shared cross-source tables | `raw.ingest_runs`, `raw.sitemap_log` | | One table across all scraper (and API-source) ingests. `source_slug` is the discriminator column. Migrations: `NNN_raw_ingest_runs.sql`, `NNN_raw_sitemap_log.sql`. |
 
 ## Never in marts
 

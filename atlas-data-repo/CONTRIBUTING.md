@@ -9,6 +9,12 @@ Procedural rules for adding, changing, and reviewing data pipelines. Written to 
 3. [`../docs/research/samfunnspuls/data-source-schema.md`](../docs/research/samfunnspuls/data-source-schema.md) — per-source catalogue schema
 4. An existing source as reference — `ingest/src/sources/ssb-08764/` is the canonical example
 
+**If you're adding a scraping source** (HTML, no API), the workflow below covers the API-source baseline but you also need:
+
+- [`../docs/ai-developer/plans/backlog/INVESTIGATE-ngo-scraping-infrastructure.md`](../docs/ai-developer/plans/backlog/INVESTIGATE-ngo-scraping-infrastructure.md) — doctrine, decisions, and rationale for the scraping toolkit (Crawlee, robots, sitemap_log, record_hash, etc.).
+- [`ingest/src/sources/README.md`](ingest/src/sources/README.md) — section "**Scraping sources — additional convention**" covers the extended folder layout (`discover.ts`, `parse.ts`, `__tests__/fixtures/`), the §C.5 mandatory raw columns, and the new-scraper checklist.
+- The completed PLAN that shipped this toolkit — `docs/ai-developer/plans/completed/PLAN-001-scraping-infrastructure.md` — shows exactly what code lives in `src/lib/scraping/` and what env vars the ingest job reads.
+
 ---
 
 ## Workflow: add a new upstream source
