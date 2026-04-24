@@ -1,0 +1,14 @@
+[
+  {
+    "id": "SAMPLE-OU-1",
+    "name": "Sample NGO - Hovedkontor",
+    "level": "national",
+    "parent_id": null
+  },
+  {
+    "id": "SAMPLE-OU-2",
+    "name": "Sample NGO - Bergen Lokallag",
+    "level": "lokallag",
+    "parent_id": "SAMPLE-OU-1"
+  }
+]

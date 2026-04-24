@@ -368,7 +368,15 @@ Some categories of private data exist at every operational NGO: equipment regist
 
 **Doctrine for new shapes** (codified in [`private-marts-shapes.md`](../../../stack/private-marts-shapes.md) "Adding new shapes"): always check for an external standard first. Adopt verbatim if it exists. Invent an Atlas-defined shape only when no external standard does the job.
 
-**Where the dbt files live — [Q-priv-18] Resolved (Option B)**: all Layer 2 dbt files (per-NGO stagings, the `private_marts.*` UNION-ALL models, `schema.yml` tests, vocabulary seed CSVs) live **entirely in the NGO's private repo** under `atlas-private-data-repo/<ngo>/dbt/`. Nothing lives in `atlas-data-repo/`. The Atlas-owned thing is the **shape** (in the contract doc), not the SQL. Reasons: each NGO's private dbt project stays self-contained and runnable; the public dbt build never has to gate or skip private models; the UNION-ALL files are tiny boilerplate (~5 lines per shape) that NGOs copy from the contract doc. Alternatives (UNION-ALL files in `atlas-data-repo/dbt/models/private_marts/` gated by `var()`; a shared `atlas-private-marts` dbt package) were considered and rejected for v1.
+**Where the dbt files live — [Q-priv-18] Revised 2026-04-24 (split by source ownership)**:
+
+- **Standards-based sources (e.g. FRR)** — schema is defined by an external standard, and consumed by multiple NGOs in the same shape. The dbt code lives **in `atlas-data-repo/`** (`models/supply/supply__frr_*.sql` + `models/private_marts/frr_*.sql`), tagged `tags=['private']` so operators can `dbt build --exclude tag:private` if the deployment has no private data. Multi-NGO coexistence is via the `ngo_orgnr` column in `private_raw` — no per-NGO UNION ALL needed. The migrations also live in `atlas-data-repo/migrations/` (`private_schemas`, `private_raw_frr_resources`). On public deployments these schemas + tables exist as empty (option a — no gating needed; the dbt models materialize as empty tables).
+- **NGO-specific sources (e.g. Visma org units, internal CRMs)** — the source is unique to one NGO; the schema is invented for that NGO. The dbt code lives in **the NGO's private repo** under `atlas-private-data-repo/<ngo>/dbt/` and materializes into `private_marts_<ngo>.*` (Layer 3, see §J).
+- **Per-NGO data files** — JSON/CSV snapshots — always live in `atlas-private-data-repo/<ngo>/<source>/` (e.g. `atlas-private-data-repo/redcross/frr/2026-04-24-FRR.json`); the entire per-NGO subdirectory is gitignored. Synthetic onboarding data lives in `atlas-private-data-repo/sample-ngo/` (committed).
+
+The split rule: **standards travel with the standard**. Atlas owns FRR's shape *and* the SQL that interprets FRR JSON, because every NGO that uses FRR uses the same SQL. NGO-specific shapes stay in the NGO's repo because the SQL is bespoke. The earlier "all Layer 2 in NGO repo" decision (Option B) over-corrected — it duplicated identical FRR staging code per NGO. See §I.
+
+The original Option B alternatives (UNION-ALL files in `atlas-data-repo/dbt/models/private_marts/` gated by `var()`; a shared `atlas-private-marts` dbt package) remain rejected — `tags=['private']` plus the multi-NGO `ngo_orgnr` column gives the same guarantees more simply.
 
 UI components for the conformed shapes live in the public Atlas repo (`src/components/private/`) so every NGO benefits without re-implementing.
 
@@ -386,7 +394,7 @@ The corresponding raw stays in `private_raw.*` — no per-NGO suffix needed beca
 
 ### J.2 Where the dbt files live
 
-All Layer 3 dbt code lives in **the NGO's private repo** (same as Layer 2 per [Q-priv-18]):
+All Layer 3 dbt code lives in **the NGO's private repo** (same as Layer 2's NGO-specific branch per the revised [Q-priv-18]):
 
 - `atlas-private-data-repo/<ngo>/dbt/models/private_marts_<ngo>/` — model SQL
 - `atlas-private-data-repo/<ngo>/dbt/seeds/<ngo>/` — any NGO-specific vocabulary seeds
@@ -456,7 +464,7 @@ These were initially Open Questions; resolved during the discussion that produce
 - ~~**[Q-priv-13]**~~ Repo organisation for private code? **Sibling directory `atlas-private-data-repo/<ngo>/` mirroring `atlas-data-repo/`'s shape**, gitignored at the public-repo level. Each NGO subdirectory is its own private git repo. See §G.
 - ~~**[Q1]**~~ Public export ships `raw.*` too? **No** — `marts.*` only. Private instances don't need raw; their own dbt builds against the conformed marts dimensions / facts. Drops dump size and contract surface considerably. **Resolved 2026-04-24.**
 - ~~**[Q-priv-16]**~~ Conformed private mart shapes (Layer 2)? **Yes** — Atlas defines the shape once in [`docs/stack/private-marts-shapes.md`](../../../stack/private-marts-shapes.md); per-NGO stagings map their source into the canonical shape; `private_marts.*` is a UNION ALL. See §I. **Resolved 2026-04-24.**
-- ~~**[Q-priv-18]**~~ Where do Layer 2 + Layer 3 dbt files live? **Option B** — entirely in the NGO's private repo (`atlas-private-data-repo/<ngo>/dbt/`). Nothing in `atlas-data-repo/`. Atlas owns the shape contract; each NGO owns the SQL. Alternatives (var-gated models in atlas-data-repo; shared dbt package) rejected for v1 — revisit at 3+ NGOs or if shape drift appears. See §I + §J. **Resolved 2026-04-24.**
+- ~~**[Q-priv-18]**~~ Where do Layer 2 + Layer 3 dbt files live? **Revised 2026-04-24 — split by source ownership**: standards-based sources (FRR) live in `atlas-data-repo/dbt/models/{supply,private_marts}/` tagged `private`; NGO-specific sources (Layer 3) live in `atlas-private-data-repo/<ngo>/dbt/`. Original Option B over-corrected by duplicating identical FRR SQL per NGO. Per-NGO data files always live in `atlas-private-data-repo/<ngo>/<source>/` (gitignored); synthetic onboarding data in `atlas-private-data-repo/sample-ngo/` (committed). See §I + §J.
 
 ---
 
