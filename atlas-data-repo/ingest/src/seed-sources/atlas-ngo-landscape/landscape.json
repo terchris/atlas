@@ -1,5 +1,5 @@
 {
-  "_comment": "Atlas-curated NGO landscape. Source-of-truth for marts.dim_ngo. Edit this file (not the generated dim_ngo.csv); then run `npm run refresh:atlas-ngo-landscape` and commit both. Source data: docs/research/ngo-landscape.md.",
+  "_comment": "Atlas-curated NGO landscape. Source-of-truth for marts.dim_ngo AND for per-NGO ingest configuration. Edit this file (not the generated dim_ngo.csv); then run `npm run refresh:atlas-ngo-landscape` and commit both. Source data: docs/research/ngo-landscape.md. Note: the optional `brreg_query` object on an NGO is ingest-only metadata used by `refresh:brreg-enheter`; it does NOT flow to dim_ngo (the refresh script only copies marts-facing columns).",
   "ngos": [
     {
       "orgnr": "864139442",
@@ -27,7 +27,12 @@
       "primary_focus": "humanitarian",
       "icnpo_code_1": null,
       "icnpo_code_2": null,
-      "icnpo_code_3": null
+      "icnpo_code_3": null,
+      "brreg_query": {
+        "navn": "norsk folkehjelp",
+        "organisasjonsform": "FLI",
+        "nameStartsWith": "Norsk Folkehjelp"
+      }
     },
     {
       "orgnr": "938429863",
