@@ -16,7 +16,7 @@
 
 This investigation focuses **only on what's specific to Norsk Folkehjelp**. Generic concerns are addressed in:
 
-- [`INVESTIGATE-ngo-scraping-infrastructure.md`](./INVESTIGATE-ngo-scraping-infrastructure.md) — tool choice (Crawlee + CheerioCrawler), two-stage scrape→cache→parse pattern, KeyValueStore cache layout, sitemap+hash change detection, ethical-scraping defaults, failure-mode policy, `raw.ingest_runs` observability, per-source folder convention.
+- [`INVESTIGATE-ngo-scraping-infrastructure.md`](../completed/INVESTIGATE-ngo-scraping-infrastructure.md) — tool choice (Crawlee + CheerioCrawler), two-stage scrape→cache→parse pattern, KeyValueStore cache layout, sitemap+hash change detection, ethical-scraping defaults, failure-mode policy, `raw.ingest_runs` observability, per-source folder convention.
 - [`INVESTIGATE-multi-ngo-supply-model-extensions.md`](./INVESTIGATE-multi-ngo-supply-model-extensions.md) — `dim_chapter.source_url`, `dim_chapter.chapter_subtype`, `chapter_kommune_coverage` link table.
 - [`INVESTIGATE-ngo-events-and-minisites.md`](./INVESTIGATE-ngo-events-and-minisites.md) — sub-activity granularity (deferred parking lot).
 
@@ -104,17 +104,17 @@ Sitemap: https://www.npaid.org/sitemaps-1-sitemap.xml
 Notes:
 - `/lokallag/*` is not in any disallow rule — clear to crawl.
 - `npaid.org` is Folkehjelp's English-language sister site (Norwegian People's Aid International). Out of scope for v1.
-- No bot-specific rule for our `Atlas/0.1` UA — the wildcard rules apply, no `Crawl-Delay` enforced. The default 1 req/sec from the [scraping infrastructure](./INVESTIGATE-ngo-scraping-infrastructure.md#d2-rate-limit-policy--q9) is fine.
+- No bot-specific rule for our `Atlas/0.1` UA — the wildcard rules apply, no `Crawl-Delay` enforced. The default 1 req/sec from the [scraping infrastructure](../completed/INVESTIGATE-ngo-scraping-infrastructure.md#d2-rate-limit-policy--q9) is fine.
 
 ### A.3 What can break for NF specifically
 
-- **Template change**: Craft CMS upgrades or content-team rework can change the Aktivitetsområder section structure. Mitigation per the [scraping infra failure-mode policy](./INVESTIGATE-ngo-scraping-infrastructure.md#section-e--failure-modes-and-observability): warn-and-continue per chapter; the index page failing is what hard-fails the run.
+- **Template change**: Craft CMS upgrades or content-team rework can change the Aktivitetsområder section structure. Mitigation per the [scraping infra failure-mode policy](../completed/INVESTIGATE-ngo-scraping-infrastructure.md#section-e--failure-modes-and-observability): warn-and-continue per chapter; the index page failing is what hard-fails the run.
 - **Sub-activity drift**: if NF adds a 7th activity bin to the CMS template, our staging mapping needs an update. Surface as a WARN: `unmapped activity_label "X" — add to supply__folkehjelp_chapter_activities CASE`.
 - **NF-specific naming oddities**: `solidaritetsungdom-*`, `studentgruppe-*`, `sanitet-haukeland`, `sentralt`, `svalbard` — handled via the override file (Section B.5).
 
 ### A.4 Craft CMS GraphQL probe — **[Q2]** outreach worth pursuing
 
-Per the [scraping infra "ask before scrape" doctrine](./INVESTIGATE-ngo-scraping-infrastructure.md#a1-check-for-a-native-data-api--q1), Craft CMS ships with a built-in GraphQL API at `/actions/graphql/api` (often aliased to `/api`). It's opt-in.
+Per the [scraping infra "ask before scrape" doctrine](../completed/INVESTIGATE-ngo-scraping-infrastructure.md#a1-check-for-a-native-data-api--q1), Craft CMS ships with a built-in GraphQL API at `/actions/graphql/api` (often aliased to `/api`). It's opt-in.
 
 **Probe results 2026-04-23**:
 - `https://folkehjelp.no/api` → 404
@@ -152,7 +152,7 @@ Following the per-source seed pattern from [`reference-tables-convention`](../co
 
 ### B.3 Sitemap-driven chapter discovery
 
-Per the [scraping infra sitemap-first doctrine](./INVESTIGATE-ngo-scraping-infrastructure.md#a2-check-for-a-sitemap):
+Per the [scraping infra sitemap-first doctrine](../completed/INVESTIGATE-ngo-scraping-infrastructure.md#a2-check-for-a-sitemap):
 
 ```ts
 // Stage 1: fetch the sitemap index
@@ -173,10 +173,10 @@ const chapterUrls = entries
 
 **Fylke grouping** is not in the sitemap. We still fetch the HTML index page (`/lokallag`) **once** per scrape run to capture fylke→slug grouping for the `chapter_kommune_coverage` 'inferred' source. If the HTML index breaks but the sitemap still works, we degrade gracefully — chapters get ingested, regional coverage falls back to the override file.
 
-**Inherited from the [scraping infra §C.2](./INVESTIGATE-ngo-scraping-infrastructure.md#c2-sitemap-level-change-detection--q6--q19)**: `discover.ts` reads/writes the **shared** `raw.sitemap_log` table (one row per `(source_slug, url)` across all sources). This drives:
+**Inherited from the [scraping infra §C.2](../completed/INVESTIGATE-ngo-scraping-infrastructure.md#c2-sitemap-level-change-detection--q6--q19)**: `discover.ts` reads/writes the **shared** `raw.sitemap_log` table (one row per `(source_slug, url)` across all sources). This drives:
 
 - **Skip-vs-fetch decision** per URL (skip when `lastmod_now <= stored_lastmod` and a `raw.folkehjelp_chapters` row exists; otherwise fetch).
-- **Orphan detection**: any `raw.sitemap_log` row for `source_slug='folkehjelp-chapters'` whose `last_seen_at` is older than this run's `started_at` → mark the corresponding `raw.folkehjelp_chapters` row `is_active=false` (preserves history per [scraping infra §E.1](./INVESTIGATE-ngo-scraping-infrastructure.md#e1-per-page-failure-warn-and-continue--q10)).
+- **Orphan detection**: any `raw.sitemap_log` row for `source_slug='folkehjelp-chapters'` whose `last_seen_at` is older than this run's `started_at` → mark the corresponding `raw.folkehjelp_chapters` row `is_active=false` (preserves history per [scraping infra §E.1](../completed/INVESTIGATE-ngo-scraping-infrastructure.md#e1-per-page-failure-warn-and-continue--q10)).
 
 Folkehjelp's source-specific code does not implement sitemap-log logic — it calls the shared helpers from `ingest/src/lib/scraping/`.
 
@@ -294,7 +294,7 @@ NF uses a closed set of 6 areas across all chapter pages:
 5. Internasjonale spørsmål
 6. Solidaritetsungdom
 
-The staging model maps these verbatim. New labels appearing in scraped HTML are a WARN (template / vocabulary change) — see [scraping infra E.1](./INVESTIGATE-ngo-scraping-infrastructure.md#e1-per-page-failure-warn-and-continue--q10).
+The staging model maps these verbatim. New labels appearing in scraped HTML are a WARN (template / vocabulary change) — see [scraping infra E.1](../completed/INVESTIGATE-ngo-scraping-infrastructure.md#e1-per-page-failure-warn-and-continue--q10).
 
 ### C.3 Empty Aktivitetsområder section — **[Q8] Resolved**
 
@@ -349,9 +349,9 @@ The mapping table goes in Appendix A.
 
 ## Section D — NF-specific raw schema
 
-Generic conventions (column patterns, hashes, `raw.ingest_runs`, `raw.sitemap_log`) are in the [scraping infra](./INVESTIGATE-ngo-scraping-infrastructure.md#section-c--cache-and-change-detection); below is the NF-specific shape.
+Generic conventions (column patterns, hashes, `raw.ingest_runs`, `raw.sitemap_log`) are in the [scraping infra](../completed/INVESTIGATE-ngo-scraping-infrastructure.md#section-c--cache-and-change-detection); below is the NF-specific shape.
 
-**Convention recap.** [Scraping infra §C.5](./INVESTIGATE-ngo-scraping-infrastructure.md#c5-mandatory-columns-for-scraper-raw-tables--q20) requires every **scraper-sourced parent-entity** raw table to carry: `url`, `record_hash`, `html_raw_hash` (audit-only, nullable), `is_active`, `loaded_at`. Of the three tables below:
+**Convention recap.** [Scraping infra §C.5](../completed/INVESTIGATE-ngo-scraping-infrastructure.md#c5-mandatory-columns-for-scraper-raw-tables--q20) requires every **scraper-sourced parent-entity** raw table to carry: `url`, `record_hash`, `html_raw_hash` (audit-only, nullable), `is_active`, `loaded_at`. Of the three tables below:
 
 - **`raw.folkehjelp_chapters`** is scraper-sourced + parent → carries the §C.5 column set.
 - **`raw.folkehjelp_chapter_activities`** is a scraper-sourced **child** → does *not* carry §C.5 columns; deletes-and-reinserts when the parent's `record_hash` changes.
@@ -387,7 +387,7 @@ For Folkehjelp specifically, `url` always equals `'https://folkehjelp.no/lokalla
 
 ### D.2 `raw.folkehjelp_chapter_activities` — scraper child
 
-Child of `raw.folkehjelp_chapters`. Per [§C.5 child-table rule](./INVESTIGATE-ngo-scraping-infrastructure.md#c5-mandatory-columns-for-scraper-raw-tables--q20), no mandatory columns — children are owned by the parent and delete-and-reinserted when the parent's `record_hash` changes.
+Child of `raw.folkehjelp_chapters`. Per [§C.5 child-table rule](../completed/INVESTIGATE-ngo-scraping-infrastructure.md#c5-mandatory-columns-for-scraper-raw-tables--q20), no mandatory columns — children are owned by the parent and delete-and-reinserted when the parent's `record_hash` changes.
 
 ```sql
 CREATE TABLE raw.folkehjelp_chapter_activities (
@@ -399,7 +399,7 @@ CREATE TABLE raw.folkehjelp_chapter_activities (
 );
 ```
 
-`activity_label` must be UTF-8 NFC-normalised at the parser boundary per [scraping infra §C.3](./INVESTIGATE-ngo-scraping-infrastructure.md#c3-record-level-change-detection--q7--q18--q21) — cheerio sometimes returns Norwegian characters in NFD form, which would silently flip the parent's `record_hash` between runs.
+`activity_label` must be UTF-8 NFC-normalised at the parser boundary per [scraping infra §C.3](../completed/INVESTIGATE-ngo-scraping-infrastructure.md#c3-record-level-change-detection--q7--q18--q21) — cheerio sometimes returns Norwegian characters in NFD form, which would silently flip the parent's `record_hash` between runs.
 
 ### D.3 `raw.brreg_folkehjelp_units` — API-sourced
 
@@ -421,7 +421,7 @@ CREATE TABLE raw.brreg_folkehjelp_units (
 
 ### D.4 Source-specific scraper config
 
-Per [scraping infra §E.2](./INVESTIGATE-ngo-scraping-infrastructure.md#e2-discovery-failure-hard-fail--q11--q24), every source declares an absolute floor for the discovery URL count. NF's index has ~108 chapters today; the floor is set at ~50 (roughly half), tuned upward when the source consistently exceeds 100.
+Per [scraping infra §E.2](../completed/INVESTIGATE-ngo-scraping-infrastructure.md#e2-discovery-failure-hard-fail--q11--q24), every source declares an absolute floor for the discovery URL count. NF's index has ~108 chapters today; the floor is set at ~50 (roughly half), tuned upward when the source consistently exceeds 100.
 
 ```ts
 // ingest/src/sources/folkehjelp-chapters/index.ts
@@ -430,7 +430,7 @@ const MIN_DISCOVERED_URLS = 50;
 
 ### D.5 Golden-file test fixtures
 
-Per [scraping infra §G.3](./INVESTIGATE-ngo-scraping-infrastructure.md#g3-per-source-tests), `parse.ts` is tested via golden-file fixtures. Target 2–3 fixtures spanning the page variants seen in the wild:
+Per [scraping infra §G.3](../completed/INVESTIGATE-ngo-scraping-infrastructure.md#g3-per-source-tests), `parse.ts` is tested via golden-file fixtures. Target 2–3 fixtures spanning the page variants seen in the wild:
 
 ```
 ingest/src/sources/folkehjelp-chapters/__tests__/
@@ -474,7 +474,7 @@ Each test reads the fixture HTML, calls `parse(html, url)`, deep-equals against 
 - [ ] Send email to NF asking whether they would enable a read-only Public GraphQL schema for `localBranch` / `localBranchSites` / activity entry types. See A.4 for rationale. Track response; if positive, the scrape PLAN may be replaced by a thinner GraphQL-client PLAN.
 
 **Prerequisites** (other investigations' PLANs that must ship first):
-- [ ] PLAN-001 from [`INVESTIGATE-ngo-scraping-infrastructure.md`](./INVESTIGATE-ngo-scraping-infrastructure.md) — Crawlee toolkit + `raw.ingest_runs` + per-source folder convention.
+- [ ] PLAN-001 from [`INVESTIGATE-ngo-scraping-infrastructure.md`](../completed/INVESTIGATE-ngo-scraping-infrastructure.md) — Crawlee toolkit + `raw.ingest_runs` + per-source folder convention.
 - [ ] PLAN-001 from [`INVESTIGATE-multi-ngo-supply-model-extensions.md`](./INVESTIGATE-multi-ngo-supply-model-extensions.md) — `dim_chapter.source_url`, `dim_chapter.chapter_subtype`, `chapter_kommune_coverage` table, plus Red Cross retro backfill.
 
 **Folkehjelp-specific PLANs**, total estimated effort ~10–13h focused:
@@ -485,10 +485,10 @@ Each test reads the fixture HTML, calls `parse(html, url)`, deep-equals against 
   - Tests: row count ≥ 100, `organisasjonsform='FLI'` 100%.
 - [ ] **PLAN-002-folkehjelp-scrape-and-ingest.md** (~7–10h)
   - Migration `NNN_raw_folkehjelp_chapters.sql` + `raw.folkehjelp_chapter_activities` carrying the §C.5 mandatory columns on the parent (D.1) and child shape from D.2.
-  - Scraper at `ingest/src/sources/folkehjelp-chapters/` following the [per-source folder convention](./INVESTIGATE-ngo-scraping-infrastructure.md#b3-per-source-folder-convention): `index.ts`, `discover.ts`, `parse.ts`, `overrides.json`, `types.ts`, `README.md`, `__tests__/`.
-  - `parse.ts` is a pure function `(html, url) → Record` with NFC normalisation on every string field ([scraping infra §C.3](./INVESTIGATE-ngo-scraping-infrastructure.md#c3-record-level-change-detection--q7--q18--q21)).
+  - Scraper at `ingest/src/sources/folkehjelp-chapters/` following the [per-source folder convention](../completed/INVESTIGATE-ngo-scraping-infrastructure.md#b3-per-source-folder-convention): `index.ts`, `discover.ts`, `parse.ts`, `overrides.json`, `types.ts`, `README.md`, `__tests__/`.
+  - `parse.ts` is a pure function `(html, url) → Record` with NFC normalisation on every string field ([scraping infra §C.3](../completed/INVESTIGATE-ngo-scraping-infrastructure.md#c3-record-level-change-detection--q7--q18--q21)).
   - `discover.ts` calls the shared `sitemap_log` reader/writer; no per-source orphan logic.
-  - `index.ts` calls the shared `ua`, `record_hash`, `ingest_runs` (with concurrent-run lock per [§E.3.1](./INVESTIGATE-ngo-scraping-infrastructure.md#e31-concurrent-run-protection--q22)), and `upsertRecord()` helpers from `ingest/src/lib/scraping/`.
+  - `index.ts` calls the shared `ua`, `record_hash`, `ingest_runs` (with concurrent-run lock per [§E.3.1](../completed/INVESTIGATE-ngo-scraping-infrastructure.md#e31-concurrent-run-protection--q22)), and `upsertRecord()` helpers from `ingest/src/lib/scraping/`.
   - `MIN_DISCOVERED_URLS = 50` in `index.ts` (per D.4).
   - 2–3 golden-file test fixtures under `__tests__/fixtures/` covering: typical chapter, empty-activities chapter, non-geographic chapter (per D.5).
   - dbt staging: `supply__folkehjelp_chapters.sql`, `supply__folkehjelp_chapter_activities.sql`, `supply__folkehjelp_chapter_kommune_coverage.sql`.

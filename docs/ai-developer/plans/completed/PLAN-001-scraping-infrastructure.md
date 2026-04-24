@@ -6,12 +6,12 @@
 
 ## Status: Completed
 
-**Goal**: Ship the shared scraping toolkit defined in [INVESTIGATE-ngo-scraping-infrastructure.md](../backlog/INVESTIGATE-ngo-scraping-infrastructure.md) — Crawlee dependency, two raw tables (`raw.ingest_runs`, `raw.sitemap_log`), the shared TypeScript library under `ingest/src/lib/scraping/` with test coverage, the minimal `mart_ingest_health` dbt view, env-var conventions, and the per-source folder convention. After this plan, per-NGO scrape PLANs (Folkehjelp first) can implement sources against a stable foundation without re-litigating infrastructure.
+**Goal**: Ship the shared scraping toolkit defined in [INVESTIGATE-ngo-scraping-infrastructure.md](./INVESTIGATE-ngo-scraping-infrastructure.md) — Crawlee dependency, two raw tables (`raw.ingest_runs`, `raw.sitemap_log`), the shared TypeScript library under `ingest/src/lib/scraping/` with test coverage, the minimal `mart_ingest_health` dbt view, env-var conventions, and the per-source folder convention. After this plan, per-NGO scrape PLANs (Folkehjelp first) can implement sources against a stable foundation without re-litigating infrastructure.
 
 **Last Updated**: 2026-04-24
 **Completed**: 2026-04-24 — all 6 phases done in one session. Crawlee + `fast-json-stable-stringify` deps added; `raw.ingest_runs` and `raw.sitemap_log` migrations (023 + 024) applied with the partial unique index enforcing the concurrent-run lock; shared library under `src/lib/scraping/` with 8 modules (ua, record_hash, html_raw_hash, robots, sitemap_log, ingest_runs, upsert_record, kv) and 49 pure-function tests; `mart_ingest_health` shipped as a 3-column dbt view with 5 passing data tests; README, naming-conventions, and CONTRIBUTING all cross-referenced. Final gates: `npm run typecheck` clean, `npm test` 49/49, `npm run migrate` idempotent, `dbt build` PASS=526 WARN=19 ERROR=0 TOTAL=545.
 
-**Investigation**: [INVESTIGATE-ngo-scraping-infrastructure.md](../backlog/INVESTIGATE-ngo-scraping-infrastructure.md) — 25 resolved Q's, zero open.
+**Investigation**: [INVESTIGATE-ngo-scraping-infrastructure.md](./INVESTIGATE-ngo-scraping-infrastructure.md) — 25 resolved Q's, zero open.
 **Prerequisites**: none (all foundation already in place — Postgres, dbt, ingest repo, migrate runner).
 **Blocks**: [INVESTIGATE-folkehjelp-supply.md](../backlog/INVESTIGATE-folkehjelp-supply.md)'s scrape PLAN — the first per-NGO consumer of this infrastructure.
 **Priority**: Medium

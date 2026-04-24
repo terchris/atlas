@@ -24,7 +24,7 @@
 - Localization (Norwegian "Oppdatert" vs English "Updated")
 
 **Out of scope:**
-- Operator-facing observability — that's `mart_ingest_health` from [`INVESTIGATE-ngo-scraping-infrastructure.md`](./INVESTIGATE-ngo-scraping-infrastructure.md). This investigation is about the *reader-facing* surface, not the ops dashboard.
+- Operator-facing observability — that's `mart_ingest_health` from [`INVESTIGATE-ngo-scraping-infrastructure.md`](../completed/INVESTIGATE-ngo-scraping-infrastructure.md). This investigation is about the *reader-facing* surface, not the ops dashboard.
 - SLA guarantees or refresh-cadence decisions per source — cadence is set by the ingest plan for each source.
 - Alerting when data goes stale — separate ops concern.
 - Retroactively backfilling `updated_at` onto sources that don't yet expose it cleanly.
@@ -119,7 +119,7 @@ Different sources have different notions of publication:
 - **SSB API tables** — `Tid` column in JSON-Stat gives the reference period; publication date lives in the catalog metadata (`KlassPublication` or similar).
 - **FHI folkehelseprofil** — annual publication with a cover year.
 - **Red Cross API** — entity-level `updatedAt` or similar.
-- **NGO scrapers** — sitemap `lastmod` (per [`INVESTIGATE-ngo-scraping-infrastructure.md`](./INVESTIGATE-ngo-scraping-infrastructure.md) §A.2).
+- **NGO scrapers** — sitemap `lastmod` (per [`INVESTIGATE-ngo-scraping-infrastructure.md`](../completed/INVESTIGATE-ngo-scraping-infrastructure.md) §A.2).
 - **Brreg** — `siste_innsending` or event timestamp.
 
 Each ingest adapter must extract this and persist it. Requires a convention (`source_published_at timestamptz nullable` — nullable because some sources genuinely don't say) and backfill for existing sources during rollout.
@@ -305,4 +305,4 @@ The implementation split is roughly:
 
 ## Companion investigations
 
-- [`INVESTIGATE-ngo-scraping-infrastructure.md`](./INVESTIGATE-ngo-scraping-infrastructure.md) — produces `raw.ingest_runs`, which is the ops-facing counterpart to this user-facing work. `ingest_runs.finished_at` may surface here for Q17.
+- [`INVESTIGATE-ngo-scraping-infrastructure.md`](../completed/INVESTIGATE-ngo-scraping-infrastructure.md) — produces `raw.ingest_runs`, which is the ops-facing counterpart to this user-facing work. `ingest_runs.finished_at` may surface here for Q17.

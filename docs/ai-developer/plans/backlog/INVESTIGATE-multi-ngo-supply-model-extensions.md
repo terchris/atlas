@@ -21,7 +21,7 @@
 
 **Out of scope:**
 - Per-NGO scrape implementation — each NGO has its own investigation + PLANs.
-- Generic scraping infrastructure — see [`INVESTIGATE-ngo-scraping-infrastructure.md`](./INVESTIGATE-ngo-scraping-infrastructure.md).
+- Generic scraping infrastructure — see [`INVESTIGATE-ngo-scraping-infrastructure.md`](../completed/INVESTIGATE-ngo-scraping-infrastructure.md).
 - Coverage-gap mart consumption — designed so it can opt in later without a schema change.
 
 ---
@@ -61,7 +61,7 @@ Otherwise: full canonical URL of the chapter's public page on the NGO's website.
 
 | NGO | Ingest type | Raw column | Notes |
 |---|---|---|---|
-| Red Cross | API-sourced (Red Cross JSON dump) | `raw.redcross_branches.source_url` (added by this PLAN; populated from `branchUrl` API field) | [Scraping infra §C.5](./INVESTIGATE-ngo-scraping-infrastructure.md#c5-mandatory-columns-for-scraper-raw-tables--q20) explicitly does *not* apply to API-sourced raw tables; column name is local choice. |
+| Red Cross | API-sourced (Red Cross JSON dump) | `raw.redcross_branches.source_url` (added by this PLAN; populated from `branchUrl` API field) | [Scraping infra §C.5](../completed/INVESTIGATE-ngo-scraping-infrastructure.md#c5-mandatory-columns-for-scraper-raw-tables--q20) explicitly does *not* apply to API-sourced raw tables; column name is local choice. |
 | Folkehjelp | Scraper-sourced | `raw.folkehjelp_chapters.url` (the §C.5 mandatory column) | The §C.5 `url` column is the public chapter page URL — same data we want in `dim_chapter.source_url`. Supply staging propagates `url` → `source_url`. |
 | Future NGO | Either | Scraper: `raw.<source>_*.url` (§C.5). API: per ingest convention. | Supply staging always lands the value in `dim_chapter.source_url`. |
 
@@ -229,5 +229,5 @@ This PLAN is a prerequisite for the Folkehjelp scrape PLAN, which expects `sourc
 
 ## Companion investigations
 
-- [`INVESTIGATE-ngo-scraping-infrastructure.md`](./INVESTIGATE-ngo-scraping-infrastructure.md) — generic scraping toolkit. Of particular relevance: [§C.5 (mandatory raw-table columns including `url`)](./INVESTIGATE-ngo-scraping-infrastructure.md#c5-mandatory-columns-for-scraper-raw-tables--q20) — for scraper-sourced NGOs, the public-facing URL surfaces as `raw.<source>_*.url` and propagates from there to `dim_chapter.source_url` (see A.2). API-sourced NGOs (Red Cross today) are exempt and use a per-ingest column name like `source_url` instead.
+- [`INVESTIGATE-ngo-scraping-infrastructure.md`](../completed/INVESTIGATE-ngo-scraping-infrastructure.md) — generic scraping toolkit. Of particular relevance: [§C.5 (mandatory raw-table columns including `url`)](../completed/INVESTIGATE-ngo-scraping-infrastructure.md#c5-mandatory-columns-for-scraper-raw-tables--q20) — for scraper-sourced NGOs, the public-facing URL surfaces as `raw.<source>_*.url` and propagates from there to `dim_chapter.source_url` (see A.2). API-sourced NGOs (Red Cross today) are exempt and use a per-ingest column name like `source_url` instead.
 - [`INVESTIGATE-folkehjelp-supply.md`](./INVESTIGATE-folkehjelp-supply.md) — first new consumer of these extensions.
