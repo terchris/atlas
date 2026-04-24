@@ -71,3 +71,19 @@ models:
       # this test. Loud signal that the curation needs updating.
       - dbt_utils.expression_is_true:
           expression: "(is_service = false) or (service_category_code is not null)"
+
+  - name: supply__redcross_chapter_kommune_coverage
+    description: |
+      Per-source staging model: Red Cross distrikt coverage, rolled up from
+      local children's kommune_nr values. All rows are source='inferred' in
+      v1 (no declared coverage scraped yet). Materialised as a view; the
+      real tests live on the marts.chapter_kommune_coverage union target.
+    columns:
+      - name: chapter_id
+        description: "Red Cross distrikt's chapter_id (chapter_level='regional')."
+      - name: kommune_nr
+        description: "One row per kommune the distrikt covers (via its locals)."
+      - name: source
+        description: "Always 'inferred' for Red Cross in v1."
+      - name: updated_at
+        description: "max(child.updated_at) from the contributing local chapters."
