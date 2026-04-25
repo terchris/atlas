@@ -35,7 +35,7 @@ This mirrors the public side, where `dim_chapter` / `dim_activity` / `fact_chapt
 - **Atlas owns the shape** (this doc). Per-NGO ingest authors map their source data to it; they do not extend the shape unilaterally. New columns / new tables go through this doc.
 - **All `private_marts.*` rows reference public `marts.*` business keys** (e.g., `chapter_org_number`), not surrogate `chapter_id` IDs that may regenerate on restore. See [`INVESTIGATE-private-atlas-deployments.md`](../ai-developer/plans/backlog/INVESTIGATE-private-atlas-deployments.md) §C.3.
 - **Every fact row carries `ngo_orgnr`** (denormalised) so single-tenant queries and future cross-NGO use cases both work without rewrites.
-- **IDs are NGO-namespaced composites** (e.g. `redcross-frr-12345`, `folkehjelp-equipsys-7890`) so UNIONs across NGOs never collide.
+- **IDs come from the source verbatim, with cross-NGO uniqueness enforced by the source.** For standards-based sources like FRR, the registry's id is globally unique across NGOs by construction (FRR assigns ids), so we keep them verbatim. For NGO-specific sources where the id space is per-NGO, the staging composes a namespaced id (e.g. `<ngo-slug>-<source>-<source-id>`) so cross-NGO joins never collide.
 - **Shape changes are forward-only** — additive columns OK; renames/drops break per-NGO ingest scripts and require coordinated migration. Same discipline as the public marts contract.
 - **PII handling is non-lossy** — see "Redaction conventions" below. We don't drop rows or NULL fields silently; we redact in place with a sentinel value so counts stay accurate and the audit trail is visible.
 - **Verbatim source field names** — when adopting an external standard (FRR, etc.), column names match the source field names verbatim. The **only** transformation is camelCase → snake_case so that Postgres identifiers don't need quoting (`registerId` → `register_id`, `sistOppdatert` → `sist_oppdatert`). No `_id` / `_url` / `_navn` suffixes added; no Atlas-side prefixes added; no English translations. The exceptions are columns Atlas DERIVES (e.g., the `current_*` denormalised columns on `frr_resources` extracted from nested arrays) and Atlas-introduced FK columns on side tables (`frr_resource_position.resource_id` is conventionally named after the parent entity since FRR doesn't expose a name for the implicit nesting relationship).
@@ -69,31 +69,37 @@ The "no PII" rule of Q-priv-4 (in the investigation) is interpreted via this two
 
 ---
 
-## Where the SQL lives — **Option B** (per [Q-priv-18])
+## Where the SQL lives — **split by source ownership** (per the revised [Q-priv-18])
 
-**All Layer 2 dbt files live entirely in each NGO's private repo. Nothing lives in `atlas-data-repo/`.** Atlas owns the *shape*; each NGO owns the *SQL*.
+Atlas owns the *shape*. Where the *SQL* lives depends on whether the source itself is a shared standard:
+
+- **Standards-based source (e.g. FRR)** — every NGO consumes it in the same shape, so the staging + mart SQL is identical across NGOs. The SQL lives in `atlas-data-repo/dbt/`. Multi-NGO coexistence is via the `ngo_orgnr` column in `private_raw` (the ingest writes it; the mart preserves it). Models are tagged `private` so operators can `dbt build --exclude tag:private` if they want to.
+- **NGO-specific source (Layer 3)** — bespoke per NGO. SQL lives in the NGO's private repo at `atlas-private-data-repo/<ngo>/dbt/`.
 
 | What | Where |
 |---|---|
 | Shape definition (this doc) | `docs/stack/private-marts-shapes.md` — public Atlas repo |
-| Vocabulary seed CSVs (when a shape needs one — none currently; FRR enums replace the previously-planned `dim_resource_type` seed) | `atlas-private-data-repo/<ngo>/dbt/seeds/` — content is Atlas-curated, copied verbatim across NGOs |
-| Per-NGO staging (`supply__<ngo>_<entity>.sql`) | `atlas-private-data-repo/<ngo>/dbt/models/supply/` |
-| `private_marts.*` UNION-ALL models | `atlas-private-data-repo/<ngo>/dbt/models/private_marts/` |
-| `schema.yml` tests on `private_marts.*` | `atlas-private-data-repo/<ngo>/dbt/models/private_marts/schema.yml` |
+| Standards-based migration (e.g. `private_raw.frr_resources`) | `atlas-data-repo/migrations/0NN_private_raw_<source>.sql` |
+| Standards-based ingest (NGO-agnostic, scans per-NGO data folders) | `atlas-data-repo/ingest/src/sources/<source>/` |
+| Per-NGO data files for a standards-based source | `atlas-private-data-repo/<ngo>/<source>/*.json` (gitignored) |
+| Synthetic data files for onboarding + CI | `atlas-private-data-repo/sample-ngo/<source>/*.json` (committed) |
+| Standards-based staging (`supply__<source>_*.sql`) | `atlas-data-repo/dbt/models/supply/`, tagged `private` |
+| Standards-based `private_marts.*` models | `atlas-data-repo/dbt/models/private_marts/`, tagged `private` |
+| Standards-based `schema.yml` tests | `atlas-data-repo/dbt/models/private_marts/schema.yml` |
+| NGO-specific staging + mart (Layer 3) | `atlas-private-data-repo/<ngo>/dbt/models/{supply,private_marts_<ngo>}/` |
 | Shared UI components reading `private_marts.*` | `src/components/private/` — public Atlas repo (mounted only when `ATLAS_MODE=private`) |
 | Per-NGO UI routes | `app/private/<ngo>/` — public Atlas repo |
 
-**Why this layout** (Option B in the investigation):
+**Why this split**:
 
-- Each NGO's private dbt project is self-contained: `dbt run`, CI, local dev all work without env-var gymnastics, model selectors, or conditional Jinja.
-- atlas.helpers.no's public dbt build never has to skip / disable / variable-gate models that don't apply to it.
-- The UNION-ALL files are tiny boilerplate (≈5 lines per shape per NGO) — copy the pattern from this doc.
-- Atlas owns the contract via this doc + by reviewing PRs that add new shapes here. Per-NGO authors enforce conformance by mapping their source columns onto the canonical column names below.
+- Standards-based SQL is identical across NGOs. Putting it in N private repos duplicates code that Atlas in fact owns. The earlier "all Layer 2 in NGO repo" decision (Option B) over-corrected — it traded code duplication for the false promise of "NGO owns their staging." For a government-defined source, no NGO meaningfully owns the conformance code.
+- NGO-specific SQL stays in the NGO's repo because the schema itself is bespoke (Visma org units, custom CRMs, payment integrations). No sharing benefit; full NGO ownership.
+- On public deployments (`atlas.helpers.no`) the standards-based migrations create empty `private_raw` / `private_marts` tables and the dbt models materialize as empty tables — no special gating, no conditional Jinja. Operators who want to skip them entirely use `dbt build --exclude tag:private`.
 
 Alternatives considered and rejected for v1:
 
-- **Option A** — UNION-ALL files in `atlas-data-repo/dbt/models/private_marts/`, `var()`-gated so the public build skips them. More central control, more dbt-config gymnastics. Revisit if shape drift across NGOs becomes an actual problem.
-- **Option D** — ship an `atlas-private-marts` dbt package that NGOs import. Most "proper" dbt approach, but real complexity for 1–2 NGOs and 3 shapes.
+- **Var-gated models in atlas-data-repo with conditional Jinja** — more complex than tag-based exclusion; adds nothing.
+- **A shared `atlas-private-marts` dbt package that NGOs import** — most "proper" dbt approach, but real complexity for ~1 standards-based source.
 
 ---
 
@@ -116,7 +122,7 @@ create table private_marts.frr_resources (
   -- Identity — verbatim FRR (camelCase → snake_case only)
   id                       text primary key,           -- FRR id
   ngo_orgnr                text not null,              -- Atlas-introduced; denormalised, for cross-NGO clarity
-  source_id                text not null,              -- Atlas-introduced; 'redcross-frr', 'folkehjelp-frr', …
+  source_id                text not null,              -- Atlas-introduced; 'frr' (the source IS the FRR registry; the NGO is identified by ngo_orgnr)
 
   -- Display + classification — verbatim FRR
   visningsnavn             text not null,
@@ -324,29 +330,22 @@ For NGOs that don't participate in FRR, org-unit display surfaces (if needed) li
 
 ---
 
-## How a per-NGO staging script conforms
+## How the FRR staging conforms
 
-### FRR resources — staging is mostly a passthrough
-
-Because Atlas adopts FRR's schema verbatim, the staging is mostly column-rename + denormalisation of `latest position` and `latest status` from the nested arrays.
+Because Atlas adopts FRR's schema verbatim, the staging is mostly column-rename + denormalisation of `latest position` and `latest status` from the nested arrays. There is **one** staging per FRR-shape table (not per NGO) — multi-NGO coexistence comes from the `ngo_orgnr` column in raw, populated by the ingest from each per-NGO data folder.
 
 ```sql
--- atlas-private-data-repo/redcross/dbt/models/supply/supply__redcross_resources.sql
-{{ config(materialized='view', schema='private_marts') }}
+-- atlas-data-repo/dbt/models/supply/supply__frr_resources.sql
+{{ config(materialized='view', schema='private_marts', tags=['private']) }}
 
 -- Maps raw FRR rows to the canonical frr_resources shape.
 -- See docs/stack/private-marts-shapes.md for the contract.
---
--- marts.dim_kommune / marts.dim_fylke are referenced via source() because they
--- arrive in the private deployment via nightly restore, not built by this dbt
--- project. See docs/stack/private-data-layout.md.
 
 with src as (
   select * from {{ source('private_raw', 'frr_resources') }}
 ),
 latest_pos as (
-  -- pick the most recent position per resource (CTE intermediate names are
-  -- implementation details; final mart columns follow the verbatim rule)
+  -- pick the most recent position per resource
   select distinct on (src.id)
          src.id                                          as resource_id,
          (pos_item->>'oppdatertTidspunkt')::timestamptz  as position_at,
@@ -357,91 +356,57 @@ latest_pos as (
          (pos_item->'posisjon'->>'lengdegrad')::float    as lon,
          pos_item->>'kilde'                              as kilde
   from src,
-       jsonb_array_elements(src.posisjoner) as pos_item
-  order by src.id, (pos_item->>'oppdatertTidspunkt')::timestamptz desc
+       jsonb_array_elements(src.raw_payload->'posisjoner') as pos_item
+  order by src.id, (pos_item->>'oppdatertTidspunkt')::timestamptz desc nulls last
 ),
 latest_status as (
   select distinct on (src.id)
          src.id                                  as resource_id,
          (st->>'startTidspunkt')::timestamptz    as status_at,
          st->>'statuskode'                       as statuskode
-  from src, jsonb_array_elements(src.status) as st
-  order by src.id, (st->>'startTidspunkt')::timestamptz desc
+  from src, jsonb_array_elements(src.raw_payload->'status') as st
+  order by src.id, (st->>'startTidspunkt')::timestamptz desc nulls last
 )
 select
-  src.id,                                           -- verbatim FRR
-  '864139442'::text                               as ngo_orgnr,
-  'redcross-frr'::text                            as source_id,
+  src.id,                                              -- verbatim FRR
+  src.ngo_orgnr,                                       -- carried forward from raw
+  'frr'::text                                       as source_id,
 
-  src.visningsnavn,
-  src.ressurstype,
-  src.hovedfunksjon,
-  src.beskrivelse,
-  src.sektor,
-  src.bilde,
-  src.verifisert_av_eier,
+  src.raw_payload->>'visningsnavn'                  as visningsnavn,
+  src.raw_payload->>'ressurstype'                   as ressurstype,
+  -- … (see actual model for the full select)
 
   -- PII redaction in place (preserves row, marks the change). See Redaction conventions (2).
-  case when src.personnavn is not null
+  case when src.raw_payload->>'personnavn' is not null
        then '[ANONYMISERT — personnavn]'
-       end                                        as personnavn,
-  case when src.kontaktinformasjon is not null
-       then '[ANONYMISERT — fri tekst kan inneholde PII]'
-       end                                        as kontaktinformasjon,
-  src.personnavn is not null                      as is_personnavn_redacted,
-  src.kontaktinformasjon is not null              as is_kontaktinfo_redacted,
+       end                                          as personnavn,
+  (src.raw_payload->>'personnavn' is not null)      as is_personnavn_redacted,
+  -- …
 
-  src.register_id,
-  src.mor_id,
-  src.baseressurs,
-  src.ekstern_system,
-  src.ekstern_id,
-  src.ekstern_mor_id,
-
-  ls.statuskode                                   as current_statuskode,
-  ls.status_at                                    as current_status_at,
-  lp.kommune_navn                                 as current_kommune_navn,
-  k.kommune_nr                                    as current_kommune_nr,
-  lp.fylke_navn                                   as current_fylke_navn,
-  f.fylke_nr                                      as current_fylke_nr,
-  lp.politidistrikt                               as current_politidistrikt,
-  lp.lat                                          as current_lat,
-  lp.lon                                          as current_lon,
-  lp.position_at,
-  lp.kilde                                        as position_kilde,
-
-  -- Convert JSON arrays of strings to native Postgres arrays for GIN indexing
-  array(select jsonb_array_elements_text(src.undertyper))   as undertyper,
-  array(select jsonb_array_elements_text(src.kapasiteter))  as kapasiteter,
-
-  src.felter,
-  src.utstyr,
-  src.vedlegg,
-
-  src.sist_oppdatert,
-  src.loaded_at
+  ls.statuskode                                     as current_statuskode,
+  lp.kommune_navn                                   as current_kommune_navn,
+  k.kommune_nr                                      as current_kommune_nr,
+  -- …
 from src
 left join latest_pos lp     on lp.resource_id = src.id
 left join latest_status ls  on ls.resource_id = src.id
-left join {{ source('marts', 'dim_kommune') }} k on k.kommune_name = lp.kommune_navn
-left join {{ source('marts', 'dim_fylke') }}   f on f.fylke_name   = lp.fylke_navn
+-- Filter to active kommuner — historical pre-2020 names duplicate.
+left join {{ ref('dim_kommune') }} k on k.kommune_name = lp.kommune_navn and k.is_active
+left join {{ ref('dim_fylke') }}   f on f.fylke_name   = lp.fylke_navn   and f.is_active
 ```
 
-The `private_marts.frr_resources.sql` model is then a thin UNION ALL of per-NGO stagings:
+The `private_marts.frr_resources.sql` model is then a thin passthrough:
 
 ```sql
--- atlas-private-data-repo/redcross/dbt/models/private_marts/frr_resources.sql
-{{ config(materialized='table', schema='private_marts') }}
+-- atlas-data-repo/dbt/models/private_marts/frr_resources.sql
+{{ config(materialized='table', schema='private_marts', tags=['private']) }}
 
-select * from {{ ref('supply__redcross_resources') }}
--- when Folkehjelp lands their FRR feed:
--- union all
--- select * from {{ ref('supply__folkehjelp_resources') }}
+select * from {{ ref('supply__frr_resources') }}
 ```
 
-The same shape applies to `frr_resource_position`, `frr_resource_status`, `frr_resource_phone` — each has a per-NGO `supply__<ngo>_resource_position.sql` etc., UNIONed by the model.
+No UNION ALL — the multi-NGO data is already merged in `private_raw.frr_resources` via the `ngo_orgnr` column. The same shape applies to `frr_resource_position`, `frr_resource_status`, `frr_resource_phone`.
 
-In any single-NGO private deployment only one branch of the UNION exists — but the pattern is the same as the public-side `dim_chapter` UNION ALL ([`atlas-data-repo/dbt/models/dimensions/dim_chapter.sql`](../../atlas-data-repo/dbt/models/dimensions/dim_chapter.sql)).
+The NGO-agnostic ingest at `atlas-data-repo/ingest/src/sources/frr/index.ts` discovers every `atlas-private-data-repo/<ngo>/frr/*.json` and writes each row with the right `ngo_orgnr` (looked up from `atlas-ngo-landscape/landscape.json`).
 
 ---
 
@@ -453,8 +418,9 @@ When a new "every NGO has this" private-data category emerges (members, training
 2. If no external standard exists (the org-units case — each NGO uses their own HR system), define a **conformed Atlas shape** that's intentionally minimal. Each NGO's staging maps their internal source into the shape; source-specific extras drop at staging time (or land in `private_marts_<ngo>.*` as Layer 3 if needed).
 3. Append a new section to this doc with the canonical table spec.
 4. Document the conformance rules specific to that shape (PK, joins to public marts, PII filter, source-specific extras handling).
-5. The first NGO that has source data ships a `supply__<ngo>_<entity>.sql` staging in their private repo + a thin `private_marts.<table>.sql` UNION-ALL model.
-6. UI components reading the new shape go in `src/components/private/` in the public Atlas repo so they're available to every NGO.
+5. **If the source is standards-based** (every NGO consumes it identically): add migration + ingest + dbt models to `atlas-data-repo/`, tagged `private`, with multi-NGO coexistence via an `ngo_orgnr` column populated from per-NGO data folders under `atlas-private-data-repo/<ngo>/<source>/`. Add a synthetic example to `atlas-private-data-repo/sample-ngo/<source>/`.
+6. **If the source is NGO-specific** (Layer 3): the first NGO with the data ships an ingest + a `supply__<ngo>_<entity>.sql` + a `private_marts_<ngo>.<table>.sql` in their own private repo.
+7. UI components reading the new shape go in `src/components/private/` in the public Atlas repo so they're available to every NGO.
 
 ---
 

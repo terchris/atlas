@@ -7,7 +7,9 @@ terchris/
 # Private per-NGO data repos. Each NGO subdirectory is its own private git repo
 # (hosted on the NGO's own remote, never pushed publicly). See
 # docs/stack/private-data-layout.md and INVESTIGATE-private-atlas-deployments.md.
-atlas-private-data-repo/
+# The sample-ngo/ subdirectory is committed (synthetic data + docs for onboarding);
+# every real NGO subdirectory must be gitignored individually.
+atlas-private-data-repo/redcross/
 
 # Pre-existing private specs that should migrate into atlas-private-data-repo/<ngo>/docs/.
 docs/research/*-internal/

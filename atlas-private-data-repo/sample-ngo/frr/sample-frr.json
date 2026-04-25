@@ -1,0 +1,319 @@
+[
+  {
+    "id": "SAMPLE-1",
+    "sistOppdatert": "2026-01-15T10:00:00+01:00",
+    "eksternSystem": null,
+    "eksternId": null,
+    "eksternMorId": null,
+    "visningsnavn": "Sample NGO - Hovedkontor",
+    "registerId": "REG-SAMPLE-001",
+    "morId": null,
+    "ressurstype": "organisatorisk enhet",
+    "hovedfunksjon": "Nasjonalkontor",
+    "personnavn": null,
+    "status": [
+      {
+        "statuskode": "S100",
+        "statuskommentar": "Aktiv",
+        "startTidspunkt": "2026-01-01T00:00:00+01:00"
+      }
+    ],
+    "telefonnumre": [
+      {
+        "retningsnummer": "+47",
+        "telefonnummer": "22000001",
+        "beskrivelse": "Sentralbord",
+        "kategori": "sentral",
+        "erUtalarmeringsnummer": false,
+        "erSkrivebeskyttet": true,
+        "eksternKilde": null,
+        "eksternKildeNavn": null,
+        "eksternId": null
+      }
+    ],
+    "beskrivelse": "Synthetic sample — root org unit",
+    "bilde": null,
+    "vedlegg": [],
+    "bokmerker": null,
+    "kontaktinformasjon": null,
+    "oppdatertPosisjon": null,
+    "posisjoner": [
+      {
+        "oppdatertTidspunkt": "2026-01-15T09:00:00+01:00",
+        "område": {
+          "fylkesnavn": "Oslo",
+          "kommunenavn": "Oslo",
+          "politidistriktnavn": "Oslo politidistrikt"
+        },
+        "posisjon": {
+          "breddegrad": 59.9139,
+          "lengdegrad": 10.7522
+        },
+        "kilde": "adresse"
+      }
+    ],
+    "sektor": "frivillig",
+    "baseressurs": null,
+    "verifisertAvEier": true,
+    "felter": [],
+    "utstyr": [],
+    "undertyper": [],
+    "kapasiteter": []
+  },
+  {
+    "id": "SAMPLE-2",
+    "sistOppdatert": "2026-01-15T10:30:00+01:00",
+    "eksternSystem": null,
+    "eksternId": null,
+    "eksternMorId": null,
+    "visningsnavn": "Sample NGO - Bergen Lokallag",
+    "registerId": "REG-SAMPLE-002",
+    "morId": "SAMPLE-1",
+    "ressurstype": "organisatorisk enhet",
+    "hovedfunksjon": "Lokallag Bergen",
+    "personnavn": null,
+    "status": [
+      {
+        "statuskode": "S100",
+        "statuskommentar": "Aktiv",
+        "startTidspunkt": "2026-01-01T00:00:00+01:00"
+      }
+    ],
+    "telefonnumre": [],
+    "beskrivelse": "Synthetic sample — sub org unit",
+    "bilde": null,
+    "vedlegg": [],
+    "bokmerker": null,
+    "kontaktinformasjon": null,
+    "oppdatertPosisjon": null,
+    "posisjoner": [
+      {
+        "oppdatertTidspunkt": "2026-01-15T10:00:00+01:00",
+        "område": {
+          "fylkesnavn": "Vestland",
+          "kommunenavn": "Bergen",
+          "politidistriktnavn": "Vest politidistrikt"
+        },
+        "posisjon": {
+          "breddegrad": 60.3913,
+          "lengdegrad": 5.3221
+        },
+        "kilde": "adresse"
+      }
+    ],
+    "sektor": "frivillig",
+    "baseressurs": null,
+    "verifisertAvEier": true,
+    "felter": [],
+    "utstyr": [],
+    "undertyper": [],
+    "kapasiteter": []
+  },
+  {
+    "id": "SAMPLE-3",
+    "sistOppdatert": "2026-01-20T14:00:00+01:00",
+    "eksternSystem": null,
+    "eksternId": null,
+    "eksternMorId": null,
+    "visningsnavn": "Sample NGO - Bergen - Kjøretøy 01",
+    "registerId": "REG-SAMPLE-003",
+    "morId": "SAMPLE-2",
+    "ressurstype": "kjøretøy",
+    "hovedfunksjon": "Mannskapsbil",
+    "personnavn": null,
+    "status": [
+      {
+        "statuskode": "S200",
+        "statuskommentar": "På oppdrag",
+        "startTidspunkt": "2026-01-20T13:00:00+01:00"
+      },
+      {
+        "statuskode": "S100",
+        "statuskommentar": "Tilgjengelig",
+        "startTidspunkt": "2026-01-15T08:00:00+01:00"
+      }
+    ],
+    "telefonnumre": [
+      {
+        "retningsnummer": "+47",
+        "telefonnummer": "55000003",
+        "beskrivelse": "Vognfører",
+        "kategori": "jobb",
+        "erUtalarmeringsnummer": false,
+        "erSkrivebeskyttet": true,
+        "eksternKilde": null,
+        "eksternKildeNavn": null,
+        "eksternId": null
+      }
+    ],
+    "beskrivelse": "Synthetic sample — vehicle with multi-status history",
+    "bilde": null,
+    "vedlegg": [],
+    "bokmerker": null,
+    "kontaktinformasjon": null,
+    "oppdatertPosisjon": null,
+    "posisjoner": [
+      {
+        "oppdatertTidspunkt": "2026-01-20T13:30:00+01:00",
+        "område": {
+          "fylkesnavn": "Vestland",
+          "kommunenavn": "Bergen",
+          "politidistriktnavn": "Vest politidistrikt"
+        },
+        "posisjon": {
+          "breddegrad": 60.3913,
+          "lengdegrad": 5.3221
+        },
+        "kilde": "manuell"
+      },
+      {
+        "oppdatertTidspunkt": "2026-01-15T08:00:00+01:00",
+        "område": {
+          "fylkesnavn": "Vestland",
+          "kommunenavn": "Bergen",
+          "politidistriktnavn": "Vest politidistrikt"
+        },
+        "posisjon": {
+          "breddegrad": 60.39,
+          "lengdegrad": 5.32
+        },
+        "kilde": "manuell"
+      }
+    ],
+    "sektor": "frivillig",
+    "baseressurs": null,
+    "verifisertAvEier": true,
+    "felter": [
+      {
+        "benevning": null,
+        "feltnavn": "Registreringsnummer",
+        "verdi": "AA00001"
+      }
+    ],
+    "utstyr": [],
+    "undertyper": ["Mannskapsbil"],
+    "kapasiteter": ["Personelltransport"]
+  },
+  {
+    "id": "SAMPLE-4",
+    "sistOppdatert": "2026-01-18T16:00:00+01:00",
+    "eksternSystem": null,
+    "eksternId": null,
+    "eksternMorId": null,
+    "visningsnavn": "Sample NGO - Innsatsleder",
+    "registerId": "REG-SAMPLE-004",
+    "morId": "SAMPLE-2",
+    "ressurstype": "personell - enkeltperson",
+    "hovedfunksjon": "Innsatsleder",
+    "personnavn": "Ola Nordmann",
+    "status": [
+      {
+        "statuskode": "S100",
+        "statuskommentar": "Tilgjengelig",
+        "startTidspunkt": "2026-01-18T16:00:00+01:00"
+      }
+    ],
+    "telefonnumre": [
+      {
+        "retningsnummer": "+47",
+        "telefonnummer": "99999999",
+        "beskrivelse": "Privat mobil",
+        "kategori": "privat",
+        "erUtalarmeringsnummer": true,
+        "erSkrivebeskyttet": true,
+        "eksternKilde": null,
+        "eksternKildeNavn": null,
+        "eksternId": null
+      }
+    ],
+    "beskrivelse": "Synthetic sample — exercises personnavn + privat phone redaction",
+    "bilde": null,
+    "vedlegg": [],
+    "bokmerker": null,
+    "kontaktinformasjon": "Kan kontaktes via Bergen Lokallag",
+    "oppdatertPosisjon": null,
+    "posisjoner": [
+      {
+        "oppdatertTidspunkt": "2026-01-18T15:30:00+01:00",
+        "område": {
+          "fylkesnavn": "Vestland",
+          "kommunenavn": "Bergen",
+          "politidistriktnavn": "Vest politidistrikt"
+        },
+        "posisjon": {
+          "breddegrad": 60.3913,
+          "lengdegrad": 5.3221
+        },
+        "kilde": "manuell"
+      }
+    ],
+    "sektor": "frivillig",
+    "baseressurs": null,
+    "verifisertAvEier": false,
+    "felter": [],
+    "utstyr": [],
+    "undertyper": [],
+    "kapasiteter": ["Innsatsledelse"]
+  },
+  {
+    "id": "SAMPLE-5",
+    "sistOppdatert": "2026-01-22T11:00:00+01:00",
+    "eksternSystem": null,
+    "eksternId": null,
+    "eksternMorId": null,
+    "visningsnavn": "Sample NGO - Operativ sentral",
+    "registerId": "REG-SAMPLE-005",
+    "morId": "SAMPLE-1",
+    "ressurstype": "sentral",
+    "hovedfunksjon": "Operativ sentral",
+    "personnavn": null,
+    "status": [
+      {
+        "statuskode": "S100",
+        "statuskommentar": "Bemannet",
+        "startTidspunkt": "2026-01-22T08:00:00+01:00"
+      }
+    ],
+    "telefonnumre": [
+      {
+        "retningsnummer": "+47",
+        "telefonnummer": "11000005",
+        "beskrivelse": "Hovednummer",
+        "kategori": "nødnett",
+        "erUtalarmeringsnummer": true,
+        "erSkrivebeskyttet": true,
+        "eksternKilde": null,
+        "eksternKildeNavn": null,
+        "eksternId": null
+      }
+    ],
+    "beskrivelse": "Synthetic sample — sentral",
+    "bilde": null,
+    "vedlegg": [],
+    "bokmerker": null,
+    "kontaktinformasjon": null,
+    "oppdatertPosisjon": null,
+    "posisjoner": [
+      {
+        "oppdatertTidspunkt": "2026-01-22T10:00:00+01:00",
+        "område": {
+          "fylkesnavn": "Oslo",
+          "kommunenavn": "Oslo",
+          "politidistriktnavn": "Oslo politidistrikt"
+        },
+        "posisjon": {
+          "breddegrad": 59.9139,
+          "lengdegrad": 10.7522
+        },
+        "kilde": "adresse"
+      }
+    ],
+    "sektor": "frivillig",
+    "baseressurs": null,
+    "verifisertAvEier": true,
+    "felter": [],
+    "utstyr": [],
+    "undertyper": [],
+    "kapasiteter": []
+  }
+]

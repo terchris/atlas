@@ -1,0 +1,132 @@
+version: 2
+
+models:
+  - name: frr_resources
+    description: |
+      Layer-2 conformed mart of FRR (Felles Ressursregister) resources.
+      One row per FRR resource. Verbatim FRR field names (camelCase → snake_case).
+      Multi-NGO via ngo_orgnr. Denormalised current state
+      (current_kommune_nr, current_statuskode, etc.) derived from the latest
+      entries in the position/status history.
+      PII redacted in place (personnavn, kontaktinformasjon).
+      Org units are included with ressurstype='organisatorisk enhet' — no
+      separate dim_org_unit table.
+      See docs/stack/private-marts-shapes.md for the contract.
+    columns:
+      - name: id
+        description: FRR resource id (verbatim).
+        data_tests:
+          - not_null
+          - unique
+      - name: ngo_orgnr
+        description: NGO Brreg orgnr (Atlas-introduced for cross-NGO clarity).
+        data_tests: [not_null]
+      - name: source_id
+        description: Origin source-slug ('frr' for the FRR registry).
+        data_tests: [not_null]
+      - name: visningsnavn
+        description: Display name (verbatim FRR).
+        data_tests: [not_null]
+      - name: ressurstype
+        description: FRR resource type enum.
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ['drone', 'fartøy', 'kjøretøy', 'objekt', 'organisatorisk enhet', 'personell - enkeltperson', 'personell - gruppe', 'sentral', 'utstyr']
+      - name: hovedfunksjon
+        description: Free-text primary function (e.g. 'Snøskuter', 'Korpshus'). For org units, the place name.
+      - name: current_statuskode
+        description: Latest status code from the status history.
+        data_tests:
+          - accepted_values:
+              values: ['S100', 'S200', 'S300']
+              config:
+                where: current_statuskode is not null
+      - name: current_kommune_nr
+        description: Resolved kommune_nr from FRR's latest position via dim_kommune.kommune_name lookup.
+      - name: current_fylke_nr
+        description: Resolved fylke_nr from FRR's latest position via dim_fylke.fylke_name lookup.
+      - name: mor_id
+        description: FRR's morId — parent in the resource/org-unit hierarchy. Self-FK to id.
+      - name: baseressurs
+        description: FRR's baseressurs — sub-resource of a base. Self-FK to id (rare).
+      - name: undertyper
+        description: FRR sub-classifications, native Postgres array (GIN-indexable).
+      - name: kapasiteter
+        description: FRR capabilities, native Postgres array (GIN-indexable).
+      - name: is_personnavn_redacted
+        description: True if a personnavn was redacted on this row.
+        data_tests: [not_null]
+      - name: is_kontaktinfo_redacted
+        description: True if kontaktinformasjon was redacted on this row.
+        data_tests: [not_null]
+      - name: loaded_at
+        description: When the underlying raw row was last loaded.
+        data_tests: [not_null]
+
+  - name: frr_resource_position
+    description: |
+      Position history per FRR resource. One row per (resource_id, position_at).
+      Current position is denormalised on frr_resources.
+    columns:
+      - name: resource_id
+        description: FK (business-key) to frr_resources.id.
+        data_tests: [not_null]
+      - name: position_at
+        description: Timestamp of this position record.
+        data_tests: [not_null]
+      - name: kommune_nr
+        description: Joined from kommune_navn at staging time.
+      - name: kilde
+        description: How the position was acquired.
+        data_tests:
+          - accepted_values:
+              values: ['adresse', 'ais', 'forenklet_tilgang', 'manuell']
+              config:
+                where: kilde is not null
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [resource_id, position_at]
+
+  - name: frr_resource_status
+    description: |
+      Status history per FRR resource. One row per (resource_id, start_tidspunkt).
+      Current status is denormalised on frr_resources.
+    columns:
+      - name: resource_id
+        description: FK (business-key) to frr_resources.id.
+        data_tests: [not_null]
+      - name: start_tidspunkt
+        data_tests: [not_null]
+      - name: statuskode
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ['S100', 'S200', 'S300']
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [resource_id, start_tidspunkt]
+
+  - name: frr_resource_phone
+    description: |
+      Phone numbers per FRR resource, with PII redaction in place.
+      Rows with kategori='privat' have telefonnummer replaced by a hashed
+      sentinel (PK uniqueness preserved); is_redacted flags those rows.
+    columns:
+      - name: resource_id
+        description: FK (business-key) to frr_resources.id.
+        data_tests: [not_null]
+      - name: telefonnummer
+        description: Phone number, or 'ANONYMISERT-<hash>' if kategori='privat'.
+        data_tests: [not_null]
+      - name: kategori
+        data_tests:
+          - accepted_values:
+              values: ['ikke angitt', 'jobb', 'nødnett', 'privat', 'satellitt', 'sentral']
+              config:
+                where: kategori is not null
+      - name: is_redacted
+        data_tests: [not_null]
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [resource_id, telefonnummer]
