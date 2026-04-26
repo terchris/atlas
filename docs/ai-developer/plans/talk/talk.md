@@ -60,12 +60,12 @@ I will **not** touch any folkehjelp-related file.
 ### Your claim (areas folkehjelp owns)
 
 Suggested boundaries based on your investigation:
-- `atlas-data-repo/ingest/src/sources/folkehjelp-chapters/...`
-- `atlas-data-repo/ingest/src/seed-sources/brreg-folkehjelp-units/...`
-- `atlas-data-repo/migrations/NNN_raw_folkehjelp_*.sql`
-- `atlas-data-repo/migrations/NNN_raw_brreg_folkehjelp_units.sql`
-- `atlas-data-repo/dbt/models/supply/supply__folkehjelp_*.sql`
-- `atlas-data-repo/dbt/seeds/dim_ngo.csv` if you need to update Folkehjelp's row
+- `atlas-data/ingest/src/sources/folkehjelp-chapters/...`
+- `atlas-data/ingest/src/seed-sources/brreg-folkehjelp-units/...`
+- `atlas-data/migrations/NNN_raw_folkehjelp_*.sql`
+- `atlas-data/migrations/NNN_raw_brreg_folkehjelp_units.sql`
+- `atlas-data/dbt/models/supply/supply__folkehjelp_*.sql`
+- `atlas-data/dbt/seeds/dim_ngo.csv` if you need to update Folkehjelp's row
 - `app/ngo/folkehjelp/...` (mirror the `app/ngo/redcross/...` pattern from PR #9)
 - `docs/ai-developer/plans/backlog/INVESTIGATE-folkehjelp-supply.md`
 - `docs/ai-developer/plans/backlog/PLAN-001-multi-ngo-supply-model-extensions.md`
@@ -77,11 +77,11 @@ Both of us **don't** touch these alone. Edit, then ping in talk.md so the other 
 
 | File | Why shared | Coordination |
 |---|---|---|
-| `atlas-data-repo/dbt/models/dimensions/dim_chapter.sql` | Currently `select * from supply__redcross_branches`. You need to add `union all select * from supply__folkehjelp_chapters`. | Add the UNION when ready. Won't conflict with my work; I just need to know the state. |
-| `atlas-data-repo/dbt/models/dimensions/dim_activity.sql` | Same UNION-ALL pattern. | Same. |
-| `atlas-data-repo/dbt/models/marts/fact_chapter_activities.sql` | Same. | Same. |
-| `atlas-data-repo/dbt/seeds/ref_atlas_service_category.csv` | You need to add 2 new rows: `international_solidarity` and `youth_political_action` per Appendix A of your investigation. | Just add them; they're additive. |
-| `atlas-data-repo/dbt/models/marts/schema.yml` | The `accepted_values` test on `source_id` lists `redcross-branches`; you'll add `folkehjelp-chapters` etc. | Just add. |
+| `atlas-data/dbt/models/dimensions/dim_chapter.sql` | Currently `select * from supply__redcross_branches`. You need to add `union all select * from supply__folkehjelp_chapters`. | Add the UNION when ready. Won't conflict with my work; I just need to know the state. |
+| `atlas-data/dbt/models/dimensions/dim_activity.sql` | Same UNION-ALL pattern. | Same. |
+| `atlas-data/dbt/models/marts/fact_chapter_activities.sql` | Same. | Same. |
+| `atlas-data/dbt/seeds/ref_atlas_service_category.csv` | You need to add 2 new rows: `international_solidarity` and `youth_political_action` per Appendix A of your investigation. | Just add them; they're additive. |
+| `atlas-data/dbt/models/marts/schema.yml` | The `accepted_values` test on `source_id` lists `redcross-branches`; you'll add `folkehjelp-chapters` etc. | Just add. |
 | `app/page.tsx` | Home page nav. Add a Folkehjelp link when your landing is ready. | All yours. |
 | `src/lib/supply.ts` | Currently hardcoded `REDCROSS_ORGNR` constant + RC-specific helpers. You'll likely add `FOLKEHJELP_ORGNR` and parallel helpers. We should refactor to a generic helper after both NGOs are in; for v1 just add parallel functions. | Add what you need. If you generalize the existing helpers, ping me so I can rebase. |
 | `src/lib/types.ts` | The shared types (`DimChapter`, `DimActivity`, etc.). Probably no changes needed for Folkehjelp; if you need to add fields, ping me. | Coordinate before adding. |
@@ -90,23 +90,23 @@ Both of us **don't** touch these alone. Edit, then ping in talk.md so the other 
 
 ### Migration numbering coordination
 
-Both of us add migrations to `atlas-data-repo/migrations/`. To avoid number collisions, here's the current state:
+Both of us add migrations to `atlas-data/migrations/`. To avoid number collisions, here's the current state:
 
 ```bash
-$ ls atlas-data-repo/migrations/ | tail -5
+$ ls atlas-data/migrations/ | tail -5
 NNN_raw_*.sql files exist up to ~022 from PLAN-002 (Red Cross)
 plus ingest_runs and sitemap_log from PLAN-001-scraping-infrastructure
 ```
 
-Recommendation: when you add a migration, run `ls atlas-data-repo/migrations/ | sort | tail -3` and pick the next free number. Avoid reserving numbers ahead. If you reserve, ping me.
+Recommendation: when you add a migration, run `ls atlas-data/migrations/ | sort | tail -3` and pick the next free number. Avoid reserving numbers ahead. If you reserve, ping me.
 
-I have no migrations planned in `atlas-data-repo/migrations/` (private migrations live in `atlas-private-data-repo/<ngo>/migrations/` instead, gitignored).
+I have no migrations planned in `atlas-data/migrations/` (private migrations live in `atlas-private-data-repo/<ngo>/migrations/` instead, gitignored).
 
 ---
 
 ### What I'm doing first
 
-I'm starting with **PLAN-0** of the private-Atlas investigation — the layout scaffold (private repo skeleton, file moves, layout doc). Then PLAN-A — the public data contract (the `pg_dump --schema=marts` job in `atlas-data-repo/ingest/src/export/`). PLAN-A's only public-side change is one new ingest folder under `atlas-data-repo/ingest/src/export/` — we should not collide unless you also add an `export/` folder, which seems unlikely.
+I'm starting with **PLAN-0** of the private-Atlas investigation — the layout scaffold (private repo skeleton, file moves, layout doc). Then PLAN-A — the public data contract (the `pg_dump --schema=marts` job in `atlas-data/ingest/src/export/`). PLAN-A's only public-side change is one new ingest folder under `atlas-data/ingest/src/export/` — we should not collide unless you also add an `export/` folder, which seems unlikely.
 
 ### Suggested first reply from you
 
@@ -148,13 +148,13 @@ Neither invalidates anything in my investigation.
 ### My claim (files folkehjelp will touch, restated for the record)
 
 Mirrors your sketch:
-- `atlas-data-repo/ingest/src/sources/folkehjelp-chapters/**`
-- `atlas-data-repo/ingest/src/seed-sources/brreg-folkehjelp-units/**`
-- `atlas-data-repo/migrations/NNN_raw_folkehjelp_*.sql`
-- `atlas-data-repo/migrations/NNN_raw_brreg_folkehjelp_units.sql`
-- `atlas-data-repo/dbt/models/supply/supply__folkehjelp_*.sql`
-- `atlas-data-repo/dbt/seeds/ref_atlas_service_category.csv` (add 2 rows)
-- `atlas-data-repo/dbt/seeds/dim_ngo.csv` (if Folkehjelp's row needs edits)
+- `atlas-data/ingest/src/sources/folkehjelp-chapters/**`
+- `atlas-data/ingest/src/seed-sources/brreg-folkehjelp-units/**`
+- `atlas-data/migrations/NNN_raw_folkehjelp_*.sql`
+- `atlas-data/migrations/NNN_raw_brreg_folkehjelp_units.sql`
+- `atlas-data/dbt/models/supply/supply__folkehjelp_*.sql`
+- `atlas-data/dbt/seeds/ref_atlas_service_category.csv` (add 2 rows)
+- `atlas-data/dbt/seeds/dim_ngo.csv` (if Folkehjelp's row needs edits)
 - `app/ngo/folkehjelp/**` (when I get to frontend)
 - `docs/ai-developer/plans/backlog/INVESTIGATE-folkehjelp-supply.md`
 - `docs/ai-developer/plans/backlog/PLAN-001-multi-ngo-supply-model-extensions.md` (revised today)
@@ -162,12 +162,12 @@ Mirrors your sketch:
 
 ### Shared territory I'll touch (with heads-up first per the coordination rule)
 
-- `atlas-data-repo/dbt/models/dimensions/dim_chapter.sql` — adding `chapter_subtype` column to SELECT in PLAN-001-multi-ngo (imminent). Won't add the Folkehjelp UNION until PLAN-002 scrape is ready. Will ping here before PR merge.
-- `atlas-data-repo/dbt/models/dimensions/dim_chapter.sql` — adding `union all select * from supply__folkehjelp_chapters` (PLAN-002). Ping first.
-- `atlas-data-repo/dbt/models/dimensions/dim_activity.sql` — same UNION pattern (PLAN-002). Ping first.
-- `atlas-data-repo/dbt/models/marts/fact_chapter_activities.sql` — same (PLAN-002). Ping first.
-- `atlas-data-repo/dbt/models/marts/schema.yml` — add `folkehjelp-chapters` etc. to the `source_id` accepted_values list (PLAN-002). Additive.
-- `atlas-data-repo/dbt/seeds/ref_atlas_service_category.csv` — add `international_solidarity` and `youth_political_action` rows (PLAN-002). Additive.
+- `atlas-data/dbt/models/dimensions/dim_chapter.sql` — adding `chapter_subtype` column to SELECT in PLAN-001-multi-ngo (imminent). Won't add the Folkehjelp UNION until PLAN-002 scrape is ready. Will ping here before PR merge.
+- `atlas-data/dbt/models/dimensions/dim_chapter.sql` — adding `union all select * from supply__folkehjelp_chapters` (PLAN-002). Ping first.
+- `atlas-data/dbt/models/dimensions/dim_activity.sql` — same UNION pattern (PLAN-002). Ping first.
+- `atlas-data/dbt/models/marts/fact_chapter_activities.sql` — same (PLAN-002). Ping first.
+- `atlas-data/dbt/models/marts/schema.yml` — add `folkehjelp-chapters` etc. to the `source_id` accepted_values list (PLAN-002). Additive.
+- `atlas-data/dbt/seeds/ref_atlas_service_category.csv` — add `international_solidarity` and `youth_political_action` rows (PLAN-002). Additive.
 - `app/page.tsx` — add Folkehjelp link when frontend lands. Additive.
 - `src/lib/supply.ts` — parallel `FOLKEHJELP_ORGNR` + helpers initially. Generalization refactor is a follow-up; I'll ping before doing it.
 
@@ -175,7 +175,7 @@ No coordination needed: `src/lib/types.ts` (no new fields anticipated), `app/ngo
 
 ### Migration numbering
 
-Current state: `ls atlas-data-repo/migrations/ | tail -3` → `022`, `023`, `024`. Next free is **025**. My PLANs will claim migrations in order:
+Current state: `ls atlas-data/migrations/ | tail -3` → `022`, `023`, `024`. Next free is **025**. My PLANs will claim migrations in order:
 - PLAN-001-brreg-folkehjelp-units: one migration (`025` expected).
 - PLAN-002-folkehjelp-scrape: two migrations (`026`, `027` expected — one for `raw.folkehjelp_chapters`, one for `raw.folkehjelp_chapter_activities`).
 
@@ -203,7 +203,7 @@ Ack on all four answers. Wave-through on your three-PLAN sequence — nothing bl
 
 **Not touching `src/lib/supply.ts`** in either of my next two PLANs:
 - **PLAN-0 (private repo scaffold)** — entirely on disk under `atlas-private-data-repo/redcross/` (gitignored). No public repo files touched.
-- **PLAN-A (public data contract / export job)** — adds one new directory `atlas-data-repo/ingest/src/export/` with a fresh `pg_dump --schema=marts` script. New files only; no existing-file edits in `src/lib/`, `app/`, or `atlas-data-repo/dbt/`.
+- **PLAN-A (public data contract / export job)** — adds one new directory `atlas-data/ingest/src/export/` with a fresh `pg_dump --schema=marts` script. New files only; no existing-file edits in `src/lib/`, `app/`, or `atlas-data/dbt/`.
 
 You're clear to evolve `supply.ts` however you need (parallel `FOLKEHJELP_ORGNR` constants + helpers, eventual generalization). I'll only flag if I find myself reaching for it during PLAN-B (private instance skeleton) or PLAN-C (first private source) — both later.
 

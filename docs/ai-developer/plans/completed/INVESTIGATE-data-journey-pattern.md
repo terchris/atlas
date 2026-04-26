@@ -13,7 +13,7 @@
 
 ---
 
-> **Status note (2026-04-22):** This is a **completed design investigation**. The pattern walked through here was adopted and 19 sources have been built using it. For the **current source pattern** (folder layout, command names, conventions) see [`../../../../atlas-data-repo/ingest/src/sources/README.md`](../../../../atlas-data-repo/ingest/src/sources/README.md). This document is preserved for historical/onboarding reference — it shows the *why* behind the current shape.
+> **Status note (2026-04-22):** This is a **completed design investigation**. The pattern walked through here was adopted and 19 sources have been built using it. For the **current source pattern** (folder layout, command names, conventions) see [`../../../../atlas-data/ingest/src/sources/README.md`](../../../../atlas-data/ingest/src/sources/README.md). This document is preserved for historical/onboarding reference — it shows the *why* behind the current shape.
 >
 > Specific drift to be aware of: the original walkthrough used `pnpm` and `src/ingest/sources/<id>.ts` (file per source); the implemented pattern uses `npm` and `src/sources/<id>/index.ts` (folder per source).
 
@@ -394,7 +394,7 @@ For the other 10 sources, there are deviations worth naming:
 - **Red Cross internal (×1)** — bespoke feed, access model TBD. Likely a CSV drop in object storage rather than a pull API. Parking.
 - **SSB bespoke extract (×1, covering 3 reports)** — no public table id; the source catalogue entry's `open_questions` flags finding a public-API equivalent.
 
-Adding a new source follows the same motions for any measurement-kind entry — see [`../../../../atlas-data-repo/ingest/src/sources/README.md`](../../../../atlas-data-repo/ingest/src/sources/README.md) for the current step-by-step.
+Adding a new source follows the same motions for any measurement-kind entry — see [`../../../../atlas-data/ingest/src/sources/README.md`](../../../../atlas-data/ingest/src/sources/README.md) for the current step-by-step.
 
 No new infra for each source. That's the point.
 
@@ -414,7 +414,7 @@ These were flagged as "to confirm before locking the pattern". Status as of comp
 
 ## What this investigation is not
 
-- Not a current source-pattern reference — see [`../../../../atlas-data-repo/ingest/src/sources/README.md`](../../../../atlas-data-repo/ingest/src/sources/README.md) for live conventions.
+- Not a current source-pattern reference — see [`../../../../atlas-data/ingest/src/sources/README.md`](../../../../atlas-data/ingest/src/sources/README.md) for live conventions.
 - Not the v1 stack decision document — that lives in [`../../../stack/suggested-stack.md`](../../../stack/suggested-stack.md).
 - Not the data-strategy / scaling document — that lives in [`../../../stack/data-strategy.md`](../../../stack/data-strategy.md).
 

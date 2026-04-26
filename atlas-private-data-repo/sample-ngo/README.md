@@ -11,7 +11,7 @@ A fictitious NGO used to:
 
 The orgnr `999999999` is a deliberately fake Brreg number (fails MOD-11) so
 it cannot collide with a real NGO. Folder names map to the NGO slug, which
-the FRR ingest joins to orgnr via `atlas-data-repo/ingest/src/seed-sources/atlas-ngo-landscape/landscape.json`
+the FRR ingest joins to orgnr via `atlas-data/ingest/src/seed-sources/atlas-ngo-landscape/landscape.json`
 (plus a hardcoded `sample-ngo → 999999999` entry in the ingest itself).
 
 ## Layout

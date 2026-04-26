@@ -54,13 +54,13 @@ The other 8 indicator models (`indicators__ssb_06913`, `_06947`, `_08764`, `_120
 
 ### Tasks
 
-- [x] 1.1 Created [`atlas-data-repo/dbt/macros/parse_codes.sql`](../../../../atlas-data-repo/dbt/macros/parse_codes.sql) with `decode_sex`, `period_start_year`, `period_end_year`, `age_range_min(col, sep)`, `age_range_max(col, sep)`. Period macros normalise both `_` and `-` separators in one path. Age macros also handle the `067+` open-ended form (min=67, max=null). ✓
+- [x] 1.1 Created [`atlas-data/dbt/macros/parse_codes.sql`](../../../../atlas-data/dbt/macros/parse_codes.sql) with `decode_sex`, `period_start_year`, `period_end_year`, `age_range_min(col, sep)`, `age_range_max(col, sep)`. Period macros normalise both `_` and `-` separators in one path. Age macros also handle the `067+` open-ended form (min=67, max=null). ✓
 - [x] 1.2 `dbt parse` runs clean. ✓
 
 ### Validation
 
 ```bash
-cd atlas-data-repo/dbt
+cd atlas-data/dbt
 uv run --env-file ../ingest/.env dbt parse
 ```
 
@@ -87,7 +87,7 @@ User confirms parse runs clean (no Jinja errors).
 ### Validation
 
 ```bash
-cd atlas-data-repo/dbt
+cd atlas-data/dbt
 uv run --env-file ../ingest/.env dbt run --select indicators
 uv run --env-file ../ingest/.env dbt show --inline "select family_type, family_type_label_no, family_type_label_en from marts.indicators__ssb_06083 where family_type = '006' limit 1"
 uv run --env-file ../ingest/.env dbt show --inline "select age_group, age_group_min, age_group_max from marts.indicators__fhi_bor_alene where age_group in ('0_120', '16_120') limit 4"
@@ -110,7 +110,7 @@ User confirms: family-type label resolves to "Par uten barn"; age_group_min/max 
 ### Validation
 
 ```bash
-cd atlas-data-repo/dbt
+cd atlas-data/dbt
 uv run --env-file ../ingest/.env dbt run --select fact_kommune_indicators
 uv run --env-file ../ingest/.env dbt show --inline "select source_id, contents_code, contents_label from marts.fact_kommune_indicators where source_id in ('ssb-06083','ssb-09429') order by 1, 2 limit 10"
 ```
@@ -134,7 +134,7 @@ The fact's synthetic-contents pattern wraps labels in `' (' || label || ')'`. Wh
 ### Validation
 
 ```bash
-cd atlas-data-repo/dbt
+cd atlas-data/dbt
 uv run --env-file ../ingest/.env dbt run
 uv run --env-file ../ingest/.env dbt test
 ```
@@ -174,18 +174,18 @@ User confirms dbt test passes (zero errors, warns excluded as today) AND the lab
 ## Files to Modify
 
 New:
-- `atlas-data-repo/dbt/macros/parse_codes.sql`
+- `atlas-data/dbt/macros/parse_codes.sql`
 
 Edit (9 indicator models):
-- `atlas-data-repo/dbt/models/indicators/indicators__ssb_06083.sql`
-- `atlas-data-repo/dbt/models/indicators/indicators__ssb_06944.sql`
-- `atlas-data-repo/dbt/models/indicators/indicators__ssb_07459.sql`
-- `atlas-data-repo/dbt/models/indicators/indicators__ssb_09429.sql`
-- `atlas-data-repo/dbt/models/indicators/indicators__ssb_12944.sql`
-- `atlas-data-repo/dbt/models/indicators/indicators__fhi_bor_alene.sql`
-- `atlas-data-repo/dbt/models/indicators/indicators__fhi_mobbing.sql`
-- `atlas-data-repo/dbt/models/indicators/indicators__fhi_trangbodd.sql`
-- `atlas-data-repo/dbt/models/indicators/indicators__fhi_vgs_gjennomforing.sql`
+- `atlas-data/dbt/models/indicators/indicators__ssb_06083.sql`
+- `atlas-data/dbt/models/indicators/indicators__ssb_06944.sql`
+- `atlas-data/dbt/models/indicators/indicators__ssb_07459.sql`
+- `atlas-data/dbt/models/indicators/indicators__ssb_09429.sql`
+- `atlas-data/dbt/models/indicators/indicators__ssb_12944.sql`
+- `atlas-data/dbt/models/indicators/indicators__fhi_bor_alene.sql`
+- `atlas-data/dbt/models/indicators/indicators__fhi_mobbing.sql`
+- `atlas-data/dbt/models/indicators/indicators__fhi_trangbodd.sql`
+- `atlas-data/dbt/models/indicators/indicators__fhi_vgs_gjennomforing.sql`
 
 Edit (1 mart):
-- `atlas-data-repo/dbt/models/marts/fact_kommune_indicators.sql`
+- `atlas-data/dbt/models/marts/fact_kommune_indicators.sql`

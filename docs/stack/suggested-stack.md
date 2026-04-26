@@ -80,7 +80,7 @@ Each of these was in the original stack draft. Recording *why* we said no so we 
   Browser    (MapLibre map + Digdir Designsystemet UI)
 ```
 
-One end-to-end journey for one source — the design that grounded this v1 stack before implementation — is documented in [`../ai-developer/plans/completed/INVESTIGATE-data-journey-pattern.md`](../ai-developer/plans/completed/INVESTIGATE-data-journey-pattern.md). For the live source pattern as currently implemented, see [`../../atlas-data-repo/ingest/src/sources/README.md`](../../atlas-data-repo/ingest/src/sources/README.md).
+One end-to-end journey for one source — the design that grounded this v1 stack before implementation — is documented in [`../ai-developer/plans/completed/INVESTIGATE-data-journey-pattern.md`](../ai-developer/plans/completed/INVESTIGATE-data-journey-pattern.md). For the live source pattern as currently implemented, see [`../../atlas-data/ingest/src/sources/README.md`](../../atlas-data/ingest/src/sources/README.md).
 
 ---
 
@@ -113,7 +113,7 @@ Investigation and proposed PLAN files filed in the UIS repo: [INVESTIGATE-dagste
 
 ## What lives in `atlas-data` (not in UIS)
 
-Atlas-data is a **separate repo** (currently colocated as `atlas-data-repo/` during research — see `atlas-data-repo/README.md`). Its only role is to produce the `marts.*` tables.
+Atlas-data is a **separate repo** (currently colocated as `atlas-data/` during research — see `atlas-data/README.md`). Its only role is to produce the `marts.*` tables.
 
 ```
 atlas-data/
@@ -134,7 +134,7 @@ Repo structure motivated in the stack-narrowing discussion. The contract between
 | Repo | Contains | Deploy surface |
 |---|---|---|
 | `atlas` (this repo) | Next.js frontend, strategic/research docs, stack docs | Next.js app → K8s in UIS, behind Traefik |
-| `atlas-data` (future — currently `atlas-data-repo/`) | TypeScript ingest + dbt + Dagster user code + migrations | Docker image → Dagster code location in UIS |
+| `atlas-data` (future — currently `atlas-data/`) | TypeScript ingest + dbt + Dagster user code + migrations | Docker image → Dagster code location in UIS |
 
 Contract between them: `marts.*` in Postgres. Frontend has a read-only role; data-side has full control of `raw.*` and `marts.*`.
 
@@ -178,7 +178,7 @@ Tracked here so they don't get lost:
 1. **Map library** — MapLibre GL vs. Leaflet. `goal.md` leaves it TBD. Either works; pick once.
 2. **Kommune boundary source** — Kartverket GeoJSON as a static build-time asset assumed. Geonorge WFS at runtime is the alternative (heavier, probably not worth it).
 3. **Next.js caching strategy** — route-level `revalidate` tied to asset cadence, or Postgres listen/notify to invalidate on materialisation. Implementation detail.
-4. **When to split `atlas-data-repo/` into its own git repo** — triggers listed in `atlas-data-repo/README.md`.
+4. **When to split `atlas-data/` into its own git repo** — triggers listed in `atlas-data/README.md`.
 
 None block building v1.
 

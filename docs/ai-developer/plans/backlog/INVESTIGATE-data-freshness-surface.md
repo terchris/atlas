@@ -37,7 +37,7 @@ Atlas synthesizes ~24 public-sector sources (SSB, FHI, Brreg, Kartverket, Bufdir
 
 A journalist writing about "homework help capacity in Bergen" needs to trust the numbers. A kommune case worker deciding whether to refer a family to a Red Cross chapter needs to know the chapter is actually still running that activity. A policy analyst comparing kommuner on youth mental-health indicators needs to know whether the indicator reflects 2024 or 2019 data.
 
-**Current state:** the plumbing exists — every raw table has a mandatory `loaded_at timestamptz` ([CONTRIBUTING.md:47](../../../../atlas-data-repo/CONTRIBUTING.md)), dbt source freshness is configured via `loaded_at_field`, and the convention is to rename `loaded_at → updated_at` at the mart layer for consumer exposure (CONTRIBUTING.md:143). But **no `.tsx` file in the frontend reads any of it**. Grep confirms: zero UI surface today.
+**Current state:** the plumbing exists — every raw table has a mandatory `loaded_at timestamptz` ([CONTRIBUTING.md:47](../../../../atlas-data/CONTRIBUTING.md)), dbt source freshness is configured via `loaded_at_field`, and the convention is to rename `loaded_at → updated_at` at the mart layer for consumer exposure (CONTRIBUTING.md:143). But **no `.tsx` file in the frontend reads any of it**. Grep confirms: zero UI surface today.
 
 This investigation defines what to build on top of that plumbing.
 
@@ -73,7 +73,7 @@ Different personas want different surfaces. The cheap thing is the Q4 answer (si
 
 ### B.1 Raw layer — **[Q5]**
 
-Every raw table has `loaded_at timestamptz not null default now()` ([CONTRIBUTING.md:47](../../../../atlas-data-repo/CONTRIBUTING.md), mandatory per the checklist at line 220). Confirmed across all existing migrations (`002_raw_ssb_08764.sql` through `021_raw_fhi_vgs_gjennomforing.sql`).
+Every raw table has `loaded_at timestamptz not null default now()` ([CONTRIBUTING.md:47](../../../../atlas-data/CONTRIBUTING.md), mandatory per the checklist at line 220). Confirmed across all existing migrations (`002_raw_ssb_08764.sql` through `021_raw_fhi_vgs_gjennomforing.sql`).
 
 Gap: `loaded_at` is only set at ingest time. It says nothing about when the *source* published the underlying data. For SSB tables, the ingest might run daily while the source only republishes annually — `loaded_at` is misleadingly recent in that case.
 
@@ -81,7 +81,7 @@ Gap: `loaded_at` is only set at ingest time. It says nothing about when the *sou
 
 Convention is "`loaded_at as updated_at` (never expose `loaded_at`)" (CONTRIBUTING.md:143). This means `updated_at` is available on marts by convention, but not enforced by schema tests yet.
 
-Verification to do during the real investigation: walk `atlas-data-repo/dbt/models/` and confirm every mart currently exposes `updated_at`. The marts to check are:
+Verification to do during the real investigation: walk `atlas-data/dbt/models/` and confirm every mart currently exposes `updated_at`. The marts to check are:
 - `marts.fact_kommune_indicators`
 - `marts.fact_chapter_activities`
 - `marts.dim_kommune`, `marts.dim_chapter`, `marts.dim_activity`, `marts.dim_fylke`
@@ -299,7 +299,7 @@ The implementation split is roughly:
 
 **Documentation:**
 - Extend [`docs/stack/naming-conventions.md`](../../../stack/naming-conventions.md) with `source_published_at` alongside `updated_at`.
-- Add a section to [`atlas-data-repo/CONTRIBUTING.md`](../../../../atlas-data-repo/CONTRIBUTING.md) covering per-source rules for deriving `source_published_at`.
+- Add a section to [`atlas-data/CONTRIBUTING.md`](../../../../atlas-data/CONTRIBUTING.md) covering per-source rules for deriving `source_published_at`.
 
 ---
 

@@ -143,9 +143,9 @@ Both required. Brreg gives us the legal-entity backbone (121 lokallag, 88% in Fr
 
 **Superseded by PLAN-001-brreg-enheter (2026-04-24).** What this investigation originally proposed here — an NF-specific `brreg-folkehjelp-units` seed-source writing to an NF-specific `raw.brreg_folkehjelp_units` table — is *not* what shipped. During implementation the scope was pulled forward to cross-NGO from day one (see [Q4] below). For Folkehjelp, the concrete shape is:
 
-- Use the existing generic ingest at [`atlas-data-repo/ingest/src/seed-sources/brreg-enheter/`](../../../../atlas-data-repo/ingest/src/seed-sources/brreg-enheter/README.md).
+- Use the existing generic ingest at [`atlas-data/ingest/src/seed-sources/brreg-enheter/`](../../../../atlas-data/ingest/src/seed-sources/brreg-enheter/README.md).
 - Run `npm run refresh:brreg-enheter`.
-- It reads [`landscape.json`](../../../../atlas-data-repo/ingest/src/seed-sources/atlas-ngo-landscape/landscape.json), iterates every NGO with a `brreg_query` block, fetches each via the shared typed Brreg client ([`src/lib/brreg/`](../../../../atlas-data-repo/ingest/src/lib/brreg/README.md)), and upserts all matches into the shared `raw.brreg_enheter` table.
+- It reads [`landscape.json`](../../../../atlas-data/ingest/src/seed-sources/atlas-ngo-landscape/landscape.json), iterates every NGO with a `brreg_query` block, fetches each via the shared typed Brreg client ([`src/lib/brreg/`](../../../../atlas-data/ingest/src/lib/brreg/README.md)), and upserts all matches into the shared `raw.brreg_enheter` table.
 - Folkehjelp's `brreg_query` block (committed 2026-04-24) is `{ navn: "norsk folkehjelp", organisasjonsform: "FLI", nameStartsWith: "Norsk Folkehjelp" }`. Verified: 122 rows, 108 in Frivillighetsregisteret — matches this investigation's baseline.
 
 Adding a new NGO's Brreg data is a `landscape.json` edit, not a new script/migration. No NF-specific code path anywhere.
@@ -211,7 +211,7 @@ Expected result: ~108 of 121 Brreg rows match a web slug. ~13 Brreg-only rows ar
 For names that don't match (Brreg uses formal long-form, web uses short display), a small JSON file in the source folder:
 
 ```jsonc
-// atlas-data-repo/ingest/src/sources/folkehjelp-chapters/overrides.json
+// atlas-data/ingest/src/sources/folkehjelp-chapters/overrides.json
 {
   "brreg_to_slug": {
     "871234567": "asker-og-baerum",       // Brreg orgnr → web slug
@@ -407,7 +407,7 @@ CREATE TABLE raw.folkehjelp_chapter_activities (
 
 **Superseded shape landed 2026-04-24 via [PLAN-001-brreg-enheter](../completed/PLAN-001-brreg-enheter.md).** What this investigation originally proposed — an NF-specific `raw.brreg_folkehjelp_units` table — shipped instead as a shared cross-NGO `raw.brreg_enheter` table. Same API source (Brreg Enhetsregister via `data.brreg.no`); same JSON-API-not-scrape classification (§C.5 scraper column conventions don't apply); but one table serves every NGO, discriminated by `navn` prefix (`navn ILIKE 'Norsk Folkehjelp%'` for NF's rows).
 
-Final shipped shape in [`atlas-data-repo/migrations/025_raw_brreg_enheter.sql`](../../../../atlas-data-repo/migrations/025_raw_brreg_enheter.sql):
+Final shipped shape in [`atlas-data/migrations/025_raw_brreg_enheter.sql`](../../../../atlas-data/migrations/025_raw_brreg_enheter.sql):
 
 ```sql
 CREATE TABLE raw.brreg_enheter (
@@ -531,8 +531,8 @@ Each PLAN ends with `dbt run && dbt test` per the always-run-tests rule in [`pro
 - `marts.supply__folkehjelp_chapters`, `marts.supply__folkehjelp_chapter_activities`, `marts.supply__folkehjelp_chapter_kommune_coverage` (PLAN-002)
 
 **New ingest folders:**
-- `atlas-data-repo/ingest/src/sources/folkehjelp-chapters/` — PLAN-002; new scraper with `__tests__/fixtures/`.
-- ~~`atlas-data-repo/ingest/src/seed-sources/brreg-folkehjelp-units/`~~ — **not created**; PLAN-001 shipped the generic `src/seed-sources/brreg-enheter/` instead, driven by `landscape.json`.
+- `atlas-data/ingest/src/sources/folkehjelp-chapters/` — PLAN-002; new scraper with `__tests__/fixtures/`.
+- ~~`atlas-data/ingest/src/seed-sources/brreg-folkehjelp-units/`~~ — **not created**; PLAN-001 shipped the generic `src/seed-sources/brreg-enheter/` instead, driven by `landscape.json`.
 
 ---
 

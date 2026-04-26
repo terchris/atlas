@@ -4,7 +4,7 @@ Welcome. This documentation is for people **using** the Atlas data platform — 
 
 If you're trying to figure out **what Atlas is as a product**, start at the repo's [README](https://github.com/terchris/atlas) and the [About Atlas](./about/what-is-atlas.md) page.
 
-If you're trying to **build or operate the data pipeline**, see [`atlas-data-repo/`](https://github.com/terchris/atlas/tree/main/atlas-data-repo) and [`docs/ai-developer/`](https://github.com/terchris/atlas/tree/main/docs/ai-developer).
+If you're trying to **build or operate the data pipeline**, see [`atlas-data/`](https://github.com/terchris/atlas/tree/main/atlas-data) and [`docs/ai-developer/`](https://github.com/terchris/atlas/tree/main/docs/ai-developer).
 
 This documentation is for everyone else.
 
@@ -41,7 +41,7 @@ This folder is **early**. The `marts.*` schema is production-shape with 19 inges
 
 What's planned (and why it isn't here yet): see [`docs/ai-developer/plans/backlog/INVESTIGATE-semantic-foundation-before-expansion.md`](https://github.com/terchris/atlas/blob/main/docs/ai-developer/plans/backlog/INVESTIGATE-semantic-foundation-before-expansion.md) and [`docs/ideas/semantic-data-platform-discussion.md`](https://github.com/terchris/atlas/blob/main/docs/ideas/semantic-data-platform-discussion.md).
 
-If a page you need doesn't exist, the data probably does — open an issue or check the dbt model's `schema.yml` description in [`atlas-data-repo/dbt/models/`](https://github.com/terchris/atlas/tree/main/atlas-data-repo/dbt/models).
+If a page you need doesn't exist, the data probably does — open an issue or check the dbt model's `schema.yml` description in [`atlas-data/dbt/models/`](https://github.com/terchris/atlas/tree/main/atlas-data/dbt/models).
 
 ## Conventions
 

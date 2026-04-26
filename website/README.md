@@ -16,7 +16,7 @@ It's deliberately **separate from**:
 
 - [`docs/research/`](../docs/research/) — research notes (audience: the team thinking about the model)
 - [`docs/ai-developer/`](../docs/ai-developer/) — implementation plans (audience: the team building the codebase) — *planned to move into `website/docs/ai-developer/` in a future PR, matching UIS convention*
-- [`atlas-data-repo/`](../atlas-data-repo/) — operational docs for people running the data pipeline
+- [`atlas-data/`](../atlas-data/) — operational docs for people running the data pipeline
 
 ## Why Docusaurus-shaped
 
@@ -98,7 +98,7 @@ The `concepts/`, `measurements/`, and `sources/` shape mirrors the structured-YA
    Skip the frontmatter entirely if the page's `# Heading` and folder position are sufficient — that's the common pattern in the sister sites.
 
 3. Use markdown links to other pages with **relative paths** (e.g. `[reading a row](./getting-started/reading-a-row.md)`) — Docusaurus rewrites these correctly when it renders.
-4. Use markdown links to repo files outside `website/` with **paths from this folder** (e.g. `[fact_kommune_indicators.sql](../atlas-data-repo/dbt/models/marts/fact_kommune_indicators.sql)`) — works in GitHub today; will need adjustment when Docusaurus is installed.
+4. Use markdown links to repo files outside `website/` with **paths from this folder** (e.g. `[fact_kommune_indicators.sql](../atlas-data/dbt/models/marts/fact_kommune_indicators.sql)`) — works in GitHub today; will need adjustment when Docusaurus is installed.
 
 ## When does Docusaurus get installed?
 

@@ -40,20 +40,20 @@ Walk the 9 indicator models with new columns and pin their values.
 
 ### Tasks
 
-- [ ] 1.1 [`indicators__ssb_06083`](../../../../atlas-data-repo/dbt/models/indicators/indicators__ssb_06083.sql) — `family_type` relationships to `ref_ssb_family_type.code`. `family_type_label_no` + `_label_en` `not_null`.
-- [ ] 1.2 [`indicators__ssb_06944`](../../../../atlas-data-repo/dbt/models/indicators/indicators__ssb_06944.sql) — `household_type` relationships to `ref_ssb_household_type`. Label columns `not_null`.
-- [ ] 1.3 [`indicators__ssb_07459`](../../../../atlas-data-repo/dbt/models/indicators/indicators__ssb_07459.sql) — `sex` accepted_values `['male','female','all']` (no seed for sex). `age_int` accepted_range 0–110 (nullable). `age_min` accepted_range 0–110.
-- [ ] 1.4 [`indicators__ssb_09429`](../../../../atlas-data-repo/dbt/models/indicators/indicators__ssb_09429.sql) — `education_level` relationships to `ref_ssb_nivaa`. `education_level_label_no/_en` `not_null`. Verify `sex` accepted_values is already present (added in PLAN-002 schema.yml? if not, add).
-- [ ] 1.5 [`indicators__ssb_12944`](../../../../atlas-data-repo/dbt/models/indicators/indicators__ssb_12944.sql) — `period_start_year`/`period_end_year` accepted_range 2000–2050 (nullable for `999A`-style rows). `age_group_min`/`age_group_max` accepted_range 0–120 (nullable).
-- [ ] 1.6 [`indicators__fhi_bor_alene`](../../../../atlas-data-repo/dbt/models/indicators/indicators__fhi_bor_alene.sql) — `period_*_year` and `age_group_min`/`age_group_max` accepted_range as above.
-- [ ] 1.7 [`indicators__fhi_mobbing`](../../../../atlas-data-repo/dbt/models/indicators/indicators__fhi_mobbing.sql) — `sex` accepted_values; `period_*_year` accepted_range.
-- [ ] 1.8 [`indicators__fhi_trangbodd`](../../../../atlas-data-repo/dbt/models/indicators/indicators__fhi_trangbodd.sql) — `parents_education` relationships to `ref_fhi_utdann`. `parents_education_label_no` `not_null`. `period_*_year` and `age_group_*` accepted_range.
-- [ ] 1.9 [`indicators__fhi_vgs_gjennomforing`](../../../../atlas-data-repo/dbt/models/indicators/indicators__fhi_vgs_gjennomforing.sql) — `sex` accepted_values; `parents_education` relationships + label `not_null`; `immigration_category` relationships to `ref_fhi_innvkat` + label `not_null`; `period_*_year` accepted_range.
+- [ ] 1.1 [`indicators__ssb_06083`](../../../../atlas-data/dbt/models/indicators/indicators__ssb_06083.sql) — `family_type` relationships to `ref_ssb_family_type.code`. `family_type_label_no` + `_label_en` `not_null`.
+- [ ] 1.2 [`indicators__ssb_06944`](../../../../atlas-data/dbt/models/indicators/indicators__ssb_06944.sql) — `household_type` relationships to `ref_ssb_household_type`. Label columns `not_null`.
+- [ ] 1.3 [`indicators__ssb_07459`](../../../../atlas-data/dbt/models/indicators/indicators__ssb_07459.sql) — `sex` accepted_values `['male','female','all']` (no seed for sex). `age_int` accepted_range 0–110 (nullable). `age_min` accepted_range 0–110.
+- [ ] 1.4 [`indicators__ssb_09429`](../../../../atlas-data/dbt/models/indicators/indicators__ssb_09429.sql) — `education_level` relationships to `ref_ssb_nivaa`. `education_level_label_no/_en` `not_null`. Verify `sex` accepted_values is already present (added in PLAN-002 schema.yml? if not, add).
+- [ ] 1.5 [`indicators__ssb_12944`](../../../../atlas-data/dbt/models/indicators/indicators__ssb_12944.sql) — `period_start_year`/`period_end_year` accepted_range 2000–2050 (nullable for `999A`-style rows). `age_group_min`/`age_group_max` accepted_range 0–120 (nullable).
+- [ ] 1.6 [`indicators__fhi_bor_alene`](../../../../atlas-data/dbt/models/indicators/indicators__fhi_bor_alene.sql) — `period_*_year` and `age_group_min`/`age_group_max` accepted_range as above.
+- [ ] 1.7 [`indicators__fhi_mobbing`](../../../../atlas-data/dbt/models/indicators/indicators__fhi_mobbing.sql) — `sex` accepted_values; `period_*_year` accepted_range.
+- [ ] 1.8 [`indicators__fhi_trangbodd`](../../../../atlas-data/dbt/models/indicators/indicators__fhi_trangbodd.sql) — `parents_education` relationships to `ref_fhi_utdann`. `parents_education_label_no` `not_null`. `period_*_year` and `age_group_*` accepted_range.
+- [ ] 1.9 [`indicators__fhi_vgs_gjennomforing`](../../../../atlas-data/dbt/models/indicators/indicators__fhi_vgs_gjennomforing.sql) — `sex` accepted_values; `parents_education` relationships + label `not_null`; `immigration_category` relationships to `ref_fhi_innvkat` + label `not_null`; `period_*_year` accepted_range.
 
 ### Validation
 
 ```bash
-cd atlas-data-repo/dbt
+cd atlas-data/dbt
 uv run --env-file ../ingest/.env dbt test --select indicators
 ```
 
@@ -67,12 +67,12 @@ Add a `schema.yml` entry per `ref_*` seed with the exact `accepted_values` and p
 
 ### Tasks
 
-- [ ] 2.1 Create [`atlas-data-repo/dbt/seeds/schema.yml`](../../../../atlas-data-repo/dbt/seeds/) with one `seed:` entry per CSV. For each: `code` `not_null` + `unique`; `label_no` `not_null`; `label_en` no test (blank for FHI); `sort_order` `not_null` + `unique` + `accepted_range: 1..N` (where N is the row count of that seed). The seed CSVs themselves are the canonical code list — no `accepted_values` echo needed.
+- [ ] 2.1 Create [`atlas-data/dbt/seeds/schema.yml`](../../../../atlas-data/dbt/seeds/) with one `seed:` entry per CSV. For each: `code` `not_null` + `unique`; `label_no` `not_null`; `label_en` no test (blank for FHI); `sort_order` `not_null` + `unique` + `accepted_range: 1..N` (where N is the row count of that seed). The seed CSVs themselves are the canonical code list — no `accepted_values` echo needed.
 
 ### Validation
 
 ```bash
-cd atlas-data-repo/dbt
+cd atlas-data/dbt
 uv run --env-file ../ingest/.env dbt test --select source:atlas seeds.*
 # Or simply:
 uv run --env-file ../ingest/.env dbt test
@@ -143,7 +143,7 @@ User reviews [`docs/stack/naming-conventions.md`](../../../stack/naming-conventi
 ### Validation
 
 ```bash
-cd atlas-data-repo/dbt
+cd atlas-data/dbt
 uv run --env-file ../ingest/.env dbt build --full-refresh
 ```
 
@@ -176,8 +176,8 @@ User confirms the suite is green.
 ## Files to Modify
 
 Edit:
-- `atlas-data-repo/dbt/models/indicators/schema.yml` — add tests on the 9 touched models
+- `atlas-data/dbt/models/indicators/schema.yml` — add tests on the 9 touched models
 - `docs/stack/naming-conventions.md` — vocabulary expansion + forbidden list
 
 New:
-- `atlas-data-repo/dbt/seeds/schema.yml` — one `seed:` entry per ref_*
+- `atlas-data/dbt/seeds/schema.yml` — one `seed:` entry per ref_*

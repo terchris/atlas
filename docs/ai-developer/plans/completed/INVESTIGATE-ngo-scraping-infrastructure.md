@@ -140,7 +140,7 @@ Cost to ask: an email. Cost to scrape: 8–10h of engineering + ongoing template
 | **Playwright alone** | overkill | Full browser. Heavy. Slow. Use only when JS is required to render content. |
 | **Firecrawl / jina.ai Reader** | unnecessary | AI-flavoured services that return clean markdown. Adds external dependency / cost; no benefit for fixed CMS templates. |
 
-Adds one dependency to `atlas-data-repo/ingest/package.json` (`crawlee`). Used by every NGO scrape from Folkehjelp onward.
+Adds one dependency to `atlas-data/ingest/package.json` (`crawlee`). Used by every NGO scrape from Folkehjelp onward.
 
 ### B.2 Two-stage pipeline — **[Q4]** scrape (cache) → ingest (parse + DB)
 
@@ -164,7 +164,7 @@ For most v1 sources, Stage 1 + Stage 2 run as a single npm script (`npm run inge
 
 ### B.3 Per-source folder convention
 
-Every scrape source follows the same structure under `atlas-data-repo/ingest/src/sources/<source-slug>/`:
+Every scrape source follows the same structure under `atlas-data/ingest/src/sources/<source-slug>/`:
 
 ```
 sources/<slug>/
@@ -185,7 +185,7 @@ sources/<slug>/
 - **`overrides.json`** holds source-specific name-to-orgnr or slug-to-kommune overrides; loaded by `parse.ts` or by the upsert stage depending on where the override applies.
 - **`types.ts`** holds TypeScript type definitions for the source's record shape. Imported by `parse.ts`, `index.ts`, and `__tests__/`.
 
-The npm script naming follows the existing convention: `npm run ingest:<slug>`. Migrations live under `atlas-data-repo/migrations/` with a three-digit sequence prefix:
+The npm script naming follows the existing convention: `npm run ingest:<slug>`. Migrations live under `atlas-data/migrations/` with a three-digit sequence prefix:
 
 - **Per-source tables** use the source slug: `NNN_raw_<source_slug>.sql` (e.g., `NNN_raw_folkehjelp_chapters.sql`).
 - **Shared infrastructure tables** use the table name: `NNN_raw_ingest_runs.sql`, `NNN_raw_sitemap_log.sql`.
@@ -201,9 +201,9 @@ The numbering is repository-wide sequential (see existing `002_raw_ssb_08764.sql
 Crawlee's `KeyValueStore` writes under the path in `CRAWLEE_STORAGE_DIR`. That one env var is the only knob the ingest code needs; dev and prod just point it at different locations.
 
 **Dev (laptop / devcontainer):**
-- `CRAWLEE_STORAGE_DIR=atlas-data-repo/ingest/.crawlee-cache/` — repo-local, gitignored.
+- `CRAWLEE_STORAGE_DIR=atlas-data/ingest/.crawlee-cache/` — repo-local, gitignored.
 - Survives across runs, so re-parses don't refetch while iterating on selectors.
-- `.gitignore` entry (added once in `atlas-data-repo/ingest/.gitignore`):
+- `.gitignore` entry (added once in `atlas-data/ingest/.gitignore`):
   ```
   .crawlee-cache/
   ```
@@ -328,7 +328,7 @@ Canonical body for `html_raw_hash` = strip `<head>`, strip per-render nonces and
 
 ### C.5 Mandatory columns for scraper raw tables — **[Q20]**
 
-**Scope.** This applies to raw tables produced by the scraping infrastructure defined in this investigation. Non-scraper raw tables — SSB API, FHI, Brreg, and other file- or API-sourced ingests — follow their own conventions per [`atlas-data-repo/CONTRIBUTING.md`](../../../../atlas-data-repo/CONTRIBUTING.md) and are **not** subject to this column set.
+**Scope.** This applies to raw tables produced by the scraping infrastructure defined in this investigation. Non-scraper raw tables — SSB API, FHI, Brreg, and other file- or API-sourced ingests — follow their own conventions per [`atlas-data/CONTRIBUTING.md`](../../../../atlas-data/CONTRIBUTING.md) and are **not** subject to this column set.
 
 Every scraper `raw.<source>_*` table representing a top-level scraped entity (chapter, branch, standalone activity record, etc.) must include the following columns. This consolidates the conventions introduced across §C and §E.1:
 
@@ -338,7 +338,7 @@ Every scraper `raw.<source>_*` table representing a top-level scraped entity (ch
 | `record_hash` | `TEXT NOT NULL` | Skip signal — sha256 of canonical JSON of the extracted record (§C.3). 64 hex chars. |
 | `html_raw_hash` | `TEXT` (nullable) | Audit-only hash for template-drift forensics (§C.3.1). Nullable because audit signals aren't load-bearing. |
 | `is_active` | `BOOLEAN NOT NULL DEFAULT true` | Set `false` on fetch-time 404 or sitemap orphan (§E.1). Preserves history instead of deleting. |
-| `loaded_at` | `TIMESTAMPTZ NOT NULL DEFAULT now()` | Ingest timestamp per project convention — see [`atlas-data-repo/CONTRIBUTING.md`](../../../../atlas-data-repo/CONTRIBUTING.md). |
+| `loaded_at` | `TIMESTAMPTZ NOT NULL DEFAULT now()` | Ingest timestamp per project convention — see [`atlas-data/CONTRIBUTING.md`](../../../../atlas-data/CONTRIBUTING.md). |
 
 `url` must be **unique** within each scraper raw table — either declare `UNIQUE(url)` or use `url` as the primary key. The orphan-detection and fetch-skip joins against `raw.sitemap_log` (§C.2) require one-to-one URL correspondence; duplicate `url` values would make these queries ambiguous.
 
@@ -494,12 +494,12 @@ Any condition that would otherwise be silent is upgraded to a log line with stru
 
 ## Section F — Environment variables
 
-The ingest job reads three environment variables. All three are documented here, in the K8s manifest for the ingest job, and in `atlas-data-repo/ingest/README.md`.
+The ingest job reads three environment variables. All three are documented here, in the K8s manifest for the ingest job, and in `atlas-data/ingest/README.md`.
 
 | Variable | Purpose | Dev default | Prod default | Required? |
 |---|---|---|---|---|
 | `ATLAS_SCRAPE_CONTACT_EMAIL` | Contact email embedded in UA string (§D.1). | `terje@helpers.no` | `terje@helpers.no` | **Yes — hard failure at startup if unset.** Anonymous scrapes breach §D.1. |
-| `CRAWLEE_STORAGE_DIR` | Crawlee KeyValueStore path (§C.1). | `atlas-data-repo/ingest/.crawlee-cache/` | `/tmp/crawlee-cache/` (or `emptyDir` mount) | No — Crawlee default (`./storage`) works; explicit value preferred. |
+| `CRAWLEE_STORAGE_DIR` | Crawlee KeyValueStore path (§C.1). | `atlas-data/ingest/.crawlee-cache/` | `/tmp/crawlee-cache/` (or `emptyDir` mount) | No — Crawlee default (`./storage`) works; explicit value preferred. |
 | `CRAWLEE_LOG_LEVEL` | Crawlee logger verbosity ([Q15]). | `INFO` | `WARNING` | No — Crawlee default (`INFO`) works. |
 
 Notes:
@@ -516,7 +516,7 @@ If the list grows past ~5 variables (e.g., per-source rate-limit overrides becom
 
 ### G.1 Runner and approach
 
-**Vitest** is the test runner for `atlas-data-repo/ingest/` — matches the `software-scrape` precedent, fast TS-native, Jest-compatible API. Two test surfaces: pure unit tests for the shared scraping lib, golden-file tests per source.
+**Vitest** is the test runner for `atlas-data/ingest/` — matches the `software-scrape` precedent, fast TS-native, Jest-compatible API. Two test surfaces: pure unit tests for the shared scraping lib, golden-file tests per source.
 
 ### G.2 Shared lib tests
 
@@ -567,7 +567,7 @@ Tests run on every PR via the repo's existing CI. Failing tests block merge. No 
 2. ~~**[Q2]**~~ Outreach is non-blocking; scrape ships regardless. Codified.
 3. ~~**[Q3]**~~ Crawlee + CheerioCrawler (Playwright fallback per-source).
 4. ~~**[Q4]**~~ Two-stage pipeline (scrape → cache → parse → DB).
-5. ~~**[Q5]**~~ Crawlee `KeyValueStore` on local FS, `atlas-data-repo/ingest/.crawlee-cache/`, gitignored.
+5. ~~**[Q5]**~~ Crawlee `KeyValueStore` on local FS, `atlas-data/ingest/.crawlee-cache/`, gitignored.
 6. ~~**[Q6]**~~ Sitemap `lastmod` skip at the discover layer.
 7. ~~**[Q7]**~~ `html_raw_hash` (sha256 of canonical body) skip at the parse layer. **Partially superseded by [Q18]** — body hash demoted to audit-only; `record_hash` is now the skip signal.
 8. ~~**[Q8]**~~ User-Agent: `Atlas/0.1 (https://github.com/terchris/atlas; <contact>)`. **See [Q13]** — `<contact>` is read from `ATLAS_SCRAPE_CONTACT_EMAIL` at startup, not hard-coded.
@@ -576,11 +576,11 @@ Tests run on every PR via the repo's existing CI. Failing tests block merge. No 
 11. ~~**[Q11]**~~ Discovery failure: hard fail.
 12. ~~**[Q12]**~~ `raw.ingest_runs` ships as part of the infra PLAN.
 13. ~~**[Q16]**~~ Target scale capped at ~15 NGOs (10 Tier A + up to 5). Rules out LLM runtime extraction, LLM fallback, CMS-cluster scrapers, Brreg-only tail, and a central activity-label mapping table. Decided 2026-04-24.
-14. ~~**[Q17]**~~ Scrape cache location is controlled by `CRAWLEE_STORAGE_DIR`. Dev points it at `atlas-data-repo/ingest/.crawlee-cache/` (repo-local, gitignored). Prod points it at an ephemeral in-pod path (`/tmp/crawlee-cache/` or an `emptyDir` volume). Change detection survives via DB columns (`record_hash`, sitemap-log), not the cache. Postgres-backed `raw.html_archive` is the documented upgrade path if audit/stage-split needs emerge. No PVC, no object storage added for v1. Decided 2026-04-24.
+14. ~~**[Q17]**~~ Scrape cache location is controlled by `CRAWLEE_STORAGE_DIR`. Dev points it at `atlas-data/ingest/.crawlee-cache/` (repo-local, gitignored). Prod points it at an ephemeral in-pod path (`/tmp/crawlee-cache/` or an `emptyDir` volume). Change detection survives via DB columns (`record_hash`, sitemap-log), not the cache. Postgres-backed `raw.html_archive` is the documented upgrade path if audit/stage-split needs emerge. No PVC, no object storage added for v1. Decided 2026-04-24.
 15. ~~**[Q18]**~~ Skip signal is `record_hash` (sha256 of canonical JSON of the extracted record), computed post-parse, gating DB upsert. `html_raw_hash` (sha256 of canonical HTML body) is kept on the raw row as an audit-only artifact for template-drift forensics (see §C.3.1). Hashing the HTML alone produced false positives from cosmetic drift (rendered dates, cache-busters, counters). Decided 2026-04-24.
 16. ~~**[Q13]**~~ UA contact email is read from env var `ATLAS_SCRAPE_CONTACT_EMAIL`. Default project value is `terje@helpers.no`. Missing env var is a hard failure at startup — no anonymous scrapes. Decided 2026-04-24.
 17. ~~**[Q14]**~~ `mart_ingest_health` ships with PLAN-001 as a minimal 3-column view (`source_slug, last_run_at, last_status`). Gives `raw.ingest_runs` a first consumer from day one; operator (Terje) reads it directly when something breaks. Additional columns (failure counts, drift counters, 30-day trend) added on demand when a real dashboard or alerting consumer emerges. Decided 2026-04-24.
-18. ~~**[Q15]**~~ Crawlee log level is controlled by the native `CRAWLEE_LOG_LEVEL` env var. Dev default: `INFO` (high-level progress per page, no request/response dumping). Prod default: `WARNING` (only unexpected events). Override to `DEBUG` ad-hoc when investigating a specific scraper — documented as a troubleshooting knob in `atlas-data-repo/ingest/README.md`, not a normal-operation setting. Decided 2026-04-24.
+18. ~~**[Q15]**~~ Crawlee log level is controlled by the native `CRAWLEE_LOG_LEVEL` env var. Dev default: `INFO` (high-level progress per page, no request/response dumping). Prod default: `WARNING` (only unexpected events). Override to `DEBUG` ad-hoc when investigating a specific scraper — documented as a troubleshooting knob in `atlas-data/ingest/README.md`, not a normal-operation setting. Decided 2026-04-24.
 19. ~~**[Q19]**~~ Sitemap state lives in a **shared** `raw.sitemap_log` table (one row per `(source_slug, url)` across all sources), not per-source. Enables cross-source orphan reporting and avoids per-source migrations. See §C.2 for schema and §E.1 for orphan-propagation rules. Decided 2026-04-24.
 20. ~~**[Q20]**~~ Mandatory columns on every scraper parent-entity `raw.<source>_*` table: `url`, `record_hash`, `html_raw_hash` (nullable), `is_active`, `loaded_at`. Consolidated from §C.2/§C.3/§C.3.1/§E.1 into §C.5. Child tables (activities, sub-locations) do not carry these columns — they're owned by the parent and delete-and-reinserted when the parent's `record_hash` changes. A dbt schema test asserts presence on every scraper raw source. Decided 2026-04-24.
 21. ~~**[Q21]**~~ Canonical JSON serialization for `record_hash` uses [`fast-json-stable-stringify`](https://www.npmjs.com/package/fast-json-stable-stringify) (npm dep). All string values entering the record object must be UTF-8 NFC-normalized (`str.normalize('NFC')`) at the parser boundary — cheerio may return NFD composition forms for Norwegian characters, which would silently flip the hash. Decided 2026-04-24.
@@ -605,7 +605,7 @@ None remaining — all resolved as of 2026-04-24. Open Questions may reappear he
   - Shared module `ingest/src/lib/scraping/` with: env-driven UA builder (hard-fails on missing `ATLAS_SCRAPE_CONTACT_EMAIL`), rate-limit config, `robots.txt` verifier (re-checked every run per §D.4), KeyValueStore wrapper, `record_hash` helper, `html_raw_hash` helper, `sitemap_log` reader/writer (discover + orphan detection), `ingest_runs` writer.
   - Add `.crawlee-cache/` to `ingest/.gitignore`.
   - Add the 3-column `mart_ingest_health` view to dbt (§E.3).
-  - Documentation: `atlas-data-repo/ingest/src/sources/README.md` documents the per-source folder convention; `atlas-data-repo/ingest/README.md` lists the three env vars from §F.
+  - Documentation: `atlas-data/ingest/src/sources/README.md` documents the per-source folder convention; `atlas-data/ingest/README.md` lists the three env vars from §F.
 
 This PLAN is a prerequisite for [`INVESTIGATE-folkehjelp-supply.md`](./INVESTIGATE-folkehjelp-supply.md)'s scrape PLAN.
 
@@ -614,8 +614,8 @@ This PLAN is a prerequisite for [`INVESTIGATE-folkehjelp-supply.md`](./INVESTIGA
 ## Files this investigation will produce
 
 **New shared code:**
-- `atlas-data-repo/ingest/src/lib/scraping/` — env-driven UA builder, rate-limit config, `robots.txt` verifier, KeyValueStore wrapper, `record_hash` + `html_raw_hash` helpers (using `fast-json-stable-stringify`), `sitemap_log` reader/writer (discover + orphan detection), `ingest_runs` writer (with concurrent-run lock per §E.3.1), generic `upsertRecord()` helper.
-- `atlas-data-repo/ingest/src/lib/scraping/__tests__/` — unit and integration tests per §G.2.
+- `atlas-data/ingest/src/lib/scraping/` — env-driven UA builder, rate-limit config, `robots.txt` verifier, KeyValueStore wrapper, `record_hash` + `html_raw_hash` helpers (using `fast-json-stable-stringify`), `sitemap_log` reader/writer (discover + orphan detection), `ingest_runs` writer (with concurrent-run lock per §E.3.1), generic `upsertRecord()` helper.
+- `atlas-data/ingest/src/lib/scraping/__tests__/` — unit and integration tests per §G.2.
 
 **New tables:**
 - `raw.ingest_runs` (§E.3)
@@ -625,10 +625,10 @@ This PLAN is a prerequisite for [`INVESTIGATE-folkehjelp-supply.md`](./INVESTIGA
 - `mart_ingest_health` (small view; surfaces in `docs/stack/erd.md` once built)
 
 **New cache location (gitignored):**
-- `atlas-data-repo/ingest/.crawlee-cache/`
+- `atlas-data/ingest/.crawlee-cache/`
 
 **Documentation:**
-- `atlas-data-repo/ingest/src/sources/README.md` — per-source folder convention.
+- `atlas-data/ingest/src/sources/README.md` — per-source folder convention.
 - Extend [`docs/stack/naming-conventions.md`](../../../stack/naming-conventions.md) with: `source_slug`, `record_hash`, `html_raw_hash`, `url` (raw-table convention per §C.2), `raw.ingest_runs`, `raw.sitemap_log`.
 
 ---

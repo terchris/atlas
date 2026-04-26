@@ -7,7 +7,7 @@ Continuing from [`semantic-data-platform.md`](semantic-data-platform.md). This f
 ## Context
 
 - Original proposal: [`semantic-data-platform.md`](semantic-data-platform.md) — argued Atlas needs a canonical semantic layer between raw sources and dbt.
-- Claude evaluation (in-conversation, 2026-04-25): walked the actual repo (`atlas-data-repo/dbt/models/`, `migrations/`, `ingest/src/sources/`, `docs/research/common-schema.md`) and concluded **~70–80% of the proposal is already implemented**, just not packaged as a first-class artifact. Key gap: no factored-out concept catalogue / external API contract / versioned model contracts.
+- Claude evaluation (in-conversation, 2026-04-25): walked the actual repo (`atlas-data/dbt/models/`, `migrations/`, `ingest/src/sources/`, `docs/research/common-schema.md`) and concluded **~70–80% of the proposal is already implemented**, just not packaged as a first-class artifact. Key gap: no factored-out concept catalogue / external API contract / versioned model contracts.
 - ChatGPT's reframing of that evaluation is captured below verbatim — it's the part we want to react to next.
 
 ---

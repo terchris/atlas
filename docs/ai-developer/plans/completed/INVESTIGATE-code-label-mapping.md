@@ -235,7 +235,7 @@ Estimated total effort: 3–4 hours of focused work.
 
 ## Files to Modify
 
-Atlas-side (in `atlas-data-repo/`):
+Atlas-side (in `atlas-data/`):
 
 - `dbt/seeds/ref_ssb_family_type.csv` *(new)*
 - `dbt/seeds/ref_ssb_household_type.csv` *(new)*

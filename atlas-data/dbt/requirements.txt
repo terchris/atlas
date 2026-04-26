@@ -1,0 +1,9 @@
+# dbt Core + Postgres adapter. Pinned to a minor version for reproducibility;
+# bump deliberately when we want newer features.
+dbt-core>=1.8.0,<1.9.0
+dbt-postgres>=1.8.0,<1.9.0
+
+# dbterd — generates the marts ERD from dbt artifacts. Reads relationships:
+# tests from schema.yml. See atlas-data/dbt/.dbterd.yml for the project
+# config and atlas-data/dbt/README.md for the regeneration command.
+dbterd>=1.25,<2

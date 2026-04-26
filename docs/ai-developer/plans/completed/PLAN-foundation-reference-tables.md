@@ -20,7 +20,7 @@
 
 ## Overview
 
-Four new lookup tables, all in `marts.*`, each loaded as a dbt seed (CSV in `atlas-data-repo/dbt/seeds/`). Plus a one-time migration of the existing 5 PLAN-001 seeds onto the same per-source architecture.
+Four new lookup tables, all in `marts.*`, each loaded as a dbt seed (CSV in `atlas-data/dbt/seeds/`). Plus a one-time migration of the existing 5 PLAN-001 seeds onto the same per-source architecture.
 
 | Table | Convention | Rows (est.) | Source | Refresh bucket | Refresh mechanism |
 |---|---|---:|---|---|---|
@@ -29,7 +29,7 @@ Four new lookup tables, all in `marts.*`, each loaded as a dbt seed (CSV in `atl
 | `dim_postnummer` | dim_* | ~5 000 | SSB Klass 488 | periodic (quarterly) | `npm run refresh:ssb-klass-postnummer` |
 | `crosswalk_kommune_name` | crosswalk_* | ~700 (canonical + alt + historical) | SSB Klass 131 (alt names) + post-2020 merger lookup | periodic (annual + at reforms) | `npm run refresh:ssb-klass-kommune-names` |
 
-Architecture: each refreshable seed lives in its own folder under [`atlas-data-repo/ingest/src/seed-sources/<id>/`](../../../../atlas-data-repo/ingest/src/), exporting `SOURCE_ID` and `run()`, mirroring the existing `src/sources/<id>/` pattern for source ingests. One `npm run refresh:<id>` command per source. Fits naturally into Dagster as one asset per source.
+Architecture: each refreshable seed lives in its own folder under [`atlas-data/ingest/src/seed-sources/<id>/`](../../../../atlas-data/ingest/src/), exporting `SOURCE_ID` and `run()`, mirroring the existing `src/sources/<id>/` pattern for source ingests. One `npm run refresh:<id>` command per source. Fits naturally into Dagster as one asset per source.
 
 Shared CSV/diff helpers extract to `src/lib/seed.ts` so each source script stays small.
 
@@ -41,7 +41,7 @@ The fifth (curated) bucket from the convention is exercised separately by `ref_a
 
 ### Tasks
 
-- [x] 1.1 Extracted shared helpers + provider patterns into [`atlas-data-repo/ingest/src/lib/seed.ts`](../../../../atlas-data-repo/ingest/src/lib/seed.ts): `csvField`, `rowsToCsv`, `parseCsvLine`, `readExistingCsv`, `diffSummary`, `buildRows`, `orderedCodes`, `runSeedSource` (specialised 4-col runner), plus reusable `fetchSsbDimension` and `fetchFhiDimension`. ✓
+- [x] 1.1 Extracted shared helpers + provider patterns into [`atlas-data/ingest/src/lib/seed.ts`](../../../../atlas-data/ingest/src/lib/seed.ts): `csvField`, `rowsToCsv`, `parseCsvLine`, `readExistingCsv`, `diffSummary`, `buildRows`, `orderedCodes`, `runSeedSource` (specialised 4-col runner), plus reusable `fetchSsbDimension` and `fetchFhiDimension`. ✓
 - [x] 1.2 Created the 5 seed-source folders under `src/seed-sources/`. Each `index.ts` exports `SOURCE_ID` and `run()` and is ~20 lines. ✓
 - [x] 1.3 Added 5 `refresh:<id>` npm scripts to `package.json`. ✓
 - [x] 1.4 Deleted `scripts/refresh-seeds.ts`; removed `refresh-seeds` npm script. ✓
@@ -52,7 +52,7 @@ The fifth (curated) bucket from the convention is exercised separately by `ref_a
 ### Validation
 
 ```bash
-cd atlas-data-repo/ingest
+cd atlas-data/ingest
 npm run refresh:ssb-family-type
 npm run refresh:ssb-household-type
 npm run refresh:ssb-nivaa
@@ -69,7 +69,7 @@ User confirms each command runs clean and the diff is empty.
 
 ### Tasks
 
-- [x] 2.1 Wrote [`atlas-data-repo/dbt/seeds/ref_un_sdg.csv`](../../../../atlas-data-repo/dbt/seeds/ref_un_sdg.csv). 17 rows; codes `'1'`–`'17'`; Norwegian + English titles from UN. **Caught a bug**: SDG 9 ("Industri, innovasjon og infrastruktur") and SDG 16 ("Fred, rettferdighet og velfungerende institusjoner") have commas in their Norwegian labels and needed CSV-quoting; fixed before any test ran. ✓
+- [x] 2.1 Wrote [`atlas-data/dbt/seeds/ref_un_sdg.csv`](../../../../atlas-data/dbt/seeds/ref_un_sdg.csv). 17 rows; codes `'1'`–`'17'`; Norwegian + English titles from UN. **Caught a bug**: SDG 9 ("Industri, innovasjon og infrastruktur") and SDG 16 ("Fred, rettferdighet og velfungerende institusjoner") have commas in their Norwegian labels and needed CSV-quoting; fixed before any test ran. ✓
 - [x] 2.2 Added schema.yml entry with `not_null + unique` on `code`, `not_null` on labels, `accepted_range 1..17` on `sort_order`. ✓
 - [x] 2.3 Updated `seeds/README.md` summary table with `ref_un_sdg` row (refresh = never; explain no seed-source folder). ✓
 - [x] 2.4 `dbt seed --select ref_un_sdg` loaded 17 rows clean. ✓
@@ -92,9 +92,9 @@ User confirms 17 rows render and labels read correctly in Norwegian.
 ### Tasks
 
 - [x] 3.1 Probed `data.brreg.no/frivillighetsregisteret/api/icnpo-kategorier`. Response shape: HAL-wrapped `_embedded.icnpoKategorier[]` with fields `icnpoNummer`, `navn`, `spraakkode` (always "NOB" — Norwegian only, label_en blank). 46 rows total. Hierarchy not in the response — derived from code length. ✓
-- [x] 3.2 **Required a refactor first**: the 4-col `runSeedSource` doesn't fit the 5-col ICNPO shape. Added `runSeedSourceGeneric` to `lib/seed.ts` taking `header[]` + `string[][]` rows. Existing 5 seed-sources unchanged; new ones use the generic runner. Then created [`src/seed-sources/brreg-icnpo/index.ts`](../../../../atlas-data-repo/ingest/src/seed-sources/brreg-icnpo/index.ts). ✓
+- [x] 3.2 **Required a refactor first**: the 4-col `runSeedSource` doesn't fit the 5-col ICNPO shape. Added `runSeedSourceGeneric` to `lib/seed.ts` taking `header[]` + `string[][]` rows. Existing 5 seed-sources unchanged; new ones use the generic runner. Then created [`src/seed-sources/brreg-icnpo/index.ts`](../../../../atlas-data/ingest/src/seed-sources/brreg-icnpo/index.ts). ✓
 - [x] 3.3 Added `refresh:brreg-icnpo` npm script. ✓
-- [x] 3.4 CSV at [`dbt/seeds/ref_brreg_icnpo.csv`](../../../../atlas-data-repo/dbt/seeds/ref_brreg_icnpo.csv) — 46 rows produced by the fetcher. Sort order: each main group followed by its subgroups in code order. ✓
+- [x] 3.4 CSV at [`dbt/seeds/ref_brreg_icnpo.csv`](../../../../atlas-data/dbt/seeds/ref_brreg_icnpo.csv) — 46 rows produced by the fetcher. Sort order: each main group followed by its subgroups in code order. ✓
 - [x] 3.5 Added schema.yml entry. The `parent_code` self-relationship test uses `config.where: "parent_code != ''"` to skip the empty parent on main groups. ✓
 - [x] 3.6 Updated `seeds/README.md` summary table with the ICNPO row. ✓
 - [x] 3.7 Ran `npm run refresh:brreg-icnpo`; output went to the empty target file (this was the first time we wrote it, so no diff to verify against — the PLAN's "byte-equivalence" check applies on subsequent refreshes). ✓
@@ -119,9 +119,9 @@ User confirms hierarchy is intact (subgroups reference their main group via `par
 ### Tasks
 
 - [x] 4.1 Probed SSB Klass 488 → wrong classification. Searched alternatives, confirmed Bring's public TXT as the canonical source. Documented the rationale inline in the seed-source `index.ts`. ✓
-- [x] 4.2 Created [`src/seed-sources/bring-postnummer/index.ts`](../../../../atlas-data-repo/ingest/src/seed-sources/bring-postnummer/index.ts). Fetches the .txt as Uint8Array, decodes Windows-1252 with `TextDecoder("windows-1252")`, splits TSV, validates each row (4-digit postnummer + 4-digit kommune_nr), sorts by postnummer, assigns sort_order. Drops Bring's kommune_navn column (dim_kommune is source of truth) and category column (out of scope). ✓
+- [x] 4.2 Created [`src/seed-sources/bring-postnummer/index.ts`](../../../../atlas-data/ingest/src/seed-sources/bring-postnummer/index.ts). Fetches the .txt as Uint8Array, decodes Windows-1252 with `TextDecoder("windows-1252")`, splits TSV, validates each row (4-digit postnummer + 4-digit kommune_nr), sorts by postnummer, assigns sort_order. Drops Bring's kommune_navn column (dim_kommune is source of truth) and category column (out of scope). ✓
 - [x] 4.3 Added `refresh:bring-postnummer` npm script. ✓
-- [x] 4.4 [`dim_postnummer.csv`](../../../../atlas-data-repo/dbt/seeds/dim_postnummer.csv) — 5 122 rows; leading zeros preserved (Oslo `'0150'`, etc.). ✓
+- [x] 4.4 [`dim_postnummer.csv`](../../../../atlas-data/dbt/seeds/dim_postnummer.csv) — 5 122 rows; leading zeros preserved (Oslo `'0150'`, etc.). ✓
 - [x] 4.5 schema.yml entry added. The `dbt_project.yml` `+column_types` was already extended in Phase 3 with `postnummer: text` so the leading-zero protection is in place. ✓
 - [x] 4.6 Updated `seeds/README.md` with the postnummer row. ✓
 - [x] 4.7 Spot-checks all correct: `0150 → 0301` (Oslo), `5020 → 4601` (Bergen), `7030 → 5001` (Trondheim), `9008 → 5501` (Tromsø). ✓
@@ -144,7 +144,7 @@ Resolves upstream free-text municipality names to canonical kommune_nr. Includes
 
 ### Tasks
 
-**Plan deviation #2 — derived model, not a seed.** Probed Klass 131: 358 active codes, 29 with bilingual "Norwegian - Sami" name pattern, no `shortName` populated. Then realised `dim_kommune` ALREADY contains everything we need: it carries 1 158 rows (358 active + 800 historical) and already splits the bilingual names into `kommune_name` + `kommune_name_alt`. So the crosswalk is a pure projection of `dim_kommune`, not a fresh fetch. **Made it a derived dbt model** at [`models/dimensions/crosswalk_kommune_name.sql`](../../../../atlas-data-repo/dbt/models/dimensions/crosswalk_kommune_name.sql), not a seed. Original tasks 5.3 (seed-source folder), 5.4 (npm script), 5.5 (CSV) become no-ops as a result.
+**Plan deviation #2 — derived model, not a seed.** Probed Klass 131: 358 active codes, 29 with bilingual "Norwegian - Sami" name pattern, no `shortName` populated. Then realised `dim_kommune` ALREADY contains everything we need: it carries 1 158 rows (358 active + 800 historical) and already splits the bilingual names into `kommune_name` + `kommune_name_alt`. So the crosswalk is a pure projection of `dim_kommune`, not a fresh fetch. **Made it a derived dbt model** at [`models/dimensions/crosswalk_kommune_name.sql`](../../../../atlas-data/dbt/models/dimensions/crosswalk_kommune_name.sql), not a seed. Original tasks 5.3 (seed-source folder), 5.4 (npm script), 5.5 (CSV) become no-ops as a result.
 
 ### Tasks
 
@@ -152,8 +152,8 @@ Resolves upstream free-text municipality names to canonical kommune_nr. Includes
 - [x] 5.2 Discovered `dim_kommune` already has all this — fetched directly from SSB Klass with full history (active + 800 historical rows), and the dim_kommune SQL already splits bilingual names into `kommune_name` + `kommune_name_alt`. No second fetch needed. ✓
 - [x] 5.3 — **No-op**: no seed-source folder; the crosswalk is derived. ✓
 - [x] 5.4 — **No-op**: no npm script. ✓
-- [x] 5.5 — **No-op**: no CSV; instead created [`models/dimensions/crosswalk_kommune_name.sql`](../../../../atlas-data-repo/dbt/models/dimensions/crosswalk_kommune_name.sql) — three-CTE union of dim_kommune (canonical for active, alternative for kommune_name_alt, historical for inactive). 1 187 rows. ✓
-- [x] 5.6 schema.yml entry added in [`models/dimensions/schema.yml`](../../../../atlas-data-repo/dbt/models/dimensions/schema.yml) (NOT seeds/schema.yml — it's a model now). Tests: `not_null` on all three cols; `accepted_values` on `name_kind`; `relationships` from `kommune_nr` to `dim_kommune.kommune_nr` (passes — dim_kommune carries both active + historical so all rows resolve); `unique_combination_of_columns(name, name_kind, kommune_nr)`. ✓
+- [x] 5.5 — **No-op**: no CSV; instead created [`models/dimensions/crosswalk_kommune_name.sql`](../../../../atlas-data/dbt/models/dimensions/crosswalk_kommune_name.sql) — three-CTE union of dim_kommune (canonical for active, alternative for kommune_name_alt, historical for inactive). 1 187 rows. ✓
+- [x] 5.6 schema.yml entry added in [`models/dimensions/schema.yml`](../../../../atlas-data/dbt/models/dimensions/schema.yml) (NOT seeds/schema.yml — it's a model now). Tests: `not_null` on all three cols; `accepted_values` on `name_kind`; `relationships` from `kommune_nr` to `dim_kommune.kommune_nr` (passes — dim_kommune carries both active + historical so all rows resolve); `unique_combination_of_columns(name, name_kind, kommune_nr)`. ✓
 - [x] 5.7 README touch not needed — no entry in seeds README since it's not a seed. ✓
 - [x] 5.8 Spot-checks: `Modum` → 3 rows (1 canonical 3316 + 2 historical from pre-reform codes 0623 and 3047 — legitimate ambiguity from kommune merger churn); `Os` → canonical 3430 (current Os in Innlandet); `Oslove` → alternative 0301 (Oslo's Sami name). Total breakdown: 358 canonical + 29 alternative + 800 historical = 1 187 rows. ✓
 - [x] **Limitation documented**: `historical` rows point to the OLD kommune_nr, not the modern merged-into successor. Consumers needing modern resolution take a follow-up step. v1 limitation; upgradeable later via SSB Klass `/changes` endpoint. ✓
@@ -187,7 +187,7 @@ Wire the new tables into the rest of the docs and tooling.
 ### Validation
 
 ```bash
-cd atlas-data-repo/dbt
+cd atlas-data/dbt
 uv run --env-file ../ingest/.env dbt build
 ./regenerate-erd.sh
 ```
@@ -238,32 +238,32 @@ A few smaller corrections worth noting:
 ## Files to Modify
 
 New seeds:
-- `atlas-data-repo/dbt/seeds/ref_un_sdg.csv`
-- `atlas-data-repo/dbt/seeds/ref_brreg_icnpo.csv`
-- `atlas-data-repo/dbt/seeds/dim_postnummer.csv`
-- `atlas-data-repo/dbt/seeds/crosswalk_kommune_name.csv`
+- `atlas-data/dbt/seeds/ref_un_sdg.csv`
+- `atlas-data/dbt/seeds/ref_brreg_icnpo.csv`
+- `atlas-data/dbt/seeds/dim_postnummer.csv`
+- `atlas-data/dbt/seeds/crosswalk_kommune_name.csv`
 
 New seed-source modules (each folder has `index.ts` + `README.md`):
-- `atlas-data-repo/ingest/src/seed-sources/ssb-family-type/` *(migrated from refresh-seeds.ts)*
-- `atlas-data-repo/ingest/src/seed-sources/ssb-household-type/` *(migrated)*
-- `atlas-data-repo/ingest/src/seed-sources/ssb-nivaa/` *(migrated)*
-- `atlas-data-repo/ingest/src/seed-sources/fhi-utdann/` *(migrated)*
-- `atlas-data-repo/ingest/src/seed-sources/fhi-innvkat/` *(migrated)*
-- `atlas-data-repo/ingest/src/seed-sources/brreg-icnpo/`
-- `atlas-data-repo/ingest/src/seed-sources/ssb-klass-postnummer/`
-- `atlas-data-repo/ingest/src/seed-sources/ssb-klass-kommune-names/`
+- `atlas-data/ingest/src/seed-sources/ssb-family-type/` *(migrated from refresh-seeds.ts)*
+- `atlas-data/ingest/src/seed-sources/ssb-household-type/` *(migrated)*
+- `atlas-data/ingest/src/seed-sources/ssb-nivaa/` *(migrated)*
+- `atlas-data/ingest/src/seed-sources/fhi-utdann/` *(migrated)*
+- `atlas-data/ingest/src/seed-sources/fhi-innvkat/` *(migrated)*
+- `atlas-data/ingest/src/seed-sources/brreg-icnpo/`
+- `atlas-data/ingest/src/seed-sources/ssb-klass-postnummer/`
+- `atlas-data/ingest/src/seed-sources/ssb-klass-kommune-names/`
 
 New shared library:
-- `atlas-data-repo/ingest/src/lib/seed.ts` — extracted CSV/diff helpers + `runSeedSource` runner
+- `atlas-data/ingest/src/lib/seed.ts` — extracted CSV/diff helpers + `runSeedSource` runner
 
 Delete:
-- `atlas-data-repo/ingest/scripts/refresh-seeds.ts`
+- `atlas-data/ingest/scripts/refresh-seeds.ts`
 
 Edit:
-- `atlas-data-repo/dbt/seeds/schema.yml` — add seed entries with tests for all four new seeds
-- `atlas-data-repo/dbt/seeds/README.md` — document the new seeds + per-source refresh commands
-- `atlas-data-repo/dbt/dbt_project.yml` — extend `+column_types` if needed (e.g. `postnummer: text`)
-- `atlas-data-repo/ingest/package.json` — replace `refresh-seeds` with 8 per-source `refresh:<id>` scripts
+- `atlas-data/dbt/seeds/schema.yml` — add seed entries with tests for all four new seeds
+- `atlas-data/dbt/seeds/README.md` — document the new seeds + per-source refresh commands
+- `atlas-data/dbt/dbt_project.yml` — extend `+column_types` if needed (e.g. `postnummer: text`)
+- `atlas-data/ingest/package.json` — replace `refresh-seeds` with 8 per-source `refresh:<id>` scripts
 - `docs/stack/naming-conventions.md` — add the new canonical fields
 - `docs/stack/erd.md` — auto-regenerated by `./regenerate-erd.sh` (no manual edit)
 
@@ -289,7 +289,7 @@ None remaining — proceed to implementation.
 - [`docs/ai-developer/plans/completed/INVESTIGATE-reference-tables-convention.md`](../completed/INVESTIGATE-reference-tables-convention.md) — the rationale.
 - [`docs/ai-developer/plans/backlog/INVESTIGATE-ngo-supply-data-model.md`](INVESTIGATE-ngo-supply-data-model.md) — the next consumer (PLAN-A will use three of these four tables).
 - [`docs/ai-developer/plans/completed/PLAN-001-code-label-seed-tables.md`](../completed/PLAN-001-code-label-seed-tables.md) — the seed pattern this plan follows.
-- [`atlas-data-repo/dbt/seeds/README.md`](../../../../atlas-data-repo/dbt/seeds/README.md) — where the new seeds get documented.
+- [`atlas-data/dbt/seeds/README.md`](../../../../atlas-data/dbt/seeds/README.md) — where the new seeds get documented.
 - [INVESTIGATE-tag-indicators-sdg-icnpo.md](INVESTIGATE-tag-indicators-sdg-icnpo.md) — follow-up investigation on tagging existing `fact_kommune_indicators` rows with SDG/ICNPO codes (depends on this plan).
 - [Brreg open data API documentation](https://data.brreg.no/enhetsregisteret/api/dokumentasjon/no/index.html) — source for ICNPO.
 - [SSB Klass](https://www.ssb.no/klass/) — source for postnummer (488) and kommune alt-names (131).

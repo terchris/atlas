@@ -31,13 +31,13 @@
 
 ### What's already locked (zero or near-zero rework risk)
 
-The 19 ingest sources and 17 indicator models in [`atlas-data-repo/dbt/models/`](../../../../atlas-data-repo/dbt/models/) demonstrate a stable, proven pattern. These canonical elements are consistent across every source:
+The 19 ingest sources and 17 indicator models in [`atlas-data/dbt/models/`](../../../../atlas-data/dbt/models/) demonstrate a stable, proven pattern. These canonical elements are consistent across every source:
 
 - **Canonical identifiers**: `kommune_nr` (4-digit, SSB Klass 131), `fylke_nr` (2-digit, SSB Klass 104), `orgnr` (Brreg 9-digit), `source_id` (e.g. `ssb-08764`, `fhi-mobbing`), `chapter_id` (NGO-namespaced slug), `activity_id` (NGO-namespaced slug).
-- **Source → indicator mapping pattern**: every `indicators__<source_id>` model in [models/indicators/](../../../../atlas-data-repo/dbt/models/indicators/) follows the same shape: extract `region_code` → `kommune_nr` / `fylke_nr` by regex, normalize sex via `decode_sex` macro, parse periods via `period_start_year` / `period_end_year`, materialize as `marts.indicators__*` table with FK tests against `dim_kommune` / `dim_fylke`.
-- **Cross-source union pattern**: [`fact_kommune_indicators`](../../../../atlas-data-repo/dbt/models/marts/fact_kommune_indicators.sql) UNION ALL of all kommune-resolved indicator passthroughs, joined to `dim_kommune` + `dim_fylke`.
-- **Reference vocabulary pattern**: `ref_*` seeds in [seeds/](../../../../atlas-data-repo/dbt/seeds/) decode upstream codes to labels (4 columns: `code`, `label_no`, `label_en`, `sort_order`).
-- **Repo boundary contract**: `atlas-data` writes `marts.*`, frontend reads via read-only role (documented in [atlas-data-repo/README.md:26-34](../../../../atlas-data-repo/README.md#L26-L34)).
+- **Source → indicator mapping pattern**: every `indicators__<source_id>` model in [models/indicators/](../../../../atlas-data/dbt/models/indicators/) follows the same shape: extract `region_code` → `kommune_nr` / `fylke_nr` by regex, normalize sex via `decode_sex` macro, parse periods via `period_start_year` / `period_end_year`, materialize as `marts.indicators__*` table with FK tests against `dim_kommune` / `dim_fylke`.
+- **Cross-source union pattern**: [`fact_kommune_indicators`](../../../../atlas-data/dbt/models/marts/fact_kommune_indicators.sql) UNION ALL of all kommune-resolved indicator passthroughs, joined to `dim_kommune` + `dim_fylke`.
+- **Reference vocabulary pattern**: `ref_*` seeds in [seeds/](../../../../atlas-data/dbt/seeds/) decode upstream codes to labels (4 columns: `code`, `label_no`, `label_en`, `sort_order`).
+- **Repo boundary contract**: `atlas-data` writes `marts.*`, frontend reads via read-only role (documented in [atlas-data/README.md:26-34](../../../../atlas-data/README.md#L26-L34)).
 
 Adding source #20 of the same shape (another SSB or FHI table) **does not** create rework risk — it slots into the existing patterns mechanically. The catalogue, when built, will auto-augment with these new sources.
 
@@ -45,8 +45,8 @@ Adding source #20 of the same shape (another SSB or FHI table) **does not** crea
 
 The supply side is much earlier and has actively-open semantic questions. These are baked into every new `supply__<ngo>_*` model added:
 
-- **Cross-NGO activity taxonomy** — the 22-row [`ref_atlas_service_category.csv`](../../../../atlas-data-repo/dbt/seeds/ref_atlas_service_category.csv) is the start, but [`common-schema.md:450`](../../../research/common-schema.md#L450) explicitly flags a deeper cross-org canonical taxonomy ("elderly_visiting_scheme" spanning RC Besøkstjeneste + N.K.S. Omsorgsberedskap + Nasjonalforeningen Aktivitetsvenn) as TBD. Each new NGO supply source adds another ~50 globalActivityName values that need mapping.
-- **`chapter_subtype` vocabulary** — [dim_chapter schema.yml:158-166](../../../../atlas-data-repo/dbt/models/dimensions/schema.yml#L158-L166) keeps it free-text in v1; promotion to `accepted_values` is gated on "3+ NGOs populate it consistently". The values that get added to v1 NGOs determine that vocabulary forever.
+- **Cross-NGO activity taxonomy** — the 22-row [`ref_atlas_service_category.csv`](../../../../atlas-data/dbt/seeds/ref_atlas_service_category.csv) is the start, but [`common-schema.md:450`](../../../research/common-schema.md#L450) explicitly flags a deeper cross-org canonical taxonomy ("elderly_visiting_scheme" spanning RC Besøkstjeneste + N.K.S. Omsorgsberedskap + Nasjonalforeningen Aktivitetsvenn) as TBD. Each new NGO supply source adds another ~50 globalActivityName values that need mapping.
+- **`chapter_subtype` vocabulary** — [dim_chapter schema.yml:158-166](../../../../atlas-data/dbt/models/dimensions/schema.yml#L158-L166) keeps it free-text in v1; promotion to `accepted_values` is gated on "3+ NGOs populate it consistently". The values that get added to v1 NGOs determine that vocabulary forever.
 - **Regional-without-orgnr modelling** — [`common-schema.md:458`](../../../research/common-schema.md#L458) flags Redd Barna's HQ-administered regions as not fitting the current `dim_chapter` shape. Adding more Tier C / hybrid orgs will surface more of these.
 - **`chapter_data_shape` enum coverage** — currently `api_canonical | cms_bins | programme_only | no_structure`. The next 5 NGOs may surface a fifth shape (e.g. "hybrid api+scrape", "kommune-list-only").
 - **SDG/ICNPO indicator tagging** — [INVESTIGATE-tag-indicators-sdg-icnpo.md](INVESTIGATE-tag-indicators-sdg-icnpo.md) is in backlog. Whatever approach wins (Option A through E in that file) will need to be retroactively applied to all 17 existing indicator models — fewer is cheaper.
@@ -57,8 +57,8 @@ The semantic content exists but is scattered:
 
 - **Entity definitions**: [`docs/research/common-schema.md`](../../../research/common-schema.md) (470 lines of prose entity model).
 - **Per-model column definitions**: dbt `schema.yml` files (~700 lines across `models/dimensions/`, `models/indicators/`, `models/marts/`, `models/supply/`).
-- **Reference vocabularies**: [`atlas-data-repo/dbt/seeds/README.md`](../../../../atlas-data-repo/dbt/seeds/README.md) + 10 CSV seeds.
-- **Source provenance**: per-source READMEs under [`atlas-data-repo/ingest/src/sources/<id>/README.md`](../../../../atlas-data-repo/ingest/src/sources/) + the catalogue at [`docs/research/data-sources.md`](../../../research/data-sources.md).
+- **Reference vocabularies**: [`atlas-data/dbt/seeds/README.md`](../../../../atlas-data/dbt/seeds/README.md) + 10 CSV seeds.
+- **Source provenance**: per-source READMEs under [`atlas-data/ingest/src/sources/<id>/README.md`](../../../../atlas-data/ingest/src/sources/) + the catalogue at [`docs/research/data-sources.md`](../../../research/data-sources.md).
 - **Architectural rationale**: the 18 `INVESTIGATE-*.md` and `PLAN-*.md` files in `plans/completed/`.
 
 A non-engineer (journalist, partnering NGO, future external developer matching the **Dev** persona in [personas.md](../../../research/personas.md)) currently has no single entry point to "what does Atlas mean by `kommune` / `chapter` / `activity` / `service_category`?".
@@ -208,7 +208,7 @@ After PLAN-A/B/C complete, the 3rd through Nth NGO supply sources can land knowi
 2. **[Q18]** Does this investigation conflict with or supersede [INVESTIGATE-tag-indicators-sdg-icnpo.md](INVESTIGATE-tag-indicators-sdg-icnpo.md), or does that one just become a sub-task of PLAN-B above?
 3. **[Q19]** Should PLAN-A include the public read API (OpenAPI + HTTP endpoints), or is that a separate downstream PLAN once at least one external consumer (e.g. Tilskuddsmatcher) materializes? The discussion file's "Lisa-first wedge" framing suggests Tilskuddsmatcher is plausibly the first external-shaped consumer, so the API may not be deferrable for long.
 4. **[Q20]** Naming — call the artifact "Concept Catalogue", "Semantic Registry", "Data Dictionary", or "Atlas Glossary"? Pick before building.
-5. **[Q21]** Where does the catalogue live in the repo — `docs/semantic/`, `atlas-data-repo/semantic/`, or a new top-level `semantic/`? Repo-boundary implications: if it includes auto-generated artifacts from `manifest.json`, it likely belongs in `atlas-data-repo/`; if it's primarily prose for external consumers, `docs/` makes more sense.
+5. **[Q21]** Where does the catalogue live in the repo — `docs/semantic/`, `atlas-data/semantic/`, or a new top-level `semantic/`? Repo-boundary implications: if it includes auto-generated artifacts from `manifest.json`, it likely belongs in `atlas-data/`; if it's primarily prose for external consumers, `docs/` makes more sense.
 6. **[Q22]** What does "more NGO supply source paused" mean operationally — block PRs, or just discourage in planning? PRs that add new NGOs would still be valuable as test cases for the catalogue; the question is whether they merge before PLAN-A/B/C finish.
 7. **[Q23]** Does the **Dev** persona ([personas.md](../../../research/personas.md) tertiary) actually exist in real form yet, or is this all speculative? If no real external developer is asking, does the YAGNI argument win for the API+contract layer (PLAN-C)?
 
@@ -254,5 +254,5 @@ From [`docs/research/goal.md`](../../../research/goal.md):
 - [`docs/research/personas.md`](../../../research/personas.md) — Dev / Ola / Signe / Lisa personas this serves.
 - [INVESTIGATE-tag-indicators-sdg-icnpo.md](INVESTIGATE-tag-indicators-sdg-icnpo.md) — the SDG/ICNPO tagging investigation that becomes a sub-task of PLAN-B (or stays separate per **[Q18]**).
 - [INVESTIGATE-multi-ngo-supply-model-extensions.md](INVESTIGATE-multi-ngo-supply-model-extensions.md) — the supply-side investigation that surfaced `chapter_subtype` and the cross-NGO activity questions.
-- [`atlas-data-repo/dbt/models/dimensions/schema.yml`](../../../../atlas-data-repo/dbt/models/dimensions/schema.yml) — the current `schema.yml` whose descriptions become the seed content for the catalogue's column-level metadata.
-- [`atlas-data-repo/dbt/seeds/README.md`](../../../../atlas-data-repo/dbt/seeds/README.md) — reference vocabulary documentation.
+- [`atlas-data/dbt/models/dimensions/schema.yml`](../../../../atlas-data/dbt/models/dimensions/schema.yml) — the current `schema.yml` whose descriptions become the seed content for the catalogue's column-level metadata.
+- [`atlas-data/dbt/seeds/README.md`](../../../../atlas-data/dbt/seeds/README.md) — reference vocabulary documentation.
