@@ -101,8 +101,6 @@ Plus tertiary: Magnus (active volunteer QC), Henrik (corporate partnerships), Å
 └── docs/
     ├── ideas/                               — proposals being chewed on, pre-INVESTIGATE
     └── research/
-        ├── api-getOrganizations-output-21apr26.json
-        │                                    — raw Red Cross Organizations API dump (reference dataset)
         ├── common-schema.md                 — formal data model
         ├── compare-ngos-spec.md             — Compare-NGOs page design spec
         ├── tilskuddsmatcher-data-availability.md

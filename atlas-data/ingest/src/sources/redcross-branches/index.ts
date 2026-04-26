@@ -2,7 +2,9 @@
  * Norges Røde Kors branches + activities — first NGO-supply ingest.
  *
  * Source for v1: static JSON dump at
- *   docs/research/api-getOrganizations-output-21apr26.json
+ *   atlas-private-data-repo/redcross/organisations/api-getOrganizations-output-21apr26.json
+ * (the file lives in atlas-private-data-repo/, gitignored, because it is
+ * Red Cross-specific organisational data — not appropriate for public docs.)
  * Live API polling (api.redcross.no/nrx/v1/organizations, requires
  * subscription key) is deferred to a separate workstream — see
  * INVESTIGATE-ngo-supply-data-model Q39.
@@ -26,10 +28,11 @@ export const SOURCE_ID = "redcross-branches";
 const BRANCHES_TABLE = "raw.redcross_branches";
 const ACTIVITIES_TABLE = "raw.redcross_branch_activities";
 
-// The dump lives in docs/research/. Resolved relative to this file.
+// The dump lives in atlas-private-data-repo/redcross/organisations/ (gitignored).
+// Resolved relative to this file.
 const DUMP_PATH = resolve(
   dirname(fileURLToPath(import.meta.url)),
-  "../../../../../docs/research/api-getOrganizations-output-21apr26.json",
+  "../../../../../atlas-private-data-repo/redcross/organisations/api-getOrganizations-output-21apr26.json",
 );
 
 const BRANCH_COLUMNS = [

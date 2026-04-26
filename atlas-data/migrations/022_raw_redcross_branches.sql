@@ -1,6 +1,6 @@
 -- raw.redcross_branches + raw.redcross_branch_activities
 -- First NGO-supply ingest — Red Cross Organizations API data.
--- Source for v1: static JSON dump at docs/research/api-getOrganizations-output-21apr26.json
+-- Source for v1: static JSON dump at atlas-private-data-repo/redcross/organisations/api-getOrganizations-output-21apr26.json (gitignored)
 -- Live-API polling deferred to a separate workstream (per INVESTIGATE-ngo-supply Q39).
 
 create table if not exists raw.redcross_branches (

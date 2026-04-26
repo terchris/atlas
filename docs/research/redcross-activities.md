@@ -1,6 +1,6 @@
 # Red Cross activities
 
-The canonical activities offered by Norwegian Red Cross chapters, derived from a live Red Cross Organizations API dump (current sibling: `api-getOrganizations-output-21apr26.json`).
+The canonical activities offered by Norwegian Red Cross chapters, derived from a live Red Cross Organizations API dump (kept locally at `atlas-private-data-repo/redcross/organisations/api-getOrganizations-output-21apr26.json`, gitignored).
 
 ## Source and method
 

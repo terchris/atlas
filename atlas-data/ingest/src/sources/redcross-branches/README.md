@@ -4,7 +4,7 @@ First NGO-supply ingest. Reads Norges Røde Kors's Organizations API data and wr
 
 ## Source
 
-Static JSON dump at [`docs/research/api-getOrganizations-output-21apr26.json`](../../../../../docs/research/api-getOrganizations-output-21apr26.json).
+Static JSON dump at `atlas-private-data-repo/redcross/organisations/api-getOrganizations-output-21apr26.json` (gitignored — Red Cross-specific organisational data lives in the per-NGO private data folder).
 
 The dump was fetched once on 2026-04-21 from `api.redcross.no/nrx/v1/organizations` (subscription key required). Live API polling is **deferred to a separate workstream** — see [`INVESTIGATE-ngo-supply-data-model.md` Q39](../../../../docs/ai-developer/plans/backlog/INVESTIGATE-ngo-supply-data-model.md). When live access lands, the script will be updated to fetch the API directly with no other changes; the `raw.*` tables stay the same.
 
