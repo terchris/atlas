@@ -329,7 +329,7 @@ Investigation found: Udir's Skoleporten publishes only as HTML pages — no publ
 
 ## How to execute a single source (quick reference)
 
-Per [`../../../atlas-data-repo/CONTRIBUTING.md`](../../../atlas-data-repo/CONTRIBUTING.md), 11 steps in order:
+Per [`../../../atlas-data/CONTRIBUTING.md`](../../../atlas-data/CONTRIBUTING.md), 11 steps in order:
 
 1. Catalogue entry fields filled (`data-sources.md`).
 2. Upstream probe (dimensions, row count, filter requirements).

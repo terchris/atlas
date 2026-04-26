@@ -108,15 +108,15 @@ User confirms the recorded mappings look right (no surprises in code count, labe
 
 ### Tasks
 
-- [x] 2.1 Created [`atlas-data-repo/dbt/seeds/`](../../../../atlas-data-repo/dbt/seeds/). ✓
+- [x] 2.1 Created [`atlas-data/dbt/seeds/`](../../../../atlas-data/dbt/seeds/). ✓
 - [x] 2.2 Wrote five CSVs with columns `code,label_no,label_en,sort_order`. Row counts match (9, 5, 7, 5, 1). SSB Nivaa preserves upstream order (`00, 01, 02a, 11, 03a, 04a, 09a`). FHI seeds have `label_en` columns present but blank. Labels containing commas (Nivaa `03a`, `04a`) are CSV-quoted. ✓
-- [x] 2.3 Added `seeds:` block to [`atlas-data-repo/dbt/dbt_project.yml`](../../../../atlas-data-repo/dbt/dbt_project.yml) with `+schema: marts` and `+column_types` pinning `code/label_no/label_en` to `text` and `sort_order` to `integer`. ✓
-- [x] 2.4 Wrote [`atlas-data-repo/dbt/seeds/README.md`](../../../../atlas-data-repo/dbt/seeds/README.md) covering schema, per-seed metadata, refresh policy, and load command. ✓
+- [x] 2.3 Added `seeds:` block to [`atlas-data/dbt/dbt_project.yml`](../../../../atlas-data/dbt/dbt_project.yml) with `+schema: marts` and `+column_types` pinning `code/label_no/label_en` to `text` and `sort_order` to `integer`. ✓
+- [x] 2.4 Wrote [`atlas-data/dbt/seeds/README.md`](../../../../atlas-data/dbt/seeds/README.md) covering schema, per-seed metadata, refresh policy, and load command. ✓
 
 ### Validation
 
 ```bash
-cd atlas-data-repo/dbt
+cd atlas-data/dbt
 dbt seed --full-refresh
 dbt run-operation list_seeds  # or: psql -c "select count(*) from marts.ref_ssb_family_type"
 ```
@@ -131,14 +131,14 @@ Make label drift detectable. The script re-fetches all five enums from SSB/FHI m
 
 ### Tasks
 
-- [x] 3.1 Created [`atlas-data-repo/ingest/scripts/refresh-seeds.ts`](../../../../atlas-data-repo/ingest/scripts/refresh-seeds.ts). Uses `fetchPxTableMetadata` for SSB. For FHI, uses the workaround from Phase 1 (GET `/query` for codes → POST `/data` with all target codes + first code per other dimension → harvest labels from json-stat2 response) since `/metadata` returns prose only. Writes CSV with stable header, LF endings, minimal-quoting (only when value contains `,`/`"`/CR/LF). Logs structured + console summary per seed. ✓
-- [x] 3.2 Added `"refresh-seeds": "tsx scripts/refresh-seeds.ts"` to [`atlas-data-repo/ingest/package.json`](../../../../atlas-data-repo/ingest/package.json). ✓
+- [x] 3.1 Created [`atlas-data/ingest/scripts/refresh-seeds.ts`](../../../../atlas-data/ingest/scripts/refresh-seeds.ts). Uses `fetchPxTableMetadata` for SSB. For FHI, uses the workaround from Phase 1 (GET `/query` for codes → POST `/data` with all target codes + first code per other dimension → harvest labels from json-stat2 response) since `/metadata` returns prose only. Writes CSV with stable header, LF endings, minimal-quoting (only when value contains `,`/`"`/CR/LF). Logs structured + console summary per seed. ✓
+- [x] 3.2 Added `"refresh-seeds": "tsx scripts/refresh-seeds.ts"` to [`atlas-data/ingest/package.json`](../../../../atlas-data/ingest/package.json). ✓
 - [x] 3.3 Ran `npm run refresh-seeds` — all five seeds report `no diff`. Script output bytes-equal the hand-written CSVs from Phase 2. ✓
 
 ### Validation
 
 ```bash
-cd atlas-data-repo/ingest
+cd atlas-data/ingest
 npm run refresh-seeds
 git diff -- ../dbt/seeds/
 ```
@@ -153,7 +153,7 @@ User confirms the diff is empty (or the differences are explained drift the user
 - [ ] All seeds have `label_no` populated. SSB seeds also have `label_en` populated. FHI seeds have `label_en` columns present but blank.
 - [ ] Codes preserve leading zeros (e.g. `001`, `0000`) — column type is `text`, not `integer`.
 - [ ] `npm run refresh-seeds` runs in under 30 seconds and produces no diff against the committed CSVs.
-- [ ] [`atlas-data-repo/dbt/seeds/README.md`](../../../../atlas-data-repo/dbt/) explains each seed and how to refresh.
+- [ ] [`atlas-data/dbt/seeds/README.md`](../../../../atlas-data/dbt/) explains each seed and how to refresh.
 
 ---
 
@@ -170,15 +170,15 @@ User confirms the diff is empty (or the differences are explained drift the user
 ## Files to Modify
 
 New:
-- `atlas-data-repo/dbt/seeds/ref_ssb_family_type.csv`
-- `atlas-data-repo/dbt/seeds/ref_ssb_household_type.csv`
-- `atlas-data-repo/dbt/seeds/ref_ssb_nivaa.csv`
-- `atlas-data-repo/dbt/seeds/ref_fhi_utdann.csv`
-- `atlas-data-repo/dbt/seeds/ref_fhi_innvkat.csv`
-- `atlas-data-repo/dbt/seeds/README.md`
-- `atlas-data-repo/ingest/scripts/refresh-seeds.ts`
+- `atlas-data/dbt/seeds/ref_ssb_family_type.csv`
+- `atlas-data/dbt/seeds/ref_ssb_household_type.csv`
+- `atlas-data/dbt/seeds/ref_ssb_nivaa.csv`
+- `atlas-data/dbt/seeds/ref_fhi_utdann.csv`
+- `atlas-data/dbt/seeds/ref_fhi_innvkat.csv`
+- `atlas-data/dbt/seeds/README.md`
+- `atlas-data/ingest/scripts/refresh-seeds.ts`
 
 Edit:
-- `atlas-data-repo/dbt/dbt_project.yml` — add `seeds:` config
-- `atlas-data-repo/ingest/package.json` — add `refresh-seeds` script
-- `atlas-data-repo/ingest/src/lib/fhi.ts` — add `fetchFhiTableMetadata` (if not already present)
+- `atlas-data/dbt/dbt_project.yml` — add `seeds:` config
+- `atlas-data/ingest/package.json` — add `refresh-seeds` script
+- `atlas-data/ingest/src/lib/fhi.ts` — add `fetchFhiTableMetadata` (if not already present)

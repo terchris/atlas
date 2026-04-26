@@ -115,7 +115,7 @@ User confirms shadcn primitives render with Designsystemet tokens applied.
 
 ### Tasks
 
-- [x] 2.1 Extend `src/lib/types.ts` with the new interfaces. Reference the actual marts schema in `atlas-data-repo/dbt/models/dimensions/schema.yml` and `atlas-data-repo/dbt/models/marts/schema.yml`:
+- [x] 2.1 Extend `src/lib/types.ts` with the new interfaces. Reference the actual marts schema in `atlas-data/dbt/models/dimensions/schema.yml` and `atlas-data/dbt/models/marts/schema.yml`:
   ```ts
   export interface DimNgo {
     orgnr: string;

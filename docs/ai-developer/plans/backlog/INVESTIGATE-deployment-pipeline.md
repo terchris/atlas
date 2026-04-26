@@ -62,7 +62,7 @@ From this conversation:
 14. **Next.js production build target** — Vercel-style serverless, or a Node server in K8s? Atlas's [`project-atlas.md`](../../project-atlas.md) says K8s; the build needs `output: 'standalone'` in next.config.ts and a small Dockerfile.
 15. **Secrets needed at build time** — none expected (Atlas reads `DATABASE_URL` at runtime). Confirm.
 16. **Secrets needed at runtime** — `DATABASE_URL` (read-only role for Next.js, owner role for dbt/ingest pods), Brreg API key (none — open data), FHI API key (none), SSB API key (none). Future: Authentik OIDC client secrets, Cloudflare API for tunnel rotation.
-17. **The atlas-data-repo split** — when atlas-data eventually splits into its own repo (per [`atlas-data-repo/README.md`](../../../../atlas-data-repo/README.md) trigger conditions), does each repo get its own pipeline or one combined? Likely separate; plan accordingly.
+17. **The atlas-data split** — when atlas-data eventually splits into its own repo (per [`atlas-data/README.md`](../../../../atlas-data/README.md) trigger conditions), does each repo get its own pipeline or one combined? Likely separate; plan accordingly.
 18. **Dagster code-location update mechanism** — does ArgoCD trigger a Dagster GraphQL `reloadRepositoryLocation` mutation, or does Dagster pull the image on a schedule? Affects how fast a deploy goes live.
 19. **Schema-change coordination** — when a `marts.*` schema change ships, the Next.js frontend may break until it's redeployed too. How is this coordinated? Manual "data pipeline first, then frontend" sequence, or atomic deploy via a release tag covering both? See [`project-atlas.md`](../../project-atlas.md#the-marts-contract).
 20. **Drift detection** — should the deployed manifests be regularly diffed against git? ArgoCD has this built in. Just confirm it's enabled.
@@ -83,7 +83,7 @@ Probably 3–4 ordered PLANs, depending on what UIS resolves first:
 
 - **PLAN-E — Next.js Dockerfile + deploy**: parallel to PLAN-C. `output: 'standalone'` in next.config.ts; small Dockerfile; ArgoCD app for the deployment.
 
-- **PLAN-F — DB migration job**: how `npm run migrate` runs in production. Likely a Dagster asset that runs before any ingest asset, with the migration runner already present in `atlas-data-repo/ingest/scripts/migrate.ts`.
+- **PLAN-F — DB migration job**: how `npm run migrate` runs in production. Likely a Dagster asset that runs before any ingest asset, with the migration runner already present in `atlas-data/ingest/scripts/migrate.ts`.
 
 - **PLAN-G — Secrets + monitoring + rollback runbook**: the operational glue. Probably the last to write because it depends on what the prior plans land.
 
@@ -107,8 +107,8 @@ A–B can land independently of UIS work. C–F wait on UIS Dagster install.
 ### Atlas-internal
 - [`docs/stack/suggested-stack.md`](../../../stack/suggested-stack.md) — the high-level deployment architecture (ArgoCD, Dagster, image-driven code location).
 - [`docs/ai-developer/project-atlas.md`](../../project-atlas.md) — devcontainer-or-not, command reference, the marts contract that constrains schema-change coordination.
-- [`atlas-data-repo/README.md`](../../../../atlas-data-repo/README.md) — the split-trigger conditions for splitting atlas-data into its own repo.
-- [`atlas-data-repo/ingest/scripts/migrate.ts`](../../../../atlas-data-repo/ingest/scripts/migrate.ts) — the existing migration runner that PLAN-F would wire into Dagster.
+- [`atlas-data/README.md`](../../../../atlas-data/README.md) — the split-trigger conditions for splitting atlas-data into its own repo.
+- [`atlas-data/ingest/scripts/migrate.ts`](../../../../atlas-data/ingest/scripts/migrate.ts) — the existing migration runner that PLAN-F would wire into Dagster.
 - [`docs/research/data-sources.md`](../../../research/data-sources.md) — confirms which upstream sources need API keys (none for current 19; check before adding new).
 
 ### UIS-side (cross-repo)
@@ -127,5 +127,5 @@ A–B can land independently of UIS work. C–F wait on UIS Dagster install.
 - Building any of it. This is a **task enumeration** — the implementing PLANs follow when we're ready.
 - Picking a release-versioning convention (defer to PLAN-A/B).
 - UIS-side work (Dagster install, ArgoCD app config). Owned by the UIS repo.
-- Deciding whether `atlas-data-repo/` splits into its own repo. Tracked separately in `atlas-data-repo/README.md`.
+- Deciding whether `atlas-data/` splits into its own repo. Tracked separately in `atlas-data/README.md`.
 - Authentik / OIDC integration for Dagster UI. Day 2 work; Tailscale fronts it for now.

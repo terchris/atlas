@@ -31,8 +31,8 @@ the goal is "every shape covered once," not realistic volume.
 The shared FRR ingest discovers this folder automatically:
 
 ```bash
-npx tsx --env-file=atlas-data-repo/ingest/.env \
-  atlas-data-repo/ingest/src/sources/frr/index.ts
+npx tsx --env-file=atlas-data/ingest/.env \
+  atlas-data/ingest/src/sources/frr/index.ts
 ```
 
 The script scans `atlas-private-data-repo/*/frr/*.json`, looks up the orgnr

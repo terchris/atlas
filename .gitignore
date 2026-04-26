@@ -14,12 +14,12 @@ atlas-private-data-repo/redcross/
 # Pre-existing private specs that should migrate into atlas-private-data-repo/<ngo>/docs/.
 docs/research/*-internal/
 
-# Next.js
-/.next/
-/out/
-/build
-next-env.d.ts
-tsconfig.tsbuildinfo
+# Next.js (artefacts may live at any depth, e.g. atlas-frontend/.next/)
+**/.next/
+**/out/
+**/build/
+**/next-env.d.ts
+**/tsconfig.tsbuildinfo
 *.tsbuildinfo
 
 # node

@@ -31,7 +31,7 @@ Getting from the row to that sentence requires knowing four things the row doesn
 
 So **the population is implicit**: every row from `ssb-08764` is about under-18s. The row itself doesn't say "children" — it's part of the source's contract.
 
-Provenance for the source lives in [`atlas-data-repo/ingest/src/sources/ssb-08764/README.md`](https://github.com/terchris/atlas/tree/main/atlas-data-repo/ingest/src/sources/ssb-08764) and the source-level description in [`atlas-data-repo/dbt/models/indicators/sources.yml`](https://github.com/terchris/atlas/blob/main/atlas-data-repo/dbt/models/indicators/sources.yml).
+Provenance for the source lives in [`atlas-data/ingest/src/sources/ssb-08764/README.md`](https://github.com/terchris/atlas/tree/main/atlas-data/ingest/src/sources/ssb-08764) and the source-level description in [`atlas-data/dbt/models/indicators/sources.yml`](https://github.com/terchris/atlas/blob/main/atlas-data/dbt/models/indicators/sources.yml).
 
 ## Stage 2 — Geography
 
@@ -82,9 +82,9 @@ Hence the plain-language reading:
 
 To assemble that interpretation, a reader has to consult at least:
 
-1. The per-source ingest README ([`atlas-data-repo/ingest/src/sources/ssb-08764/README.md`](https://github.com/terchris/atlas/tree/main/atlas-data-repo/ingest/src/sources/ssb-08764)).
-2. The dbt source description ([`atlas-data-repo/dbt/models/indicators/sources.yml`](https://github.com/terchris/atlas/blob/main/atlas-data-repo/dbt/models/indicators/sources.yml)).
-3. The dbt model description for unit/suppression notes ([`atlas-data-repo/dbt/models/indicators/schema.yml`](https://github.com/terchris/atlas/blob/main/atlas-data-repo/dbt/models/indicators/schema.yml)).
+1. The per-source ingest README ([`atlas-data/ingest/src/sources/ssb-08764/README.md`](https://github.com/terchris/atlas/tree/main/atlas-data/ingest/src/sources/ssb-08764)).
+2. The dbt source description ([`atlas-data/dbt/models/indicators/sources.yml`](https://github.com/terchris/atlas/blob/main/atlas-data/dbt/models/indicators/sources.yml)).
+3. The dbt model description for unit/suppression notes ([`atlas-data/dbt/models/indicators/schema.yml`](https://github.com/terchris/atlas/blob/main/atlas-data/dbt/models/indicators/schema.yml)).
 4. The `contents_label` text on the row itself.
 5. SSB's own metadata page for the table.
 

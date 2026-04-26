@@ -32,7 +32,7 @@ Four phases, estimated **~3 h**.
 
 **Built in PLAN-001-brreg-enheter:**
 
-- **Shared Brreg typed client** at `atlas-data-repo/ingest/src/lib/brreg/`:
+- **Shared Brreg typed client** at `atlas-data/ingest/src/lib/brreg/`:
   - `schema.ts` — codegen'd from `brreg/openAPI/specs/enhetsregisteret.json`. Typed `paths`, `components`, responses.
   - `client.ts` — a configured `openapi-fetch` client + a small paginate helper for HAL responses (`_embedded.enheter` + `page.totalPages`).
   - `README.md` — how it works, how to regenerate schema.
@@ -40,13 +40,13 @@ Four phases, estimated **~3 h**.
   - New npm script: `refresh:brreg-schema` for schema regeneration.
 - **Migration**: `025_raw_brreg_enheter.sql` — the shared cross-NGO raw landing table. Columns: `orgnr` PK, `navn`, `organisasjonsform`, `registrert_dato`, `i_frivillighetsreg`, `antall_ansatte`, `konkurs`, `under_avvikling`, `under_tvangsavvikling`, `raw_payload` (full Enhet JSON), `loaded_at`. No `ngo_slug` column — navn/orgnr self-identify. API-sourced (§C.5 scraper conventions don't apply).
 - **Generic fetch**: `src/lib/brreg/ngo-units.ts` — `fetchNgoUnits({ navn, organisasjonsform, nameStartsWith })` wraps the typed client + pagination + exact-prefix post-filter. Reusable by any ingest that needs Brreg enheter for a named NGO.
-- **Ingest module** at `atlas-data-repo/ingest/src/seed-sources/brreg-enheter/`:
+- **Ingest module** at `atlas-data/ingest/src/seed-sources/brreg-enheter/`:
   - `index.ts` — reads `../atlas-ngo-landscape/landscape.json`, iterates every NGO that has a `brreg_query` block, calls `fetchNgoUnits()` for each, upserts to `raw.brreg_enheter` on `orgnr`.
   - `README.md` — source description, refresh cadence note, new-NGO checklist.
   - New npm script: `refresh:brreg-enheter` (generic, not per-NGO).
 - **landscape.json edit** — add `brreg_query: { navn, organisasjonsform, nameStartsWith }` to Folkehjelp's entry. The `refresh:atlas-ngo-landscape` script ignores this field (it only copies marts-facing columns to `dim_ngo.csv`); it's ingest-only metadata.
 - **dbt source declaration** — `raw.brreg_enheter` registered. Location: `dbt/models/shared/sources.yml` alongside `ingest_runs` + `sitemap_log` (this is cross-NGO shared infrastructure, not per-NGO supply).
-- **Docs update** — extend `atlas-data-repo/ingest/src/sources/README.md` with a row pointing at the generic `brreg-enheter` refresh; add a short note in `CONTRIBUTING.md` about the typed-client pattern + the `landscape.json` `brreg_query` convention.
+- **Docs update** — extend `atlas-data/ingest/src/sources/README.md` with a row pointing at the generic `brreg-enheter` refresh; add a short note in `CONTRIBUTING.md` about the typed-client pattern + the `landscape.json` `brreg_query` convention.
 
 **NOT built in PLAN-001:**
 
@@ -61,7 +61,7 @@ Four phases, estimated **~3 h**.
 
 ### Tasks
 
-- [ ] 1.1 Install dependencies (from `atlas-data-repo/ingest/`):
+- [ ] 1.1 Install dependencies (from `atlas-data/ingest/`):
   ```bash
   npm install openapi-fetch
   npm install --save-dev openapi-typescript
@@ -120,7 +120,7 @@ Four phases, estimated **~3 h**.
 ### Validation
 
 ```bash
-cd atlas-data-repo/ingest
+cd atlas-data/ingest
 npm install   # if lock file has drift
 npm run refresh:brreg-schema
 npm run typecheck
@@ -134,7 +134,7 @@ User confirms: `src/lib/brreg/schema.ts` exists and is ~thousands-of-lines-of-ty
 
 ### Tasks
 
-- [ ] 2.1 Check next free migration number with `ls atlas-data-repo/migrations/ | tail -3` (expected 025, but confirm — multi-agent repo). Create `atlas-data-repo/migrations/025_raw_brreg_enheter.sql`:
+- [ ] 2.1 Check next free migration number with `ls atlas-data/migrations/ | tail -3` (expected 025, but confirm — multi-agent repo). Create `atlas-data/migrations/025_raw_brreg_enheter.sql`:
   ```sql
   -- raw.brreg_enheter — all Norsk Folkehjelp legal entities
   -- from Brreg's Enhetsregister, filtered to organisasjonsform = 'FLI'.
@@ -142,7 +142,7 @@ User confirms: `src/lib/brreg/schema.ts` exists and is ~thousands-of-lines-of-ty
   -- API-sourced (not a scrape); §C.5 mandatory scraper columns do NOT
   -- apply. Follows the existing raw.<source> convention.
   --
-  -- Populated by atlas-data-repo/ingest/src/seed-sources/brreg-enheter/.
+  -- Populated by atlas-data/ingest/src/seed-sources/brreg-enheter/.
   -- Expected ~121 rows based on 2026-04-23 research.
 
   create table if not exists raw.brreg_enheter (
@@ -160,13 +160,13 @@ User confirms: `src/lib/brreg/schema.ts` exists and is ~thousands-of-lines-of-ty
     'All Norsk Folkehjelp legal entities (organisasjonsform=FLI) from Brreg Enhetsregister. Written by ingest/src/seed-sources/brreg-enheter via the shared typed client at src/lib/brreg/.';
   ```
 - [ ] 2.2 Run `npm run migrate`. Verify the table exists and is empty.
-- [ ] 2.3 Create `atlas-data-repo/ingest/src/seed-sources/brreg-enheter/index.ts`:
+- [ ] 2.3 Create `atlas-data/ingest/src/seed-sources/brreg-enheter/index.ts`:
   - Imports `brregClient` + `paginate` from `../../lib/brreg/client.js`.
   - Query: `GET /enheter?navn=norsk+folkehjelp&organisasjonsform=FLI&size=100` (paginated).
   - For each `Enhet`, map to the raw schema (use typed response fields; store the full entity as `raw_payload`).
   - Upsert on `orgnr` via `upsert()` helper from `src/lib/postgres.ts` (existing pattern).
   - Logging via the existing `createLogger` helper — `info` on start, page boundaries, and end with row-count summary.
-- [ ] 2.4 Create `atlas-data-repo/ingest/src/seed-sources/brreg-enheter/README.md`:
+- [ ] 2.4 Create `atlas-data/ingest/src/seed-sources/brreg-enheter/README.md`:
   - Source: Brreg Enhetsregister (`data.brreg.no`).
   - Query: `navn=norsk+folkehjelp&organisasjonsform=FLI`.
   - Expected rows: ~121 (121 Brreg rows observed 2026-04-23; 88% in Frivillighetsregisteret).
@@ -181,7 +181,7 @@ User confirms: `src/lib/brreg/schema.ts` exists and is ~thousands-of-lines-of-ty
 ### Validation
 
 ```bash
-cd atlas-data-repo/ingest
+cd atlas-data/ingest
 npm run migrate
 npm run refresh:brreg-enheter
 
@@ -203,7 +203,7 @@ User confirms: ~121 total rows; ~107 in Frivillighetsregisteret; date range plau
 
 ### Tasks
 
-- [ ] 3.1 Decide sources.yml location. Recommended: add to `atlas-data-repo/dbt/models/supply/sources.yml` alongside `raw.redcross_branches` — it's a per-NGO raw table, same category. Alternative: a new `dbt/models/brreg/sources.yml` if we expect multiple Brreg-sourced tables per NGO. Default to `supply/` for v1; revisit if pattern grows.
+- [ ] 3.1 Decide sources.yml location. Recommended: add to `atlas-data/dbt/models/supply/sources.yml` alongside `raw.redcross_branches` — it's a per-NGO raw table, same category. Alternative: a new `dbt/models/brreg/sources.yml` if we expect multiple Brreg-sourced tables per NGO. Default to `supply/` for v1; revisit if pattern grows.
 - [ ] 3.2 Add source entry for `raw.brreg_enheter`:
   - `loaded_at_field: loaded_at`
   - description: brief sentence pointing at the seed source and the shared typed client
@@ -212,7 +212,7 @@ User confirms: ~121 total rows; ~107 in Frivillighetsregisteret; date range plau
 ### Validation
 
 ```bash
-cd atlas-data-repo/dbt
+cd atlas-data/dbt
 uv run --env-file ../ingest/.env dbt parse
 uv run --env-file ../ingest/.env dbt show --inline "
   select column_name, data_type
@@ -231,13 +231,13 @@ User confirms: dbt source list grew by 1; column listing matches the migration s
 ### Tasks
 
 - [ ] 4.1 Document the new source in the sources catalogue:
-  - If `atlas-data-repo/ingest/src/seed-sources/README.md` exists, add a row.
-  - Otherwise, extend `atlas-data-repo/ingest/src/sources/README.md` with a "Seed sources (refresh-*)" section if one doesn't exist, and add a row for `brreg-enheter`.
-- [ ] 4.2 Extend [`atlas-data-repo/CONTRIBUTING.md`](../../../../atlas-data-repo/CONTRIBUTING.md) with a short note under "Workflow: add a new upstream source" mentioning that Brreg-sourced ingests should use the shared typed client at `ingest/src/lib/brreg/` rather than hand-rolling fetch + type mapping.
+  - If `atlas-data/ingest/src/seed-sources/README.md` exists, add a row.
+  - Otherwise, extend `atlas-data/ingest/src/sources/README.md` with a "Seed sources (refresh-*)" section if one doesn't exist, and add a row for `brreg-enheter`.
+- [ ] 4.2 Extend [`atlas-data/CONTRIBUTING.md`](../../../../atlas-data/CONTRIBUTING.md) with a short note under "Workflow: add a new upstream source" mentioning that Brreg-sourced ingests should use the shared typed client at `ingest/src/lib/brreg/` rather than hand-rolling fetch + type mapping.
 - [ ] 4.3 Update the talk.md coordination channel (once, at closeout): append a short Message noting that `raw.brreg_enheter` landed and the shared typed-client pattern is available. Purely informational; doesn't touch anything redcross owns.
 - [ ] 4.4 Final gates:
   ```bash
-  cd atlas-data-repo/ingest && npm run typecheck && npm test
+  cd atlas-data/ingest && npm run typecheck && npm test
   cd ../dbt && uv run --env-file ../ingest/.env dbt build
   ```
   Expect: typecheck clean, 49/49 tests passing (unchanged), `dbt build` PASS=535 + whatever source-freshness entries dbt counts for the new source (likely +0 or +1).
@@ -277,19 +277,19 @@ All gates pass. User confirms the ingest is runnable from a clean checkout via `
 ## Files to Modify
 
 **New files:**
-- `atlas-data-repo/ingest/src/lib/brreg/schema.ts` (codegen output)
-- `atlas-data-repo/ingest/src/lib/brreg/client.ts`
-- `atlas-data-repo/ingest/src/lib/brreg/README.md`
-- `atlas-data-repo/migrations/025_raw_brreg_enheter.sql`
-- `atlas-data-repo/ingest/src/seed-sources/brreg-enheter/index.ts`
-- `atlas-data-repo/ingest/src/seed-sources/brreg-enheter/README.md`
+- `atlas-data/ingest/src/lib/brreg/schema.ts` (codegen output)
+- `atlas-data/ingest/src/lib/brreg/client.ts`
+- `atlas-data/ingest/src/lib/brreg/README.md`
+- `atlas-data/migrations/025_raw_brreg_enheter.sql`
+- `atlas-data/ingest/src/seed-sources/brreg-enheter/index.ts`
+- `atlas-data/ingest/src/seed-sources/brreg-enheter/README.md`
 
 **Modified files:**
-- `atlas-data-repo/ingest/package.json` — new deps (`openapi-fetch`, `openapi-typescript` dev) + two new scripts (`refresh:brreg-schema`, `refresh:brreg-enheter`).
-- `atlas-data-repo/ingest/package-lock.json` — drift from the installs.
-- `atlas-data-repo/dbt/models/supply/sources.yml` — new source entry (or `shared/` if Phase 3.1 picks differently).
-- `atlas-data-repo/ingest/src/sources/README.md` or `seed-sources/README.md` — catalogue row.
-- `atlas-data-repo/CONTRIBUTING.md` — note about the shared typed-client pattern.
+- `atlas-data/ingest/package.json` — new deps (`openapi-fetch`, `openapi-typescript` dev) + two new scripts (`refresh:brreg-schema`, `refresh:brreg-enheter`).
+- `atlas-data/ingest/package-lock.json` — drift from the installs.
+- `atlas-data/dbt/models/supply/sources.yml` — new source entry (or `shared/` if Phase 3.1 picks differently).
+- `atlas-data/ingest/src/sources/README.md` or `seed-sources/README.md` — catalogue row.
+- `atlas-data/CONTRIBUTING.md` — note about the shared typed-client pattern.
 
 ---
 
@@ -297,7 +297,7 @@ All gates pass. User confirms the ingest is runnable from a clean checkout via `
 
 Three implementation-level choices the plan leaves to the implementer:
 
-- **[P1B.Q1]** **Migration number** → verify with `ls atlas-data-repo/migrations/ | tail -3` before writing. Expected 025 based on state at drafting; another agent's branch may have claimed it. Ping redcross on talk.md if 025 is taken.
+- **[P1B.Q1]** **Migration number** → verify with `ls atlas-data/migrations/ | tail -3` before writing. Expected 025 based on state at drafting; another agent's branch may have claimed it. Ping redcross on talk.md if 025 is taken.
 - **[P1B.Q2]** **sources.yml location** → recommend `dbt/models/supply/sources.yml` (alongside `redcross_branches`). If a separate `brreg/sources.yml` feels cleaner during implementation, document the move in the commit.
 - **[P1B.Q3]** **`raw_payload` size** — Brreg `Enhet` entities are moderate (a few KB each); storing full JSONB for ~121 rows is ~hundreds of KB total, trivial. Don't bother with a trimmed projection; keep the full payload for audit + future-proof field extraction.
 

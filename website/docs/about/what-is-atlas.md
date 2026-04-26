@@ -113,7 +113,7 @@ The **extensions** include expanded NGO coverage (N.K.S., Nasjonalforeningen, 4H
 Atlas is built on:
 
 - **Frontend**: Next.js (App Router), TypeScript, [Digdir Designsystemet](https://designsystemet.no), [MapLibre GL](https://maplibre.org).
-- **Data platform**: TypeScript ingestion modules + dbt + PostgreSQL. The [`atlas-data-repo/`](https://github.com/terchris/atlas/tree/main/atlas-data-repo) folder holds the data side, intended to split into a separate `atlas-data` repo as it matures.
+- **Data platform**: TypeScript ingestion modules + dbt + PostgreSQL. The [`atlas-data/`](https://github.com/terchris/atlas/tree/main/atlas-data) folder holds the data side, intended to split into a separate `atlas-data` repo as it matures.
 - **Hosting**: the [Urbalurba Infrastructure Stack](https://uis.sovereignsky.no) (UIS) — a sovereign Kubernetes platform.
 - **Data sources**: SSB, FHI, Brreg, Bufdir, IMDi, NAV, Lottstift, Innsamlingskontrollen, Kartverket, met.no, plus per-NGO APIs and scrapes.
 

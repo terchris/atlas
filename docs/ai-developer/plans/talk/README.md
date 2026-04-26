@@ -26,7 +26,7 @@ Each agent has a **name** — usually the area of work they own. Examples in cur
 | Name | What they own |
 |---|---|
 | `redcross` | Importing Red Cross's private data (`atlas-private-data-repo/redcross/`, `app/private/redcross/`, anything under the private-Atlas thread). |
-| `folkehjelp` | The Folkehjelp NGO ingest (`atlas-data-repo/ingest/src/sources/folkehjelp-chapters/`, `atlas-data-repo/dbt/models/supply/supply__folkehjelp_*.sql`, `app/ngo/folkehjelp/`). |
+| `folkehjelp` | The Folkehjelp NGO ingest (`atlas-data/ingest/src/sources/folkehjelp-chapters/`, `atlas-data/dbt/models/supply/supply__folkehjelp_*.sql`, `app/ngo/folkehjelp/`). |
 
 Names persist across sessions — `redcross` always means the Red Cross-private-data agent, regardless of which session is currently inhabiting that role.
 

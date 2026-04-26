@@ -236,7 +236,7 @@ Product value: Sara can filter across organisations by age and expectation, and 
 
 ## Current ingest status
 
-This status reflects source folders currently implemented under `atlas-data-repo/ingest/src/sources`. "Implemented" means the ingest code exists; it does not necessarily mean every downstream mart/model or UI surface is complete.
+This status reflects source folders currently implemented under `atlas-data/ingest/src/sources`. "Implemented" means the ingest code exists; it does not necessarily mean every downstream mart/model or UI surface is complete.
 
 ### Already implemented source groups
 

@@ -138,7 +138,7 @@ Forbidden names, and what to use instead.
 
 | Schema | Purpose | Who writes | Who reads |
 |---|---|---|---|
-| `raw.*` | Upstream landing. Names follow source. | `atlas-data-repo/ingest/*` | `dbt` only |
+| `raw.*` | Upstream landing. Names follow source. | `atlas-data/ingest/*` | `dbt` only |
 | `marts.*` | Atlas public contract. Canonical names. | `dbt` only | frontend, analysts, public API, other teams |
 | `dagster.*` | Dagster platform metadata. | Dagster itself | Dagster itself |
 
@@ -200,7 +200,7 @@ When a model is retired:
 ## How this file is enforced
 
 - `schema.yml` descriptions + `relationships:` tests catch most name-and-FK drift automatically.
-- PR checklist (see `atlas-data-repo/CONTRIBUTING.md`) asks each contributor to check this file.
+- PR checklist (see `atlas-data/CONTRIBUTING.md`) asks each contributor to check this file.
 - New columns that match a "Never in marts" entry → rename before merge.
 - If no canonical name exists for a concept you're introducing, **add it to the Canonical vocabulary table in this file** as part of the same PR. The vocabulary grows deliberately, not by accident.
 
@@ -213,8 +213,8 @@ For a visual map of how these fields connect across `marts.*` (entities + relati
 The hybrid strategy for turning upstream codes into the canonical vocabulary above is documented in:
 
 - [`docs/ai-developer/plans/completed/INVESTIGATE-code-label-mapping.md`](../ai-developer/plans/backlog/INVESTIGATE-code-label-mapping.md) — the original investigation (kept in backlog as a living reference).
-- `atlas-data-repo/dbt/macros/parse_codes.sql` — `decode_sex`, `period_start_year`, `period_end_year`, `age_range_min(col, sep)`, `age_range_max(col, sep)`.
-- `atlas-data-repo/dbt/seeds/` — the five `marts.ref_*` lookup CSVs and their refresh policy ([`seeds/README.md`](../../atlas-data-repo/dbt/seeds/README.md)).
+- `atlas-data/dbt/macros/parse_codes.sql` — `decode_sex`, `period_start_year`, `period_end_year`, `age_range_min(col, sep)`, `age_range_max(col, sep)`.
+- `atlas-data/dbt/seeds/` — the five `marts.ref_*` lookup CSVs and their refresh policy ([`seeds/README.md`](../../atlas-data/dbt/seeds/README.md)).
 
 When adding a new source with coded fields, follow the same hybrid pattern: small universal enums (`sex`, `housing_status`) inline; medium domain enums via a new `marts.ref_*` seed + left join; structured codes (period, age band) parsed into `_min/_max` or `_start/_end_year` integer columns alongside the raw text.
 

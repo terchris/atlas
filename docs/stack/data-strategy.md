@@ -98,7 +98,7 @@ Data mesh has two separable contributions that often get bundled:
 **Relevance for Atlas**:
 
 - The organisational model — **does not apply**. Atlas doesn't own SSB, FHI, Udir, IMDi, Brreg or NAV. We can't make external government agencies conform to our contracts. The producers are external, not internal domains.
-- The thinking tool — **very relevant, and we're already doing a lightweight version**. Atlas has 6 distinct producers today (SSB, FHI, Udir, IMDi, Brreg, NAV) with ~19 ingested sources, projected to grow to 100+ across a similar number of producers. Each source folder in [`atlas-data-repo/ingest/src/sources/<id>/`](../../atlas-data-repo/ingest/src/sources/) is effectively a data product: its own README, its own contract (the raw-schema it writes, documented in source-level YAML), its own freshness assumption, its own failure modes.
+- The thinking tool — **very relevant, and we're already doing a lightweight version**. Atlas has 6 distinct producers today (SSB, FHI, Udir, IMDi, Brreg, NAV) with ~19 ingested sources, projected to grow to 100+ across a similar number of producers. Each source folder in [`atlas-data/ingest/src/sources/<id>/`](../../atlas-data/ingest/src/sources/) is effectively a data product: its own README, its own contract (the raw-schema it writes, documented in source-level YAML), its own freshness assumption, its own failure modes.
 
 What this means practically for Atlas:
 
@@ -244,7 +244,7 @@ Concrete signals that tell us when to add the next layer:
 - [`naming-conventions.md`](./naming-conventions.md) — current field dictionary
 - [`../ai-developer/plans/backlog/INVESTIGATE-code-label-mapping.md`](../ai-developer/plans/backlog/INVESTIGATE-code-label-mapping.md) — enum-decoding architectural options (sub-problem of the dictionary; open decision in backlog)
 - [`../ai-developer/plans/completed/INVESTIGATE-data-journey-pattern.md`](../ai-developer/plans/completed/INVESTIGATE-data-journey-pattern.md) — end-to-end walkthrough of how one source flows through the stack (the completed design investigation that grounded the v1 pattern)
-- [`../../atlas-data-repo/CONTRIBUTING.md`](../../atlas-data-repo/CONTRIBUTING.md) — rules for adding new sources
+- [`../../atlas-data/CONTRIBUTING.md`](../../atlas-data/CONTRIBUTING.md) — rules for adding new sources
 
 ---
 

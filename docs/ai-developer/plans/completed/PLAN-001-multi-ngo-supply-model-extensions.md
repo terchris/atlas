@@ -47,15 +47,15 @@ Three phases, estimated **~1.5–2 h**. The investigation's design work is done;
 
 ### Tasks
 
-- [ ] 1.1 Update `atlas-data-repo/dbt/models/dimensions/dim_chapter.sql` — add `chapter_subtype` to the SELECT list. Each contributing `supply__*_*` staging model provides the column (either a real value or `NULL::TEXT` as a placeholder) so the UNION type-aligns.
-- [ ] 1.2 Update `atlas-data-repo/dbt/models/supply/supply__redcross_branches.sql` — add `NULL::TEXT as chapter_subtype` to the SELECT. No RØFF-specific subtyping yet per investigation §B.2; that's a future pass.
-- [ ] 1.3 Update `atlas-data-repo/dbt/models/dimensions/schema.yml` for `dim_chapter` — add `chapter_subtype` entry with description: "Optional subtype for non-geographic chapters. NULL = normal geographic chapter. Vocabulary (`youth-political`, `youth-health`, `student`, `hospital`, `umbrella`) is free-text in v1; promoted to `accepted_values` once 3+ NGOs populate it consistently." No data tests in v1.
+- [ ] 1.1 Update `atlas-data/dbt/models/dimensions/dim_chapter.sql` — add `chapter_subtype` to the SELECT list. Each contributing `supply__*_*` staging model provides the column (either a real value or `NULL::TEXT` as a placeholder) so the UNION type-aligns.
+- [ ] 1.2 Update `atlas-data/dbt/models/supply/supply__redcross_branches.sql` — add `NULL::TEXT as chapter_subtype` to the SELECT. No RØFF-specific subtyping yet per investigation §B.2; that's a future pass.
+- [ ] 1.3 Update `atlas-data/dbt/models/dimensions/schema.yml` for `dim_chapter` — add `chapter_subtype` entry with description: "Optional subtype for non-geographic chapters. NULL = normal geographic chapter. Vocabulary (`youth-political`, `youth-health`, `student`, `hospital`, `umbrella`) is free-text in v1; promoted to `accepted_values` once 3+ NGOs populate it consistently." No data tests in v1.
 - [ ] 1.4 Run `dbt build --select +dim_chapter`. Sanity-check with `dbt show --inline "select count(*), count(chapter_subtype) from marts.dim_chapter"` — `chapter_subtype` is all NULL for Red Cross in v1.
 
 ### Validation
 
 ```bash
-cd atlas-data-repo/dbt
+cd atlas-data/dbt
 uv run --env-file ../ingest/.env dbt build --select +dim_chapter
 uv run --env-file ../ingest/.env dbt show --inline "select chapter_id, name, chapter_subtype from marts.dim_chapter limit 5"
 ```
@@ -68,7 +68,7 @@ User confirms: the column exists on `dim_chapter`, all values NULL.
 
 ### Tasks
 
-- [ ] 2.1 Create `atlas-data-repo/dbt/models/marts/chapter_kommune_coverage.sql`:
+- [ ] 2.1 Create `atlas-data/dbt/models/marts/chapter_kommune_coverage.sql`:
   ```sql
   {{ config(materialized='table', schema='marts', indexes=[
     {'columns': ['chapter_id']},
@@ -89,7 +89,7 @@ User confirms: the column exists on `dim_chapter`, all values NULL.
   )
   select * from all_coverage
   ```
-- [ ] 2.2 Create `atlas-data-repo/dbt/models/supply/supply__redcross_chapter_kommune_coverage.sql` — rolls up `parent_chapter_id` → child `kommune_nr` for Red Cross's 19 distrikter:
+- [ ] 2.2 Create `atlas-data/dbt/models/supply/supply__redcross_chapter_kommune_coverage.sql` — rolls up `parent_chapter_id` → child `kommune_nr` for Red Cross's 19 distrikter:
   ```sql
   {{ config(materialized='view', schema='marts') }}
 
@@ -131,7 +131,7 @@ User confirms: the column exists on `dim_chapter`, all values NULL.
 ### Validation
 
 ```bash
-cd atlas-data-repo/dbt
+cd atlas-data/dbt
 uv run --env-file ../ingest/.env dbt build --select +chapter_kommune_coverage
 uv run --env-file ../ingest/.env dbt show --inline "
   select count(distinct chapter_id) as distrikter_with_coverage,
@@ -152,14 +152,14 @@ User confirms: coverage rows exist for Red Cross distrikter.
 - [ ] 3.1 Extend [`docs/stack/naming-conventions.md`](../../../stack/naming-conventions.md):
   - Add `chapter_subtype` to Canonical vocabulary: list the 5-value v1 vocabulary (`youth-political`, `youth-health`, `student`, `hospital`, `umbrella`) and note it's free-text in v1, promoted to `accepted_values` once 3+ NGOs use it.
   - Add `chapter_kommune_coverage` to Model naming: mention it's a link table in `marts/` following the per-source staging + UNION ALL pattern.
-- [ ] 3.2 Regenerate the ERD: `cd atlas-data-repo/dbt && ./regenerate-erd.sh`. Verify `CHAPTER_KOMMUNE_COVERAGE` appears in `docs/stack/erd.md` with edges to `DIM_CHAPTER` and `DIM_KOMMUNE`.
+- [ ] 3.2 Regenerate the ERD: `cd atlas-data/dbt && ./regenerate-erd.sh`. Verify `CHAPTER_KOMMUNE_COVERAGE` appears in `docs/stack/erd.md` with edges to `DIM_CHAPTER` and `DIM_KOMMUNE`.
 - [ ] 3.3 Final gates: `npm run typecheck` + `npm test` in ingest (tests unchanged; should stay green) + `dbt build` (full; verify PASS increased vs the pre-plan baseline of 526).
 - [ ] 3.4 Move this plan from `plans/backlog/` to `plans/completed/`. Update Status to `Completed`, add completion date, one-line shipped-summary.
 
 ### Validation
 
 ```bash
-cd atlas-data-repo/ingest && npm run typecheck && npm test
+cd atlas-data/ingest && npm run typecheck && npm test
 cd ../dbt && uv run --env-file ../ingest/.env dbt build
 grep -A3 "CHAPTER_KOMMUNE_COVERAGE" ../../docs/stack/erd.md | head -8
 ```
@@ -193,15 +193,15 @@ User confirms ERD has the new node; dbt build is green.
 ## Files to Modify
 
 **New files:**
-- `atlas-data-repo/dbt/models/marts/chapter_kommune_coverage.sql`
-- `atlas-data-repo/dbt/models/supply/supply__redcross_chapter_kommune_coverage.sql`
+- `atlas-data/dbt/models/marts/chapter_kommune_coverage.sql`
+- `atlas-data/dbt/models/supply/supply__redcross_chapter_kommune_coverage.sql`
 
 **Modified files:**
-- `atlas-data-repo/dbt/models/dimensions/dim_chapter.sql` — add `chapter_subtype` to SELECT.
-- `atlas-data-repo/dbt/models/dimensions/schema.yml` — column description for new field.
-- `atlas-data-repo/dbt/models/supply/supply__redcross_branches.sql` — add `NULL::TEXT as chapter_subtype` to SELECT.
-- `atlas-data-repo/dbt/models/supply/schema.yml` — entry for `supply__redcross_chapter_kommune_coverage`.
-- `atlas-data-repo/dbt/models/marts/schema.yml` — entry for `chapter_kommune_coverage` with all tests.
+- `atlas-data/dbt/models/dimensions/dim_chapter.sql` — add `chapter_subtype` to SELECT.
+- `atlas-data/dbt/models/dimensions/schema.yml` — column description for new field.
+- `atlas-data/dbt/models/supply/supply__redcross_branches.sql` — add `NULL::TEXT as chapter_subtype` to SELECT.
+- `atlas-data/dbt/models/supply/schema.yml` — entry for `supply__redcross_chapter_kommune_coverage`.
+- `atlas-data/dbt/models/marts/schema.yml` — entry for `chapter_kommune_coverage` with all tests.
 - `docs/stack/naming-conventions.md` — new entries per Phase 3.1.
 - `docs/stack/erd.md` — regenerated by `regenerate-erd.sh`.
 

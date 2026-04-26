@@ -73,19 +73,19 @@ The "no PII" rule of Q-priv-4 (in the investigation) is interpreted via this two
 
 Atlas owns the *shape*. Where the *SQL* lives depends on whether the source itself is a shared standard:
 
-- **Standards-based source (e.g. FRR)** — every NGO consumes it in the same shape, so the staging + mart SQL is identical across NGOs. The SQL lives in `atlas-data-repo/dbt/`. Multi-NGO coexistence is via the `ngo_orgnr` column in `private_raw` (the ingest writes it; the mart preserves it). Models are tagged `private` so operators can `dbt build --exclude tag:private` if they want to.
+- **Standards-based source (e.g. FRR)** — every NGO consumes it in the same shape, so the staging + mart SQL is identical across NGOs. The SQL lives in `atlas-data/dbt/`. Multi-NGO coexistence is via the `ngo_orgnr` column in `private_raw` (the ingest writes it; the mart preserves it). Models are tagged `private` so operators can `dbt build --exclude tag:private` if they want to.
 - **NGO-specific source (Layer 3)** — bespoke per NGO. SQL lives in the NGO's private repo at `atlas-private-data-repo/<ngo>/dbt/`.
 
 | What | Where |
 |---|---|
 | Shape definition (this doc) | `docs/stack/private-marts-shapes.md` — public Atlas repo |
-| Standards-based migration (e.g. `private_raw.frr_resources`) | `atlas-data-repo/migrations/0NN_private_raw_<source>.sql` |
-| Standards-based ingest (NGO-agnostic, scans per-NGO data folders) | `atlas-data-repo/ingest/src/sources/<source>/` |
+| Standards-based migration (e.g. `private_raw.frr_resources`) | `atlas-data/migrations/0NN_private_raw_<source>.sql` |
+| Standards-based ingest (NGO-agnostic, scans per-NGO data folders) | `atlas-data/ingest/src/sources/<source>/` |
 | Per-NGO data files for a standards-based source | `atlas-private-data-repo/<ngo>/<source>/*.json` (gitignored) |
 | Synthetic data files for onboarding + CI | `atlas-private-data-repo/sample-ngo/<source>/*.json` (committed) |
-| Standards-based staging (`supply__<source>_*.sql`) | `atlas-data-repo/dbt/models/supply/`, tagged `private` |
-| Standards-based `private_marts.*` models | `atlas-data-repo/dbt/models/private_marts/`, tagged `private` |
-| Standards-based `schema.yml` tests | `atlas-data-repo/dbt/models/private_marts/schema.yml` |
+| Standards-based staging (`supply__<source>_*.sql`) | `atlas-data/dbt/models/supply/`, tagged `private` |
+| Standards-based `private_marts.*` models | `atlas-data/dbt/models/private_marts/`, tagged `private` |
+| Standards-based `schema.yml` tests | `atlas-data/dbt/models/private_marts/schema.yml` |
 | NGO-specific staging + mart (Layer 3) | `atlas-private-data-repo/<ngo>/dbt/models/{supply,private_marts_<ngo>}/` |
 | Shared UI components reading `private_marts.*` | `src/components/private/` — public Atlas repo (mounted only when `ATLAS_MODE=private`) |
 | Per-NGO UI routes | `app/private/<ngo>/` — public Atlas repo |
@@ -98,7 +98,7 @@ Atlas owns the *shape*. Where the *SQL* lives depends on whether the source itse
 
 Alternatives considered and rejected for v1:
 
-- **Var-gated models in atlas-data-repo with conditional Jinja** — more complex than tag-based exclusion; adds nothing.
+- **Var-gated models in atlas-data with conditional Jinja** — more complex than tag-based exclusion; adds nothing.
 - **A shared `atlas-private-marts` dbt package that NGOs import** — most "proper" dbt approach, but real complexity for ~1 standards-based source.
 
 ---
@@ -335,7 +335,7 @@ For NGOs that don't participate in FRR, org-unit display surfaces (if needed) li
 Because Atlas adopts FRR's schema verbatim, the staging is mostly column-rename + denormalisation of `latest position` and `latest status` from the nested arrays. There is **one** staging per FRR-shape table (not per NGO) — multi-NGO coexistence comes from the `ngo_orgnr` column in raw, populated by the ingest from each per-NGO data folder.
 
 ```sql
--- atlas-data-repo/dbt/models/supply/supply__frr_resources.sql
+-- atlas-data/dbt/models/supply/supply__frr_resources.sql
 {{ config(materialized='view', schema='private_marts', tags=['private']) }}
 
 -- Maps raw FRR rows to the canonical frr_resources shape.
@@ -398,7 +398,7 @@ left join {{ ref('dim_fylke') }}   f on f.fylke_name   = lp.fylke_navn   and f.i
 The `private_marts.frr_resources.sql` model is then a thin passthrough:
 
 ```sql
--- atlas-data-repo/dbt/models/private_marts/frr_resources.sql
+-- atlas-data/dbt/models/private_marts/frr_resources.sql
 {{ config(materialized='table', schema='private_marts', tags=['private']) }}
 
 select * from {{ ref('supply__frr_resources') }}
@@ -406,7 +406,7 @@ select * from {{ ref('supply__frr_resources') }}
 
 No UNION ALL — the multi-NGO data is already merged in `private_raw.frr_resources` via the `ngo_orgnr` column. The same shape applies to `frr_resource_position`, `frr_resource_status`, `frr_resource_phone`.
 
-The NGO-agnostic ingest at `atlas-data-repo/ingest/src/sources/frr/index.ts` discovers every `atlas-private-data-repo/<ngo>/frr/*.json` and writes each row with the right `ngo_orgnr` (looked up from `atlas-ngo-landscape/landscape.json`).
+The NGO-agnostic ingest at `atlas-data/ingest/src/sources/frr/index.ts` discovers every `atlas-private-data-repo/<ngo>/frr/*.json` and writes each row with the right `ngo_orgnr` (looked up from `atlas-ngo-landscape/landscape.json`).
 
 ---
 
@@ -418,7 +418,7 @@ When a new "every NGO has this" private-data category emerges (members, training
 2. If no external standard exists (the org-units case — each NGO uses their own HR system), define a **conformed Atlas shape** that's intentionally minimal. Each NGO's staging maps their internal source into the shape; source-specific extras drop at staging time (or land in `private_marts_<ngo>.*` as Layer 3 if needed).
 3. Append a new section to this doc with the canonical table spec.
 4. Document the conformance rules specific to that shape (PK, joins to public marts, PII filter, source-specific extras handling).
-5. **If the source is standards-based** (every NGO consumes it identically): add migration + ingest + dbt models to `atlas-data-repo/`, tagged `private`, with multi-NGO coexistence via an `ngo_orgnr` column populated from per-NGO data folders under `atlas-private-data-repo/<ngo>/<source>/`. Add a synthetic example to `atlas-private-data-repo/sample-ngo/<source>/`.
+5. **If the source is standards-based** (every NGO consumes it identically): add migration + ingest + dbt models to `atlas-data/`, tagged `private`, with multi-NGO coexistence via an `ngo_orgnr` column populated from per-NGO data folders under `atlas-private-data-repo/<ngo>/<source>/`. Add a synthetic example to `atlas-private-data-repo/sample-ngo/<source>/`.
 6. **If the source is NGO-specific** (Layer 3): the first NGO with the data ships an ingest + a `supply__<ngo>_<entity>.sql` + a `private_marts_<ngo>.<table>.sql` in their own private repo.
 7. UI components reading the new shape go in `src/components/private/` in the public Atlas repo so they're available to every NGO.
 

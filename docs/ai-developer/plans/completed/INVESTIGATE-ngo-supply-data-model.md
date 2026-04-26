@@ -190,7 +190,7 @@ Recommendation: Q22. Postal code is the deterministic primary; SSB Klass histori
 
 ### D. What's the ingestion pattern per NGO?
 
-**[Q23]** The existing TypeScript ingest in [`atlas-data-repo/ingest/src/sources/`](../../../../atlas-data-repo/ingest/src/sources/) has 19 source folders, one per data source. Same pattern fits here:
+**[Q23]** The existing TypeScript ingest in [`atlas-data/ingest/src/sources/`](../../../../atlas-data/ingest/src/sources/) has 19 source folders, one per data source. Same pattern fits here:
 
 - `ingest/src/sources/redcross-branches/` — fetches the Red Cross API, writes `raw.redcross_branches` and `raw.redcross_branch_activities`.
 - `ingest/src/sources/folkehjelp-chapters/` — HTML scrape of folkehjelp.no chapter list, writes `raw.folkehjelp_chapters` and `raw.folkehjelp_chapter_activities`.
@@ -524,7 +524,7 @@ The data model was discussed and refined in a planning conversation. Decisions l
 ## Open Questions
 
 1. ~~**[Q39]**~~ Does the Red Cross API require a key for live polls? **Resolved (2026-04-23)**: yes. For v1, ingest from the static JSON dump at [`docs/research/api-getOrganizations-output-21apr26.json`](../../../research/api-getOrganizations-output-21apr26.json). Live API polling is deferred to a separate workstream — a future PLAN will write the live-poll client when access is granted.
-2. ~~**[Q40]**~~ Where do `dim_ngo` rows come from initially? **Resolved (2026-04-23)**: convert [`docs/research/ngo-landscape.md`](../../../research/ngo-landscape.md) into a structured JSON file (one entry per NGO, with `orgnr`, `slug`, `name`, `tier`, `chapter_data_shape`, `primary_focus`, etc.). An import script reads the JSON and produces `dbt/seeds/dim_ngo.csv`. The JSON is the human-edited source-of-truth; the CSV is what dbt loads. Lives at e.g. `atlas-data-repo/ingest/src/seed-sources/atlas-ngo-landscape/landscape.json` + `index.ts` that reads it and writes the seed.
+2. ~~**[Q40]**~~ Where do `dim_ngo` rows come from initially? **Resolved (2026-04-23)**: convert [`docs/research/ngo-landscape.md`](../../../research/ngo-landscape.md) into a structured JSON file (one entry per NGO, with `orgnr`, `slug`, `name`, `tier`, `chapter_data_shape`, `primary_focus`, etc.). An import script reads the JSON and produces `dbt/seeds/dim_ngo.csv`. The JSON is the human-edited source-of-truth; the CSV is what dbt loads. Lives at e.g. `atlas-data/ingest/src/seed-sources/atlas-ngo-landscape/landscape.json` + `index.ts` that reads it and writes the seed.
 3. ~~**[Q41]**~~ How granular should the service-category vocabulary be? **Resolved**: ~22 categories — see Appendix A.
 4. ~~**[Q42]**~~ Should `fact_kommune_supply` be long-format like `fact_kommune_indicators`? **Resolved**: deferred. The granular `fact_chapter_activities` answers the same questions; rollup added only if needed.
 5. **[Q43]** Do we model the institution sub-array (N.K.S., Frelsesarmeen, Kirkens Bymisjon)? Defer to a third per-NGO ingest.
@@ -590,8 +590,8 @@ The data model was discussed and refined in a planning conversation. Decisions l
 - `marts.mart_coverage_gap` — `INVESTIGATE-coverage-gap-mart.md` (not yet written).
 
 **New ingest folders:**
-- `atlas-data-repo/ingest/src/seed-sources/atlas-ngo-landscape/` (PLAN-001)
-- `atlas-data-repo/ingest/src/sources/redcross-branches/` (PLAN-002)
+- `atlas-data/ingest/src/seed-sources/atlas-ngo-landscape/` (PLAN-001)
+- `atlas-data/ingest/src/sources/redcross-branches/` (PLAN-002)
 
 **Documentation impact:**
 - Extended [`docs/stack/naming-conventions.md`](../../../stack/naming-conventions.md) with the new vocabulary: `ngo_orgnr`, `ngo_slug`, `tier`, `chapter_data_shape`, `primary_focus`, `service_category_code`, `chapter_id`, `chapter_level`, `parent_chapter_id`, `chapter_orgnr`, `activity_id`, `canonical_name`, `local_activity_name`.

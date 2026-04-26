@@ -81,7 +81,7 @@ User confirms the renamed references read consistently and PLAN-A — when draft
 
 - **No CI gate / automated check.** Convention compliance is enforced socially by reviewing new `marts.*` tables in PRs, like the rest of `naming-conventions.md`.
 - **Existing tables are grandfathered.** The convention reads forward; `dim_kommune` and `ref_ssb_family_type` already conform. No rename, no migration.
-- **The seed schema.yml from PLAN-003** (`atlas-data-repo/dbt/seeds/schema.yml`) doesn't need to change — it already documents the existing five seeds. New seeds added under the convention will get entries there per the existing pattern.
+- **The seed schema.yml from PLAN-003** (`atlas-data/dbt/seeds/schema.yml`) doesn't need to change — it already documents the existing five seeds. New seeds added under the convention will get entries there per the existing pattern.
 - **The ERD ([`docs/stack/erd.md`](../../../stack/erd.md)) doesn't change** — it auto-regenerates from the dbt manifest when new tables are added; the convention only changes table names, not how dbterd reads them.
 
 ---

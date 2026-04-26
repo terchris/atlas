@@ -24,9 +24,9 @@ Six phases, estimated **~10–12 h**. The investigation's 6–8h estimate pre-da
 
 **Built in PLAN-001:**
 
-- **Dependencies**: `crawlee`, `fast-json-stable-stringify` added to `atlas-data-repo/ingest/package.json`. Dev deps: `vitest`.
+- **Dependencies**: `crawlee`, `fast-json-stable-stringify` added to `atlas-data/ingest/package.json`. Dev deps: `vitest`.
 - **Migrations**: `023_raw_ingest_runs.sql`, `024_raw_sitemap_log.sql`.
-- **Shared library** under `atlas-data-repo/ingest/src/lib/scraping/`:
+- **Shared library** under `atlas-data/ingest/src/lib/scraping/`:
   - `ua.ts` — env-driven UA builder, hard-fail on missing `ATLAS_SCRAPE_CONTACT_EMAIL`.
   - `record_hash.ts` — canonical JSON + NFC + sha256 hasher.
   - `html_raw_hash.ts` — body-level hasher (audit-only).
@@ -40,10 +40,10 @@ Six phases, estimated **~10–12 h**. The investigation's 6–8h estimate pre-da
   - `__tests__/` folder co-located under `src/lib/scraping/`.
   - Pure-function coverage: hashers, UA builder, robots parser, `decideFetch` reason codes, `upsertRecord` input validation. DB-touching code is verified end-to-end (see Implementation Notes).
 - **dbt model**: `mart_ingest_health` (3-column minimal view per Q14).
-- **`.gitignore`** entry for `.crawlee-cache/` under `atlas-data-repo/ingest/`.
+- **`.gitignore`** entry for `.crawlee-cache/` under `atlas-data/ingest/`.
 - **Documentation**:
-  - New `atlas-data-repo/ingest/README.md` listing the three env vars (§F).
-  - New `atlas-data-repo/ingest/src/sources/README.md` documenting the per-source folder convention (§B.3).
+  - New `atlas-data/ingest/README.md` listing the three env vars (§F).
+  - New `atlas-data/ingest/src/sources/README.md` documenting the per-source folder convention (§B.3).
   - Extended [`docs/stack/naming-conventions.md`](../../../stack/naming-conventions.md) with `source_slug`, `record_hash`, `html_raw_hash`, `url`, `raw.ingest_runs`, `raw.sitemap_log`.
 
 **NOT built in PLAN-001:**
@@ -62,15 +62,15 @@ Six phases, estimated **~10–12 h**. The investigation's 6–8h estimate pre-da
 - [x] 1.1 Install runtime deps: `crawlee ^3.16.0`, `fast-json-stable-stringify ^2.1.0`. Major-pinned via caret per existing project convention.
 - [x] 1.2 Install dev deps: `vitest ^4.1.5`.
 - [x] 1.3 Added `"test": "vitest run --passWithNoTests"` and `"test:watch": "vitest"` to `package.json` scripts. The `--passWithNoTests` flag makes the empty-suite interim state (pre-Phase 3) a clean exit-0 instead of exit-1.
-- [x] 1.4 Created `atlas-data-repo/ingest/vitest.config.ts` with the include glob from the PLAN.
+- [x] 1.4 Created `atlas-data/ingest/vitest.config.ts` with the include glob from the PLAN.
 - [x] 1.5 Created `src/lib/scraping/` + `__tests__/` subfolder + `index.ts` stub. Stub contains only a module-level comment listing the Phase 3/4 exports to land here + `export {};` to keep TypeScript happy until real exports land.
-- [x] 1.6 Added `.crawlee-cache/` to `atlas-data-repo/ingest/.gitignore` (file already existed; appended the new entry).
-- [x] 1.7 Extended the **existing** `atlas-data-repo/ingest/README.md` with an "Environment variables" section (inserted between "Install" and "Run one source"). **Deviation from plan**: the PLAN said "create" but the README already existed with substantive content describing the current ingest flow — extending it was the correct action. Env-var table matches §F of the investigation, with a clarifying note that non-scraper modules (SSB, FHI, Brreg, Red Cross API) don't read these variables.
+- [x] 1.6 Added `.crawlee-cache/` to `atlas-data/ingest/.gitignore` (file already existed; appended the new entry).
+- [x] 1.7 Extended the **existing** `atlas-data/ingest/README.md` with an "Environment variables" section (inserted between "Install" and "Run one source"). **Deviation from plan**: the PLAN said "create" but the README already existed with substantive content describing the current ingest flow — extending it was the correct action. Env-var table matches §F of the investigation, with a clarifying note that non-scraper modules (SSB, FHI, Brreg, Red Cross API) don't read these variables.
 
 ### Validation
 
 ```bash
-cd atlas-data-repo/ingest
+cd atlas-data/ingest
 npm run typecheck
 npm test   # should run zero tests cleanly — "No test files found" is acceptable
 ```
@@ -86,12 +86,12 @@ User confirms phase is complete.
 - [x] 2.1 Created `023_raw_ingest_runs.sql` with schema + partial unique index `raw_ingest_runs_one_inprogress_per_source` on `(source_slug) WHERE finished_at IS NULL`. Made `finished_at` and `exit_code` nullable so the row can be inserted at run-start with `finished_at = NULL` (in-progress marker).
 - [x] 2.2 Created `024_raw_sitemap_log.sql` with composite PK `(source_slug, url)` and the sitemap_log schema from §C.2. Table comment notes that HTML-index sources also use this table with `lastmod = NULL`.
 - [x] 2.3 `npm run migrate` applied both (023 in 10ms, 024 in 4ms). `file_count: 24` total.
-- [x] 2.4 Created new `atlas-data-repo/dbt/models/shared/sources.yml` with both tables. dbt now sees 23 sources (was 21); `dbt parse` clean.
+- [x] 2.4 Created new `atlas-data/dbt/models/shared/sources.yml` with both tables. dbt now sees 23 sources (was 21); `dbt parse` clean.
 
 ### Validation
 
 ```bash
-cd atlas-data-repo/ingest
+cd atlas-data/ingest
 npm run migrate
 psql $DATABASE_URL -c "\d raw.ingest_runs"
 psql $DATABASE_URL -c "\d raw.sitemap_log"
@@ -119,7 +119,7 @@ Both tables exist, the partial unique index exists. User confirms phase is compl
 ### Validation
 
 ```bash
-cd atlas-data-repo/ingest
+cd atlas-data/ingest
 npm run typecheck
 npm test -- src/lib/scraping/__tests__/
 ```
@@ -143,7 +143,7 @@ All tests pass; `npm run typecheck` clean. User confirms.
 ### Validation
 
 ```bash
-cd atlas-data-repo/ingest
+cd atlas-data/ingest
 npm run typecheck
 npm test
 ```
@@ -158,13 +158,13 @@ All tests pass. `npm run typecheck` clean. User confirms.
 
 - [x] 5.1 `mart_ingest_health.sql` created as a **view** materialized in `marts.*`. Selects `distinct on (source_slug)` ordered by `finished_at desc` with a `where finished_at is not null` clause so in-progress rows never leak through. SQL comment at the top documents the empty-state expectation per [P1S.Q4].
 - [x] 5.2 schema.yml entry added. Five data tests: `not_null` + `unique` on `source_slug`, `not_null` on `last_run_at`, `not_null` + `accepted_values: ['ok', 'fail']` on `last_status`. Went slightly beyond the PLAN's "+3" estimate to cover presence of all three columns, not just three assertions.
-- [x] 5.3 ERD regenerated via `atlas-data-repo/dbt/regenerate-erd.sh`. `docs/stack/erd.md` now contains `MODEL.ATLAS.MART_INGEST_HEALTH` with all three columns. ERD entity count: 36 → 37.
+- [x] 5.3 ERD regenerated via `atlas-data/dbt/regenerate-erd.sh`. `docs/stack/erd.md` now contains `MODEL.ATLAS.MART_INGEST_HEALTH` with all three columns. ERD entity count: 36 → 37.
 - [x] 5.4 `dbt build` clean: **PASS=526 WARN=19 ERROR=0 SKIP=0 TOTAL=545** (was 520 baseline from PLAN-002 + 1 model + 5 tests = 526 ✓). `dbt show --inline "select * from marts.mart_ingest_health"` returns empty — expected.
 
 ### Validation
 
 ```bash
-cd atlas-data-repo/dbt
+cd atlas-data/dbt
 uv run --env-file ../ingest/.env dbt build
 uv run --env-file ../ingest/.env dbt show --inline "select * from marts.mart_ingest_health"
 ```
@@ -177,9 +177,9 @@ Empty result is expected (no scrapers have written to `raw.ingest_runs` yet). `d
 
 ### Tasks
 
-- [x] 6.1 Extended the existing `atlas-data-repo/ingest/src/sources/README.md` with a new **"Scraping sources — additional convention"** section covering the extended folder layout (`discover.ts` / `parse.ts` / `overrides.json` / `types.ts` / `__tests__/fixtures/`), file responsibilities (Q25), the §C.5 mandatory raw-table columns, migration naming, env vars, and a 7-step new-scraper checklist. Also added the missing `redcross-branches` row to the implemented-sources table.
+- [x] 6.1 Extended the existing `atlas-data/ingest/src/sources/README.md` with a new **"Scraping sources — additional convention"** section covering the extended folder layout (`discover.ts` / `parse.ts` / `overrides.json` / `types.ts` / `__tests__/fixtures/`), file responsibilities (Q25), the §C.5 mandatory raw-table columns, migration naming, env vars, and a 7-step new-scraper checklist. Also added the missing `redcross-branches` row to the implemented-sources table.
 - [x] 6.2 Extended [`docs/stack/naming-conventions.md`](../../../stack/naming-conventions.md) with a new **"Raw-schema scraper conventions"** section covering `source_slug`, `url`, `record_hash`, `html_raw_hash`, `is_active`, `lastmod`, and the two shared cross-source tables. Noted on the existing `source_id` canonical row that it's renamed from `raw.*.source_slug` at the dbt passthrough — which caught a small inconsistency in `mart_ingest_health` that was then fixed (the mart now exposes `source_id`, renamed at the view boundary).
-- [x] 6.3 Added a scraper-specific sub-block to the "Prerequisites reading" list in [`atlas-data-repo/CONTRIBUTING.md`](../../../../atlas-data-repo/CONTRIBUTING.md) pointing at the investigation, the sources/README scraper section, and this PLAN's completed copy.
+- [x] 6.3 Added a scraper-specific sub-block to the "Prerequisites reading" list in [`atlas-data/CONTRIBUTING.md`](../../../../atlas-data/CONTRIBUTING.md) pointing at the investigation, the sources/README scraper section, and this PLAN's completed copy.
 - [x] 6.4 All four gates green:
   - `npm run typecheck` — clean
   - `npm test` — 49 passing, 0 skipped, 0 failing (487ms)
@@ -195,14 +195,14 @@ All gates pass. User confirms by reading the three new README/docs files and agr
 
 ## Acceptance Criteria
 
-- [ ] `npm run typecheck` clean in `atlas-data-repo/ingest/`.
+- [ ] `npm run typecheck` clean in `atlas-data/ingest/`.
 - [ ] `npm test` passes (vitest; shared-lib pure tests).
 - [ ] `npm run migrate` applies both new migrations cleanly (and is idempotent on re-run).
 - [ ] `dbt build` passes; `marts.mart_ingest_health` exists and is queryable (empty until first scraper runs).
 - [ ] The partial unique index on `raw.ingest_runs (source_slug) WHERE finished_at IS NULL` exists and rejects concurrent inserts.
-- [ ] Three env vars are documented in `atlas-data-repo/ingest/README.md`. Running any script with `ATLAS_SCRAPE_CONTACT_EMAIL` unset yields a clear startup error.
-- [ ] `.crawlee-cache/` is gitignored under `atlas-data-repo/ingest/`.
-- [ ] Per-source folder convention is documented in `atlas-data-repo/ingest/src/sources/README.md`.
+- [ ] Three env vars are documented in `atlas-data/ingest/README.md`. Running any script with `ATLAS_SCRAPE_CONTACT_EMAIL` unset yields a clear startup error.
+- [ ] `.crawlee-cache/` is gitignored under `atlas-data/ingest/`.
+- [ ] Per-source folder convention is documented in `atlas-data/ingest/src/sources/README.md`.
 - [ ] `docs/stack/naming-conventions.md` covers the new columns and tables.
 - [ ] No per-NGO scraper is implemented as part of this PLAN (that's a follow-up).
 
@@ -223,34 +223,34 @@ All gates pass. User confirms by reading the three new README/docs files and agr
 ## Files to Modify
 
 **New files:**
-- `atlas-data-repo/ingest/src/lib/scraping/ua.ts`
-- `atlas-data-repo/ingest/src/lib/scraping/record_hash.ts`
-- `atlas-data-repo/ingest/src/lib/scraping/html_raw_hash.ts`
-- `atlas-data-repo/ingest/src/lib/scraping/robots.ts`
-- `atlas-data-repo/ingest/src/lib/scraping/sitemap_log.ts`
-- `atlas-data-repo/ingest/src/lib/scraping/ingest_runs.ts`
-- `atlas-data-repo/ingest/src/lib/scraping/upsert_record.ts`
-- `atlas-data-repo/ingest/src/lib/scraping/kv.ts`
-- `atlas-data-repo/ingest/src/lib/scraping/index.ts`
-- `atlas-data-repo/ingest/src/lib/scraping/__tests__/ua.test.ts`
-- `atlas-data-repo/ingest/src/lib/scraping/__tests__/record_hash.test.ts`
-- `atlas-data-repo/ingest/src/lib/scraping/__tests__/html_raw_hash.test.ts`
-- `atlas-data-repo/ingest/src/lib/scraping/__tests__/robots.test.ts`
-- `atlas-data-repo/ingest/src/lib/scraping/__tests__/sitemap_log.test.ts` — `decideFetch` pure-logic tests
-- `atlas-data-repo/ingest/src/lib/scraping/__tests__/upsert_record.test.ts` — input-validation tests
-- `atlas-data-repo/ingest/vitest.config.ts`
-- `atlas-data-repo/ingest/README.md`
-- `atlas-data-repo/ingest/src/sources/README.md`
-- `atlas-data-repo/migrations/023_raw_ingest_runs.sql`
-- `atlas-data-repo/migrations/024_raw_sitemap_log.sql`
-- `atlas-data-repo/dbt/models/marts/mart_ingest_health.sql`
+- `atlas-data/ingest/src/lib/scraping/ua.ts`
+- `atlas-data/ingest/src/lib/scraping/record_hash.ts`
+- `atlas-data/ingest/src/lib/scraping/html_raw_hash.ts`
+- `atlas-data/ingest/src/lib/scraping/robots.ts`
+- `atlas-data/ingest/src/lib/scraping/sitemap_log.ts`
+- `atlas-data/ingest/src/lib/scraping/ingest_runs.ts`
+- `atlas-data/ingest/src/lib/scraping/upsert_record.ts`
+- `atlas-data/ingest/src/lib/scraping/kv.ts`
+- `atlas-data/ingest/src/lib/scraping/index.ts`
+- `atlas-data/ingest/src/lib/scraping/__tests__/ua.test.ts`
+- `atlas-data/ingest/src/lib/scraping/__tests__/record_hash.test.ts`
+- `atlas-data/ingest/src/lib/scraping/__tests__/html_raw_hash.test.ts`
+- `atlas-data/ingest/src/lib/scraping/__tests__/robots.test.ts`
+- `atlas-data/ingest/src/lib/scraping/__tests__/sitemap_log.test.ts` — `decideFetch` pure-logic tests
+- `atlas-data/ingest/src/lib/scraping/__tests__/upsert_record.test.ts` — input-validation tests
+- `atlas-data/ingest/vitest.config.ts`
+- `atlas-data/ingest/README.md`
+- `atlas-data/ingest/src/sources/README.md`
+- `atlas-data/migrations/023_raw_ingest_runs.sql`
+- `atlas-data/migrations/024_raw_sitemap_log.sql`
+- `atlas-data/dbt/models/marts/mart_ingest_health.sql`
 
 **Modified files:**
-- `atlas-data-repo/ingest/package.json` — new deps, new scripts.
-- `atlas-data-repo/ingest/.gitignore` — add `.crawlee-cache/` (create file if absent).
-- `atlas-data-repo/dbt/models/marts/schema.yml` — entry for `mart_ingest_health`.
-- `atlas-data-repo/dbt/models/shared/sources.yml` — entries for `raw.ingest_runs` and `raw.sitemap_log` (new folder per [P1S.Q1]).
-- `atlas-data-repo/CONTRIBUTING.md` — cross-reference to this PLAN and its investigation.
+- `atlas-data/ingest/package.json` — new deps, new scripts.
+- `atlas-data/ingest/.gitignore` — add `.crawlee-cache/` (create file if absent).
+- `atlas-data/dbt/models/marts/schema.yml` — entry for `mart_ingest_health`.
+- `atlas-data/dbt/models/shared/sources.yml` — entries for `raw.ingest_runs` and `raw.sitemap_log` (new folder per [P1S.Q1]).
+- `atlas-data/CONTRIBUTING.md` — cross-reference to this PLAN and its investigation.
 - `docs/stack/naming-conventions.md` — new sections per §6.2.
 - `docs/stack/erd.md` — add `mart_ingest_health`, `raw.ingest_runs`, `raw.sitemap_log`.
 
@@ -260,7 +260,7 @@ All gates pass. User confirms by reading the three new README/docs files and agr
 
 All four items were implementation-level choices; all resolved before handing the plan to implementation.
 
-- ~~**[P1S.Q1]**~~ **`sources.yml` placement for the shared tables** → new `atlas-data-repo/dbt/models/shared/sources.yml`. Infrastructure tables aren't supply or indicators; they get their own folder. Decided 2026-04-24.
+- ~~**[P1S.Q1]**~~ **`sources.yml` placement for the shared tables** → new `atlas-data/dbt/models/shared/sources.yml`. Infrastructure tables aren't supply or indicators; they get their own folder. Decided 2026-04-24.
 - ~~**[P1S.Q2]**~~ **`robots-parser` dependency vs hand-rolled parser** → check npm for active maintenance and bundle size during Phase 3.4; prefer the dep if healthy, hand-roll (~30 lines of regex) if stale. Implementer's call. Decided 2026-04-24.
 - ~~**[P1S.Q3]**~~ **DB integration test harness** → not pursued in this PLAN. At Atlas's scale the DB-touching shared-lib code is short and mostly delegates to `postgres.js`; unit tests against a mocked DB would mostly test that `postgres.js` works. The DB path is verified end-to-end via Phase 2 migrate + Phase 5 dbt build + the first per-source PLAN's smoke test. Revisit with a discrete PLAN (likely testcontainers-postgres) if real bugs escape that coverage. Decided 2026-04-24.
 - ~~**[P1S.Q4]**~~ **Seed `raw.ingest_runs` with a dummy row** → no. Empty `mart_ingest_health` is the correct reflection of "no scrapers have run yet" and seed rows tend to become permanent mystery fixtures. Instead, add a SQL comment at the top of `mart_ingest_health.sql` explaining that empty output is expected (see Phase 5.1). Decided 2026-04-24.

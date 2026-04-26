@@ -70,6 +70,19 @@ Plus tertiary: Magnus (active volunteer QC), Henrik (corporate partnerships), Å
 ```
 ./
 ├── README.md                                — this file
+├── atlas-frontend/                          — Next.js App Router app (atlas.helpers.no)
+│   ├── app/                                 — App Router pages and layouts
+│   ├── src/                                 — shared code (components, lib)
+│   ├── public/                              — static assets
+│   ├── next.config.ts, tsconfig.json        — Next.js + TypeScript config
+│   ├── package.json                         — frontend deps (Node 20+)
+│   ├── postcss.config.mjs, components.json  — PostCSS, shadcn config
+│   └── design-tokens/                       — Digdir Designsystemet token sources
+├── atlas-data/                              — TypeScript ingest + dbt + raw migrations (writes marts.* in Postgres)
+│   ├── ingest/                              — one folder per upstream source under ingest/src/sources/
+│   ├── dbt/                                 — dbt Core project (raw.* → marts.*)
+│   └── migrations/                          — raw.* schema SQL, numbered 001_*.sql onwards
+├── atlas-private-data-repo/                 — per-NGO private data folders (sample-ngo committed; real NGOs gitignored)
 ├── website/                                 — public-facing documentation; Docusaurus-shaped, Docusaurus not yet installed
 │   ├── README.md                            — layout conventions, helpers-projects sister-site references
 │   └── docs/
