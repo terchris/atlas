@@ -26,7 +26,7 @@ And a non-negotiable crisis band surfaces sector-wide helplines (113, 112, 110, 
 
 ## Who it's for
 
-16 personas across three tiers — full detail in [`docs/research/personas.md`](docs/research/personas.md). Primary:
+16 personas across three tiers — full detail in [`website/docs/about/personas.md`](website/docs/about/personas.md). Primary:
 
 - **Kari** wants to help but doesn't know where → activity-first matching across orgs
 - **Jonas** wants to donate transparently → honest NGO comparison
@@ -53,13 +53,13 @@ Plus tertiary: Magnus (active volunteer QC), Henrik (corporate partnerships), Å
 - 14 Norwegian NGOs mapped in depth (4 Tier A with activities + indicator matrix; 8 Tier C with profiles; 2 Tier B-minus with profiles)
 - Formal data model ([`docs/research/common-schema.md`](docs/research/common-schema.md))
 - Design spec for the cross-org comparison surface ([`docs/research/compare-ngos-spec.md`](docs/research/compare-ngos-spec.md))
-- Sector landscape analysis ([`docs/research/ngo-landscape.md`](docs/research/ngo-landscape.md))
+- Sector landscape analysis ([`website/docs/sector/ngo-landscape.md`](website/docs/sector/ngo-landscape.md))
 - Tilskuddsmatcher feasibility research — verdict: feasible as v1 MVP ([`docs/research/tilskuddsmatcher-data-availability.md`](docs/research/tilskuddsmatcher-data-availability.md))
 - Data-source catalogue covering Norwegian public registries, international humanitarian sources, and per-activity need indicators
 
 ### What's next
 
-- Business-model decision (foundation grants + state contract + SaaS for internal tools, most likely — see [`docs/research/goal.md`](docs/research/goal.md))
+- Business-model decision (foundation grants + state contract + SaaS for internal tools, most likely — see [`website/docs/about/what-is-atlas.md`](website/docs/about/what-is-atlas.md))
 - Public-facing-first vs Lisa-first v1 scoping
 - Implementation: Next.js + TypeScript + [Digdir Designsystemet](https://designsystemet.no)
 
@@ -70,14 +70,26 @@ Plus tertiary: Magnus (active volunteer QC), Henrik (corporate partnerships), Å
 ```
 ./
 ├── README.md                                — this file
+├── website/                                 — public-facing documentation; Docusaurus-shaped, Docusaurus not yet installed
+│   ├── README.md                            — layout conventions, helpers-projects sister-site references
+│   └── docs/
+│       ├── index.md                         — landing page
+│       ├── about/                           — what Atlas is, who it's for
+│       │   ├── what-is-atlas.md             — what Atlas is and why
+│       │   └── personas.md                  — 16 personas across 3 tiers
+│       ├── sector/                          — Norwegian NGO sector context
+│       │   ├── ngo-landscape.md             — 35+ NGO sector map
+│       │   └── sector-research.md           — Frivillighetsbarometer + ISF findings
+│       ├── getting-started/                 — first-time orientation
+│       │   └── reading-a-row.md             — how to interpret a record in marts.fact_kommune_indicators
+│       ├── concepts/                        — canonical Atlas entities (planned)
+│       ├── measurements/                    — per-(source,metric) reference (planned)
+│       └── sources/                         — per-ingest-source provenance (planned)
 └── docs/
+    ├── ideas/                               — proposals being chewed on, pre-INVESTIGATE
     └── research/
         ├── api-getOrganizations-output-21apr26.json
         │                                    — raw Red Cross Organizations API dump (reference dataset)
-        ├── goal.md                          — what we're building, why, for whom
-        ├── personas.md                      — 16 personas across 3 tiers
-        ├── ngo-landscape.md                 — 35+ NGO sector map
-        ├── sector-research.md               — Frivillighetsbarometer + ISF findings
         ├── common-schema.md                 — formal data model
         ├── compare-ngos-spec.md             — Compare-NGOs page design spec
         ├── tilskuddsmatcher-data-availability.md
@@ -151,4 +163,4 @@ When implementation starts, contribution guidelines and code-style will go here.
 
 ## Licence
 
-TBD. Intent is an open licence for the code and CC BY (or equivalent) for the data research docs — consistent with the public-good positioning and open-source framing in `docs/research/goal.md`.
+TBD. Intent is an open licence for the code and CC BY (or equivalent) for the data research docs — consistent with the public-good positioning and open-source framing in [`website/docs/about/what-is-atlas.md`](website/docs/about/what-is-atlas.md).

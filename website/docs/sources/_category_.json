@@ -1,0 +1,8 @@
+{
+  "label": "Sources",
+  "position": 7,
+  "link": {
+    "type": "generated-index",
+    "description": "One page per upstream data source (SSB tables, FHI tables, NGO APIs, registry endpoints). Provenance, refresh cadence, methodology, links to the per-source ingest README in atlas-data-repo/."
+  }
+}

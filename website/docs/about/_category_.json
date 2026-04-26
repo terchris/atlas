@@ -1,0 +1,8 @@
+{
+  "label": "About Atlas",
+  "position": 2,
+  "link": {
+    "type": "generated-index",
+    "description": "What Atlas is, who it's for, and what we're trying to accomplish."
+  }
+}
