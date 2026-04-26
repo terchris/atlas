@@ -1,15 +1,10 @@
+---
+sidebar_position: 1
+---
+
 # Norwegian NGO landscape
 
-Research on the Norwegian NGO sector — who the large organisations are, what they focus on, how they are structured, and which of them could plug into the chapter-anchored framework we've built. Norges Røde Kors is included as the **reference case** against which structural fit is evaluated.
-
-Pairs with:
-- `data-sources.md` — Brreg, Lottstift, and other registries used here as the evidence base
-- `sector-research.md` — macro trends (Frivillighetsbarometeret, ISF reports)
-- `goal.md` — the generalised project framing; the `redcross-*.md` files remain as the reference case the framework was built against
-
-Verified on **2026-04-18** against Brønnøysundregistrene Enhetsregisteret + organisations' own live sites. Some claims (chapter counts, member figures) draw on secondary sources where primary fetches were blocked; status flags inline.
-
----
+The Norwegian NGO sector — who the large organisations are, what they focus on, how they are structured, and which of them plug into Atlas's chapter-anchored framework. Norges Røde Kors is included as the **reference case** against which structural fit is evaluated.
 
 ## 1. Landscape map — 35+ Norwegian NGOs
 
@@ -154,7 +149,7 @@ Admin-share % (not consistent across stiftelse vs forening accounting), geograph
 | 9 | Amnesty Norge | 10.6 | 179 | ~6% |
 | 10 | WWF Norge | 11.4 | 265 | ~4% |
 
-Reading: Mental Helse is the most state-dependent of the ones we sized. Sanitetskvinnene, LHL and Nasjonalforeningen are all 20–45% state-funded on central accounts. For rescue infrastructure (Redningsselskapet ~40% real dependency, Norsk Luftambulanse) and operational humanitarians (Kirkens Nødhjelp ~350m/yr Norad, Norsk Folkehjelp Norad rammeavtaler, Redd Barna Norad), the true state-dependency is much higher but routes outside Lottstift — see methodology.
+Reading: Mental Helse is the most state-dependent of the ones sized. Sanitetskvinnene, LHL and Nasjonalforeningen are all 20–45% state-funded on central accounts. For rescue infrastructure (Redningsselskapet ~40% real dependency, Norsk Luftambulanse) and operational humanitarians (Kirkens Nødhjelp ~350m/yr Norad, Norsk Folkehjelp Norad rammeavtaler, Redd Barna Norad), the true state-dependency is much higher but routes outside Lottstift — see methodology.
 
 ---
 
@@ -354,7 +349,7 @@ Ranking criteria: (a) real chapter network ≥ 50 units; (b) chapters have own o
 
 | Org | Chapters | Own org.nr? | V/M/D? | Need-indicator alignment |
 |---|---|---|---|---|
-| **Norges Røde Kors** (reference) | 372 | Yes | All three | Strong — the activity-indicator matrix in `redcross-activity-indicator-matrix.md` is built against this |
+| **Norges Røde Kors** (reference) | 372 | Yes | All three | Strong — the activity-indicator matrix in the research material is built against this |
 | **N.K.S. (Sanitetskvinnene)** | 550 | Yes | All three | Strong: women's health, omsorg, beredskap |
 | **Nasjonalforeningen for folkehelsen** | 450+ | Yes | All three | Strong: FHI dementia + cardiovascular, fastlege-dekning |
 | **4H Norge** | ~463 | Yes | Member; adult leader | Moderate: rural youth |
@@ -436,11 +431,11 @@ Combined query pattern: Frivillighetsregisteret filter → Regnskapsregisteret i
 
 Three realistic shapes a multi-NGO product could take:
 
-1. **Single-org framework, Red Cross-first** — what we're currently building. Tightest fit, richest domain knowledge, crispest UX.
+1. **Single-org framework, Red Cross-first** — tightest fit, richest domain knowledge, crispest UX.
 2. **Platform for the ~10 Tier-A dense-chapter NGOs** — same finder + pathways + Brreg/Lottstift backbone, pluggable activity taxonomy per org. ~70% code reuse. Each org gets its own branded surface.
 3. **Meta-site "all Norwegian NGOs"** — browse the sector with Brreg/Frivillighetsregisteret as the spine. Different product entirely; closer to a civil-society explorer than a chapter finder.
 
-Option 2 is the realistic version of "a site for all NGOs." Option 3 is a different product.
+Atlas adopts shape 2.
 
 ---
 
@@ -449,7 +444,7 @@ Option 2 is the realistic version of "a site for all NGOs." Option 3 is a differ
 ### Structural
 
 - Chapter/member counts draw on 2023–2025 sources and are order-of-magnitude, not current-year.
-- "Chapter has own org.nr" is true as a *pattern* (each 4H klubb, each Rotary club, each Speidergruppe, each sanitetsforening typically has one) but not uniformly verified. **NF update (2026-04-19)**: Brreg query confirms 121 geographic NF lokallag have own org.nr, 107 in Frivillighetsregisteret. Most don't file annual accounts (below threshold) but the org.nr itself exists, so Grasrotandelen and Brreg joins work. Amnesty and Framtiden still unverified.
+- "Chapter has own org.nr" is true as a *pattern* (each 4H klubb, each Rotary club, each Speidergruppe, each sanitetsforening typically has one) but not uniformly verified. Brreg query confirms 121 geographic NF lokallag have own org.nr, 107 in Frivillighetsregisteret. Most don't file annual accounts (below threshold) but the org.nr itself exists, so Grasrotandelen and Brreg joins work. Amnesty and Framtiden still unverified.
 - Four primary fetches hit 403 bot protection (reddbarna.no, legerutengrenser.no, amnesty.no, rotary.no). Confirmed via Brreg + Frivillighet Norge + Innsamlingskontrollen.
 - Rotary NORFO (885315402) is a collaboration forum; individual distrikter have separate entities (e.g. D2310: 991333428).
 - Kreftforeningen's chapter story is unusual: central org has 6 regional offices but real density is in 17 partner pasientforeninger. For framework port, the partner-foreningsfamilie is the right unit.

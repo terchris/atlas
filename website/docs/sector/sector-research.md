@@ -1,15 +1,10 @@
+---
+sidebar_position: 2
+---
+
 # Sector research — Norwegian NGOs / frivillig sektor
 
-Research and reports on the status and trends of Norwegian civil society. This is evidence we can cite when the app frames Red Cross against the wider sector — in "Om appen", in Jonas's transparency path, in Tone's board-member browsing, in Ola's data-curious pages.
-
-Pairs with:
-- `data-sources.md` entries 80 (Frivillighet Norge) and 81 (Senter for forskning på sivilsamfunn og frivillig sektor) — this file is the substance behind those one-line catalogue entries
-- `personas.md` — which personas each finding speaks to
-- `goal.md` — the transparency and "serve prospective volunteers well" goals
-
-Verified against live sources on **2026-04-18**.
-
----
+Research and reports on the status and trends of Norwegian civil society. The evidence Atlas cites when framing organisations against the wider sector — in the "Om appen" page, in donation-transparency views, in board-member browsing, in data-curious explorations.
 
 ## Who produces sector research
 
@@ -53,7 +48,7 @@ Population survey (Kantar, 15+, representative). Stable since 2024; back to pre-
 5. Economy — cost of participation
 6. Follow-up — poor onboarding after first contact
 
-This framework maps almost directly onto Kari (knowledge + accessibility), Amira (culture + accessibility), Magnus (follow-up), and Sara (culture). Worth adopting the barrier taxonomy in the app's volunteer-pathway copy.
+This framework maps almost directly onto the Atlas personas: Kari (knowledge + accessibility), Amira (culture + accessibility), Magnus (follow-up), and Sara (culture). Atlas's volunteer-pathway copy adopts the barrier taxonomy.
 
 ---
 
@@ -67,7 +62,7 @@ The ISF centre publishes the most rigorous research on sector trends. Output fro
 
 - Hours of volunteering stable across the pandemic, but concentrated on fewer people → burnout risk + organisations dependent on a small number of key volunteers
 - Strong bydel variation: Søndre Nordstrand and Grorud high; indre Oslo low
-- **Immigrants in Oslo participate at the same level as others** — breaks the national pattern where immigrants participate less. Useful counter-evidence when framing Amira's personas.
+- **Immigrants in Oslo participate at the same level as others** — breaks the national pattern where immigrants participate less. Useful counter-evidence when framing Amira's persona.
 - Higher participation: parents of children 6–15, those with higher education, men, 60+
 
 ### 2025
@@ -77,17 +72,17 @@ The ISF centre publishes the most rigorous research on sector trends. Output fro
 - Women and people with immigrant backgrounds remain under-represented in board seats vs. membership share, despite long-run improvement
 - Immigrant board share ~12% (vs 18% of population)
 - Fewer pure women's organisations; women more present in mainstream orgs but still lag in leadership
-- Directly relevant to Tone (board-member persona) and to any "chapter vitality" framing
+- Directly relevant to the board-member persona and to any "chapter vitality" framing
 
 **Stoltenberg, D.; Sivesind, K. H. (2025). Tilskuddsregimer for frivillig sektor. Statlige tilskudd i et feltperspektiv.**
 
 - Structural analysis of how state grants to the sector work in practice
-- Directly relevant to `redcross-data-sources-funding.md` — the academic complement to the Lottstift data
+- The academic complement to the Lottstift-derived funding data Atlas surfaces
 
 **Skiple, J. K.; Eimhjellen, I. (2025). Digitalt samfunnsengasjement. Omfang, utvikling og ulikskap.**
 
 - Scope, development and inequality in digital civic engagement
-- Relevant to Dev (developer persona) and to Ola
+- Relevant to the developer and data-curious personas
 
 **Trætteberg, H. S. (2025). Samskaping i Norge.**
 
@@ -132,13 +127,13 @@ From SSB's satellittregnskap for frivillig sektor (most recent headline figures)
 - 17% kommune and fylke (grants, contracts)
 - 12% other private
 
-For Red Cross specifically (see `redcross-data-sources-funding.md`), the mix is weighted more toward state grants (2024: NOK 530m from state grants alone) and investment returns from the pre-2007 slot-machine portfolio. Relevant contrast for transparency storytelling.
+For Red Cross specifically, the mix is weighted more toward state grants (2024: NOK 530m from state grants alone) and investment returns from the pre-2007 slot-machine portfolio. Relevant contrast for transparency storytelling.
 
 ---
 
-## How this lands in the app
+## How this lands in Atlas
 
-Concrete hooks these findings give each persona:
+Concrete hooks these findings give each persona ([see Personas](../about/personas.md)):
 
 - **Kari / Sara** — adopt Frivillighet Norge's six-barrier framework in volunteer copy; it's the most tested taxonomy of what stops people starting.
 - **Amira** — both sides: national data says immigrants participate less (IMDi + ISF); Oslo 2026 data says they participate equally. Reflects that friction varies by place. Useful for not pretending one answer fits everywhere.
@@ -147,7 +142,7 @@ Concrete hooks these findings give each persona:
 - **Magnus** — "fewer people doing the same hours → burnout" is exactly the frame that explains why "meld feil" and chapter-support features matter.
 - **Henrik** — the ISF samskaping work on how kommuner are taking over volunteer recruitment directly is relevant context for corporate partnerships.
 
-Coverage-gap explorer and Activity Atlas both benefit from the Solheim 2026 bydel-variation finding: national averages hide big sub-regional differences, and the app's chapter-level data is exactly the granularity that can show this.
+The Coverage-gap explorer and Activity Atlas both benefit from the Solheim 2026 bydel-variation finding: national averages hide big sub-regional differences, and Atlas's chapter-level data is exactly the granularity that can show this.
 
 ---
 

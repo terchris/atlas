@@ -1,16 +1,20 @@
+---
+sidebar_position: 2
+---
+
 # Personas
 
-This document defines the people who might use the app we're building. It pairs with `goal.md` (which says what we're trying to do) by naming who we're trying to do it *for*.
+This document defines the people who use Atlas. It pairs with [About Atlas](./what-is-atlas.md), which says what Atlas is trying to do; this page says who it's doing it for.
 
-The goal document established that this is an **organisation-neutral public-facing app** serving Norway's NGO sector as a whole — so the personas are people engaging with the **sector**, not with one specific organisation. Some might arrive with a preferred NGO in mind; most don't. The app's job is to help them find the fit regardless of which way they enter.
+Atlas is an organisation-neutral public-facing app serving Norway's NGO sector as a whole — so the personas are people engaging with the **sector**, not with one specific organisation. Some arrive with a preferred NGO in mind; most don't. The app's job is to help them find the fit regardless of which way they enter.
 
 This file groups personas into three tiers:
 
-- **Primary personas** — the public-facing users who most directly shape v1. Every flow should serve at least one of them.
+- **Primary personas** — public-facing users who most directly shape v1. Every flow serves at least one of them.
 - **Secondary personas** — internal NGO staff and volunteers at any organisation. The app serves them, but the UX is not optimised for them in v1.
-- **Tertiary personas** — users who'll land on the app less frequently, or who need a specific path they shouldn't be funnelled into the generic engagement flow. Still real users, still served — just with different needs and often a different destination from the main chapter-finder experience.
+- **Tertiary personas** — users who land on the app less frequently, or who need a specific path they shouldn't be funnelled into the generic engagement flow. Still real users, still served — just with different needs and often a different destination from the main chapter-finder experience.
 
-All 16 personas are people we plan to serve. No one is excluded — we just prioritise.
+All 16 personas are people Atlas serves. No one is excluded — they are just prioritised.
 
 Each persona has:
 - A name and short label
@@ -18,29 +22,19 @@ Each persona has:
 - What they want when they arrive
 - What would make them bounce
 - What success looks like for them
-- Which ideas from the working docs speak most directly to them
+- Which Atlas features speak most directly to them
 
----
-
-## How to use this document
-
-Three rules of thumb:
-
-1. **Primary personas set the default flow.** The landing page and chapter detail views are designed around them. Every v1 feature should serve at least one primary persona directly.
-2. **Secondary and tertiary personas get dedicated paths.** They don't get the spotlight, but they do get a deliberate answer to their question — a section, a page, a routing decision — not just "hope they figure it out."
-3. **When in doubt, side with the less technical persona.** The audience skews toward "not a power user." Our bar for clarity and friction should be set by Kari (below), not by someone comfortable with filters and maps.
-
-The six-barrier framework from `sector-research.md` (knowledge, time, culture, accessibility, economy, follow-up) applies across these personas. Our copy should recognise barriers without patronising.
+The six-barrier framework from the [sector research](../sector/sector-research.md) (knowledge, time, culture, accessibility, economy, follow-up) applies across these personas. Copy in Atlas should recognise barriers without patronising.
 
 ---
 
 ## Primary personas — public-facing
 
-These are the people the app is being built for. They all arrive without context, without an account, usually on a phone, often without a preferred organisation in mind.
+These are the people Atlas is built for. They all arrive without context, without an account, usually on a phone, often without a preferred organisation in mind.
 
 ### 1. Kari — "I want to help, somehow"
 
-**Late 40s, lives in a mid-sized kommune, works part-time, kids are older now.** She's aware of several humanitarian and social organisations — Røde Kors, Norsk Folkehjelp, Kirkens Bymisjon, Sanitetskvinnene, Nasjonalforeningen — but has never been involved with any of them. A week ago she saw a news segment about loneliness among elderly and thought *"I could do something about that."* She Googles "frivillig besøksvenn" or "hjelpe eldre ensomhet" and lands on our app.
+**Late 40s, lives in a mid-sized kommune, works part-time, kids are older now.** She's aware of several humanitarian and social organisations — Røde Kors, Norsk Folkehjelp, Kirkens Bymisjon, Sanitetskvinnene, Nasjonalforeningen — but has never been involved with any of them. A week ago she saw a news segment about loneliness among elderly and thought *"I could do something about that."* She Googles "frivillig besøksvenn" or "hjelpe eldre ensomhet" and lands on Atlas.
 
 **What she wants:** to discover that multiple organisations offer relevant activities near her, understand what "visiting lonely elderly" actually looks like at each (Red Cross Besøkstjeneste? N.K.S. omsorg? Kirkens Bymisjon Gatenær? a kommunal scheme?), and find a specific human at one of them to talk to. She doesn't know that "Besøkstjeneste" is the canonical name; she just wants "to visit lonely old people."
 
@@ -51,9 +45,9 @@ These are the people the app is being built for. They all arrive without context
 - A form that asks for personnummer before she's decided anything
 - Ambiguity about what she'd actually be doing day to day
 
-**Success looks like:** she ends up with the name, email and phone number of the coordinator for a specific "visit lonely elderly" activity near her — at whichever organisation actually offers it best in her kommune — and she feels the app helped her compare, not made the choice for her.
+**Success looks like:** she ends up with the name, email and phone number of the coordinator for a specific "visit lonely elderly" activity near her — at whichever organisation actually offers it best in her kommune — and she feels Atlas helped her compare, not made the choice for her.
 
-**Ideas that serve her:** Activity-first finder, Volunteer matchmaker quiz, Enriched chapter pages across organisations, Multilingual activity discovery.
+**Features that serve her:** Activity-first finder, Volunteer matchmaker quiz, Enriched chapter pages across organisations, Multilingual activity discovery.
 
 ---
 
@@ -72,7 +66,7 @@ These are the people the app is being built for. They all arrive without context
 
 **Success looks like:** he ends up on Grasrotandelen with his chosen chapter's org number pre-filled, or on an organisation's fast-giver signup, having seen exactly what 93%-to-cause means across three or four comparable organisations and which ones match his values best.
 
-**Ideas that serve him:** Compare organisations, Give-local across NGOs, Chapter campaign generator, Coverage-gap explorer, funding-transparency sections.
+**Features that serve him:** Compare organisations, Give-local across NGOs, Chapter campaign generator, Coverage-gap explorer, funding-transparency sections.
 
 ---
 
@@ -91,7 +85,7 @@ These are the people the app is being built for. They all arrive without context
 
 **Success looks like:** she has a specific address, time, coordinator name and phone number for her nearest språkkafé — regardless of whether it's Red Cross Norsktrening, Folkehjelp Språkkafé, Kirkens Bymisjon, or a kommunal offering — and she feels okay texting that person.
 
-**Ideas that serve her:** Activity-first across organisations, Enriched chapter pages, Multilingual activity discovery.
+**Features that serve her:** Activity-first across organisations, Enriched chapter pages, Multilingual activity discovery.
 
 ---
 
@@ -109,7 +103,7 @@ These are the people the app is being built for. They all arrive without context
 
 **Success looks like:** he sees the weather warning on a map, sees rescue-capable chapters across organisations in the area, has a phone number for a local leader at whichever is closest, and can text that number or forward to his parents in under a minute.
 
-**Ideas that serve him:** Storm mode (cross-org), Storm response giving, Preparedness compass, Enriched chapter pages.
+**Features that serve him:** Storm mode (cross-org), Storm response giving, Preparedness compass, Enriched chapter pages.
 
 ---
 
@@ -127,7 +121,7 @@ These are the people the app is being built for. They all arrive without context
 
 **Success looks like:** she's visited a dozen chapter pages across four organisations, has a mental model of what a healthy chapter looks like in each, knows which chapters near her are most active, and has the district contact number at the organisation she's leaning toward.
 
-**Ideas that serve her:** Chapter Explorer map, Compare chapters (same or cross-org), Time-travel mode, Anniversary radar, Memorial view, Chapter vitality score, Chapter Genesis.
+**Features that serve her:** Chapter Explorer map, Compare chapters (same or cross-org), Time-travel mode, Anniversary radar, Memorial view, Chapter vitality score, Chapter Genesis.
 
 ---
 
@@ -135,7 +129,7 @@ These are the people the app is being built for. They all arrive without context
 
 **Late 30s, journalist / researcher / student / involved citizen — could be any of these.** He's interested in how Norwegian civil society works as a sector: scale, funding, geographic distribution, history, activities, coverage gaps, which organisations cluster where. Maybe he's writing an article about NGO efficiency, maybe he's a civil-society researcher, maybe he's just curious. The audience at the tail end of public-facing.
 
-**What he wants:** facts, data, context across the sector. "How many chapters of each organisation? What's the sector's total economy (4.7% of mainland GDP, see `sector-research.md`)? How much comes from state grants versus private donations? How is coverage distributed geographically? Where are the gaps?"
+**What he wants:** facts, data, context across the sector. "How many chapters of each organisation? What's the sector's total economy (4.7% of mainland GDP, see [sector research](../sector/sector-research.md))? How much comes from state grants versus private donations? How is coverage distributed geographically? Where are the gaps?"
 
 **What makes him bounce:**
 - Marketing copy in place of data
@@ -143,27 +137,27 @@ These are the people the app is being built for. They all arrive without context
 - Numbers without citations or links to originals
 - Single-org framing when he needs cross-org comparisons
 
-**Success looks like:** he finds clear, comparable answers, with sources, and a path into deeper data. The app becomes a resource he cites or shares. Bonus: he becomes a repeat visitor because it's the only place he can see this data in one coherent view.
+**Success looks like:** he finds clear, comparable answers, with sources, and a path into deeper data. Atlas becomes a resource he cites or shares. Bonus: he becomes a repeat visitor because it's the only place he can see this data in one coherent view.
 
-**Ideas that serve him:** Coverage-gap explorer, Activity Atlas, Time-travel, News aggregator, funding-transparency features, sector-wide API attribution.
+**Features that serve him:** Coverage-gap explorer, Activity Atlas, Time-travel, News aggregator, funding-transparency features, sector-wide API attribution.
 
 ---
 
 ## Secondary personas — internal / staff
 
-These are real people inside the NGOs themselves — we might hear from them, the app might evolve to serve them, but v1 is not for them. Named here so we remember they exist and don't accidentally close doors. They're organisation-agnostic: any of them could work at any NGO in Norway.
+These are real people inside the NGOs themselves. Atlas might evolve to serve them, but v1 is not optimised for them. They're organisation-agnostic: any of them could work at any NGO in Norway.
 
 ### 7. Inger — chapter leader
-**The volunteer leader of a mid-sized lokalforening at any NGO.** Spends evenings on org work. Cares deeply about her chapter, less about national strategy. She might use our app to see how her chapter looks to the public, spot errors in the scraped or API data, or compare her activity mix to nearby chapters at her own organisation or at similar NGOs. She's not the audience for features she'd have to log in to use.
+**The volunteer leader of a mid-sized lokalforening at any NGO.** Spends evenings on org work. Cares deeply about her chapter, less about national strategy. She might use Atlas to see how her chapter looks to the public, spot errors in the scraped or API data, or compare her activity mix to nearby chapters at her own organisation or at similar NGOs. She's not the audience for features she'd have to log in to use.
 
 ### 8. Arne — district coordinator
-**Paid staff at a district office at any NGO.** Oversees 10–30 chapters, supports their operations, runs recruitment campaigns. Would find the coverage-gap explorer and cross-organisational chapter comparison genuinely useful as planning tools. Likely among the first internal users we'd hear from if the app got attention.
+**Paid staff at a district office at any NGO.** Oversees 10–30 chapters, supports their operations, runs recruitment campaigns. Would find the coverage-gap explorer and cross-organisational chapter comparison genuinely useful as planning tools. Likely among the first internal users to surface if Atlas got attention.
 
 ### 9. Signe — national office planner
-**Works on strategy at a national office.** Already has internal tools; possibly has access to Samfunnspuls or equivalent. Our app is useful to her only if it shows her something internal tools don't — the chapter overlay at her own organisation, the competitor/collaborator overlay across organisations, or public-audience framing she can point external stakeholders to.
+**Works on strategy at a national office.** Already has internal tools; possibly has access to Samfunnspuls or equivalent. Atlas is useful to her only if it shows her something internal tools don't — the chapter overlay at her own organisation, the competitor/collaborator overlay across organisations, or public-audience framing she can point external stakeholders to.
 
 ### 10. Mette — emergency response coordinator
-**Runs beredskap training and real-event coordination for a region** — whether at Red Cross Hjelpekorps, Norsk Folkehjelp Sanitet, Redningsselskapet, or cross-organisational. The one whose work most benefits from the storm mode idea. Would want a version with additional capabilities (crisis rehearsal, phone trees, operational status across orgs) beyond what we'd build in a public app.
+**Runs beredskap training and real-event coordination for a region** — whether at Red Cross Hjelpekorps, Norsk Folkehjelp Sanitet, Redningsselskapet, or cross-organisational. The one whose work most benefits from the storm mode feature. Would want a version with additional capabilities (crisis rehearsal, phone trees, operational status across orgs) beyond what a public app would build.
 
 ### 11. Lisa — tilskuddsansvarlig
 
@@ -178,46 +172,30 @@ These are real people inside the NGOs themselves — we might hear from them, th
 - Missing deadlines because new calls publish without aggregation
 - Generic templates with no need-data integration
 
-**Success looks like:** she opens the app on a Monday morning, sees three open calls that match her organisation's activity mix with deadlines in the next 60 days, clicks through to each directorate's own portal pre-informed about the ordning's history, and files stronger, faster applications. Over a year, more wins per hour spent.
+**Success looks like:** she opens Atlas on a Monday morning, sees three open calls that match her organisation's activity mix with deadlines in the next 60 days, clicks through to each directorate's own portal pre-informed about the ordning's history, and files stronger, faster applications. Over a year, more wins per hour spent.
 
-**Ideas that serve her:** **Tilskuddsmatcher** (the central feature for her — see `goal.md` extensions), Coverage-gap explorer (produces evidence for applications), historical award patterns from `tilskudd.lottstift.no`, Compare organisations (to benchmark positioning), alerts for new calls matching her org's profile.
-
----
-
-## Design implications — what the primary/secondary tier tells us
-
-A few consequences for v1, written down so we don't drift:
-
-**1. The app has to work for someone arriving cold, on a phone, in Norwegian, without a preferred organisation.** This is Kari and Amira's default. If the app requires multiple context-setting moves before it's useful, it's too complex. The fastest path from landing page to "here's what I need" wins.
-
-**2. Every chapter detail view is trying to serve at least four personas at once.** Kari wants to volunteer; Jonas wants to donate; Amira wants an address and a time; Tone wants a reference view. The page has to accommodate all of them without becoming cluttered. A tabbed or section-based layout — "What we do / How to help / How to reach us / History / Funding" — probably works better than one long wall of everything.
-
-**3. Rich detail and simple entry aren't in tension as long as we order them right.** Landing page = simple and org-agnostic. Chapter detail = rich. Advanced cross-org features (compare, time-travel, coverage-gap maps) = one click behind an "Utforsk mer" link, so they don't clutter the main flow but aren't hidden either.
-
-**4. Ola and Tone are the reason deep scraping and cross-org normalisation pay off.** Kari, Jonas, Amira and Lars mostly need what each organisation's public data gives us, normalised. But the browsing-and-comparing personas genuinely depend on scraped activity details, news, coordinator contacts, history across organisations. That's why the scrape-deep-then-normalise architecture matters.
-
-**5. Internal personas are the target for v2.** If v1 lands well with the public, the natural next move is an internal-tool layer — coverage strategist, vitality dashboard, crisis rehearsal — that reuses the same data and would be useful to Arne, Mette and Signe at any organisation. Mentioning them here keeps that door open.
+**Features that serve her:** **Tilskuddsmatcher** (the central feature for her), Coverage-gap explorer (produces evidence for applications), historical award patterns from `tilskudd.lottstift.no`, Compare organisations (to benchmark positioning), alerts for new calls matching her org's profile.
 
 ---
 
-## Tertiary personas — niche audiences we also serve
+## Tertiary personas — niche audiences also served
 
 Real users with needs the primary/secondary flows don't cover well. They get deliberate paths, not fallbacks.
 
 ### 12. Magnus — existing active volunteer
 
-**Mid-30s, active volunteer at a rescue-capable NGO for six years.** He uses his organisation's internal tools (Mitt Røde Kors, Folkehjelpens portal, or similar) regularly for shifts and internal comms, but he'll also land on our public app — to show it to a prospective recruit, to check how his chapter looks to the outside world, to verify that contacts and activities are rendered correctly, and to see how his chapter compares to neighbouring ones at his own organisation or at peer NGOs. He's a quality-control user as much as a consumer.
+**Mid-30s, active volunteer at a rescue-capable NGO for six years.** He uses his organisation's internal tools (Mitt Røde Kors, Folkehjelpens portal, or similar) regularly for shifts and internal comms, but he'll also land on Atlas — to show it to a prospective recruit, to check how his chapter looks to the outside world, to verify that contacts and activities are rendered correctly, and to see how his chapter compares to neighbouring ones at his own organisation or at peer NGOs. He's a quality-control user as much as a consumer.
 
 **What he wants:** to see his chapter rendered well for the public audience, to compare it against neighbouring chapters (same org and across orgs), and ideally to flag errors he spots in the scraped or aggregated data.
 
 **What makes him bounce:**
 - Data that contradicts what he knows (e.g. an activity listed that's been discontinued, or a leader name that's wrong)
 - No way to report inaccuracies
-- The app pretending to replace his organisation's internal tools — he already has those
+- Atlas pretending to replace his organisation's internal tools — he already has those
 
 **Success looks like:** he sends the chapter URL to someone considering joining and it tells the right story. When he notices something wrong, there's a clear "meld feil" or "kontakt kapitlet" path routed to the correct organisation.
 
-**Ideas that serve him:** Enriched chapter pages, Compare chapters, Chapter vitality score (read-only public version), News aggregator, Meld feil.
+**Features that serve him:** Enriched chapter pages, Compare chapters, Chapter vitality score (read-only public version), News aggregator, Meld feil.
 
 ---
 
@@ -235,13 +213,13 @@ Real users with needs the primary/secondary flows don't cover well. They get del
 
 **Success looks like:** he has a clear mental model of the Norwegian NGO sector's scale, footprint and funding, has named chapters of specific organisations near his offices, and has a direct path to a partnerships contact at whichever organisations he wants to engage — or at a curated few.
 
-**Ideas that serve him:** Corporate partnership storytelling, Compare organisations, Coverage-gap explorer (to identify where his company's offices overlap with unmet need), For bedrifter page with per-org routing.
+**Features that serve him:** Corporate partnership storytelling, Compare organisations, Coverage-gap explorer (to identify where his company's offices overlap with unmet need), For bedrifter page with per-org routing.
 
 ---
 
 ### 14. Åse — person in acute crisis
 
-**Any age, any place. She's in acute distress right now.** Her house has just flooded, she's being abused at home, she's contemplating suicide, or she's caring for someone in crisis. She types "hjelp", "noen å snakke med", or "Røde Kors hjelp" into Google and lands on our app.
+**Any age, any place. She's in acute distress right now.** Her house has just flooded, she's being abused at home, she's contemplating suicide, or she's caring for someone in crisis. She types "hjelp", "noen å snakke med", or "Røde Kors hjelp" into Google and lands on Atlas.
 
 **What she wants:** the right number to call, right now. Not sector-structural overview. Not the nearest chapter's weekly BARK schedule. A phone number, visible, immediately.
 
@@ -250,7 +228,7 @@ Real users with needs the primary/secondary flows don't cover well. They get del
 - A page full of volunteer signups and donation buttons when what she needs is a helpline
 - Crisis information in the footer or behind a link
 
-**Success looks like:** within three seconds of landing on any page of the app, she can see — visibly, persistently, not buried — the appropriate emergency and helpline numbers. The helplines are sector-wide, owned by no single NGO:
+**Success looks like:** within three seconds of landing on any page of Atlas, she can see — visibly, persistently, not buried — the appropriate emergency and helpline numbers. The helplines are sector-wide, owned by no single NGO:
 - 113 (ambulance), 112 (police), 110 (fire)
 - Mental Helse: 116 123
 - Kirkens SOS: 22 40 00 40
@@ -258,9 +236,9 @@ Real users with needs the primary/secondary flows don't cover well. They get del
 - Alarmtelefonen for barn og unge: 116 111
 - Others relevant to the specific context (tvangsekteskap, overgrep, vold i nære relasjoner — each has its own helpline across multiple providers)
 
-And if her need maps to a specific NGO service, the app tells her so clearly without forcing her to navigate.
+And if her need maps to a specific NGO service, Atlas tells her so clearly without forcing her to navigate.
 
-**Ideas that serve her:** a **persistent crisis band** on every page — a small, always-visible component, readable at a glance, sector-wide (not organisation-branded). This is arguably the single most important non-negotiable UX element in the app. Storm mode also serves her directly (if her crisis is a weather event).
+**Features that serve her:** a **persistent crisis band** on every page — a small, always-visible component, readable at a glance, sector-wide (not organisation-branded). Storm mode also serves her directly (if her crisis is a weather event).
 
 ---
 
@@ -268,16 +246,16 @@ And if her need maps to a specific NGO service, the app tells her so clearly wit
 
 **Norwegian or international software engineer, curious about public data on the Norwegian NGO sector.** Maybe they're considering building something themselves — for a school project, a hackathon, a proposal, or another civil-society tool. They want to see what the available data can do and what a reference implementation using it looks like.
 
-**What they want:** an "Om dataene og teknologien" page or similar — what data sources this app uses (Red Cross Organizations API, scrape of folkehjelp.no, Brreg, Lottstift, Innsamlingskontrollen, SSB, FHI, Bufdir, IMDi, Kartverket, NVE, met.no), what each contributes, what the scrape cadence is, where to find the original sources. A link to our GitHub repo, links to the relevant registry portals, and enough context that they could build on the same stack.
+**What they want:** an "Om dataene og teknologien" page or similar — what data sources Atlas uses (Red Cross Organizations API, scrape of folkehjelp.no, Brreg, Lottstift, Innsamlingskontrollen, SSB, FHI, Bufdir, IMDi, Kartverket, NVE, met.no), what each contributes, what the scrape cadence is, where to find the original sources. A link to the GitHub repo, links to the relevant registry portals, and enough context that they could build on the same stack.
 
 **What makes them bounce:**
-- No technical details at all (they can't tell what the app is built on)
+- No technical details at all (they can't tell what Atlas is built on)
 - Mysterious data provenance — they can't tell if what they're looking at is authoritative
 - Per-organisation attribution missing — they can't tell what came from where
 
-**Success looks like:** they end up on our GitHub, skim the code, and come away thinking *"this is a good reference for how to build on Norwegian civil-society data."* Bonus: they cite or star the repo, or build their own thing using it as a template.
+**Success looks like:** they end up on the GitHub repo, skim the code, and come away thinking *"this is a good reference for how to build on Norwegian civil-society data."* Bonus: they cite or star the repo, or build their own thing using it as a template.
 
-**Ideas that serve them:** a lightweight "Om appen / Om dataene" section. Clear attribution on every page showing which data source powered each view. Open-source repo prominently linked.
+**Features that serve them:** a lightweight "Om appen / Om dataene" section. Clear attribution on every page showing which data source powered each view. Open-source repo prominently linked. The data documentation (in progress) — concept catalogue, measurement reference, source provenance.
 
 ---
 
@@ -296,28 +274,26 @@ And if her need maps to a specific NGO service, the app tells her so clearly wit
 
 **Success looks like:** she finds her local youth activity — regardless of which NGO runs it — knows exactly what to expect, and has a clear next step that feels welcoming, not bureaucratic.
 
-**Ideas that serve her:** Activity Atlas with age filters; activity pages that clearly mark age ranges and parental-consent requirements; a "For ungdom" section or tag that cuts across organisations. Kors på halsen as a visible resource for youth who aren't looking to volunteer but might need someone to talk to.
+**Features that serve her:** Activity Atlas with age filters; activity pages that clearly mark age ranges and parental-consent requirements; a "For ungdom" section or tag that cuts across organisations. Kors på halsen as a visible resource for youth who aren't looking to volunteer but might need someone to talk to.
 
 ---
 
-## Design implications from the tertiary personas
+## Design implications
 
-Three things these additional personas add that the primary six don't:
+Eight things drawn from the personas that Atlas's design follows.
 
-**1. The crisis band is non-negotiable and organisation-neutral.** Åse's needs trump every other layout decision. An always-visible component with sector-wide helpline numbers is the first thing we build, before any chapter finder.
+**1. Atlas has to work for someone arriving cold, on a phone, in Norwegian, without a preferred organisation.** This is Kari and Amira's default. If Atlas requires multiple context-setting moves before it's useful, it's too complex. The fastest path from landing page to "here's what I need" wins.
 
-**2. We need a "meta" layer the app wears lightly.** Magnus wants to flag errors in any organisation's data. Dev wants to see what's under the hood across all data sources. Henrik wants a cross-org partnerships path. None of this is the primary flow, but all of it can be addressed with 2–3 supporting pages and a consistent footer or "Om appen" section.
+**2. Every chapter detail view serves at least four personas at once.** Kari wants to volunteer; Jonas wants to donate; Amira wants an address and a time; Tone wants a reference view. The page accommodates all of them without becoming cluttered. A tabbed or section-based layout — "What we do / How to help / How to reach us / History / Funding" — works better than one long wall of everything.
 
-**3. Youth-coded and language-coded content needs filters, not just tags.** Sara and Amira both benefit from age-appropriate and language-appropriate filtering of activities **across organisations**. This isn't a separate app — it's filter chips on the Activity Atlas, age labels on activity cards, and thoughtful signposting that cuts across organisational silos.
+**3. Rich detail and simple entry aren't in tension as long as they're ordered right.** Landing page = simple and org-agnostic. Chapter detail = rich. Advanced cross-org features (compare, time-travel, coverage-gap maps) = one click behind an "Utforsk mer" link, so they don't clutter the main flow but aren't hidden.
 
----
+**4. Ola and Tone are the reason deep scraping and cross-org normalisation pay off.** Kari, Jonas, Amira and Lars mostly need what each organisation's public data gives, normalised. But the browsing-and-comparing personas genuinely depend on scraped activity details, news, coordinator contacts, history across organisations. That's why the scrape-deep-then-normalise architecture matters.
 
-## Stance on what we'll do to serve these personas
+**5. The crisis band is non-negotiable and organisation-neutral.** Åse's needs trump every other layout decision. An always-visible component with sector-wide helpline numbers is the first thing built, before any chapter finder.
 
-A few decisions that shape what "in scope" means for the project:
+**6. A "meta" layer that Atlas wears lightly.** Magnus wants to flag errors in any organisation's data. Dev wants to see what's under the hood across all data sources. Henrik wants a cross-org partnerships path. None of this is the primary flow, but all of it is addressed with 2–3 supporting pages and a consistent footer or "Om appen" section.
 
-**Scraping is fully in scope, per organisation.** We'll scrape whatever we need from each organisation's public website and related registries, and store it locally if helpful for performance or resilience. This is how we surface the activity-level detail, coordinator contacts, photos and news that make chapter pages useful to Kari, Amira, Tone, Magnus — regardless of which NGO. Cache invalidation and respectful crawl rates are implementation concerns — not scope restrictions.
+**7. Youth-coded and language-coded content needs filters, not just tags.** Sara and Amira both benefit from age-appropriate and language-appropriate filtering of activities **across organisations**. Filter chips on the Activity Atlas, age labels on activity cards, and thoughtful signposting that cuts across organisational silos.
 
-**Public information is fair to harvest, subject to each source's terms.** If it's published on a public Norwegian NGO website, or held in a public registry (Brreg, Lottstift, Innsamlingskontrollen, SSB, FHI, Bufdir, IMDi, etc.), we can pull it in and display it. We use it for its intended purpose — helping people engage with the sector — not repurpose it for unrelated ends, and we credit the source on every view.
-
-**The app is organisation-neutral.** No single NGO's branding dominates. Each organisation's content appears in a consistent app chrome, with its own logo and identity shown where appropriate (on chapter cards, in attribution) but not as the frame. The shared chrome uses Digdir Designsystemet — the neutral Norwegian public-sector design foundation. We are a portal, not a reskin of any one organisation.
+**8. Internal personas are the target for v2.** If v1 lands well with the public, the natural next move is an internal-tool layer — coverage strategist, vitality dashboard, crisis rehearsal — that reuses the same data and would be useful to Arne, Mette and Signe at any organisation.

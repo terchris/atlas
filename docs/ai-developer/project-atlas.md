@@ -36,7 +36,19 @@ atlas/
 │   │   └── packages.yml            — dbt_utils etc.
 │   └── migrations/                 — raw.* schema SQL, numbered 001_*.sql onwards
 │
+├── website/                        — user-facing documentation; Docusaurus-shaped, Docusaurus not yet installed
+│   ├── README.md                   — layout conventions, helpers-projects sister-site references, Docusaurus install plan
+│   └── docs/                       — MD pages, Docusaurus-compatible
+│       ├── index.md                — landing page
+│       ├── about/                  — what Atlas is, who it's for
+│       ├── sector/                 — Norwegian NGO sector context
+│       ├── getting-started/        — orientation for first-time consumers of marts.*
+│       ├── concepts/               — one page per canonical entity (kommune, NGO, chapter, …)
+│       ├── measurements/           — one page per (source_id, contents_code) pair
+│       └── sources/                — one page per ingest source
+│
 └── docs/
+    ├── ideas/                      — proposals being chewed on, pre-INVESTIGATE
     ├── research/                   — sector research, personas, NGO profiles, data sources
     │   └── samfunnspuls/           — 24-source Samfunnspuls-traced catalogue
     ├── stack/                      — architecture decisions, narrowed v1 stack
@@ -158,6 +170,7 @@ The `docs/` folder is split into three. Read the relevant one before working in 
 |-----------------|------------|
 | Adding or modifying a data source | [`atlas-data-repo/ingest/src/sources/README.md`](../../atlas-data-repo/ingest/src/sources/README.md) — per-source pattern, the template, the catalogue table |
 | Working on the dbt models / dim spine / marts.* | [`atlas-data-repo/dbt/`](../../atlas-data-repo/dbt/) and [`plans/completed/INVESTIGATE-data-journey-pattern.md`](plans/completed/INVESTIGATE-data-journey-pattern.md) (the worked end-to-end journey for one source — completed design investigation) |
+| Writing user-facing data documentation (concept definitions, "what does this row mean", measurement reference, source provenance for non-engineers) | [`website/README.md`](../../website/README.md) — folder layout, helpers-project conventions, when Docusaurus actually gets installed. Worked example: [`website/docs/getting-started/reading-a-row.md`](../../website/docs/getting-started/reading-a-row.md) |
 | Thinking about modelling, scaling beyond 19 sources, or the metric/catalogue/dictionary layers | [`docs/stack/data-strategy.md`](../../docs/stack/data-strategy.md) — established patterns, what mid-size teams run, what Atlas needs when |
 | Adding or renaming a field — establishing the canonical Atlas vocabulary | [`docs/stack/naming-conventions.md`](../../docs/stack/naming-conventions.md) |
 | Deciding how to decode a coded field for a new source (enum mapping, label lookup, structured parse) | [`plans/backlog/INVESTIGATE-code-label-mapping.md`](plans/backlog/INVESTIGATE-code-label-mapping.md) — open decision with hybrid recommendation |
@@ -201,6 +214,17 @@ These are non-negotiable constraints. They are the things that take longer to un
 
 - `docs/stack/suggested-stack.md` lists what is in v1, what is removed from v1 (with reasons), and what is deferred to v1.5+. Before proposing a new platform component, check if it has already been evaluated and rejected.
 - New platform services that need to live in UIS are proposed via `INVESTIGATE-*.md` files in the **UIS repo's** backlog folder, not Atlas's. Atlas's `docs/stack/` documents the Atlas-side reasoning; UIS's backlog documents the platform-side install plan.
+
+### User-facing documentation goes in `website/docs/`
+
+- Documentation aimed at **consumers of `marts.*`** — concept definitions ("what is a `kommune`?"), measurement reference ("what does `EUskala50` mean?"), worked examples ("how do I read a row?"), source provenance for non-engineers — lives in [`website/docs/`](../../website/docs/).
+- The folder is shaped to match Docusaurus conventions used by sister Helpers projects ([UIS](https://github.com/helpers-no/urbalurba-infrastructure), [DCT](https://github.com/helpers-no/devcontainer-toolbox)) so the eventual install requires no restructuring. Docusaurus is **not yet installed**; pages render as plain MD on GitHub for now. See [`website/README.md`](../../website/README.md) for layout, conventions inherited from the sister sites, and Docusaurus-install triggers.
+- Audience split — keep these separate, do not mix:
+  - `website/docs/` — for **consumers** of `marts.*` (Dev/Ola/Lisa/journalist personas, future LLM agents)
+  - `docs/research/` — for the team **thinking about** the model (NGO profiles, common-schema, sector landscape)
+  - `docs/ai-developer/` — for the team **building** the codebase (PLANS, WORKFLOW, INVESTIGATE-*) — *planned to move into `website/docs/ai-developer/` in a future PR, matching UIS convention so AI-developer docs become public/searchable*
+  - `atlas-data-repo/ingest/src/sources/<id>/README.md` — for the team **operating** the pipeline (per-source quirks, refresh notes)
+- When adding a new dbt model, ingest source, or measurement that a consumer would need to understand, the corresponding `website/docs/` page is part of the work — not a follow-up. The MD content seeds the eventual structured Concept Catalogue YAML proposed in [`plans/backlog/INVESTIGATE-semantic-foundation-before-expansion.md`](plans/backlog/INVESTIGATE-semantic-foundation-before-expansion.md).
 
 ### Norwegian-first
 
