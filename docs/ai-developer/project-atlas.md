@@ -143,9 +143,12 @@ dbt is run via **uv** with the project venv at `atlas-data/dbt/.venv/` and crede
 ```bash
 cd atlas-data/dbt
 
-# One-time setup
-uv venv && uv pip install -r requirements.txt    # creates .venv/, installs pinned dbt-core + dbt-postgres
-uv run --env-file ../ingest/.env dbt deps        # install dbt packages (dbt_utils, etc.)
+# One-time setup (also rerun this after any rename of an ancestor folder
+# of .venv, e.g. atlas-data-repo -> atlas-data — Python venvs hardcode the
+# absolute path to python in every script's shebang and don't survive moves)
+rm -rf .venv && uv venv --python 3.12         # fresh venv at .venv/
+uv pip install -r requirements.txt            # installs pinned dbt-core + dbt-postgres
+uv run --env-file ../ingest/.env dbt deps     # installs dbt packages (dbt_utils, etc.)
 
 # Day-to-day
 uv run --env-file ../ingest/.env dbt debug       # verify Postgres connection
