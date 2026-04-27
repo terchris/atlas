@@ -16,7 +16,11 @@ models:
           kommune_name_sami.
         data_tests: [not_null]
       - name: kommune_name_alt
-        data_type: text
+        description: |
+          Alternative name variant from Klass when distinct from
+          kommune_name (typically a Sámi or Kven form before the Sámi
+          variant gets normalised into kommune_name_sami). NULL when
+          there is no alternative.
       - name: fylke_nr
         description: 2-digit fylke code, derived from the first two digits of kommune_nr.
         data_tests:
@@ -162,6 +166,11 @@ models:
           Brreg orgnr if the chapter is separately registered (e.g. Red Cross local branches each have
           their own). NULL otherwise.
       - name: name
+        description: |
+          Display name for the chapter, verbatim from upstream (Red
+          Cross's localBranchName etc.). Not normalised — preserves
+          casing, diacritics, and embedded NGO prefixes if upstream
+          publishes them.
         data_tests: [not_null]
       - name: kommune_nr
         description: >-
@@ -172,22 +181,40 @@ models:
               field: kommune_nr
               config: {severity: warn}
       - name: is_active
+        description: |
+          Whether the chapter is currently operational. False for
+          dormant or merged chapters that upstream still publishes for
+          historical continuity. Coverage-gap supply queries filter to
+          is_active = true.
         data_tests:
           - not_null
           - accepted_values: {values: [true, false]}
       - name: postal_address_line1
-        data_type: text
+        description: |
+          Street address (first line). Used together with postal_code +
+          post_office to resolve to a kommune_nr via dim_postnummer.
+          NULL for chapters that don't publish a physical address.
       - name: postal_code
-        data_type: text
+        description: |
+          4-digit Norwegian postal code (postnummer), leading zeros
+          preserved. Drives the kommune_nr resolution; FK to
+          dim_postnummer.
       - name: post_office
         description: Post-office name, ALLCAPS as published by Bring.
-        data_type: text
       - name: phone
-        data_type: text
+        description: |
+          Public contact phone number for the chapter, verbatim from
+          upstream (no normalisation, may include country code or local
+          formatting). NULL when not published.
       - name: email
-        data_type: text
+        description: |
+          Public contact email for the chapter. NULL when not published.
+          Not validated for RFC compliance.
       - name: web
-        data_type: text
+        description: |
+          Public website URL for the chapter. NULL when not published.
+          May be a chapter sub-page on the NGO's national site rather
+          than a dedicated domain.
       - name: chapter_subtype
         description: |
           Optional subtype for non-geographic or structurally distinct chapters.
@@ -198,6 +225,7 @@ models:
           Sentralt). Promoted to an accepted_values test once 3+ NGOs populate
           it consistently (per INVESTIGATE-multi-ngo-supply-model-extensions Q1).
       - name: updated_at
+        description: When the row was last loaded from the upstream supply staging model.
         data_tests: [not_null]
   - name: dim_activity
     description: |
@@ -212,17 +240,21 @@ models:
       (Red Cross). PLAN-003 will UNION ALL Folkehjelp.
     columns:
       - name: activity_id
+        description: |
+          Composite slug, namespaced by NGO (e.g.
+          'redcross-besokstjeneste'). Stable across refreshes. Unique
+          within this table.
         data_tests: [not_null, unique]
-        data_type: text
       - name: ngo_orgnr
+        description: |
+          9-digit Brreg organisasjonsnummer of the NGO that owns the
+          activity. FK to dim_ngo.
         data_tests:
           - not_null
           - relationships: {to: ref('dim_ngo'), field: orgnr}
-        data_type: text
       - name: canonical_name
         description: Red Cross's globalActivityName, verbatim.
         data_tests: [not_null]
-        data_type: text
       - name: service_category_code
         description: >-
           From the 50→22 CASE WHEN. NULL only if a new globalActivityName appeared in raw that the CASE
@@ -232,12 +264,14 @@ models:
         data_tests:
           - not_null
           - relationships: {to: ref('ref_atlas_service_category'), field: code}
-        data_type: text
       - name: is_active
+        description: |
+          Whether this NGO still offers the activity. False for retired
+          activities kept in the catalog so historical
+          fact_chapter_activities rows can still resolve activity_id.
         data_tests:
           - not_null
           - accepted_values: {values: [true, false]}
-        data_type: boolean
     data_tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns: [ngo_orgnr, canonical_name]
