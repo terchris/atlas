@@ -4,9 +4,35 @@
 > - [WORKFLOW.md](../../WORKFLOW.md) — The implementation process
 > - [PLANS.md](../../PLANS.md) — Plan structure and best practices
 
-## Status: Backlog
+## Status: Complete (pending review + commit) — 2026-04-27
 
 **Goal**: Build the ~9 `mart_<feature>` dbt views identified by the per-route audit in [`INVESTIGATE-public-api-surface.md`](INVESTIGATE-public-api-surface.md), so PostgREST has stable, OpenAPI-friendly endpoints to project for the dogfood API. **Pure data-side work** — no API code, no frontend changes in this PLAN. The Next.js frontend keeps reading `marts.*` directly until PLAN-E migrates it.
+
+## Final outcome (2026-04-27)
+
+All 7 phases complete. 9 mart views landed under `atlas-data/dbt/models/marts/api/`, each with full schema.yml descriptions and tests; sample-row diffs against the original inline queries match. `check-osmosis.sh` strict gate stays green; full `dbt build` runs 654 PASS / 21 WARN / 0 ERROR / 675 TOTAL across the whole project. The 21 WARNs are 20 pre-existing data-quality warns plus 1 expected new warn for Svalbard (kommune_nr 2100, Longyearbyen Røde Kors) on `mart_kommune_local_chapters` — kept visible by `severity: warn` rather than failing the build.
+
+PLAN-D.2 (PostgREST stand-up) is now unblocked.
+
+Two PLAN expectations were off; verified actual is correct:
+- PLAN said `mart_distrikt_summary` = 19; actual = 18. The original `listDistrikter()` query also returns 18 for Red Cross today.
+- PLAN said `mart_kommune_local_chapters` for kommune 0301 (Oslo) returns the same chapter list as `/kommuner/0301`. Both old and new return 0 because Red Cross Oslo `redcross-L032` has no rows in `fact_chapter_activities` yet — known supply-side gap, separate from this PLAN.
+
+## Phase 1 outcome (2026-04-27)
+
+Phase 1 ran. dbt-osmosis baseline propagation surfaced **180 columns** in existing models that have no description (initial pass surfaced 164; a second pass — required for full convergence — surfaced 16 more). Per **option D** (resolved during Phase 1), these are accepted as-is and tracked separately in [PLAN-002-fill-schema-yml-description-gaps.md](../backlog/PLAN-002-fill-schema-yml-description-gaps.md). The check script `atlas-data/dbt/check-osmosis.sh` is strict on `models/marts/api/` (the new mart_* views from this PLAN) and lenient (report-only) on existing models. As PLAN-002 phases land, the gap count goes down.
+
+Verification at Phase 1 close:
+- `dbt parse` clean, `dbt test` 521 PASS / 20 WARN / 0 ERROR / 541 TOTAL
+- `dbt-osmosis yaml document --dry-run --check` exits 0 (idempotent after the two-pass baseline)
+
+Net Phase 1 deliverables:
+- `dbt-osmosis>=1.0,<2` in `requirements.txt`
+- `+dbt-osmosis: schema.yml` config in `dbt_project.yml`
+- 12 schema.yml/sources.yml files reformatted + descriptions propagated + 180 newly-discovered columns surfaced
+- `atlas-data/dbt/check-osmosis.sh` (strict-on-marts/api/, lenient-elsewhere)
+- `atlas-data/dbt/README.md` documents the new hygiene workflow
+- `PLAN-002-fill-schema-yml-description-gaps.md` tracks the 180 backlog
 
 **Last Updated**: 2026-04-27
 
@@ -85,6 +111,17 @@ Install dbt-osmosis as the schema.yml safety net before any new mart views land.
 ## Phase 2: Pattern-setter view — `mart_indicator_summary`
 
 Build one view end-to-end as the template for the other 8. Verify shape against the existing `listIndicators()` query. This phase tests the pattern; the per-view phases that follow are mechanical applications.
+
+### Phase 2 outcome (2026-04-27)
+
+Phase 2 built `mart_indicator_summary` end-to-end: 171 rows, identical top-5 and identical row count to the original `listIndicators()` inline query. `dbt build --select mart_indicator_summary` clean (1 model, 8 tests passing). `check-osmosis.sh` strict gate confirmed the new schema.yml under `models/marts/api/` is fully documented (the gate was previously skipping the directory because it didn't exist).
+
+**Pattern for Phases 3-6:**
+
+1. **SQL file**: copy the relevant inline query from `atlas-frontend/src/lib/{indicators,supply}.ts` into `models/marts/api/mart_<feature>.sql`. Replace `marts.fact_<x>` references with `{{ ref('fact_<x>') }}` (and `marts.dim_<x>` with `{{ ref('dim_<x>') }}`). Keep `order by` for stable output. No `{{ config(...) }}` block — the `marts:` block in `dbt_project.yml` already provides `+materialized: table` + `+schema: marts`, which inherits to `marts/api/`.
+2. **schema.yml**: append a model entry to `models/marts/api/schema.yml` (single file shared across all 9 views, per dbt-osmosis's one-schema.yml-per-directory convention). Every column gets a description (Q5). Tests: `not_null` on key columns, `dbt_utils.unique_combination_of_columns` on the natural key, `dbt_utils.accepted_range` where ranges are knowable.
+3. **Verify**: `dbt build --select mart_<feature>` (clean), `dbt show --select mart_<feature> --limit 5` vs `dbt show --inline "<original SQL>" --limit 5` (identical top-5), and `./check-osmosis.sh` (strict-on-marts/api/ stays green).
+4. **Pitfall**: `dbt show --inline` appends `LIMIT N` itself, so don't include `limit` in the inline SQL — pass `--limit 5` as a flag.
 
 ### Tasks
 

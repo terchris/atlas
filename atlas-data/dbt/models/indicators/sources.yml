@@ -1,8 +1,9 @@
 version: 2
-
 sources:
   - name: raw
-    description: "Atlas landing layer. Tables here are written by the atlas-data ingest modules (TypeScript) and read by dbt."
+    description: >-
+      Atlas landing layer. Tables here are written by the atlas-data ingest modules (TypeScript) and read
+      by dbt.
     schema: raw
     tables:
       - name: ssb_08764
@@ -20,20 +21,29 @@ sources:
           error_after: {count: 800, period: day}
         columns:
           - name: region_code
-            description: "SSB region code — kommune, fylke, nasjon, or historical variant."
+            description: SSB region code — kommune, fylke, nasjon, or historical variant.
             data_tests:
               - not_null
           - name: year
-            description: "Calendar year (from SSB's Tid dimension)."
+            description: Calendar year (from SSB's Tid dimension).
             data_tests:
               - not_null
           - name: contents_code
-            description: "SSB ContentsCode — one of Personer / EUskala50 / EUskala60 / OECDskala50 / OECDskala60."
+            description: SSB ContentsCode — one of Personer / EUskala50 / EUskala60 / OECDskala50 / 
+              OECDskala60.
             data_tests:
               - not_null
               - accepted_values:
-                  values: ['Personer', 'EUskala50', 'EUskala60', 'OECDskala50', 'OECDskala60']
+                  values: [Personer, EUskala50, EUskala60, OECDskala50, OECDskala60]
 
+          - name: contents_label
+            data_type: text
+          - name: value
+            data_type: numeric
+          - name: status
+            data_type: text
+          - name: loaded_at
+            data_type: timestamp with time zone
       - name: ssb_06913
         description: |
           SSB statistikkbanktabell 06913 — Folkemengde 1. januar og endringer
@@ -51,7 +61,14 @@ sources:
             data_tests: [not_null]
           - name: contents_code
             data_tests: [not_null]
-
+          - name: contents_label
+            data_type: text
+          - name: value
+            data_type: numeric
+          - name: status
+            data_type: text
+          - name: loaded_at
+            data_type: timestamp with time zone
       - name: ssb_06083
         description: |
           SSB statistikkbanktabell 06083 — families by type (single parent,
@@ -70,7 +87,14 @@ sources:
             data_tests: [not_null]
           - name: contents_code
             data_tests: [not_null]
-
+          - name: contents_label
+            data_type: text
+          - name: value
+            data_type: numeric
+          - name: status
+            data_type: text
+          - name: loaded_at
+            data_type: timestamp with time zone
       - name: ssb_06944
         description: |
           SSB statistikkbanktabell 06944 — household income (median), income
@@ -92,10 +116,18 @@ sources:
             data_tests:
               - not_null
               - accepted_values:
-                  values: ['SamletInntekt', 'InntSkatt', 'AntallHushold']
+                  values: [SamletInntekt, InntSkatt, AntallHushold]
 
+          - name: contents_label
+            data_type: text
+          - name: value
+            data_type: numeric
+          - name: status
+            data_type: text
+          - name: loaded_at
+            data_type: timestamp with time zone
       - name: ssb_09429
-        description: "SSB 09429 — educational attainment by kommune and sex (5 dims)."
+        description: SSB 09429 — educational attainment by kommune and sex (5 dims).
         loaded_at_field: loaded_at
         freshness:
           warn_after: {count: 400, period: day}
@@ -109,9 +141,18 @@ sources:
             data_tests: [not_null]
           - name: year
             data_tests: [not_null]
-
+          - name: contents_code
+            data_type: text
+          - name: contents_label
+            data_type: text
+          - name: value
+            data_type: numeric
+          - name: status
+            data_type: text
+          - name: loaded_at
+            data_type: timestamp with time zone
       - name: ssb_12063
-        description: "SSB KOSTRA 12063 — municipal leisure services / voluntary youth associations."
+        description: SSB KOSTRA 12063 — municipal leisure services / voluntary youth associations.
         loaded_at_field: loaded_at
         freshness:
           warn_after: {count: 400, period: day}
@@ -123,9 +164,16 @@ sources:
             data_tests: [not_null]
           - name: contents_code
             data_tests: [not_null]
-
+          - name: contents_label
+            data_type: text
+          - name: value
+            data_type: numeric
+          - name: status
+            data_type: text
+          - name: loaded_at
+            data_type: timestamp with time zone
       - name: ssb_12131
-        description: "SSB KOSTRA 12131 — social-assistance monthly rates."
+        description: SSB KOSTRA 12131 — social-assistance monthly rates.
         loaded_at_field: loaded_at
         freshness:
           warn_after: {count: 400, period: day}
@@ -137,9 +185,16 @@ sources:
             data_tests: [not_null]
           - name: contents_code
             data_tests: [not_null]
-
+          - name: contents_label
+            data_type: text
+          - name: value
+            data_type: numeric
+          - name: status
+            data_type: text
+          - name: loaded_at
+            data_type: timestamp with time zone
       - name: ssb_12132
-        description: "SSB KOSTRA 12132 — welfare benefit-income rules."
+        description: SSB KOSTRA 12132 — welfare benefit-income rules.
         loaded_at_field: loaded_at
         freshness:
           warn_after: {count: 400, period: day}
@@ -151,7 +206,14 @@ sources:
             data_tests: [not_null]
           - name: contents_code
             data_tests: [not_null]
-
+          - name: contents_label
+            data_type: text
+          - name: value
+            data_type: numeric
+          - name: status
+            data_type: text
+          - name: loaded_at
+            data_type: timestamp with time zone
       - name: ssb_12292
         description: |
           SSB KOSTRA 12292 — nursing-home and home-care indicators. 49
@@ -168,7 +230,14 @@ sources:
             data_tests: [not_null]
           - name: contents_code
             data_tests: [not_null]
-
+          - name: contents_label
+            data_type: text
+          - name: value
+            data_type: numeric
+          - name: status
+            data_type: text
+          - name: loaded_at
+            data_type: timestamp with time zone
       - name: ssb_13995
         description: |
           SSB statistikkbanktabell 13995 — Sosialhjelpstilfeller, utbetalt
@@ -185,7 +254,14 @@ sources:
             data_tests: [not_null]
           - name: contents_code
             data_tests: [not_null]
-
+          - name: contents_label
+            data_type: text
+          - name: value
+            data_type: numeric
+          - name: status
+            data_type: text
+          - name: loaded_at
+            data_type: timestamp with time zone
       - name: ssb_06947
         description: |
           SSB statistikkbanktabell 06947 — whole-population low income
@@ -204,8 +280,16 @@ sources:
             data_tests:
               - not_null
               - accepted_values:
-                  values: ['Personer', 'EUskala50', 'EUskala60', 'OECDskala50', 'OECDskala60']
+                  values: [Personer, EUskala50, EUskala60, OECDskala50, OECDskala60]
 
+          - name: contents_label
+            data_type: text
+          - name: value
+            data_type: numeric
+          - name: status
+            data_type: text
+          - name: loaded_at
+            data_type: timestamp with time zone
       - name: ssb_07459
         description: |
           SSB statistikkbanktabell 07459 — Alders- og kjønnsfordeling i
@@ -220,13 +304,13 @@ sources:
           - name: region_code
             data_tests: [not_null]
           - name: sex
-            description: "SSB Kjonn — '1' (Menn) or '2' (Kvinner)."
+            description: SSB Kjonn — '1' (Menn) or '2' (Kvinner).
             data_tests:
               - not_null
               - accepted_values:
                   values: ['1', '2']
           - name: age
-            description: "SSB Alder — '000'..'104' or '105+'."
+            description: SSB Alder — '000'..'104' or '105+'.
             data_tests: [not_null]
           - name: year
             data_tests: [not_null]
@@ -234,10 +318,18 @@ sources:
             data_tests:
               - not_null
               - accepted_values:
-                  values: ['Personer1']
+                  values: [Personer1]
 
+          - name: contents_label
+            data_type: text
+          - name: value
+            data_type: numeric
+          - name: status
+            data_type: text
+          - name: loaded_at
+            data_type: timestamp with time zone
       - name: fhi_mobbing
-        description: "FHI 377 — bullying share 7./10. klasse, 3-year averages."
+        description: FHI 377 — bullying share 7./10. klasse, 3-year averages.
         loaded_at_field: loaded_at
         freshness:
           warn_after: {count: 400, period: day}
@@ -247,15 +339,25 @@ sources:
             data_tests: [not_null]
           - name: aar_code
             data_tests: [not_null]
+          - name: kjonn_code
+            data_type: text
           - name: trinn_code
             data_tests:
               - not_null
               - accepted_values: {values: ['7', '10']}
+          - name: spm_id_code
+            data_type: text
           - name: measure_type
             data_tests: [not_null]
-
+          - name: value
+            data_type: numeric
+          - name: status
+            data_type: text
+          - name: loaded_at
+            data_type: timestamp with time zone
       - name: fhi_vgs_gjennomforing
-        description: "FHI 360 — upper-secondary completion rate, by region × sex × parents-education × immigration-category."
+        description: >-
+          FHI 360 — upper-secondary completion rate, by region × sex × parents-education × immigration-category.
         loaded_at_field: loaded_at
         freshness:
           warn_after: {count: 400, period: day}
@@ -265,11 +367,23 @@ sources:
             data_tests: [not_null]
           - name: aar_code
             data_tests: [not_null]
+          - name: kjonn_code
+            data_type: text
+          - name: utdann_code
+            data_type: text
+          - name: innvkat_code
+            data_type: text
           - name: measure_type
             data_tests: [not_null]
-
+          - name: value
+            data_type: numeric
+          - name: status
+            data_type: text
+          - name: loaded_at
+            data_type: timestamp with time zone
       - name: fhi_trangbodd
-        description: "FHI 794 — overcrowded-housing share by region × age × education × housing-status."
+        description: FHI 794 — overcrowded-housing share by region × age × education × 
+          housing-status.
         loaded_at_field: loaded_at
         freshness:
           warn_after: {count: 400, period: day}
@@ -286,12 +400,18 @@ sources:
           - name: bodd_code
             data_tests:
               - not_null
-              - accepted_values: {values: ['trangt', 'uoppgitt']}
+              - accepted_values: {values: [trangt, uoppgitt]}
           - name: measure_type
             data_tests:
               - not_null
-              - accepted_values: {values: ['RATE', 'SMR', 'TELLER']}
+              - accepted_values: {values: [RATE, SMR, TELLER]}
 
+          - name: value
+            data_type: numeric
+          - name: status
+            data_type: text
+          - name: loaded_at
+            data_type: timestamp with time zone
       - name: fhi_bor_alene
         description: |
           FHI Folkehelsestatistikk table 187 (Personer som bor alene).
@@ -312,8 +432,14 @@ sources:
             data_tests:
               - not_null
               - accepted_values:
-                  values: ['RATE', 'SMR', 'TELLER']
+                  values: [RATE, SMR, TELLER]
 
+          - name: value
+            data_type: numeric
+          - name: status
+            data_type: text
+          - name: loaded_at
+            data_type: timestamp with time zone
       - name: ssb_12944
         description: |
           SSB statistikkbanktabell 12944 — Personer i husholdninger med vedvarende
@@ -326,22 +452,31 @@ sources:
           error_after: {count: 800, period: day}
         columns:
           - name: region_code
-            description: "SSB region code."
+            description: SSB region code.
             data_tests:
               - not_null
           - name: age_group
-            description: "SSB Alder dimension — 999A (all ages), 00-17, 18-34, 35-49, 50-66, 067+."
+            description: SSB Alder dimension — 999A (all ages), 00-17, 18-34, 35-49, 50-66, 067+.
             data_tests:
               - not_null
               - accepted_values:
-                  values: ['999A', '00-17', '18-34', '35-49', '50-66', '067+']
+                  values: [999A, 00-17, 18-34, 35-49, 50-66, 067+]
           - name: period
-            description: "Three-year rolling period, e.g. 2022-2024. Stored verbatim from upstream Tid."
+            description: Three-year rolling period, e.g. 2022-2024. Stored verbatim from upstream 
+              Tid.
             data_tests:
               - not_null
           - name: contents_code
-            description: "SSB ContentsCode — PersonerSeksti (count) or EUskalaSeksti (percent EU-60)."
+            description: SSB ContentsCode — PersonerSeksti (count) or EUskalaSeksti (percent EU-60).
             data_tests:
               - not_null
               - accepted_values:
-                  values: ['PersonerSeksti', 'EUskalaSeksti']
+                  values: [PersonerSeksti, EUskalaSeksti]
+          - name: contents_label
+            data_type: text
+          - name: value
+            data_type: numeric
+          - name: status
+            data_type: text
+          - name: loaded_at
+            data_type: timestamp with time zone

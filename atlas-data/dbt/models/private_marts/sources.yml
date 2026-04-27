@@ -1,15 +1,26 @@
 version: 2
-
 sources:
   # Raw landing zone for FRR (Felles Ressursregister) — populated by
   # ingest/src/sources/frr/index.ts which scans atlas-private-data-repo/<ngo>/frr/.
   # On public deployments the table exists but is empty (no NGO data present);
   # private_marts.frr_* models materialize as empty tables (option a).
   - name: private_raw
-    description: "private_raw.* schema — Layer-2 raw landing zone (Atlas-defined shape, NGO-ingested data)."
+    description: >-
+      private_raw.* schema — Layer-2 raw landing zone (Atlas-defined shape, NGO-ingested data).
     schema: private_raw
     tables:
       - name: frr_resources
         description: >
           One row per FRR resource (verbatim JSON in raw_payload). Multi-NGO via
           ngo_orgnr. See atlas-data/migrations/027_private_raw_frr_resources.sql.
+        columns:
+          - name: id
+            data_type: text
+          - name: ngo_orgnr
+            data_type: text
+          - name: raw_payload
+            data_type: jsonb
+          - name: sist_oppdatert
+            data_type: timestamp with time zone
+          - name: loaded_at
+            data_type: timestamp with time zone

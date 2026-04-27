@@ -1,5 +1,4 @@
 version: 2
-
 models:
   - name: indicators__ssb_08764
     description: |
@@ -8,46 +7,53 @@ models:
       the forthcoming indicator_values union.
     columns:
       - name: source_id
-        description: "Always 'ssb-08764'. Distinguishes this source once unioned with others."
+        description: Always 'ssb-08764'. Distinguishes this source once unioned with others.
         data_tests:
           - not_null
           - accepted_values:
-              values: ['ssb-08764']
+              values: [ssb-08764]
       - name: region_code
-        description: "SSB region code, verbatim. Includes kommune, fylke, nasjon and historical variants — mixed levels. Use kommune_nr for kommune-only joins."
+        description: >-
+          SSB region code, verbatim. Includes kommune, fylke, nasjon and historical variants — mixed levels.
+          Use kommune_nr for kommune-only joins.
         data_tests:
           - not_null
       - name: kommune_nr
-        description: "4-digit kommune code — populated only for kommune-level rows (NULL for fylke/nasjon/historical). Canonical join key to dim_kommune."
+        description: >-
+          4-digit kommune code — populated only for kommune-level rows (NULL for fylke/nasjon/historical).
+          Canonical join key to dim_kommune.
         data_tests:
           - relationships:
               to: ref('dim_kommune')
               field: kommune_nr
       - name: fylke_nr
-        description: "2-digit fylke code — populated only for fylke-level rows. NULL otherwise."
+        description: 2-digit fylke code — populated only for fylke-level rows. NULL otherwise.
         data_tests:
           - relationships:
               to: ref('dim_fylke')
               field: fylke_nr
       - name: year
-        description: "Calendar year."
+        description: Calendar year.
         data_tests:
           - not_null
           - dbt_utils.accepted_range:
               min_value: 2000
               max_value: 2040
       - name: contents_code
-        description: "Metric within the SSB table."
+        description: Metric within the SSB table.
         data_tests:
           - not_null
           - accepted_values:
-              values: ['Personer', 'EUskala50', 'EUskala60', 'OECDskala50', 'OECDskala60']
+              values: [Personer, EUskala50, EUskala60, OECDskala50, OECDskala60]
+      - name: contents_label
+        data_type: text
       - name: value
-        description: "Numeric value — count for Personer, percent for the others. NULL when suppressed (see status)."
+        description: >-
+          Numeric value — count for Personer, percent for the others. NULL when suppressed (see status).
       - name: status
-        description: "SSB suppression marker. NULL when the cell has a plain numeric value."
+        description: SSB suppression marker. NULL when the cell has a plain numeric value.
       - name: updated_at
-        description: "When the raw row was last loaded into raw.ssb_08764 by the ingest module."
+        description: When the raw row was last loaded into raw.ssb_08764 by the ingest module.
         data_tests:
           - not_null
     data_tests:
@@ -67,12 +73,12 @@ models:
         data_tests:
           - not_null
           - accepted_values:
-              values: ['ssb-06913']
+              values: [ssb-06913]
       - name: region_code
-        description: "SSB region code with K_/F_/... prefix. Use kommune_nr for kommune joins."
+        description: SSB region code with K_/F_/... prefix. Use kommune_nr for kommune joins.
         data_tests: [not_null]
       - name: kommune_nr
-        description: "Kommune code extracted from K_xxxx prefixed rows. NULL for non-kommune rows."
+        description: Kommune code extracted from K_xxxx prefixed rows. NULL for non-kommune rows.
         data_tests:
           # SSB 06913 retains historical kommune codes in its Region dimension
           # (mergers 1960-2024). dim_kommune currently holds active-today codes
@@ -84,7 +90,7 @@ models:
               config:
                 severity: warn
       - name: fylke_nr
-        description: "Fylke code extracted from F_xx prefixed rows. NULL for non-fylke rows."
+        description: Fylke code extracted from F_xx prefixed rows. NULL for non-fylke rows.
         data_tests:
           # Historical fylker (pre-2020 01-20 numbering) may appear — warn.
           - relationships:
@@ -100,6 +106,12 @@ models:
               max_value: 2050
       - name: contents_code
         data_tests: [not_null]
+      - name: contents_label
+        data_type: text
+      - name: value
+        data_type: numeric
+      - name: status
+        data_type: text
       - name: updated_at
         data_tests: [not_null]
     data_tests:
@@ -120,11 +132,11 @@ models:
         data_tests:
           - not_null
           - accepted_values:
-              values: ['ssb-06944']
+              values: [ssb-06944]
       - name: region_code
         data_tests: [not_null]
       - name: kommune_nr
-        description: "4-digit kommune code; NULL for bydel/fylke/nasjon/rest-of-fylke (XX99) rows."
+        description: 4-digit kommune code; NULL for bydel/fylke/nasjon/rest-of-fylke (XX99) rows.
         data_tests:
           # SSB 06944 includes Svalbard (21xx), Jan Mayen (22xx), continental
           # shelf (23xx) kommune-like codes that aren't in Klass 131 mainland.
@@ -135,7 +147,7 @@ models:
               config:
                 severity: warn
       - name: fylke_nr
-        description: "2-digit fylke code; NULL otherwise."
+        description: 2-digit fylke code; NULL otherwise.
         data_tests:
           # SSB uses special 2-digit codes outside Klass 104 for Svalbard (21),
           # Jan Mayen (22), continental shelf (23), EU (25), abroad (26),
@@ -147,10 +159,10 @@ models:
               config:
                 severity: warn
       - name: household_type
-        description: "SSB HusholdType code, '0000' = all households."
+        description: SSB HusholdType code, '0000' = all households.
         data_tests:
           - not_null
-          - relationships: { to: ref('ref_ssb_household_type'), field: code }
+          - relationships: {to: ref('ref_ssb_household_type'), field: code}
       - name: household_type_label_no
         data_tests: [not_null]
       - name: household_type_label_en
@@ -165,7 +177,13 @@ models:
         data_tests:
           - not_null
           - accepted_values:
-              values: ['SamletInntekt', 'InntSkatt', 'AntallHushold']
+              values: [SamletInntekt, InntSkatt, AntallHushold]
+      - name: contents_label
+        data_type: text
+      - name: value
+        data_type: numeric
+      - name: status
+        data_type: text
       - name: updated_at
         data_tests: [not_null]
     data_tests:
@@ -178,12 +196,12 @@ models:
             - contents_code
 
   - name: indicators__ssb_09429
-    description: "Per-source indicator passthrough for SSB 09429 (education level by kommune + sex)."
+    description: Per-source indicator passthrough for SSB 09429 (education level by kommune + sex).
     columns:
       - name: source_id
         data_tests:
           - not_null
-          - accepted_values: {values: ['ssb-09429']}
+          - accepted_values: {values: [ssb-09429]}
       - name: region_code
         data_tests: [not_null]
       - name: kommune_nr
@@ -199,10 +217,10 @@ models:
               field: fylke_nr
               config: {severity: warn}
       - name: education_level
-        description: "SSB Nivaa NUS2000 code (subject's own level). Joined to ref_ssb_nivaa."
+        description: SSB Nivaa NUS2000 code (subject's own level). Joined to ref_ssb_nivaa.
         data_tests:
           - not_null
-          - relationships: { to: ref('ref_ssb_nivaa'), field: code }
+          - relationships: {to: ref('ref_ssb_nivaa'), field: code}
       - name: education_level_label_no
         data_tests: [not_null]
       - name: education_level_label_en
@@ -210,13 +228,19 @@ models:
       - name: sex
         data_tests:
           - not_null
-          - accepted_values: {values: ['male', 'female', 'all']}
+          - accepted_values: {values: [male, female, all]}
       - name: year
         data_tests:
           - not_null
           - dbt_utils.accepted_range: {min_value: 1970, max_value: 2050}
       - name: contents_code
         data_tests: [not_null]
+      - name: contents_label
+        data_type: text
+      - name: value
+        data_type: numeric
+      - name: status
+        data_type: text
       - name: updated_at
         data_tests: [not_null]
     data_tests:
@@ -224,12 +248,12 @@ models:
           combination_of_columns: [source_id, region_code, education_level, sex, year, contents_code]
 
   - name: indicators__ssb_12063
-    description: "Per-source indicator passthrough for SSB KOSTRA 12063 (municipal leisure services)."
+    description: Per-source indicator passthrough for SSB KOSTRA 12063 (municipal leisure services).
     columns:
       - name: source_id
         data_tests:
           - not_null
-          - accepted_values: {values: ['ssb-12063']}
+          - accepted_values: {values: [ssb-12063]}
       - name: region_code
         data_tests: [not_null]
       - name: kommune_nr
@@ -250,6 +274,12 @@ models:
           - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
       - name: contents_code
         data_tests: [not_null]
+      - name: contents_label
+        data_type: text
+      - name: value
+        data_type: numeric
+      - name: status
+        data_type: text
       - name: updated_at
         data_tests: [not_null]
     data_tests:
@@ -257,12 +287,12 @@ models:
           combination_of_columns: [source_id, region_code, year, contents_code]
 
   - name: indicators__ssb_12131
-    description: "Per-source indicator passthrough for SSB KOSTRA 12131 (social-assistance rates)."
+    description: Per-source indicator passthrough for SSB KOSTRA 12131 (social-assistance rates).
     columns:
       - name: source_id
         data_tests:
           - not_null
-          - accepted_values: {values: ['ssb-12131']}
+          - accepted_values: {values: [ssb-12131]}
       - name: region_code
         data_tests: [not_null]
       - name: kommune_nr
@@ -283,6 +313,12 @@ models:
           - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
       - name: contents_code
         data_tests: [not_null]
+      - name: contents_label
+        data_type: text
+      - name: value
+        data_type: numeric
+      - name: status
+        data_type: text
       - name: updated_at
         data_tests: [not_null]
     data_tests:
@@ -290,12 +326,13 @@ models:
           combination_of_columns: [source_id, region_code, year, contents_code]
 
   - name: indicators__ssb_12132
-    description: "Per-source indicator passthrough for SSB KOSTRA 12132 (welfare benefit-income rules)."
+    description: Per-source indicator passthrough for SSB KOSTRA 12132 (welfare benefit-income 
+      rules).
     columns:
       - name: source_id
         data_tests:
           - not_null
-          - accepted_values: {values: ['ssb-12132']}
+          - accepted_values: {values: [ssb-12132]}
       - name: region_code
         data_tests: [not_null]
       - name: kommune_nr
@@ -316,6 +353,12 @@ models:
           - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
       - name: contents_code
         data_tests: [not_null]
+      - name: contents_label
+        data_type: text
+      - name: value
+        data_type: numeric
+      - name: status
+        data_type: text
       - name: updated_at
         data_tests: [not_null]
     data_tests:
@@ -323,12 +366,12 @@ models:
           combination_of_columns: [source_id, region_code, year, contents_code]
 
   - name: indicators__ssb_12292
-    description: "Per-source indicator passthrough for SSB KOSTRA 12292 (omsorgstjenester)."
+    description: Per-source indicator passthrough for SSB KOSTRA 12292 (omsorgstjenester).
     columns:
       - name: source_id
         data_tests:
           - not_null
-          - accepted_values: {values: ['ssb-12292']}
+          - accepted_values: {values: [ssb-12292]}
       - name: region_code
         data_tests: [not_null]
       - name: kommune_nr
@@ -349,6 +392,12 @@ models:
           - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
       - name: contents_code
         data_tests: [not_null]
+      - name: contents_label
+        data_type: text
+      - name: value
+        data_type: numeric
+      - name: status
+        data_type: text
       - name: updated_at
         data_tests: [not_null]
     data_tests:
@@ -365,11 +414,11 @@ models:
         data_tests:
           - not_null
           - accepted_values:
-              values: ['ssb-13995']
+              values: [ssb-13995]
       - name: region_code
         data_tests: [not_null]
       - name: kommune_nr
-        description: "4-digit kommune code; NULL for XX99 aggregates / bydel / fylke / nasjon rows."
+        description: 4-digit kommune code; NULL for XX99 aggregates / bydel / fylke / nasjon rows.
         data_tests:
           - relationships:
               to: ref('dim_kommune')
@@ -377,7 +426,7 @@ models:
               config:
                 severity: warn
       - name: fylke_nr
-        description: "2-digit fylke code; NULL otherwise."
+        description: 2-digit fylke code; NULL otherwise.
         data_tests:
           - relationships:
               to: ref('dim_fylke')
@@ -392,6 +441,12 @@ models:
               max_value: 2050
       - name: contents_code
         data_tests: [not_null]
+      - name: contents_label
+        data_type: text
+      - name: value
+        data_type: numeric
+      - name: status
+        data_type: text
       - name: updated_at
         data_tests: [not_null]
     data_tests:
@@ -412,7 +467,7 @@ models:
         data_tests:
           - not_null
           - accepted_values:
-              values: ['ssb-06083']
+              values: [ssb-06083]
       - name: region_code
         data_tests: [not_null]
       - name: kommune_nr
@@ -432,7 +487,7 @@ models:
       - name: family_type
         data_tests:
           - not_null
-          - relationships: { to: ref('ref_ssb_family_type'), field: code }
+          - relationships: {to: ref('ref_ssb_family_type'), field: code}
       - name: family_type_label_no
         data_tests: [not_null]
       - name: family_type_label_en
@@ -440,9 +495,15 @@ models:
       - name: year
         data_tests:
           - not_null
-          - dbt_utils.accepted_range: { min_value: 2000, max_value: 2050 }
+          - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
       - name: contents_code
         data_tests: [not_null]
+      - name: contents_label
+        data_type: text
+      - name: value
+        data_type: numeric
+      - name: status
+        data_type: text
       - name: updated_at
         data_tests: [not_null]
     data_tests:
@@ -463,11 +524,11 @@ models:
         data_tests:
           - not_null
           - accepted_values:
-              values: ['ssb-06947']
+              values: [ssb-06947]
       - name: region_code
         data_tests: [not_null]
       - name: kommune_nr
-        description: "4-digit kommune code; NULL for XX99 aggregates / bydel / fylke / nasjon rows."
+        description: 4-digit kommune code; NULL for XX99 aggregates / bydel / fylke / nasjon rows.
         data_tests:
           # Same pattern as ssb-06944 — includes historical + Svalbard + offshore codes.
           - relationships:
@@ -476,7 +537,7 @@ models:
               config:
                 severity: warn
       - name: fylke_nr
-        description: "2-digit fylke code; NULL otherwise."
+        description: 2-digit fylke code; NULL otherwise.
         data_tests:
           - relationships:
               to: ref('dim_fylke')
@@ -493,7 +554,13 @@ models:
         data_tests:
           - not_null
           - accepted_values:
-              values: ['Personer', 'EUskala50', 'EUskala60', 'OECDskala50', 'OECDskala60']
+              values: [Personer, EUskala50, EUskala60, OECDskala50, OECDskala60]
+      - name: contents_label
+        data_type: text
+      - name: value
+        data_type: numeric
+      - name: status
+        data_type: text
       - name: updated_at
         data_tests: [not_null]
     data_tests:
@@ -513,12 +580,13 @@ models:
         data_tests:
           - not_null
           - accepted_values:
-              values: ['ssb-07459']
+              values: [ssb-07459]
       - name: region_code
-        description: "SSB region code. Includes kommune, fylke, nasjon levels. Use kommune_nr for kommune joins."
+        description: >-
+          SSB region code. Includes kommune, fylke, nasjon levels. Use kommune_nr for kommune joins.
         data_tests: [not_null]
       - name: kommune_nr
-        description: "4-digit kommune code; NULL for fylke/nasjon rows."
+        description: 4-digit kommune code; NULL for fylke/nasjon rows.
         data_tests:
           # SSB 07459 covers 1986-2026 in its Region dimension so it retains
           # ~593 historical 4-digit codes (old Østfold 01xx, etc.) with 0
@@ -530,7 +598,7 @@ models:
               config:
                 severity: warn
       - name: fylke_nr
-        description: "2-digit fylke code; NULL for kommune/nasjon rows."
+        description: 2-digit fylke code; NULL for kommune/nasjon rows.
         data_tests:
           # Pre-2020 fylker (01-20 numbering) appear here with zero values.
           - relationships:
@@ -539,21 +607,24 @@ models:
               config:
                 severity: warn
       - name: sex
-        description: "Biological/administrative sex via decode_sex(). 'all' is possible if SSB ever ships an aggregate row in this table."
+        description: >-
+          Biological/administrative sex via decode_sex(). 'all' is possible if SSB ever ships an aggregate
+          row in this table.
         data_tests:
           - not_null
-          - accepted_values: { values: ['male', 'female', 'all'] }
+          - accepted_values: {values: [male, female, all]}
       - name: age
         data_tests: [not_null]
+        description: SSB Alder — '000'..'104' or '105+'.
       - name: age_int
-        description: "age as integer; NULL for the open-ended '105+' bucket."
+        description: age as integer; NULL for the open-ended '105+' bucket.
         data_tests:
-          - dbt_utils.accepted_range: { min_value: 0, max_value: 110 }
+          - dbt_utils.accepted_range: {min_value: 0, max_value: 110}
       - name: age_min
-        description: "Sortable floor of age; 105 for '105+'."
+        description: Sortable floor of age; 105 for '105+'.
         data_tests:
           - not_null
-          - dbt_utils.accepted_range: { min_value: 0, max_value: 110 }
+          - dbt_utils.accepted_range: {min_value: 0, max_value: 110}
       - name: year
         data_tests:
           - not_null
@@ -564,7 +635,13 @@ models:
         data_tests:
           - not_null
           - accepted_values:
-              values: ['Personer1']
+              values: [Personer1]
+      - name: contents_label
+        data_type: text
+      - name: value
+        data_type: numeric
+      - name: status
+        data_type: text
       - name: updated_at
         data_tests: [not_null]
     data_tests:
@@ -578,12 +655,12 @@ models:
             - contents_code
 
   - name: indicators__fhi_mobbing
-    description: "Per-source passthrough for FHI 377 (bullying 7./10. klasse)."
+    description: Per-source passthrough for FHI 377 (bullying 7./10. klasse).
     columns:
       - name: source_id
         data_tests:
           - not_null
-          - accepted_values: {values: ['fhi-mobbing']}
+          - accepted_values: {values: [fhi-mobbing]}
       - name: region_code
         data_tests: [not_null]
       - name: kommune_nr
@@ -615,28 +692,37 @@ models:
       - name: sex
         data_tests:
           - not_null
-          - accepted_values: {values: ['male', 'female', 'all']}
+          - accepted_values: {values: [male, female, all]}
       - name: grade
         data_tests:
           - not_null
           - accepted_values: {values: ['7', '10']}
+      - name: question_id
+        data_type: text
       - name: contents_code
         data_tests:
           - not_null
-          - accepted_values: {values: ['RATE', 'SMR', 'MEIS']}
+          - accepted_values: {values: [RATE, SMR, MEIS]}
+      - name: contents_label
+        data_type: text
+      - name: value
+        data_type: numeric
+      - name: status
+        data_type: text
       - name: updated_at
         data_tests: [not_null]
     data_tests:
       - dbt_utils.unique_combination_of_columns:
-          combination_of_columns: [source_id, region_code, period, sex, grade, question_id, contents_code]
+          combination_of_columns: [source_id, region_code, period, sex, grade, question_id, 
+                contents_code]
 
   - name: indicators__fhi_vgs_gjennomforing
-    description: "Per-source passthrough for FHI 360 (VGS completion rate)."
+    description: Per-source passthrough for FHI 360 (VGS completion rate).
     columns:
       - name: source_id
         data_tests:
           - not_null
-          - accepted_values: {values: ['fhi-vgs-gjennomforing']}
+          - accepted_values: {values: [fhi-vgs-gjennomforing]}
       - name: region_code
         data_tests: [not_null]
       - name: kommune_nr
@@ -668,38 +754,48 @@ models:
       - name: sex
         data_tests:
           - not_null
-          - accepted_values: {values: ['male', 'female', 'all']}
+          - accepted_values: {values: [male, female, all]}
       - name: parents_education
-        description: "FHI UTDANN code (parents' education level). Joined to ref_fhi_utdann."
+        description: FHI UTDANN code (parents' education level). Joined to ref_fhi_utdann.
         data_tests:
           - not_null
-          - relationships: { to: ref('ref_fhi_utdann'), field: code }
+          - relationships: {to: ref('ref_fhi_utdann'), field: code}
       - name: parents_education_label_no
         data_tests: [not_null]
       - name: immigration_category
-        description: "FHI INNVKAT code. Joined to ref_fhi_innvkat (single-row seed today; future-proofed)."
+        description: FHI INNVKAT code. Joined to ref_fhi_innvkat (single-row seed today; 
+          future-proofed).
         data_tests:
           - not_null
-          - relationships: { to: ref('ref_fhi_innvkat'), field: code }
+          - relationships: {to: ref('ref_fhi_innvkat'), field: code}
       - name: immigration_category_label_no
         data_tests: [not_null]
       - name: contents_code
         data_tests:
           - not_null
-          - accepted_values: {values: ['RATE', 'SMR', 'MEIS', 'TELLER']}
+          - accepted_values: {values: [RATE, SMR, MEIS, TELLER]}
+      - name: contents_label
+        data_type: text
+      - name: value
+        data_type: numeric
+      - name: status
+        data_type: text
       - name: updated_at
         data_tests: [not_null]
     data_tests:
       - dbt_utils.unique_combination_of_columns:
-          combination_of_columns: [source_id, region_code, period, sex, parents_education, immigration_category, contents_code]
+          combination_of_columns: [source_id, region_code, period, sex, parents_education, 
+                immigration_category, contents_code]
 
   - name: indicators__fhi_trangbodd
-    description: "Per-source indicator passthrough for FHI 794 (overcrowded housing). Preserves parents_education (UTDANN, parents' level) and housing_status (BODD) dims."
+    description: >-
+      Per-source indicator passthrough for FHI 794 (overcrowded housing). Preserves parents_education
+      (UTDANN, parents' level) and housing_status (BODD) dims.
     columns:
       - name: source_id
         data_tests:
           - not_null
-          - accepted_values: {values: ['fhi-trangbodd']}
+          - accepted_values: {values: [fhi-trangbodd]}
       - name: region_code
         data_tests: [not_null]
       - name: kommune_nr
@@ -739,25 +835,32 @@ models:
           - not_null
           - dbt_utils.accepted_range: {min_value: 0, max_value: 120}
       - name: parents_education
-        description: "FHI UTDANN code (parents' education level). Joined to ref_fhi_utdann."
+        description: FHI UTDANN code (parents' education level). Joined to ref_fhi_utdann.
         data_tests:
           - not_null
-          - relationships: { to: ref('ref_fhi_utdann'), field: code }
+          - relationships: {to: ref('ref_fhi_utdann'), field: code}
       - name: parents_education_label_no
         data_tests: [not_null]
       - name: housing_status
         data_tests:
           - not_null
-          - accepted_values: {values: ['trangt', 'uoppgitt']}
+          - accepted_values: {values: [trangt, uoppgitt]}
       - name: contents_code
         data_tests:
           - not_null
-          - accepted_values: {values: ['RATE']}
+          - accepted_values: {values: [RATE]}
+      - name: contents_label
+        data_type: text
+      - name: value
+        data_type: numeric
+      - name: status
+        data_type: text
       - name: updated_at
         data_tests: [not_null]
     data_tests:
       - dbt_utils.unique_combination_of_columns:
-          combination_of_columns: [source_id, region_code, period, age_group, parents_education, housing_status, contents_code]
+          combination_of_columns: [source_id, region_code, period, age_group, parents_education, 
+                housing_status, contents_code]
 
   - name: indicators__fhi_bor_alene
     description: |
@@ -770,17 +873,17 @@ models:
         data_tests:
           - not_null
           - accepted_values:
-              values: ['fhi-bor-alene']
+              values: [fhi-bor-alene]
       - name: region_code
         data_tests: [not_null]
       - name: kommune_nr
-        description: "4-digit kommune code; NULL for non-kommune rows. Joins to dim_kommune."
+        description: 4-digit kommune code; NULL for non-kommune rows. Joins to dim_kommune.
         data_tests:
           - relationships:
               to: ref('dim_kommune')
               field: kommune_nr
       - name: fylke_nr
-        description: "2-digit fylke code; NULL otherwise."
+        description: 2-digit fylke code; NULL otherwise.
         data_tests:
           - relationships:
               to: ref('dim_fylke')
@@ -792,33 +895,39 @@ models:
               min_value: 2000
               max_value: 2050
       - name: period
-        description: "FHI AAR code, e.g. '2024_2024'."
+        description: FHI AAR code, e.g. '2024_2024'.
         data_tests: [not_null]
       - name: period_start_year
         data_tests:
           - not_null
-          - dbt_utils.accepted_range: { min_value: 2000, max_value: 2050 }
+          - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
       - name: period_end_year
         data_tests:
           - not_null
-          - dbt_utils.accepted_range: { min_value: 2000, max_value: 2050 }
+          - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
       - name: age_group
-        description: "FHI ALDER code in min_max form (e.g. '16_120')."
+        description: FHI ALDER code in min_max form (e.g. '16_120').
         data_tests: [not_null]
       - name: age_group_min
         data_tests:
           - not_null
-          - dbt_utils.accepted_range: { min_value: 0, max_value: 120 }
+          - dbt_utils.accepted_range: {min_value: 0, max_value: 120}
       - name: age_group_max
         data_tests:
           - not_null
-          - dbt_utils.accepted_range: { min_value: 0, max_value: 120 }
+          - dbt_utils.accepted_range: {min_value: 0, max_value: 120}
       - name: contents_code
-        description: "RATE | SMR | TELLER, from FHI MEASURE_TYPE."
+        description: RATE | SMR | TELLER, from FHI MEASURE_TYPE.
         data_tests:
           - not_null
           - accepted_values:
-              values: ['RATE', 'SMR', 'TELLER']
+              values: [RATE, SMR, TELLER]
+      - name: contents_label
+        data_type: text
+      - name: value
+        data_type: numeric
+      - name: status
+        data_type: text
       - name: updated_at
         data_tests: [not_null]
     data_tests:
@@ -837,66 +946,70 @@ models:
       uses a period string instead of a numeric year; these carry through to
       marts and will be handled by the downstream union/mart layer.
     columns:
+      - name: region_code
+        description: >-
+          SSB region code. Includes kommune, bydel, fylke, nasjon levels. Use kommune_nr for kommune joins.
+        data_tests:
+          - not_null
       - name: source_id
-        description: "Always 'ssb-12944'."
+        description: Always 'ssb-12944'.
         data_tests:
           - not_null
           - accepted_values:
-              values: ['ssb-12944']
-      - name: region_code
-        description: "SSB region code. Includes kommune, bydel, fylke, nasjon levels. Use kommune_nr for kommune joins."
-        data_tests:
-          - not_null
+              values: [ssb-12944]
       - name: kommune_nr
-        description: "4-digit kommune code; NULL for bydel/fylke/nasjon rows."
+        description: 4-digit kommune code; NULL for bydel/fylke/nasjon rows.
         data_tests:
           - relationships:
               to: ref('dim_kommune')
               field: kommune_nr
       - name: fylke_nr
-        description: "2-digit fylke code; NULL for kommune/bydel/nasjon rows."
+        description: 2-digit fylke code; NULL for kommune/bydel/nasjon rows.
         data_tests:
           - relationships:
               to: ref('dim_fylke')
               field: fylke_nr
       - name: age_group
-        description: "SSB Alder code."
+        description: SSB Alder code.
         data_tests:
           - not_null
           - accepted_values:
-              values: ['999A', '00-17', '18-34', '35-49', '50-66', '067+']
+              values: [999A, 00-17, 18-34, 35-49, 50-66, 067+]
       - name: age_group_min
-        description: "Lower bound of age_group; NULL for cryptic 999A and any unparseable value."
+        description: Lower bound of age_group; NULL for cryptic 999A and any unparseable value.
         data_tests:
-          - dbt_utils.accepted_range: { min_value: 0, max_value: 120 }
+          - dbt_utils.accepted_range: {min_value: 0, max_value: 120}
       - name: age_group_max
-        description: "Upper bound of age_group; NULL for open-ended (067+) and 999A."
+        description: Upper bound of age_group; NULL for open-ended (067+) and 999A.
         data_tests:
-          - dbt_utils.accepted_range: { min_value: 0, max_value: 120 }
+          - dbt_utils.accepted_range: {min_value: 0, max_value: 120}
       - name: period
-        description: "Three-year rolling period as upstream code text."
+        description: Three-year rolling period as upstream code text.
         data_tests:
           - not_null
       - name: period_start_year
         data_tests:
           - not_null
-          - dbt_utils.accepted_range: { min_value: 2000, max_value: 2050 }
+          - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
       - name: period_end_year
         data_tests:
           - not_null
-          - dbt_utils.accepted_range: { min_value: 2000, max_value: 2050 }
+          - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
       - name: contents_code
-        description: "SSB ContentsCode."
+        description: SSB ContentsCode.
         data_tests:
           - not_null
           - accepted_values:
-              values: ['PersonerSeksti', 'EUskalaSeksti']
+              values: [PersonerSeksti, EUskalaSeksti]
+      - name: contents_label
+        data_type: text
       - name: value
-        description: "Numeric value — count for PersonerSeksti, percent for EUskalaSeksti. NULL when suppressed."
+        description: >-
+          Numeric value — count for PersonerSeksti, percent for EUskalaSeksti. NULL when suppressed.
       - name: status
-        description: "SSB suppression marker. NULL when the cell has a plain numeric value."
+        description: SSB suppression marker. NULL when the cell has a plain numeric value.
       - name: updated_at
-        description: "When the raw row was last loaded."
+        description: When the raw row was last loaded.
         data_tests:
           - not_null
     data_tests:

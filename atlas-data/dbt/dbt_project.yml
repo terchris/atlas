@@ -20,6 +20,9 @@ models:
   atlas:
     # Default materialisation for any model we don't override.
     +materialized: view
+    # dbt-osmosis: keep one schema.yml per directory (existing convention).
+    # See atlas-data/dbt/check-osmosis.sh and PLAN-001 phase 1.
+    +dbt-osmosis: schema.yml
     # Per-source indicator passthroughs live in models/indicators/ and are
     # materialised as tables in the marts schema.
     indicators:

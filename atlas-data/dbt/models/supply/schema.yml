@@ -1,5 +1,4 @@
 version: 2
-
 models:
   - name: supply__redcross_branches
     description: |
@@ -12,28 +11,51 @@ models:
         description: "'redcross-' || branch_id; namespaced for cross-NGO uniqueness."
         data_tests: [not_null, unique]
       - name: ngo_orgnr
-        description: "Hardcoded '864139442' (Norges Røde Kors)."
+        description: Hardcoded '864139442' (Norges Røde Kors).
         data_tests:
           - not_null
-          - relationships: { to: ref('dim_ngo'), field: orgnr }
+          - relationships: {to: ref('dim_ngo'), field: orgnr}
       - name: chapter_level
         data_tests:
           - not_null
-          - accepted_values: { values: ['national', 'regional', 'local'] }
+          - accepted_values: {values: [national, regional, local]}
       - name: parent_chapter_id
-        description: "Self-FK to chapter_id. NULL for HQ and Ukjent."
+        description: Self-FK to chapter_id. NULL for HQ and Ukjent.
+      - name: chapter_orgnr
+        data_type: text
+      - name: name
+        data_type: text
       - name: kommune_nr
-        description: "Resolved via dim_postnummer.postnummer → kommune_nr lookup. NULL for branches without a postal code (HQ, some Distrikt, Ukjent)."
+        description: >-
+          Resolved via dim_postnummer.postnummer → kommune_nr lookup. NULL for branches without a postal
+          code (HQ, some Distrikt, Ukjent).
         data_tests:
           - relationships:
               to: ref('dim_kommune')
               field: kommune_nr
-              config: { severity: warn }
+              config: {severity: warn}
       - name: is_active
         data_tests:
           - not_null
-          - accepted_values: { values: [true, false] }
+          - accepted_values: {values: [true, false]}
 
+      - name: postal_address_line1
+        data_type: text
+      - name: postal_code
+        data_type: text
+      - name: post_office
+        description: Post-office name, ALLCAPS as published by Bring.
+        data_type: text
+      - name: phone
+        data_type: text
+      - name: email
+        data_type: text
+      - name: web
+        data_type: text
+      - name: chapter_subtype
+        data_type: text
+      - name: updated_at
+        data_type: timestamp with time zone
   - name: supply__redcross_branch_activities
     description: |
       Per-source staging: reshapes raw.redcross_branch_activities into a per-
@@ -46,31 +68,39 @@ models:
         description: "'redcross-' || branch_id."
         data_tests:
           - not_null
-          - relationships: { to: ref('dim_chapter'), field: chapter_id }
+          - relationships: {to: ref('dim_chapter'), field: chapter_id}
       - name: ngo_orgnr
         data_tests:
           - not_null
-          - relationships: { to: ref('dim_ngo'), field: orgnr }
+          - relationships: {to: ref('dim_ngo'), field: orgnr}
       - name: canonical_name
-        description: "Red Cross's globalActivityName, verbatim."
+        description: Red Cross's globalActivityName, verbatim.
         data_tests: [not_null]
+      - name: local_activity_name
+        data_type: text
       - name: service_category_code
-        description: "From the 50→22 CASE WHEN. NULL only if a new globalActivityName appeared in raw that the CASE doesn't cover (catches drift loudly via the not_null filter applied at dim_activity/fact_chapter_activities — those filter is_service = true; a new unmapped service-type activity would still be is_service = true with NULL category, surfacing the gap)."
+        description: >-
+          From the 50→22 CASE WHEN. NULL only if a new globalActivityName appeared in raw that the CASE
+          doesn't cover (catches drift loudly via the not_null filter applied at dim_activity/fact_chapter_activities
+          — those filter is_service = true; a new unmapped service-type activity would still be is_service
+          = true with NULL category, surfacing the gap).
         data_tests:
           - relationships:
               to: ref('ref_atlas_service_category')
               field: code
-              config: { where: "service_category_code is not null" }
+              config: {where: service_category_code is not null}
       - name: is_service
         data_tests:
           - not_null
-          - accepted_values: { values: [true, false] }
+          - accepted_values: {values: [true, false]}
+      - name: updated_at
+        data_type: timestamp with time zone
     data_tests:
       # Catches the drift case: any NEW global_activity_name that wasn't in
       # the CASE, AND wasn't filtered out as is_service = false, will fail
       # this test. Loud signal that the curation needs updating.
       - dbt_utils.expression_is_true:
-          expression: "(is_service = false) or (service_category_code is not null)"
+          expression: (is_service = false) or (service_category_code is not null)
 
   - name: supply__redcross_chapter_kommune_coverage
     description: |
@@ -80,10 +110,144 @@ models:
       real tests live on the marts.chapter_kommune_coverage union target.
     columns:
       - name: chapter_id
-        description: "Red Cross distrikt's chapter_id (chapter_level='regional')."
+        description: Composite slug, namespaced by NGO. Stable across refreshes.
+        data_type: text
       - name: kommune_nr
-        description: "One row per kommune the distrikt covers (via its locals)."
+        description: >-
+          Resolved via dim_postnummer. NULL for branches that span multiple kommuner (regional, national).
+        data_type: text
       - name: source
-        description: "Always 'inferred' for Red Cross in v1."
+        data_type: text
       - name: updated_at
-        description: "max(child.updated_at) from the contributing local chapters."
+        data_type: timestamp with time zone
+  - name: supply__frr_resource_phone
+    columns:
+      - name: resource_id
+        data_type: text
+      - name: retningsnummer
+        data_type: text
+      - name: telefonnummer
+        data_type: text
+      - name: beskrivelse
+        data_type: text
+      - name: kategori
+        data_type: text
+      - name: er_utalarmeringsnummer
+        data_type: boolean
+      - name: is_redacted
+        data_type: boolean
+      - name: loaded_at
+        data_type: timestamp with time zone
+  - name: supply__frr_resource_status
+    columns:
+      - name: resource_id
+        data_type: text
+      - name: start_tidspunkt
+        data_type: timestamp with time zone
+      - name: statuskode
+        data_type: text
+      - name: statuskommentar
+        data_type: text
+      - name: loaded_at
+        data_type: timestamp with time zone
+  - name: supply__frr_resource_position
+    columns:
+      - name: resource_id
+        data_type: text
+      - name: position_at
+        data_type: timestamp with time zone
+      - name: fylke_navn
+        data_type: text
+      - name: kommune_navn
+        data_type: text
+      - name: kommune_nr
+        description: 4-digit zero-padded kommune code, SSB canonical form (e.g. '0301' = Oslo).
+        data_type: text
+      - name: politidistrikt
+        data_type: text
+      - name: lat
+        data_type: double precision
+      - name: lon
+        data_type: double precision
+      - name: kilde
+        data_type: text
+      - name: loaded_at
+        data_type: timestamp with time zone
+  - name: supply__frr_resources
+    columns:
+      - name: id
+        data_type: text
+      - name: ngo_orgnr
+        data_type: text
+      - name: source_id
+        data_type: text
+      - name: visningsnavn
+        data_type: text
+      - name: ressurstype
+        data_type: text
+      - name: hovedfunksjon
+        data_type: text
+      - name: beskrivelse
+        data_type: text
+      - name: sektor
+        data_type: text
+      - name: bilde
+        data_type: text
+      - name: verifisert_av_eier
+        data_type: boolean
+      - name: personnavn
+        data_type: text
+      - name: kontaktinformasjon
+        data_type: text
+      - name: is_personnavn_redacted
+        data_type: boolean
+      - name: is_kontaktinfo_redacted
+        data_type: boolean
+      - name: register_id
+        data_type: text
+      - name: mor_id
+        data_type: text
+      - name: baseressurs
+        data_type: text
+      - name: ekstern_system
+        data_type: text
+      - name: ekstern_id
+        data_type: text
+      - name: ekstern_mor_id
+        data_type: text
+      - name: current_statuskode
+        data_type: text
+      - name: current_status_at
+        data_type: timestamp with time zone
+      - name: current_kommune_navn
+        data_type: text
+      - name: current_kommune_nr
+        data_type: text
+      - name: current_fylke_navn
+        data_type: text
+      - name: current_fylke_nr
+        data_type: text
+      - name: current_politidistrikt
+        data_type: text
+      - name: current_lat
+        data_type: double precision
+      - name: current_lon
+        data_type: double precision
+      - name: position_at
+        data_type: timestamp with time zone
+      - name: position_kilde
+        data_type: text
+      - name: undertyper
+        data_type: ARRAY
+      - name: kapasiteter
+        data_type: ARRAY
+      - name: felter
+        data_type: jsonb
+      - name: utstyr
+        data_type: jsonb
+      - name: vedlegg
+        data_type: jsonb
+      - name: sist_oppdatert
+        data_type: timestamp with time zone
+      - name: loaded_at
+        data_type: timestamp with time zone

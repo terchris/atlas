@@ -1,0 +1,600 @@
+version: 2
+models:
+  - name: mart_indicator_summary
+    description: |
+      One row per (source_id, contents_code) summarising the latest-year
+      coverage and value range for every indicator in
+      fact_kommune_indicators. This is the backing dataset for the data
+      explorer index page (atlas-frontend /data) and is the equivalent of
+      the listIndicators() inline query that PostgREST projects as
+      /mart_indicator_summary on the public API.
+
+      Query shape: latest-year-per-indicator + group-by + value/null counts
+      filtered to active kommuner only. Inactive kommuner (historical
+      codes retained by upstream) are excluded from the counts so consumers
+      see "how many of today's kommuner have data?" not "how many rows
+      exist?".
+
+      Refreshed nightly together with fact_kommune_indicators. The
+      upstream_updated column carries the most recent raw load timestamp
+      across the rows that contributed to this summary, so freshness can
+      be inspected per indicator without joining to raw.* sources.
+    columns:
+      - name: source_id
+        description: |
+          Atlas source identifier, e.g. 'ssb-08764'. Joins back to
+          fact_kommune_indicators.source_id and to the source declarations
+          in indicators/sources.yml.
+        data_tests:
+          - not_null
+      - name: contents_code
+        description: |
+          Source-specific ContentsCode verbatim from upstream (e.g.
+          'EUskala60', 'Folkemengde'). Combined with source_id forms the
+          natural key of this view.
+        data_tests:
+          - not_null
+      - name: contents_label
+        description: |
+          Human-readable label for contents_code, verbatim from upstream.
+          NULL only if every contributing row had a NULL label (rare).
+      - name: latest_year
+        description: |
+          Most recent calendar year for which this (source_id,
+          contents_code) has any rows in fact_kommune_indicators. The
+          coverage and value-range columns below are computed against
+          this year only.
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 2000
+              max_value: 2040
+      - name: kommuner_with_value
+        description: |
+          Count of active kommuner (kommune_is_active = true) that have a
+          non-NULL value for this indicator at latest_year. The headline
+          coverage number on the data explorer.
+        data_tests:
+          - not_null
+      - name: kommuner_with_null
+        description: |
+          Count of active kommuner that have a row at latest_year but
+          value IS NULL (i.e. upstream suppressed the cell). Inactive
+          kommuner are not counted.
+        data_tests:
+          - not_null
+      - name: min_value
+        description: |
+          Minimum non-NULL value across all rows at latest_year, regardless
+          of whether the kommune is active. NULL if no row had a value.
+      - name: max_value
+        description: |
+          Maximum non-NULL value across all rows at latest_year, regardless
+          of whether the kommune is active. NULL if no row had a value.
+      - name: upstream_updated
+        description: |
+          Most recent fact_kommune_indicators.updated_at across the rows
+          that contributed to this summary. Useful for staleness checks
+          per indicator without joining to raw.*.
+        data_tests:
+          - not_null
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [source_id, contents_code]
+
+  - name: mart_indicator_latest_values
+    description: |
+      One row per (source_id, contents_code, kommune_nr) at each
+      indicator's latest_year, restricted to active kommuner. Backs the
+      data explorer's per-indicator detail page (atlas-frontend
+      /data/[source_id]/[contents_code]) and is the equivalent of the
+      loadIndicatorValues() inline query.
+
+      PostgREST consumers filter via
+      ?source_id=eq.X&contents_code=eq.Y. The full table is the
+      cross-product of every indicator with every active kommune that
+      has a row at latest_year, so the unfiltered row count is large
+      (~360 active kommuner × ~70 indicators in v1).
+
+      Inactive kommuner (kommune_is_active = false) are excluded so the
+      output reflects today's kommune set, not historical codes that
+      upstream still emits.
+    columns:
+      - name: source_id
+        description: |
+          Atlas source identifier, e.g. 'ssb-08764'. Joins back to
+          fact_kommune_indicators.source_id.
+        data_tests:
+          - not_null
+      - name: contents_code
+        description: |
+          Source-specific ContentsCode verbatim from upstream (e.g.
+          'EUskala60', 'Folkemengde'). Combined with source_id and
+          kommune_nr forms the natural key of this view.
+        data_tests:
+          - not_null
+      - name: kommune_nr
+        description: |
+          4-digit zero-padded kommune code. FK to dim_kommune; only
+          active kommuner are included.
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_kommune')
+              field: kommune_nr
+      - name: kommune_name
+        description: Joined from fact_kommune_indicators (originally from dim_kommune).
+        data_tests:
+          - not_null
+      - name: fylke_name
+        description: |
+          Joined from fact_kommune_indicators (originally from
+          dim_fylke). NULL when the kommune's fylke_nr isn't present in
+          dim_fylke (rare — happens for codes like Svalbard 21xx).
+      - name: value
+        description: |
+          Numeric value at latest_year. Unit depends on (source_id,
+          contents_code) — see the source's README. NULL when upstream
+          suppressed the cell.
+      - name: status
+        description: |
+          SSB suppression marker (e.g. ':' for 'not available'). NULL
+          when value is present.
+      - name: year
+        description: |
+          The latest year for this (source_id, contents_code). Repeats
+          across all kommuner for a given indicator — kept on the row so
+          PostgREST consumers can read it without a separate join.
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 2000
+              max_value: 2040
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [source_id, contents_code, kommune_nr]
+
+  - name: mart_indicator_missing_kommuner
+    description: |
+      One row per (source_id, contents_code, kommune_nr) for every
+      active kommune that has *no* non-NULL value at the indicator's
+      latest_year. The "coverage gap" sidebar on the data explorer
+      detail page; equivalent to the listMissingKommuner() inline query.
+
+      PostgREST consumers filter via
+      ?source_id=eq.X&contents_code=eq.Y. Membership semantics: a
+      kommune is considered "missing" if it either has no row at
+      latest_year, or has a row with value IS NULL. Status markers (':',
+      'X') do not count as a value.
+
+      The full table is the cross-product of every indicator with every
+      active kommune that lacks data. Most cells are present, so the
+      unfiltered row count is the per-indicator gap-list aggregated
+      across all indicators.
+    columns:
+      - name: source_id
+        description: Atlas source identifier, e.g. 'ssb-08764'.
+        data_tests:
+          - not_null
+      - name: contents_code
+        description: |
+          Source-specific ContentsCode verbatim from upstream (e.g.
+          'EUskala60', 'Folkemengde').
+        data_tests:
+          - not_null
+      - name: kommune_nr
+        description: |
+          4-digit zero-padded kommune code. FK to dim_kommune; only
+          active kommuner with no value at latest_year are listed.
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_kommune')
+              field: kommune_nr
+      - name: kommune_name
+        description: Joined from dim_kommune.
+        data_tests:
+          - not_null
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [source_id, contents_code, kommune_nr]
+
+  - name: mart_coverage_gap_barnefattigdom
+    description: |
+      One row per active kommune for the latest year of SSB 08764 child
+      poverty data, combining the EUskala60 share (% of children in
+      low-income households) with the Personer count (number of
+      children). Backs the barnefattigdom map page (atlas-frontend
+      /coverage-gap/barnefattigdom).
+
+      First member of the mart_coverage_gap_<topic> family. Future
+      coverage-gap maps follow the same shape: latest year per kommune,
+      one row per kommune, value(s) pivoted out of contents_code into
+      named columns. PostgREST projects this view as a single endpoint;
+      consumers don't filter, they read the whole map dataset in one
+      request.
+
+      Inactive kommuner are excluded so the map renders today's
+      kommune set. NULL values are kept in place — Map.tsx renders
+      them as "no data".
+    columns:
+      - name: kommune_nr
+        description: |
+          4-digit zero-padded kommune code. FK to dim_kommune; only
+          active kommuner are included. Unique within this view.
+        data_tests:
+          - not_null
+          - unique
+          - relationships:
+              to: ref('dim_kommune')
+              field: kommune_nr
+      - name: kommune_name
+        description: Joined from fact_kommune_indicators (originally from dim_kommune).
+        data_tests:
+          - not_null
+      - name: fylke_name
+        description: |
+          Joined from fact_kommune_indicators (originally from
+          dim_fylke). NULL for kommuner whose fylke_nr isn't in
+          dim_fylke (rare — Svalbard 21xx).
+      - name: year
+        description: |
+          The latest year for ssb-08764/EUskala60. Same value across all
+          rows; carried on each row so the consumer reads it without a
+          separate query.
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 2000
+              max_value: 2040
+      - name: value_pct
+        description: |
+          EU-skala 60 % share — the percent of children under 18 in
+          low-income households (defined as < 60 % of national median
+          equivalised income). NULL when upstream suppressed the cell.
+      - name: personer
+        description: |
+          Number of children under 18 in low-income households at the
+          same year. NULL when upstream suppressed the cell.
+  - name: mart_ngo_index
+    description: |
+      One row per NGO in dim_ngo with chapter_count and has_supply
+      decorations. Backs the NGO landing page (atlas-frontend /ngo) and
+      is equivalent to the listNgos() inline query.
+
+      chapter_count counts only active chapters (dim_chapter.is_active),
+      so a defunct NGO sits at 0 even if its historical chapters are
+      retained. has_supply is the convenience boolean (chapter_count > 0).
+      The full table is small (~11 rows in v1, growing as new NGOs
+      land), so PostgREST consumers typically read all of it.
+    columns:
+      - name: orgnr
+        description: |
+          9-digit Brreg organisasjonsnummer (text — leading zeros are
+          preserved). Natural key for this view.
+        data_tests:
+          - not_null
+          - unique
+      - name: slug
+        description: kebab-case URL-friendly identifier (e.g. 'redcross', 'kirkens-bymisjon').
+        data_tests:
+          - not_null
+          - unique
+      - name: name
+        description: Legal name from Brreg.
+        data_tests:
+          - not_null
+      - name: brand_name
+        description: |
+          Common brand name when distinct from legal name (e.g.
+          'Sanitetskvinnene' vs N.K.S.). NULL when the brand equals
+          the legal name.
+      - name: website_url
+        description: NGO's primary website. Used as the outbound link from the index page.
+        data_tests:
+          - not_null
+      - name: tier
+        description: |
+          Structural-fit tier (A / B / C) from
+          docs/research/ngo-landscape.md. v1 includes Tier A only.
+        data_tests:
+          - not_null
+      - name: chapter_data_shape
+        description: |
+          How this NGO models its chapters. Values: 'distrikt+local'
+          (Red Cross), 'flat' (single-tier), 'none' (no chapters).
+          Drives which supply staging model the NGO uses.
+        data_tests:
+          - not_null
+      - name: has_chapters
+        description: True when the NGO has any chapters at all (regardless of activity).
+        data_tests:
+          - not_null
+      - name: primary_focus
+        description: One-line description of the NGO's main mission area.
+      - name: icnpo_code_1
+        description: |
+          ICNPO classification code (primary). See ref_icnpo. NULL when
+          unclassified.
+      - name: icnpo_code_2
+        description: ICNPO classification code (secondary). NULL when not used.
+      - name: icnpo_code_3
+        description: ICNPO classification code (tertiary). NULL when not used.
+      - name: chapter_count
+        description: |
+          Count of active chapters for this NGO (filtered by
+          dim_chapter.is_active = true). Zero if the NGO has no chapters
+          or all chapters are dormant.
+        data_tests:
+          - not_null
+      - name: has_supply
+        description: |
+          Convenience boolean: chapter_count > 0. True when the NGO has
+          at least one active chapter — i.e. it appears on the supply
+          side of Atlas.
+        data_tests:
+          - not_null
+
+  - name: mart_ngo_overview
+    description: |
+      One row per NGO in dim_ngo with the six count metrics shown on
+      the per-NGO landing page (atlas-frontend /ngo/[slug]).
+      Equivalent to the getNgoOverview() inline query, but precomputed
+      for all NGOs so PostgREST projects it as a single endpoint
+      consumers filter via ?orgnr=eq.X.
+
+      Counts include both active and inactive chapters in the
+      level-specific buckets (national/regional/local). kommune_count
+      counts distinct kommune_nr only across *active* local chapters,
+      matching the original query's behaviour.
+    columns:
+      - name: orgnr
+        description: 9-digit Brreg organisasjonsnummer. Natural key for this view.
+        data_tests:
+          - not_null
+          - unique
+          - relationships:
+              to: ref('dim_ngo')
+              field: orgnr
+      - name: chapter_count
+        description: Total count of chapters for this NGO across all levels (active + inactive).
+        data_tests:
+          - not_null
+      - name: national_count
+        description: Count of chapters at chapter_level = 'national'.
+        data_tests:
+          - not_null
+      - name: regional_count
+        description: Count of chapters at chapter_level = 'regional' (e.g. Red Cross distrikt).
+        data_tests:
+          - not_null
+      - name: local_count
+        description: Count of chapters at chapter_level = 'local' (the kommune-bound branches).
+        data_tests:
+          - not_null
+      - name: activity_count
+        description: |
+          Count of distinct activities offered by this NGO (rows in
+          dim_activity for this orgnr).
+        data_tests:
+          - not_null
+      - name: kommune_count
+        description: |
+          Count of distinct kommuner with at least one active local
+          chapter for this NGO. The "footprint" metric for coverage-gap
+          questions.
+        data_tests:
+          - not_null
+
+  - name: mart_activity_catalog
+    description: |
+      One row per (NGO, activity) joining dim_activity to the
+      service-category seed for the human-readable label, plus a count
+      of active chapters offering each activity. Backs the per-NGO
+      activity catalogue page (atlas-frontend
+      /ngo/[slug]/aktiviteter); equivalent to listActivities().
+
+      The full table is small (~35 rows for Red Cross alone in v1) and
+      grows as new NGOs land. PostgREST consumers filter via
+      ?ngo_orgnr=eq.X.
+    columns:
+      - name: activity_id
+        description: |
+          Composite slug (e.g. 'redcross-besokstjeneste'). Stable across
+          refreshes. Unique within this view.
+        data_tests:
+          - not_null
+          - unique
+          - relationships:
+              to: ref('dim_activity')
+              field: activity_id
+      - name: ngo_orgnr
+        description: 9-digit Brreg organisasjonsnummer of the NGO offering the activity.
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_ngo')
+              field: orgnr
+      - name: canonical_name
+        description: Atlas's canonical Norwegian name for the activity.
+        data_tests:
+          - not_null
+      - name: service_category_code
+        description: |
+          ICNPO-derived service category code (e.g. 'health',
+          'social-services'). FK to ref_atlas_service_category.
+        data_tests:
+          - not_null
+      - name: service_category_label_no
+        description: |
+          Human-readable Norwegian label for service_category_code,
+          joined from ref_atlas_service_category.
+        data_tests:
+          - not_null
+      - name: is_active
+        description: |
+          Whether this activity is still offered by the NGO. Inactive
+          activities are kept so historical analysis can still resolve
+          activity_id values.
+        data_tests:
+          - not_null
+      - name: chapter_count
+        description: |
+          Count of distinct active chapters offering this activity. Zero
+          when the activity exists in dim_activity but no active chapter
+          provides it (rare but possible during transitions).
+        data_tests:
+          - not_null
+
+  - name: mart_distrikt_summary
+    description: |
+      One row per regional chapter (Red Cross "distrikt" level, and the
+      equivalent regional tier for any other NGO with a hierarchy).
+      Each row carries denormalised counts of how many child chapters
+      the distrikt has and how many distinct kommuner those children
+      cover. Backs atlas-frontend /ngo/[slug]/distrikter and the
+      individual /distrikt/[id] pages; equivalent to the listDistrikter()
+      inline query.
+
+      Counts come from dim_chapter joined back to itself by
+      parent_chapter_id, filtered to active children. PostgREST
+      consumers filter via ?ngo_orgnr=eq.X (or ?chapter_id=eq.Y for the
+      single-distrikt case).
+    columns:
+      - name: chapter_id
+        description: |
+          Composite slug for the regional chapter (e.g.
+          'redcross-oslo'). Stable across refreshes. Unique within this
+          view.
+        data_tests:
+          - not_null
+          - unique
+          - relationships:
+              to: ref('dim_chapter')
+              field: chapter_id
+      - name: name
+        description: Display name for the regional chapter (e.g. 'Oslo Røde Kors').
+        data_tests:
+          - not_null
+      - name: kommune_nr
+        description: |
+          4-digit kommune code where the regional chapter is
+          headquartered. NULL for distrikter without a single HQ
+          kommune. Note: kommune_coverage_count tells you how many
+          *child* kommuner the distrikt covers — that's the operational
+          footprint, not where the office sits.
+      - name: kommune_name
+        description: Joined from dim_kommune. NULL when kommune_nr is NULL.
+      - name: ngo_orgnr
+        description: 9-digit Brreg organisasjonsnummer of the NGO this distrikt belongs to.
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_ngo')
+              field: orgnr
+      - name: child_count
+        description: |
+          Count of active local chapters whose parent_chapter_id equals
+          this distrikt's chapter_id. The "lokalforeninger" total shown
+          in the UI.
+        data_tests:
+          - not_null
+      - name: kommune_coverage_count
+        description: |
+          Count of distinct kommuner served by this distrikt's active
+          children (kommune_nr IS NOT NULL). The operational footprint;
+          may be smaller than child_count when multiple children share
+          a kommune.
+        data_tests:
+          - not_null
+
+  - name: mart_kommune_local_chapters
+    description: |
+      Active local chapters in each kommune, decorated with the NGO
+      name/brand and the service-category labels offered. Backs the
+      kommune detail page (atlas-frontend /kommuner/[kommune_nr]);
+      equivalent to listChaptersInKommune().
+
+      **Important:** this view returns *multiple rows per chapter* —
+      one per service category the chapter offers. A chapter that
+      provides three service categories appears as three rows for the
+      same kommune_nr / chapter_id, with different
+      service_category_code values. Consumers that want unique chapters
+      should distinct on chapter_id (or aggregate service categories
+      into an array client-side).
+
+      PostgREST consumers filter via ?kommune_nr=eq.X. Inactive
+      chapters, non-local chapters (regional, national), and chapters
+      with NULL kommune_nr are excluded. Svalbard (kommune_nr 2100,
+      Longyearbyen Røde Kors) is included even though 2100 isn't in
+      dim_kommune — the FK relationships test is `warn`-severity to
+      keep this row visible.
+    columns:
+      - name: kommune_nr
+        description: |
+          4-digit kommune code where the local chapter operates. FK to
+          dim_kommune. The primary filter dimension for this view.
+          Chapters with NULL kommune_nr are excluded by the view (this
+          isn't "local chapters in a kommune" if there's no kommune).
+          The relationships test is `warn`-severity because Svalbard
+          (2100) is a real Red Cross local chapter location whose
+          kommune code isn't in dim_kommune.
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_kommune')
+              field: kommune_nr
+              config: {severity: warn}
+      - name: chapter_id
+        description: |
+          Composite slug for the local chapter (e.g.
+          'redcross-oslo-grunerløkka'). Repeats across rows when the
+          chapter offers multiple service categories.
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_chapter')
+              field: chapter_id
+      - name: name
+        description: Display name for the local chapter.
+        data_tests:
+          - not_null
+      - name: ngo_orgnr
+        description: 9-digit Brreg organisasjonsnummer of the NGO that owns the chapter.
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_ngo')
+              field: orgnr
+      - name: ngo_name
+        description: Joined from dim_ngo (legal name).
+        data_tests:
+          - not_null
+      - name: ngo_brand_name
+        description: |
+          Joined from dim_ngo (brand name when distinct from legal
+          name). NULL when the NGO doesn't use a brand alias.
+      - name: service_category_code
+        description: |
+          ICNPO-derived service category code for one of the activities
+          this chapter offers. Combined with chapter_id forms the
+          natural key of this view (rows are unique on
+          (chapter_id, service_category_code)).
+        data_tests:
+          - not_null
+      - name: service_category_label_no
+        description: |
+          Human-readable Norwegian label for service_category_code,
+          joined from ref_atlas_service_category.
+        data_tests:
+          - not_null
+      - name: sort_order
+        description: |
+          Display order from ref_atlas_service_category. Used by the UI
+          to render service categories in a consistent sequence; carry
+          on the row so consumers can sort without a separate query.
+        data_tests:
+          - not_null
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [chapter_id, service_category_code]
