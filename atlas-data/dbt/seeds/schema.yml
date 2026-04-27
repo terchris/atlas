@@ -56,7 +56,10 @@ seeds:
       - name: label_no
         data_tests: [not_null]
       - name: label_en
-        data_type: text
+        description: |
+          English label. NULL for every row in this seed — FHI does not
+          publish English labels for UTDANN. The column is kept for
+          shape parity with the SSB ref_* seeds.
       - name: sort_order
         data_tests:
           - not_null
@@ -73,7 +76,10 @@ seeds:
       - name: label_no
         data_tests: [not_null]
       - name: label_en
-        data_type: text
+        description: |
+          English label. NULL in this seed — FHI does not publish
+          English labels for INNVKAT. The column is kept for shape
+          parity with the SSB ref_* seeds.
       - name: sort_order
         data_tests:
           - not_null

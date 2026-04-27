@@ -4,7 +4,7 @@
 > - [WORKFLOW.md](../../WORKFLOW.md) — The implementation process
 > - [PLANS.md](../../PLANS.md) — Plan structure and best practices
 
-## Status: Complete (pending review + commit) — 2026-04-27
+## Status: Complete — 2026-04-27 (merged in PR #21)
 
 **Goal**: Build the ~9 `mart_<feature>` dbt views identified by the per-route audit in [`INVESTIGATE-public-api-surface.md`](INVESTIGATE-public-api-surface.md), so PostgREST has stable, OpenAPI-friendly endpoints to project for the dogfood API. **Pure data-side work** — no API code, no frontend changes in this PLAN. The Next.js frontend keeps reading `marts.*` directly until PLAN-E migrates it.
 
