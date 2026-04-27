@@ -1,5 +1,4 @@
 version: 2
-
 models:
   - name: dim_kommune
     description: |
@@ -8,39 +7,48 @@ models:
       that reference a kommune join to this table via kommune_nr.
     columns:
       - name: kommune_nr
-        description: "4-digit zero-padded kommune code, SSB canonical form (e.g. '0301' = Oslo)."
+        description: 4-digit zero-padded kommune code, SSB canonical form (e.g. '0301' = Oslo).
         data_tests:
           - not_null
           - unique
       - name: kommune_name
-        description: "Kommune name in bokmål; Sámi variant (if any) is stripped into kommune_name_sami."
+        description: Kommune name in bokmål; Sámi variant (if any) is stripped into 
+          kommune_name_sami.
         data_tests: [not_null]
-      - name: kommune_name_sami
-        description: "Sámi variant of the kommune name, when Klass publishes one (e.g. 'Oslove', 'Guovdageaidnu'). NULL for kommuner without a Sámi variant."
+      - name: kommune_name_alt
+        data_type: text
       - name: fylke_nr
-        description: "2-digit fylke code, derived from the first two digits of kommune_nr."
+        description: 2-digit fylke code, derived from the first two digits of kommune_nr.
         data_tests:
           - not_null
       - name: notes
-        description: "Verbatim notes from Klass — historical boundary changes, Sámi name details, etc. Not for user display."
+        description: >-
+          Verbatim notes from Klass — historical boundary changes, Sámi name details, etc. Not for user
+          display.
+      - name: updated_at
+        description: When the row was last loaded from upstream.
+        data_tests: [not_null]
       - name: valid_from
-        description: "Date from which this kommune code is valid. NULL in a codesAt snapshot (means 'active at the snapshot date')."
+        description: >-
+          Date from which this kommune code is valid. NULL in a codesAt snapshot (means 'active at the
+          snapshot date').
       - name: valid_to
-        description: "Date at which this code becomes inactive. NULL = still active."
+        description: Date at which this code becomes inactive. NULL = still active.
       - name: is_active
-        description: "Convenience boolean: true when valid_to is null or in the future."
+        description: 'Convenience boolean: true when valid_to is null or in the future.'
         data_tests:
           - not_null
           - accepted_values:
               values: [true, false]
-      - name: updated_at
-        description: "When the row was last loaded from upstream."
-        data_tests: [not_null]
+      - name: kommune_name_sami
+        description: >-
+          Sámi variant of the kommune name, when Klass publishes one (e.g. 'Oslove', 'Guovdageaidnu').
+          NULL for kommuner without a Sámi variant.
     data_tests:
       - dbt_utils.expression_is_true:
-          expression: "length(kommune_nr) = 4"
+          expression: length(kommune_nr) = 4
       - dbt_utils.expression_is_true:
-          expression: "length(fylke_nr) = 2"
+          expression: length(fylke_nr) = 2
 
   - name: dim_fylke
     description: |
@@ -48,33 +56,36 @@ models:
       Sourced from SSB Klass classification 104.
     columns:
       - name: fylke_nr
-        description: "2-digit zero-padded fylke code (e.g. '03' = Oslo)."
+        description: 2-digit zero-padded fylke code (e.g. '03' = Oslo).
         data_tests:
           - not_null
           - unique
       - name: fylke_name
-        description: "Fylke name in bokmål. Multi-variant Sámi/Kven names are split into fylke_name_alt."
+        description: Fylke name in bokmål. Multi-variant Sámi/Kven names are split into 
+          fylke_name_alt.
         data_tests: [not_null]
       - name: fylke_name_alt
-        description: "Everything after the first ' - ' in the upstream name — typically one or more Sámi/Kven variants. NULL for fylker without alt names."
+        description: >-
+          Everything after the first ' - ' in the upstream name — typically one or more Sámi/Kven variants.
+          NULL for fylker without alt names.
       - name: notes
-        description: "Verbatim notes from Klass."
+        description: Verbatim notes from Klass.
+      - name: updated_at
+        description: When the row was last loaded from upstream.
+        data_tests: [not_null]
       - name: valid_from
-        description: "Date from which this fylke code is valid. NULL in a codesAt snapshot."
+        description: Date from which this fylke code is valid. NULL in a codesAt snapshot.
       - name: valid_to
-        description: "Date at which this code becomes inactive. NULL = still active."
+        description: Date at which this code becomes inactive. NULL = still active.
       - name: is_active
-        description: "True when valid_to is null or in the future."
+        description: True when valid_to is null or in the future.
         data_tests:
           - not_null
           - accepted_values:
               values: [true, false]
-      - name: updated_at
-        description: "When the row was last loaded from upstream."
-        data_tests: [not_null]
     data_tests:
       - dbt_utils.expression_is_true:
-          expression: "length(fylke_nr) = 2"
+          expression: length(fylke_nr) = 2
 
   - name: crosswalk_kommune_name
     description: |
@@ -95,18 +106,22 @@ models:
       (postal code, fylke).
     columns:
       - name: name
-        description: "The free-text municipality name to resolve."
+        description: The free-text municipality name to resolve.
         data_tests: [not_null]
       - name: name_kind
-        description: "Where this name comes from: canonical (current), alternative (Sami variant), or historical (pre-merger)."
+        description: >-
+          Where this name comes from: canonical (current), alternative (Sami variant), or historical (pre-merger).
         data_tests:
           - not_null
-          - accepted_values: { values: ['canonical', 'alternative', 'historical'] }
+          - accepted_values: {values: [canonical, alternative, historical]}
       - name: kommune_nr
-        description: "Resolved kommune_nr. For historical rows this is the OLD code, not the modern successor. Both active and historical codes appear; relationships test passes against dim_kommune which carries both."
+        description: >-
+          Resolved kommune_nr. For historical rows this is the OLD code, not the modern successor. Both
+          active and historical codes appear; relationships test passes against dim_kommune which carries
+          both.
         data_tests:
           - not_null
-          - relationships: { to: ref('dim_kommune'), field: kommune_nr }
+          - relationships: {to: ref('dim_kommune'), field: kommune_nr}
     data_tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns: [name, name_kind, kommune_nr]
@@ -120,40 +135,59 @@ models:
       is_active = true (per Q44 + Q48 of INVESTIGATE-ngo-supply-data-model).
     columns:
       - name: chapter_id
-        description: "Composite slug, namespaced by NGO. Stable across refreshes."
+        description: Composite slug, namespaced by NGO. Stable across refreshes.
         data_tests: [not_null, unique]
       - name: ngo_orgnr
-        description: "FK to dim_ngo.orgnr."
+        description: FK to dim_ngo.orgnr.
         data_tests:
           - not_null
-          - relationships: { to: ref('dim_ngo'), field: orgnr }
+          - relationships: {to: ref('dim_ngo'), field: orgnr}
       - name: chapter_level
-        description: "national / regional / local per Q46. Coverage-gap supply queries filter to local."
+        description: national / regional / local per Q46. Coverage-gap supply queries filter to 
+          local.
         data_tests:
           - not_null
-          - accepted_values: { values: ['national', 'regional', 'local'] }
+          - accepted_values: {values: [national, regional, local]}
       - name: parent_chapter_id
-        description: "Self-FK to chapter_id (e.g. local → regional → national). NULL for top-level (national) and orphan (Ukjent) rows."
+        description: >-
+          Self-FK to chapter_id (e.g. local → regional → national). NULL for top-level (national) and
+          orphan (Ukjent) rows.
         data_tests:
           - relationships:
               to: ref('dim_chapter')
               field: chapter_id
-              config: { where: "parent_chapter_id is not null" }
+              config: {where: parent_chapter_id is not null}
       - name: chapter_orgnr
-        description: "Brreg orgnr if the chapter is separately registered (e.g. Red Cross local branches each have their own). NULL otherwise."
+        description: >-
+          Brreg orgnr if the chapter is separately registered (e.g. Red Cross local branches each have
+          their own). NULL otherwise.
       - name: name
         data_tests: [not_null]
       - name: kommune_nr
-        description: "Resolved via dim_postnummer. NULL for branches that span multiple kommuner (regional, national)."
+        description: >-
+          Resolved via dim_postnummer. NULL for branches that span multiple kommuner (regional, national).
         data_tests:
           - relationships:
               to: ref('dim_kommune')
               field: kommune_nr
-              config: { severity: warn }
+              config: {severity: warn}
       - name: is_active
         data_tests:
           - not_null
-          - accepted_values: { values: [true, false] }
+          - accepted_values: {values: [true, false]}
+      - name: postal_address_line1
+        data_type: text
+      - name: postal_code
+        data_type: text
+      - name: post_office
+        description: Post-office name, ALLCAPS as published by Bring.
+        data_type: text
+      - name: phone
+        data_type: text
+      - name: email
+        data_type: text
+      - name: web
+        data_type: text
       - name: chapter_subtype
         description: |
           Optional subtype for non-geographic or structurally distinct chapters.
@@ -165,7 +199,6 @@ models:
           it consistently (per INVESTIGATE-multi-ngo-supply-model-extensions Q1).
       - name: updated_at
         data_tests: [not_null]
-
   - name: dim_activity
     description: |
       Activity catalog — one row per (NGO, NGO-canonical activity name).
@@ -179,24 +212,32 @@ models:
       (Red Cross). PLAN-003 will UNION ALL Folkehjelp.
     columns:
       - name: activity_id
-        description: "Composite slug, e.g. 'redcross-besokstjeneste'. Stable across refreshes."
         data_tests: [not_null, unique]
+        data_type: text
       - name: ngo_orgnr
         data_tests:
           - not_null
-          - relationships: { to: ref('dim_ngo'), field: orgnr }
+          - relationships: {to: ref('dim_ngo'), field: orgnr}
+        data_type: text
       - name: canonical_name
-        description: "NGO's own canonical activity name. Used for per-NGO reporting and display."
+        description: Red Cross's globalActivityName, verbatim.
         data_tests: [not_null]
+        data_type: text
       - name: service_category_code
-        description: "Atlas cross-NGO category. Used for cross-NGO Coverage-gap queries."
+        description: >-
+          From the 50→22 CASE WHEN. NULL only if a new globalActivityName appeared in raw that the CASE
+          doesn't cover (catches drift loudly via the not_null filter applied at dim_activity/fact_chapter_activities
+          — those filter is_service = true; a new unmapped service-type activity would still be is_service
+          = true with NULL category, surfacing the gap).
         data_tests:
           - not_null
-          - relationships: { to: ref('ref_atlas_service_category'), field: code }
+          - relationships: {to: ref('ref_atlas_service_category'), field: code}
+        data_type: text
       - name: is_active
         data_tests:
           - not_null
-          - accepted_values: { values: [true, false] }
+          - accepted_values: {values: [true, false]}
+        data_type: boolean
     data_tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns: [ngo_orgnr, canonical_name]

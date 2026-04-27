@@ -1,13 +1,76 @@
 version: 2
-
 sources:
   - name: raw
-    description: "raw.* schema — landing tables for NGO supply ingests."
+    description: raw.* schema — landing tables for NGO supply ingests.
     schema: raw
     tables:
       - name: redcross_branches
-        description: "Norges Røde Kors branches (HQ + Distrikt + Lokalforening + Ukjent). Loaded by atlas-data/ingest/src/sources/redcross-branches from a static API dump (live polling deferred — see INVESTIGATE-ngo-supply Q39)."
+        description: >-
+          Norges Røde Kors branches (HQ + Distrikt + Lokalforening + Ukjent). Loaded by atlas-data/ingest/src/sources/redcross-branches
+          from a static API dump (live polling deferred — see INVESTIGATE-ngo-supply Q39).
         loaded_at_field: loaded_at
+        columns:
+          - name: branch_id
+            data_type: text
+          - name: branch_number
+            data_type: text
+          - name: organization_number
+            data_type: text
+          - name: branch_type
+            data_type: text
+          - name: branch_name
+            data_type: text
+          - name: is_active
+            data_type: boolean
+          - name: is_terminated
+            data_type: boolean
+          - name: creation_date
+            data_type: date
+          - name: parent_branch_id
+            data_type: text
+          - name: parent_branch_number
+            data_type: text
+          - name: parent_branch_name
+            data_type: text
+          - name: parent_branch_type
+            data_type: text
+          - name: municipality
+            data_type: text
+          - name: county
+            data_type: text
+          - name: region
+            data_type: text
+          - name: postal_address_line1
+            data_type: text
+          - name: postal_code
+            data_type: text
+          - name: post_office
+            data_type: text
+          - name: street_address_line1
+            data_type: text
+          - name: street_postal_code
+            data_type: text
+          - name: street_post_office
+            data_type: text
+          - name: phone
+            data_type: text
+          - name: email
+            data_type: text
+          - name: web
+            data_type: text
+          - name: loaded_at
+            data_type: timestamp with time zone
       - name: redcross_branch_activities
-        description: "Per-branch activities for Røde Kors. global_activity_name is Red Cross's canonical term (50 distinct values)."
+        description: >-
+          Per-branch activities for Røde Kors. global_activity_name is Red Cross's canonical term (50
+          distinct values).
         loaded_at_field: loaded_at
+        columns:
+          - name: branch_id
+            data_type: text
+          - name: global_activity_name
+            data_type: text
+          - name: local_activity_name
+            data_type: text
+          - name: loaded_at
+            data_type: timestamp with time zone

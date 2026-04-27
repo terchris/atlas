@@ -1,5 +1,4 @@
 version: 2
-
 sources:
   - name: raw
     schema: raw
@@ -17,14 +16,32 @@ sources:
           error_after: {count: 400, period: day}
         columns:
           - name: code
-            description: "4-digit kommune code, e.g. '0301' (Oslo). Not unique: a code can appear multiple times with different validity windows."
+            description: >-
+              4-digit kommune code, e.g. '0301' (Oslo). Not unique: a code can appear multiple times with
+              different validity windows.
             data_tests: [not_null]
           - name: name
-            description: "Kommune name (bokmål), sometimes with Sámi variant."
+            description: Kommune name (bokmål), sometimes with Sámi variant.
             data_tests: [not_null]
+          - name: parent_code
+            data_type: text
+          - name: level
+            data_type: text
+          - name: short_name
+            data_type: text
+          - name: valid_from
+            data_type: date
+          - name: valid_to
+            data_type: date
           - name: valid_from_in_range
-            description: "Start of this validity window within the ingest's date range."
+            description: Start of this validity window within the ingest's date range.
             data_tests: [not_null]
+          - name: valid_to_in_range
+            data_type: date
+          - name: notes
+            data_type: text
+          - name: loaded_at
+            data_type: timestamp with time zone
         data_tests:
           - dbt_utils.unique_combination_of_columns:
               combination_of_columns: [code, valid_from_in_range]
@@ -40,13 +57,30 @@ sources:
           error_after: {count: 400, period: day}
         columns:
           - name: code
-            description: "2-digit fylke code. Not unique: see ssb_klass_kommuner notes."
+            description: '2-digit fylke code. Not unique: see ssb_klass_kommuner notes.'
             data_tests: [not_null]
           - name: name
-            description: "Fylke name (bokmål), sometimes with multi-variant Sámi/Kven names separated by ' - '."
+            description: Fylke name (bokmål), sometimes with multi-variant Sámi/Kven names separated
+              by ' - '.
             data_tests: [not_null]
+          - name: parent_code
+            data_type: text
+          - name: level
+            data_type: text
+          - name: short_name
+            data_type: text
+          - name: valid_from
+            data_type: date
+          - name: valid_to
+            data_type: date
           - name: valid_from_in_range
             data_tests: [not_null]
+          - name: valid_to_in_range
+            data_type: date
+          - name: notes
+            data_type: text
+          - name: loaded_at
+            data_type: timestamp with time zone
         data_tests:
           - dbt_utils.unique_combination_of_columns:
               combination_of_columns: [code, valid_from_in_range]

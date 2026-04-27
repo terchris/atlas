@@ -1,5 +1,4 @@
 version: 2
-
 models:
   - name: fact_kommune_indicators
     description: |
@@ -15,52 +14,61 @@ models:
       source-specific marts or an extended schema once use cases clarify.
     columns:
       - name: source_id
-        description: "Atlas source identifier, e.g. 'ssb-08764'."
+        description: Atlas source identifier, e.g. 'ssb-08764'.
         data_tests:
           - not_null
           - accepted_values:
-              values: ['ssb-08764', 'ssb-06913', 'ssb-06944', 'fhi-bor-alene', 'ssb-13995', 'ssb-06947', 'ssb-06083', 'ssb-12292', 'ssb-12063', 'ssb-12131', 'ssb-12132', 'ssb-09429', 'fhi-trangbodd', 'fhi-mobbing', 'fhi-vgs-gjennomforing']
+              values: [ssb-08764, ssb-06913, ssb-06944, fhi-bor-alene, ssb-13995, ssb-06947, 
+                    ssb-06083, ssb-12292, ssb-12063, ssb-12131, ssb-12132, ssb-09429, fhi-trangbodd, 
+                    fhi-mobbing, fhi-vgs-gjennomforing]
       - name: kommune_nr
-        description: "4-digit kommune code. FK to dim_kommune."
+        description: 4-digit kommune code. FK to dim_kommune.
         data_tests:
           - not_null
           - relationships:
               to: ref('dim_kommune')
               field: kommune_nr
       - name: kommune_name
-        description: "Joined from dim_kommune."
+        description: Joined from dim_kommune.
         data_tests: [not_null]
       - name: fylke_nr
-        description: "2-digit fylke code (derived from kommune_nr in dim_kommune). FK to dim_fylke."
+        description: 2-digit fylke code (derived from kommune_nr in dim_kommune). FK to dim_fylke.
         data_tests:
           - not_null
           - relationships:
               to: ref('dim_fylke')
               field: fylke_nr
       - name: fylke_name
-        description: "Joined from dim_fylke. NULL if kommune's fylke_nr isn't in dim_fylke (rare — happens for codes like Svalbard 21xx without a matching fylke)."
+        description: >-
+          Joined from dim_fylke. NULL if kommune's fylke_nr isn't in dim_fylke (rare — happens for codes
+          like Svalbard 21xx without a matching fylke).
       - name: year
-        description: "Calendar year."
+        description: Calendar year.
         data_tests:
           - not_null
           - dbt_utils.accepted_range:
               min_value: 1900
               max_value: 2050
       - name: contents_code
-        description: "Source-specific ContentsCode verbatim from upstream (e.g. 'EUskala60', 'Folkemengde')."
+        description: Source-specific ContentsCode verbatim from upstream (e.g. 'EUskala60', 
+          'Folkemengde').
         data_tests: [not_null]
       - name: contents_label
-        description: "Human-readable label for contents_code, verbatim from upstream."
+        description: Human-readable label for contents_code, verbatim from upstream.
       - name: value
-        description: "Numeric value. Unit depends on (source_id, contents_code) — see the source's README. NULL when upstream suppressed the cell."
+        description: >-
+          Numeric value. Unit depends on (source_id, contents_code) — see the source's README. NULL when
+          upstream suppressed the cell.
       - name: status
-        description: "SSB suppression marker. NULL when value is present."
+        description: SSB suppression marker. NULL when value is present.
       - name: kommune_is_active
-        description: "Whether the kommune is active today. False for historical kommune codes that only appear because the upstream retained them."
+        description: >-
+          Whether the kommune is active today. False for historical kommune codes that only appear because
+          the upstream retained them.
         data_tests:
           - not_null
       - name: updated_at
-        description: "When the underlying raw row was last loaded."
+        description: When the underlying raw row was last loaded.
         data_tests: [not_null]
     data_tests:
       - dbt_utils.unique_combination_of_columns:
@@ -86,32 +94,36 @@ models:
       - name: chapter_id
         data_tests:
           - not_null
-          - relationships: { to: ref('dim_chapter'), field: chapter_id }
+          - relationships: {to: ref('dim_chapter'), field: chapter_id}
+        description: Composite slug, namespaced by NGO. Stable across refreshes.
       - name: activity_id
         data_tests:
           - not_null
-          - relationships: { to: ref('dim_activity'), field: activity_id }
+          - relationships: {to: ref('dim_activity'), field: activity_id}
+        description: Composite slug, e.g. 'redcross-besokstjeneste'. Stable across refreshes.
       - name: ngo_orgnr
-        description: "Denormalised from dim_chapter for query convenience."
+        description: Denormalised from dim_chapter for query convenience.
         data_tests:
           - not_null
-          - relationships: { to: ref('dim_ngo'), field: orgnr }
+          - relationships: {to: ref('dim_ngo'), field: orgnr}
       - name: kommune_nr
-        description: "Denormalised from dim_chapter. NULL for non-local chapters (regional, national)."
+        description: Denormalised from dim_chapter. NULL for non-local chapters (regional, 
+          national).
         data_tests:
           - relationships:
               to: ref('dim_kommune')
               field: kommune_nr
-              config: { severity: warn }
+              config: {severity: warn}
       - name: local_activity_name
-        description: "NGO's local display string for the activity at this chapter (e.g. 'Modum Røde Kors Hjelpekorps')."
-      - name: canonical_name
-        description: "Denormalised from dim_activity for query convenience."
-        data_tests: [not_null]
+        description: >-
+          NGO's local display string for the activity at this chapter (e.g. 'Modum Røde Kors Hjelpekorps').
       - name: is_active
         data_tests:
           - not_null
-          - accepted_values: { values: [true, false] }
+          - accepted_values: {values: [true, false]}
+      - name: canonical_name
+        description: Denormalised from dim_activity for query convenience.
+        data_tests: [not_null]
       - name: source_id
         data_tests: [not_null]
       - name: updated_at
@@ -131,21 +143,21 @@ models:
       to raw.ingest_runs.
     columns:
       - name: source_id
-        description: "Source identifier in Atlas catalogue form (e.g. 'redcross-branches'). Renamed from raw.ingest_runs.source_slug at the mart boundary."
         data_tests:
           - not_null
           - unique
+        data_type: text
       - name: last_run_at
-        description: "finished_at of the most recent completed run for this source."
         data_tests:
           - not_null
+        data_type: timestamp with time zone
       - name: last_status
-        description: "'ok' when exit_code = 0, otherwise 'fail'."
         data_tests:
           - not_null
           - accepted_values:
-              values: ['ok', 'fail']
+              values: [ok, fail]
 
+        data_type: text
   - name: chapter_kommune_coverage
     description: |
       Link table between dim_chapter (regional-level rows) and dim_kommune,
@@ -155,30 +167,33 @@ models:
       staging models. See INVESTIGATE-multi-ngo-supply-model-extensions §C.
     columns:
       - name: chapter_id
-        description: "FK to dim_chapter.chapter_id; always chapter_level='regional' in v1."
+        description: Composite slug, namespaced by NGO. Stable across refreshes.
         data_tests:
           - not_null
           - relationships:
               to: ref('dim_chapter')
               field: chapter_id
+        data_type: text
       - name: kommune_nr
-        description: "FK to dim_kommune.kommune_nr. severity:warn matches dim_chapter's convention — one known orphan from Red Cross postnummer drift surfaces as a warning, not an error."
+        description: >-
+          Resolved via dim_postnummer. NULL for branches that span multiple kommuner (regional, national).
         data_tests:
           - not_null
           - relationships:
               to: ref('dim_kommune')
               field: kommune_nr
-              config: { severity: warn }
+              config: {severity: warn}
+        data_type: text
       - name: source
-        description: "'declared' (NGO publishes it) or 'inferred' (rolled up from child chapters). All Red Cross rows are 'inferred' in v1."
         data_tests:
           - not_null
           - accepted_values:
-              values: ['declared', 'inferred']
+              values: [declared, inferred]
+        data_type: text
       - name: updated_at
-        description: "max(contributing child.updated_at) for 'inferred' rows; the scrape timestamp for 'declared' rows."
         data_tests:
           - not_null
+        data_type: timestamp with time zone
     data_tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns: [chapter_id, kommune_nr]

@@ -4,9 +4,25 @@
 > - [WORKFLOW.md](../../WORKFLOW.md) — The implementation process
 > - [PLANS.md](../../PLANS.md) — Plan structure and best practices
 
-## Status: Backlog
+## Status: Active
 
 **Goal**: Build the ~9 `mart_<feature>` dbt views identified by the per-route audit in [`INVESTIGATE-public-api-surface.md`](INVESTIGATE-public-api-surface.md), so PostgREST has stable, OpenAPI-friendly endpoints to project for the dogfood API. **Pure data-side work** — no API code, no frontend changes in this PLAN. The Next.js frontend keeps reading `marts.*` directly until PLAN-E migrates it.
+
+## Phase 1 outcome (2026-04-27)
+
+Phase 1 ran. dbt-osmosis baseline propagation surfaced **180 columns** in existing models that have no description (initial pass surfaced 164; a second pass — required for full convergence — surfaced 16 more). Per **option D** (resolved during Phase 1), these are accepted as-is and tracked separately in [PLAN-002-fill-schema-yml-description-gaps.md](../backlog/PLAN-002-fill-schema-yml-description-gaps.md). The check script `atlas-data/dbt/check-osmosis.sh` is strict on `models/marts/api/` (the new mart_* views from this PLAN) and lenient (report-only) on existing models. As PLAN-002 phases land, the gap count goes down.
+
+Verification at Phase 1 close:
+- `dbt parse` clean, `dbt test` 521 PASS / 20 WARN / 0 ERROR / 541 TOTAL
+- `dbt-osmosis yaml document --dry-run --check` exits 0 (idempotent after the two-pass baseline)
+
+Net Phase 1 deliverables:
+- `dbt-osmosis>=1.0,<2` in `requirements.txt`
+- `+dbt-osmosis: schema.yml` config in `dbt_project.yml`
+- 12 schema.yml/sources.yml files reformatted + descriptions propagated + 180 newly-discovered columns surfaced
+- `atlas-data/dbt/check-osmosis.sh` (strict-on-marts/api/, lenient-elsewhere)
+- `atlas-data/dbt/README.md` documents the new hygiene workflow
+- `PLAN-002-fill-schema-yml-description-gaps.md` tracks the 180 backlog
 
 **Last Updated**: 2026-04-27
 

@@ -134,3 +134,28 @@ Typical per-source effort: ~10 minutes.
 - **dbt source freshness tied to Dagster** — once Dagster is wired in, freshness violations surface as red assets in the Dagster UI.
 
 See [`../../docs/ai-developer/plans/completed/INVESTIGATE-data-journey-pattern.md`](../../docs/ai-developer/plans/completed/INVESTIGATE-data-journey-pattern.md) for the full end-to-end picture.
+
+## schema.yml hygiene — `dbt-osmosis` + `check-osmosis.sh`
+
+[dbt-osmosis](https://github.com/z3z1ma/dbt-osmosis) is installed as a dev dependency (per [`requirements.txt`](requirements.txt)). It propagates column descriptions across the dbt lineage — write a `kommune_nr` description once on `dim_kommune` and it auto-fills downstream models that have a `kommune_nr` column. Configured via `+dbt-osmosis: schema.yml` in [`dbt_project.yml`](dbt_project.yml) (one schema.yml per directory, matching the existing layout).
+
+### Day-to-day commands
+
+```bash
+# Propagate descriptions across the lineage (writes to schema.yml files)
+uv run --env-file ../ingest/.env dbt-osmosis yaml document
+
+# Dry-run + check (exits non-zero if anything would change — useful before commit)
+uv run --env-file ../ingest/.env dbt-osmosis yaml document --dry-run --check
+
+# Atlas's wrapper: strict on models/marts/api/, lenient report on existing gaps
+./check-osmosis.sh             # runs both checks
+./check-osmosis.sh --strict-only  # CI-friendly, just the strict check
+```
+
+### What `check-osmosis.sh` does
+
+1. **Strict** on `models/marts/api/` — fails (exit 1) if any column there is missing a description. The `mart_<feature>` views landed via [PLAN-001](../../docs/ai-developer/plans/active/PLAN-001-api-mart-views.md) must be fully documented because they are the public OpenAPI surface PostgREST projects.
+2. **Lenient report** on existing models — prints the per-file count of columns with bare `data_type:` entries (no description). Currently 164; tracked in [PLAN-002-fill-schema-yml-description-gaps.md](../../docs/ai-developer/plans/backlog/PLAN-002-fill-schema-yml-description-gaps.md). As that PLAN's phases land, the count goes down.
+
+Run it before any commit that touches `models/`.

@@ -7,3 +7,9 @@ dbt-postgres>=1.8.0,<1.9.0
 # tests from schema.yml. See atlas-data/dbt/.dbterd.yml for the project
 # config and atlas-data/dbt/README.md for the regeneration command.
 dbterd>=1.25,<2
+
+# dbt-osmosis — schema.yml hygiene + description propagation across the
+# dbt lineage. Used to (1) baseline-propagate column descriptions across
+# existing models and (2) gate PRs against missing descriptions on any
+# marts.* model. Per PLAN-001 phase 1; see atlas-data/dbt/check-osmosis.sh.
+dbt-osmosis>=1.0,<2
