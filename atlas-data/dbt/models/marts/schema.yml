@@ -121,6 +121,10 @@ models:
         data_tests:
           - not_null
           - accepted_values: {values: [true, false]}
+        description: |
+          Whether this NGO still offers the activity. False for retired
+          activities kept in the catalog so historical
+          fact_chapter_activities rows can still resolve activity_id.
       - name: canonical_name
         description: Denormalised from dim_activity for query convenience.
         data_tests: [not_null]
@@ -128,6 +132,7 @@ models:
         data_tests: [not_null]
       - name: updated_at
         data_tests: [not_null]
+        description: When the row was last loaded from the upstream supply staging model.
     data_tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns: [chapter_id, activity_id]
@@ -143,21 +148,29 @@ models:
       to raw.ingest_runs.
     columns:
       - name: source_id
+        description: |
+          Atlas source identifier, e.g. 'ssb-08764' or 'redcross'.
+          Unique within this table — one row per source. Joins back to
+          raw.ingest_runs.source_id.
         data_tests:
           - not_null
           - unique
-        data_type: text
       - name: last_run_at
+        description: |
+          finished_at of the most recent COMPLETED ingest run for this
+          source. NULL rows from raw.ingest_runs (in-flight or
+          aborted runs) are filtered out upstream.
         data_tests:
           - not_null
-        data_type: timestamp with time zone
       - name: last_status
+        description: |
+          Status of the most recent COMPLETED run. 'ok' = the scraper
+          finished and wrote rows; 'fail' = it errored or completed
+          with the expected output shape missing.
         data_tests:
           - not_null
           - accepted_values:
               values: [ok, fail]
-
-        data_type: text
   - name: chapter_kommune_coverage
     description: |
       Link table between dim_chapter (regional-level rows) and dim_kommune,
@@ -173,7 +186,6 @@ models:
           - relationships:
               to: ref('dim_chapter')
               field: chapter_id
-        data_type: text
       - name: kommune_nr
         description: >-
           Resolved via dim_postnummer. NULL for branches that span multiple kommuner (regional, national).
@@ -183,17 +195,21 @@ models:
               to: ref('dim_kommune')
               field: kommune_nr
               config: {severity: warn}
-        data_type: text
       - name: source
+        description: |
+          How this (chapter, kommune) link was established.
+          'declared' = the NGO publishes the kommune list directly for
+          this regional chapter; 'inferred' = derived by Atlas from
+          child-chapter coverage (e.g. union of local kommuner under
+          the regional parent).
         data_tests:
           - not_null
           - accepted_values:
               values: [declared, inferred]
-        data_type: text
       - name: updated_at
+        description: When the row was last loaded from the upstream supply staging model.
         data_tests:
           - not_null
-        data_type: timestamp with time zone
     data_tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns: [chapter_id, kommune_nr]
