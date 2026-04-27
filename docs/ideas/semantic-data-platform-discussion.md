@@ -331,8 +331,14 @@ ChatGPT's response: _(to be pasted)_
 ### Q4 — "What's best for an LLM?"
 ChatGPT's response: _(to be pasted)_
 
+**Updated answer (2026-04-27, post-research):** in 2026 the answer is **dbt MCP server** (the [dbt-mcp](https://github.com/dbt-labs/dbt-mcp) project), not a static dbt-docs site and not hand-curated YAML. MCP (Model Context Protocol) is what Claude / GPT / agent clients now speak natively when consuming data semantics. dbt's own AI tooling reads `manifest.json` over MCP, not the rendered HTML. So the "best for LLM" criteria from this section's open follow-ups — (a) deterministic structure an agent can grep, (b) stable concept IDs, (c) lineage from concept → model → raw source — are all served by MCP exposing the Discovery API directly, no custom generator needed.
+
+Pair it with a Postgres MCP server scoped to the existing read-only role and the LLM gets *both* "what does this concept mean" and "fetch me the rows" against the existing dbt Core + Postgres stack — no dbt Cloud, no SaaS dependency. This is the recommendation now landed in [`INVESTIGATE-semantic-foundation-before-expansion.md`](../ai-developer/plans/backlog/INVESTIGATE-semantic-foundation-before-expansion.md) as **Option E** (the recommended pick) and reflected in PLAN-A scope.
+
 ### Q5 / decision — "OK, then we do that, and I can always later create the [Docusaurus?] version."
-Apparent outcome: user picked the LLM-friendly option (likely dbt docs / structured YAML over Docusaurus prose), with Docusaurus left as a possible later wrapper for human readers.
+Apparent outcome (original reading): user picked the LLM-friendly option (likely dbt docs / structured YAML over Docusaurus prose), with Docusaurus left as a possible later wrapper for human readers.
+
+**Updated decision (2026-04-27, post-research):** the LLM-friendly option is **dbt MCP**, not static dbt-docs and not Docusaurus prose. Static `dbt docs generate` HTML stays as a thin fallback view for human browsing (no custom theming — `dbt-docs` is on a sunset trajectory toward Cloud-only Platform Catalog, see **[Q25]** in the INVESTIGATE plan). Docusaurus is *not* the right human-facing wrapper either: [`common-schema.md`](../research/common-schema.md) stays as the narrative layer and gets linked from dbt models via `meta: { concept_doc: ... }` so MCP exposes it directly, rather than being copied into a separate Docusaurus surface (which would create the glossary-drift problem the Q3 follow-up flagged).
 
 ### Open follow-ups from this voice round
 
