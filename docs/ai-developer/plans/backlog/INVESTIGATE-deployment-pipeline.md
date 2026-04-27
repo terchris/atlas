@@ -14,6 +14,23 @@
 
 ---
 
+## Status update (2026-04-27): Dagster moved to v2
+
+Per the 2026-04-27 update to [`docs/stack/suggested-stack.md`](../../../stack/suggested-stack.md), **Dagster is no longer in v1** — it's a v2 / Future component. v1 ingestion runs as **CLI npm scripts under cron** (likely a Kubernetes CronJob) — no orchestrator UI, no Dagster Pipes, no code-location reload. v1 design is structured so Dagster can be inserted later cleanly (pod-spawnable scripts).
+
+A new v1 component appeared in the same update: **PostgREST** (auto-API on `marts.*`, deployed via ArgoCD as its own service). See [`INVESTIGATE-public-api-surface.md`](INVESTIGATE-public-api-surface.md) for the API plan.
+
+**What this changes about this investigation:**
+
+- **Most of the Dagster-specific deployment questions defer to v2.** Image-driven Dagster code location, ArgoCD watching image tag for code-reload, Dagster sensors firing migrations — all still valid for when Dagster lands, but not v1 work.
+- **v1 deployment surface is simpler than this plan assumes.** Three artefacts to deploy: Next.js frontend (K8s app), PostgREST (K8s app), atlas-data image used as a CronJob runner (the same image that will become Dagster's user-code image in v2 — built once, used in both modes).
+- **CI test gates and DB migrations are still needed in v1.** The "test gates" section, "image build + push", and "DB migration job" sections of this plan remain relevant. The "Dagster sensor / ArgoCD pre-sync hook" question for migrations gets a simpler answer in v1: a Kubernetes Job triggered manually or via ArgoCD pre-sync hook.
+- **The phasing changes.** Originally PLAN-A through PLAN-F all assumed Dagster as the orchestrator. With Dagster deferred, v1 PLANs split into two waves: **(1) v1 deployment** — Next.js + PostgREST + cron-driven ingest, GHA CI, ArgoCD wiring (no Dagster). **(2) v2 Dagster cutover** — once Dagster is installed in UIS, migrate the cron-driven ingest to Dagster Pipes; the existing image just needs Dagster user-code added.
+
+The body of this plan below describes the v2 end-state. Use it as the target architecture; the v1 path is a subset (drop Dagster, add PostgREST as a separate K8s app).
+
+---
+
 ## What's already settled (don't re-litigate)
 
 From [`suggested-stack.md`](../../../stack/suggested-stack.md):
