@@ -170,6 +170,25 @@ When in doubt:
 - If it's a controlled list of codes that decodes upstream values or rolls indicators up to a standard taxonomy (ICNPO, SDG, NUS2000, …), it's `ref_<owner>_<concept>`.
 - If it bridges two reference systems with a non-1:1 relationship (alt names → canonical, local term → Atlas vocabulary), it's `crosswalk_<from>_<to>`.
 
+### When to add a new `mart_<feature>`
+
+A `mart_*` model exists to **shape data for a specific consumer query** that the underlying `dim_*` / `fact_*` / `ref_*` surface can't express directly without aggregation, latest-year-per-X logic, or DISTINCT across multi-table joins. The driving consumer is usually a single Next.js page or a single public-API endpoint.
+
+When you need one:
+
+- A page or endpoint runs a CTE / multi-step aggregation against `marts.*` (e.g. "latest year per kommune", "count of children per chapter", "top N by metric").
+- The same query gets reused across multiple consumers with the same shape.
+- The query is too computed to express as a PostgREST embedded resource (covered in [`../ai-developer/plans/backlog/INVESTIGATE-public-api-surface.md`](../ai-developer/plans/backlog/INVESTIGATE-public-api-surface.md)).
+
+Naming and shape:
+
+- **Name by feature, not entity.** `mart_coverage_gap_barnefattigdom` ✓ (the page it serves). `mart_dim_ngo_with_chapter_count` ✗ (rename to `mart_ngo_index`).
+- One row per consumer-meaningful natural key (e.g. one row per kommune, one row per indicator, one row per NGO).
+- Compose from existing `dim_*` / `fact_*` models — never reach back into `raw.*`.
+- Materialise as a table (default) when the consumer hits it on every page load; as a view when the underlying data changes more often than the read pattern justifies.
+
+Subfolder convention: API-shaped marts may live under `models/marts/api/` for organisational clarity once there are 5+ of them. Until then, keeping them flat under `models/marts/` is fine.
+
 ---
 
 ## Reference table refresh cadence

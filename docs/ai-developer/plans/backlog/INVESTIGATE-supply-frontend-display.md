@@ -12,6 +12,32 @@
 
 ---
 
+## Status update (2026-04-27): dogfood pivot
+
+The data-access posture in this plan was written before the **dogfood decision**: Atlas's Next.js frontend will be migrated to consume the same public HTTP API external consumers use (PostgREST), not direct `marts.*` reads. See [`INVESTIGATE-public-api-surface.md`](INVESTIGATE-public-api-surface.md) for the full plan and per-route audit.
+
+**What this changes about Section H (Technical approach):**
+
+- **H.1 Component model** — Server Components still default, but they `fetch()` from the API (`api.atlas.helpers.no`) instead of executing SQL via `db()`. The "no internal API routes" point still holds — there's an *external* API service (PostgREST) that Next.js calls via plain `fetch()`. No internal `/api/*` routes needed.
+- **H.4 Caching** — moves from "server fetch on every request" to leveraging HTTP cache headers from PostgREST (Cache-Control). Next.js's `fetch()` deduplicates and caches per-render; gateway-side caching arrives later via Gravitee/APIM in v1.5+.
+- **Data access reference** — [`atlas-frontend/src/lib/db.ts`](../../../../atlas-frontend/src/lib/db.ts) (the native `postgres` client mentioned below) goes away once PLAN-E migration completes; replaced by typed HTTP wrappers around PostgREST.
+
+**What stays the same:**
+
+- Three viewing layers (Sections B, C, D).
+- Visualisation choices, visual identity, empty states, URL state for filters, pagination posture.
+- Server Components by default.
+- Norwegian-first localisation.
+- Per-NGO vs cross-NGO display vocabulary.
+
+**What new supply pages need from the data side:**
+
+The per-route audit in [`INVESTIGATE-public-api-surface.md`](INVESTIGATE-public-api-surface.md) identifies the `mart_<feature>` views needed for the existing 15 routes. New supply pages from this plan (e.g. `/aktivitet/<code>`, `/aktivitet/<code>/kommune/<kommune_nr>`, per-NGO chapters tables, distrikter pages for non-Red-Cross NGOs) will each likely need their own `mart_*` view added before the page can ship via PostgREST.
+
+The data-access lines in **Existing context** below and the SQL examples throughout this plan reflect the pre-dogfood pattern. They remain useful as the *current* code shape — they just describe what PLAN-E will migrate away from, not the long-term posture.
+
+---
+
 ## Scope
 
 **In scope:**
