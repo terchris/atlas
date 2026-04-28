@@ -4,11 +4,13 @@
 > - [WORKFLOW.md](../../WORKFLOW.md) — The implementation process
 > - [PLANS.md](../../PLANS.md) — Plan structure and best practices
 
-## Status: Backlog
+## Status: Complete — 2026-04-28
 
-**Goal**: Fill in the **180 column descriptions** that dbt-osmosis surfaced as undocumented across the existing dbt models when PLAN-001 phase 1 ran the baseline. These columns produce data the public PostgREST API will expose; without descriptions, the auto-generated OpenAPI spec is uninformative for external consumers.
+All 180 columns documented across 5 PRs (#22 phase 1 — seeds, #23 phase 2 — dimensions + marts, #24 phase 3 — indicators, #25 phase 4 — private_marts, and the phase 5+6 PR closing supply + tightening the strict gate). `check-osmosis.sh` now enforces "every column documented" repo-wide; a missing description fails CI.
 
-**Last Updated**: 2026-04-27
+**Goal** (achieved): Fill in the **180 column descriptions** that dbt-osmosis surfaced as undocumented across the existing dbt models when PLAN-001 phase 1 ran the baseline. These columns produce data the public PostgREST API will expose; without descriptions, the auto-generated OpenAPI spec is uninformative for external consumers.
+
+**Last Updated**: 2026-04-28
 
 **Origin**: PLAN-001 phase 1 ran `dbt-osmosis yaml document` twice (it took two passes to converge — propagation discovers more bare columns on the second pass). The tool surfaced **180 columns** that exist in `marts.*` (and `private_marts.*` and `raw.*` source declarations) but were never documented in any `schema.yml`. PLAN-001 [Q5] said "full descriptions on all 9 mart_* views — public OpenAPI surface"; the same standard should eventually apply to the existing 60+ models. Filling all 180 in PLAN-001 itself was rejected (option C) as too big for that PLAN's scope; PLAN-001 chose option D (accept the gaps, track here, ratchet up over time).
 

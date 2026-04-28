@@ -22,9 +22,15 @@ models:
       - name: parent_chapter_id
         description: Self-FK to chapter_id. NULL for HQ and Ukjent.
       - name: chapter_orgnr
-        data_type: text
+        description: |
+          Brreg orgnr if the branch is separately registered (every Red
+          Cross local branch has its own). NULL otherwise. Distinct
+          from ngo_orgnr — see dim_chapter.chapter_orgnr.
       - name: name
-        data_type: text
+        description: |
+          Display name for the chapter, verbatim from upstream
+          (Red Cross's localBranchName etc.). Not normalised — preserves
+          casing, diacritics, and embedded prefixes.
       - name: kommune_nr
         description: >-
           Resolved via dim_postnummer.postnummer → kommune_nr lookup. NULL for branches without a postal
@@ -40,22 +46,34 @@ models:
           - accepted_values: {values: [true, false]}
 
       - name: postal_address_line1
-        data_type: text
+        description: |
+          Street address (first line) from upstream. Drives the
+          kommune_nr resolution via dim_postnummer. NULL when the
+          branch doesn't publish a physical address.
       - name: postal_code
-        data_type: text
+        description: |
+          4-digit Norwegian postal code (postnummer), leading zeros
+          preserved. FK to dim_postnummer; the join produces kommune_nr.
       - name: post_office
         description: Post-office name, ALLCAPS as published by Bring.
-        data_type: text
       - name: phone
-        data_type: text
+        description: |
+          Public contact phone for the branch, verbatim from upstream
+          (no normalisation). NULL when not published.
       - name: email
-        data_type: text
+        description: Public contact email for the branch. NULL when not published.
       - name: web
-        data_type: text
+        description: |
+          Public website URL for the branch. NULL when not published.
+          May be a sub-page on the NGO's national site.
       - name: chapter_subtype
-        data_type: text
+        description: |
+          Optional subtype tag for non-geographic / structurally
+          distinct branches. Always NULL for Red Cross today;
+          populated by other NGO supply models — see dim_chapter for
+          the vocabulary.
       - name: updated_at
-        data_type: timestamp with time zone
+        description: When the row was last loaded from the upstream raw table.
   - name: supply__redcross_branch_activities
     description: |
       Per-source staging: reshapes raw.redcross_branch_activities into a per-
@@ -77,7 +95,10 @@ models:
         description: Red Cross's globalActivityName, verbatim.
         data_tests: [not_null]
       - name: local_activity_name
-        data_type: text
+        description: |
+          Red Cross's local-branch display string for the activity
+          (e.g. 'Modum Røde Kors Hjelpekorps'). Free-text; preserved
+          verbatim. NULL when upstream didn't supply one.
       - name: service_category_code
         description: >-
           From the 50→22 CASE WHEN. NULL only if a new globalActivityName appeared in raw that the CASE
@@ -94,7 +115,7 @@ models:
           - not_null
           - accepted_values: {values: [true, false]}
       - name: updated_at
-        data_type: timestamp with time zone
+        description: When the row was last loaded from the upstream raw table.
     data_tests:
       # Catches the drift case: any NEW global_activity_name that wasn't in
       # the CASE, AND wasn't filtered out as is_service = false, will fail
@@ -111,144 +132,234 @@ models:
     columns:
       - name: chapter_id
         description: Composite slug, namespaced by NGO. Stable across refreshes.
-        data_type: text
       - name: kommune_nr
         description: >-
           Resolved via dim_postnummer. NULL for branches that span multiple kommuner (regional, national).
-        data_type: text
       - name: source
-        data_type: text
+        description: |
+          How this (chapter, kommune) link was established.
+          'declared' = the NGO publishes the kommune list directly;
+          'inferred' = derived by Atlas from child-chapter coverage.
+          All rows are 'inferred' in v1.
       - name: updated_at
-        data_type: timestamp with time zone
         description: When the row was last loaded from the upstream supply staging model.
   - name: supply__frr_resource_phone
+    description: |
+      Per-source staging of FRR phone numbers. PII-redaction applied in
+      this layer: rows with kategori='privat' have telefonnummer
+      replaced by a hashed sentinel. See private_marts.frr_resource_phone
+      for the canonical column semantics.
     columns:
       - name: resource_id
-        data_type: text
+        description: |
+          FK (business-key) to frr_resources.id. Joins the
+          phone/status/position child rows back to their parent
+          resource.
       - name: retningsnummer
-        data_type: text
+        description: Country calling code (e.g. '+47'). NULL for some external-source numbers.
       - name: telefonnummer
-        data_type: text
+        description: |
+          Phone number, or 'ANONYMISERT-<hash>' if kategori='privat'
+          (privacy redaction applied here). The hash preserves uniqueness
+          while protecting PII.
       - name: beskrivelse
-        data_type: text
+        description: |
+          Description of whose number this is (e.g. 'Alarmnummer',
+          'Alarmtelefon'). Free-text from FRR.
       - name: kategori
-        data_type: text
+        description: |
+          Category of the phone number — one of: ikke angitt, jobb,
+          nødnett, privat, satellitt, sentral.
       - name: er_utalarmeringsnummer
-        data_type: boolean
+        description: |
+          True if this number is registered for automated dispatch /
+          alarm callouts (FRR's erUtalarmeringsnummer).
       - name: is_redacted
-        data_type: boolean
+        description: |
+          True if this row's telefonnummer was replaced by a hashed
+          sentinel because kategori='privat'.
       - name: loaded_at
-        data_type: timestamp with time zone
+        description: When the underlying raw FRR row was last loaded by the ingest module.
   - name: supply__frr_resource_status
+    description: |
+      Per-source staging of FRR resource status history. See
+      private_marts.frr_resource_status for the canonical column
+      semantics; statuskode S100/S200/S300 maps to
+      Available/Reduced/Unavailable.
     columns:
       - name: resource_id
-        data_type: text
+        description: |
+          FK (business-key) to frr_resources.id. Joins the
+          phone/status/position child rows back to their parent
+          resource.
       - name: start_tidspunkt
-        data_type: timestamp with time zone
+        description: When this status became active in FRR (FRR's startTidspunkt).
       - name: statuskode
-        data_type: text
+        description: |
+          Operational availability code from FRR. S100 =
+          Available/Ready, S200 = Conditionally Available / Reduced
+          Capacity, S300 = Unavailable.
       - name: statuskommentar
-        data_type: text
+        description: |
+          Free-text comment providing context on the status. NULL when
+          no comment was recorded.
       - name: loaded_at
-        data_type: timestamp with time zone
+        description: When the underlying raw FRR row was last loaded by the ingest module.
   - name: supply__frr_resource_position
+    description: |
+      Per-source staging of FRR position history. See
+      private_marts.frr_resource_position for canonical column
+      semantics; kommune_nr is resolved here via dim_kommune name lookup.
     columns:
       - name: resource_id
-        data_type: text
+        description: |
+          FK (business-key) to frr_resources.id. Joins the
+          phone/status/position child rows back to their parent
+          resource.
       - name: position_at
-        data_type: timestamp with time zone
+        description: When this position was recorded in FRR (FRR's oppdatertTidspunkt).
       - name: fylke_navn
-        data_type: text
+        description: |
+          Fylke name (verbatim FRR) at the time of this position.
+          Joined via dim_fylke.fylke_name to derive a canonical fylke_nr.
       - name: kommune_navn
-        data_type: text
+        description: |
+          Kommune name (verbatim FRR) at the time of this position.
+          Joined via dim_kommune.kommune_name to derive kommune_nr.
       - name: kommune_nr
         description: 4-digit zero-padded kommune code, SSB canonical form (e.g. '0301' = Oslo).
-        data_type: text
       - name: politidistrikt
-        data_type: text
+        description: Police district covering this position (verbatim FRR).
       - name: lat
-        data_type: double precision
+        description: Latitude at the time of this position (decimal degrees, WGS-84).
       - name: lon
-        data_type: double precision
+        description: Longitude at the time of this position (decimal degrees, WGS-84).
       - name: kilde
-        data_type: text
+        description: |
+          How the position was acquired — one of: adresse, ais,
+          forenklet_tilgang, manuell.
       - name: loaded_at
-        data_type: timestamp with time zone
+        description: When the underlying raw FRR row was last loaded by the ingest module.
   - name: supply__frr_resources
+    description: |
+      Per-source staging of FRR resources. PII redaction applied here
+      (personnavn / kontaktinformasjon nulled, redaction flags set);
+      current_* columns derived from latest position/status history.
+      See private_marts.frr_resources for canonical column semantics —
+      this staging table feeds it via the private_marts mart.
     columns:
       - name: id
-        data_type: text
+        description: FRR resource id (verbatim). Unique within the table.
       - name: ngo_orgnr
-        data_type: text
+        description: NGO Brreg orgnr (Atlas-introduced for cross-NGO clarity).
       - name: source_id
-        data_type: text
+        description: Origin source-slug ('frr' for the FRR registry).
       - name: visningsnavn
-        data_type: text
+        description: Display name (verbatim FRR).
       - name: ressurstype
-        data_type: text
+        description: |
+          FRR resource type — one of: drone, fartøy, kjøretøy, objekt,
+          organisatorisk enhet, personell - enkeltperson, personell -
+          gruppe, sentral, utstyr.
       - name: hovedfunksjon
-        data_type: text
+        description: |
+          Free-text primary function (e.g. 'Snøskuter', 'Korpshus').
+          For org units, the place name.
       - name: beskrivelse
-        data_type: text
+        description: Additional descriptive free-text about the resource (verbatim FRR).
       - name: sektor
-        data_type: text
+        description: |
+          Sector the resource belongs to. FRR currently emits
+          'frivillig' (volunteer organisations) for all Red Cross rows.
       - name: bilde
-        data_type: text
+        description: URL or reference to an image of the resource. NULL when no image is registered.
       - name: verifisert_av_eier
-        data_type: boolean
+        description: |
+          Whether the resource's details have been verified by its
+          owner in FRR.
       - name: personnavn
-        data_type: text
+        description: |
+          Name of the person associated with the resource. **Always
+          NULL in Atlas** — PII redacted in place; original presence
+          recorded by is_personnavn_redacted.
       - name: kontaktinformasjon
-        data_type: text
+        description: |
+          General contact information. **Always NULL in Atlas** — PII
+          redacted in place; original presence recorded by
+          is_kontaktinfo_redacted.
       - name: is_personnavn_redacted
-        data_type: boolean
+        description: True if a personnavn was redacted on this row.
       - name: is_kontaktinfo_redacted
-        data_type: boolean
+        description: True if kontaktinformasjon was redacted on this row.
       - name: register_id
-        data_type: text
+        description: |
+          ID of the FRR register this resource belongs to. Distinguishes
+          parallel registers within FRR.
       - name: mor_id
-        data_type: text
+        description: FRR's morId — parent in the resource/org-unit hierarchy. Self-FK to id.
       - name: baseressurs
-        data_type: text
+        description: FRR's baseressurs — sub-resource of a base. Self-FK to id (rare).
       - name: ekstern_system
-        data_type: text
+        description: |
+          External system this resource originates from, when FRR
+          mirrors a row from elsewhere. NULL for FRR-native resources.
       - name: ekstern_id
-        data_type: text
+        description: ID of this resource in the external system. NULL when ekstern_system is NULL.
       - name: ekstern_mor_id
-        data_type: text
+        description: Parent ID in the external system. NULL when there is no external parent.
       - name: current_statuskode
-        data_type: text
+        description: |
+          Latest statuskode from frr_resource_status (S100 / S200 /
+          S300). NULL when the resource has no status history.
       - name: current_status_at
-        data_type: timestamp with time zone
+        description: |
+          start_tidspunkt of the latest status row from
+          frr_resource_status. NULL when no status history.
       - name: current_kommune_navn
-        data_type: text
+        description: |
+          Kommune name (verbatim FRR) of the resource's latest position.
+          Source of the current_kommune_nr lookup.
       - name: current_kommune_nr
-        data_type: text
+        description: Resolved kommune_nr from FRR's latest position via dim_kommune.kommune_name 
+          lookup.
       - name: current_fylke_navn
-        data_type: text
+        description: Fylke name (verbatim FRR) of the resource's latest position.
       - name: current_fylke_nr
-        data_type: text
+        description: Resolved fylke_nr from FRR's latest position via dim_fylke.fylke_name lookup.
       - name: current_politidistrikt
-        data_type: text
+        description: Police district covering the latest position (verbatim FRR).
       - name: current_lat
-        data_type: double precision
+        description: Latitude of the resource's latest position (decimal degrees, WGS-84).
       - name: current_lon
-        data_type: double precision
+        description: Longitude of the resource's latest position (decimal degrees, WGS-84).
       - name: position_at
-        data_type: timestamp with time zone
+        description: |
+          Timestamp of the latest position row from
+          frr_resource_position. NULL when no position is recorded.
       - name: position_kilde
-        data_type: text
+        description: |
+          How the latest position was acquired — one of: adresse, ais,
+          forenklet_tilgang, manuell.
       - name: undertyper
-        data_type: ARRAY
+        description: |
+          FRR sub-classifications (e.g. 'Snøskuter'). Native Postgres
+          array (GIN-indexable).
       - name: kapasiteter
-        data_type: ARRAY
+        description: |
+          FRR capabilities (e.g. 'Terrenggående vinter'). Native
+          Postgres array (GIN-indexable).
       - name: felter
-        data_type: jsonb
+        description: |
+          Custom dynamic fields (FRR's felter). Stored as jsonb to
+          preserve FRR's open-ended schema.
       - name: utstyr
-        data_type: jsonb
+        description: List of equipment carried by the resource. Stored as jsonb.
       - name: vedlegg
-        data_type: jsonb
+        description: Attachments / documents linked to the resource. Stored as jsonb.
       - name: sist_oppdatert
-        data_type: timestamp with time zone
+        description: |
+          When the resource record was last updated *in FRR* (FRR's
+          sistOppdatert). Distinct from loaded_at, which records when
+          Atlas pulled the row.
       - name: loaded_at
-        data_type: timestamp with time zone
+        description: When the underlying raw FRR row was last loaded by the ingest module.
