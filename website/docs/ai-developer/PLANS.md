@@ -549,3 +549,15 @@ This convention applies to both INVESTIGATE-*.md and PLAN-*.md files. PLANs typi
 5. **Update as you go** — the plan is the source of truth
 6. **Keep completed plans** — they're documentation of what was done and why
 7. **Ask for gap analysis** — "Are there gaps in this plan?" catches issues early
+
+## Keeping contributor docs in sync (PLAN-003 phase 5, 2026-04-28)
+
+When a plan changes behaviour that's documented on a `website/docs/contributors/*.md` page (or in `website/docs/ai-developer/`), **the docs update is a sub-step of the relevant phase, not a follow-up plan**. Examples:
+
+- A plan changes how dbt-osmosis is configured → updating `contributors/dbt-osmosis.md` is part of the same phase, not a "we'll do it later" item.
+- A plan adds a new step to the source-add workflow → `contributors/adding-a-source.md` gets the new step in the same PR.
+- A plan modifies the `check-osmosis.sh` gate → `contributors/check-osmosis.md` reflects the new behaviour.
+
+This convention is rule #8 in [`docs/stack/naming-conventions.md`](../../../docs/stack/naming-conventions.md). Reviewer responsibility to flag PRs that ship behaviour changes without the matching docs update. No tooling enforces this in v1; if drift becomes a real problem, revisit and add a `check-docs.sh` similar to [`check-osmosis.sh`](../../../atlas-data/dbt/check-osmosis.sh).
+
+When drafting a plan that changes documented behaviour, include the docs update in the **Files to Modify** list and as an explicit task line in the relevant phase. Don't list it under "What's next" — that's where the convention slips.

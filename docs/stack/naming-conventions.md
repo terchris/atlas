@@ -20,6 +20,7 @@ All rules apply to marts, public APIs, and any external contract.
 5. **MUST** declare a description in `schema.yml` for every column in every model, seed, and source. Enforced repo-wide by [`atlas-data/dbt/check-osmosis.sh`](../../atlas-data/dbt/check-osmosis.sh) (PLAN-002 phase 6, 2026-04-28); a missing description fails CI.
 6. **MUST** declare a `relationships:` test for every column that references a `dim_*` table.
 7. **MUST** commit changes that follow this file, not ones that violate it. If a rule is wrong, change the rule; don't bypass it.
+8. **MUST** update `website/docs/contributors/*.md` in the same PR as any change to behaviour the page documents. If you change how dbt-osmosis is configured, the `dbt-osmosis.md` page is part of the same PR. If you change the source-add workflow, `adding-a-source.md` updates with it. The contributor docs are the canonical guide; PRs that drift from them create a divergent local rule (rule #7 forbids this). PLAN-003 phase 5 (2026-04-28) made this convention explicit; reviewer responsibility to flag.
 
 ---
 
