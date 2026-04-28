@@ -58,7 +58,16 @@ export async function run(): Promise<Ssb06913Summary> {
   logger.info("source.start", { source_id: SOURCE_ID, table_id: TABLE_ID });
   const started = Date.now();
 
-  const resp = await fetchPxTableData({ tableId: TABLE_ID, lang: "no" });
+  // 06913 requires explicit valuecodes for every dimension. Without them
+  // PxWebAPI v2-beta returns 400 "Non-existent value" — observed 2026-04-28
+  // (probably a server-side guard for tables above some cell-count threshold:
+  // 06913 is 1288×8×76 ≈ 783k cells, while small tables like 08764 still
+  // accept the no-filter default).
+  const resp = await fetchPxTableData({
+    tableId: TABLE_ID,
+    lang: "no",
+    filters: { Region: "*", ContentsCode: "*", Tid: "*" },
+  });
   const pxRows = parseJsonStat2(resp);
   const rows = pxRows.map(toRow);
 
