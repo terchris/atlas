@@ -4,7 +4,85 @@
 > - [WORKFLOW.md](../../WORKFLOW.md) — The implementation process
 > - [PLANS.md](../../PLANS.md) — Plan structure and best practices
 
-## Status: Backlog
+## Status: Active — Phase 1 done (2026-04-28); awaiting user review before Phase 2
+
+## Phase 1 outcomes (2026-04-28)
+
+All four pre-flight experiments complete. Three changed the resolution from the INVESTIGATE's pre-decisions; one stayed the same.
+
+### [Q3] Description propagation → **comments do NOT propagate**
+
+`psql` test (synthetic schema, table with column comments + view `SELECT *`):
+
+```
+=== view columns and their comments (NULL = no comment on view) ===
+ column_name | view_comment
+-------------+--------------
+ id          |
+ note        |
+=== underlying-table comments for comparison ===
+ column_name |            underlying_comment
+-------------+-------------------------------------------
+ id          | q3-test: id comment on underlying TABLE
+ note        | q3-test: note comment on underlying TABLE
+```
+
+**Resolution**: generator emits one `COMMENT ON COLUMN api_v1.X.col IS '...'` per column, descriptions sourced from `target/manifest.json`. ~80 columns at v1 scale; scales linearly.
+
+### [Q18] Migration-runner semantics → **state-less; same NNN re-applied every run**
+
+Read `atlas-data/ingest/scripts/migrate.ts`. Key comment (line 4–6): *"Files must be individually idempotent — this runner does not track state (no `schema_migrations` table). Re-running applies every file again."*
+
+**Resolution**: sunny path. Generator writes to a single `migrations/NNN_api_v1_generated.sql` file at a fixed NNN; re-runs of `npm run migrate` re-apply the same file each time. Generated SQL must be idempotent (already a requirement: `CREATE OR REPLACE VIEW`, `CREATE SCHEMA IF NOT EXISTS`, `DROP VIEW IF EXISTS`). [Q18] fallbacks (b) increment-NNN and (c) separate `psql -f` step are **not needed**.
+
+### [Q11] UIS GRANT semantics → **`./uis configure postgrest` not yet implemented**
+
+Read `urbalurba-infrastructure/provision-host/uis/services/integration/service-postgrest.sh` (47 lines). Line 23: `SCRIPT_PLAYBOOK=""` — intentionally empty. Comment lines 8–14: *"This file currently contains METADATA ONLY — SCRIPT_PLAYBOOK is intentionally empty so the docs page renders, but `./uis deploy` does not yet do anything. The implementation plan (PLAN-002-postgrest-implementation.md, not yet written) will add the playbook, configure handler, and Jinja templates."*
+
+**Resolution**: guarded grants ([Q11/Q12](ii)) become **load-bearing, not optional**. Today's UIS Postgres has roles `postgres`, `my_app`, `backstage`, `delete_test` — no `atlas_authenticator`, no `atlas_web_anon`. Atlas's migration must apply against a database where those roles don't exist; the generator emits any GRANT statements inside `DO $$ BEGIN IF EXISTS (SELECT FROM pg_roles WHERE rolname='atlas_web_anon') THEN ... END IF; END $$;` so missing-role doesn't abort the migration. Once UIS implements configure later, the same migration re-runs and the grants activate. **Atlas should signal this finding to the UIS contributor** so they don't double-grant when implementing configure.
+
+### [Q10] FK-embed via comment hints → **does NOT work for Atlas (no underlying FKs)**
+
+Three docker-PostgREST tests against synthetic schemas:
+
+| Setup | Result |
+|---|---|
+| Underlying tables WITH FK + view `@source` comment | ✓ embed works (`?select=*,kommune(*)` returns nested object) |
+| Underlying tables WITHOUT FK + view `@source` comment | ✗ "Could not find a relationship" |
+| Underlying tables WITHOUT FK + column `@references` hint | ✗ "Could not find a relationship" |
+
+Atlas's reality: `marts.*` and `private_marts.*` tables have **zero Postgres FK constraints** (verified via `information_schema.table_constraints` query — 0 rows for these schemas). dbt's `relationships:` tests are SQL assertions that run during `dbt test`, not DDL — they do not create FOREIGN KEY constraints.
+
+**Three paths to enable embeds**, none free:
+1. **Add FK constraints to `marts.*`** via dbt-postgres `+constraints_enabled: true`. Significant change — affects build ordering, fail-on-violation semantics; potentially incompatible with `dim_kommune` `is_active` filter pattern. Worth a separate INVESTIGATE.
+2. **Computed relationships via SQL functions** — write per-FK-per-direction SQL functions PostgREST recognises. Significant boilerplate; generator could emit but doubles complexity.
+3. **Skip embeds in v1**.
+
+**Resolution**: **(c) skip embeds in v1**. The 9 `mart_*` views were designed to be **fat rows** (mart_kommune_local_chapters carries `kommune_nr`, `ngo_orgnr`, `ngo_name`, `ngo_brand_name`, `service_category_label_no` etc. inline — no FK lookups needed). External consumers can fetch each mart_* without embeds. PLAN-001 anticipated this without realising it.
+
+**Implications**:
+- **Generator scope shrinks** from ~14 views to **9 views**. No `dim_*` wrappers needed.
+- **No `@source` / `@references` view comments** in the generated SQL.
+- **`api_v1` is purely the 9 wrapper views** + their column comments + (conditional) GRANT statements.
+- **Future PLAN** (or PLAN-005) can add embed support if external consumer demand surfaces — by then dim_* wrappers or constraint enforcement can be evaluated independently.
+
+### Net effect on PLAN-004 scope
+
+The Phase 2 generator simplifies meaningfully:
+
+- ✗ Walk `relationships:` declarations — not needed (no embeds means no FK following)
+- ✗ Emit `dim_*` wrappers — not needed
+- ✗ Emit `@source` / `@references` view comments — not needed
+- ✓ Read `models/marts/api/` from manifest, emit one wrapper view per model
+- ✓ Emit one `COMMENT ON COLUMN api_v1.X.col` per column (per [Q3])
+- ✓ Emit guarded GRANT statements (per [Q11])
+- ✓ Emit `DROP VIEW IF EXISTS` for removed views (per [Q17])
+- ✓ Emit `NOTIFY pgrst, 'reload schema'`
+
+Validation gates ([Q16]) stay the same. Coverage check is now purely model ↔ wrapper symmetry (no transitive dim walk).
+
+---
+
 
 **Goal**: Build the `api_v1` schema layer that the UIS-deployed PostgREST instance will project. Atlas auto-generates the wrappers (and FK-embed metadata) from `models/marts/api/` so the layer scales to hundreds of datasets without per-dataset cost. Five CI gates ensure the generator's output stays in sync with the dbt models. Once this lands, the UIS contributor can run `./uis configure postgrest --app atlas --schema api_v1 --url-prefix api-atlas` and the public API is live.
 
