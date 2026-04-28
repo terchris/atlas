@@ -4,7 +4,7 @@
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Backlog
+## Status: Complete — 2026-04-28 (implemented in PLAN-003, PR #27)
 
 **Goal**: Make the docs that a new contributor needs (how to add a data source, what dbt-osmosis does and why, what `check-osmosis.sh` enforces, plus closely-related onboarding) reachable from the public Docusaurus site at one canonical URL each — and **move** the existing in-repo content into that canonical location, leaving short pointer stubs at the old paths so there is exactly one source of truth.
 

@@ -4,9 +4,37 @@
 > - [WORKFLOW.md](../../WORKFLOW.md) — The implementation process
 > - [PLANS.md](../../PLANS.md) — Plan structure and best practices
 
-## Status: Backlog
+## Status: Complete — 2026-04-28 (PR #27)
 
-**Goal**: Make the public Docusaurus site at `website/docs/` the single source of truth for contributor onboarding (how to add a data source, what dbt-osmosis is, what `check-osmosis.sh` enforces, the data-journey worked example, plus dev-environment setup). Move canonical content out of in-repo READMEs into `website/docs/contributors/`, leaving short pointer stubs. Move `docs/ai-developer/` to `website/docs/ai-developer/` so agent-oriented planning lives alongside everything else (matching the devcontainer-toolbox convention). Create a repo-root `CLAUDE.md` so every new agent invocation lands in the same canonical context as the sister projects.
+All 6 phases landed across 6 commits on `feature/plan-003-phase-1-foundation` (PR #27 — kept as one PR pending end-to-end verification by the user, per "merge when we have something tested").
+
+## Final outcome (2026-04-28)
+
+**Phase 1** — bulk-moved 41 files from `docs/ai-developer/` → `website/docs/ai-developer/`. Rewrote 16 external files referencing the moved tree. Swept 301 internal cross-tree refs (depth+1 + implicit-`docs/` insertion via Python script). New repo-root `CLAUDE.md` mirroring `devcontainer-toolbox/CLAUDE.md`. Thin `docs/README.md` pointer; `website/docs/contributors/_category_.json` placeholder. `.claude/settings.json` and auto-memory updated. (Commit `3907b26`.)
+
+**Phase 2 — pilot** — 2 contributor pages: `dbt-osmosis.md` (what it is, why Atlas relies on it, two-pass convergence, propagation rules, day-to-day workflow) + `check-osmosis.md` (gate semantics, failure recipes). `atlas-data/dbt/README.md` "schema.yml hygiene" section trimmed to pointer + cheatsheet (style b). `atlas-data/dbt/check-osmosis.sh` top-of-file shrunk to 3-line pointer. (Commit `737d1a6`.)
+
+**Phase 3** — 2 contributor pages: `adding-a-source.md` (full 11-step workflow + PR checklist + 10 MUST-NOT rules) + `ingest-modules.md` (ingest-side template + scraping convention). `atlas-data/CONTRIBUTING.md` rewritten as GitHub-friendly stub. `atlas-data/ingest/src/sources/README.md` split — kept implemented-sources catalogue + planned-sources roadmap, moved template + scraping convention. (Commit `196148d`.)
+
+**Phase 4** — 5 more contributor pages: `data-journey.md` (distilled from INVESTIGATE-data-journey-pattern.md, 9-stage SSB 08764 walkthrough), `setup.md` (first-time dev env), `testing.md` (PR-readiness checklist + test-failure recipes), `git-workflow.md` (bridge to ai-developer/GIT.md), `index.md` (replaced placeholder with task-driven landing). (Commit `0af0671`.)
+
+**Phase 5** — drift-prevention rules. `naming-conventions.md` rule #8: PRs MUST update `website/docs/contributors/*.md` in the same PR as behaviour changes. `PLANS.md` "Keeping contributor docs in sync" section. Auto-memory note for future agent sessions. (Commit `c76c630`.)
+
+**Phase 6** — closeout. Link audit (Python script): 106 relative links across 9 pages, 1 broken (`/docs` placeholder in index.md, fixed). Structural pass: all 8 sibling pages reachable from `index.md`. INVESTIGATE moved to `completed/`. PLAN-003 moved to `completed/`.
+
+**Net deliverables:**
+- 9 contributor pages totalling 1484 lines under `website/docs/contributors/`
+- `docs/ai-developer/` (whole subtree, 41 files) relocated to `website/docs/ai-developer/`
+- Repo-root `CLAUDE.md` (Atlas's first one)
+- `naming-conventions.md` rule #8 + `PLANS.md` "Keeping contributor docs in sync" rule
+- 16 external files + 301 internal cross-refs rewritten to the new path
+- 4 in-source docs (`atlas-data/CONTRIBUTING.md`, `atlas-data/dbt/README.md`, `atlas-data/dbt/check-osmosis.sh`, `atlas-data/ingest/src/sources/README.md`) reduced to thin pointers + operational cheatsheets
+
+**Verified:**
+- `find docs/ai-developer` → no such directory
+- `grep "docs/ai-developer"` outside the moved tree → 0 matches
+- `./check-osmosis.sh` strict ✓ (no dbt-data changes)
+- All 106 internal contributor-page links resolve
 
 **Last Updated**: 2026-04-28
 

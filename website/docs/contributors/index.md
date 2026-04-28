@@ -1,6 +1,6 @@
 # Contributors
 
-Welcome. This section is for people **developing Atlas itself** — adding data sources, writing dbt models, fixing bugs, opening PRs against the repo. If you want to *consume* Atlas's data (build an app on top of `marts.*`, query the public API), the developer docs are at [/docs](/docs) and the API reference at `api.atlas.helpers.no/docs` (forthcoming).
+Welcome. This section is for people **developing Atlas itself** — adding data sources, writing dbt models, fixing bugs, opening PRs against the repo. If you want to *consume* Atlas's data (build an app on top of `marts.*`, query the public API), the user-facing docs are at [the site root](../) and the API reference will be at `api.atlas.helpers.no/docs` (forthcoming).
 
 ## What is Atlas?
 
