@@ -17,7 +17,7 @@ All rules apply to marts, public APIs, and any external contract.
 2. **MUST** use full words — no abbreviations except those in the canonical vocabulary below.
 3. **MUST** use English for generic identifiers (model names, verb-based columns). **MUST** preserve Norwegian for Norway-specific concepts: `kommune`, `fylke`, `orgnr`, `bydel`, `grunnkrets`.
 4. **MUST NOT** let raw column names from upstream leak into marts. Rename in the dbt passthrough.
-5. **MUST** declare a description in `schema.yml` for every column in every marts model.
+5. **MUST** declare a description in `schema.yml` for every column in every model, seed, and source. Enforced repo-wide by [`atlas-data/dbt/check-osmosis.sh`](../../atlas-data/dbt/check-osmosis.sh) (PLAN-002 phase 6, 2026-04-28); a missing description fails CI.
 6. **MUST** declare a `relationships:` test for every column that references a `dim_*` table.
 7. **MUST** commit changes that follow this file, not ones that violate it. If a rule is wrong, change the rule; don't bypass it.
 

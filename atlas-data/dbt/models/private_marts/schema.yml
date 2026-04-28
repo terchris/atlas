@@ -207,11 +207,16 @@ models:
         data_tests: [not_null]
       - name: start_tidspunkt
         data_tests: [not_null]
+        description: When this status became active in FRR (FRR's startTidspunkt).
       - name: statuskode
         data_tests:
           - not_null
           - accepted_values:
               values: [S100, S200, S300]
+        description: |
+          Operational availability code from FRR. S100 =
+          Available/Ready, S200 = Conditionally Available / Reduced
+          Capacity, S300 = Unavailable.
       - name: statuskommentar
         description: |
           Free-text comment providing context on the status (e.g. why a
@@ -246,12 +251,18 @@ models:
               values: [ikke angitt, jobb, nødnett, privat, satellitt, sentral]
               config:
                 where: kategori is not null
+        description: |
+          Category of the phone number — one of: ikke angitt, jobb,
+          nødnett, privat, satellitt, sentral.
       - name: er_utalarmeringsnummer
         description: |
           True if this number is registered for automated dispatch /
           alarm callouts (FRR's erUtalarmeringsnummer).
       - name: is_redacted
         data_tests: [not_null]
+        description: |
+          True if this row's telefonnummer was replaced by a hashed
+          sentinel because kategori='privat'.
       - name: loaded_at
         description: When the underlying raw FRR row was last loaded by the ingest module.
     data_tests:

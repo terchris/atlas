@@ -155,7 +155,7 @@ uv run --env-file ../ingest/.env dbt-osmosis yaml document --dry-run --check
 
 ### What `check-osmosis.sh` does
 
-1. **Strict** on `models/marts/api/` — fails (exit 1) if any column there is missing a description. The `mart_<feature>` views landed via [PLAN-001](../../docs/ai-developer/plans/active/PLAN-001-api-mart-views.md) must be fully documented because they are the public OpenAPI surface PostgREST projects.
-2. **Lenient report** on existing models — prints the per-file count of columns with bare `data_type:` entries (no description). Currently 164; tracked in [PLAN-002-fill-schema-yml-description-gaps.md](../../docs/ai-developer/plans/backlog/PLAN-002-fill-schema-yml-description-gaps.md). As that PLAN's phases land, the count goes down.
+1. **Strict** across the whole project — fails (exit 1) if any column in any model, seed, or source is missing a description. Originally scoped to `models/marts/api/` only ([PLAN-001](../../docs/ai-developer/plans/completed/PLAN-001-api-mart-views.md)); tightened to the whole project after [PLAN-002](../../docs/ai-developer/plans/completed/PLAN-002-fill-schema-yml-description-gaps.md) phase 6 closed the original 180-column backlog.
+2. **Lenient report** — prints the heuristic count of columns with bare `data_type:` entries per file. Should be 0 when fully documented; >0 means a new column was added without a description (the strict check will also fail in that case).
 
-Run it before any commit that touches `models/`.
+Run it before any commit that touches `models/` or `seeds/`.
