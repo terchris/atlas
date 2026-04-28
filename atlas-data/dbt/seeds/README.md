@@ -5,7 +5,7 @@ human-readable labels. They are loaded as `marts.ref_*` tables by `dbt seed`
 and joined into indicator models to expose `<field>_label_no` /
 `<field>_label_en` alongside the raw code.
 
-Investigation: [`docs/ai-developer/plans/backlog/INVESTIGATE-code-label-mapping.md`](../../../docs/ai-developer/plans/backlog/INVESTIGATE-code-label-mapping.md)
+Investigation: [`website/docs/ai-developer/plans/completed/INVESTIGATE-code-label-mapping.md`](../../../website/docs/ai-developer/plans/completed/INVESTIGATE-code-label-mapping.md)
 
 ## Schema
 

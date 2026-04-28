@@ -1,28 +1,12 @@
 #!/usr/bin/env bash
-# check-osmosis.sh — verify schema.yml hygiene.
+# check-osmosis.sh — verify schema.yml hygiene (strict gate + lenient report).
 #
-# As of PLAN-002 phase 6 (2026-04-28), the strict gate covers the WHOLE
-# project — every column in every model + seed + source must have a
-# description. New columns added without a description will fail this
-# gate and block the PR.
+# Canonical guide: website/docs/contributors/check-osmosis.md
+# Sister guide:    website/docs/contributors/dbt-osmosis.md
 #
-# Two checks, both run by default:
-#
-# 1. STRICT — `dbt-osmosis yaml document --dry-run --check` across the
-#    full project. Fails (exit 1) if any column in models/, seeds/, or
-#    sources/ is missing a description.
-#
-# 2. LENIENT report — heuristic count of bare `data_type:` lines per
-#    schema.yml. Useful as a trend signal but not authoritative; a
-#    column with both `description:` and `data_type:` still gets
-#    counted. Should report TOTAL = 0 when fully documented.
-#
-# Usage (run from atlas-data/dbt/):
+# Usage:
 #   ./check-osmosis.sh                — strict + lenient report
 #   ./check-osmosis.sh --strict-only  — just the strict check (CI-friendly)
-#
-# Prerequisites: uv venv set up per atlas-data/dbt/README.md, ingest/.env
-# present with PG* vars.
 
 set -euo pipefail
 cd "$(dirname "$0")"

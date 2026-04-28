@@ -4,7 +4,7 @@ Shared client for the Brønnøysundregistrene Enhetsregister open API. Built on 
 
 Used by:
 
-- `src/seed-sources/brreg-enheter/` — generic cross-NGO Brreg ingest driven by `landscape.json`. See [PLAN-001-brreg-enheter](../../../../../docs/ai-developer/plans/completed/PLAN-001-brreg-enheter.md).
+- `src/seed-sources/brreg-enheter/` — generic cross-NGO Brreg ingest driven by `landscape.json`. See [PLAN-001-brreg-enheter](../../../../../website/docs/ai-developer/plans/completed/PLAN-001-brreg-enheter.md).
 - Future Brreg-sourced ingests (potential retrofit of `brreg-icnpo`; any new endpoint-specific fetches).
 
 ## Files

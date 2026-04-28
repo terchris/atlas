@@ -133,11 +133,16 @@ Typical per-source effort: ~10 minutes.
 - **`kommune_indicators`** — joins `indicator_values` with `kommune_dim`. The single table the Coverage-gap explorer reads.
 - **dbt source freshness tied to Dagster** — once Dagster is wired in, freshness violations surface as red assets in the Dagster UI.
 
-See [`../../docs/ai-developer/plans/completed/INVESTIGATE-data-journey-pattern.md`](../../docs/ai-developer/plans/completed/INVESTIGATE-data-journey-pattern.md) for the full end-to-end picture.
+See [`../../website/docs/ai-developer/plans/completed/INVESTIGATE-data-journey-pattern.md`](../../website/docs/ai-developer/plans/completed/INVESTIGATE-data-journey-pattern.md) for the full end-to-end picture.
 
 ## schema.yml hygiene — `dbt-osmosis` + `check-osmosis.sh`
 
-[dbt-osmosis](https://github.com/z3z1ma/dbt-osmosis) is installed as a dev dependency (per [`requirements.txt`](requirements.txt)). It propagates column descriptions across the dbt lineage — write a `kommune_nr` description once on `dim_kommune` and it auto-fills downstream models that have a `kommune_nr` column. Configured via `+dbt-osmosis: schema.yml` in [`dbt_project.yml`](dbt_project.yml) (one schema.yml per directory, matching the existing layout).
+Atlas uses [dbt-osmosis](https://github.com/z3z1ma/dbt-osmosis) to propagate column descriptions across the dbt lineage, and `check-osmosis.sh` as the CI gate that fails any PR with an undocumented column. **Canonical contributor guides:**
+
+- [`website/docs/contributors/dbt-osmosis.md`](../../website/docs/contributors/dbt-osmosis.md) — what dbt-osmosis is, why Atlas uses it, two-pass convergence, propagation rules
+- [`website/docs/contributors/check-osmosis.md`](../../website/docs/contributors/check-osmosis.md) — the gate, what failures mean, how to fix them
+
+The day-to-day commands stay below for quick reference while you're in this directory.
 
 ### Day-to-day commands
 
@@ -148,14 +153,9 @@ uv run --env-file ../ingest/.env dbt-osmosis yaml document
 # Dry-run + check (exits non-zero if anything would change — useful before commit)
 uv run --env-file ../ingest/.env dbt-osmosis yaml document --dry-run --check
 
-# Atlas's wrapper: strict on models/marts/api/, lenient report on existing gaps
+# Atlas's gate: strict on the whole project, lenient backlog report
 ./check-osmosis.sh             # runs both checks
 ./check-osmosis.sh --strict-only  # CI-friendly, just the strict check
 ```
 
-### What `check-osmosis.sh` does
-
-1. **Strict** across the whole project — fails (exit 1) if any column in any model, seed, or source is missing a description. Originally scoped to `models/marts/api/` only ([PLAN-001](../../docs/ai-developer/plans/completed/PLAN-001-api-mart-views.md)); tightened to the whole project after [PLAN-002](../../docs/ai-developer/plans/completed/PLAN-002-fill-schema-yml-description-gaps.md) phase 6 closed the original 180-column backlog.
-2. **Lenient report** — prints the heuristic count of columns with bare `data_type:` entries per file. Should be 0 when fully documented; >0 means a new column was added without a description (the strict check will also fail in that case).
-
-Run it before any commit that touches `models/` or `seeds/`.
+Run `./check-osmosis.sh` before any commit that touches `models/` or `seeds/`.

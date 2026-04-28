@@ -113,5 +113,5 @@ The label for `contents_code: "Personer"` comes back as just *"Personer under 18
 ## References
 
 - Catalogue entry: [`docs/research/samfunnspuls/data-sources.md`](../../../../../docs/research/samfunnspuls/data-sources.md) — ssb-08764 block with use cases, questions answered, Samfunnspuls linkage
-- End-to-end journey: [`docs/ai-developer/plans/completed/INVESTIGATE-data-journey-pattern.md`](../../../../../docs/ai-developer/plans/completed/INVESTIGATE-data-journey-pattern.md) — source → browser walkthrough (completed design investigation)
+- End-to-end journey: [`website/docs/ai-developer/plans/completed/INVESTIGATE-data-journey-pattern.md`](../../../../../website/docs/ai-developer/plans/completed/INVESTIGATE-data-journey-pattern.md) — source → browser walkthrough (completed design investigation)
 - Shared client: [`../../lib/pxweb.ts`](../../lib/pxweb.ts) — the PxWebAPI v2 client and JSON-stat2 parser used here
