@@ -37,17 +37,28 @@ models:
         description: >-
           Free-text primary function (e.g. 'Snøskuter', 'Korpshus'). For org units, the place name.
       - name: beskrivelse
-        data_type: text
+        description: Additional descriptive free-text about the resource (verbatim FRR).
       - name: sektor
-        data_type: text
+        description: |
+          Sector the resource belongs to. FRR currently emits 'frivillig'
+          (volunteer organisations) for all Red Cross resources.
       - name: bilde
-        data_type: text
+        description: URL or reference to an image of the resource. NULL when no image is registered.
       - name: verifisert_av_eier
-        data_type: boolean
+        description: |
+          Whether the resource's details have been verified by its owner
+          in FRR. Used by FRR consumers to weight data confidence.
       - name: personnavn
-        data_type: text
+        description: |
+          Name of the person associated with the resource (typical for
+          'personell - enkeltperson' rows). **Always NULL in Atlas** —
+          PII redacted in place; the original presence is recorded by
+          is_personnavn_redacted.
       - name: kontaktinformasjon
-        data_type: text
+        description: |
+          General contact information for the resource. **Always NULL
+          in Atlas** — PII redacted in place; the original presence is
+          recorded by is_kontaktinfo_redacted.
       - name: is_personnavn_redacted
         description: True if a personnavn was redacted on this row.
         data_tests: [not_null]
@@ -55,17 +66,25 @@ models:
         description: True if kontaktinformasjon was redacted on this row.
         data_tests: [not_null]
       - name: register_id
-        data_type: text
+        description: |
+          ID of the FRR register this resource belongs to. Distinguishes
+          parallel registers within FRR when multiple co-exist.
       - name: mor_id
         description: FRR's morId — parent in the resource/org-unit hierarchy. Self-FK to id.
       - name: baseressurs
         description: FRR's baseressurs — sub-resource of a base. Self-FK to id (rare).
       - name: ekstern_system
-        data_type: text
+        description: |
+          External system this resource originates from, when FRR
+          mirrors a row from elsewhere (FRR's eksternSystem). NULL for
+          FRR-native resources.
       - name: ekstern_id
-        data_type: text
+        description: ID of this resource in the external system. NULL when ekstern_system is NULL.
       - name: ekstern_mor_id
-        data_type: text
+        description: |
+          Parent ID in the external system, e.g. the local department
+          this resource belongs to (FRR's eksternMorId). NULL when
+          there is no external parent.
       - name: current_statuskode
         description: Latest status code from the status history.
         data_tests:
@@ -74,38 +93,66 @@ models:
               config:
                 where: current_statuskode is not null
       - name: current_status_at
-        data_type: timestamp with time zone
+        description: |
+          start_tidspunkt of the latest status row from
+          frr_resource_status. NULL when the resource has no status
+          history.
       - name: current_kommune_navn
-        data_type: text
+        description: |
+          Kommune name (verbatim FRR) of the resource's latest position.
+          Source of the current_kommune_nr lookup. NULL when no
+          position is recorded.
       - name: current_kommune_nr
         description: Resolved kommune_nr from FRR's latest position via dim_kommune.kommune_name 
           lookup.
       - name: current_fylke_navn
-        data_type: text
+        description: |
+          Fylke name (verbatim FRR) of the resource's latest position.
+          Source of the current_fylke_nr lookup. NULL when no position
+          is recorded.
       - name: current_fylke_nr
         description: Resolved fylke_nr from FRR's latest position via dim_fylke.fylke_name lookup.
       - name: current_politidistrikt
-        data_type: text
+        description: |
+          Police district covering the latest position (verbatim FRR).
+          Useful for emergency-coordination consumers. NULL when no
+          position is recorded.
       - name: current_lat
-        data_type: double precision
+        description: Latitude of the resource's latest position (decimal degrees, WGS-84).
       - name: current_lon
-        data_type: double precision
+        description: Longitude of the resource's latest position (decimal degrees, WGS-84).
       - name: position_at
-        data_type: timestamp with time zone
+        description: |
+          Timestamp of the latest position row from
+          frr_resource_position (FRR's oppdatertTidspunkt). NULL when
+          no position is recorded.
       - name: position_kilde
-        data_type: text
+        description: |
+          How the latest position was acquired. One of: adresse, ais,
+          forenklet_tilgang, manuell. NULL when no position is recorded.
       - name: undertyper
         description: FRR sub-classifications, native Postgres array (GIN-indexable).
       - name: kapasiteter
         description: FRR capabilities, native Postgres array (GIN-indexable).
       - name: felter
-        data_type: jsonb
+        description: |
+          Custom dynamic fields (FRR's felter array). Stored as jsonb
+          to preserve FRR's open-ended schema; consumers extract
+          specific keys with the `->>` operator.
       - name: utstyr
-        data_type: jsonb
+        description: |
+          List of equipment associated with this resource (FRR's utstyr
+          array). Stored as jsonb; consumers iterate with
+          jsonb_array_elements.
       - name: vedlegg
-        data_type: jsonb
+        description: |
+          Attachments / documents linked to the resource (FRR's vedlegg
+          array). Stored as jsonb.
       - name: sist_oppdatert
-        data_type: timestamp with time zone
+        description: |
+          When the resource record was last updated *in FRR* (FRR's
+          sistOppdatert). Distinct from loaded_at, which records when
+          Atlas pulled the row.
       - name: loaded_at
         description: When the underlying raw row was last loaded.
         data_tests: [not_null]
@@ -121,17 +168,22 @@ models:
         description: Timestamp of this position record.
         data_tests: [not_null]
       - name: fylke_navn
-        data_type: text
+        description: |
+          Fylke name (verbatim FRR) at the time of this position.
+          Joined via dim_fylke.fylke_name to derive a canonical
+          fylke_nr where needed.
       - name: kommune_navn
-        data_type: text
+        description: |
+          Kommune name (verbatim FRR) at the time of this position.
+          Joined via dim_kommune.kommune_name to derive kommune_nr.
       - name: kommune_nr
         description: Joined from kommune_navn at staging time.
       - name: politidistrikt
-        data_type: text
+        description: Police district covering this position (verbatim FRR).
       - name: lat
-        data_type: double precision
+        description: Latitude at the time of this position (decimal degrees, WGS-84).
       - name: lon
-        data_type: double precision
+        description: Longitude at the time of this position (decimal degrees, WGS-84).
       - name: kilde
         description: How the position was acquired.
         data_tests:
@@ -140,7 +192,7 @@ models:
               config:
                 where: kilde is not null
       - name: loaded_at
-        data_type: timestamp with time zone
+        description: When the underlying raw FRR row was last loaded by the ingest module.
     data_tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns: [resource_id, position_at]
@@ -161,9 +213,11 @@ models:
           - accepted_values:
               values: [S100, S200, S300]
       - name: statuskommentar
-        data_type: text
+        description: |
+          Free-text comment providing context on the status (e.g. why a
+          resource was marked S300). NULL when no comment was recorded.
       - name: loaded_at
-        data_type: timestamp with time zone
+        description: When the underlying raw FRR row was last loaded by the ingest module.
     data_tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns: [resource_id, start_tidspunkt]
@@ -178,12 +232,14 @@ models:
         description: FK (business-key) to frr_resources.id.
         data_tests: [not_null]
       - name: retningsnummer
-        data_type: text
+        description: Country calling code (e.g. '+47'). NULL for some external-source numbers.
       - name: telefonnummer
         description: Phone number, or 'ANONYMISERT-<hash>' if kategori='privat'.
         data_tests: [not_null]
       - name: beskrivelse
-        data_type: text
+        description: |
+          Description of whose number this is (e.g. 'Alarmnummer',
+          'Alarmtelefon'). Free-text from FRR.
       - name: kategori
         data_tests:
           - accepted_values:
@@ -191,11 +247,13 @@ models:
               config:
                 where: kategori is not null
       - name: er_utalarmeringsnummer
-        data_type: boolean
+        description: |
+          True if this number is registered for automated dispatch /
+          alarm callouts (FRR's erUtalarmeringsnummer).
       - name: is_redacted
         data_tests: [not_null]
       - name: loaded_at
-        data_type: timestamp with time zone
+        description: When the underlying raw FRR row was last loaded by the ingest module.
     data_tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns: [resource_id, telefonnummer]
