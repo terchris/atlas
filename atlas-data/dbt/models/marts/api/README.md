@@ -75,9 +75,9 @@ of in a Next.js page file.
 
 ## Cross-references
 
-- [`docs/ai-developer/plans/active/PLAN-001-api-mart-views.md`](../../../../../docs/ai-developer/plans/active/PLAN-001-api-mart-views.md)
+- [`website/docs/ai-developer/plans/completed/PLAN-001-api-mart-views.md`](../../../../../website/docs/ai-developer/plans/completed/PLAN-001-api-mart-views.md)
   — the plan that landed the initial 9 views.
-- [`docs/ai-developer/plans/backlog/INVESTIGATE-public-api-surface.md`](../../../../../docs/ai-developer/plans/backlog/INVESTIGATE-public-api-surface.md)
+- [`website/docs/ai-developer/plans/backlog/INVESTIGATE-public-api-surface.md`](../../../../../website/docs/ai-developer/plans/backlog/INVESTIGATE-public-api-surface.md)
   — the route audit that identified the 9 views.
 - [`docs/stack/naming-conventions.md`](../../../../../docs/stack/naming-conventions.md)
   — `mart_<feature>` naming rule and canonical column vocabulary.

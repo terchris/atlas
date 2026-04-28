@@ -5,15 +5,15 @@ Procedural rules for adding, changing, and reviewing data pipelines. Written to 
 **Prerequisites reading** before making changes:
 
 1. [`../docs/stack/naming-conventions.md`](../docs/stack/naming-conventions.md) — canonical vocabulary and naming rules
-2. [`../docs/ai-developer/plans/completed/INVESTIGATE-data-journey-pattern.md`](../docs/ai-developer/plans/completed/INVESTIGATE-data-journey-pattern.md) — end-to-end journey for one source (completed design investigation)
+2. [`../website/docs/ai-developer/plans/completed/INVESTIGATE-data-journey-pattern.md`](../website/docs/ai-developer/plans/completed/INVESTIGATE-data-journey-pattern.md) — end-to-end journey for one source (completed design investigation)
 3. [`../docs/research/samfunnspuls/data-source-schema.md`](../docs/research/samfunnspuls/data-source-schema.md) — per-source catalogue schema
 4. An existing source as reference — `ingest/src/sources/ssb-08764/` is the canonical example
 
 **If you're adding a scraping source** (HTML, no API), the workflow below covers the API-source baseline but you also need:
 
-- [`../docs/ai-developer/plans/completed/INVESTIGATE-ngo-scraping-infrastructure.md`](../docs/ai-developer/plans/completed/INVESTIGATE-ngo-scraping-infrastructure.md) — doctrine, decisions, and rationale for the scraping toolkit (Crawlee, robots, sitemap_log, record_hash, etc.).
+- [`../website/docs/ai-developer/plans/completed/INVESTIGATE-ngo-scraping-infrastructure.md`](../website/docs/ai-developer/plans/completed/INVESTIGATE-ngo-scraping-infrastructure.md) — doctrine, decisions, and rationale for the scraping toolkit (Crawlee, robots, sitemap_log, record_hash, etc.).
 - [`ingest/src/sources/README.md`](ingest/src/sources/README.md) — section "**Scraping sources — additional convention**" covers the extended folder layout (`discover.ts`, `parse.ts`, `__tests__/fixtures/`), the §C.5 mandatory raw columns, and the new-scraper checklist.
-- The completed PLAN that shipped this toolkit — `docs/ai-developer/plans/completed/PLAN-001-scraping-infrastructure.md` — shows exactly what code lives in `src/lib/scraping/` and what env vars the ingest job reads.
+- The completed PLAN that shipped this toolkit — `website/docs/ai-developer/plans/completed/PLAN-001-scraping-infrastructure.md` — shows exactly what code lives in `src/lib/scraping/` and what env vars the ingest job reads.
 
 **If you're covering a new NGO with Brreg data** (legal-entity metadata for an NGO Atlas tracks), you do **not** add a new ingest source — the generic `refresh:brreg-enheter` already handles every NGO. Add a `brreg_query` block (`navn`, `organisasjonsform`, `nameStartsWith`) to the NGO's entry in [`ingest/src/seed-sources/atlas-ngo-landscape/landscape.json`](ingest/src/seed-sources/atlas-ngo-landscape/landscape.json), then re-run `npm run refresh:brreg-enheter`. The rows land in the shared `raw.brreg_enheter` table. See [`ingest/src/seed-sources/brreg-enheter/README.md`](ingest/src/seed-sources/brreg-enheter/README.md) and [`ingest/src/lib/brreg/README.md`](ingest/src/lib/brreg/README.md) for the typed-client pattern (openapi-typescript + openapi-fetch against `github.com/brreg/openAPI`).
 
@@ -279,7 +279,7 @@ Before opening a PR, verify every box. An LLM reviewer should reject a PR that f
 ### Task: "add a new source X"
 
 1. Read `docs/stack/naming-conventions.md` in full.
-2. Read `docs/ai-developer/plans/completed/INVESTIGATE-data-journey-pattern.md` to understand the end-to-end flow.
+2. Read `website/docs/ai-developer/plans/completed/INVESTIGATE-data-journey-pattern.md` to understand the end-to-end flow.
 3. Read the nearest existing source that matches the new source's shape (3-dim SSB, 4-dim SSB, 5-dim SSB, HTML scrape, etc.) as the template.
 4. Execute Steps 1–11 in order.
 5. Walk through the PR checklist; fix any failures before proposing commit.

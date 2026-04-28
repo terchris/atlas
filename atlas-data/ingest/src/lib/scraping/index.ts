@@ -1,5 +1,5 @@
 // Shared scraping infrastructure for Atlas NGO-site scrapers.
-// See docs/ai-developer/plans/completed/INVESTIGATE-ngo-scraping-infrastructure.md
+// See website/docs/ai-developer/plans/completed/INVESTIGATE-ngo-scraping-infrastructure.md
 
 export { buildUserAgent, MissingContactEmailError } from "./ua.js";
 export { recordHash } from "./record_hash.js";

@@ -26,7 +26,7 @@ The ingest modules read environment variables from `.env` (dev) or from the K8s 
 | `CRAWLEE_STORAGE_DIR` | Path for Crawlee's KeyValueStore (the fetched-HTML cache). Ephemeral in prod — the cache doesn't need to survive pod restarts (see change-detection notes below). | `./.crawlee-cache/` (relative to `atlas-data/ingest/`, gitignored) | `/tmp/crawlee-cache/` or an `emptyDir` volume | No — Crawlee default (`./storage`) works; explicit value preferred. |
 | `CRAWLEE_LOG_LEVEL` | Crawlee logger verbosity. | `INFO` | `WARNING` | No. `DEBUG` is a troubleshooting knob when investigating a specific scraper, not a normal-operation value. |
 
-Rationale and change-detection design live in [`INVESTIGATE-ngo-scraping-infrastructure.md`](../../docs/ai-developer/plans/completed/INVESTIGATE-ngo-scraping-infrastructure.md) — in particular §D.1 (User-Agent), §C.1 (cache), §F (env-var summary), and Q15 (log level).
+Rationale and change-detection design live in [`INVESTIGATE-ngo-scraping-infrastructure.md`](../../website/docs/ai-developer/plans/completed/INVESTIGATE-ngo-scraping-infrastructure.md) — in particular §D.1 (User-Agent), §C.1 (cache), §F (env-var summary), and Q15 (log level).
 
 Non-scraper modules (the existing SSB, FHI, Brreg, Red Cross API ingests) do not read these variables.
 
@@ -112,4 +112,4 @@ Deliberately deferred:
 - **CLI flags** — `--output`, `--dry-run`, `--year-filter`, etc. Add when a concrete need emerges.
 - **Retry/rate-limit tuning** — current backoff is conservative (4 attempts, exponential 500 ms base). SSB has been reliable; revisit if we see 429s or 5xx in prod.
 
-See `/docs/ai-developer/plans/completed/INVESTIGATE-data-journey-pattern.md` in the parent Atlas repo for the full end-to-end flow this ingest module is one piece of.
+See `/website/docs/ai-developer/plans/completed/INVESTIGATE-data-journey-pattern.md` in the parent Atlas repo for the full end-to-end flow this ingest module is one piece of.

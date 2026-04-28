@@ -133,7 +133,7 @@ Typical per-source effort: ~10 minutes.
 - **`kommune_indicators`** — joins `indicator_values` with `kommune_dim`. The single table the Coverage-gap explorer reads.
 - **dbt source freshness tied to Dagster** — once Dagster is wired in, freshness violations surface as red assets in the Dagster UI.
 
-See [`../../docs/ai-developer/plans/completed/INVESTIGATE-data-journey-pattern.md`](../../docs/ai-developer/plans/completed/INVESTIGATE-data-journey-pattern.md) for the full end-to-end picture.
+See [`../../website/docs/ai-developer/plans/completed/INVESTIGATE-data-journey-pattern.md`](../../website/docs/ai-developer/plans/completed/INVESTIGATE-data-journey-pattern.md) for the full end-to-end picture.
 
 ## schema.yml hygiene — `dbt-osmosis` + `check-osmosis.sh`
 
@@ -155,7 +155,7 @@ uv run --env-file ../ingest/.env dbt-osmosis yaml document --dry-run --check
 
 ### What `check-osmosis.sh` does
 
-1. **Strict** across the whole project — fails (exit 1) if any column in any model, seed, or source is missing a description. Originally scoped to `models/marts/api/` only ([PLAN-001](../../docs/ai-developer/plans/completed/PLAN-001-api-mart-views.md)); tightened to the whole project after [PLAN-002](../../docs/ai-developer/plans/completed/PLAN-002-fill-schema-yml-description-gaps.md) phase 6 closed the original 180-column backlog.
+1. **Strict** across the whole project — fails (exit 1) if any column in any model, seed, or source is missing a description. Originally scoped to `models/marts/api/` only ([PLAN-001](../../website/docs/ai-developer/plans/completed/PLAN-001-api-mart-views.md)); tightened to the whole project after [PLAN-002](../../website/docs/ai-developer/plans/completed/PLAN-002-fill-schema-yml-description-gaps.md) phase 6 closed the original 180-column backlog.
 2. **Lenient report** — prints the heuristic count of columns with bare `data_type:` entries per file. Should be 0 when fully documented; >0 means a new column was added without a description (the strict check will also fail in that case).
 
 Run it before any commit that touches `models/` or `seeds/`.

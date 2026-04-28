@@ -53,7 +53,7 @@ Typical per-source effort for an SSB table: ~30 minutes. API ingests from NGOs (
 
 ## Scraping sources — additional convention
 
-NGO scraping sources (those that fetch and parse HTML) follow an **extended folder layout** on top of the baseline above. Design rationale and the full decision log live in [`INVESTIGATE-ngo-scraping-infrastructure.md`](../../../../docs/ai-developer/plans/completed/INVESTIGATE-ngo-scraping-infrastructure.md); this section is the practical checklist.
+NGO scraping sources (those that fetch and parse HTML) follow an **extended folder layout** on top of the baseline above. Design rationale and the full decision log live in [`INVESTIGATE-ngo-scraping-infrastructure.md`](../../../../website/docs/ai-developer/plans/completed/INVESTIGATE-ngo-scraping-infrastructure.md); this section is the practical checklist.
 
 ### Folder layout
 

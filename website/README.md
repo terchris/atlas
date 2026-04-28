@@ -14,9 +14,13 @@ The home for documentation aimed at people *using* the `marts.*` schema and the 
 
 It's deliberately **separate from**:
 
-- [`docs/research/`](../docs/research/) — research notes (audience: the team thinking about the model)
-- [`docs/ai-developer/`](../docs/ai-developer/) — implementation plans (audience: the team building the codebase) — *planned to move into `website/docs/ai-developer/` in a future PR, matching UIS convention*
-- [`atlas-data/`](../atlas-data/) — operational docs for people running the data pipeline
+- [`docs/research/`](../docs/research/) — research notes (audience: the team thinking about the model). Likely future move into `website/docs/research/`.
+- [`atlas-data/`](../atlas-data/) — operational docs for people running the data pipeline (these stay alongside the code; pointer-stubs link out to the canonical contributor guides under `docs/contributors/`).
+
+Sibling docs that **live under `docs/` in this folder**:
+
+- [`docs/ai-developer/`](docs/ai-developer/) — implementation plans, agent workflow, planning conventions. Moved here in PLAN-003 phase 1 (matches the devcontainer-toolbox pattern). Repo-root `CLAUDE.md` points agents at `website/docs/ai-developer/PLANS.md`, `WORKFLOW.md`, etc.
+- [`docs/contributors/`](docs/contributors/) — public contributor onboarding (lands across PLAN-003 phases 2–4: `dbt-osmosis.md`, `check-osmosis.md`, `adding-a-source.md`, `setup.md`, `data-journey.md`, etc.).
 
 ## Why Docusaurus-shaped
 
@@ -81,7 +85,7 @@ docs/
     └── ssb-08764.md
 ```
 
-The `concepts/`, `measurements/`, and `sources/` shape mirrors the structured-YAML proposal in [`docs/ai-developer/plans/backlog/INVESTIGATE-semantic-foundation-before-expansion.md`](../docs/ai-developer/plans/backlog/INVESTIGATE-semantic-foundation-before-expansion.md). When the Concept Catalogue YAML lands, these MD files become the auto-rendered output of the YAML — same content, different source-of-truth.
+The `concepts/`, `measurements/`, and `sources/` shape mirrors the structured-YAML proposal in [`website/docs/ai-developer/plans/backlog/INVESTIGATE-semantic-foundation-before-expansion.md`](./docs/ai-developer/plans/backlog/INVESTIGATE-semantic-foundation-before-expansion.md). When the Concept Catalogue YAML lands, these MD files become the auto-rendered output of the YAML — same content, different source-of-truth.
 
 ## Adding a page
 

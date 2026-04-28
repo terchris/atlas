@@ -231,7 +231,7 @@ For a visual map of how these fields connect across `marts.*` (entities + relati
 
 The hybrid strategy for turning upstream codes into the canonical vocabulary above is documented in:
 
-- [`docs/ai-developer/plans/completed/INVESTIGATE-code-label-mapping.md`](../ai-developer/plans/backlog/INVESTIGATE-code-label-mapping.md) — the original investigation (kept in backlog as a living reference).
+- [`website/docs/ai-developer/plans/completed/INVESTIGATE-code-label-mapping.md`](../../website/docs/ai-developer/plans/completed/INVESTIGATE-code-label-mapping.md) — the original investigation.
 - `atlas-data/dbt/macros/parse_codes.sql` — `decode_sex`, `period_start_year`, `period_end_year`, `age_range_min(col, sep)`, `age_range_max(col, sep)`.
 - `atlas-data/dbt/seeds/` — the five `marts.ref_*` lookup CSVs and their refresh policy ([`seeds/README.md`](../../atlas-data/dbt/seeds/README.md)).
 

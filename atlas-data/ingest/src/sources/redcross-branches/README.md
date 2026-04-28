@@ -6,7 +6,7 @@ First NGO-supply ingest. Reads Norges Røde Kors's Organizations API data and wr
 
 Static JSON dump at `atlas-private-data-repo/redcross/organisations/api-getOrganizations-output-21apr26.json` (gitignored — Red Cross-specific organisational data lives in the per-NGO private data folder).
 
-The dump was fetched once on 2026-04-21 from `api.redcross.no/nrx/v1/organizations` (subscription key required). Live API polling is **deferred to a separate workstream** — see [`INVESTIGATE-ngo-supply-data-model.md` Q39](../../../../docs/ai-developer/plans/backlog/INVESTIGATE-ngo-supply-data-model.md). When live access lands, the script will be updated to fetch the API directly with no other changes; the `raw.*` tables stay the same.
+The dump was fetched once on 2026-04-21 from `api.redcross.no/nrx/v1/organizations` (subscription key required). Live API polling is **deferred to a separate workstream** — see [`INVESTIGATE-ngo-supply-data-model.md` Q39](../../../../website/docs/ai-developer/plans/completed/INVESTIGATE-ngo-supply-data-model.md). When live access lands, the script will be updated to fetch the API directly with no other changes; the `raw.*` tables stay the same.
 
 ## Tables written
 
@@ -24,7 +24,7 @@ Idempotent — re-runs upsert on `(branch_id)` for branches and `(branch_id, glo
 
 ## Downstream
 
-Per [PLAN-002](../../../../docs/ai-developer/plans/active/PLAN-002-redcross-ingest.md):
+Per [PLAN-002](../../../../website/docs/ai-developer/plans/completed/PLAN-002-redcross-ingest.md):
 
 - `supply__redcross_branches` reshapes `raw.redcross_branches` into `dim_chapter` shape (chapter_level, parent_chapter_id, kommune_nr resolved via dim_postnummer)
 - `supply__redcross_branch_activities` reshapes `raw.redcross_branch_activities` and applies the 50-row CASE WHEN that maps Red Cross's `globalActivityName` to the 22-row `service_category_code` vocabulary (Appendix A of PLAN-002)
