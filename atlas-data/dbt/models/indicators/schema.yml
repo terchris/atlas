@@ -46,7 +46,7 @@ models:
           - accepted_values:
               values: [Personer, EUskala50, EUskala60, OECDskala50, OECDskala60]
       - name: contents_label
-        data_type: text
+        description: Human-readable label for contents_code, verbatim from upstream.
       - name: value
         description: >-
           Numeric value — count for Personer, percent for the others. NULL when suppressed (see status).
@@ -107,11 +107,14 @@ models:
       - name: contents_code
         data_tests: [not_null]
       - name: contents_label
-        data_type: text
+        description: Human-readable label for contents_code, verbatim from upstream.
       - name: value
-        data_type: numeric
+        description: |
+          Numeric value of the metric. Unit depends on contents_code
+          (count, percent, NOK, or rate — see the source-specific notes).
+          NULL when upstream suppressed the cell (see status).
       - name: status
-        data_type: text
+        description: Upstream suppression / quality marker. NULL when value is present.
       - name: updated_at
         data_tests: [not_null]
     data_tests:
@@ -179,11 +182,14 @@ models:
           - accepted_values:
               values: [SamletInntekt, InntSkatt, AntallHushold]
       - name: contents_label
-        data_type: text
+        description: Human-readable label for contents_code, verbatim from upstream.
       - name: value
-        data_type: numeric
+        description: |
+          Numeric value of the metric. Unit depends on contents_code
+          (count, percent, NOK, or rate — see the source-specific notes).
+          NULL when upstream suppressed the cell (see status).
       - name: status
-        data_type: text
+        description: Upstream suppression / quality marker. NULL when value is present.
       - name: updated_at
         data_tests: [not_null]
     data_tests:
@@ -236,11 +242,14 @@ models:
       - name: contents_code
         data_tests: [not_null]
       - name: contents_label
-        data_type: text
+        description: Human-readable label for contents_code, verbatim from upstream.
       - name: value
-        data_type: numeric
+        description: |
+          Numeric value of the metric. Unit depends on contents_code
+          (count, percent, NOK, or rate — see the source-specific notes).
+          NULL when upstream suppressed the cell (see status).
       - name: status
-        data_type: text
+        description: Upstream suppression / quality marker. NULL when value is present.
       - name: updated_at
         data_tests: [not_null]
     data_tests:
@@ -275,11 +284,14 @@ models:
       - name: contents_code
         data_tests: [not_null]
       - name: contents_label
-        data_type: text
+        description: Human-readable label for contents_code, verbatim from upstream.
       - name: value
-        data_type: numeric
+        description: |
+          Numeric value of the metric. Unit depends on contents_code
+          (count, percent, NOK, or rate — see the source-specific notes).
+          NULL when upstream suppressed the cell (see status).
       - name: status
-        data_type: text
+        description: Upstream suppression / quality marker. NULL when value is present.
       - name: updated_at
         data_tests: [not_null]
     data_tests:
@@ -314,11 +326,14 @@ models:
       - name: contents_code
         data_tests: [not_null]
       - name: contents_label
-        data_type: text
+        description: Human-readable label for contents_code, verbatim from upstream.
       - name: value
-        data_type: numeric
+        description: |
+          Numeric value of the metric. Unit depends on contents_code
+          (count, percent, NOK, or rate — see the source-specific notes).
+          NULL when upstream suppressed the cell (see status).
       - name: status
-        data_type: text
+        description: Upstream suppression / quality marker. NULL when value is present.
       - name: updated_at
         data_tests: [not_null]
     data_tests:
@@ -354,11 +369,14 @@ models:
       - name: contents_code
         data_tests: [not_null]
       - name: contents_label
-        data_type: text
+        description: Human-readable label for contents_code, verbatim from upstream.
       - name: value
-        data_type: numeric
+        description: |
+          Numeric value of the metric. Unit depends on contents_code
+          (count, percent, NOK, or rate — see the source-specific notes).
+          NULL when upstream suppressed the cell (see status).
       - name: status
-        data_type: text
+        description: Upstream suppression / quality marker. NULL when value is present.
       - name: updated_at
         data_tests: [not_null]
     data_tests:
@@ -393,11 +411,14 @@ models:
       - name: contents_code
         data_tests: [not_null]
       - name: contents_label
-        data_type: text
+        description: Human-readable label for contents_code, verbatim from upstream.
       - name: value
-        data_type: numeric
+        description: |
+          Numeric value of the metric. Unit depends on contents_code
+          (count, percent, NOK, or rate — see the source-specific notes).
+          NULL when upstream suppressed the cell (see status).
       - name: status
-        data_type: text
+        description: Upstream suppression / quality marker. NULL when value is present.
       - name: updated_at
         data_tests: [not_null]
     data_tests:
@@ -442,11 +463,14 @@ models:
       - name: contents_code
         data_tests: [not_null]
       - name: contents_label
-        data_type: text
+        description: Human-readable label for contents_code, verbatim from upstream.
       - name: value
-        data_type: numeric
+        description: |
+          Numeric value of the metric. Unit depends on contents_code
+          (count, percent, NOK, or rate — see the source-specific notes).
+          NULL when upstream suppressed the cell (see status).
       - name: status
-        data_type: text
+        description: Upstream suppression / quality marker. NULL when value is present.
       - name: updated_at
         data_tests: [not_null]
     data_tests:
@@ -499,11 +523,14 @@ models:
       - name: contents_code
         data_tests: [not_null]
       - name: contents_label
-        data_type: text
+        description: Human-readable label for contents_code, verbatim from upstream.
       - name: value
-        data_type: numeric
+        description: |
+          Numeric value of the metric. Unit depends on contents_code
+          (count, percent, NOK, or rate — see the source-specific notes).
+          NULL when upstream suppressed the cell (see status).
       - name: status
-        data_type: text
+        description: Upstream suppression / quality marker. NULL when value is present.
       - name: updated_at
         data_tests: [not_null]
     data_tests:
@@ -556,11 +583,14 @@ models:
           - accepted_values:
               values: [Personer, EUskala50, EUskala60, OECDskala50, OECDskala60]
       - name: contents_label
-        data_type: text
+        description: Human-readable label for contents_code, verbatim from upstream.
       - name: value
-        data_type: numeric
+        description: |
+          Numeric value of the metric. Unit depends on contents_code
+          (count, percent, NOK, or rate — see the source-specific notes).
+          NULL when upstream suppressed the cell (see status).
       - name: status
-        data_type: text
+        description: Upstream suppression / quality marker. NULL when value is present.
       - name: updated_at
         data_tests: [not_null]
     data_tests:
@@ -637,11 +667,14 @@ models:
           - accepted_values:
               values: [Personer1]
       - name: contents_label
-        data_type: text
+        description: Human-readable label for contents_code, verbatim from upstream.
       - name: value
-        data_type: numeric
+        description: |
+          Numeric value of the metric. Unit depends on contents_code
+          (count, percent, NOK, or rate — see the source-specific notes).
+          NULL when upstream suppressed the cell (see status).
       - name: status
-        data_type: text
+        description: Upstream suppression / quality marker. NULL when value is present.
       - name: updated_at
         data_tests: [not_null]
     data_tests:
@@ -698,17 +731,22 @@ models:
           - not_null
           - accepted_values: {values: ['7', '10']}
       - name: question_id
-        data_type: text
+        description: |
+          Survey-question identifier from FHI Folkehelsestatistikk. NULL
+          when the row is an aggregate not tied to a specific question.
       - name: contents_code
         data_tests:
           - not_null
           - accepted_values: {values: [RATE, SMR, MEIS]}
       - name: contents_label
-        data_type: text
+        description: Human-readable label for contents_code, verbatim from upstream.
       - name: value
-        data_type: numeric
+        description: |
+          Numeric value of the metric. Unit depends on contents_code
+          (count, percent, NOK, or rate — see the source-specific notes).
+          NULL when upstream suppressed the cell (see status).
       - name: status
-        data_type: text
+        description: Upstream suppression / quality marker. NULL when value is present.
       - name: updated_at
         data_tests: [not_null]
     data_tests:
@@ -775,11 +813,14 @@ models:
           - not_null
           - accepted_values: {values: [RATE, SMR, MEIS, TELLER]}
       - name: contents_label
-        data_type: text
+        description: Human-readable label for contents_code, verbatim from upstream.
       - name: value
-        data_type: numeric
+        description: |
+          Numeric value of the metric. Unit depends on contents_code
+          (count, percent, NOK, or rate — see the source-specific notes).
+          NULL when upstream suppressed the cell (see status).
       - name: status
-        data_type: text
+        description: Upstream suppression / quality marker. NULL when value is present.
       - name: updated_at
         data_tests: [not_null]
     data_tests:
@@ -850,11 +891,14 @@ models:
           - not_null
           - accepted_values: {values: [RATE]}
       - name: contents_label
-        data_type: text
+        description: Human-readable label for contents_code, verbatim from upstream.
       - name: value
-        data_type: numeric
+        description: |
+          Numeric value of the metric. Unit depends on contents_code
+          (count, percent, NOK, or rate — see the source-specific notes).
+          NULL when upstream suppressed the cell (see status).
       - name: status
-        data_type: text
+        description: Upstream suppression / quality marker. NULL when value is present.
       - name: updated_at
         data_tests: [not_null]
     data_tests:
@@ -923,11 +967,14 @@ models:
           - accepted_values:
               values: [RATE, SMR, TELLER]
       - name: contents_label
-        data_type: text
+        description: Human-readable label for contents_code, verbatim from upstream.
       - name: value
-        data_type: numeric
+        description: |
+          Numeric value of the metric. Unit depends on contents_code
+          (count, percent, NOK, or rate — see the source-specific notes).
+          NULL when upstream suppressed the cell (see status).
       - name: status
-        data_type: text
+        description: Upstream suppression / quality marker. NULL when value is present.
       - name: updated_at
         data_tests: [not_null]
     data_tests:
@@ -1002,7 +1049,7 @@ models:
           - accepted_values:
               values: [PersonerSeksti, EUskalaSeksti]
       - name: contents_label
-        data_type: text
+        description: Human-readable label for contents_code, verbatim from upstream.
       - name: value
         description: >-
           Numeric value — count for PersonerSeksti, percent for EUskalaSeksti. NULL when suppressed.
