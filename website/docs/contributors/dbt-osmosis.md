@@ -117,7 +117,7 @@ echo "exit=$?"   # should be 0
 
 ## When you don't need to run osmosis
 
-- **Description-only edits** (you change wording in `schema.yml` but don't add new columns) — `dbt parse` is sufficient. The strict gate in CI runs the same `--dry-run --check` so it catches anything you missed.
+- **Description-only edits** (you change wording in `schema.yml` but don't add new columns) — `dbt parse` is sufficient. The strict gate in CI runs the same `--dry-run --check` so it catches anything you missed. **However, if the column lives in a `mart_*` model under `models/marts/api/`, also re-run `./regenerate-api-v1.sh`** so the description propagates into the public-API surface (per [api-v1.md](./api-v1.md)).
 - **Code changes that don't touch dbt models** — no osmosis needed.
 - **Frontend or ingest TypeScript changes** — no osmosis needed.
 
@@ -125,7 +125,9 @@ echo "exit=$?"   # should be 0
 
 ## Cross-references
 
-- [check-osmosis.md](./check-osmosis.md) — the CI wrapper that enforces "every column documented" repo-wide
+- [check-osmosis.md](./check-osmosis.md) — the gate that enforces "every column documented" on `marts.*` (sibling of `check-api-v1.md` which covers `api_v1.*`)
+- [api-v1.md](./api-v1.md) — the public-API wrapper layer; descriptions you write here propagate into `api_v1.*` via the generator and become the OpenAPI spec
 - [`atlas-data/dbt/README.md`](https://github.com/terchris/atlas/blob/main/atlas-data/dbt/README.md) — dbt project layout and command cheatsheet (kept in-source for while-coding reference)
 - [PLAN-001](../ai-developer/plans/completed/PLAN-001-api-mart-views.md) — installed dbt-osmosis as part of the public API mart-view work
 - [PLAN-002](../ai-developer/plans/completed/PLAN-002-fill-schema-yml-description-gaps.md) — closed the 180-column description backlog and tightened the gate to the whole project
+- [PLAN-004](../ai-developer/plans/active/PLAN-004-postgrest-api-v1-wrapper.md) — built the `api_v1` wrapper layer that consumes these descriptions

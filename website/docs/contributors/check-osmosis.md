@@ -2,7 +2,9 @@
 
 `atlas-data/dbt/check-osmosis.sh` is the CI gate that fails a PR if any column in any dbt model, seed, or source is missing a description. It wraps `dbt-osmosis` (see [dbt-osmosis.md](./dbt-osmosis.md)) and adds Atlas-specific reporting.
 
-This page covers what the script does, when it runs, what failure looks like, and how to fix it.
+It covers `marts.*` schema.yml hygiene. The **sibling gate** [`check-api-v1.sh`](./api-v1.md#the-five-validation-gates) covers the `api_v1.*` wrapper layer's generator-output integrity (drift, coverage, static description coverage). Both gates must be green to merge a PR; they have non-overlapping scopes.
+
+This page covers what `check-osmosis.sh` does, when it runs, what failure looks like, and how to fix it.
 
 ---
 
@@ -110,6 +112,8 @@ See [dbt-osmosis.md § why Atlas relies on it](./dbt-osmosis.md#why-atlas-relies
 ## Cross-references
 
 - [dbt-osmosis.md](./dbt-osmosis.md) — what dbt-osmosis is, how propagation works, two-pass convergence
+- [api-v1.md](./api-v1.md) — sibling gate (`check-api-v1.sh`) covering the public-API wrapper layer; non-overlapping scope
 - [`atlas-data/dbt/check-osmosis.sh`](https://github.com/terchris/atlas/blob/main/atlas-data/dbt/check-osmosis.sh) — the script itself
 - [`atlas-data/dbt/README.md`](https://github.com/terchris/atlas/blob/main/atlas-data/dbt/README.md) — dbt project layout and command cheatsheet
 - [PLAN-002](../ai-developer/plans/completed/PLAN-002-fill-schema-yml-description-gaps.md) — closed the 180-column backlog and tightened the gate to repo-wide
+- [PLAN-004](../ai-developer/plans/active/PLAN-004-postgrest-api-v1-wrapper.md) — built `check-api-v1.sh` and the `api_v1` wrapper layer it gates

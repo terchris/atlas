@@ -13,7 +13,7 @@ You need:
 - **Node.js ≥ 20** (uses built-in `fetch` and `import.meta.url`). Check with `node --version`.
 - **npm** (Atlas's `package.json` uses npm; pnpm also works).
 - **uv** — the Python env manager dbt uses. Install with `brew install uv` (macOS) or see [uv's install docs](https://github.com/astral-sh/uv).
-- **Postgres** reachable from your machine. Atlas runs against Postgres in the [Urbalurba Infrastructure Stack (UIS)](https://github.com/helpers-no/urbalurba-infrastructure) for local dev — UIS spins up a Postgres pod inside Rancher Desktop k8s. If you don't have UIS, any local Postgres ≥ 14 works for ingest + dbt; you'll skip the frontend until you point at a real Atlas database.
+- **Postgres** reachable from your machine. Atlas runs against Postgres in the [Urbalurba Infrastructure Stack (UIS)](https://github.com/helpers-no/urbalurba-infrastructure) for local dev — UIS spins up a Postgres pod inside Rancher Desktop k8s. See [Connecting to Postgres in UIS](#connecting-to-postgres-in-uis) below for the port-forward step. If you don't have UIS, any local Postgres ≥ 14 works for ingest + dbt; you'll skip the frontend until you point at a real Atlas database.
 - **`git`** with a configured user.
 
 ---
@@ -30,6 +30,39 @@ The repo has three top-level codebases:
 - [`atlas-data/`](https://github.com/terchris/atlas/tree/main/atlas-data) — TypeScript ingest + dbt project. **Most contributor work happens here.**
 - [`atlas-frontend/`](https://github.com/terchris/atlas/tree/main/atlas-frontend) — Next.js app (reads `marts.*`).
 - [`website/`](https://github.com/terchris/atlas/tree/main/website) — Docusaurus-bound docs source (this site).
+
+---
+
+## Connecting to Postgres in UIS
+
+Postgres runs as a pod inside the local k3s cluster (Rancher Desktop). The pod listens on cluster-internal port `5432`, but that ClusterIP service isn't reachable from your host machine directly — you need a `kubectl port-forward`.
+
+Atlas's `.env` expects Postgres on `localhost:35432`. Open the forward in a long-lived terminal (or background process) and leave it running while you work:
+
+```bash
+kubectl port-forward svc/postgresql 35432:5432
+```
+
+Verify:
+
+```bash
+nc -z localhost 35432 && echo "ok"
+# or
+psql "$DATABASE_URL" -c 'select 1'
+```
+
+If `dbt debug --connection` reports `connection refused` on `localhost:35432`, the port-forward dropped — restart it. The forward survives normal terminal use but ends when you `Ctrl-C` or close the shell that started it.
+
+You can verify the Postgres pod itself is healthy with:
+
+```bash
+kubectl get pod -n default -l app.kubernetes.io/name=postgresql
+kubectl logs -n default postgresql-0 --tail=20
+```
+
+Pod logs typically show `database system is ready to accept connections` when Postgres is up.
+
+If you don't have UIS, point Atlas at any local Postgres ≥ 14 by editing `atlas-data/ingest/.env`'s `DATABASE_URL` / `PG*` variables. The cluster topology stops mattering once `psql "$DATABASE_URL" -c 'select 1'` works.
 
 ---
 
@@ -139,6 +172,7 @@ For the testing workflow before opening a PR, see [testing.md](./testing.md).
 
 - **`uv: command not found`** — install with `brew install uv` (macOS) or [uv's docs](https://github.com/astral-sh/uv). Don't use `pip install dbt-core` directly; the env will diverge from CI.
 - **dbt errors with `permission denied for schema raw`** — your Postgres role doesn't have `CREATE` on `raw`. UIS sets this up automatically; a fresh Postgres needs `GRANT CREATE ON SCHEMA raw TO <your-role>;`.
+- **`dbt debug` says "connection refused" on `localhost:35432`** — the `kubectl port-forward` to UIS Postgres dropped or was never started. See [Connecting to Postgres in UIS](#connecting-to-postgres-in-uis).
 - **`ATLAS_SCRAPE_CONTACT_EMAIL` unset** — only matters if you're running a scraping source (`ingest:redcross-branches` etc.). For SSB/FHI ingests, you can leave it blank.
 - **TypeScript errors after pulling main** — `npm install` again. Atlas pins types tightly and stale `node_modules/` causes type drift.
 - **`dbt-osmosis` says "would write changes" after a fresh run** — run it twice; osmosis is two-pass on a populated project. See [dbt-osmosis.md § two-pass convergence](./dbt-osmosis.md#two-pass-convergence).

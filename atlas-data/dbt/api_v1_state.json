@@ -1,0 +1,14 @@
+{
+  "format_version": 1,
+  "views": [
+    "activity_catalog",
+    "coverage_gap_barnefattigdom",
+    "distrikt_summary",
+    "indicator_latest_values",
+    "indicator_missing_kommuner",
+    "indicator_summary",
+    "kommune_local_chapters",
+    "ngo_index",
+    "ngo_overview"
+  ]
+}
