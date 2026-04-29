@@ -4,7 +4,40 @@
 > - [WORKFLOW.md](../../WORKFLOW.md) — The implementation process
 > - [PLANS.md](../../PLANS.md) — Plan structure and best practices
 
-## Status: Active — Phase 1 done (2026-04-28); awaiting user review before Phase 2
+## Status: Active — Phases 1–4 done (2026-04-29); Phases 5–7 (docs) remain
+
+## Phase 4 outcomes (2026-04-29) — generator applied + all five gates green
+
+`./apply-api-v1.sh` applied `api_v1_generated.sql` cleanly against UIS Postgres (port-forwarded `localhost:35432`). Re-applying is a no-op (`CREATE OR REPLACE` / `IF NOT EXISTS` / `DROP IF EXISTS` everywhere; idempotency verified by second apply succeeding silently).
+
+### Spot-checks (psql)
+
+- `api_v1` schema exists with **9 views** (the wrappers).
+- Row counts match `marts.mart_*` exactly:
+  - `indicator_summary` = 171 (matches PLAN-001 baseline)
+  - `kommune_local_chapters` = 1 521
+  - `ngo_index` = 11
+- Column comments present on the views (`pg_catalog.pg_description` returns the dbt-manifest description for `api_v1.indicator_summary.source_id` etc.) — confirms [Q3] fallback works end-to-end.
+
+### All five validation gates green
+
+| # | Gate | Result |
+|---|---|---|
+| 1 | Drift (`check-api-v1.sh`) | ✓ regenerator output matches checked-in |
+| 2 | Coverage (`check-api-v1.sh`) | ✓ 9 wrappers = 9 api/ models |
+| 3a | Static description coverage (`check-api-v1.sh`) | ✓ 71 COMMENT lines = 71 described columns |
+| 3b | Runtime description coverage (`dbt test api_v1_descriptions_complete`) | ✓ no NULL `obj_description` in `api_v1.*` |
+| 4 | Row-count parity (`dbt test api_v1_rowcount_matches_marts`) | ✓ all 9 view pairs match |
+| 5 | Idempotency (Phase 2.4 one-shot + this re-apply) | ✓ byte-identical re-generation; no-op re-apply |
+
+### Regression sweep
+
+- `./check-osmosis.sh --strict-only` ✓ — schema.yml hygiene from PLAN-002 unchanged
+- `dbt test` full sweep — **600 PASS / 21 WARN / 0 ERROR / 621 TOTAL**. WARN count stable vs. post-PLAN-002 baseline (20 pre-existing data-quality + 1 Svalbard). PASS up by 2 due to the two new singular tests this PLAN added.
+
+### Coordination state
+
+UIS contributor merged the documentation in PR #129 (2026-04-28); Atlas reviewed and approved 2026-04-29 (see [`NOTE-from-atlas-postgrest-doc-approval.md`](../../../../../urbalurba-infrastructure/website/docs/ai-developer/plans/backlog/NOTE-from-atlas-postgrest-doc-approval.md) in the UIS repo). UIS PLAN-002 (PostgREST deployment) started right after; once it ships, Atlas runs `./uis configure postgrest --app atlas --schema api_v1 --url-prefix api-atlas` + `./uis deploy postgrest --app atlas` and the API is live.
 
 ## Phase 1 outcomes (2026-04-28)
 
