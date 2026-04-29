@@ -21,6 +21,7 @@ All rules apply to marts, public APIs, and any external contract.
 6. **MUST** declare a `relationships:` test for every column that references a `dim_*` table.
 7. **MUST** commit changes that follow this file, not ones that violate it. If a rule is wrong, change the rule; don't bypass it.
 8. **MUST** update `website/docs/contributors/*.md` in the same PR as any change to behaviour the page documents. If you change how dbt-osmosis is configured, the `dbt-osmosis.md` page is part of the same PR. If you change the source-add workflow, `adding-a-source.md` updates with it. The contributor docs are the canonical guide; PRs that drift from them create a divergent local rule (rule #7 forbids this). PLAN-003 phase 5 (2026-04-28) made this convention explicit; reviewer responsibility to flag.
+9. **MUST** re-run `atlas-data/dbt/regenerate-api-v1.sh` and commit the updated `atlas-data/dbt/api_v1_generated.sql` + `atlas-data/dbt/api_v1_state.json` whenever a model under `models/marts/api/` is added, removed, or has columns / descriptions changed. The drift gate at [`atlas-data/dbt/check-api-v1.sh`](../../atlas-data/dbt/check-api-v1.sh) (PLAN-004 phase 3, 2026-04-29) fails CI if the generated artefacts on disk don't match what the generator would produce now. The artefacts ARE the public-API contract — `api_v1.*` is what PostgREST projects. See [`/website/docs/contributors/api-v1.md`](../../website/docs/contributors/api-v1.md) for the workflow.
 
 ---
 
@@ -140,7 +141,8 @@ Forbidden names, and what to use instead.
 | Schema | Purpose | Who writes | Who reads |
 |---|---|---|---|
 | `raw.*` | Upstream landing. Names follow source. | `atlas-data/ingest/*` | `dbt` only |
-| `marts.*` | Atlas public contract. Canonical names. | `dbt` only | frontend, analysts, public API, other teams |
+| `marts.*` | Atlas internal API-shaped layer. Canonical names. | `dbt` only | frontend (today, until PLAN-E migrates), analysts, the `api_v1` wrapper layer |
+| `api_v1.*` | **External public contract.** Auto-generated wrapper views over `marts.mart_*` (one per `models/marts/api/` model). Versioned. PostgREST projects this as the OpenAPI surface at `api-atlas.helpers.no`. See [PLAN-004](../ai-developer/plans/active/PLAN-004-postgrest-api-v1-wrapper.md). | `atlas-data/dbt/scripts/generate_api_v1.py` (auto) | external API consumers, future `atlas_authenticator` PostgREST role |
 | `dagster.*` | Dagster platform metadata. | Dagster itself | Dagster itself |
 
 A process **MUST NOT** write to a schema it doesn't own. A consumer **MUST NOT** read from a schema it's not listed for.
@@ -188,7 +190,7 @@ Naming and shape:
 - Compose from existing `dim_*` / `fact_*` models — never reach back into `raw.*`.
 - Materialise as a table (default) when the consumer hits it on every page load; as a view when the underlying data changes more often than the read pattern justifies.
 
-Subfolder convention: API-shaped marts may live under `models/marts/api/` for organisational clarity once there are 5+ of them. Until then, keeping them flat under `models/marts/` is fine.
+Subfolder convention: API-shaped marts live under `models/marts/api/`. The api_v1 generator (PLAN-004) walks this directory and emits one `api_v1.<feature>` wrapper view per model — drop the `mart_` prefix in the api_v1 name (e.g. `mart_indicator_summary` → `api_v1.indicator_summary`). Marts NOT under `models/marts/api/` are internal-only (consumed by Atlas's frontend or other dbt models) and are NOT exposed via PostgREST. After adding, removing, or changing a model under `models/marts/api/`, run `regenerate-api-v1.sh` (rule #9).
 
 ---
 

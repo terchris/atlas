@@ -145,6 +145,21 @@ Add a `models[]` entry with:
 
 **Done when**: `dbt-osmosis yaml document --dry-run --check` exits 0. See [dbt-osmosis.md](./dbt-osmosis.md) for the description-propagation flow.
 
+### Step 9b — Regenerate `api_v1` if your model is under `models/marts/api/`
+
+If (and only if) your new model is a `mart_<feature>` view living under `models/marts/api/` — i.e. you're adding to the public API surface — re-run the generator:
+
+```bash
+cd atlas-data/dbt
+./regenerate-api-v1.sh
+```
+
+This updates `atlas-data/dbt/api_v1_generated.sql` and `api_v1_state.json`. Inspect the diff: a new `CREATE OR REPLACE VIEW api_v1.<your_view>` block plus per-column `COMMENT ON COLUMN` lines should appear. **Also update [`atlas-data/dbt/tests/api_v1_rowcount_matches_marts.sql`](https://github.com/terchris/atlas/blob/main/atlas-data/dbt/tests/api_v1_rowcount_matches_marts.sql)** — add a `union all` line for the new view pair (the test is hand-maintained today; future iteration may auto-generate it).
+
+If your model is in `models/marts/` but NOT under `models/marts/api/` (e.g. a fact or internal mart consumed by other dbt models), skip this step — that view is internal-only.
+
+The drift gate at `./check-api-v1.sh` enforces this; naming-conventions rule #9 codifies the convention. See [api-v1.md](./api-v1.md) for the layer's design rationale.
+
 ### Step 10 — Verify end-to-end
 
 Run, in order, **all** of:
@@ -158,6 +173,9 @@ cd ../dbt
 uv run --env-file ../ingest/.env dbt run  --select indicators__<source_id>   # must succeed
 uv run --env-file ../ingest/.env dbt test --select indicators__<source_id>   # must pass 100%
 ./check-osmosis.sh                                                    # must pass
+./check-api-v1.sh                                                     # must pass (only if step 9b applies)
+./apply-api-v1.sh                                                     # only if step 9b applies; idempotent
+uv run --env-file ../ingest/.env dbt test --select api_v1_descriptions_complete api_v1_rowcount_matches_marts   # only if step 9b applies
 ```
 
 If any command fails or any test warns, **fix before committing**. No "we'll clean up later."
@@ -181,9 +199,26 @@ Similar to the source workflow, with these differences:
 ## Workflow: modify an existing source
 
 - Raw column changes: add a **new migration file** — never edit the existing one.
-- Model column changes: edit the model file directly; update `schema.yml` in the same change.
-- Renaming a column: do it in the dbt passthrough; raw stays as-is.
+- Model column changes: edit the model file directly; update `schema.yml` in the same change. **If the model is under `models/marts/api/`, also re-run `regenerate-api-v1.sh` and commit the regenerated artefacts** (rule #9 in naming-conventions.md).
+- Renaming a column: do it in the dbt passthrough; raw stays as-is. For api/ models, the rename surfaces in `api_v1.<view>` after regenerate — that's a breaking change for external consumers, treat carefully.
 - Retiring a source: add `deprecation_date: YYYY-MM-DD` to the model config; delete after the date.
+
+## Workflow: deprecate then remove a `mart_<feature>` (api_v1 view)
+
+A two-phase process — the api_v1 wrapper has external consumers and can't be dropped abruptly. See [api-v1.md § Deprecating then removing](./api-v1.md#deprecating-then-removing-a-mart_) for the full flow.
+
+**Phase A — Deprecate.** Add a `meta:` block to the model's schema.yml entry indicating deprecation:
+
+```yaml
+- name: mart_old_view
+  meta:
+    deprecated_until: '2026-12-01'
+    deprecated_reason: 'Replaced by mart_new_view; see PLAN-XXX'
+```
+
+Wrapper still serves traffic; consumers are notified via release notes. Grace period: at least one consumer-notice cycle.
+
+**Phase B — Remove.** After grace period and confirmed no traffic: delete the model from `models/marts/api/`. Run `./regenerate-api-v1.sh` — the generator notices the view is in `api_v1_state.json` but not in the current manifest, and emits `DROP VIEW IF EXISTS api_v1.<name> CASCADE`. Apply via `./apply-api-v1.sh`. Remove the corresponding line from `tests/api_v1_rowcount_matches_marts.sql`.
 
 ---
 

@@ -61,6 +61,12 @@ Atlas uses **dbt-osmosis** to propagate column descriptions across the dbt linea
 - [dbt-osmosis.md](./dbt-osmosis.md) — what it is, why Atlas uses it, two-pass convergence, propagation rules
 - [check-osmosis.md](./check-osmosis.md) — the gate, what failure looks like, how to fix it
 
+### "I want to understand the public API surface"
+
+The external HTTP API at `api-atlas.helpers.no` is a **PostgREST** instance projecting the `api_v1.*` schema. Atlas auto-generates `api_v1` as wrapper views over `marts.mart_*` (one per `models/marts/api/` model); UIS deploys and operates PostgREST.
+
+→ [api-v1.md](./api-v1.md) — what `api_v1` is, why it's separate from `marts.*`, the generator + apply workflow, the five validation gates, the deprecation flow.
+
 ### "I want to set up my dev environment"
 
 → [setup.md](./setup.md). Covers Node, uv, Postgres, env files, and the first-time smoke test.
@@ -96,7 +102,8 @@ The full set is in [`docs/stack/naming-conventions.md`](https://github.com/terch
 | Add a new data source | [adding-a-source.md](./adding-a-source.md) |
 | Ingest module template | [ingest-modules.md](./ingest-modules.md) |
 | dbt-osmosis description propagation | [dbt-osmosis.md](./dbt-osmosis.md) |
-| The description gate | [check-osmosis.md](./check-osmosis.md) |
+| The description gate (`marts.*`) | [check-osmosis.md](./check-osmosis.md) |
+| The public API wrapper layer (`api_v1.*`) | [api-v1.md](./api-v1.md) |
 | Local testing before a PR | [testing.md](./testing.md) |
 | Git workflow + multi-agent safety | [git-workflow.md](./git-workflow.md) |
 
