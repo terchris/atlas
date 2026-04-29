@@ -13,3 +13,7 @@ dbterd>=1.25,<2
 # existing models and (2) gate PRs against missing descriptions on any
 # marts.* model. Per PLAN-001 phase 1; see atlas-data/dbt/check-osmosis.sh.
 dbt-osmosis>=1.0,<2
+
+# pytest — unit tests for the api_v1 generator (scripts/generate_api_v1.py).
+# Exercised via `uv run pytest scripts/tests/`. Per PLAN-004 phase 2.
+pytest>=8,<10
