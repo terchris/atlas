@@ -4,7 +4,18 @@
 > - [WORKFLOW.md](../../WORKFLOW.md) — The implementation process
 > - [PLANS.md](../../PLANS.md) — Plan structure and best practices
 
-## Status: Resolved — ready to draft PLAN-004 (2026-04-28)
+## Status: Complete — 2026-04-29 (implemented in PLAN-004)
+
+PLAN-004 implementation landed across 6 commits on `feature/plan-004-api-v1-wrapper`. Phase 1 verified the four experiment-driven outcomes ([Q3], [Q10], [Q11], [Q18]) — three changed the pre-decisions:
+
+- **[Q3]**: comments do NOT propagate to wrapper views; generator emits explicit `COMMENT ON COLUMN api_v1.X.col` per column.
+- **[Q10]**: marts.* has no FK constraints; PostgREST `@source` / `@references` hints don't synthesise FK metadata; resolved as **(c) skip embeds in v1** (was pre-decided as (a) wrap dim_*). Generator scope shrank from ~14 wrappers to 9.
+- **[Q11]**: `./uis configure postgrest` not yet implemented; guarded grants load-bearing.
+- **[Q18]**: stayed at sunny path (state-less migration runner re-applies idempotent SQL on every run).
+
+See [PLAN-004 Phase 1 outcomes](PLAN-004-postgrest-api-v1-wrapper.md) for the full experiment log. Original status header preserved below for the architectural-decision audit trail.
+
+## Status (original): Resolved — ready to draft PLAN-004 (2026-04-28)
 
 **Goal**: Decide how Atlas exposes its dbt-built marts to the UIS-deployed PostgREST instance: should the public API contract live in `marts.mart_*` directly (PLAN-001's assumption), or should Atlas add an `api_v1` schema layer with thin wrapper views — matching the convention UIS has now documented and giving Atlas a real internal/external boundary it currently lacks. This INVESTIGATE makes the architectural argument and surfaces the small open questions before a follow-up PLAN does the work.
 
