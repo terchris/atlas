@@ -210,12 +210,19 @@ export default async function EndpointTablePage({
   return (
     <div className="min-h-screen bg-zinc-50 font-sans dark:bg-black">
       <main className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-6 py-12">
-        <nav className="text-sm">
+        <nav className="flex flex-wrap items-center gap-3 text-sm">
           <Link
             href="/data"
             className="text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-50"
           >
             ← Back to catalog
+          </Link>
+          <span className="text-zinc-300 dark:text-zinc-700">·</span>
+          <Link
+            href={`/data/${endpoint}/spec`}
+            className="text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-50"
+          >
+            View spec
           </Link>
         </nav>
 

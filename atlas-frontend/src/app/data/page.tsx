@@ -162,6 +162,12 @@ export default async function DataCatalogPage() {
                   >
                     View as table →
                   </Link>
+                  <Link
+                    href={`/data/${endpoint.name}/spec`}
+                    className="font-medium text-zinc-700 underline-offset-2 hover:underline dark:text-zinc-300"
+                  >
+                    View spec →
+                  </Link>
                 </div>
               </div>
             </details>
