@@ -83,11 +83,21 @@ export async function fetchRows<K extends keyof components["schemas"]>(
  * Uses PostgREST's `Prefer: count=exact` header — the count comes back in
  * the `Content-Range` response header; we don't read the body.
  *
+ * Pass an optional `query` to count rows matching a filter (e.g.
+ * `"?or=(name.ilike.*oslo*,fylke_name.ilike.*oslo*)"`). The function adds
+ * `limit=0` so no rows are returned.
+ *
  * @example
  *   const total = await fetchCount("indicator_summary");  // → 163
+ *   const filtered = await fetchCount("kommune_local_chapters",
+ *     "?or=(kommune_name.ilike.*oslo*)");                 // → 4
  */
-export async function fetchCount(endpoint: string): Promise<number> {
-  const url = buildUrl(`/${endpoint}?limit=0`);
+export async function fetchCount(
+  endpoint: string,
+  query: string = "",
+): Promise<number> {
+  const sep = query.includes("?") ? "&" : "?";
+  const url = buildUrl(`/${endpoint}${query}${sep}limit=0`);
   const res = await fetch(url, {
     headers: {
       Accept: "application/json",
