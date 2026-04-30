@@ -34,7 +34,7 @@ The folder is **self-contained**: zero imports from elsewhere in the Atlas monor
 - **`app/data/page.tsx`** (Phase 4): introspection-driven catalogue listing every `api_v1.*` endpoint with row counts, sourced from PostgREST itself.
 - **`app/page.tsx`** (Phase 4): homepage; links to `/data`.
 
-The full architectural rationale lives at [`website/docs/ai-developer/plans/backlog/INVESTIGATE-frontend-data-access-architecture.md`](../website/docs/ai-developer/plans/backlog/INVESTIGATE-frontend-data-access-architecture.md). The phased build is in [`website/docs/ai-developer/plans/active/PLAN-005-frontend-split-and-rebuild.md`](../website/docs/ai-developer/plans/active/PLAN-005-frontend-split-and-rebuild.md).
+The full architectural rationale lives at [`website/docs/ai-developer/plans/completed/INVESTIGATE-frontend-data-access-architecture.md`](../website/docs/ai-developer/plans/completed/INVESTIGATE-frontend-data-access-architecture.md). The phased build log is in [`website/docs/ai-developer/plans/completed/PLAN-005-frontend-split-and-rebuild.md`](../website/docs/ai-developer/plans/completed/PLAN-005-frontend-split-and-rebuild.md).
 
 ## What's deliberately not in here
 

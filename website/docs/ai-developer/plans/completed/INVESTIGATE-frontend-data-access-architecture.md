@@ -4,7 +4,9 @@
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Backlog
+## Status: Completed (2026-04-30)
+
+Architectural commitments here are realized in code via [PLAN-005-frontend-split-and-rebuild](PLAN-005-frontend-split-and-rebuild.md), shipped on Atlas `main` as PR [#33](https://github.com/terchris/atlas/pull/33) / [`2266f21`](https://github.com/terchris/atlas/commit/2266f21). All seven items in the [Recommended outcome](#recommended-outcome) are live: the two-app split (`atlas-frontend/` + `atlas-contributor-frontend/`), monorepo layout, the URL anchors (atlas.helpers.no consumes api-atlas.helpers.no, developer-atlas.helpers.no future-deploys Docusaurus), customer app self-contained / forkable, no shared code between the apps, the wholesale rename + greenfield rebuild, and the production-posture rule (only customer + Docusaurus reach the internet). Moved backlog/ → completed/ alongside the PLAN.
 
 **Goal**: Establish that today's single `atlas-frontend/` splits into two top-level Next.js apps — one for **Atlas contributors** (today's code, renamed to `atlas-contributor-frontend/`; verifies ingestion worked, direct Postgres, dev/staging only) and one for **Atlas customers / external developers** (a fresh `atlas-frontend/` consuming the public PostgREST API, deploys to `atlas.helpers.no`, structured to be forkable as a reference implementation). Output is the architectural commitments + the migration sketch — not the actual implementation (a follow-on PLAN handles that).
 

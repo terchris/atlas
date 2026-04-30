@@ -4,13 +4,25 @@
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Backlog
+## Status: Completed (2026-04-30)
 
-**Goal**: Execute the architectural decision in [INVESTIGATE-frontend-data-access-architecture.md](INVESTIGATE-frontend-data-access-architecture.md). After this PLAN, the repo has two top-level Next.js apps: `atlas-contributor-frontend/` (today's `atlas-frontend/` renamed; direct Postgres; dev/staging only) and `atlas-frontend/` (fresh scaffold; PostgREST only; deploys to `atlas.helpers.no`; structured as a forkable reference for external developers). Customer app starts with one working route as proof-of-concept; further routes scale out as customer-facing pages are designed.
+Shipped on Atlas `main` as PR [#33](https://github.com/terchris/atlas/pull/33), squash-merged at commit [`2266f21`](https://github.com/terchris/atlas/commit/2266f21). All six phases complete; all acceptance criteria satisfied.
 
-**Investigation**: [INVESTIGATE-frontend-data-access-architecture.md](INVESTIGATE-frontend-data-access-architecture.md) — settled all architectural commitments (URL anchors, naming, monorepo, no shared code, customer-app forkability).
+**Outcome**: the repo now has two top-level Next.js apps:
 
-**Last Updated**: 2026-04-30
+- **`atlas-contributor-frontend/`** — today's original `atlas-frontend/` renamed wholesale. Direct Postgres against `marts.*`, dev/staging only, port 4000. Used by ingest authors and dbt model writers to verify ingestion + dbt output. Homepage rewritten to clearly identify its contributor audience and surface 8 diagnostic tools as visible card-style affordances.
+- **`atlas-frontend/`** — fresh scaffold consuming `api-atlas.helpers.no` via typed fetch, port 3001, deploys to `atlas.helpers.no`. Forkable as a reference implementation for external developers (zero DB drivers, no monorepo cross-imports, self-contained `package.json` + README). Three views per `api_v1.*` endpoint, all introspection-driven (no hardcoded endpoint names anywhere): `/data` catalog, `/data/[endpoint]` table viewer with pagination + sort + search, `/data/[endpoint]/spec` per-endpoint OpenAPI spec slice.
+
+Phase 5 deliverables shipped beyond the original PLAN scope:
+- Generic table viewer at `/data/[endpoint]` with shadcn-style Table primitives (no Radix dep)
+- URL-driven pagination, click-to-cycle column sort, search via PostgREST `or= ilike` across string columns
+- Per-endpoint spec viewer at `/data/[endpoint]/spec`
+
+`website/docs/developers/` stub created per Phase 6.6; full content tracked by [INVESTIGATE-developer-docs-surface.md](../backlog/INVESTIGATE-developer-docs-surface.md) (still in backlog/, the natural follow-on PLAN-006).
+
+**Investigation**: [INVESTIGATE-frontend-data-access-architecture.md](INVESTIGATE-frontend-data-access-architecture.md) — settled all architectural commitments (URL anchors, naming, monorepo, no shared code, customer-app forkability). Now also in `completed/`.
+
+**Last Updated**: 2026-04-30 — moved active/ → completed/
 
 **Prerequisites**:
 - PostgREST live with `api_v1.*` wrapper layer (PLAN-004 + UIS PLAN-002, verified 2026-04-30 — see [`talk2.md`](../talk/talk2.md), Messages 1–4).
@@ -27,8 +39,8 @@ Whole-folder git move. Today's content unchanged; just lives under a new name th
 
 ### Tasks
 
-- [ ] 1.1 `git mv atlas-frontend atlas-contributor-frontend` from a feature branch.
-- [ ] 1.2 Update inbound references across the repo:
+- [x] 1.1 `git mv atlas-frontend atlas-contributor-frontend` from a feature branch.
+- [x] 1.2 Update inbound references across the repo:
   - [`website/docs/contributors/setup.md`](../../../contributors/setup.md) — currently mentions `atlas-frontend/` for the optional frontend setup; update path + frame as the contributor diagnostic app.
   - [`website/docs/contributors/index.md`](../../../contributors/index.md) — same.
   - [`website/docs/contributors/data-journey.md`](../../../contributors/data-journey.md) — Stage 8 (Next.js queries).
@@ -36,8 +48,8 @@ Whole-folder git move. Today's content unchanged; just lives under a new name th
   - `atlas-data/CONTRIBUTING.md` if it references the path.
   - Any other markdown that has `atlas-frontend/` as a literal path.
   - Run `grep -rn "atlas-frontend" website/ docs/ atlas-data/ CLAUDE.md` and fix every hit.
-- [ ] 1.3 Verify `cd atlas-contributor-frontend && npm install && npm run dev` still works against direct Postgres. Spot-check `/coverage-gap/barnefattigdom` and `/admin/supply/redcross-branches` render rows.
-- [ ] 1.4 Add a one-paragraph banner at the top of `atlas-contributor-frontend/README.md` that says "this is the contributor app — direct DB access for ingestion verification — not for prod deploy. Customer-facing app is the new `atlas-frontend/`."
+- [x] 1.3 Verify `cd atlas-contributor-frontend && npm install && npm run dev` still works against direct Postgres. Spot-check `/coverage-gap/barnefattigdom` and `/admin/supply/redcross-branches` render rows.
+- [x] 1.4 Add a one-paragraph banner at the top of `atlas-contributor-frontend/README.md` that says "this is the contributor app — direct DB access for ingestion verification — not for prod deploy. Customer-facing app is the new `atlas-frontend/`."
 
 ### Validation
 
@@ -62,18 +74,18 @@ Fresh Next.js app at the repo root. No carryover from `atlas-contributor-fronten
 
 ### Tasks
 
-- [ ] 2.1 `npx create-next-app@latest atlas-frontend --typescript --app --no-src-dir` (or `--src-dir` to match Atlas conventions — match what `atlas-contributor-frontend/` uses for symmetry, even though they don't share code).
-- [ ] 2.2 Configure environment:
+- [x] 2.1 `npx create-next-app@latest atlas-frontend --typescript --app --no-src-dir` (or `--src-dir` to match Atlas conventions — match what `atlas-contributor-frontend/` uses for symmetry, even though they don't share code).
+- [x] 2.2 Configure environment:
   - `.env.example` at root: `NEXT_PUBLIC_API_URL=http://api-atlas.localhost`.
   - **Do not** include `DATABASE_URL` or any DB role.
   - **Do not** install `postgres.js` or any DB driver.
-- [ ] 2.3 **Port assignment**: change `npm run dev` to use port 3001 (`"dev": "next dev -p 3001"` in `package.json`). Avoids collision with `atlas-contributor-frontend/`'s default 3000. Document in the README.
-- [ ] 2.4 Write the customer app's `README.md` to market the folder as a forkable reference:
+- [x] 2.3 **Port assignment**: change `npm run dev` to use port 3001 (`"dev": "next dev -p 3001"` in `package.json`). Avoids collision with `atlas-contributor-frontend/`'s default 3000. Document in the README.
+- [x] 2.4 Write the customer app's `README.md` to market the folder as a forkable reference:
   - "What this is": Atlas's customer-facing Next.js consuming `api-atlas.helpers.no`.
   - "How to run locally": `cp .env.example .env.local && npm install && npm run dev`.
   - "How to fork": clone or copy the folder, set `NEXT_PUBLIC_API_URL` to your own PostgREST endpoint.
   - "What you can build": explain that `api-atlas.helpers.no` is the same API external developers use; this folder is the canonical example.
-- [ ] 2.5 Forkability discipline: enforce no upward imports.
+- [x] 2.5 Forkability discipline: enforce no upward imports.
   - Add a top-of-file comment in any shared lib explaining the forkability constraint.
   - Optional ESLint rule: `no-restricted-imports` blocking `../atlas-data`, `../website`, `../atlas-contributor-frontend`.
 
@@ -103,16 +115,16 @@ Types are generated from PostgREST's OpenAPI spec via `openapi-typescript`. Sing
 
 ### Tasks
 
-- [ ] 3.1 Add dev dependency: `npm install -D openapi-typescript`.
-- [ ] 3.2 Generate types: `npx openapi-typescript http://api-atlas.localhost/ -o src/lib/api-types.ts`.
-- [ ] 3.3 Add an npm script: `"api:types": "openapi-typescript http://api-atlas.localhost/ -o src/lib/api-types.ts"`.
-- [ ] 3.4 Write `src/lib/api.ts` — a thin `fetch` wrapper that:
+- [x] 3.1 Add dev dependency: `npm install -D openapi-typescript`.
+- [x] 3.2 Generate types: `npx openapi-typescript http://api-atlas.localhost/ -o src/lib/api-types.ts`.
+- [x] 3.3 Add an npm script: `"api:types": "openapi-typescript http://api-atlas.localhost/ -o src/lib/api-types.ts"`.
+- [x] 3.4 Write `src/lib/api.ts` — a thin `fetch` wrapper that:
   - Reads `process.env.NEXT_PUBLIC_API_URL`.
   - Returns typed responses using `api-types.ts`.
   - Surfaces clear errors on 4xx/5xx (use Next.js error boundary patterns).
   - Provides a helper to fetch row counts via `Prefer: count=exact` headers (used by the catalog page in Phase 4).
   - **Has no SQL. Has no `postgres.js` import. Imports only from `node_modules` and `./api-types`.**
-- [ ] 3.5 Document in the README: "after schema changes on the API side, refresh types with `npm run api:types`."
+- [x] 3.5 Document in the README: "after schema changes on the API side, refresh types with `npm run api:types`."
 
 ### Validation
 
@@ -138,14 +150,14 @@ Build a self-describing data catalog at `/data` driven entirely by PostgREST int
 
 ### Tasks
 
-- [ ] 4.1 Build `app/data/page.tsx`:
+- [x] 4.1 Build `app/data/page.tsx`:
   - Fetch the OpenAPI spec at `process.env.NEXT_PUBLIC_API_URL` (root). Extract `paths` (the endpoint list) and `definitions` (column types + descriptions).
   - For each path (excluding `/`), fetch its row count via `lib/api.ts`'s `Prefer: count=exact` helper.
   - For `/indicator_summary`, fetch the rows and group by `source_id` to render the per-source indicator catalogue (sources, contents codes per source, latest year).
   - Render as a clean, public-facing landing — table or card grid. Each cataloged endpoint links to a detail page (built piecemeal across Phase 5).
   - Loading + error states. Server component (Next.js fetches at request time; no client-side state needed).
-- [ ] 4.2 Add a homepage (`app/page.tsx`) that introduces Atlas and links to `/data`. One-liner now; can grow with marketing later.
-- [ ] 4.3 Verify the catalog reflects every `api_v1.*` endpoint without hardcoding any of them — adding a new mart view + regenerating `api_v1` should make it appear in the catalog automatically on next page load.
+- [x] 4.2 Add a homepage (`app/page.tsx`) that introduces Atlas and links to `/data`. One-liner now; can grow with marketing later.
+- [x] 4.3 Verify the catalog reflects every `api_v1.*` endpoint without hardcoding any of them — adding a new mart view + regenerating `api_v1` should make it appear in the catalog automatically on next page load.
 
 ### Validation
 
@@ -183,10 +195,10 @@ Open-ended phase. Each cataloged endpoint can grow a detail page; new mart views
 
 ### Generic per-route flow
 
-- [ ] 5.x.1 Confirm the route's data needs map to an existing `api_v1.*` view. If not, add a `mart_<feature>` view first; regenerate + apply `api_v1`; rerun `npm run api:types`.
-- [ ] 5.x.2 Implement the route in `atlas-frontend/app/<path>/page.tsx` against `lib/api.ts` with typed responses from `api-types.ts`.
-- [ ] 5.x.3 Confirm the catalog at `/data` shows the new endpoint without code changes (the introspection-driven render handles it).
-- [ ] 5.x.4 Add a smoke check (curl + grep on rendered HTML, or a Playwright test if testing infra lands).
+- [x] 5.x.1 Confirm the route's data needs map to an existing `api_v1.*` view. If not, add a `mart_<feature>` view first; regenerate + apply `api_v1`; rerun `npm run api:types`.
+- [x] 5.x.2 Implement the route in `atlas-frontend/app/<path>/page.tsx` against `lib/api.ts` with typed responses from `api-types.ts`.
+- [x] 5.x.3 Confirm the catalog at `/data` shows the new endpoint without code changes (the introspection-driven render handles it).
+- [x] 5.x.4 Add a smoke check (curl + grep on rendered HTML, or a Playwright test if testing infra lands).
 
 ### Done when
 
@@ -200,15 +212,15 @@ Update contributor docs to reflect the split.
 
 ### Tasks
 
-- [ ] 6.1 Update [`website/docs/contributors/setup.md`](../../../contributors/setup.md) to describe **two** Next.js apps:
+- [x] 6.1 Update [`website/docs/contributors/setup.md`](../../../contributors/setup.md) to describe **two** Next.js apps:
   - `atlas-contributor-frontend/` — direct Postgres, what contributors run during ingestion verification.
   - `atlas-frontend/` — PostgREST consumer, the customer-facing app, ports 3001 in dev.
   - Reference each app's own README for fork/extend.
-- [ ] 6.2 Update [`website/docs/contributors/index.md`](../../../contributors/index.md) "Where things live" table to list both apps.
-- [ ] 6.3 Update [`website/docs/contributors/data-journey.md`](../../../contributors/data-journey.md) Stage 8 — clarify that the customer app dogfoods the API and that the contributor app keeps direct-DB access for verification work.
-- [ ] 6.4 Update [`CLAUDE.md`](../../../../../CLAUDE.md) "Key Folders" section.
-- [ ] 6.5 Update [`atlas-data/CONTRIBUTING.md`](../../../../../atlas-data/CONTRIBUTING.md) if it references the frontend path.
-- [ ] 6.6 Scaffold a stub for the **external developer docs surface** at `website/docs/developers/index.md`. Single page with:
+- [x] 6.2 Update [`website/docs/contributors/index.md`](../../../contributors/index.md) "Where things live" table to list both apps.
+- [x] 6.3 Update [`website/docs/contributors/data-journey.md`](../../../contributors/data-journey.md) Stage 8 — clarify that the customer app dogfoods the API and that the contributor app keeps direct-DB access for verification work.
+- [x] 6.4 Update [`CLAUDE.md`](../../../../../CLAUDE.md) "Key Folders" section.
+- [x] 6.5 Update [`atlas-data/CONTRIBUTING.md`](../../../../../atlas-data/CONTRIBUTING.md) if it references the frontend path.
+- [x] 6.6 Scaffold a stub for the **external developer docs surface** at `website/docs/developers/index.md`. Single page with:
   - One paragraph framing the audience (people consuming `api-atlas.helpers.no` to build their own apps — frontend, CLI, agent, mobile, scripts).
   - A pointer to the customer app's README at `atlas-frontend/` as the canonical fork-me reference.
   - A pointer to the live Swagger 2.0 spec at `api-atlas.helpers.no/` for the schema.
@@ -231,14 +243,14 @@ grep -rn "atlas-frontend\|atlas-contributor-frontend" website/ CLAUDE.md atlas-d
 
 ## Acceptance Criteria
 
-- [ ] `git log --diff-filter=R --summary` shows the rename `atlas-frontend → atlas-contributor-frontend`.
-- [ ] Fresh `atlas-frontend/` exists with zero DB driver dependencies.
-- [ ] `atlas-frontend/src/lib/api.ts` + `api-types.ts` exist; `npm run api:types` regenerates types from live PostgREST.
-- [ ] `/data` catalog at `localhost:3001/data` lists every `api_v1.*` endpoint with row count and descriptions, sourced from the live OpenAPI spec, with **no hardcoded endpoint names** in the page source.
-- [ ] `app/page.tsx` (homepage) renders and links to `/data`.
-- [ ] setup.md, index.md, data-journey.md, CLAUDE.md describe the two apps correctly.
-- [ ] No literal `atlas-frontend/` reference in the repo points at the wrong app for its context.
-- [ ] `website/docs/developers/index.md` exists as a stub pointing at the customer app's README + the live OpenAPI spec, with a forward reference to `INVESTIGATE-developer-docs-surface.md`.
+- [x] `git log --diff-filter=R --summary` shows the rename `atlas-frontend → atlas-contributor-frontend`.
+- [x] Fresh `atlas-frontend/` exists with zero DB driver dependencies.
+- [x] `atlas-frontend/src/lib/api.ts` + `api-types.ts` exist; `npm run api:types` regenerates types from live PostgREST.
+- [x] `/data` catalog at `localhost:3001/data` lists every `api_v1.*` endpoint with row count and descriptions, sourced from the live OpenAPI spec, with **no hardcoded endpoint names** in the page source.
+- [x] `app/page.tsx` (homepage) renders and links to `/data`.
+- [x] setup.md, index.md, data-journey.md, CLAUDE.md describe the two apps correctly.
+- [x] No literal `atlas-frontend/` reference in the repo points at the wrong app for its context.
+- [x] `website/docs/developers/index.md` exists as a stub pointing at the customer app's README + the live OpenAPI spec, with a forward reference to `INVESTIGATE-developer-docs-surface.md`.
 
 (Detail pages, any new `mart_*` views, and the actual developer-docs content are out of PLAN-005's scope — Phase 5 scale-out and the developer-docs INVESTIGATE handle them.)
 
