@@ -7,8 +7,8 @@ Project-specific instructions for Claude Code when working on Atlas.
 Atlas builds an open semantic layer over Norwegian public data (SSB, FHI, Brreg) and NGO supply data, exposed via a public PostgREST API.
 
 - **Data side**: [`atlas-data/`](atlas-data/) — TypeScript ingest modules write `raw.*`; dbt transforms to `marts.*`.
-- **Contributor frontend**: [`atlas-contributor-frontend/`](atlas-contributor-frontend/) — Next.js app for ingestion verification and dbt-output diagnostics; reads `marts.*` directly. Dev/staging only.
-- **Customer frontend** (rebuilt under PLAN-005): [`atlas-frontend/`](atlas-frontend/) — Next.js app consuming `api-atlas.helpers.no` (PostgREST); deploys to `atlas.helpers.no`. Currently being scaffolded.
+- **Contributor frontend**: [`atlas-contributor-frontend/`](atlas-contributor-frontend/) — Next.js app for ingestion verification and dbt-output diagnostics; reads `marts.*` directly. Dev/staging only. Default port `3000`.
+- **Customer frontend**: [`atlas-frontend/`](atlas-frontend/) — Next.js app consuming `api-atlas.helpers.no` (PostgREST); deploys to `atlas.helpers.no`. No DB role; fully introspection-driven catalog at `/data`. Self-contained / forkable as a reference implementation. Default port `3001`.
 - **Public docs**: [`website/docs/`](website/docs/) — Docusaurus-bound markdown (build/deploy pending).
 
 ## Multi-agent repo — read first
@@ -63,5 +63,6 @@ In-repo `docs/` is a thin pointer; new documentation goes under `website/docs/`.
 - [`atlas-data/dbt/`](atlas-data/dbt/) — dbt project; the `check-osmosis.sh` gate enforces "every column documented" repo-wide.
 - [`atlas-data/ingest/`](atlas-data/ingest/) — TypeScript ingest modules writing `raw.*`.
 - [`atlas-contributor-frontend/`](atlas-contributor-frontend/) — Next.js diagnostics app, direct Postgres, dev/staging only.
-- [`atlas-frontend/`](atlas-frontend/) — Next.js customer app, PostgREST consumer, forkable reference (rebuilt under PLAN-005).
-- [`website/`](website/) — Docusaurus-bound docs source (install pending).
+- [`atlas-frontend/`](atlas-frontend/) — Next.js customer app, PostgREST consumer, forkable reference; introspection-driven catalog at `/data`.
+- [`website/`](website/) — Docusaurus-bound docs source.
+- [`website/docs/developers/`](website/docs/developers/) — external API consumer docs (stub; full content tracked by `INVESTIGATE-developer-docs-surface.md`).

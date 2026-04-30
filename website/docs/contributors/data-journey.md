@@ -235,12 +235,14 @@ PostgREST (owned + deployed by UIS) sits in front of an auto-generated `api_v1.*
 
 So the descriptions you write in `schema.yml` are the docs an external developer reads. See [api-v1.md](./api-v1.md) for the wrapper layer + generator, and [dbt-osmosis.md § why Atlas relies on it](./dbt-osmosis.md#why-atlas-relies-on-it) for the description propagation.
 
-## Stage 8 — Next.js queries (dogfood)
+## Stage 8 — Two frontends, two access patterns
 
-Today, the Next.js frontend queries `marts.*` directly via SQL (read-only Postgres role). The frontend's eventual migration to call PostgREST's `api_v1.*` endpoints — same HTTP API external developers use — is the "dogfood" pattern, tracked separately in PLAN-E.
+Atlas has two Next.js apps that each take a different path through the data layer:
+
+**Contributor frontend** (`atlas-contributor-frontend/`) — direct SQL against `marts.*` for ingestion verification, FK integrity checks, raw counts. Dev/staging only. Example query:
 
 ```typescript
-// atlas-contributor-frontend/app/coverage-gap/barnefattigdom/page.tsx (sketch)
+// atlas-contributor-frontend/app/coverage-gap/barnefattigdom/page.tsx
 const rows = await sql<KommuneRow[]>`
   select kommune_nr, kommune_name, fylke_name, year, value_pct, personer
   from marts.mart_coverage_gap_barnefattigdom
@@ -248,7 +250,18 @@ const rows = await sql<KommuneRow[]>`
 `;
 ```
 
-Three indexed queries, parallelised. Total sub-50ms on Atlas's data size. Cached at the route level.
+**Customer frontend** (`atlas-frontend/`) — fetches from `api-atlas.helpers.no` (PostgREST against `api_v1.*`). No DB role; consumes the same public API external developers use. This is the dogfood pattern. Example query:
+
+```typescript
+// atlas-frontend/app/coverage-gap/barnefattigdom/page.tsx (Phase 5 of PLAN-005)
+import { fetchRows } from "@/lib/api";
+const rows = await fetchRows(
+  "coverage_gap_barnefattigdom",
+  "?order=value_pct.desc&limit=10",
+);
+```
+
+Both apps render server components against the same underlying mart data; the contributor app sees it as SQL rows and the customer app sees it as typed API responses. The customer app is structured to be **forkable** — external developers clone it, change `NEXT_PUBLIC_API_URL`, and have a working starting point for their own UI on Atlas's data.
 
 ## Stage 9 — Render in the browser
 
