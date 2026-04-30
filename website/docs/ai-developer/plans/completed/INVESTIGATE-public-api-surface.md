@@ -4,11 +4,25 @@
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Backlog
+## Status: Completed (2026-04-30)
 
-**Goal**: Decide the technology, shape, contract location, and hosting for Atlas's public HTTP API — the surface that **both** Atlas's own Next.js frontend (after migration) and external consumers (Tilskuddsmatcher / Lisa, journalists, future devs) will read through. Pick a starting tool that matches Atlas's read-heavy, dimension-shaped, small-team profile while leaving room to grow.
+This parent investigation is functionally resolved. End-to-end Atlas → PostgREST → real-data curl verified live against UIS rancher-desktop on 2026-04-30 (see [`talk/talk.md`](../talk/talk.md) Messages 1–4). Implementation arc:
 
-**Last Updated**: 2026-04-27
+| Question raised here | Resolved by |
+|---|---|
+| Technology choice for the public HTTP API | **PostgREST** — Atlas-side wrapper layer in [PLAN-004](PLAN-004-postgrest-api-v1-wrapper.md); UIS-side runtime in `helpers-no/urbalurba-infrastructure` PR #132 (PLAN-002) + #135 (`set -e` regression fix). |
+| Contract location (`marts.*` directly vs wrapper) | **`api_v1.*` wrapper views** — design rationale in the follow-up [INVESTIGATE-postgrest-api-v1-wrapper.md](INVESTIGATE-postgrest-api-v1-wrapper.md), built by [PLAN-004](PLAN-004-postgrest-api-v1-wrapper.md). |
+| v1 hosting / auth posture | **Anonymous-only PostgREST direct exposure** — verified working on `api-atlas.localhost` with Swagger 2.0 metadata, view rows, hidden-table 404, CORS preflight. |
+| [Q19] in INVESTIGATE-semantic-foundation-before-expansion.md ("API now or later?") | **Now** — resolved by completing this surface. |
+
+What's still open (carried forward into separate plans, not blocking this investigation):
+
+- **PLAN-E (Next.js dogfood migration)** — frontend swaps from direct `marts.*` Postgres reads to PostgREST `api_v1.*` HTTP calls.
+- **JWT / Authentik auth layer** on PostgREST — UIS PLAN-004 on the urbalurba side.
+- **API gateway insertion (Gravitee local / APIM prod)** — v1.5+ when external consumer volume justifies it.
+- **FK embeds (`?select=*,kommune(*)`)** — deferred per PLAN-004 [Q10]; needs Postgres FK constraints retrofitted across `marts.*`.
+
+**Last Updated**: 2026-04-30 — moved backlog/ → completed/
 
 **Origin**: A late-stage decision in the semantic-foundation thread changed the calculus for the public API. Atlas's Next.js frontend will be migrated to call the **same** API external consumers use — the "dogfood your own API" pattern. This shifts three things in the existing plans:
 
