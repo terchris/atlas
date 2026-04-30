@@ -147,10 +147,10 @@ export default async function DataCatalogPage() {
                 <p className="pt-2 text-xs text-zinc-500 dark:text-zinc-400">
                   Try it:{" "}
                   <code className="font-mono">
-                    curl{" "}
+                    curl &apos;
                     {process.env.NEXT_PUBLIC_API_URL ??
                       "http://api-atlas.localhost"}
-                    /{endpoint.name}?limit=3
+                    /{endpoint.name}?limit=3&apos;
                   </code>
                 </p>
               </div>
