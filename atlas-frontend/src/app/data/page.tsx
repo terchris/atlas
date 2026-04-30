@@ -11,6 +11,8 @@
  * for the design rationale.
  */
 
+import Link from "next/link";
+
 import { fetchCount, fetchSpec } from "@/lib/api";
 
 export const revalidate = 60;
@@ -144,15 +146,23 @@ export default async function DataCatalogPage() {
                     No column metadata in spec.
                   </p>
                 )}
-                <p className="pt-2 text-xs text-zinc-500 dark:text-zinc-400">
-                  Try it:{" "}
-                  <code className="font-mono">
-                    curl &apos;
-                    {process.env.NEXT_PUBLIC_API_URL ??
-                      "http://api-atlas.localhost"}
-                    /{endpoint.name}?limit=3&apos;
-                  </code>
-                </p>
+                <div className="flex flex-wrap items-center gap-3 pt-2 text-xs text-zinc-500 dark:text-zinc-400">
+                  <span>
+                    Try it:{" "}
+                    <code className="font-mono">
+                      curl &apos;
+                      {process.env.NEXT_PUBLIC_API_URL ??
+                        "http://api-atlas.localhost"}
+                      /{endpoint.name}?limit=3&apos;
+                    </code>
+                  </span>
+                  <Link
+                    href={`/data/${endpoint.name}`}
+                    className="font-medium text-zinc-700 underline-offset-2 hover:underline dark:text-zinc-300"
+                  >
+                    View as table →
+                  </Link>
+                </div>
               </div>
             </details>
           ))}
