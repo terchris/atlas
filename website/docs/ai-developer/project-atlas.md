@@ -100,7 +100,7 @@ Browser (MapLibre map + Digdir Designsystemet UI)
 
 The **public HTTP API** (PostgREST) is the hard contract between `atlas-data/` and consumers. Atlas's own Next.js dogfoods this surface — it goes through the same API external developers use, no direct DB role. The data pipeline owns `raw.*` and `marts.*`; it never touches frontend code. **No API gateway, no auth in v1** — added later via Authentik+Gravitee (UIS) / Okta+APIM (Azure prod) when keyed users or rate-limit pressure emerges.
 
-In **v2**, Dagster sits between the ingest scripts and `raw.*` (and between dbt and `marts.*`) for orchestration. v1 ingest runs as CLI — pod-spawnable so v2 insertion is clean. See [`docs/stack/suggested-stack.md`](../../../docs/stack/suggested-stack.md) for the full v1/Future split and [`plans/backlog/INVESTIGATE-public-api-surface.md`](plans/backlog/INVESTIGATE-public-api-surface.md) for the API plan.
+In **v2**, Dagster sits between the ingest scripts and `raw.*` (and between dbt and `marts.*`) for orchestration. v1 ingest runs as CLI — pod-spawnable so v2 insertion is clean. See [`docs/stack/suggested-stack.md`](../../../docs/stack/suggested-stack.md) for the full v1/Future split and [`plans/completed/INVESTIGATE-public-api-surface.md`](plans/completed/INVESTIGATE-public-api-surface.md) for the API plan.
 
 ---
 
@@ -213,7 +213,7 @@ These are non-negotiable constraints. They are the things that take longer to un
 - **v1 = no API gateway, no auth.** PostgREST sits behind Cloudflare Tunnel, public + anonymous + read-only. Auth and rate-limiting come later via Authentik+Gravitee (UIS) / Okta+APIM (Azure prod) when triggers fire (keyed users, abuse pressure, write endpoints).
 - API-shaped views in `marts.*` follow the [`mart_<feature>`](../../../docs/stack/naming-conventions.md#when-to-add-a-new-mart_feature) convention. Query logic lives in dbt views; PostgREST stays a thin projection.
 
-See [`plans/backlog/INVESTIGATE-public-api-surface.md`](plans/backlog/INVESTIGATE-public-api-surface.md) for the full plan, the per-route audit, and the phased migration (PLAN-D.1 → D.2 → E → F → G).
+See [`plans/completed/INVESTIGATE-public-api-surface.md`](plans/completed/INVESTIGATE-public-api-surface.md) for the full plan, the per-route audit, and the phased migration (PLAN-D.1 → D.2 → E → F → G).
 
 **Migration status** (2026-04-27): the dogfood decision is recent. The frontend at [`atlas-frontend/src/lib/db.ts`](../../../atlas-frontend/src/lib/db.ts) still reads `marts.*` directly via `postgres.js`. PLAN-E migrates these calls to PostgREST. Until that lands, expect to see direct-DB reads in the frontend; new pages should still be written this way during transition (the migration plan handles them all together).
 

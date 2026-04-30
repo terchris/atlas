@@ -181,7 +181,7 @@ When you need one:
 
 - A page or endpoint runs a CTE / multi-step aggregation against `marts.*` (e.g. "latest year per kommune", "count of children per chapter", "top N by metric").
 - The same query gets reused across multiple consumers with the same shape.
-- The query is too computed to express as a PostgREST embedded resource (covered in [`../ai-developer/plans/backlog/INVESTIGATE-public-api-surface.md`](../ai-developer/plans/backlog/INVESTIGATE-public-api-surface.md)).
+- The query is too computed to express as a PostgREST embedded resource (covered in [`../ai-developer/plans/completed/INVESTIGATE-public-api-surface.md`](../ai-developer/plans/completed/INVESTIGATE-public-api-surface.md)).
 
 Naming and shape:
 
