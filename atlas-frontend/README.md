@@ -13,7 +13,7 @@ npm install
 npm run dev
 ```
 
-Default dev URL: <http://localhost:3001>. (The contributor diagnostic app at `atlas-contributor-frontend/` runs on port 3000; this app uses 3001 so they coexist locally.)
+Default dev URL: <http://localhost:3001>. (The contributor diagnostic app at `atlas-contributor-frontend/` runs on port 4000; this app uses 3001 so they coexist locally.)
 
 For the API to respond, Atlas's PostgREST instance has to be reachable at `NEXT_PUBLIC_API_URL`. In the standard local-dev setup this is `http://api-atlas.localhost`, exposed via UIS — see [`website/docs/contributors/setup.md`](../website/docs/contributors/setup.md).
 

@@ -7,7 +7,7 @@ Project-specific instructions for Claude Code when working on Atlas.
 Atlas builds an open semantic layer over Norwegian public data (SSB, FHI, Brreg) and NGO supply data, exposed via a public PostgREST API.
 
 - **Data side**: [`atlas-data/`](atlas-data/) — TypeScript ingest modules write `raw.*`; dbt transforms to `marts.*`.
-- **Contributor frontend**: [`atlas-contributor-frontend/`](atlas-contributor-frontend/) — Next.js app for ingestion verification and dbt-output diagnostics; reads `marts.*` directly. Dev/staging only. Default port `3000`.
+- **Contributor frontend**: [`atlas-contributor-frontend/`](atlas-contributor-frontend/) — Next.js app for ingestion verification and dbt-output diagnostics; reads `marts.*` directly. Dev/staging only. Default port `4000`.
 - **Customer frontend**: [`atlas-frontend/`](atlas-frontend/) — Next.js app consuming `api-atlas.helpers.no` (PostgREST); deploys to `atlas.helpers.no`. No DB role; fully introspection-driven catalog at `/data`. Self-contained / forkable as a reference implementation. Default port `3001`.
 - **Public docs**: [`website/docs/`](website/docs/) — Docusaurus-bound markdown (build/deploy pending).
 

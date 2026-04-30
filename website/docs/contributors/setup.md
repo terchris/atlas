@@ -28,7 +28,7 @@ cd atlas
 The repo has four top-level codebases:
 
 - [`atlas-data/`](https://github.com/terchris/atlas/tree/main/atlas-data) — TypeScript ingest + dbt project. **Most contributor work happens here.**
-- [`atlas-contributor-frontend/`](https://github.com/terchris/atlas/tree/main/atlas-contributor-frontend) — Next.js diagnostics app for contributors. Reads `marts.*` directly (no API layer); used to verify ingestion + dbt output. Dev/staging only — never deployed publicly. Default port `3000`.
+- [`atlas-contributor-frontend/`](https://github.com/terchris/atlas/tree/main/atlas-contributor-frontend) — Next.js diagnostics app for contributors. Reads `marts.*` directly (no API layer); used to verify ingestion + dbt output. Dev/staging only — never deployed publicly. Default port `4000`.
 - [`atlas-frontend/`](https://github.com/terchris/atlas/tree/main/atlas-frontend) — Next.js customer app consuming the public PostgREST API at `api-atlas.helpers.no`. Deploys to `atlas.helpers.no`. **No DB role.** Self-contained / forkable as a reference implementation for external developers. Default port `3001`.
 - [`website/`](https://github.com/terchris/atlas/tree/main/website) — Docusaurus-bound docs source (this site).
 
@@ -228,7 +228,7 @@ npm install
 npm run dev
 ```
 
-Default port `3000`. Reads `marts.*` directly via `postgres.js` using the same `.env` settings as ingest + dbt. If your local DB has at least one source loaded and `dbt run` has succeeded, the data-explorer page at <http://localhost:3000/data> should work. This app is contributor-facing only — it's how you confirm ingestion and dbt output landed correctly. Never deployed publicly.
+Default port `4000`. Reads `marts.*` directly via `postgres.js` using the same `.env` settings as ingest + dbt. If your local DB has at least one source loaded and `dbt run` has succeeded, the data-explorer page at <http://localhost:4000/data> should work. This app is contributor-facing only — it's how you confirm ingestion and dbt output landed correctly. Never deployed publicly.
 
 ### Customer frontend — PostgREST consumer, the public-facing app
 
@@ -239,7 +239,7 @@ npm install
 npm run dev
 ```
 
-Default port `3001` (so it coexists with the contributor frontend on `3000`). No DB role; reads only via HTTP from `NEXT_PUBLIC_API_URL`. Visit <http://localhost:3001> for the homepage and <http://localhost:3001/data> for the introspection-driven data catalog (lists every `api_v1.*` endpoint with row counts and column descriptions, sourced live from PostgREST's spec).
+Default port `3001` (so it coexists with the contributor frontend on `4000`). No DB role; reads only via HTTP from `NEXT_PUBLIC_API_URL`. Visit <http://localhost:3001> for the homepage and <http://localhost:3001/data> for the introspection-driven data catalog (lists every `api_v1.*` endpoint with row counts and column descriptions, sourced live from PostgREST's spec).
 
 For the customer frontend to return data, PostgREST has to be reachable at the configured `NEXT_PUBLIC_API_URL` — see the *(Optional) Serve `api_v1.*` via PostgREST* section above.
 
