@@ -31,7 +31,7 @@ Configured via `+dbt-osmosis: schema.yml` in [`dbt_project.yml`](https://github.
 
 ### 1. Column descriptions become public OpenAPI documentation
 
-Atlas's public HTTP API is **PostgREST against the `marts.*` schema** (see [INVESTIGATE-public-api-surface.md](../ai-developer/plans/backlog/INVESTIGATE-public-api-surface.md)). PostgREST auto-generates an OpenAPI spec from Postgres `COMMENT ON COLUMN ...` metadata. dbt writes those comments from `schema.yml` descriptions on every `dbt run`. So:
+Atlas's public HTTP API is **PostgREST against the `api_v1.*` schema** — auto-generated wrapper views over `marts.mart_*` (see [api-v1.md](./api-v1.md) for the wrapper layer; [INVESTIGATE-postgrest-api-v1-wrapper.md](../ai-developer/plans/completed/INVESTIGATE-postgrest-api-v1-wrapper.md) for the design rationale). PostgREST auto-generates a Swagger 2.0 spec from Postgres `COMMENT ON COLUMN ...` metadata. dbt writes those comments on `marts.*` from `schema.yml` descriptions on every `dbt run`; the api_v1 generator copies them onto the wrapper views. So:
 
 > The text you write in `schema.yml` is the text an external developer reads when they hit `api.atlas.helpers.no/docs`.
 

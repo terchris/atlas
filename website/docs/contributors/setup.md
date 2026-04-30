@@ -13,7 +13,7 @@ You need:
 - **Node.js ≥ 20** (uses built-in `fetch` and `import.meta.url`). Check with `node --version`.
 - **npm** (Atlas's `package.json` uses npm; pnpm also works).
 - **uv** — the Python env manager dbt uses. Install with `brew install uv` (macOS) or see [uv's install docs](https://github.com/astral-sh/uv).
-- **Postgres** reachable from your machine. Atlas runs against Postgres in the [Urbalurba Infrastructure Stack (UIS)](https://github.com/helpers-no/urbalurba-infrastructure) for local dev — UIS spins up a Postgres pod inside Rancher Desktop k8s. See [Connecting to Postgres in UIS](#connecting-to-postgres-in-uis) below for the port-forward step. If you don't have UIS, any local Postgres ≥ 14 works for ingest + dbt; you'll skip the frontend until you point at a real Atlas database.
+- **Postgres** reachable from your machine. Atlas runs against Postgres in the [Urbalurba Infrastructure Stack (UIS)](https://github.com/helpers-no/urbalurba-infrastructure) for local dev — UIS spins up a Postgres pod inside Rancher Desktop k8s. See [Bootstrap atlas_db on UIS Postgres](#bootstrap-atlas_db-on-uis-postgres) below for the one-shot setup. If you don't have UIS, any local Postgres ≥ 14 works for ingest + dbt; you'll skip the frontend until you point at a real Atlas database.
 - **`git`** with a configured user.
 
 ---
@@ -33,25 +33,44 @@ The repo has three top-level codebases:
 
 ---
 
-## Connecting to Postgres in UIS
+## Bootstrap `atlas_db` on UIS Postgres
 
-Postgres runs as a pod inside the local k3s cluster (Rancher Desktop). The pod listens on cluster-internal port `5432`, but that ClusterIP service isn't reachable from your host machine directly — you need a `kubectl port-forward`.
-
-Atlas's `.env` expects Postgres on `localhost:35432`. Open the forward in a long-lived terminal (or background process) and leave it running while you work:
+Postgres runs as a pod inside the local k3s cluster (Rancher Desktop). UIS's per-app configure does the bootstrap (database + role + grants) and exposes the port to your host machine in one command:
 
 ```bash
-kubectl port-forward svc/postgresql 35432:5432
+./uis configure postgresql --app atlas --database atlas_db --json
 ```
 
-Verify:
+This creates the `atlas_db` database, generates an `atlas` Postgres role with a random password, grants the role on the database, and auto-exposes the cluster service at `localhost:35432`. Sample output:
+
+```json
+{
+  "status": "ok",
+  "service": "postgresql",
+  "local": {
+    "host": "host.docker.internal",
+    "port": 35432,
+    "database_url": "postgresql://atlas:<password>@host.docker.internal:35432/atlas_db"
+  },
+  "database": "atlas_db",
+  "username": "atlas",
+  "password": "<generated>"
+}
+```
+
+Copy the credentials into `atlas-data/ingest/.env` (or run the dedicated env-write step in [Set up the ingest layer](#set-up-the-ingest-layer) below). Treat the password like any other secret — `.env` is gitignored.
+
+Verify the connection from your host:
 
 ```bash
 nc -z localhost 35432 && echo "ok"
-# or
-psql "$DATABASE_URL" -c 'select 1'
 ```
 
-If `dbt debug --connection` reports `connection refused` on `localhost:35432`, the port-forward dropped — restart it. The forward survives normal terminal use but ends when you `Ctrl-C` or close the shell that started it.
+If `dbt debug --connection` later reports `connection refused` on `localhost:35432`, the auto-expose dropped (it ends with the UIS container session). Re-attach with:
+
+```bash
+./uis expose postgresql
+```
 
 You can verify the Postgres pod itself is healthy with:
 
@@ -62,7 +81,21 @@ kubectl logs -n default postgresql-0 --tail=20
 
 Pod logs typically show `database system is ready to accept connections` when Postgres is up.
 
-If you don't have UIS, point Atlas at any local Postgres ≥ 14 by editing `atlas-data/ingest/.env`'s `DATABASE_URL` / `PG*` variables. The cluster topology stops mattering once `psql "$DATABASE_URL" -c 'select 1'` works.
+### How Atlas reaches Postgres — dev vs production
+
+Postgres is a single pod inside the local k3s cluster (Rancher Desktop) listening on cluster-internal port `5432`. Three different clients reach it three different ways:
+
+| Client | Address | Why |
+|---|---|---|
+| **You, on your host machine** (running `npm run ingest:*`, `dbt run`, `psql`) | `localhost:35432` | The cluster's `5432` isn't reachable from the host directly. UIS's `./uis configure postgresql` (or `./uis expose postgresql`) opens a `kubectl port-forward`-style tunnel from `localhost:35432` to the cluster service `postgresql.default.svc.cluster.local:5432`. **`35432` is just the host-side port UIS picked** — high enough to avoid collisions with any system Postgres already running on `5432` on your laptop. |
+| **A container running inside the same Docker host as the cluster** (like UIS's own `uis-provision-host` container) | `host.docker.internal:35432` | The container can't say "localhost" and mean your laptop, so Docker provides this magic DNS name. Same tunnel as above, just addressed differently. |
+| **Atlas itself, when deployed as a container inside the k3s cluster (production / staging)** | `postgresql.default.svc.cluster.local:5432` | Same cluster, no port-forward needed. The pod talks to the postgresql Service via Kubernetes DNS, on the cluster-native port `5432`. |
+
+The `./uis configure postgresql ... --json` output reflects the first two: the `local.database_url` field carries `host.docker.internal` (for in-Docker callers); for host-machine work like contributor dev, swap that for `localhost`. Same port `35432` either way.
+
+**For contributors today: dev = `localhost:35432`.** The other two paths only matter once Atlas itself is containerised and deployed; the production deploy will set `DATABASE_URL` to the in-cluster form via a Kubernetes Secret, and the host-side port-forward stops being part of the picture.
+
+**No UIS?** If you don't have UIS, skip this section and point Atlas at any local Postgres ≥ 14 by editing `atlas-data/ingest/.env`'s `DATABASE_URL` / `PG*` variables. You'll need to `CREATE DATABASE atlas_db;` and a role with full grants on it manually. The cluster topology stops mattering once `psql "$DATABASE_URL" -c 'select 1'` works.
 
 ---
 
@@ -86,9 +119,21 @@ Required variables:
 
 | Variable | What it is | Where to get it |
 |---|---|---|
-| `DATABASE_URL` | Postgres connection string | UIS gives one out of the box; otherwise your local Postgres. |
-| `PGHOST`, `PGPORT`, `PGUSER`, `PGPASSWORD`, `PGDATABASE` | Same as DATABASE_URL but separately for dbt | dbt's `profiles.yml` reads these. |
+| `DATABASE_URL` | Postgres connection string | The `local.database_url` field from `./uis configure postgresql --app atlas --database atlas_db --json`. From the host machine use `localhost:35432`, not `host.docker.internal`. |
+| `PGHOST`, `PGPORT`, `PGUSER`, `PGPASSWORD`, `PGDATABASE` | Same as DATABASE_URL but separately for dbt | Same JSON output: `host` → `localhost`, `port` → `35432`, `username` → `PGUSER`, `password` → `PGPASSWORD`, `database` → `PGDATABASE`. |
 | `ATLAS_SCRAPE_CONTACT_EMAIL` | Your contact email; embedded in scrapers' User-Agent | Use the address you want site operators to reach you at if a scrape causes problems. **Required for scraping sources** (hard-fails if unset); not needed for SSB/FHI/Brreg API ingests. |
+
+Concrete example based on the JSON output from [Bootstrap atlas_db on UIS Postgres](#bootstrap-atlas_db-on-uis-postgres):
+
+```bash
+DATABASE_URL=postgresql://atlas:<password>@localhost:35432/atlas_db
+PGHOST=localhost
+PGPORT=35432
+PGUSER=atlas
+PGPASSWORD=<password>
+PGDATABASE=atlas_db
+ATLAS_SCRAPE_CONTACT_EMAIL=you@example.org
+```
 
 Smoke test the ingest:
 
@@ -127,14 +172,46 @@ Smoke test:
 
 ```bash
 uv run --env-file ../ingest/.env dbt debug    # verifies connection + profile + packages
+uv run --env-file ../ingest/.env dbt seed     # loads ref_*.csv + dim_postnummer.csv into marts.*
 uv run --env-file ../ingest/.env dbt run      # builds all models
 uv run --env-file ../ingest/.env dbt test     # runs all tests
 ./check-osmosis.sh                            # verifies every column has a description
 ```
 
+`dbt seed` is required on a fresh database — `models/indicators/*.sql` left-join lookup tables (`ref_ssb_family_type`, `ref_fhi_utdann`, `ref_ssb_household_type`, `ref_ssb_nivaa`) that come from `seeds/`, and `models/supply/supply__redcross_branches.sql` joins `dim_postnummer`. Without seeds, `dbt run` errors with `relation "marts.ref_*" does not exist`.
+
 If `dbt run` errors complaining about missing `raw.*` tables, you skipped the ingest step — go back and run at least `ingest:ssb-08764`. dbt sources require something to read from.
 
 For more on dbt-osmosis and the description gate, see [dbt-osmosis.md](./dbt-osmosis.md) and [check-osmosis.md](./check-osmosis.md).
+
+---
+
+## (Optional) Serve `api_v1.*` via PostgREST
+
+After `dbt run` succeeds, you can expose the public API surface (`api_v1.*` wrapper views over `marts.mart_*`) as a REST API by running PostgREST against your local `atlas_db`. UIS deploys and operates PostgREST as a multi-instance service; Atlas just generates and applies the schema.
+
+```bash
+# 1. Generate + apply api_v1 wrapper views (after dbt run)
+cd atlas-data/dbt
+./regenerate-api-v1.sh    # writes api_v1_generated.sql + api_v1_state.json (idempotent)
+./apply-api-v1.sh         # applies the generated SQL to atlas_db
+
+# 2. Configure + deploy PostgREST for the atlas app (UIS-side, run from your UIS CLI)
+./uis configure postgrest --app atlas --database atlas_db --url-prefix api-atlas --json
+./uis deploy postgrest --app atlas
+
+# 3. Smoke test the live endpoint
+curl -s http://api-atlas.localhost/ | jq '{swagger, version: .info.version}'
+# expect: {"swagger":"2.0","version":"14.10"}
+curl -s http://api-atlas.localhost/indicator_summary | jq '.[0:3]'
+# expect: 3 rows from marts.mart_indicator_summary
+```
+
+The configure step creates `atlas_authenticator` + `atlas_web_anon` Postgres roles in `atlas_db` (anonymous read-only access to `api_v1.*` only — `marts.*`, `private_marts.*`, etc. stay hidden). The deploy step renders a per-app Deployment + Service + IngressRoute in the `postgrest` namespace.
+
+After adding a new mart to `models/marts/api/`, re-run `./regenerate-api-v1.sh` + `./apply-api-v1.sh` + `psql "$DATABASE_URL" -c "NOTIFY pgrst, 'reload schema';"` — no PostgREST redeploy needed.
+
+For more on the wrapper layer, the generator, and the validation gates, see [api-v1.md](./api-v1.md).
 
 ---
 
@@ -172,7 +249,7 @@ For the testing workflow before opening a PR, see [testing.md](./testing.md).
 
 - **`uv: command not found`** — install with `brew install uv` (macOS) or [uv's docs](https://github.com/astral-sh/uv). Don't use `pip install dbt-core` directly; the env will diverge from CI.
 - **dbt errors with `permission denied for schema raw`** — your Postgres role doesn't have `CREATE` on `raw`. UIS sets this up automatically; a fresh Postgres needs `GRANT CREATE ON SCHEMA raw TO <your-role>;`.
-- **`dbt debug` says "connection refused" on `localhost:35432`** — the `kubectl port-forward` to UIS Postgres dropped or was never started. See [Connecting to Postgres in UIS](#connecting-to-postgres-in-uis).
+- **`dbt debug` says "connection refused" on `localhost:35432`** — the UIS port expose dropped (auto-expose ends with the UIS container session). Re-attach with `./uis expose postgresql`. See [Bootstrap atlas_db on UIS Postgres](#bootstrap-atlas_db-on-uis-postgres).
 - **`ATLAS_SCRAPE_CONTACT_EMAIL` unset** — only matters if you're running a scraping source (`ingest:redcross-branches` etc.). For SSB/FHI ingests, you can leave it blank.
 - **TypeScript errors after pulling main** — `npm install` again. Atlas pins types tightly and stale `node_modules/` causes type drift.
 - **`dbt-osmosis` says "would write changes" after a fresh run** — run it twice; osmosis is two-pass on a populated project. See [dbt-osmosis.md § two-pass convergence](./dbt-osmosis.md#two-pass-convergence).

@@ -77,6 +77,7 @@ The wrapper views reference `marts.mart_*` tables that only exist after `dbt run
 ```
 npm run migrate         # creates raw schemas
 npm run ingest:*        # populates raw.*
+dbt seed                # loads ref_*.csv + dim_postnummer.csv (required on fresh db)
 dbt run                 # builds marts.*
 ./apply-api-v1.sh       # creates api_v1.* wrappers
 ```
