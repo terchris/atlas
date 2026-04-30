@@ -10,14 +10,17 @@ For the user-facing description, personas, status, and key product decisions, re
 
 ## Repository structure
 
-This repo holds two co-located concerns: the **Next.js frontend** (lives in `atlas-frontend/`) and the **data platform** (lives in `atlas-data/`, intended to be split into a separate `atlas-data` repo later — see [`atlas-data/README.md`](../../../atlas-data/README.md) for the split-trigger conditions).
+This repo holds three co-located concerns: the **customer-facing Next.js app** (`atlas-frontend/`, PostgREST consumer; rebuilt under PLAN-005), the **contributor diagnostic Next.js app** (`atlas-contributor-frontend/`, direct Postgres for ingestion verification), and the **data platform** (`atlas-data/`, intended to be split into a separate `atlas-data` repo later — see [`atlas-data/README.md`](../../../atlas-data/README.md) for the split-trigger conditions).
 
 ```
 atlas/
 ├── README.md                       — product overview (read this first)
 │
-├── atlas-frontend/                 — Next.js App Router app (atlas.helpers.no)
-│   ├── package.json                — Next.js frontend (Node 20+)
+├── atlas-frontend/                 — Next.js customer app (atlas.helpers.no, PostgREST consumer; rebuilt under PLAN-005)
+│   └── (under construction)
+│
+├── atlas-contributor-frontend/     — Next.js diagnostic app for contributors (direct Postgres; dev/staging only)
+│   ├── package.json                — Node 20+
 │   ├── next.config.ts, tsconfig.json — Next.js config
 │   ├── app/                        — App Router pages and layouts
 │   ├── src/                        — shared code (components, lib)
@@ -120,10 +123,10 @@ Requirements:
 
 Each subproject has its own `package.json`. Run commands from the appropriate folder.
 
-### Next.js frontend (`atlas-frontend/`)
+### Next.js contributor frontend (`atlas-contributor-frontend/`)
 
 ```bash
-cd atlas-frontend
+cd atlas-contributor-frontend
 npm install                  # install dependencies
 npm run dev                  # dev server at http://localhost:4000
 npm run build                # production build
@@ -215,7 +218,7 @@ These are non-negotiable constraints. They are the things that take longer to un
 
 See [`plans/completed/INVESTIGATE-public-api-surface.md`](plans/completed/INVESTIGATE-public-api-surface.md) for the full plan, the per-route audit, and the phased migration (PLAN-D.1 → D.2 → E → F → G).
 
-**Migration status** (2026-04-27): the dogfood decision is recent. The frontend at [`atlas-frontend/src/lib/db.ts`](../../../atlas-frontend/src/lib/db.ts) still reads `marts.*` directly via `postgres.js`. PLAN-E migrates these calls to PostgREST. Until that lands, expect to see direct-DB reads in the frontend; new pages should still be written this way during transition (the migration plan handles them all together).
+**Migration status** (2026-04-30, post-PLAN-005 Phase 1): the original `atlas-frontend/` has been renamed to [`atlas-contributor-frontend/`](../../../atlas-contributor-frontend/) (it was contributor-shaped throughout). The customer-facing `atlas-frontend/` is being rebuilt under PLAN-005 as a fresh PostgREST consumer with no DB role. See [INVESTIGATE-frontend-data-access-architecture.md](plans/backlog/INVESTIGATE-frontend-data-access-architecture.md) for the architectural rationale and [PLAN-005-frontend-split-and-rebuild.md](plans/active/PLAN-005-frontend-split-and-rebuild.md) for the implementation phases.
 
 ### Always run `dbt test` after pipeline changes
 

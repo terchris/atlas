@@ -4,10 +4,12 @@ Welcome. This section is for people **developing Atlas itself** — adding data 
 
 ## What is Atlas?
 
-Atlas is an open semantic layer over Norwegian public data (SSB, FHI, Brreg) and NGO supply data (Red Cross, Folkehjelp, etc.), exposed via a public PostgREST API. Two top-level codebases:
+Atlas is an open semantic layer over Norwegian public data (SSB, FHI, Brreg) and NGO supply data (Red Cross, Folkehjelp, etc.), exposed via a public PostgREST API. Three top-level codebases plus the docs site:
 
 - [`atlas-data/`](https://github.com/terchris/atlas/tree/main/atlas-data) — TypeScript ingest + dbt project. **Most contributor work happens here.**
-- [`atlas-frontend/`](https://github.com/terchris/atlas/tree/main/atlas-frontend) — Next.js app reading `marts.*`.
+- [`atlas-contributor-frontend/`](https://github.com/terchris/atlas/tree/main/atlas-contributor-frontend) — Next.js diagnostics app reading `marts.*` directly. Used to verify ingestion and dbt output. Dev/staging only — never deployed publicly. Default port `4000`.
+- [`atlas-frontend/`](https://github.com/terchris/atlas/tree/main/atlas-frontend) — Next.js customer app consuming the public PostgREST API at `api-atlas.helpers.no`. Deploys to `atlas.helpers.no`. **No DB role.** Self-contained / forkable as a reference implementation for external developers. Default port `3001`.
+- [`website/`](https://github.com/terchris/atlas/tree/main/website) — Docusaurus-bound docs source.
 
 Read [data-journey.md](./data-journey.md) for the end-to-end walkthrough — it traces SSB 08764 from upstream to a user's browser. Reading that first makes everything else here make sense.
 

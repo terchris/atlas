@@ -25,10 +25,11 @@ git clone https://github.com/terchris/atlas.git
 cd atlas
 ```
 
-The repo has three top-level codebases:
+The repo has four top-level codebases:
 
 - [`atlas-data/`](https://github.com/terchris/atlas/tree/main/atlas-data) — TypeScript ingest + dbt project. **Most contributor work happens here.**
-- [`atlas-frontend/`](https://github.com/terchris/atlas/tree/main/atlas-frontend) — Next.js app (reads `marts.*`).
+- [`atlas-contributor-frontend/`](https://github.com/terchris/atlas/tree/main/atlas-contributor-frontend) — Next.js diagnostics app for contributors. Reads `marts.*` directly (no API layer); used to verify ingestion + dbt output. Dev/staging only — never deployed publicly. Default port `4000`.
+- [`atlas-frontend/`](https://github.com/terchris/atlas/tree/main/atlas-frontend) — Next.js customer app consuming the public PostgREST API at `api-atlas.helpers.no`. Deploys to `atlas.helpers.no`. **No DB role.** Self-contained / forkable as a reference implementation for external developers. Default port `3001`.
 - [`website/`](https://github.com/terchris/atlas/tree/main/website) — Docusaurus-bound docs source (this site).
 
 ---
@@ -215,17 +216,34 @@ For more on the wrapper layer, the generator, and the validation gates, see [api
 
 ---
 
-## (Optional) Set up the frontend
+## (Optional) Set up the frontends
 
-If you want to view changes in the Next.js app:
+Atlas has two Next.js apps. Pick the one(s) you want to run.
+
+### Contributor frontend — direct Postgres, for ingestion verification
 
 ```bash
-cd atlas-frontend
+cd atlas-contributor-frontend
 npm install
 npm run dev
 ```
 
-Default port 3000. The frontend connects to Postgres via the same `.env` settings; if your local DB has at least one source loaded + dbt run, the data-explorer page (`/data`) should work.
+Default port `4000`. Reads `marts.*` directly via `postgres.js` using the same `.env` settings as ingest + dbt. If your local DB has at least one source loaded and `dbt run` has succeeded, the data-explorer page at <http://localhost:4000/data> should work. This app is contributor-facing only — it's how you confirm ingestion and dbt output landed correctly. Never deployed publicly.
+
+### Customer frontend — PostgREST consumer, the public-facing app
+
+```bash
+cd atlas-frontend
+cp .env.example .env.local                 # only NEXT_PUBLIC_API_URL is required; defaults to http://api-atlas.localhost
+npm install
+npm run dev
+```
+
+Default port `3001` (so it coexists with the contributor frontend on `4000`). No DB role; reads only via HTTP from `NEXT_PUBLIC_API_URL`. Visit <http://localhost:3001> for the homepage and <http://localhost:3001/data> for the introspection-driven data catalog (lists every `api_v1.*` endpoint with row counts and column descriptions, sourced live from PostgREST's spec).
+
+For the customer frontend to return data, PostgREST has to be reachable at the configured `NEXT_PUBLIC_API_URL` — see the *(Optional) Serve `api_v1.*` via PostgREST* section above.
+
+The customer frontend is structured as a **forkable reference implementation** for external developers building their own apps on Atlas's API. Its `README.md` markets it that way; treat changes there as documentation external readers will see.
 
 ---
 

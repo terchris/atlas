@@ -20,7 +20,7 @@ The data-access posture in this plan was written before the **dogfood decision**
 
 - **H.1 Component model** — Server Components still default, but they `fetch()` from the API (`api.atlas.helpers.no`) instead of executing SQL via `db()`. The "no internal API routes" point still holds — there's an *external* API service (PostgREST) that Next.js calls via plain `fetch()`. No internal `/api/*` routes needed.
 - **H.4 Caching** — moves from "server fetch on every request" to leveraging HTTP cache headers from PostgREST (Cache-Control). Next.js's `fetch()` deduplicates and caches per-render; gateway-side caching arrives later via Gravitee/APIM in v1.5+.
-- **Data access reference** — [`atlas-frontend/src/lib/db.ts`](../../../../../atlas-frontend/src/lib/db.ts) (the native `postgres` client mentioned below) goes away once PLAN-E migration completes; replaced by typed HTTP wrappers around PostgREST.
+- **Data access reference** — [`atlas-contributor-frontend/src/lib/db.ts`](../../../../../atlas-contributor-frontend/src/lib/db.ts) (the native `postgres` client mentioned below). Note: the original `atlas-frontend/` was renamed to `atlas-contributor-frontend/` in PLAN-005 Phase 1; today's contributor frontend keeps direct Postgres access for diagnostic work, while a separately-built customer `atlas-frontend/` consumes PostgREST.
 
 **What stays the same:**
 

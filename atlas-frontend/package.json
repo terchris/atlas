@@ -1,38 +1,30 @@
 {
-  "name": "atlas",
-  "version": "0.0.0",
+  "name": "atlas-frontend",
+  "version": "0.1.0",
   "private": true,
-  "description": "Atlas — a Norwegian public-facing portal to the NGO sector. Next.js App Router app that reads marts.* from Postgres.",
   "scripts": {
-    "dev": "next dev -p 4000",
+    "dev": "next dev -p 3001",
     "build": "next build",
-    "start": "next start -p 4000",
-    "extract:redcross": "tsx ../terchris/extract-report-data.ts --out ../terchris/extracted",
-    "typecheck": "tsc --noEmit"
+    "start": "next start -p 3001",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "api:types": "swagger2openapi http://api-atlas.localhost/ -o /tmp/atlas-openapi.json && openapi-typescript /tmp/atlas-openapi.json -o src/lib/api-types.ts"
   },
   "dependencies": {
-    "@digdir/designsystemet-css": "^1.13.3",
-    "@tailwindcss/postcss": "^4.2.4",
-    "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
-    "lucide-react": "^1.9.0",
-    "maplibre-gl": "^5.24.0",
-    "next": "^16.2.4",
-    "postgres": "^3.4.9",
-    "radix-ui": "^1.4.3",
-    "react": "^19.2.5",
-    "react-dom": "^19.2.5",
-    "tailwind-merge": "^3.5.0",
-    "tailwindcss": "^4.2.4"
+    "next": "16.2.4",
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
   },
   "devDependencies": {
-    "@types/node": "^25.6.0",
-    "@types/react": "^19.2.14",
-    "@types/react-dom": "^19.2.3",
-    "tsx": "^4.21.0",
-    "typescript": "^6.0.3"
-  },
-  "engines": {
-    "node": ">=20.0.0"
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.4",
+    "openapi-typescript": "^7.13.0",
+    "swagger2openapi": "^7.0.8",
+    "tailwindcss": "^4",
+    "typescript": "^5"
   }
 }
