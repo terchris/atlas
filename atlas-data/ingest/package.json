@@ -6,6 +6,7 @@
   "description": "Atlas data ingestion — per-source TypeScript fetchers writing to raw.* in Postgres.",
   "scripts": {
     "migrate": "tsx --env-file=.env scripts/migrate.ts",
+    "sources:bootstrap-manifest": "tsx scripts/bootstrap-manifest.ts",
     "refresh:ssb-family-type": "tsx src/seed-sources/ssb-family-type/index.ts",
     "refresh:ssb-household-type": "tsx src/seed-sources/ssb-household-type/index.ts",
     "refresh:ssb-nivaa": "tsx src/seed-sources/ssb-nivaa/index.ts",

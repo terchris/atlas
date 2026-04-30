@@ -97,6 +97,13 @@ export type FinishRunArgs = {
   warningsCount?: number;
   errorsCount?: number;
   notes?: string | null;
+  /**
+   * Upstream's own last-modified / "updated" timestamp at the time of this
+   * run. NULL for sources whose upstream doesn't expose such a field, or whose
+   * ingest module doesn't yet capture it. Surfaced via marts.meta_sources as
+   * the "freshness vs upstream" signal — see PLAN-007.
+   */
+  upstreamUpdatedAt?: Date | null;
 };
 
 /**
@@ -110,14 +117,15 @@ export async function finishRun(
 ): Promise<void> {
   await sql`
     update raw.ingest_runs set
-      finished_at    = now(),
-      exit_code      = ${args.exitCode},
-      rows_scraped   = ${args.rowsScraped ?? null},
-      rows_parsed    = ${args.rowsParsed ?? null},
-      rows_skipped   = ${args.rowsSkipped ?? null},
-      warnings_count = ${args.warningsCount ?? 0},
-      errors_count   = ${args.errorsCount ?? 0},
-      notes          = ${args.notes ?? null}
+      finished_at         = now(),
+      exit_code           = ${args.exitCode},
+      rows_scraped        = ${args.rowsScraped ?? null},
+      rows_parsed         = ${args.rowsParsed ?? null},
+      rows_skipped        = ${args.rowsSkipped ?? null},
+      warnings_count      = ${args.warningsCount ?? 0},
+      errors_count        = ${args.errorsCount ?? 0},
+      notes               = ${args.notes ?? null},
+      upstream_updated_at = ${args.upstreamUpdatedAt ?? null}
     where run_id = ${runId}
   `;
 }
