@@ -152,8 +152,8 @@ The follow-on **PLAN-006-developer-docs-content** ships these pages, in approxim
 
 ## Cross-references
 
-- [INVESTIGATE-frontend-data-access-architecture.md](INVESTIGATE-frontend-data-access-architecture.md) — established the URL architecture; this INVESTIGATE fills in what `developer-atlas.helpers.no` actually serves.
-- [PLAN-005-frontend-split-and-rebuild.md](PLAN-005-frontend-split-and-rebuild.md) — adds a stub `developers/index.md` that this INVESTIGATE's follow-on PLAN replaces with real content.
+- [INVESTIGATE-frontend-data-access-architecture.md](../completed/INVESTIGATE-frontend-data-access-architecture.md) — established the URL architecture; this INVESTIGATE fills in what `developer-atlas.helpers.no` actually serves.
+- [PLAN-005-frontend-split-and-rebuild.md](../completed/PLAN-005-frontend-split-and-rebuild.md) — added a stub `developers/index.md` that this INVESTIGATE's follow-on PLAN replaces with real content.
 - [INVESTIGATE-deployment-pipeline.md](INVESTIGATE-deployment-pipeline.md) — Docusaurus deploy + custom domain; separate concern from content.
 - [INVESTIGATE-public-api-surface.md](../completed/INVESTIGATE-public-api-surface.md) — the parent that mentioned PLAN-F (publish OpenAPI + docs); this INVESTIGATE realises that work.
 - [PLAN-004-postgrest-api-v1-wrapper.md](../completed/PLAN-004-postgrest-api-v1-wrapper.md) — produces the schema descriptions that flow through to the API reference.

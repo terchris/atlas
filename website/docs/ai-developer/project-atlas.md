@@ -218,7 +218,7 @@ These are non-negotiable constraints. They are the things that take longer to un
 
 See [`plans/completed/INVESTIGATE-public-api-surface.md`](plans/completed/INVESTIGATE-public-api-surface.md) for the full plan, the per-route audit, and the phased migration (PLAN-D.1 → D.2 → E → F → G).
 
-**Migration status** (2026-04-30, post-PLAN-005 Phase 1): the original `atlas-frontend/` has been renamed to [`atlas-contributor-frontend/`](../../../atlas-contributor-frontend/) (it was contributor-shaped throughout). The customer-facing `atlas-frontend/` is being rebuilt under PLAN-005 as a fresh PostgREST consumer with no DB role. See [INVESTIGATE-frontend-data-access-architecture.md](plans/backlog/INVESTIGATE-frontend-data-access-architecture.md) for the architectural rationale and [PLAN-005-frontend-split-and-rebuild.md](plans/active/PLAN-005-frontend-split-and-rebuild.md) for the implementation phases.
+**Migration status** (2026-04-30, PLAN-005 shipped): the original `atlas-frontend/` was renamed to [`atlas-contributor-frontend/`](../../../atlas-contributor-frontend/) (it was contributor-shaped throughout) and a fresh customer-facing [`atlas-frontend/`](../../../atlas-frontend/) was scaffolded as a PostgREST consumer with no DB role. See [INVESTIGATE-frontend-data-access-architecture.md](plans/completed/INVESTIGATE-frontend-data-access-architecture.md) for the architectural rationale and [PLAN-005-frontend-split-and-rebuild.md](plans/completed/PLAN-005-frontend-split-and-rebuild.md) for the implementation log.
 
 ### Always run `dbt test` after pipeline changes
 
