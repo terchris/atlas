@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start -p 3001",
     "lint": "eslint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "api:types": "swagger2openapi http://api-atlas.localhost/ -o /tmp/atlas-openapi.json && openapi-typescript /tmp/atlas-openapi.json -o src/lib/api-types.ts"
   },
   "dependencies": {
     "next": "16.2.4",
@@ -21,6 +22,8 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.4",
+    "openapi-typescript": "^7.13.0",
+    "swagger2openapi": "^7.0.8",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
