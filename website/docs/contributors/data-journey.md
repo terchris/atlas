@@ -240,7 +240,7 @@ So the descriptions you write in `schema.yml` are the docs an external developer
 Today, the Next.js frontend queries `marts.*` directly via SQL (read-only Postgres role). The frontend's eventual migration to call PostgREST's `api_v1.*` endpoints — same HTTP API external developers use — is the "dogfood" pattern, tracked separately in PLAN-E.
 
 ```typescript
-// atlas-frontend/app/coverage-gap/barnefattigdom/page.tsx (sketch)
+// atlas-contributor-frontend/app/coverage-gap/barnefattigdom/page.tsx (sketch)
 const rows = await sql<KommuneRow[]>`
   select kommune_nr, kommune_name, fylke_name, year, value_pct, personer
   from marts.mart_coverage_gap_barnefattigdom

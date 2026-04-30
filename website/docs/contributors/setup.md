@@ -28,7 +28,8 @@ cd atlas
 The repo has three top-level codebases:
 
 - [`atlas-data/`](https://github.com/terchris/atlas/tree/main/atlas-data) — TypeScript ingest + dbt project. **Most contributor work happens here.**
-- [`atlas-frontend/`](https://github.com/terchris/atlas/tree/main/atlas-frontend) — Next.js app (reads `marts.*`).
+- [`atlas-contributor-frontend/`](https://github.com/terchris/atlas/tree/main/atlas-contributor-frontend) — Next.js diagnostics app for contributors (reads `marts.*` directly).
+- [`atlas-frontend/`](https://github.com/terchris/atlas/tree/main/atlas-frontend) — Next.js customer app consuming the PostgREST API (rebuilt under PLAN-005; under construction).
 - [`website/`](https://github.com/terchris/atlas/tree/main/website) — Docusaurus-bound docs source (this site).
 
 ---
@@ -215,17 +216,17 @@ For more on the wrapper layer, the generator, and the validation gates, see [api
 
 ---
 
-## (Optional) Set up the frontend
+## (Optional) Set up the contributor frontend
 
-If you want to view changes in the Next.js app:
+If you want a UI to verify ingestion and inspect dbt-built marts:
 
 ```bash
-cd atlas-frontend
+cd atlas-contributor-frontend
 npm install
 npm run dev
 ```
 
-Default port 3000. The frontend connects to Postgres via the same `.env` settings; if your local DB has at least one source loaded + dbt run, the data-explorer page (`/data`) should work.
+Default port 3000. The contributor frontend connects to Postgres via the same `.env` settings; if your local DB has at least one source loaded + dbt run, the data-explorer page (`/data`) should work. This app is contributor-facing only — it queries `marts.*` directly; the customer-facing app (`atlas-frontend/`, currently being scaffolded under PLAN-005) consumes the PostgREST API instead.
 
 ---
 

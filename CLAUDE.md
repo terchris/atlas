@@ -7,7 +7,8 @@ Project-specific instructions for Claude Code when working on Atlas.
 Atlas builds an open semantic layer over Norwegian public data (SSB, FHI, Brreg) and NGO supply data, exposed via a public PostgREST API.
 
 - **Data side**: [`atlas-data/`](atlas-data/) — TypeScript ingest modules write `raw.*`; dbt transforms to `marts.*`.
-- **Frontend**: [`atlas-frontend/`](atlas-frontend/) — Next.js app reading `marts.*` (today directly; via PostgREST after PLAN-E migration).
+- **Contributor frontend**: [`atlas-contributor-frontend/`](atlas-contributor-frontend/) — Next.js app for ingestion verification and dbt-output diagnostics; reads `marts.*` directly. Dev/staging only.
+- **Customer frontend** (rebuilt under PLAN-005): [`atlas-frontend/`](atlas-frontend/) — Next.js app consuming `api-atlas.helpers.no` (PostgREST); deploys to `atlas.helpers.no`. Currently being scaffolded.
 - **Public docs**: [`website/docs/`](website/docs/) — Docusaurus-bound markdown (build/deploy pending).
 
 ## Multi-agent repo — read first
@@ -61,5 +62,6 @@ In-repo `docs/` is a thin pointer; new documentation goes under `website/docs/`.
 - [`atlas-data/`](atlas-data/) — ingest + dbt; canonical data side. See `atlas-data/README.md`.
 - [`atlas-data/dbt/`](atlas-data/dbt/) — dbt project; the `check-osmosis.sh` gate enforces "every column documented" repo-wide.
 - [`atlas-data/ingest/`](atlas-data/ingest/) — TypeScript ingest modules writing `raw.*`.
-- [`atlas-frontend/`](atlas-frontend/) — Next.js app.
+- [`atlas-contributor-frontend/`](atlas-contributor-frontend/) — Next.js diagnostics app, direct Postgres, dev/staging only.
+- [`atlas-frontend/`](atlas-frontend/) — Next.js customer app, PostgREST consumer, forkable reference (rebuilt under PLAN-005).
 - [`website/`](website/) — Docusaurus-bound docs source (install pending).

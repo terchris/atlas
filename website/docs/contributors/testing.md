@@ -86,7 +86,7 @@ Re-run it. If it fails on the second run, the migration isn't idempotent — fix
 ### Frontend changes
 
 ```bash
-cd atlas-frontend
+cd atlas-contributor-frontend
 npm run typecheck
 npm run build
 ```
@@ -101,7 +101,7 @@ CI configuration is currently minimal — most gates are run locally. The known 
 
 - **`check-osmosis.sh` strict mode** — fails CI if any column lacks a description. Required because PostgREST projects descriptions verbatim into the public OpenAPI spec.
 - **`dbt parse`** — catches `schema.yml` syntax errors and broken `ref()` / `source()` references.
-- **TypeScript compile** — `npm run typecheck` in `atlas-data/ingest/` and `atlas-frontend/`.
+- **TypeScript compile** — `npm run typecheck` in `atlas-data/ingest/` and `atlas-contributor-frontend/`.
 
 CI does **not** currently run `dbt run` / `dbt test` (it would need a live Postgres). Reviewer responsibility to verify these passed locally before requesting merge.
 
