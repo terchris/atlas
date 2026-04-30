@@ -11,7 +11,7 @@ If you've never seen Atlas's data pipeline before, read the [data journey walkth
 Atlas's data side is two layers:
 
 1. **Ingest** — TypeScript modules under [`atlas-data/ingest/src/sources/`](https://github.com/terchris/atlas/tree/main/atlas-data/ingest/src/sources) that fetch upstream data (SSB, FHI, Brreg, NGO HTML scrapes) and write to the `raw.*` Postgres schema. Verbatim shape — no renaming or reshaping.
-2. **dbt** — SQL models under [`atlas-data/dbt/models/`](https://github.com/terchris/atlas/tree/main/atlas-data/dbt/models) that transform `raw.*` into `marts.*` (the public schema PostgREST projects as the API).
+2. **dbt** — SQL models under [`atlas-data/dbt/models/`](https://github.com/terchris/atlas/tree/main/atlas-data/dbt/models) that transform `raw.*` into `marts.*` (the internal data layer; the external public API is PostgREST against `api_v1.*` wrapper views — see [api-v1.md](./api-v1.md)).
 
 Adding a source means both: write the ingest module that lands rows in `raw.<source>`, and the dbt model that maps `raw.<source>` to a clean per-source mart in `marts.indicators__<source>`.
 

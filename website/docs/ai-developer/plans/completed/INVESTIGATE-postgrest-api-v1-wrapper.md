@@ -228,7 +228,7 @@ The `marts.mart_*` tables stay as Postgres `TABLE`s (PLAN-001 [Q3] — fast read
 
 - **Stand up PostgREST** — that's UIS's `./uis configure postgrest --app atlas` + `./uis deploy postgrest --app atlas`. Atlas's responsibility ends at "the `api_v1` schema exists with the agreed views and descriptions."
 - **Migrate the Atlas frontend** — the frontend continues reading `marts.*` directly until PLAN-E (frontend migration to PostgREST). The `api_v1` layer is purely for external consumers in v1.
-- **Build a human-readable API docs site** — PostgREST projects the OpenAPI 3.0 spec at `GET /` automatically; rendering it as a Swagger-UI / Redoc page at `api-atlas.helpers.no/docs` is **PLAN-F** (per PLAN-001's "What's next"). PLAN-004 stops at "PostgREST has a correct, descriptive OpenAPI to project."
+- **Build a human-readable API docs site** — PostgREST 12.x projects a Swagger 2.0 spec at `GET /` automatically (the version-discriminating key is `.swagger == "2.0"`, not `.openapi`); rendering it as a Swagger-UI / Redoc page at `api-atlas.helpers.no/docs` is **PLAN-F** (per PLAN-001's "What's next"). PLAN-004 stops at "PostgREST has a correct, descriptive Swagger 2.0 spec to project."
 - **Decide `api_v2` policy** — premature; no breaking change is on the horizon today.
 - **Build new mart views** — the 9 from PLAN-001 are the v1 surface. New views land via the normal `adding-a-source.md` workflow (extended to include the `api_v1` wrapper step in [Q9]).
 - **Verify planner push-down on every wrapper** — PostgREST's filter / projection / order params should rewrite efficiently through `SELECT *` views; spot-check one with `EXPLAIN` and trust the rest unless evidence otherwise.
@@ -266,7 +266,7 @@ The `marts.mart_*` tables stay as Postgres `TABLE`s (PLAN-001 [Q3] — fast read
   7. **Rollback runbook** — short note in the migration file (or a sibling doc) covering ordered rollback per [Q13].
 
 - **(Future) PLAN-D.2 / coordination with UIS — end-to-end verification.** Once PLAN-004 is merged, signal to the UIS contributor that `api_v1` exists and they can run `./uis configure postgrest --app atlas --schema api_v1 --url-prefix api-atlas` + `./uis deploy postgrest --app atlas`. No code change on Atlas's side at that point. End-to-end checks:
-  - `curl http://api-atlas.localhost/` returns OpenAPI 3.0 spec containing all 9 (or ~14 with dim_* wrappers) endpoints with descriptions.
+  - `curl http://api-atlas.localhost/` returns Swagger 2.0 spec (PostgREST 12.x; verify with `jq '.swagger == "2.0"'`) containing all 9 (or ~14 with dim_* wrappers) endpoints with descriptions.
   - `curl 'http://api-atlas.localhost/indicator_summary?source_id=eq.ssb-08764'` returns rows.
   - If [Q10](a) chosen: `curl 'http://api-atlas.localhost/kommune_local_chapters?select=*,kommune(*)&kommune_nr=eq.0301'` embeds the kommune row.
 

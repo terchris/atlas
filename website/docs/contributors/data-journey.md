@@ -223,21 +223,21 @@ After dbt, `marts.mart_coverage_gap_barnefattigdom` looks like:
 
 Indexed on `kommune_nr`. Queries against it are millisecond-scale.
 
-This is the **only schema** the Next.js frontend (and the future PostgREST API) reads from. Atlas's frontend has no knowledge of `raw.*`, no knowledge of PxWebAPI, no knowledge of dbt. `marts.*` is the stable public contract.
+This is the schema the Next.js frontend reads from today. `marts.*` is the **internal data layer** — the stable contract internal Atlas code (frontend, ad-hoc analysts) builds on. The frontend has no knowledge of `raw.*`, no knowledge of PxWebAPI, no knowledge of dbt.
 
-## Stage 7 — PostgREST projects the API (forthcoming)
+## Stage 7 — PostgREST projects the public API via `api_v1.*`
 
-PostgREST (deployment in progress, owned by UIS) sits in front of `marts.*` and projects:
+PostgREST (owned + deployed by UIS) sits in front of an auto-generated `api_v1.*` schema — wrapper views over `marts.mart_*` (one per `models/marts/api/` model). The wrapper layer is the **external public contract**; `marts.*` stays internal. PostgREST projects:
 
-- One `GET` endpoint per `marts.*` table or view
+- One `GET` endpoint per `api_v1.*` view
 - Filtering via `?col=eq.X` query params
-- An auto-generated OpenAPI spec at `api.atlas.helpers.no/docs`, with column descriptions sourced verbatim from `schema.yml`
+- An auto-generated Swagger 2.0 spec at `api.atlas.helpers.no/docs`, with column descriptions sourced verbatim from `schema.yml` (propagated through dbt → `COMMENT ON COLUMN` on `marts.*` → copied onto `api_v1.*` by the generator)
 
-So the descriptions you write in `schema.yml` are the docs an external developer reads. See [dbt-osmosis.md § why Atlas relies on it](./dbt-osmosis.md#why-atlas-relies-on-it).
+So the descriptions you write in `schema.yml` are the docs an external developer reads. See [api-v1.md](./api-v1.md) for the wrapper layer + generator, and [dbt-osmosis.md § why Atlas relies on it](./dbt-osmosis.md#why-atlas-relies-on-it) for the description propagation.
 
 ## Stage 8 — Next.js queries (dogfood)
 
-Today, the Next.js frontend queries `marts.*` directly via SQL (read-only Postgres role). Once PostgREST is live, the frontend migrates to call the same HTTP API external developers use — the "dogfood" pattern.
+Today, the Next.js frontend queries `marts.*` directly via SQL (read-only Postgres role). The frontend's eventual migration to call PostgREST's `api_v1.*` endpoints — same HTTP API external developers use — is the "dogfood" pattern, tracked separately in PLAN-E.
 
 ```typescript
 // atlas-frontend/app/coverage-gap/barnefattigdom/page.tsx (sketch)

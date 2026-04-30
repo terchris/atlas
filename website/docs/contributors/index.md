@@ -1,6 +1,6 @@
 # Contributors
 
-Welcome. This section is for people **developing Atlas itself** — adding data sources, writing dbt models, fixing bugs, opening PRs against the repo. If you want to *consume* Atlas's data (build an app on top of `marts.*`, query the public API), the user-facing docs are at [the site root](../) and the API reference will be at `api.atlas.helpers.no/docs` (forthcoming).
+Welcome. This section is for people **developing Atlas itself** — adding data sources, writing dbt models, fixing bugs, opening PRs against the repo. If you want to *consume* Atlas's data (query the public API at `api.atlas.helpers.no` — PostgREST projecting the `api_v1.*` schema), the user-facing docs are at [the site root](../) and the API reference will be at `api.atlas.helpers.no/docs` (forthcoming).
 
 ## What is Atlas?
 
@@ -19,17 +19,22 @@ Read [data-journey.md](./data-journey.md) for the end-to-end walkthrough — it 
 git clone https://github.com/terchris/atlas.git
 cd atlas
 
+# Bootstrap atlas_db on UIS Postgres (one-shot; creates db + role + auto-exposes :35432)
+./uis configure postgresql --app atlas --database atlas_db --json
+
 # Set up the ingest layer
 cd atlas-data/ingest && npm install && cp .env.example .env
-# Edit .env to point at a Postgres (UIS local k8s, or any local Postgres ≥14)
+# Edit .env with the credentials from the JSON output above
 
-# First end-to-end smoke test: ingest one source
+# Apply schema migrations (creates raw.* schemas) and ingest one source
+npm run migrate
 npm run ingest:ssb-08764
 
-# Set up dbt + run all models
+# Set up dbt + load seeds + run all models
 cd ../dbt
 uv venv && uv pip install -r requirements.txt
 uv run --env-file ../ingest/.env dbt deps
+uv run --env-file ../ingest/.env dbt seed     # required on a fresh database
 uv run --env-file ../ingest/.env dbt run
 uv run --env-file ../ingest/.env dbt test
 ./check-osmosis.sh
