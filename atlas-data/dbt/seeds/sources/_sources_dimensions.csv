@@ -31,6 +31,12 @@ fhi-neet,KJONN,Sex,3 codes upstream; Atlas filters to 1,"""0"" both (Atlas only 
 fhi-neet,ALDER,Age band,"""min_max"" range string","14 bands — includes the canonical NEET span 15_29 and finer slices 15_19, 20_24, 25_29; pick a single non-overlapping partition downstream"
 fhi-neet,UTDANN,Parents' education level (NOT the youth's own),5 codes,"0 (all), 1 (grunnskole), 2 (videregående), 3 (høgskole/uni kort), 4 (høgskole/uni lang). Reflects socioeconomic context — children of higher-educated parents have markedly lower NEET rates."
 fhi-neet,MEASURE_TYPE,Which number,4 codes upstream; Atlas filters to 1,"RATE (percent — Atlas keeps only this), TELLER, MEIS, SMR are derivable downstream"
+fhi-prognose,GEO,Region (mixed kommune / fylke / bydel / nasjon),1- to 6-character numeric code,~409 codes
+fhi-prognose,AAR,Base year of the projection (anchor year),"""YYYY_YYYY"" range string",The year the forecast is anchored on — *not* the year being projected. PROGNOSEAAR is the target.
+fhi-prognose,KJONN,Sex,3 codes upstream; Atlas filters to 1,"""0"" both (Atlas only ingests this) — re-ingest for sex-stratified slice"
+fhi-prognose,ALDER,Age band,"""min_max"" range string","31 codes — includes the universal 0_120, 5-year disjoint slices (0_4, 5_9, …, 100_120), and aggregates (0_17, 45_64, 80_120). Pick a single non-overlapping partition downstream."
+fhi-prognose,PROGNOSEAAR,Year being projected to (target year),4-digit year as text,"26 codes upstream (per-year out to ~2050+). Atlas keeps 3 horizons: 2030, 2040, 2050. Add intermediate years as a sibling source if 5-year resolution is needed."
+fhi-prognose,MEASURE_TYPE,Which number,3 codes upstream; Atlas filters to 1,TELLER (count) only — RATE / SMR are derivable downstream from these counts.
 fhi-trangbodd,GEO,Region (mixed kommune / fylke / bydel / nasjon),1- to 6-character numeric code,~409 codes
 fhi-trangbodd,AAR,Year,"""YYYY_YYYY"" range string (single-year)","10 years, 2015_2015 through 2024_2024"
 fhi-trangbodd,ALDER,Age band,text band code,9 age bands

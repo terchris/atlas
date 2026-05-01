@@ -1,0 +1,48 @@
+# Bootstrapped by bootstrap-manifest.ts; auto-fillable fields populated by fill-manifest-todos.ts.
+# The dimensions: block is hand-authored — editorial semantics the catalogue can't compute.
+# After commit, this file is human-authored — ingest runs do NOT modify it.
+
+source_id: fhi-prognose
+upstream_id: "171"
+upstream_url: https://statistikk-data.fhi.no/api/open/v1/nokkel/table/171
+upstream_landing_page: https://statistikk.fhi.no/nokkel/xhjU-zpSijmY8w2E1Zhcrzqbt_xSfLCoudR2O1jYTbM?GEO=0,03,31,32,33,34,39,40,42,11,46,15,50,18,55,56&AAR=2024_2024&KJONN=0&ALDER=0_17,80_120&PROGNOSEAAR=2030,2035,2040,2045,2050&MEASURE_TYPE=TELLER
+upstream_title: "Befolkningsframskriving"
+description: "FHI Folkehelsestatistikk table 171 — population projections (Befolkningsframskriving) by region × age band × forecast year. Pairs with fhi-befolkning (table 338) so observed and projected trajectories splice naturally."
+publisher: Folkehelseinstituttet
+license: NLOD
+license_url: https://data.norge.no/nlod/no/2.0
+periodicity: P1Y
+eu_theme: SOCI
+attribution: "Kilde: Folkehelseinstituttet, Folkehelsestatistikk tabell 171"
+
+tags:
+  provider: fhi
+  topic: demographics
+  geo: kommune
+  cadence: annual
+
+dimensions:
+  - code: GEO
+    meaning: Region (mixed kommune / fylke / bydel / nasjon)
+    value_format: 1- to 6-character numeric code
+    notes: "~409 codes"
+  - code: AAR
+    meaning: Base year of the projection (anchor year)
+    value_format: '"YYYY_YYYY" range string'
+    notes: 'The year the forecast is anchored on — *not* the year being projected. PROGNOSEAAR is the target.'
+  - code: KJONN
+    meaning: Sex
+    value_format: 3 codes upstream; Atlas filters to 1
+    notes: '"0" both (Atlas only ingests this) — re-ingest for sex-stratified slice'
+  - code: ALDER
+    meaning: Age band
+    value_format: '"min_max" range string'
+    notes: "31 codes — includes the universal 0_120, 5-year disjoint slices (0_4, 5_9, …, 100_120), and aggregates (0_17, 45_64, 80_120). Pick a single non-overlapping partition downstream."
+  - code: PROGNOSEAAR
+    meaning: Year being projected to (target year)
+    value_format: 4-digit year as text
+    notes: "26 codes upstream (per-year out to ~2050+). Atlas keeps 3 horizons: 2030, 2040, 2050. Add intermediate years as a sibling source if 5-year resolution is needed."
+  - code: MEASURE_TYPE
+    meaning: Which number
+    value_format: 3 codes upstream; Atlas filters to 1
+    notes: "TELLER (count) only — RATE / SMR are derivable downstream from these counts."
