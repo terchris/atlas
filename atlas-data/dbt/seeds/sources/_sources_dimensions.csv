@@ -1,4 +1,9 @@
 source_id,code,meaning,value_format,notes
+fhi-befolkning,GEO,Region (mixed kommune / fylke / bydel / nasjon),1- to 6-character numeric code,"~409 codes — 0 (national), 2-digit fylke, 4-digit kommune, 6-digit bydel"
+fhi-befolkning,AAR,Year,"""YYYY_YYYY"" range string (single-year)","36 single-year periods, 1990–2025"
+fhi-befolkning,KJONN,Sex,3 codes,"""0"" both, ""1"" men, ""2"" women"
+fhi-befolkning,ALDER,Age band,"""min_max"" range string","35 bands. Includes overlapping aggregates (0_120 = everyone) and disjoint slices (0_4, 5_14, 0_17, etc.); pick a single non-overlapping partition downstream."
+fhi-befolkning,MEASURE_TYPE,Which number,3 codes upstream; Atlas filters to 1,TELLER (count) only — RATE / SMR are derivable downstream from these counts.
 fhi-bor-alene,GEO,Region (mixed kommune / fylke / bydel / nasjon),1- to 6-character numeric code,"0 (national), 03 (Oslo fylke), 0301 (Oslo kommune), 030101 (bydel)"
 fhi-bor-alene,AAR,Year or period,"""YYYY_YYYY"" range string","2025_2025 for single-year, 2023_2025 for 3-year averages"
 fhi-bor-alene,ALDER,Age band,"""min_max"" range string","16_120 (all adults 16+), 16_29, 65_74, 75_84, 85_120"

@@ -1,0 +1,43 @@
+# Bootstrapped by bootstrap-manifest.ts; auto-fillable fields populated by fill-manifest-todos.ts.
+# The dimensions: block is hand-authored — editorial semantics the catalogue can't compute.
+# After commit, this file is human-authored — ingest runs do NOT modify it.
+
+source_id: fhi-befolkning
+upstream_id: "338"
+upstream_url: https://statistikk-data.fhi.no/api/open/v1/nokkel/table/338
+upstream_title: "Befolkningssammensetning_antall_andel"
+description: "FHI Folkehelsestatistikk table 338 — Befolkningssammensetning. Population counts by region × sex × age band, used as the demographic denominator across other indicators (per-capita rates, age structure)."
+publisher: Folkehelseinstituttet
+license: NLOD
+license_url: https://data.norge.no/nlod/no/2.0
+periodicity: P1Y
+eu_theme: SOCI
+attribution: "Kilde: Folkehelseinstituttet, Folkehelsestatistikk tabell 338"
+
+tags:
+  provider: fhi
+  topic: demographics
+  geo: kommune
+  cadence: annual
+
+dimensions:
+  - code: GEO
+    meaning: Region (mixed kommune / fylke / bydel / nasjon)
+    value_format: 1- to 6-character numeric code
+    notes: "~409 codes — 0 (national), 2-digit fylke, 4-digit kommune, 6-digit bydel"
+  - code: AAR
+    meaning: Year
+    value_format: '"YYYY_YYYY" range string (single-year)'
+    notes: 36 single-year periods, 1990–2025
+  - code: KJONN
+    meaning: Sex
+    value_format: 3 codes
+    notes: '"0" both, "1" men, "2" women'
+  - code: ALDER
+    meaning: Age band
+    value_format: '"min_max" range string'
+    notes: "35 bands. Includes overlapping aggregates (0_120 = everyone) and disjoint slices (0_4, 5_14, 0_17, etc.); pick a single non-overlapping partition downstream."
+  - code: MEASURE_TYPE
+    meaning: Which number
+    value_format: 3 codes upstream; Atlas filters to 1
+    notes: "TELLER (count) only — RATE / SMR are derivable downstream from these counts."
