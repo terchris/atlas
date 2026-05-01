@@ -155,11 +155,15 @@ Promote the existing Markdown table at `atlas-data/ingest/src/sources/README.md`
   - **`MANUAL_OVERRIDES`** dict — hardcoded values for `redcross-branches` and `frr`, whose READMEs don't follow the SSB/FHI Upstream-table format.
   - Only fills TODO/empty fields; never overwrites human-authored content. After commit, the manifest is human-authored and ingest runs do NOT modify it (the discipline from Phase 2's preamble).
 - [x] 2.4c **Run + verify** — `npm run sources:bootstrap-manifest` against each source folder, then `npm run sources:fill-manifest-todos` (no per-source arg; runs across all 21). Spot-check the outputs; fix the topic/geo regex when classifications drift (e.g. ssb-12292 omsorgstjenester → health not ngo-supply, fhi-bor-alene → demographics not health). Commit the 21 manifests + both scripts as a batch.
-- [ ] 2.5 Add the seed-build helper at `atlas-data/dbt/scripts/build_sources_seed.py` that:
+- [x] 2.5 Add the seed-build helper at `atlas-data/dbt/scripts/build_sources_seed.py` that:
   - Scans `atlas-data/ingest/src/sources/*/manifest.yml`
   - Validates each against the required-field list (fails loudly if any required field is missing or any tag namespace is absent — TODO placeholders also fail)
-  - Emits a dbt seed CSV at `atlas-data/dbt/seeds/sources/manifest.csv` with columns `source_id, upstream_id, upstream_url, upstream_title, description, publisher, license, license_url, periodicity, tags`. The `tags` column is a comma-separated `namespace:value` string (e.g. `provider:ssb,topic:income,geo:kommune,cadence:annual`).
-- [ ] 2.6 Update `atlas-data/dbt/dbt_project.yml`'s seeds config so `seeds/sources/manifest.csv` lands in `marts._sources_manifest` (private internal name; not user-facing).
+  - Emits a dbt seed CSV at `atlas-data/dbt/seeds/sources/_sources_manifest.csv` with columns `source_id, upstream_id, upstream_url, upstream_title, description, publisher, license, license_url, periodicity, tags`. The `tags` column is a comma-separated `namespace:value` string (e.g. `provider:ssb,topic:income,geo:kommune,cadence:annual`).
+
+  **Deviation (2026-05-01):** Plan said `seeds/sources/manifest.csv` + alias to `_sources_manifest`. Implemented as `seeds/sources/_sources_manifest.csv` directly — no alias needed; the file's basename is the dbt resource name and the relation name (both `_sources_manifest`). Cleaner than the alias indirection.
+- [x] 2.6 Update `atlas-data/dbt/dbt_project.yml`'s seeds config so `seeds/sources/_sources_manifest.csv` lands in `marts._sources_manifest` (private internal name; not user-facing).
+
+  Implemented as: extend the `seeds.atlas.+column_types` map with the nine manifest columns + `tags`. `+schema: marts` already inherits from the parent. Added a separate `seeds/sources/schema.yml` documenting all ten columns + carrying `not_null` / `unique` data tests. `dbt seed --select _sources_manifest` loads 21 rows; `dbt test --select _sources_manifest` passes 11/11.
 - [x] 2.7 **Migration**: add `atlas-data/migrations/NNN_raw_ingest_runs_upstream_updated.sql` adding `upstream_updated_at timestamptz` to `raw.ingest_runs` (nullable; idempotent via `ADD COLUMN IF NOT EXISTS`). Run `npm run migrate` to apply.
 
   Landed as `atlas-data/migrations/028_raw_ingest_runs_upstream_updated.sql`.
@@ -373,7 +377,8 @@ All four doc files reflect the new shape; no stale references to "the 9 endpoint
 - `atlas-data/migrations/028_raw_ingest_runs_upstream_updated.sql` — adds `upstream_updated_at` column
 - `atlas-data/dbt/scripts/build_sources_seed.py` — YAML scanner → dbt seed CSV (validates required fields, refuses TODO placeholders)
 - `atlas-data/dbt/scripts/extract_lineage.py` — `manifest.json` → lineage seed CSV
-- `atlas-data/dbt/seeds/sources/manifest.csv` — generated, committed
+- `atlas-data/dbt/seeds/sources/_sources_manifest.csv` — generated, committed
+- `atlas-data/dbt/seeds/sources/schema.yml` — column descriptions + tests for the seed
 - `atlas-data/dbt/seeds/sources/lineage.csv` — generated, committed
 - `atlas-data/dbt/models/marts/api/mart_meta_sources.sql`
 - `atlas-data/dbt/models/marts/api/mart_meta_endpoints.sql`
