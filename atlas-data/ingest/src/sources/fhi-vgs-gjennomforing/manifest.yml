@@ -5,6 +5,7 @@
 source_id: fhi-vgs-gjennomforing
 upstream_id: 360
 upstream_url: https://statistikk-data.fhi.no/api/open/v1/nokkel/table/360
+upstream_landing_page: ""  # TODO paste from statistikk.fhi.no — slug for table 360
 upstream_title: "Gjennomforing i videregående skole (utdann_3)"
 description: "FHI Folkehelsestatistikk table 360 — Gjennomforing i videregående skole (utdann_3). Upper-secondary completion rate per region × sex × parents' education × immigration category."
 publisher: Folkehelseinstituttet

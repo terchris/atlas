@@ -5,6 +5,7 @@
 source_id: ssb-06947
 upstream_id: 06947
 upstream_url: https://www.ssb.no/statbank/table/06947
+upstream_landing_page: https://www.ssb.no/statbank/table/06947
 upstream_title: "06947: Personer i husholdninger med lavinntekt (EU- og OECD-skala). Antall og prosent (K) (B) 2005-2024"
 description: "SSB statistikkbanktabell 06947 — Personer i husholdninger med lavinntekt (EU- og OECD-skala). Whole-population complement to ssb-08764 (children only)."
 publisher: Statistisk sentralbyrå
@@ -24,7 +25,7 @@ dimensions:
   - code: Region
     meaning: Region (kommune / fylke / nasjon / bydel / historical)
     value_format: "Numeric code: 0 national, 2-digit fylke, 4-digit kommune, 6-digit bydel"
-    notes: "~1036 codes — bydeler exist for the 4 largest cities"
+    notes: ~1036 codes — bydeler exist for the 4 largest cities
   - code: ContentsCode
     meaning: Statistic measure
     value_format: 5 codes

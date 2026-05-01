@@ -21,7 +21,8 @@ Every source folder ships a `manifest.yml` that drives the catalogue's `marts._s
 |---|---|
 | `source_id` | Folder name; primary key (e.g. `ssb-08764`). |
 | `upstream_id` | The upstream's own identifier (SSB table number, FHI dataset slug, etc.). |
-| `upstream_url` | Canonical link to the source on the upstream's site. |
+| `upstream_url` | Link to the data — typically the API endpoint or machine-readable URL Atlas's ingest module fetches. |
+| `upstream_landing_page` *(optional)* | Human-browsable web page describing the dataset (DCAT-AP `dcat:landingPage`). Use when the data URL is JSON-only (e.g. FHI's `/api/open/v1/...`); leave empty when `upstream_url` is already browsable (e.g. SSB statbank tables). Frontend falls back to `upstream_url` when this is empty. |
 | `upstream_title` | The source's authoritative title at the upstream (usually Norwegian). |
 | `description` | One paragraph for the customer-facing catalogue. |
 | `publisher` | Institution that publishes the data (often equals provider). |

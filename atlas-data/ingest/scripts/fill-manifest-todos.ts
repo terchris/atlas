@@ -37,6 +37,7 @@ type Manifest = {
   source_id: string;
   upstream_id: string;
   upstream_url: string;
+  upstream_landing_page: string | null;
   upstream_title: string | null;
   description: string | null;
   publisher: string;
@@ -192,6 +193,7 @@ function parseExistingManifest(yaml: string): Manifest | null {
     source_id: r["source_id"] ?? "",
     upstream_id: r["upstream_id"] ?? "",
     upstream_url: r["upstream_url"] ?? "",
+    upstream_landing_page: r["upstream_landing_page"] ?? null,
     upstream_title: r["upstream_title"] ?? null,
     description: r["description"] ?? null,
     publisher: r["publisher"] ?? "",
@@ -378,6 +380,7 @@ function renderManifest(m: Manifest): string {
   lines.push(`source_id: ${m.source_id}`);
   lines.push(`upstream_id: ${quote(m.upstream_id)}`);
   lines.push(`upstream_url: ${m.upstream_url}`);
+  lines.push(`upstream_landing_page: ${m.upstream_landing_page ?? ""}`);
   lines.push(`upstream_title: ${blockOrInline(m.upstream_title ?? "")}`);
   lines.push(`description: ${blockOrInline(m.description ?? "")}`);
   lines.push(`publisher: ${quote(m.publisher)}`);
@@ -410,7 +413,10 @@ function renderManifest(m: Manifest): string {
 
 function quote(s: string): string {
   if (!s) return '""';
-  if (/[:#?]|^[!&*-]/.test(s)) return JSON.stringify(s);
+  // Quote strings that contain YAML-significant characters anywhere, or
+  // start with a special-meaning sigil. Embedded `"` requires JSON-style
+  // escaping; otherwise YAML parsers see it as a malformed inline mapping.
+  if (/["':#?]|^[!&*-]/.test(s)) return JSON.stringify(s);
   return s;
 }
 
@@ -474,6 +480,22 @@ function fillOne(sourceDir: string): { sourceId: string; changed: boolean; warni
       touched = true;
     } else warnings.push("no upstream_id");
   }
+  // upstream_landing_page — for SSB statbank / klass, the upstream_url IS
+  // already browsable, so we mirror it. For FHI the human portal is at
+  // statistikk.fhi.no/<source>/<opaque-slug> — that slug isn't derivable
+  // from the table id, so it stays hand-authored. Optional field; null is
+  // fine when it equals upstream_url (frontend falls back).
+  if (isTodo(m.upstream_landing_page)) {
+    if (m.source_id.startsWith("ssb-klass-") && !isTodo(m.upstream_id)) {
+      m.upstream_landing_page = `https://www.ssb.no/klass/klassifikasjoner/${m.upstream_id}`;
+      touched = true;
+    } else if (m.source_id.startsWith("ssb-") && !isTodo(m.upstream_id)) {
+      m.upstream_landing_page = `https://www.ssb.no/statbank/table/${m.upstream_id}`;
+      touched = true;
+    }
+    // For FHI / redcross / frr the contributor hand-fills.
+  }
+
   // upstream_url — manual override > derived from upstream_id (FHI/SSB) >
   // README's `URL` row. The generic provider homepage (fhi.no, rodekors.no)
   // is not a useful catalogue link for shoppers; we deep-link to the

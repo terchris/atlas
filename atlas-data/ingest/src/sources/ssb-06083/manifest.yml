@@ -5,6 +5,7 @@
 source_id: ssb-06083
 upstream_id: 06083
 upstream_url: https://www.ssb.no/statbank/table/06083
+upstream_landing_page: https://www.ssb.no/statbank/table/06083
 upstream_title: "06083: Familier, etter familietype (K) (B) 2005-2025"
 description: "SSB statistikkbanktabell 06083 — Familier, etter familietype. Family counts by type per region and year."
 publisher: Statistisk sentralbyrå
@@ -24,7 +25,7 @@ dimensions:
   - code: Region
     meaning: Region (kommune / fylke / nasjon / bydel / historical)
     value_format: "Numeric code: 0 national, 2-digit fylke, 4-digit kommune, 6-digit bydel"
-    notes: "~1051 codes"
+    notes: ~1051 codes
   - code: FamilieType
     meaning: Family type
     value_format: 9 codes
@@ -32,7 +33,7 @@ dimensions:
   - code: ContentsCode
     meaning: Statistic measure
     value_format: 1 code
-    notes: "Familier (family count)"
+    notes: Familier (family count)
   - code: Tid
     meaning: Year
     value_format: 4-digit year as text

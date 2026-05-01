@@ -5,6 +5,7 @@
 source_id: frr
 upstream_id: frr
 upstream_url: https://www.rodekors.no/
+upstream_landing_page: https://www.rodekors.no/
 upstream_title: "Frivillig Resource Register (FRR) — Norges Røde Kors internal volunteer register"
 description: "Norges Røde Kors's internal Frivillig Resource Register (FRR) — operational data on volunteer resources, status, and positions. Private; never exposed via the public API."
 publisher: Norges Røde Kors (private FRR register)

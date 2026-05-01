@@ -5,6 +5,7 @@
 source_id: ssb-09429
 upstream_id: 09429
 upstream_url: https://www.ssb.no/statbank/table/09429
+upstream_landing_page: https://www.ssb.no/statbank/table/09429
 upstream_title: "09429: Utdanningsnivå, etter kommune og kjønn (K) 1970-2024"
 description: "SSB statistikkbanktabell 09429 — Utdanningsnivå, etter kommune og kjønn. Educational attainment distribution per kommune × education level × sex × year."
 publisher: Statistisk sentralbyrå
@@ -24,7 +25,7 @@ dimensions:
   - code: Region
     meaning: Region (kommune / fylke / nasjon / bydel / historical)
     value_format: "Numeric code: 0 national, 2-digit fylke, 4-digit kommune, 6-digit bydel"
-    notes: "~979 codes"
+    notes: ~979 codes
   - code: Nivaa
     meaning: Education level (NUS2000)
     value_format: 7 codes

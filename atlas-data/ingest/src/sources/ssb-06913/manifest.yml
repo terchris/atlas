@@ -5,6 +5,7 @@
 source_id: ssb-06913
 upstream_id: 06913
 upstream_url: https://www.ssb.no/statbank/table/06913
+upstream_landing_page: https://www.ssb.no/statbank/table/06913
 upstream_title: "06913: Endringer i kommuner, fylker og hele landets befolkning (K) 1951-2026"
 description: "SSB statistikkbanktabell 06913 — Folkemengde 1. januar og endringer i kalenderåret (folketilvekst, fødsler, dødsfall, inn- og utflyttinger)."
 publisher: Statistisk sentralbyrå
@@ -24,11 +25,11 @@ dimensions:
   - code: Region
     meaning: Region (kommune / fylke / nasjon / historical)
     value_format: "Numeric code: 0 national, 2-digit fylke, 4-digit kommune"
-    notes: "~1288 codes including historical variants going back decades"
+    notes: ~1288 codes including historical variants going back decades
   - code: ContentsCode
     meaning: Statistic measure
     value_format: 8 codes
-    notes: "Folkemengde, Levende (live births), Dode (deaths), Fodselsoverskudd (birth surplus), Innflyttinger (in-migration), Utflyttinger (out-migration), Nettoinnflytting (net migration), Folketilvekst (population growth)"
+    notes: Folkemengde, Levende (live births), Dode (deaths), Fodselsoverskudd (birth surplus), Innflyttinger (in-migration), Utflyttinger (out-migration), Nettoinnflytting (net migration), Folketilvekst (population growth)
   - code: Tid
     meaning: Year
     value_format: 4-digit year as text

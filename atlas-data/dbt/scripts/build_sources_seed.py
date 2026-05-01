@@ -54,6 +54,12 @@ REQUIRED_FIELDS: tuple[str, ...] = (
     "attribution",
 )
 
+# Optional manifest fields — emitted as columns in the seed CSV (empty string
+# when absent), but not validated as required.
+OPTIONAL_FIELDS: tuple[str, ...] = (
+    "upstream_landing_page",
+)
+
 DIMENSION_FIELDS: tuple[str, ...] = (
     "source_id",
     "code",
@@ -79,7 +85,7 @@ EU_DATA_THEME_CODES: frozenset[str] = frozenset({
     "INTR", "JUST", "REGI", "SOCI", "TECH", "TRAN",
 })
 
-CSV_FIELDS: tuple[str, ...] = REQUIRED_FIELDS + ("tags",)
+CSV_FIELDS: tuple[str, ...] = REQUIRED_FIELDS + OPTIONAL_FIELDS + ("tags",)
 
 
 @dataclass(frozen=True)
@@ -177,6 +183,8 @@ def emit_csv(manifests: list[tuple[Path, dict[str, Any]]], out_path: Path) -> No
         writer.writeheader()
         for _, manifest in manifests:
             row = {field: normalise_value(manifest.get(field)) for field in REQUIRED_FIELDS}
+            for field in OPTIONAL_FIELDS:
+                row[field] = normalise_value(manifest.get(field))
             row["tags"] = render_tags(manifest["tags"])
             writer.writerow(row)
 

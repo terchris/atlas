@@ -5,6 +5,7 @@
 source_id: ssb-klass-fylker
 upstream_id: 104
 upstream_url: https://www.ssb.no/klass/klassifikasjoner/104
+upstream_landing_page: https://www.ssb.no/klass/klassifikasjoner/104
 upstream_title: "Standard for fylkesinndeling"
 description: "SSB Klass classification 104 — Fylker. The canonical active-fylker list. Feeds dim_fylke."
 publisher: Statistisk sentralbyrå

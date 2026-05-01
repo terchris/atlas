@@ -85,6 +85,7 @@ seeds:
       periodicity: text
       eu_theme: text
       attribution: text
+      upstream_landing_page: text
       tags: text
       # eu_data_theme.csv columns
       uri: text

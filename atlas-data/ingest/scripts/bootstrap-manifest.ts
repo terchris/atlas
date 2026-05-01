@@ -215,6 +215,7 @@ function renderManifest(m: ManifestStub): string {
   lines.push(`source_id: ${m.source_id}`);
   lines.push(`upstream_id: ${quote(m.upstream_id)}`);
   lines.push(`upstream_url: ${m.upstream_url}`);
+  lines.push(`upstream_landing_page: TODO  # human-browsable web page (paste from your browser); leave blank if same as upstream_url`);
   if (m.upstream_title) {
     lines.push(`upstream_title: ${blockScalar(m.upstream_title)}`);
   } else {

@@ -5,6 +5,7 @@
 source_id: ssb-07459
 upstream_id: 07459
 upstream_url: https://www.ssb.no/statbank/table/07459
+upstream_landing_page: https://www.ssb.no/statbank/table/07459
 upstream_title: "07459: Alders- og kjønnsfordeling i kommuner, fylker og hele landets befolkning (K) 1986-2025"
 description: "SSB statistikkbanktabell 07459 — Alders- og kjønnsfordeling i kommuner, fylker og hele landets befolkning."
 publisher: Statistisk sentralbyrå
@@ -24,7 +25,7 @@ dimensions:
   - code: Region
     meaning: Region (kommune / fylke / nasjon)
     value_format: "Numeric code: 0 national, 2-digit fylke, 4-digit kommune"
-    notes: "~994 codes"
+    notes: ~994 codes
   - code: Kjonn
     meaning: Sex
     value_format: 2 codes
@@ -36,7 +37,7 @@ dimensions:
   - code: ContentsCode
     meaning: Statistic measure
     value_format: 1 code
-    notes: "Personer1 (resident count)"
+    notes: Personer1 (resident count)
   - code: Tid
     meaning: Year
     value_format: 4-digit year as text

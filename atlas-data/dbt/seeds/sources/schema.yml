@@ -39,8 +39,14 @@ seeds:
         description: The upstream's own identifier (e.g. SSB table number, FHI dataset slug).
         data_tests: [not_null]
       - name: upstream_url
-        description: Canonical link to the source on the upstream's site.
+        description: Canonical link to the source on the upstream's site (often the API endpoint or machine-readable URL).
         data_tests: [not_null]
+      - name: upstream_landing_page
+        description: >-
+          Human-browsable web page describing the dataset (DCAT-AP
+          dcat:landingPage equivalent). Empty when the same URL serves
+          both purposes (e.g. SSB statbank tables); fall back to
+          upstream_url in clients.
       - name: upstream_title
         description: The source's authoritative title at the upstream (usually Norwegian).
         data_tests: [not_null]

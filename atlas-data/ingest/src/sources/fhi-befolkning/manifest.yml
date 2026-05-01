@@ -5,6 +5,7 @@
 source_id: fhi-befolkning
 upstream_id: "338"
 upstream_url: https://statistikk-data.fhi.no/api/open/v1/nokkel/table/338
+upstream_landing_page: https://statistikk.fhi.no/nokkel/iIALHYpjwwxCYECV9iAnanUAYXxFBhFZdQW1M7T5EeA
 upstream_title: "Befolkningssammensetning_antall_andel"
 description: "FHI Folkehelsestatistikk table 338 — Befolkningssammensetning. Population counts by region × sex × age band, used as the demographic denominator across other indicators (per-capita rates, age structure)."
 publisher: Folkehelseinstituttet
