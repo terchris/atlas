@@ -5,7 +5,7 @@
 source_id: fhi-innvandrere
 upstream_id: "175"
 upstream_url: https://statistikk-data.fhi.no/api/open/v1/nokkel/table/175
-upstream_landing_page: https://statistikk.fhi.no/nokkel/ZQAEuMN7Ar2Mmi30zcPD232XzenC3NS5IJyQ1nUeySQ
+upstream_landing_page: https://statistikk.fhi.no/nokkel/ZQAEuMN7Ar2Mmi30zcPD232XzenC3NS5IJyQ1nUeySQ?GEO=0&AAR=2020_2020,2021_2021,2022_2022,2023_2023,2024_2024,2025_2025&ALDER=0_120&LANDBAK=100,1,2,3,456&MEASURE_TYPE=TELLER
 upstream_title: "Innvandrere og norskfødte med innv.foreldre _LANDBAK"
 description: "FHI Folkehelsestatistikk table 175 — population with immigrant background (1st-gen immigrants + Norwegian-born with two immigrant parents) by region × age × country background."
 publisher: Folkehelseinstituttet

@@ -5,7 +5,7 @@
 source_id: fhi-neet
 upstream_id: "809"
 upstream_url: https://statistikk-data.fhi.no/api/open/v1/nokkel/table/809
-upstream_landing_page: https://statistikk.fhi.no/nokkel/sGprm5F-rJQcpEqkZhAfGis_ImrcQCCkOBfyOWGUQnE
+upstream_landing_page: https://statistikk.fhi.no/nokkel/sGprm5F-rJQcpEqkZhAfGis_ImrcQCCkOBfyOWGUQnE?GEO=0&AAR=2019_2019,2020_2020,2021_2021,2022_2022,2023_2023,2024_2024&KJONN=0&ALDER=30_39&UTDANN=1,23&MEASURE_TYPE=TELLER
 upstream_title: "NEET_UTDANN"
 description: "FHI Folkehelsestatistikk table 809 — NEET (Not in Education, Employment, or Training) share among young people, broken down by age band × parents' education level."
 publisher: Folkehelseinstituttet
