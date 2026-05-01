@@ -19,6 +19,7 @@
     "refresh:bring-postnummer": "tsx src/seed-sources/bring-postnummer/index.ts",
     "refresh:atlas-ngo-landscape": "tsx src/seed-sources/atlas-ngo-landscape/index.ts",
     "ingest:fhi-befolkning": "tsx --env-file=.env src/sources/fhi-befolkning/index.ts",
+    "ingest:fhi-befolkningsvekst": "tsx --env-file=.env src/sources/fhi-befolkningsvekst/index.ts",
     "ingest:fhi-bor-alene": "tsx --env-file=.env src/sources/fhi-bor-alene/index.ts",
     "ingest:fhi-innvandrere": "tsx --env-file=.env src/sources/fhi-innvandrere/index.ts",
     "ingest:fhi-innvkat": "tsx --env-file=.env src/sources/fhi-innvkat/index.ts",

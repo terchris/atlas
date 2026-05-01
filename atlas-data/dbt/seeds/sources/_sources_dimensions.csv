@@ -4,6 +4,11 @@ fhi-befolkning,AAR,Year,"""YYYY_YYYY"" range string (single-year)","36 single-ye
 fhi-befolkning,KJONN,Sex,3 codes,"""0"" both, ""1"" men, ""2"" women"
 fhi-befolkning,ALDER,Age band,"""min_max"" range string","35 bands. Includes overlapping aggregates (0_120 = everyone) and disjoint slices (0_4, 5_14, 0_17, etc.); pick a single non-overlapping partition downstream."
 fhi-befolkning,MEASURE_TYPE,Which number,3 codes upstream; Atlas filters to 1,TELLER (count) only — RATE / SMR are derivable downstream from these counts.
+fhi-befolkningsvekst,GEO,Region (mixed kommune / fylke / bydel / nasjon),1- to 6-character numeric code,~409 codes
+fhi-befolkningsvekst,AAR,Year,"""YYYY_YYYY"" range string (single-year)","23 single-year periods, 2002–2024"
+fhi-befolkningsvekst,KJONN,Sex,1 code (degenerate),"Always ""0"" (both) — table is whole-population only"
+fhi-befolkningsvekst,ALDER,Age band,1 code (degenerate),"Always ""0_120"" (everyone) — table is whole-population only"
+fhi-befolkningsvekst,MEASURE_TYPE,Which number,2 codes,"TELLER (absolute change in resident count vs prior year), RATE (percent growth). Verify exact FHI semantics before labelling as a headline indicator."
 fhi-bor-alene,GEO,Region (mixed kommune / fylke / bydel / nasjon),1- to 6-character numeric code,"0 (national), 03 (Oslo fylke), 0301 (Oslo kommune), 030101 (bydel)"
 fhi-bor-alene,AAR,Year or period,"""YYYY_YYYY"" range string","2025_2025 for single-year, 2023_2025 for 3-year averages"
 fhi-bor-alene,ALDER,Age band,"""min_max"" range string","16_120 (all adults 16+), 16_29, 65_74, 75_84, 85_120"

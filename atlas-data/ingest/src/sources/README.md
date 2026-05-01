@@ -78,6 +78,7 @@ uv run --directory atlas-data/dbt python scripts/build_sources_seed.py --readme 
 | Source | Provider | What it is | Topic | EU theme | Geo | Cadence |
 |---|---|---|---|---|---|---|
 | [fhi-befolkning](./fhi-befolkning/) | fhi | FHI Folkehelsestatistikk table 338 — Befolkningssammensetning. Population counts by region × sex × age band, used as the demographic deno… | demographics | SOCI | kommune | annual |
+| [fhi-befolkningsvekst](./fhi-befolkningsvekst/) | fhi | FHI Folkehelsestatistikk table 185 — year-over-year population growth per region (counts and percent rates). Pairs with fhi-befolkning (o… | demographics | SOCI | kommune | annual |
 | [fhi-bor-alene](./fhi-bor-alene/) | fhi | FHI Folkehelsestatistikk table 187 — "Personer som bor alene". Share of adults (16+) living alone, per region, annual. | demographics | SOCI | kommune | annual |
 | [fhi-innvandrere](./fhi-innvandrere/) | fhi | FHI Folkehelsestatistikk table 175 — population with immigrant background (1st-gen immigrants + Norwegian-born with two immigrant parents… | demographics | SOCI | kommune | annual |
 | [fhi-innvkat](./fhi-innvkat/) | fhi | FHI Folkehelsestatistikk table 650 — population by immigrant category (1st-gen / 2nd-gen / combined) per region × age band. Complements f… | demographics | SOCI | kommune | annual |
