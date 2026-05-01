@@ -13,6 +13,12 @@ fhi-innvandrere,AAR,Year,"""YYYY_YYYY"" range string (single-year)","23 single-y
 fhi-innvandrere,ALDER,Age band,"""min_max"" range string","10 bands. Includes 0_120 (everyone) plus disjoint slices 0_17, 18_29, 30_44, 45_64, 45_120, etc."
 fhi-innvandrere,LANDBAK,Country background grouping,8 codes,"Codes spanning Norway-born and immigrant origin regions (Europe / Asia / Africa / Oceania / etc.) plus aggregates. Codes are not human-readable on their own — verify against FHI's dimension reference. Common: 100 ≈ no immigrant background, 456 = aggregate group."
 fhi-innvandrere,MEASURE_TYPE,Which number,3 codes upstream; Atlas filters to 1,TELLER (count) only — RATE / SMR are derivable downstream from these counts.
+fhi-innvkat,GEO,Region (mixed kommune / fylke / bydel / nasjon),1- to 6-character numeric code,~409 codes
+fhi-innvkat,AAR,Year,"""YYYY_YYYY"" range string (single-year)","23 single-year periods, 2003–2025"
+fhi-innvkat,ALDER,Age band,"""min_max"" range string","10 bands. Includes 0_120 (everyone) plus disjoint slices 0_29, 30_44, 45_64, 65_79, 80_120, etc."
+fhi-innvkat,INNVKAT,Immigrant category,3 codes,"""2"" innvandrere (1st-gen), ""3"" norskfødte med innvandrerforeldre (2nd-gen), ""23"" combined (sum of 2 + 3 — exclude from disjoint-category sums)"
+fhi-innvkat,LANDBAK,Country background grouping,1 code,"Always ""0"" for this table — origin region is collapsed. Use fhi-innvandrere (table 175) for origin-region resolution."
+fhi-innvkat,MEASURE_TYPE,Which number,3 codes,"TELLER (count), RATE (percent), SMR (standardised ratio vs national)"
 fhi-mobbing,GEO,Region (mixed kommune / fylke / bydel / nasjon),1- to 6-character numeric code,~409 codes
 fhi-mobbing,AAR,3-year rolling period,"""YYYY_YYYY"" range string","7 periods, e.g. 2016_2018 through 2022_2024"
 fhi-mobbing,KJONN,Sex,1 code,"""0"" (both sexes only — table is sex-aggregated)"
