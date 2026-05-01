@@ -14,6 +14,12 @@ fhi-mobbing,KJONN,Sex,1 code,"""0"" (both sexes only — table is sex-aggregated
 fhi-mobbing,TRINN,School grade,2 codes,"""7"" (7th grade), ""10"" (10th grade)"
 fhi-mobbing,SPM_ID,Question id (bullying composite),1 code,Single composite question only
 fhi-mobbing,MEASURE_TYPE,Which number,3 codes,"SMR (standardised ratio), MEIS (?), RATE (percent)"
+fhi-neet,GEO,Region (mixed kommune / fylke / bydel / nasjon),1- to 6-character numeric code,~409 codes
+fhi-neet,AAR,Year,"""YYYY_YYYY"" range string (single-year)","17 single-year periods, 2008–2024"
+fhi-neet,KJONN,Sex,3 codes upstream; Atlas filters to 1,"""0"" both (Atlas only ingests this), ""1"" men, ""2"" women — re-ingest if a sex-stratified slice is needed"
+fhi-neet,ALDER,Age band,"""min_max"" range string","14 bands — includes the canonical NEET span 15_29 and finer slices 15_19, 20_24, 25_29; pick a single non-overlapping partition downstream"
+fhi-neet,UTDANN,Parents' education level (NOT the youth's own),5 codes,"0 (all), 1 (grunnskole), 2 (videregående), 3 (høgskole/uni kort), 4 (høgskole/uni lang). Reflects socioeconomic context — children of higher-educated parents have markedly lower NEET rates."
+fhi-neet,MEASURE_TYPE,Which number,4 codes upstream; Atlas filters to 1,"RATE (percent — Atlas keeps only this), TELLER, MEIS, SMR are derivable downstream"
 fhi-trangbodd,GEO,Region (mixed kommune / fylke / bydel / nasjon),1- to 6-character numeric code,~409 codes
 fhi-trangbodd,AAR,Year,"""YYYY_YYYY"" range string (single-year)","10 years, 2015_2015 through 2024_2024"
 fhi-trangbodd,ALDER,Age band,text band code,9 age bands
