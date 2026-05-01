@@ -172,7 +172,14 @@ Promote the existing Markdown table at `atlas-data/ingest/src/sources/README.md`
   **Outcome (2026-05-01):** Scope was bigger than the plan implied — the existing SSB/FHI ingest modules didn't write to `raw.ingest_runs` at all; the start/finish helpers were only used by the NGO scraping infrastructure. Built a new shared wrapper at [`atlas-data/ingest/src/lib/ingest_run.ts`](../../../../atlas-data/ingest/src/lib/ingest_run.ts) (`recordIngestRun(sourceId, work)`) that owns the start/finish + sql lifecycle, then wired all 21 source modules through it. Per-source delta is ~10 lines: `return recordIngestRun(SOURCE_ID, async () => { ... return { output, record: { rowsParsed, upstreamUpdatedAt: new Date(resp.updated) } }; })`. SSB (14) + FHI (4) populate `upstreamUpdatedAt` from `resp.updated`; KLASS (2) + redcross/frr (2) pass null or a derived timestamp where the upstream concept exists. Live test: `npm run ingest:ssb-08764` returned `upstream_updated_at: "2026-01-16T07:00:00.000Z"` on `run_id 2`.
 - [x] 2.9 Update `atlas-data/ingest/src/sources/README.md`: either (a) auto-generate from the YAMLs via `build_sources_seed.py` adding a markdown-table emission flag (one-way duplication, single source of truth in the YAMLs), or (b) replace the table with a pointer at `api_v1.meta_sources`. **Recommendation: (a)** — contributors browsing the repo without the API still see a readable index, and the table can never go stale.
 
-  Implemented option (a): `build_sources_seed.py` now accepts `--readme [PATH]` (defaults to `atlas-data/ingest/src/sources/README.md`). Replaces content between `<!-- BEGIN auto-generated source table -->` / `<!-- END auto-generated source table -->` markers with a 6-column table (Source, Provider, What it is, Topic, Geo, Cadence). Idempotent — re-running on an unchanged manifest set is a no-op. The legacy `Notes` column is dropped; per-source READMEs already capture editorial commentary.
+  Implemented option (a): `build_sources_seed.py` now accepts `--readme [PATH]` (defaults to `atlas-data/ingest/src/sources/README.md`). Replaces content between `<!-- BEGIN auto-generated source table -->` / `<!-- END auto-generated source table -->` markers with a 7-column table (Source, Provider, What it is, Topic, EU theme, Geo, Cadence). Idempotent — re-running on an unchanged manifest set is a no-op. The legacy `Notes` column is dropped; per-source READMEs already capture editorial commentary.
+
+- [x] 2.10 **Add `eu_theme` field + `eu_data_theme` lookup seed** (extension to original plan, per [INVESTIGATE-felles-datakatalog-classification.md](../backlog/INVESTIGATE-felles-datakatalog-classification.md)). Aligns Atlas with Felles datakatalog's EU-tema facet (DCAT-AP `dcat:theme`) without giving up the domain-precise `topic` for our own UX.
+  - `manifest.yml` schema gains `eu_theme:` top-level field — one of the 13 EU Publications Office Data Theme codes (AGRI / ECON / EDUC / ENER / ENVI / GOVE / HEAL / INTR / JUST / REGI / SOCI / TECH / TRAN). Required (validated by `build_sources_seed.py`); auto-derived from `tags.topic` by `fill-manifest-todos.ts` via a static `TOPIC_TO_EU_THEME` map.
+  - New seed at `atlas-data/dbt/seeds/sources/eu_data_theme.csv` — 13 rows × 4 columns (`code`, `uri`, `label_en`, `label_no`). URIs are stable EU IRIs (`http://publications.europa.eu/resource/authority/data-theme/{CODE}`). Lands as `marts.eu_data_theme`.
+  - `seeds/sources/schema.yml` gains the new seed's column tests + a `relationships` test on `_sources_manifest.eu_theme → eu_data_theme.code` (broken eu_theme values fail the gate).
+  - Backfill: re-ran `npm run sources:fill-manifest-todos` to add `eu_theme:` to all 21 manifests. Distribution: 14 SOCI (income/social/demographics/ngo-supply collapse), 4 EDUC, 2 GOVE (reference data), 1 HEAL.
+  - Customer frontend in Phase 4 can render an "EU theme" filter alongside Atlas's domain `topic`; later, a DCAT-AP-NO catalogue endpoint can re-emit these as `dcat:theme` URIs for federated discovery — see [INVESTIGATE-felles-datakatalog-classification.md](../backlog/INVESTIGATE-felles-datakatalog-classification.md) for the open question on DCAT-AP-NO publishing as a separate later PLAN.
 
 ### Validation
 
@@ -381,7 +388,8 @@ All four doc files reflect the new shape; no stale references to "the 9 endpoint
 - `atlas-data/dbt/scripts/build_sources_seed.py` — YAML scanner → dbt seed CSV (validates required fields, refuses TODO placeholders)
 - `atlas-data/dbt/scripts/extract_lineage.py` — `manifest.json` → lineage seed CSV
 - `atlas-data/dbt/seeds/sources/_sources_manifest.csv` — generated, committed
-- `atlas-data/dbt/seeds/sources/schema.yml` — column descriptions + tests for the seed
+- `atlas-data/dbt/seeds/sources/eu_data_theme.csv` — 13-row EU Data Theme lookup
+- `atlas-data/dbt/seeds/sources/schema.yml` — column descriptions + tests for both seeds (incl. eu_theme→eu_data_theme.code relationships test)
 - `atlas-data/dbt/seeds/sources/lineage.csv` — generated, committed
 - `atlas-data/dbt/models/marts/api/mart_meta_sources.sql`
 - `atlas-data/dbt/models/marts/api/mart_meta_endpoints.sql`

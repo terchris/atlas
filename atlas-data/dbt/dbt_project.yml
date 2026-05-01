@@ -83,4 +83,7 @@ seeds:
       license: text
       license_url: text
       periodicity: text
+      eu_theme: text
       tags: text
+      # eu_data_theme.csv columns
+      uri: text

@@ -36,6 +36,7 @@ type Manifest = {
   license: string;
   license_url: string;
   periodicity: string | null;
+  eu_theme: string | null;
   tags: { provider: string; topic: string; geo: string; cadence: string };
 };
 
@@ -66,6 +67,25 @@ const GEO_OVERRIDES: Record<string, string> = {
   "ssb-klass-fylker": "fylke",
   "ssb-klass-kommuner": "kommune",
   "frr": "national",
+};
+
+/**
+ * Mapping from Atlas-domain `tags.topic` to EU Publications Office Data Theme
+ * (DCAT-AP `dcat:theme`). Coarser than Atlas topics — income / social /
+ * demographics / ngo-supply all collapse to SOCI ("Population and society"),
+ * which is the right call: SOCI is the federated-discovery bucket those
+ * datasets live in on data.norge.no and data.europa.eu. Atlas keeps the
+ * finer-grained `topic` for its own UX. See
+ * INVESTIGATE-felles-datakatalog-classification.md.
+ */
+const TOPIC_TO_EU_THEME: Record<string, string> = {
+  demographics: "SOCI",
+  income: "SOCI",
+  social: "SOCI",
+  "ngo-supply": "SOCI",
+  education: "EDUC",
+  health: "HEAL",
+  reference: "GOVE",
 };
 
 /** Last-resort topic when nothing matches. */
@@ -165,6 +185,7 @@ function parseExistingManifest(yaml: string): Manifest | null {
     license: r["license"] ?? "",
     license_url: r["license_url"] ?? "",
     periodicity: r["periodicity"] ?? null,
+    eu_theme: r["eu_theme"] ?? null,
     tags: {
       provider: tags["provider"] ?? "TODO",
       topic: tags["topic"] ?? "TODO",
@@ -294,6 +315,7 @@ function renderManifest(m: Manifest): string {
   lines.push(`license: ${m.license}`);
   lines.push(`license_url: ${m.license_url}`);
   lines.push(`periodicity: ${m.periodicity ?? ""}`);
+  lines.push(`eu_theme: ${m.eu_theme ?? ""}`);
   lines.push(``);
   lines.push(`tags:`);
   lines.push(`  provider: ${m.tags.provider}`);
@@ -439,6 +461,19 @@ function fillOne(sourceDir: string): { sourceId: string; changed: boolean; warni
   if (isTodo(m.tags.cadence)) {
     m.tags.cadence = deriveCadence(m.periodicity);
     touched = true;
+  }
+
+  // EU Data Theme — derived from topic via the static map (per
+  // INVESTIGATE-felles-datakatalog-classification.md). Cardinality is one;
+  // multi-theme sources can override by hand-editing the manifest.
+  if (isTodo(m.eu_theme)) {
+    const derived = TOPIC_TO_EU_THEME[m.tags.topic];
+    if (derived) {
+      m.eu_theme = derived;
+      touched = true;
+    } else {
+      warnings.push(`no eu_theme mapping for topic '${m.tags.topic}'`);
+    }
   }
 
   if (!touched) return { sourceId: m.source_id, changed: false, warnings };

@@ -10,6 +10,7 @@ publisher: Norges Røde Kors
 license: permissive
 license_url: https://www.rodekors.no/personvern/
 periodicity: irregular
+eu_theme: SOCI
 
 tags:
   provider: redcross

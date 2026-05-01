@@ -10,6 +10,7 @@ publisher: Statistisk sentralbyrå
 license: NLOD
 license_url: https://data.norge.no/nlod/no/2.0
 periodicity: irregular
+eu_theme: GOVE
 
 tags:
   provider: ssb

@@ -50,6 +50,7 @@ REQUIRED_FIELDS: tuple[str, ...] = (
     "license",
     "license_url",
     "periodicity",
+    "eu_theme",
 )
 
 REQUIRED_TAG_NAMESPACES: tuple[str, ...] = (
@@ -58,6 +59,14 @@ REQUIRED_TAG_NAMESPACES: tuple[str, ...] = (
     "geo",
     "cadence",
 )
+
+# EU Data Theme codes (EU Publications Office controlled vocabulary).
+# Validated against the eu_data_theme.csv seed; manifests with an unknown
+# code fail the gate. See INVESTIGATE-felles-datakatalog-classification.md.
+EU_DATA_THEME_CODES: frozenset[str] = frozenset({
+    "AGRI", "ECON", "EDUC", "ENER", "ENVI", "GOVE", "HEAL",
+    "INTR", "JUST", "REGI", "SOCI", "TECH", "TRAN",
+})
 
 CSV_FIELDS: tuple[str, ...] = REQUIRED_FIELDS + ("tags",)
 
@@ -92,6 +101,12 @@ def validate(manifest: dict[str, Any], path: Path) -> list[ValidationError]:
         for ns in REQUIRED_TAG_NAMESPACES:
             if _is_todo(tags.get(ns)):
                 errors.append(ValidationError(path, f"missing or TODO tag '{ns}'"))
+    eu_theme = manifest.get("eu_theme")
+    if isinstance(eu_theme, str) and eu_theme.strip() and eu_theme.strip() not in EU_DATA_THEME_CODES:
+        errors.append(ValidationError(
+            path,
+            f"unknown eu_theme '{eu_theme.strip()}' — expected one of {sorted(EU_DATA_THEME_CODES)}",
+        ))
     return errors
 
 
@@ -148,13 +163,14 @@ README_END = "<!-- END auto-generated source table -->"
 
 def render_readme_table(manifests: list[tuple[Path, dict[str, Any]]]) -> str:
     lines = [
-        "| Source | Provider | What it is | Topic | Geo | Cadence |",
-        "|---|---|---|---|---|---|",
+        "| Source | Provider | What it is | Topic | EU theme | Geo | Cadence |",
+        "|---|---|---|---|---|---|---|",
     ]
     for _, manifest in manifests:
         sid = manifest["source_id"]
         tags = manifest["tags"]
         desc = normalise_value(manifest.get("description"))
+        eu_theme = normalise_value(manifest.get("eu_theme"))
         # Cap description length so the table stays readable. Per-source
         # README is the place for full prose.
         if len(desc) > 140:
@@ -164,6 +180,7 @@ def render_readme_table(manifests: list[tuple[Path, dict[str, Any]]]) -> str:
             f"| {tags['provider']} "
             f"| {desc} "
             f"| {tags['topic']} "
+            f"| {eu_theme} "
             f"| {tags['geo']} "
             f"| {tags['cadence']} |"
         )
