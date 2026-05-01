@@ -142,8 +142,62 @@ def emit_csv(manifests: list[tuple[Path, dict[str, Any]]], out_path: Path) -> No
             writer.writerow(row)
 
 
+README_BEGIN = "<!-- BEGIN auto-generated source table — do not edit; run `uv run python atlas-data/dbt/scripts/build_sources_seed.py --readme atlas-data/ingest/src/sources/README.md` -->"
+README_END = "<!-- END auto-generated source table -->"
+
+
+def render_readme_table(manifests: list[tuple[Path, dict[str, Any]]]) -> str:
+    lines = [
+        "| Source | Provider | What it is | Topic | Geo | Cadence |",
+        "|---|---|---|---|---|---|",
+    ]
+    for _, manifest in manifests:
+        sid = manifest["source_id"]
+        tags = manifest["tags"]
+        desc = normalise_value(manifest.get("description"))
+        # Cap description length so the table stays readable. Per-source
+        # README is the place for full prose.
+        if len(desc) > 140:
+            desc = desc[:137].rstrip() + "…"
+        lines.append(
+            f"| [{sid}](./{sid}/) "
+            f"| {tags['provider']} "
+            f"| {desc} "
+            f"| {tags['topic']} "
+            f"| {tags['geo']} "
+            f"| {tags['cadence']} |"
+        )
+    return "\n".join(lines)
+
+
+def update_readme(readme_path: Path, manifests: list[tuple[Path, dict[str, Any]]]) -> bool:
+    """Replace the table between BEGIN/END markers in `readme_path`.
+
+    Returns True if the file was modified, False if it was already up to date.
+    Raises if the markers are missing.
+    """
+    if not readme_path.exists():
+        raise FileNotFoundError(f"{readme_path} does not exist")
+    text = readme_path.read_text()
+    if README_BEGIN not in text or README_END not in text:
+        raise ValueError(
+            f"{readme_path}: missing BEGIN/END markers. Add\n"
+            f"  {README_BEGIN}\n  ...\n  {README_END}\n"
+            "around the auto-generated table region."
+        )
+    before, _, rest = text.partition(README_BEGIN)
+    _, _, after = rest.partition(README_END)
+    new_block = f"{README_BEGIN}\n{render_readme_table(manifests)}\n{README_END}"
+    new_text = f"{before}{new_block}{after}"
+    if new_text == text:
+        return False
+    readme_path.write_text(new_text)
+    return True
+
+
 DEFAULT_SOURCES_DIR = Path(__file__).resolve().parents[2] / "ingest" / "src" / "sources"
 DEFAULT_OUT = Path(__file__).resolve().parents[1] / "seeds" / "sources" / "_sources_manifest.csv"
+DEFAULT_README = Path(__file__).resolve().parents[2] / "ingest" / "src" / "sources" / "README.md"
 
 
 def main() -> int:
@@ -161,6 +215,22 @@ def main() -> int:
         type=Path,
         default=DEFAULT_OUT,
         help=f"Path to seed CSV (default: {DEFAULT_OUT})",
+    )
+    parser.add_argument(
+        "--readme",
+        type=Path,
+        nargs="?",
+        const=DEFAULT_README,
+        default=None,
+        help=(
+            "Also update the markdown table in the given README.md "
+            f"between BEGIN/END markers (default if flag is bare: {DEFAULT_README})"
+        ),
+    )
+    parser.add_argument(
+        "--no-csv",
+        action="store_true",
+        help="Skip CSV emission (useful with --readme to update only the README)",
     )
     args = parser.parse_args()
 
@@ -185,8 +255,19 @@ def main() -> int:
         print(f"No manifest.yml files found under {sources_dir}", file=sys.stderr)
         return 1
 
-    emit_csv(manifests, args.out)
-    print(f"emitted {len(manifests)} rows → {args.out}", file=sys.stderr)
+    if not args.no_csv:
+        emit_csv(manifests, args.out)
+        print(f"emitted {len(manifests)} rows → {args.out}", file=sys.stderr)
+
+    if args.readme is not None:
+        try:
+            changed = update_readme(args.readme, manifests)
+        except (FileNotFoundError, ValueError) as exc:
+            print(str(exc), file=sys.stderr)
+            return 1
+        verb = "updated" if changed else "unchanged"
+        print(f"{verb} markdown table in {args.readme}", file=sys.stderr)
+
     return 0
 
 

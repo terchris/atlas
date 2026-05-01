@@ -11,28 +11,37 @@ One folder per upstream data source. Each folder is a self-contained unit: the c
 
 ## Implemented sources
 
-| Source | Provider | What it is | Run | Notes |
-|---|---|---|---|---|
-| [fhi-bor-alene](./fhi-bor-alene/) | FHI | Share of adults (16+) living alone, per region, annual | `npm run ingest:fhi-bor-alene` | First non-SSB source. POST-only data endpoint, json-stat2 response |
-| [fhi-mobbing](./fhi-mobbing/) | FHI | Bullying share, 7th and 10th grade, 3-year averages | `npm run ingest:fhi-mobbing` | Substitute for `udir-elevundersokelsen` (bullying); FHI 377 |
-| [fhi-trangbodd](./fhi-trangbodd/) | FHI | Overcrowded-housing share by region × age × education × housing-status | `npm run ingest:fhi-trangbodd` | Public substitute for Samfunnspuls's bespoke SSB extract; RATE measure only |
-| [fhi-vgs-gjennomforing](./fhi-vgs-gjennomforing/) | FHI | Upper-secondary completion rate by region × sex × parents-ed × immigration-cat | `npm run ingest:fhi-vgs-gjennomforing` | Substitute for `udir-sluttet-vgs`; dropout = 100 − completion |
-| [ssb-06083](./ssb-06083/) | SSB | Families by type (couple with/without kids, single parent, etc.) | `npm run ingest:ssb-06083` | 4 dims (adds FamilieType); single-parent share = vulnerability proxy |
-| [ssb-06913](./ssb-06913/) | SSB | Population change — folketilvekst, fødsler, dødsfall, flyttinger, per kommune/fylke, annual | `npm run ingest:ssb-06913` | 3 dims, 8 ContentsCodes, includes projections in future years |
-| [ssb-06944](./ssb-06944/) | SSB | Household income (median), income tax, household count by region × household type | `npm run ingest:ssb-06944` | First economy indicator; includes bydeler (delområder) |
-| [ssb-07459](./ssb-07459/) | SSB | Population by region, sex and single-year age | `npm run ingest:ssb-07459` | 5 dims (adds Kjonn + Alder); ~210 k cells — largest pull so far |
-| [ssb-06947](./ssb-06947/) | SSB | Whole-population low income (EU/OECD) — complements ssb-08764 (children) | `npm run ingest:ssb-06947` | Same 5 content codes as 08764; 1 036 regions × 20 years |
-| [ssb-08764](./ssb-08764/) | SSB | Persons under 18 in low-income households (EU/OECD scale), per kommune, annual | `npm run ingest:ssb-08764` | Default response = latest year only; see README |
-| [ssb-09429](./ssb-09429/) | SSB | Educational attainment by kommune × sex × level | `npm run ingest:ssb-09429` | 5 dims (Nivaa + Kjonn); sex mapped to male/female/all |
-| [ssb-12063](./ssb-12063/) | SSB KOSTRA | Municipal leisure services / voluntary youth associations | `npm run ingest:ssb-12063` | KOSTRA pattern |
-| [ssb-12131](./ssb-12131/) | SSB KOSTRA | Social-assistance monthly rates | `npm run ingest:ssb-12131` | KOSTRA pattern |
-| [ssb-12132](./ssb-12132/) | SSB KOSTRA | Welfare benefit-income rules | `npm run ingest:ssb-12132` | KOSTRA pattern |
-| [ssb-12292](./ssb-12292/) | SSB KOSTRA | Omsorgstjenester — nursing home + home care indicators | `npm run ingest:ssb-12292` | 49 content codes, KOSTRA region dim |
-| [ssb-12944](./ssb-12944/) | SSB | Persons in households with persistent low income (EU-60), 3-year rolling periods, broken down by age group | `npm run ingest:ssb-12944` | 4 dims (adds Alder); Tid stored as period text like "2022-2024" |
-| [ssb-13995](./ssb-13995/) | SSB | Social-assistance cases, amounts paid, support duration — 34 content codes | `npm run ingest:ssb-13995` | KOSTRA table with `KOKkommuneregion0000` dim; 2022-2025 only |
-| [ssb-klass-fylker](./ssb-klass-fylker/) | SSB Klass | Canonical active-fylker list (classification 104) | `npm run ingest:ssb-klass-fylker` | Dimension source; feeds `dim_fylke`. Includes residual `"99 Uoppgitt"`. |
-| [ssb-klass-kommuner](./ssb-klass-kommuner/) | SSB Klass | Canonical active-kommuner list (classification 131) | `npm run ingest:ssb-klass-kommuner` | Dimension source; feeds `dim_kommune`. REST API, not PxWebAPI. |
-| [redcross-branches](./redcross-branches/) | Red Cross Organizations API | Branches (HQ + Distrikt + Lokalforening) with per-branch activities | `npm run ingest:redcross-branches` | First NGO supply source; static JSON dump in v1, live API deferred |
+The table below is auto-generated from each source's `manifest.yml`. To regenerate after editing a manifest, run from the repo root:
+
+```bash
+uv run --directory atlas-data/dbt python scripts/build_sources_seed.py --readme atlas-data/ingest/src/sources/README.md
+```
+
+<!-- BEGIN auto-generated source table — do not edit; run `uv run python atlas-data/dbt/scripts/build_sources_seed.py --readme atlas-data/ingest/src/sources/README.md` -->
+| Source | Provider | What it is | Topic | Geo | Cadence |
+|---|---|---|---|---|---|
+| [fhi-bor-alene](./fhi-bor-alene/) | fhi | FHI Folkehelsestatistikk table 187 — "Personer som bor alene". Share of adults (16+) living alone, per region, annual. | demographics | kommune | annual |
+| [fhi-mobbing](./fhi-mobbing/) | fhi | FHI Folkehelsestatistikk table 377 — Mobbing, 7. og 10. klasse, 3-årige tall. Share of pupils reporting bullying in 7th and 10th grade, 3… | education | kommune | annual |
+| [fhi-trangbodd](./fhi-trangbodd/) | fhi | FHI Folkehelsestatistikk table 794 — Trangbodd_UTDANN. Share of population living in overcrowded housing by region × age × education × ho… | education | kommune | annual |
+| [fhi-vgs-gjennomforing](./fhi-vgs-gjennomforing/) | fhi | FHI Folkehelsestatistikk table 360 — Gjennomforing i videregående skole (utdann_3). Upper-secondary completion rate per region × sex × pa… | education | kommune | annual |
+| [frr](./frr/) | redcross | Norges Røde Kors's internal Frivillig Resource Register (FRR) — operational data on volunteer resources, status, and positions. Private;… | ngo-supply | national | irregular |
+| [redcross-branches](./redcross-branches/) | redcross | First NGO-supply ingest. Reads Norges Røde Kors's Organizations API data and writes it to two raw.* tables — chapters and per-chapter act… | ngo-supply | kommune | irregular |
+| [ssb-06083](./ssb-06083/) | ssb | SSB statistikkbanktabell 06083 — Familier, etter familietype. Family counts by type per region and year. | demographics | kommune | annual |
+| [ssb-06913](./ssb-06913/) | ssb | SSB statistikkbanktabell 06913 — Folkemengde 1. januar og endringer i kalenderåret (folketilvekst, fødsler, dødsfall, inn- og utflyttinger). | demographics | kommune | annual |
+| [ssb-06944](./ssb-06944/) | ssb | SSB statistikkbanktabell 06944 — Inntekt for husholdninger, etter husholdningstype. Median household income, income-tax, and household co… | income | kommune | annual |
+| [ssb-06947](./ssb-06947/) | ssb | SSB statistikkbanktabell 06947 — Personer i husholdninger med lavinntekt (EU- og OECD-skala). Whole-population complement to ssb-08764 (c… | income | kommune | annual |
+| [ssb-07459](./ssb-07459/) | ssb | SSB statistikkbanktabell 07459 — Alders- og kjønnsfordeling i kommuner, fylker og hele landets befolkning. | demographics | kommune | annual |
+| [ssb-08764](./ssb-08764/) | ssb | Ingestion module for SSB statistikkbanktabell 08764 — Personer under 18 år i husholdninger med lavinntekt (EU- og OECD-skala). | income | kommune | annual |
+| [ssb-09429](./ssb-09429/) | ssb | SSB statistikkbanktabell 09429 — Utdanningsnivå, etter kommune og kjønn. Educational attainment distribution per kommune × education leve… | education | kommune | annual |
+| [ssb-12063](./ssb-12063/) | ssb | SSB KOSTRA 12063 — Kommunale fritidstilbud. Municipal leisure services for children/youth and counts of volunteer youth associations rece… | ngo-supply | kommune | annual |
+| [ssb-12131](./ssb-12131/) | ssb | SSB KOSTRA 12131 — Stønadssatser for sosialhjelp. Monthly social-assistance rates set by each kommune. Same KOSTRA pattern as ssb-12292/1… | social | kommune | annual |
+| [ssb-12132](./ssb-12132/) | ssb | SSB KOSTRA 12132 — Utgifter som inngår i stønadssatsene for økonomisk sosialhjelp. Per-kommune rules showing whether child benefit / chil… | social | kommune | annual |
+| [ssb-12292](./ssb-12292/) | ssb | SSB KOSTRA 12292 — Omsorgstjenester (supplerende grunnlagstall). Nursing-home and home-care service indicators per kommune. | health | kommune | annual |
+| [ssb-12944](./ssb-12944/) | ssb | Ingestion module for SSB statistikkbanktabell 12944 — Personer i husholdninger med vedvarende lavinntekt (EU-60), 3-årsperiode. | income | kommune | annual |
+| [ssb-13995](./ssb-13995/) | ssb | SSB statistikkbanktabell 13995 — Sosialhjelpstilfeller, utbetalt beløp og stønadstid. Per-kommune counts of social-assistance cases and r… | social | kommune | annual |
+| [ssb-klass-fylker](./ssb-klass-fylker/) | ssb | SSB Klass classification 104 — Fylker. The canonical active-fylker list. Feeds dim_fylke. | reference | fylke | irregular |
+| [ssb-klass-kommuner](./ssb-klass-kommuner/) | ssb | SSB Klass classification 131 — Kommuner. The canonical active-kommuner list. Sourced from SSB's classification registry (Klass), not from… | reference | kommune | irregular |
+<!-- END auto-generated source table -->
 
 ## Planned sources
 
