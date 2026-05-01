@@ -24,28 +24,41 @@
 
 ## The `manifest.yml` shape
 
-Phase 2's deliverable. One file per source folder:
+Phase 2's deliverable. One file per source folder. **All structured catalogue metadata lives here**; per-source READMEs are prose-only (what the script does, quirks, TODOs, references). After commit, the manifest is human-authored — ingest runs do NOT modify it.
 
 ```yaml
 # atlas-data/ingest/src/sources/ssb-08764/manifest.yml
 source_id: ssb-08764
 upstream_id: "08764"
 upstream_url: https://www.ssb.no/statbank/table/08764
-upstream_title: |
-  Personer i husholdninger med en årlig inntekt etter skatt per forbruksenhet
-  under 60 prosent av medianinntekten, etter region og kjennemerker, 2008-2024
-description: |
-  Persons under 18 in low-income households (EU/OECD scale), per kommune,
-  annual. Default response = latest year only.
+upstream_title: "08764: Personer under 18 år i husholdninger med lavinntekt (EU- og OECD-skala). Antall og prosent (K) (B) 2005-2024"
+description: "Ingestion module for SSB statistikkbanktabell 08764 — Personer under 18 år i husholdninger med lavinntekt (EU- og OECD-skala)."
 publisher: Statistisk sentralbyrå
 license: NLOD
 license_url: https://data.norge.no/nlod/no/2.0
 periodicity: P1Y
+eu_theme: SOCI
+attribution: "Kilde: Statistisk sentralbyrå, tabell 08764"
+
 tags:
   provider: ssb
   topic: income
   geo: kommune
   cadence: annual
+
+dimensions:
+  - code: Region
+    meaning: Region (national / fylke / kommune / bydel / historical)
+    value_format: "Numeric code: 0 national, 2-digit fylke, 4-digit kommune, 6-digit bydel"
+    notes: "~1036 codes when pulling full range"
+  - code: ContentsCode
+    meaning: Statistic measure
+    value_format: 5 codes
+    notes: "Personer (count under 18), EUskala50/EUskala60 (% under 18 below 50%/60% of median, EU scale), OECDskala50/OECDskala60 (same, OECD scale)."
+  - code: Tid
+    meaning: Year
+    value_format: 4-digit year as text
+    notes: 2005–2024 (20 years); default v2-beta response is latest year only
 ```
 
 Required top-level fields:
@@ -55,39 +68,35 @@ Required top-level fields:
 | `source_id` | Folder name; primary key; e.g. `ssb-08764`. |
 | `upstream_id` | The upstream's own identifier (SSB table number, FHI dataset slug, etc.) so external developers can reconcile against upstream catalogues. |
 | `upstream_url` | Canonical link to the source on the upstream's own site. |
-| `upstream_title` | The source's authoritative title — usually Norwegian, sometimes bilingual. Better-worded than our internal description; gives developers something to search for in upstream tooling. |
+| `upstream_title` | The source's authoritative title — usually Norwegian, sometimes bilingual. Gives developers something to search for in upstream tooling. |
 | `description` | One paragraph framing the dataset for the customer-facing catalogue. |
 | `publisher` | Institution that publishes the data (often = provider but sometimes different — e.g. an SSB table published on behalf of another body). |
-| `license` + `license_url` | Critical for external developers building products. Default `NLOD` (Norwegian Licence for Open Government Data) for any Norwegian public-sector source if the upstream doesn't specify otherwise; declare explicitly anyway so consumers don't guess. |
+| `license` + `license_url` | Critical for external developers building products. Default `NLOD` (Norwegian Licence for Open Government Data) for Norwegian public-sector sources; declare explicitly so consumers don't guess. |
 | `periodicity` | ISO 8601 — `P1Y` annual, `P3M` quarterly, `P1M` monthly, `P1D` daily, `irregular` for ad-hoc / one-shot. More precise than the `cadence:` tag. |
+| `eu_theme` | EU Publications Office Data Theme code (one of: `AGRI`, `ECON`, `EDUC`, `ENER`, `ENVI`, `GOVE`, `HEAL`, `INTR`, `JUST`, `REGI`, `SOCI`, `TECH`, `TRAN`). Aligns Atlas with Felles datakatalog (DCAT-AP `dcat:theme`). Auto-derived from `tags.topic` by `fill-manifest-todos.ts`; lookup table at `seeds/sources/eu_data_theme.csv`. |
+| `attribution` | Citation string for academic / legal compliance (e.g. `Kilde: Statistisk sentralbyrå, tabell 08764`). External developers must use this when republishing or citing data. |
 
-The `tags:` map carries the four declared namespaces (`provider`, `topic`, `geo`, `cadence`) — exactly one value per namespace per source. The `cadence:` tag is the human-readable shorthand of `periodicity` (so users can filter by `cadence:annual` without writing ISO 8601); the dbt model can derive it from `periodicity` if you'd rather not duplicate.
+The `tags:` map carries the four declared namespaces (`provider`, `topic`, `geo`, `cadence`) — exactly one value per namespace per source. The `cadence:` tag is the human-readable shorthand of `periodicity` (so users can filter by `cadence:annual` without writing ISO 8601).
+
+The `dimensions:` list carries one entry per upstream dimension with `code` (upstream's own dimension name), `meaning` (short human-readable interpretation), `value_format` (encoding of values), `notes` (cardinality, gotchas). **Hand-authored** — this is editorial semantic content the catalogue can't compute. Phase 3's `mart_meta_dimensions` joins this with computed cardinality + example values from `raw.*` tables.
 
 The `layer:` namespace is not declared here; it's derived per-endpoint in Phase 3 from the schema + dbt model path.
 
-Plus a sibling change to capture upstream freshness: a new column on `raw.ingest_runs` named `upstream_updated_at timestamptz` (nullable). Ingest modules that can read a "last modified" timestamp from upstream metadata populate it; those that can't leave it null. The lag between `MAX(finished_at)` (we ingested) and `MAX(upstream_updated_at)` (they published) is then a meaningful signal in `mart_meta_sources`.
+Plus a sibling change to capture upstream freshness: a new column on `raw.ingest_runs` named `upstream_updated_at timestamptz` (nullable). The shared `recordIngestRun()` wrapper at `lib/ingest_run.ts` extracts the upstream's own "updated" timestamp from the JSON-stat2 response and writes it. The lag between `MAX(finished_at)` (we ingested) and `MAX(upstream_updated_at)` (they published) is a meaningful signal in `mart_meta_sources`.
 
 ### How a `manifest.yml` gets created — bootstrap once, human-authored after
 
-Two-stage workflow:
+Three-stage workflow:
 
-**(1) First time, automatic** — a Python script fetches the upstream's own metadata and emits a starter `manifest.yml`. For SSB sources, that's the PxWebAPI table-metadata response (carries title, publisher, last-update, variables). For FHI, json-stat2 metadata. The contributor runs:
+**(1) Skeleton — automatic.** `npm run sources:bootstrap-manifest -- <source_id>` fetches upstream metadata and writes a starter manifest with `source_id`, `upstream_id`, `upstream_url`, `upstream_title`, `publisher`, `periodicity`, `license` (NLOD default for SSB / FHI / KOSTRA) populated. Other fields left as TODO.
 
-```bash
-npm run sources:bootstrap-manifest -- ssb-08764
-# → writes atlas-data/ingest/src/sources/ssb-08764/manifest.yml with:
-#   - source_id, upstream_id, upstream_url filled
-#   - upstream_title verbatim from upstream
-#   - publisher, periodicity inferred from upstream metadata
-#   - license = NLOD (default for SSB / FHI / KOSTRA)
-#   - description, tags left as TODO placeholders for human review
-```
+**(2) Auto-fillable fields — automatic.** `npm run sources:fill-manifest-todos` parses the per-source README and fills `description`, `attribution`, and the four `tags:` namespaces (topic via regex first-match-wins; cadence derived from periodicity; geo via priority kommune > fylke > bydel; eu_theme derived from topic via static map). Idempotent — only fills TODO/empty fields.
 
-Then reviews the file, fills in `description` and `tags`, commits.
+**(3) Editorial — hand-authored.** The contributor authors the `dimensions:` list by hand (semantic content the catalogue can't derive). Reviews the auto-filled fields. Commits.
 
-**(2) From then on, human-authored** — the manifest is just a YAML file in the repo. Edits happen via PRs like any other code change. **Ingest runs never rewrite it.** That's the discipline: `npm run ingest:ssb-08764` reads upstream data, writes rows to `raw.ssb_08764`, captures `upstream_updated_at` to `raw.ingest_runs` — but does not touch `manifest.yml`. Avoids "PR diff has mystery edits from a CI run."
+After commit the manifest is human-authored — ingest runs do NOT modify it. `npm run ingest:<source_id>` reads upstream data, writes rows to `raw.<source_id>`, captures `upstream_updated_at` to `raw.ingest_runs` — but does not touch `manifest.yml`. Avoids "PR diff has mystery edits from a CI run."
 
-For the 21 existing sources (Phase 2.3): same bootstrap, in batch. SSB (14) + FHI (4) cover via the script — that's 18 sources auto-bootstrapped. The 3 outliers (`redcross-branches`, `frr`, `ssb-klass-*` if treated separately from SSB) are authored manually using a small template; they don't have provider APIs the bootstrap script understands. ~30 minutes total to bootstrap + review all 21.
+For the 21 existing sources (Phase 2.3): same flow in batch. SSB (14) + FHI (4) cover via the bootstrap script — that's 18 sources auto-bootstrapped. The 3 outliers (`redcross-branches`, `frr`, `ssb-klass-*` if treated separately from SSB) use `MANUAL_OVERRIDES` in `fill-manifest-todos.ts`. Dimension blocks were hand-authored in ~30 minutes by reading each README's `## Response shape` section.
 
 ---
 
