@@ -4,7 +4,7 @@
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Active (Phase 2 in progress)
+## Status: Active (Phase 2 complete; Phase 3 next)
 
 **Goal**: Execute [INVESTIGATE-customer-frontend-data-display.md](INVESTIGATE-customer-frontend-data-display.md). After this PLAN, the customer frontend's `/data` page shows every queryable endpoint across `api_v1`, `marts`, and `raw` schemas (everything that isn't `private_marts`), each tagged with `provider`, `topic`, `geo`, `cadence`, and `layer`. A filter sidebar lets users slice the catalogue by any combination of tags. A first-class sources list (`/data/sources` + `api_v1.meta_sources`) carries provider, upstream URL, last-ingested timestamp, and downstream-model count for each of Atlas's 21 ingest sources.
 
@@ -133,7 +133,7 @@ Promote the existing Markdown table at `atlas-data/ingest/src/sources/README.md`
 
 ### Tasks
 
-- [ ] 2.1 Document the `manifest.yml` schema in `atlas-data/ingest/src/sources/README.md`'s "Conventions" section: the eight required top-level fields (`source_id`, `upstream_id`, `upstream_url`, `upstream_title`, `description`, `publisher`, `license`, `license_url`, `periodicity`), the required `tags:` map with the four declared namespaces, allowed values per namespace.
+- [x] 2.1 Document the `manifest.yml` schema in `atlas-data/ingest/src/sources/README.md`'s "Conventions" section: the eight required top-level fields (`source_id`, `upstream_id`, `upstream_url`, `upstream_title`, `description`, `publisher`, `license`, `license_url`, `periodicity`), the required `tags:` map with the four declared namespaces, allowed values per namespace.
 - [x] 2.2 Define the initial vocabulary for each tag namespace:
   - `provider`: `ssb` / `fhi` / `redcross` / `brreg` (extend as new providers land)
   - `topic`: `demographics` / `income` / `education` / `health` / `social` / `ngo-supply` / `reference` (initial coarse set; refine as needed)
@@ -167,9 +167,9 @@ Promote the existing Markdown table at `atlas-data/ingest/src/sources/README.md`
 - [x] 2.7 **Migration**: add `atlas-data/migrations/NNN_raw_ingest_runs_upstream_updated.sql` adding `upstream_updated_at timestamptz` to `raw.ingest_runs` (nullable; idempotent via `ADD COLUMN IF NOT EXISTS`). Run `npm run migrate` to apply.
 
   Landed as `atlas-data/migrations/028_raw_ingest_runs_upstream_updated.sql`.
-- [ ] 2.8 **Update SSB + FHI ingest modules** (the easy wave) to populate `upstream_updated_at`. SSB's PxWebAPI metadata returns an `updated` field at the table level; FHI's json-stat2 has equivalent. The bootstrap script in 2.3 already extracts these — wire the same extraction into the runtime ingest path (one-place change in the run-record helper at `atlas-data/ingest/src/lib/ingest-runs.ts` or equivalent). Red Cross / Brreg can adopt the same convention later — leaving them null is fine; column is nullable.
+- [x] 2.8 **Update SSB + FHI ingest modules** (the easy wave) to populate `upstream_updated_at`. SSB's PxWebAPI metadata returns an `updated` field at the table level; FHI's json-stat2 has equivalent. The bootstrap script in 2.3 already extracts these — wire the same extraction into the runtime ingest path (one-place change in the run-record helper at `atlas-data/ingest/src/lib/ingest-runs.ts` or equivalent). Red Cross / Brreg can adopt the same convention later — leaving them null is fine; column is nullable.
 
-  **Partial (2026-05-01):** The shared run-record helper [`atlas-data/ingest/src/lib/scraping/ingest_runs.ts`](../../../../atlas-data/ingest/src/lib/scraping/ingest_runs.ts) now accepts `upstreamUpdatedAt?: Date | null` on `FinishRunArgs` and writes it. SSB + FHI ingest modules still need to be wired to pass it through.
+  **Outcome (2026-05-01):** Scope was bigger than the plan implied — the existing SSB/FHI ingest modules didn't write to `raw.ingest_runs` at all; the start/finish helpers were only used by the NGO scraping infrastructure. Built a new shared wrapper at [`atlas-data/ingest/src/lib/ingest_run.ts`](../../../../atlas-data/ingest/src/lib/ingest_run.ts) (`recordIngestRun(sourceId, work)`) that owns the start/finish + sql lifecycle, then wired all 21 source modules through it. Per-source delta is ~10 lines: `return recordIngestRun(SOURCE_ID, async () => { ... return { output, record: { rowsParsed, upstreamUpdatedAt: new Date(resp.updated) } }; })`. SSB (14) + FHI (4) populate `upstreamUpdatedAt` from `resp.updated`; KLASS (2) + redcross/frr (2) pass null or a derived timestamp where the upstream concept exists. Live test: `npm run ingest:ssb-08764` returned `upstream_updated_at: "2026-01-16T07:00:00.000Z"` on `run_id 2`.
 - [x] 2.9 Update `atlas-data/ingest/src/sources/README.md`: either (a) auto-generate from the YAMLs via `build_sources_seed.py` adding a markdown-table emission flag (one-way duplication, single source of truth in the YAMLs), or (b) replace the table with a pointer at `api_v1.meta_sources`. **Recommendation: (a)** — contributors browsing the repo without the API still see a readable index, and the table can never go stale.
 
   Implemented option (a): `build_sources_seed.py` now accepts `--readme [PATH]` (defaults to `atlas-data/ingest/src/sources/README.md`). Replaces content between `<!-- BEGIN auto-generated source table -->` / `<!-- END auto-generated source table -->` markers with a 6-column table (Source, Provider, What it is, Topic, Geo, Cadence). Idempotent — re-running on an unchanged manifest set is a no-op. The legacy `Notes` column is dropped; per-source READMEs already capture editorial commentary.
@@ -376,6 +376,7 @@ All four doc files reflect the new shape; no stale references to "the 9 endpoint
 - `atlas-data/ingest/src/sources/<id>/manifest.yml` — 21 new files, one per source (auto-bootstrapped + auto-filled)
 - `atlas-data/ingest/scripts/bootstrap-manifest.ts` — provider-aware bootstrap (SSB PxWebAPI extractor + FHI extractor + fallback template); npm alias `sources:bootstrap-manifest`
 - `atlas-data/ingest/scripts/fill-manifest-todos.ts` — README-parsing TODO-filler (description, upstream_id, upstream_title, license, tags) with topic/geo regex rules + `MANUAL_OVERRIDES` for redcross-branches/frr; npm alias `sources:fill-manifest-todos`
+- `atlas-data/ingest/src/lib/ingest_run.ts` — shared `recordIngestRun(sourceId, work)` wrapper that owns start/finish + sql lifecycle; replaces the original "one-place change" plan
 - `atlas-data/migrations/028_raw_ingest_runs_upstream_updated.sql` — adds `upstream_updated_at` column
 - `atlas-data/dbt/scripts/build_sources_seed.py` — YAML scanner → dbt seed CSV (validates required fields, refuses TODO placeholders)
 - `atlas-data/dbt/scripts/extract_lineage.py` — `manifest.json` → lineage seed CSV

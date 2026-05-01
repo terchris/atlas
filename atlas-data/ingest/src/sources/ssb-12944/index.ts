@@ -7,7 +7,8 @@ import { fileURLToPath } from "node:url";
 import { fetchPxTableData, parseJsonStat2 } from "../../lib/pxweb.js";
 import { logger } from "../../lib/logger.js";
 import { writeNdjson } from "../../lib/output.js";
-import { closeSql, getSql, upsert } from "../../lib/postgres.js";
+import { getSql, upsert } from "../../lib/postgres.js";
+import { recordIngestRun } from "../../lib/ingest_run.js";
 import type { PxRow } from "../../lib/types.js";
 
 /** Row shape for raw.ssb_12944. Region × Alder × ContentsCode × Tid cell. */
@@ -54,89 +55,97 @@ export type Ssb12944Summary = {
 };
 
 export async function run(): Promise<Ssb12944Summary> {
-  logger.info("source.start", { source_id: SOURCE_ID, table_id: TABLE_ID });
-  const started = Date.now();
+  return recordIngestRun(SOURCE_ID, async () => {
+    logger.info("source.start", { source_id: SOURCE_ID, table_id: TABLE_ID });
+    const started = Date.now();
 
-  const resp = await fetchPxTableData({ tableId: TABLE_ID, lang: "no" });
-  const pxRows = parseJsonStat2(resp);
-  const rows = pxRows.map(toRow);
+    const resp = await fetchPxTableData({ tableId: TABLE_ID, lang: "no" });
+    const pxRows = parseJsonStat2(resp);
+    const rows = pxRows.map(toRow);
 
-  const periods = new Set<string>();
-  const ageGroups = new Set<string>();
-  const regions = new Set<string>();
-  const contentsCodes = new Set<string>();
-  for (const r of rows) {
-    periods.add(r.period);
-    ageGroups.add(r.age_group);
-    regions.add(r.region_code);
-    contentsCodes.add(r.contents_code);
-  }
+    const periods = new Set<string>();
+    const ageGroups = new Set<string>();
+    const regions = new Set<string>();
+    const contentsCodes = new Set<string>();
+    for (const r of rows) {
+      periods.add(r.period);
+      ageGroups.add(r.age_group);
+      regions.add(r.region_code);
+      contentsCodes.add(r.contents_code);
+    }
 
-  await writeNdjson(OUTPUT_PATH, rows);
+    await writeNdjson(OUTPUT_PATH, rows);
 
-  let rowsWritten = 0;
-  const wroteToPostgres = Boolean(process.env["DATABASE_URL"]);
-  if (wroteToPostgres) {
-    const sql = getSql();
-    const now = new Date();
-    const pgRows = rows.map((r) => ({
-      region_code: r.region_code,
-      age_group: r.age_group,
-      period: r.period,
-      contents_code: r.contents_code,
-      contents_label: r.contents_label,
-      value: r.value,
-      status: r.status,
-      loaded_at: now,
-    }));
-    logger.info("postgres.upsert.start", {
-      table: TARGET_TABLE,
-      row_count: pgRows.length,
-    });
-    const upsertStart = Date.now();
-    rowsWritten = await upsert(sql, {
-      table: TARGET_TABLE,
-      rows: pgRows,
-      columns: WRITE_COLUMNS,
-      conflictKeys: CONFLICT_KEYS,
-    });
-    logger.info("postgres.upsert.done", {
-      table: TARGET_TABLE,
+    let rowsWritten = 0;
+    const wroteToPostgres = Boolean(process.env["DATABASE_URL"]);
+    if (wroteToPostgres) {
+      const sql = getSql();
+      const now = new Date();
+      const pgRows = rows.map((r) => ({
+        region_code: r.region_code,
+        age_group: r.age_group,
+        period: r.period,
+        contents_code: r.contents_code,
+        contents_label: r.contents_label,
+        value: r.value,
+        status: r.status,
+        loaded_at: now,
+      }));
+      logger.info("postgres.upsert.start", {
+        table: TARGET_TABLE,
+        row_count: pgRows.length,
+      });
+      const upsertStart = Date.now();
+      rowsWritten = await upsert(sql, {
+        table: TARGET_TABLE,
+        rows: pgRows,
+        columns: WRITE_COLUMNS,
+        conflictKeys: CONFLICT_KEYS,
+      });
+      logger.info("postgres.upsert.done", {
+        table: TARGET_TABLE,
+        rows_written: rowsWritten,
+        duration_ms: Date.now() - upsertStart,
+      });
+    } else {
+      logger.info("postgres.upsert.skipped", {
+        reason: "DATABASE_URL not set — ran in NDJSON-only mode",
+      });
+    }
+
+    const summary = {
+      source_id: SOURCE_ID,
+      row_count: rows.length,
+      duration_ms: Date.now() - started,
+      output_path: OUTPUT_PATH,
+      wrote_to_postgres: wroteToPostgres,
       rows_written: rowsWritten,
-      duration_ms: Date.now() - upsertStart,
-    });
-    await closeSql();
-  } else {
-    logger.info("postgres.upsert.skipped", {
-      reason: "DATABASE_URL not set — ran in NDJSON-only mode",
-    });
-  }
+      upstream_updated: resp.updated,
+      period_count: periods.size,
+      age_group_count: ageGroups.size,
+      region_count: regions.size,
+      contents_codes: [...contentsCodes],
+    };
+    logger.info("source.done", summary);
 
-  const summary = {
-    source_id: SOURCE_ID,
-    row_count: rows.length,
-    duration_ms: Date.now() - started,
-    output_path: OUTPUT_PATH,
-    wrote_to_postgres: wroteToPostgres,
-    rows_written: rowsWritten,
-    upstream_updated: resp.updated,
-    period_count: periods.size,
-    age_group_count: ageGroups.size,
-    region_count: regions.size,
-    contents_codes: [...contentsCodes],
-  };
-  logger.info("source.done", summary);
-
-  return {
-    rowCount: rows.length,
-    outputPath: OUTPUT_PATH,
-    wroteToPostgres,
-    rowsWritten,
-    periods: [...periods].sort(),
-    ageGroups: [...ageGroups].sort(),
-    contentsCodes: [...contentsCodes],
-    regionCount: regions.size,
-  };
+    return {
+      output: {
+        rowCount: rows.length,
+        outputPath: OUTPUT_PATH,
+        wroteToPostgres,
+        rowsWritten,
+        periods: [...periods].sort(),
+        ageGroups: [...ageGroups].sort(),
+        contentsCodes: [...contentsCodes],
+        regionCount: regions.size,
+      },
+      record: {
+        rowsScraped: rows.length,
+        rowsParsed: rows.length,
+        upstreamUpdatedAt: new Date(resp.updated),
+      },
+    };
+  });
 }
 
 function toRow(px: PxRow): Ssb12944Row {

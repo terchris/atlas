@@ -7,7 +7,8 @@ import { fileURLToPath } from "node:url";
 import { fetchPxTableData, parseJsonStat2 } from "../../lib/pxweb.js";
 import { logger } from "../../lib/logger.js";
 import { writeNdjson } from "../../lib/output.js";
-import { closeSql, getSql, upsert } from "../../lib/postgres.js";
+import { getSql, upsert } from "../../lib/postgres.js";
+import { recordIngestRun } from "../../lib/ingest_run.js";
 import type { PxRow } from "../../lib/types.js";
 
 type Ssb06083Row = {
@@ -34,36 +35,45 @@ const WRITE_COLUMNS = [
 const CONFLICT_KEYS = ["region_code", "family_type", "year", "contents_code"] as const;
 
 export async function run() {
-  logger.info("source.start", { source_id: SOURCE_ID, table_id: TABLE_ID });
-  const started = Date.now();
+  return recordIngestRun(SOURCE_ID, async () => {
+    logger.info("source.start", { source_id: SOURCE_ID, table_id: TABLE_ID });
+    const started = Date.now();
 
-  const resp = await fetchPxTableData({
-    tableId: TABLE_ID,
-    lang: "no",
-    filters: { Tid: "TOP(1)", ContentsCode: "*", Region: "*", FamilieType: "*" },
-  });
-
-  const rows = parseJsonStat2(resp).map(toRow);
-  await writeNdjson(OUTPUT_PATH, rows);
-
-  let rowsWritten = 0;
-  const wroteToPostgres = Boolean(process.env["DATABASE_URL"]);
-  if (wroteToPostgres) {
-    const sql = getSql();
-    const now = new Date();
-    const pgRows = rows.map((r) => ({ ...r, loaded_at: now }));
-    rowsWritten = await upsert(sql, {
-      table: TARGET_TABLE, rows: pgRows,
-      columns: WRITE_COLUMNS, conflictKeys: CONFLICT_KEYS,
+    const resp = await fetchPxTableData({
+      tableId: TABLE_ID,
+      lang: "no",
+      filters: { Tid: "TOP(1)", ContentsCode: "*", Region: "*", FamilieType: "*" },
     });
-    await closeSql();
-  }
 
-  logger.info("source.done", {
-    source_id: SOURCE_ID, row_count: rows.length,
-    duration_ms: Date.now() - started,
-    wrote_to_postgres: wroteToPostgres, rows_written: rowsWritten,
-    upstream_updated: resp.updated,
+    const rows = parseJsonStat2(resp).map(toRow);
+    await writeNdjson(OUTPUT_PATH, rows);
+
+    let rowsWritten = 0;
+    const wroteToPostgres = Boolean(process.env["DATABASE_URL"]);
+    if (wroteToPostgres) {
+      const sql = getSql();
+      const now = new Date();
+      const pgRows = rows.map((r) => ({ ...r, loaded_at: now }));
+      rowsWritten = await upsert(sql, {
+        table: TARGET_TABLE, rows: pgRows,
+        columns: WRITE_COLUMNS, conflictKeys: CONFLICT_KEYS,
+      });
+    }
+
+    logger.info("source.done", {
+      source_id: SOURCE_ID, row_count: rows.length,
+      duration_ms: Date.now() - started,
+      wrote_to_postgres: wroteToPostgres, rows_written: rowsWritten,
+      upstream_updated: resp.updated,
+    });
+    return {
+      output: undefined,
+      record: {
+        rowsScraped: rows.length,
+        rowsParsed: rows.length,
+        upstreamUpdatedAt: new Date(resp.updated),
+      },
+    };
   });
 }
 

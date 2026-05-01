@@ -7,7 +7,45 @@ One folder per upstream data source. Each folder is a self-contained unit: the c
 - **One folder per source.** Folder name = source id (matches the id in `docs/research/samfunnspuls/data-sources.md`).
 - **Entry point is `index.ts`.** Exports `SOURCE_ID`, `run()`, and any types callers need.
 - **README.md alongside the code.** Implementation notes, observed quirks, known issues. Strategic/catalogue-level metadata stays in `docs/research/samfunnspuls/data-sources.md`, not duplicated here.
+- **manifest.yml alongside the code.** Catalogue-level metadata about the source (publisher, license, periodicity, tags). See [manifest.yml schema](#manifestyml-schema) below.
 - **npm script per source**: `"ingest:<id>": "tsx src/sources/<id>/index.ts"` in [`../../package.json`](../../package.json).
+- **`run()` wraps work in `recordIngestRun()`**. The wrapper inserts a row into `raw.ingest_runs` (start), executes the work, and updates the row with `rows_parsed` / `upstream_updated_at` / `exit_code` (finish). Source modules do NOT call `closeSql()` themselves — the wrapper owns sql lifecycle.
+
+### manifest.yml schema
+
+Every source folder ships a `manifest.yml` that drives the catalogue's `marts._sources_manifest` seed (PLAN-007 phase 2). After bootstrap, the file is human-authored — ingest runs do NOT modify it.
+
+**Required top-level fields:**
+
+| Field | Description |
+|---|---|
+| `source_id` | Folder name; primary key (e.g. `ssb-08764`). |
+| `upstream_id` | The upstream's own identifier (SSB table number, FHI dataset slug, etc.). |
+| `upstream_url` | Canonical link to the source on the upstream's site. |
+| `upstream_title` | The source's authoritative title at the upstream (usually Norwegian). |
+| `description` | One paragraph for the customer-facing catalogue. |
+| `publisher` | Institution that publishes the data (often equals provider). |
+| `license` | License token. Default `NLOD` for Norwegian public-sector sources. |
+| `license_url` | URL to the license terms. |
+| `periodicity` | ISO 8601 — `P1Y` annual, `P3M` quarterly, `P1M` monthly, `P1D` daily, or `irregular`. |
+
+**Required `tags:` namespaces** (exactly one value per namespace):
+
+| Namespace | Allowed values |
+|---|---|
+| `provider` | `ssb` / `fhi` / `redcross` / `brreg` |
+| `topic` | `demographics` / `income` / `education` / `health` / `social` / `ngo-supply` / `reference` |
+| `geo` | `kommune` / `fylke` / `national` / `bydel` |
+| `cadence` | `annual` / `quarterly` / `monthly` / `irregular` / `one-shot` |
+
+**Authoring workflow** (see [`contributors/ingest-modules.md`](../../../../website/docs/contributors/ingest-modules.md) for the full walkthrough):
+
+1. `npm run sources:bootstrap-manifest -- <source_id>` — fetches upstream metadata + writes a skeleton.
+2. `npm run sources:fill-manifest-todos` — auto-fills description + tags from this source's README.
+3. Review the generated YAML; spot-check `tags.topic` (regex first-match-wins).
+4. Commit alongside the source code.
+
+After commit, future field changes happen via PR like any other code change. The seed CSV at `atlas-data/dbt/seeds/sources/_sources_manifest.csv` (and the `Implemented sources` table below) regenerate from these YAMLs via `uv run python atlas-data/dbt/scripts/build_sources_seed.py --readme`.
 
 ## Implemented sources
 

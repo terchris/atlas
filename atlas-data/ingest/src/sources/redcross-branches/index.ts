@@ -22,7 +22,8 @@ import { readFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { logger } from "../../lib/logger.js";
-import { closeSql, getSql, upsert } from "../../lib/postgres.js";
+import { getSql, upsert } from "../../lib/postgres.js";
+import { recordIngestRun } from "../../lib/ingest_run.js";
 
 export const SOURCE_ID = "redcross-branches";
 const BRANCHES_TABLE = "raw.redcross_branches";
@@ -116,26 +117,27 @@ function emptyToNull(v: string | undefined | null): string | null {
 }
 
 export async function run(): Promise<void> {
-  logger.info("source.start", { source_id: SOURCE_ID, dump_path: DUMP_PATH });
-  const started = Date.now();
+  return recordIngestRun(SOURCE_ID, async () => {
+    logger.info("source.start", { source_id: SOURCE_ID, dump_path: DUMP_PATH });
+    const started = Date.now();
 
-  const text = await readFile(DUMP_PATH, "utf8");
-  const dump = JSON.parse(text) as Dump;
-  if (!dump.data?.branches?.length) {
-    throw new Error(`Dump at ${DUMP_PATH} has no branches`);
-  }
-  logger.info("dump.parsed", {
-    total_count: dump.metadata?.totalCount,
-    timestamp: dump.metadata?.timestamp,
-    branches: dump.data.branches.length,
-  });
+    const text = await readFile(DUMP_PATH, "utf8");
+    const dump = JSON.parse(text) as Dump;
+    if (!dump.data?.branches?.length) {
+      throw new Error(`Dump at ${DUMP_PATH} has no branches`);
+    }
+    logger.info("dump.parsed", {
+      total_count: dump.metadata?.totalCount,
+      timestamp: dump.metadata?.timestamp,
+      branches: dump.data.branches.length,
+    });
 
-  const branchRows: BranchRow[] = [];
-  const activityRows: ActivityRow[] = [];
-  const seenBranchIds = new Set<string>();
-  const seenActivityKeys = new Set<string>();
+    const branchRows: BranchRow[] = [];
+    const activityRows: ActivityRow[] = [];
+    const seenBranchIds = new Set<string>();
+    const seenActivityKeys = new Set<string>();
 
-  for (const b of dump.data.branches) {
+    for (const b of dump.data.branches) {
     if (!b.branchId || !b.branchType || !b.branchName) {
       throw new Error(`Branch missing required identity fields: ${JSON.stringify(b).slice(0, 200)}`);
     }
@@ -187,16 +189,15 @@ export async function run(): Promise<void> {
         local_activity_name: emptyToNull(a.localActivityName),
       });
     }
-  }
+    }
 
-  logger.info("rows.shaped", {
-    branches: branchRows.length,
-    activities: activityRows.length,
-  });
+    logger.info("rows.shaped", {
+      branches: branchRows.length,
+      activities: activityRows.length,
+    });
 
-  const sql = getSql();
-  const now = new Date();
-  try {
+    const sql = getSql();
+    const now = new Date();
     const branchUpsertStart = Date.now();
     const branchesWritten = await upsert(sql, {
       table: BRANCHES_TABLE,
@@ -229,9 +230,21 @@ export async function run(): Promise<void> {
       branches: branchRows.length,
       activities: activityRows.length,
     });
-  } finally {
-    await closeSql();
-  }
+
+    return {
+      output: undefined,
+      record: {
+        rowsScraped: dump.data.branches.length,
+        rowsParsed: branchRows.length + activityRows.length,
+        // Dump-file ingest: the upstream's own export timestamp is the
+        // freshness signal. Falls back to null if the dump didn't include
+        // metadata.timestamp.
+        upstreamUpdatedAt: dump.metadata?.timestamp
+          ? new Date(dump.metadata.timestamp)
+          : null,
+      },
+    };
+  });
 }
 
 run().catch((err) => {
