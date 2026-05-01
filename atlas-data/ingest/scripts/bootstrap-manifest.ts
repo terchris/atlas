@@ -145,12 +145,17 @@ function extractSsbKlass(sourceId: string): ManifestStub {
  * shape varies per indicator. For v1, we don't fetch — emit a template with
  * NLOD defaults; the human fills in upstream_title + upstream_id from the
  * existing per-source README.
+ *
+ * upstream_url left as TODO — fill-manifest-todos.ts derives the API
+ * endpoint URL from the upstream_id once known
+ * (https://statistikk-data.fhi.no/api/open/v1/nokkel/table/<id>). The
+ * generic fhi.no homepage is not a useful catalogue link for shoppers.
  */
 function extractFhi(sourceId: string): ManifestStub {
   return {
     source_id: sourceId,
     upstream_id: "TODO",
-    upstream_url: "https://www.fhi.no/",
+    upstream_url: "TODO",
     upstream_title: null,
     publisher: "Folkehelseinstituttet",
     license: "NLOD",

@@ -4,7 +4,7 @@
 
 source_id: fhi-trangbodd
 upstream_id: 794
-upstream_url: https://www.fhi.no/
+upstream_url: https://statistikk-data.fhi.no/api/open/v1/nokkel/table/794
 upstream_title: "Trangbodd_UTDANN"
 description: "FHI Folkehelsestatistikk table 794 — Trangbodd_UTDANN. Share of population living in overcrowded housing by region × age × education × housing-status × measure."
 publisher: Folkehelseinstituttet

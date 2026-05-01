@@ -115,7 +115,7 @@ const DESCRIPTION_FALLBACKS: Record<string, string> = {
 const MANUAL_OVERRIDES: Record<string, Partial<Manifest>> = {
   "redcross-branches": {
     upstream_id: "organizations-api",
-    upstream_url: "https://www.rodekors.no/",
+    upstream_url: "https://api.redcross.no/nrx/v1/organizations",
     upstream_title: "Norges Røde Kors Organizations API — branches + per-branch activities",
     license: "permissive",
     license_url: "https://www.rodekors.no/personvern/",
@@ -123,6 +123,8 @@ const MANUAL_OVERRIDES: Record<string, Partial<Manifest>> = {
   },
   "frr": {
     upstream_id: "frr",
+    // FRR is internal — no public canonical URL; rodekors.no is the closest
+    // public-facing parent reference.
     upstream_url: "https://www.rodekors.no/",
     upstream_title: "Frivillig Resource Register (FRR) — Norges Røde Kors internal volunteer register",
     attribution: "Norges Røde Kors, Frivillig Resource Register (FRR) — internal data",
@@ -472,10 +474,26 @@ function fillOne(sourceDir: string): { sourceId: string; changed: boolean; warni
       touched = true;
     } else warnings.push("no upstream_id");
   }
-  // upstream_url override
-  if (isTodo(m.upstream_url) && overrides.upstream_url) {
-    m.upstream_url = overrides.upstream_url;
-    touched = true;
+  // upstream_url — manual override > derived from upstream_id (FHI/SSB) >
+  // README's `URL` row. The generic provider homepage (fhi.no, rodekors.no)
+  // is not a useful catalogue link for shoppers; we deep-link to the
+  // table/API endpoint instead.
+  if (isTodo(m.upstream_url)) {
+    let derived: string | null = null;
+    if (overrides.upstream_url) derived = overrides.upstream_url;
+    else if (m.source_id.startsWith("fhi-") && !isTodo(m.upstream_id)) {
+      derived = `https://statistikk-data.fhi.no/api/open/v1/nokkel/table/${m.upstream_id}`;
+    } else if (m.source_id.startsWith("ssb-klass-") && !isTodo(m.upstream_id)) {
+      derived = `https://www.ssb.no/klass/klassifikasjoner/${m.upstream_id}`;
+    } else if (m.source_id.startsWith("ssb-") && !isTodo(m.upstream_id)) {
+      derived = `https://www.ssb.no/statbank/table/${m.upstream_id}`;
+    } else {
+      derived = lookupReadmeUpstream(readme, ["URL"]);
+    }
+    if (derived) {
+      m.upstream_url = derived;
+      touched = true;
+    } else warnings.push("no upstream_url");
   }
   // upstream_title
   if (isTodo(m.upstream_title)) {

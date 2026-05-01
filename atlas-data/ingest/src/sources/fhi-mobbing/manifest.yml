@@ -4,7 +4,7 @@
 
 source_id: fhi-mobbing
 upstream_id: 377
-upstream_url: https://www.fhi.no/
+upstream_url: https://statistikk-data.fhi.no/api/open/v1/nokkel/table/377
 upstream_title: "Mobbing, 7. og 10. klasse, 3-årige tall"
 description: "FHI Folkehelsestatistikk table 377 — Mobbing, 7. og 10. klasse, 3-årige tall. Share of pupils reporting bullying in 7th and 10th grade, 3-year rolling averages per region."
 publisher: Folkehelseinstituttet

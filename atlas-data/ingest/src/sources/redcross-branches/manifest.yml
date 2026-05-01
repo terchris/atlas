@@ -4,7 +4,7 @@
 
 source_id: redcross-branches
 upstream_id: organizations-api
-upstream_url: https://www.rodekors.no/
+upstream_url: https://api.redcross.no/nrx/v1/organizations
 upstream_title: "Norges Røde Kors Organizations API — branches + per-branch activities"
 description: "First NGO-supply ingest. Reads Norges Røde Kors's Organizations API data and writes it to two raw.* tables — chapters and per-chapter activities."
 publisher: Norges Røde Kors
