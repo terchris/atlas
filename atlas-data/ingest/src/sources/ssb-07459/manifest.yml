@@ -11,9 +11,32 @@ license: NLOD
 license_url: https://data.norge.no/nlod/no/2.0
 periodicity: P1Y
 eu_theme: SOCI
+attribution: "Kilde: Statistisk sentralbyrå, tabell 07459"
 
 tags:
   provider: ssb
   topic: demographics
   geo: kommune
   cadence: annual
+
+dimensions:
+  - code: Region
+    meaning: Region (kommune / fylke / nasjon)
+    value_format: "Numeric code: 0 national, 2-digit fylke, 4-digit kommune"
+    notes: "~994 codes"
+  - code: Kjonn
+    meaning: Sex
+    value_format: 2 codes
+    notes: '"1" Menn (men), "2" Kvinner (women)'
+  - code: Alder
+    meaning: Single-year age
+    value_format: 3-character text code
+    notes: '"000" through "104" + "105+" residual; 106 codes total'
+  - code: ContentsCode
+    meaning: Statistic measure
+    value_format: 1 code
+    notes: "Personer1 (resident count)"
+  - code: Tid
+    meaning: Year
+    value_format: 4-digit year as text
+    notes: 1986–2026 (41 years; default response is latest year only). Largest pull in the catalogue at ~210 k cells when wildcarded.

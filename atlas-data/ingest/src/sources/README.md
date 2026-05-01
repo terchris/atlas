@@ -29,6 +29,7 @@ Every source folder ships a `manifest.yml` that drives the catalogue's `marts._s
 | `license_url` | URL to the license terms. |
 | `periodicity` | ISO 8601 — `P1Y` annual, `P3M` quarterly, `P1M` monthly, `P1D` daily, or `irregular`. |
 | `eu_theme` | EU Publications Office Data Theme code (one of: `AGRI`, `ECON`, `EDUC`, `ENER`, `ENVI`, `GOVE`, `HEAL`, `INTR`, `JUST`, `REGI`, `SOCI`, `TECH`, `TRAN`). Coarser than `tags.topic`; aligns Atlas with Felles datakatalog + DCAT-AP. Auto-derived from `topic` by `fill-manifest-todos.ts`. |
+| `attribution` | Citation string for academic / legal compliance (e.g. `Kilde: Statistisk sentralbyrå, tabell 08764`). Surfaced via `mart_meta_sources` so external developers can attribute Atlas data correctly. |
 
 **Required `tags:` namespaces** (exactly one value per namespace):
 
@@ -38,6 +39,22 @@ Every source folder ships a `manifest.yml` that drives the catalogue's `marts._s
 | `topic` | `demographics` / `income` / `education` / `health` / `social` / `ngo-supply` / `reference` |
 | `geo` | `kommune` / `fylke` / `national` / `bydel` |
 | `cadence` | `annual` / `quarterly` / `monthly` / `irregular` / `one-shot` |
+
+**Required `dimensions:` block** — list each upstream dimension the source delivers, with editorial semantic context the catalogue can't compute:
+
+```yaml
+dimensions:
+  - code: Region                  # upstream's own dimension code
+    meaning: Region (kommune / fylke / nasjon / bydel / historical)
+    value_format: "Numeric code: 0 national, 2-digit fylke, 4-digit kommune, 6-digit bydel"
+    notes: "~1036 codes when pulling full range"
+  - code: ContentsCode
+    meaning: Statistic measure
+    value_format: 5 codes
+    notes: "Personer (count), EUskala50/60 (% below 50%/60% of median, EU scale), …"
+```
+
+`code` and `meaning` are required per dimension; `value_format` and `notes` may be empty strings. The catalogue's Phase-3 `mart_meta_dimensions` joins this editorial seed with computed cardinality + example values from `raw.*` tables, so shoppers see "what each column means" + "what values it actually contains" in one view.
 
 **Authoring workflow** (see [`contributors/ingest-modules.md`](../../../../website/docs/contributors/ingest-modules.md) for the full walkthrough):
 

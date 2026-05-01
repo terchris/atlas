@@ -174,6 +174,14 @@ Promote the existing Markdown table at `atlas-data/ingest/src/sources/README.md`
 
   Implemented option (a): `build_sources_seed.py` now accepts `--readme [PATH]` (defaults to `atlas-data/ingest/src/sources/README.md`). Replaces content between `<!-- BEGIN auto-generated source table -->` / `<!-- END auto-generated source table -->` markers with a 7-column table (Source, Provider, What it is, Topic, EU theme, Geo, Cadence). Idempotent — re-running on an unchanged manifest set is a no-op. The legacy `Notes` column is dropped; per-source READMEs already capture editorial commentary.
 
+- [x] 2.11 **Invert the manifest/README contract** (extension to original plan, prompted by user observation that the per-source README carried more structured info than `manifest.yml`). After this step, all *structured* catalogue metadata lives in `manifest.yml`; the README is reduced to *prose-only* contributor notes (what the script does, quirks, TODOs, references). Outcome:
+  - `manifest.yml` schema gains two more required fields: `attribution` (citation string for academic/legal compliance, parsed from each README's `## Upstream` table or its `Attribution: *Kilde …*` prose fallback) and `dimensions:` (list of `{code, meaning, value_format, notes}` per upstream dimension — semantic interpretation that a computed `mart_meta_dimensions` from `raw.*` can't produce on its own).
+  - `fill-manifest-todos.ts` extracts `attribution` automatically; `dimensions:` is hand-authored once per source (cost: ~30 min for the 21-source backfill).
+  - `build_sources_seed.py` now validates `attribution` + the `dimensions:` shape and emits a second seed at `seeds/sources/_sources_dimensions.csv` (90 rows × 21 sources). Lands as `marts._sources_dimensions`. Phase 3's `mart_meta_dimensions` will join this editorial seed with computed cardinality + example values from `raw.*`.
+  - `seeds/sources/schema.yml` gains `_sources_dimensions` with a `relationships` test on `source_id → _sources_manifest.source_id` and `not_null` on `code` / `meaning`. dbt test: 24/24 passing.
+  - **Contributor guide** at `website/docs/contributors/ingest-modules.md` rewritten — README sections required to be prose-only (drop the Markdown `## Upstream`, `## Response shape`, `## Row shape emitted`, `## How to run locally` requirements). Adding-a-source workflow now points contributors at `npm run sources:bootstrap-manifest` + `npm run sources:fill-manifest-todos` + hand-authoring the `dimensions:` block. **Source for new entries: manifest.yml only — never duplicated in Markdown.**
+  - **21 existing READMEs slimmed** by a one-off script: dropped the now-redundant structured sections, kept Title + What the script does + Known quirks + Known issues + References. Average: ~60% line reduction. fhi-bor-alene went 93 → 30 lines; ssb-08764 went 118 → 44 lines.
+
 - [x] 2.10 **Add `eu_theme` field + `eu_data_theme` lookup seed** (extension to original plan, per [INVESTIGATE-felles-datakatalog-classification.md](../backlog/INVESTIGATE-felles-datakatalog-classification.md)). Aligns Atlas with Felles datakatalog's EU-tema facet (DCAT-AP `dcat:theme`) without giving up the domain-precise `topic` for our own UX.
   - `manifest.yml` schema gains `eu_theme:` top-level field — one of the 13 EU Publications Office Data Theme codes (AGRI / ECON / EDUC / ENER / ENVI / GOVE / HEAL / INTR / JUST / REGI / SOCI / TECH / TRAN). Required (validated by `build_sources_seed.py`); auto-derived from `tags.topic` by `fill-manifest-todos.ts` via a static `TOPIC_TO_EU_THEME` map.
   - New seed at `atlas-data/dbt/seeds/sources/eu_data_theme.csv` — 13 rows × 4 columns (`code`, `uri`, `label_en`, `label_no`). URIs are stable EU IRIs (`http://publications.europa.eu/resource/authority/data-theme/{CODE}`). Lands as `marts.eu_data_theme`.
@@ -388,8 +396,9 @@ All four doc files reflect the new shape; no stale references to "the 9 endpoint
 - `atlas-data/dbt/scripts/build_sources_seed.py` — YAML scanner → dbt seed CSV (validates required fields, refuses TODO placeholders)
 - `atlas-data/dbt/scripts/extract_lineage.py` — `manifest.json` → lineage seed CSV
 - `atlas-data/dbt/seeds/sources/_sources_manifest.csv` — generated, committed
+- `atlas-data/dbt/seeds/sources/_sources_dimensions.csv` — 90-row editorial dimension reference (one row per source × dimension)
 - `atlas-data/dbt/seeds/sources/eu_data_theme.csv` — 13-row EU Data Theme lookup
-- `atlas-data/dbt/seeds/sources/schema.yml` — column descriptions + tests for both seeds (incl. eu_theme→eu_data_theme.code relationships test)
+- `atlas-data/dbt/seeds/sources/schema.yml` — column descriptions + tests for all three seeds (incl. eu_theme→eu_data_theme.code + dimensions.source_id→_sources_manifest.source_id relationships)
 - `atlas-data/dbt/seeds/sources/lineage.csv` — generated, committed
 - `atlas-data/dbt/models/marts/api/mart_meta_sources.sql`
 - `atlas-data/dbt/models/marts/api/mart_meta_endpoints.sql`

@@ -11,9 +11,24 @@ license: NLOD
 license_url: https://data.norge.no/nlod/no/2.0
 periodicity: P1Y
 eu_theme: SOCI
+attribution: "Kilde: Statistisk sentralbyrå, tabell 12063"
 
 tags:
   provider: ssb
   topic: ngo-supply
   geo: kommune
   cadence: annual
+
+dimensions:
+  - code: KOKkommuneregion0000
+    meaning: KOSTRA region (kommune / fylke / aggregate)
+    value_format: "Numeric code: 0 national, 2-digit fylke, 4-digit kommune; KOSTRA-specific codes for aggregates"
+    notes: "~891 codes — mapped to region_code at ingest"
+  - code: ContentsCode
+    meaning: Statistic measure
+    value_format: 15 codes
+    notes: Youth-centre count + capacity + voluntary-association counts receiving public support (kommunale fritidstilbud / frivillige ungdomsforeninger)
+  - code: Tid
+    meaning: Year
+    value_format: 4-digit year as text
+    notes: 2015–2024

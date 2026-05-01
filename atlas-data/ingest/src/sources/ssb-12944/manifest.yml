@@ -11,9 +11,28 @@ license: NLOD
 license_url: https://data.norge.no/nlod/no/2.0
 periodicity: P1Y
 eu_theme: SOCI
+attribution: "Kilde: Statistisk sentralbyrå, tabell 12944"
 
 tags:
   provider: ssb
   topic: income
   geo: kommune
   cadence: annual
+
+dimensions:
+  - code: Region
+    meaning: Region (kommune / fylke / nasjon / bydel / grunnkrets / historical)
+    value_format: "Numeric code: 0 national, 2-digit fylke, 4-digit kommune, 6-digit bydel"
+    notes: "1036 codes"
+  - code: Alder
+    meaning: Age band
+    value_format: 6 codes
+    notes: '999A (all ages), 00-17, 18-34, 35-49, 50-66, 067+'
+  - code: ContentsCode
+    meaning: Statistic measure
+    value_format: 2 codes
+    notes: PersonerSeksti (count) and EUskalaSeksti (% below 60% of median, EU scale, 3-year persistent)
+  - code: Tid
+    meaning: 3-year rolling period
+    value_format: '"YYYY-YYYY" period label'
+    notes: 12 periods — 2011-2013 through 2022-2024

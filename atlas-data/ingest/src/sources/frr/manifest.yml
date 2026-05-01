@@ -11,9 +11,31 @@ license: internal
 license_url: internal
 periodicity: irregular
 eu_theme: SOCI
+attribution: "Norges Røde Kors, Frivillig Resource Register (FRR) — internal data"
 
 tags:
   provider: redcross
   topic: ngo-supply
   geo: national
   cadence: irregular
+
+dimensions:
+  # Not a statistical table — FRR delivers per-NGO opaque JSON resources.
+  # Atlas stores the raw payload verbatim and shreds in dbt
+  # (private_marts/frr_*.sql).
+  - code: id
+    meaning: FRR resource UUID
+    value_format: text
+    notes: Stable across snapshots; primary key
+  - code: ngo_orgnr
+    meaning: Owning NGO orgnr (Brreg)
+    value_format: 9-digit numeric
+    notes: Resolved from atlas-ngo-landscape/landscape.json at ingest; sample-ngo uses synthetic 999999999
+  - code: sist_oppdatert
+    meaning: FRR-side last-updated timestamp
+    value_format: timestamptz
+    notes: Per-resource freshness; max across run is captured as upstream_updated_at
+  - code: raw_payload
+    meaning: FRR record payload
+    value_format: jsonb
+    notes: Verbatim JSON from FRR — schema is FRR-managed, mirrored without flattening

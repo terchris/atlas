@@ -51,7 +51,18 @@ REQUIRED_FIELDS: tuple[str, ...] = (
     "license_url",
     "periodicity",
     "eu_theme",
+    "attribution",
 )
+
+DIMENSION_FIELDS: tuple[str, ...] = (
+    "source_id",
+    "code",
+    "meaning",
+    "value_format",
+    "notes",
+)
+
+REQUIRED_DIMENSION_KEYS: tuple[str, ...] = ("code", "meaning")
 
 REQUIRED_TAG_NAMESPACES: tuple[str, ...] = (
     "provider",
@@ -107,6 +118,19 @@ def validate(manifest: dict[str, Any], path: Path) -> list[ValidationError]:
             path,
             f"unknown eu_theme '{eu_theme.strip()}' — expected one of {sorted(EU_DATA_THEME_CODES)}",
         ))
+    dims = manifest.get("dimensions")
+    if not isinstance(dims, list) or len(dims) == 0:
+        errors.append(ValidationError(path, "'dimensions' must be a non-empty list"))
+    else:
+        for i, dim in enumerate(dims):
+            if not isinstance(dim, dict):
+                errors.append(ValidationError(path, f"dimensions[{i}] must be a mapping"))
+                continue
+            for key in REQUIRED_DIMENSION_KEYS:
+                if _is_todo(dim.get(key)):
+                    errors.append(ValidationError(
+                        path, f"dimensions[{i}] missing or TODO '{key}'"
+                    ))
     return errors
 
 
@@ -155,6 +179,27 @@ def emit_csv(manifests: list[tuple[Path, dict[str, Any]]], out_path: Path) -> No
             row = {field: normalise_value(manifest.get(field)) for field in REQUIRED_FIELDS}
             row["tags"] = render_tags(manifest["tags"])
             writer.writerow(row)
+
+
+def emit_dimensions_csv(manifests: list[tuple[Path, dict[str, Any]]], out_path: Path) -> int:
+    """Emit one row per source × dimension. Returns total dimension count."""
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    total = 0
+    with out_path.open("w", newline="") as fh:
+        writer = csv.DictWriter(fh, fieldnames=DIMENSION_FIELDS)
+        writer.writeheader()
+        for _, manifest in manifests:
+            sid = manifest["source_id"]
+            for dim in manifest.get("dimensions") or []:
+                writer.writerow({
+                    "source_id": sid,
+                    "code": normalise_value(dim.get("code")),
+                    "meaning": normalise_value(dim.get("meaning")),
+                    "value_format": normalise_value(dim.get("value_format")),
+                    "notes": normalise_value(dim.get("notes")),
+                })
+                total += 1
+    return total
 
 
 README_BEGIN = "<!-- BEGIN auto-generated source table — do not edit; run `uv run python atlas-data/dbt/scripts/build_sources_seed.py --readme atlas-data/ingest/src/sources/README.md` -->"
@@ -214,6 +259,7 @@ def update_readme(readme_path: Path, manifests: list[tuple[Path, dict[str, Any]]
 
 DEFAULT_SOURCES_DIR = Path(__file__).resolve().parents[2] / "ingest" / "src" / "sources"
 DEFAULT_OUT = Path(__file__).resolve().parents[1] / "seeds" / "sources" / "_sources_manifest.csv"
+DEFAULT_DIMENSIONS_OUT = Path(__file__).resolve().parents[1] / "seeds" / "sources" / "_sources_dimensions.csv"
 DEFAULT_README = Path(__file__).resolve().parents[2] / "ingest" / "src" / "sources" / "README.md"
 
 
@@ -232,6 +278,12 @@ def main() -> int:
         type=Path,
         default=DEFAULT_OUT,
         help=f"Path to seed CSV (default: {DEFAULT_OUT})",
+    )
+    parser.add_argument(
+        "--dimensions-out",
+        type=Path,
+        default=DEFAULT_DIMENSIONS_OUT,
+        help=f"Path to dimensions seed CSV (default: {DEFAULT_DIMENSIONS_OUT})",
     )
     parser.add_argument(
         "--readme",
@@ -275,6 +327,8 @@ def main() -> int:
     if not args.no_csv:
         emit_csv(manifests, args.out)
         print(f"emitted {len(manifests)} rows → {args.out}", file=sys.stderr)
+        dim_count = emit_dimensions_csv(manifests, args.dimensions_out)
+        print(f"emitted {dim_count} dimension rows → {args.dimensions_out}", file=sys.stderr)
 
     if args.readme is not None:
         try:

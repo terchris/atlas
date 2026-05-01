@@ -11,9 +11,36 @@ license: NLOD
 license_url: https://data.norge.no/nlod/no/2.0
 periodicity: P1Y
 eu_theme: EDUC
+attribution: "Kilde: Folkehelseinstituttet, Folkehelsestatistikk tabell 794 (Trangbodd)"
 
 tags:
   provider: fhi
   topic: education
   geo: kommune
   cadence: annual
+
+dimensions:
+  - code: GEO
+    meaning: Region (mixed kommune / fylke / bydel / nasjon)
+    value_format: 1- to 6-character numeric code
+    notes: "~409 codes"
+  - code: AAR
+    meaning: Year
+    value_format: '"YYYY_YYYY" range string (single-year)'
+    notes: "10 years, 2015_2015 through 2024_2024"
+  - code: ALDER
+    meaning: Age band
+    value_format: text band code
+    notes: 9 age bands
+  - code: UTDANN
+    meaning: Education level
+    value_format: 5 codes
+    notes: '"0" (all education levels) + "1"–"4" (specific levels). Atlas filters to "0" at ingest to stay under the 50k-row cap.'
+  - code: BODD
+    meaning: Housing crowding status
+    value_format: 2 codes
+    notes: "trangt (overcrowded), uoppgitt (unknown)"
+  - code: MEASURE_TYPE
+    meaning: Which number
+    value_format: 3 codes
+    notes: RATE (percent — Atlas keeps only this), SMR (standardised ratio), TELLER (count)

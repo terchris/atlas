@@ -26,6 +26,13 @@ import { fileURLToPath } from "node:url";
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const SOURCES_DIR = resolve(SCRIPT_DIR, "../src/sources");
 
+type Dimension = {
+  code: string;
+  meaning: string;
+  value_format: string;
+  notes: string;
+};
+
 type Manifest = {
   source_id: string;
   upstream_id: string;
@@ -37,7 +44,9 @@ type Manifest = {
   license_url: string;
   periodicity: string | null;
   eu_theme: string | null;
+  attribution: string | null;
   tags: { provider: string; topic: string; geo: string; cadence: string };
+  dimensions: Dimension[];
 };
 
 /**
@@ -110,11 +119,13 @@ const MANUAL_OVERRIDES: Record<string, Partial<Manifest>> = {
     upstream_title: "Norges Røde Kors Organizations API — branches + per-branch activities",
     license: "permissive",
     license_url: "https://www.rodekors.no/personvern/",
+    attribution: "Norges Røde Kors, Organizations API",
   },
   "frr": {
     upstream_id: "frr",
     upstream_url: "https://www.rodekors.no/",
     upstream_title: "Frivillig Resource Register (FRR) — Norges Røde Kors internal volunteer register",
+    attribution: "Norges Røde Kors, Frivillig Resource Register (FRR) — internal data",
   },
 };
 
@@ -186,12 +197,67 @@ function parseExistingManifest(yaml: string): Manifest | null {
     license_url: r["license_url"] ?? "",
     periodicity: r["periodicity"] ?? null,
     eu_theme: r["eu_theme"] ?? null,
+    attribution: r["attribution"] ?? null,
     tags: {
       provider: tags["provider"] ?? "TODO",
       topic: tags["topic"] ?? "TODO",
       geo: tags["geo"] ?? "TODO",
       cadence: tags["cadence"] ?? "TODO",
     },
+    // Dimensions are hand-authored by the contributor; the parser preserves
+    // whatever's already in the YAML. The parser is intentionally minimal —
+    // it doesn't try to reconstruct the dimensions array shape.
+    dimensions: parseExistingDimensions(yaml),
+  };
+}
+
+/**
+ * Best-effort parser for the `dimensions:` block. The block is a YAML list of
+ * mappings; we don't pretty-print or normalise — we just preserve the raw
+ * bytes between `dimensions:` and the next top-level key, so subsequent
+ * passes through the renderer don't lose hand-authored content. Returns []
+ * when the block is missing or empty.
+ */
+function parseExistingDimensions(yaml: string): Dimension[] {
+  const lines = yaml.split("\n");
+  let inDims = false;
+  let current: Partial<Dimension> | null = null;
+  const dims: Dimension[] = [];
+  for (const raw of lines) {
+    if (raw.startsWith("dimensions:")) {
+      inDims = true;
+      continue;
+    }
+    if (!inDims) continue;
+    if (/^\S/.test(raw) || raw === "") {
+      // dedented out of dimensions block
+      if (current && current.code) dims.push(completeDimension(current));
+      current = null;
+      inDims = false;
+      continue;
+    }
+    const itemMatch = raw.match(/^\s*-\s+code:\s*(.*)$/);
+    if (itemMatch) {
+      if (current && current.code) dims.push(completeDimension(current));
+      current = { code: unquote(itemMatch[1]!.trim()) };
+      continue;
+    }
+    const keyMatch = raw.match(/^\s+(meaning|value_format|notes):\s*(.*)$/);
+    if (keyMatch && current) {
+      const [, key, val] = keyMatch;
+      (current as Record<string, string>)[key!] = unquote(val!.trim());
+    }
+  }
+  if (current && current.code) dims.push(completeDimension(current));
+  return dims;
+}
+
+function completeDimension(p: Partial<Dimension>): Dimension {
+  return {
+    code: p.code ?? "",
+    meaning: p.meaning ?? "",
+    value_format: p.value_format ?? "",
+    notes: p.notes ?? "",
   };
 }
 
@@ -316,12 +382,25 @@ function renderManifest(m: Manifest): string {
   lines.push(`license_url: ${m.license_url}`);
   lines.push(`periodicity: ${m.periodicity ?? ""}`);
   lines.push(`eu_theme: ${m.eu_theme ?? ""}`);
+  lines.push(`attribution: ${blockOrInline(m.attribution ?? "")}`);
   lines.push(``);
   lines.push(`tags:`);
   lines.push(`  provider: ${m.tags.provider}`);
   lines.push(`  topic: ${m.tags.topic}`);
   lines.push(`  geo: ${m.tags.geo}`);
   lines.push(`  cadence: ${m.tags.cadence}`);
+  lines.push(``);
+  if (m.dimensions.length === 0) {
+    lines.push(`dimensions: []  # TODO list each upstream dimension: code, meaning, value_format, notes`);
+  } else {
+    lines.push(`dimensions:`);
+    for (const d of m.dimensions) {
+      lines.push(`  - code: ${quote(d.code)}`);
+      lines.push(`    meaning: ${quote(d.meaning)}`);
+      lines.push(`    value_format: ${quote(d.value_format)}`);
+      lines.push(`    notes: ${quote(d.notes)}`);
+    }
+  }
   lines.push(``);
   return lines.join("\n");
 }
@@ -413,6 +492,25 @@ function fillOne(sourceDir: string): { sourceId: string; changed: boolean; warni
   if (isTodo(m.license_url) && overrides.license_url) {
     m.license_url = overrides.license_url;
     touched = true;
+  }
+  // attribution — prefer the Upstream-table row, fall back to the
+  // "Attribution: *Kilde: ...*" prose pattern (used by some KOSTRA sources
+  // whose Upstream table is condensed to Table id + URL).
+  if (isTodo(m.attribution)) {
+    const fromTable = lookupReadmeUpstream(readme, ["Attribution"]);
+    const fromProse = readme.match(/Attribution:\s*\*?([^*\n]+)\*?/i)?.[1] ?? null;
+    const v = fromTable ?? fromProse ?? overrides.attribution ?? null;
+    if (v) {
+      // Strip surrounding markdown emphasis (*Kilde: ...*) and trailing
+      // sentence punctuation that follows in prose form.
+      const cleaned = v
+        .replace(/^\*+/, "")
+        .replace(/\*+$/, "")
+        .replace(/[.;]+$/, "")
+        .trim();
+      m.attribution = cleaned;
+      touched = true;
+    } else warnings.push("no attribution");
   }
   // license / license_url — keep what bootstrap set unless explicit TODO
   if (isTodo(m.license)) {

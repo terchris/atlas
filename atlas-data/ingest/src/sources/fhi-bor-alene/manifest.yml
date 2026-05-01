@@ -11,9 +11,28 @@ license: NLOD
 license_url: https://data.norge.no/nlod/no/2.0
 periodicity: P1Y
 eu_theme: SOCI
+attribution: "Kilde: Folkehelseinstituttet, Folkehelsestatistikk — tabell 187"
 
 tags:
   provider: fhi
   topic: demographics
   geo: kommune
   cadence: annual
+
+dimensions:
+  - code: GEO
+    meaning: Region (mixed kommune / fylke / bydel / nasjon)
+    value_format: 1- to 6-character numeric code
+    notes: 0 (national), 03 (Oslo fylke), 0301 (Oslo kommune), 030101 (bydel)
+  - code: AAR
+    meaning: Year or period
+    value_format: '"YYYY_YYYY" range string'
+    notes: "2025_2025 for single-year, 2023_2025 for 3-year averages"
+  - code: ALDER
+    meaning: Age band
+    value_format: '"min_max" range string'
+    notes: '16_120 (all adults 16+), 16_29, 65_74, 75_84, 85_120'
+  - code: MEASURE_TYPE
+    meaning: Which number
+    value_format: 3 codes
+    notes: RATE (percent), SMR (standardised ratio vs national), TELLER (absolute count)

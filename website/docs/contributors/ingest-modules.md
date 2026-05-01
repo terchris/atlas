@@ -10,7 +10,9 @@ For the full end-to-end workflow that ties this into dbt and the catalogue, see 
 
 - **One folder per source.** Folder name = source id (matches the catalogue id in [`docs/research/samfunnspuls/data-sources.md`](https://github.com/terchris/atlas/blob/main/docs/research/samfunnspuls/data-sources.md)).
 - **Entry point is `index.ts`.** Exports `SOURCE_ID`, `run()`, and any types callers need.
-- **README.md alongside the code.** Implementation notes, observed quirks, known issues. Strategic / catalogue-level metadata stays in the data-sources catalogue, not duplicated here.
+- **manifest.yml alongside the code** — *all* structured catalogue metadata (publisher, license, periodicity, dimensions, tags, EU theme, attribution). The catalogue's customer-facing `mart_meta_*` views read from this. See the [manifest.yml schema](https://github.com/terchris/atlas/blob/main/atlas-data/ingest/src/sources/README.md#manifestyml-schema).
+- **README.md alongside the code** — *prose-only* contributor notes: what the script does, observed quirks, known issues, references. Anything structured belongs in `manifest.yml`, not Markdown.
+- **`run()` wraps work in `recordIngestRun()`** — the wrapper inserts into `raw.ingest_runs` and owns sql lifecycle. Source modules do NOT call `closeSql()` themselves.
 - **npm script per source**: `"ingest:<id>": "tsx src/sources/<id>/index.ts"` in [`atlas-data/ingest/package.json`](https://github.com/terchris/atlas/blob/main/atlas-data/ingest/package.json).
 
 The full implemented-sources catalogue (currently 20 sources — SSB, FHI, Brreg, Red Cross) is in the in-source [`atlas-data/ingest/src/sources/README.md`](https://github.com/terchris/atlas/blob/main/atlas-data/ingest/src/sources/README.md). New entries land there during step 6 of [adding-a-source.md](./adding-a-source.md).
@@ -23,10 +25,10 @@ Most Atlas sources are API-based (SSB PxWebAPI, FHI's PxWebAPI, Red Cross Organi
 
 1. Create `atlas-data/ingest/src/sources/<source-id>/` (folder name matches the catalogue `id`).
 2. Copy [`atlas-data/ingest/src/sources/ssb-08764/index.ts`](https://github.com/terchris/atlas/blob/main/atlas-data/ingest/src/sources/ssb-08764/index.ts) and adapt: new `SOURCE_ID`, new `TABLE_ID` (or fetch logic for non-SSB sources), adjust `toIndicatorRow()` if the upstream dimensions differ.
-3. Write `<source-id>/README.md` describing upstream, response shape, known quirks, how to run, references back to the catalogue.
-4. Add a row to the implemented-sources table in [`atlas-data/ingest/src/sources/README.md`](https://github.com/terchris/atlas/blob/main/atlas-data/ingest/src/sources/README.md).
+3. Write `<source-id>/README.md` — prose-only: what the script does, known quirks, known issues / TODOs, references. *No structured tables* (those live in `manifest.yml`).
+4. Bootstrap the manifest: `npm run sources:bootstrap-manifest -- <source-id>` then `npm run sources:fill-manifest-todos`. Review the generated `manifest.yml` and **author the `dimensions:` block** by hand (see schema).
 5. Add `"ingest:<source-id>": "tsx src/sources/<source-id>/index.ts"` to [`atlas-data/ingest/package.json`](https://github.com/terchris/atlas/blob/main/atlas-data/ingest/package.json).
-6. Ensure the corresponding catalogue entry is up to date.
+6. Regenerate the implemented-sources index: `cd atlas-data/dbt && uv run python scripts/build_sources_seed.py --readme`. This rebuilds the seed CSVs and the auto-generated table in [`atlas-data/ingest/src/sources/README.md`](https://github.com/terchris/atlas/blob/main/atlas-data/ingest/src/sources/README.md).
 
 Typical per-source effort for an SSB table: ~30 minutes. API ingests from NGOs (e.g. Red Cross) similar.
 
@@ -50,19 +52,27 @@ Typical per-source effort for an SSB table: ~30 minutes. API ingests from NGOs (
 
 ### Per-source README structure
 
+The README is **prose-only** — quirks, decisions, debugging audit trail. Anything *structured* (provider, URL, license, attribution, dimension semantics, tags) belongs in `manifest.yml`. The README never duplicates manifest fields.
+
 Required sections, in this order:
 
 1. `# <source-id>` header + one-line description
 2. **What the script does** — 1–3 sentences
-3. **Upstream** — table with: Provider, Table id, URL, Auth, Format, Licence, Attribution
-4. **Response shape** — table of dimensions and their value counts
-5. **Row shape emitted** — one JSON sample, including a suppressed example if relevant
-6. **How to run locally** — the `npm run ingest:<source-id>` command
-7. **Known quirks** — observations from actually running the script (prefix codes, default filter behaviour, unexpected suppressions, etc.)
-8. **Known issues / TODOs** — open items the next maintainer should know about
-9. **References** — catalogue entry, shared libs, related docs
+3. **Known quirks** — observations from actually running the script (prefix codes, default filter behaviour, unexpected suppressions, server-side guards that change response shape, etc.)
+4. **Known issues / TODOs** — open items the next maintainer should know about
+5. **References** — links to upstream docs, shared libs, related decisions
 
-Treat the README as the audit trail for someone debugging this source three months later when upstream changes shape.
+Treat the README as the audit trail for someone debugging this source three months later when upstream changes shape. The catalogue entry — what shoppers see — is generated from `manifest.yml`, not the README.
+
+### Per-source `manifest.yml`
+
+Every source folder ships a `manifest.yml` that drives the catalogue's `marts._sources_manifest` and `marts._sources_dimensions` seeds. Required fields are documented in detail in [`atlas-data/ingest/src/sources/README.md`](https://github.com/terchris/atlas/blob/main/atlas-data/ingest/src/sources/README.md#manifestyml-schema):
+
+- 10 top-level fields (`source_id`, `upstream_id`, `upstream_url`, `upstream_title`, `description`, `publisher`, `license`, `license_url`, `periodicity`, `eu_theme`, `attribution`)
+- 4-namespace `tags:` map (`provider`, `topic`, `geo`, `cadence`)
+- `dimensions:` list — one entry per upstream dimension with `code`, `meaning`, `value_format`, `notes`
+
+`build_sources_seed.py` validates required fields + the `eu_theme` allowlist + the `dimensions:` shape, then emits two seed CSVs the dbt project loads as `marts._sources_manifest` and `marts._sources_dimensions`. After commit, the manifest is human-authored — ingest runs do NOT modify it.
 
 ---
 

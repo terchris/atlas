@@ -11,9 +11,28 @@ license: NLOD
 license_url: https://data.norge.no/nlod/no/2.0
 periodicity: P1Y
 eu_theme: SOCI
+attribution: "Kilde: Statistisk sentralbyrå, tabell 06083"
 
 tags:
   provider: ssb
   topic: demographics
   geo: kommune
   cadence: annual
+
+dimensions:
+  - code: Region
+    meaning: Region (kommune / fylke / nasjon / bydel / historical)
+    value_format: "Numeric code: 0 national, 2-digit fylke, 4-digit kommune, 6-digit bydel"
+    notes: "~1051 codes"
+  - code: FamilieType
+    meaning: Family type
+    value_format: 9 codes
+    notes: Couple with/without children, single mother, single father, etc.
+  - code: ContentsCode
+    meaning: Statistic measure
+    value_format: 1 code
+    notes: "Familier (family count)"
+  - code: Tid
+    meaning: Year
+    value_format: 4-digit year as text
+    notes: 2005–2025 (annual)

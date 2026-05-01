@@ -11,9 +11,36 @@ license: NLOD
 license_url: https://data.norge.no/nlod/no/2.0
 periodicity: P1Y
 eu_theme: EDUC
+attribution: "Kilde: Folkehelseinstituttet, Folkehelsestatistikk tabell 360"
 
 tags:
   provider: fhi
   topic: education
   geo: kommune
   cadence: annual
+
+dimensions:
+  - code: GEO
+    meaning: Region (mixed kommune / fylke / bydel / nasjon)
+    value_format: 1- to 6-character numeric code
+    notes: "~409 codes"
+  - code: AAR
+    meaning: 3-year rolling cohort
+    value_format: '"YYYY_YYYY" range string'
+    notes: "11 cohorts"
+  - code: KJONN
+    meaning: Sex
+    value_format: 3 codes
+    notes: '"0" both, "1" men, "2" women'
+  - code: UTDANN
+    meaning: Parents' education level
+    value_format: 5 codes
+    notes: Highest parental education at child's birth — proxy for socioeconomic context
+  - code: INNVKAT
+    meaning: Immigration category
+    value_format: 1 code
+    notes: Single category (collapsed in this slice)
+  - code: MEASURE_TYPE
+    meaning: Which number
+    value_format: 4 codes
+    notes: TELLER (count), RATE (completion %), SMR (standardised ratio), MEIS

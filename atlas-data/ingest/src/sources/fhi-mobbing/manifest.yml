@@ -11,9 +11,36 @@ license: NLOD
 license_url: https://data.norge.no/nlod/no/2.0
 periodicity: P1Y
 eu_theme: EDUC
+attribution: "Kilde: Folkehelseinstituttet, Folkehelsestatistikk tabell 377"
 
 tags:
   provider: fhi
   topic: education
   geo: kommune
   cadence: annual
+
+dimensions:
+  - code: GEO
+    meaning: Region (mixed kommune / fylke / bydel / nasjon)
+    value_format: 1- to 6-character numeric code
+    notes: "~409 codes"
+  - code: AAR
+    meaning: 3-year rolling period
+    value_format: '"YYYY_YYYY" range string'
+    notes: "7 periods, e.g. 2016_2018 through 2022_2024"
+  - code: KJONN
+    meaning: Sex
+    value_format: 1 code
+    notes: '"0" (both sexes only — table is sex-aggregated)'
+  - code: TRINN
+    meaning: School grade
+    value_format: 2 codes
+    notes: '"7" (7th grade), "10" (10th grade)'
+  - code: SPM_ID
+    meaning: Question id (bullying composite)
+    value_format: 1 code
+    notes: Single composite question only
+  - code: MEASURE_TYPE
+    meaning: Which number
+    value_format: 3 codes
+    notes: SMR (standardised ratio), MEIS (?), RATE (percent)

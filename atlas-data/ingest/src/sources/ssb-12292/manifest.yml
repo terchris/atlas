@@ -11,9 +11,24 @@ license: NLOD
 license_url: https://data.norge.no/nlod/no/2.0
 periodicity: P1Y
 eu_theme: HEAL
+attribution: "Kilde: Statistisk sentralbyrå, tabell 12292"
 
 tags:
   provider: ssb
   topic: health
   geo: kommune
   cadence: annual
+
+dimensions:
+  - code: KOKkommuneregion0000
+    meaning: KOSTRA region (kommune / fylke / aggregate)
+    value_format: "Numeric code: 0 national, 2-digit fylke, 4-digit kommune; KOSTRA-specific codes for aggregates"
+    notes: "~891 codes — mapped to region_code at ingest"
+  - code: ContentsCode
+    meaning: Statistic measure
+    value_format: 49 codes
+    notes: Care-service indicators — nursing home + home-care metrics (capacity, staffing, recipients, costs)
+  - code: Tid
+    meaning: Year
+    value_format: 4-digit year as text
+    notes: 2015–2024

@@ -11,9 +11,24 @@ license: NLOD
 license_url: https://data.norge.no/nlod/no/2.0
 periodicity: P1Y
 eu_theme: SOCI
+attribution: "Kilde: Statistisk sentralbyrå, tabell 06947"
 
 tags:
   provider: ssb
   topic: income
   geo: kommune
   cadence: annual
+
+dimensions:
+  - code: Region
+    meaning: Region (kommune / fylke / nasjon / bydel / historical)
+    value_format: "Numeric code: 0 national, 2-digit fylke, 4-digit kommune, 6-digit bydel"
+    notes: "~1036 codes — bydeler exist for the 4 largest cities"
+  - code: ContentsCode
+    meaning: Statistic measure
+    value_format: 5 codes
+    notes: Same vocabulary as ssb-08764 — Personer, EUskala50, EUskala60, OECDskala50, OECDskala60. ssb-08764 is the under-18 slice; this is whole-population.
+  - code: Tid
+    meaning: Year
+    value_format: 4-digit year as text
+    notes: 2005–2024
