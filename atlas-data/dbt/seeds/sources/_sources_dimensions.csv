@@ -13,6 +13,13 @@ fhi-bor-alene,GEO,Region (mixed kommune / fylke / bydel / nasjon),1- to 6-charac
 fhi-bor-alene,AAR,Year or period,"""YYYY_YYYY"" range string","2025_2025 for single-year, 2023_2025 for 3-year averages"
 fhi-bor-alene,ALDER,Age band,"""min_max"" range string","16_120 (all adults 16+), 16_29, 65_74, 75_84, 85_120"
 fhi-bor-alene,MEASURE_TYPE,Which number,3 codes,"RATE (percent), SMR (standardised ratio vs national), TELLER (absolute count)"
+fhi-depresjon,GEO,Region (mixed kommune / fylke / bydel / nasjon),1- to 6-character numeric code,~409 codes
+fhi-depresjon,AAR,Year,"""YYYY_YYYY"" range string (single-year)",14 single-year periods upstream (2012–2025); Atlas pulls latest 4 to fit cell budget
+fhi-depresjon,KJONN,Sex,3 codes,"""0"" both, ""1"" men, ""2"" women — girls report markedly higher rates of depressive symptoms"
+fhi-depresjon,ALDER,Age band (Ungdata cohort grouping),1 code (degenerate),"Always ""1_6"" — Ungdata survey-cohort identifier (same as fhi-livskvalitet). Verify against Ungdata methodology."
+fhi-depresjon,DEPRESJON,Depression-symptom response,1 code (degenerate),"Always ""Ja"" — yes-respondents only. The value is the share reaching the symptomatic threshold."
+fhi-depresjon,SOES,Socioeconomic status,4 codes,"""0"" combined + ""1""/""2""/""3"" specific levels (typically low/middle/high family SES). Verify against Ungdata methodology."
+fhi-depresjon,MEASURE_TYPE,Which number,2 codes,"SMR (standardised ratio vs national), MEIS (FHI mean / smoothed indicator). No TELLER / RATE — Ungdata is sample-based."
 fhi-innvandrere,GEO,Region (mixed kommune / fylke / bydel / nasjon),1- to 6-character numeric code,~409 codes
 fhi-innvandrere,AAR,Year,"""YYYY_YYYY"" range string (single-year)","23 single-year periods, 2003–2025"
 fhi-innvandrere,ALDER,Age band,"""min_max"" range string","10 bands. Includes 0_120 (everyone) plus disjoint slices 0_17, 18_29, 30_44, 45_64, 45_120, etc."
