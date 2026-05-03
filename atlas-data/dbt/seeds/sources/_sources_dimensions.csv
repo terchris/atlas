@@ -24,6 +24,13 @@ fhi-innvkat,ALDER,Age band,"""min_max"" range string","10 bands. Includes 0_120 
 fhi-innvkat,INNVKAT,Immigrant category,3 codes,"""2"" innvandrere (1st-gen), ""3"" norskfødte med innvandrerforeldre (2nd-gen), ""23"" combined (sum of 2 + 3 — exclude from disjoint-category sums)"
 fhi-innvkat,LANDBAK,Country background grouping,1 code,"Always ""0"" for this table — origin region is collapsed. Use fhi-innvandrere (table 175) for origin-region resolution."
 fhi-innvkat,MEASURE_TYPE,Which number,3 codes,"TELLER (count), RATE (percent), SMR (standardised ratio vs national)"
+fhi-livskvalitet,GEO,Region (mixed kommune / fylke / bydel / nasjon),1- to 6-character numeric code,~409 codes
+fhi-livskvalitet,AAR,Year,"""YYYY_YYYY"" range string (single-year)","5 single-year periods, 2021–2025"
+fhi-livskvalitet,KJONN,Sex,3 codes,"""0"" both, ""1"" men, ""2"" women"
+fhi-livskvalitet,ALDER,Age band (Ungdata cohort grouping),1 code (degenerate),"Always ""1_6"" — likely an Ungdata survey-cohort identifier rather than literal ages 1-6. Verify against Ungdata methodology."
+fhi-livskvalitet,LIVSKVALITET,Quality-of-life score band,1 code (degenerate),"Always ""8_10"" — share of respondents reporting high quality of life (8–10 on a 0–10 self-report scale)."
+fhi-livskvalitet,SOES,Socioeconomic status,1 code (degenerate),"Always ""0"" — combined socioeconomic statuses (no breakdown in this slice)."
+fhi-livskvalitet,MEASURE_TYPE,Which number,2 codes,"SMR (standardised ratio vs national), MEIS (FHI mean / smoothed indicator). No TELLER / RATE — Ungdata is sample-based, not an enumeration."
 fhi-mobbing,GEO,Region (mixed kommune / fylke / bydel / nasjon),1- to 6-character numeric code,~409 codes
 fhi-mobbing,AAR,3-year rolling period,"""YYYY_YYYY"" range string","7 periods, e.g. 2016_2018 through 2022_2024"
 fhi-mobbing,KJONN,Sex,1 code,"""0"" (both sexes only — table is sex-aggregated)"
