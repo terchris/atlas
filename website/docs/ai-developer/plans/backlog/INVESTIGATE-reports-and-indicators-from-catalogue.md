@@ -1,4 +1,4 @@
-# Investigate: Reports & indicators we can build from the 31-source catalogue
+# Investigate: Reports & indicators we can build from the 32-source catalogue
 
 > **IMPLEMENTATION RULES:** Before implementing this plan, read and follow:
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
@@ -6,15 +6,15 @@
 
 ## Status: Backlog
 
-**Goal**: Survey the 31 sources Atlas now ingests, identify the **reports and composite indicators** they enable end-to-end (catalogue → ingest → mart → frontend), and document the **conformed dimensions, crosswalks, and reference seeds** that have to land in dbt before those indicators become queryable. Output: a sequenced list of indicator-PLAN candidates the user can pick from, plus a clean inventory of the dimensional plumbing each one depends on.
+**Goal**: Survey the 32 sources Atlas now ingests, identify the **reports and composite indicators** they enable end-to-end (catalogue → ingest → mart → frontend), and document the **conformed dimensions, crosswalks, and reference seeds** that have to land in dbt before those indicators become queryable. Output: a sequenced list of indicator-PLAN candidates the user can pick from, plus a clean inventory of the dimensional plumbing each one depends on.
 
 **Last Updated**: 2026-05-03
 
-**Origin**: Atlas's catalogue grew from 21 to 31 sources between 2026-04-30 and 2026-05-03 (PLAN-007 phase 2 + the FHI onboarding wave). Seven new FHI sources extended Atlas from a Samfunnspuls-replication scope into broader public-health-statistics coverage — population projection, immigrant-background mix, youth wellbeing (Ungdata), primary-care contacts (KPR), and 5-year suicide. The user asked: *"create an investigate file on the potential reports and stats we can create based on the data we have gathered. what relations we need to make them happen."* This document is the answer — it does not implement anything; it scopes the surface so a follow-up `PLAN-*` can land each indicator under PLAN-007's catalogue + frontend.
+**Origin**: Atlas's catalogue grew from 21 to 32 sources between 2026-04-30 and 2026-05-03 (PLAN-007 phase 2 + the FHI onboarding wave). Eleven new FHI sources extended Atlas from a Samfunnspuls-replication scope into broader public-health-statistics coverage — population projection, immigrant-background mix, youth wellbeing (Ungdata: QoL / depression / painkillers), primary-care contacts (KPR), and 5-year suicide. The user asked: *"create an investigate file on the potential reports and stats we can create based on the data we have gathered. what relations we need to make them happen."* This document is the answer — it does not implement anything; it scopes the surface so a follow-up `PLAN-*` can land each indicator under PLAN-007's catalogue + frontend.
 
 ---
 
-## The 31-source catalogue at a glance
+## The 32-source catalogue at a glance
 
 Tagged by `topic` (Atlas-domain), with `eu_theme` (DCAT-AP) and `geo`. All annual unless noted; all kommune-resolved unless noted.
 
@@ -47,12 +47,13 @@ Tagged by `topic` (Atlas-domain), with `eu_theme` (DCAT-AP) and `geo`. All annua
 | `fhi-mobbing` (377) | School bullying, 7th + 10th grade (3-year averages) |
 | `fhi-trangbodd` (794) | Overcrowded housing by education |
 
-### Youth & mental health (4 sources, eu_theme=HEAL or EDUC)
+### Youth & mental health (5 sources, eu_theme=HEAL or EDUC)
 | Source | What |
 |---|---|
 | `fhi-neet` (809) | Not in Education, Employment, or Training, by parents' education |
 | `fhi-livskvalitet` (373) | Subjective quality of life — Ungdata sample-survey |
 | `fhi-depresjon` (339) | Depressive symptoms — Ungdata sample-survey |
+| `fhi-smertestillende` (390) | At-least-weekly painkiller use — Ungdata sample-survey, marker of chronic pain / psychological distress |
 | `fhi-selvmord` (344) | Suicide deaths, 5-year rolling, smoothed MEIS |
 
 ### Welfare & social (3 sources, eu_theme=SOCI)
@@ -123,9 +124,10 @@ Each row below is an *indicator* or *report-page* that the catalogue currently s
 - NEET rate (`fhi-neet`)
 - Self-reported quality of life (`fhi-livskvalitet`)
 - Self-reported depression symptoms (`fhi-depresjon`)
+- At-least-weekly painkiller use (`fhi-smertestillende`)
 - School bullying (`fhi-mobbing`, 7th + 10th grade)
 
-**Sources**: 5 indicators above.
+**Sources**: 6 indicators above.
 
 **Required relations**:
 - `dim_kommune` ✓
@@ -136,11 +138,11 @@ Each row below is an *indicator* or *report-page* that the catalogue currently s
 ### 4. Mental-Health Triangulation
 
 **Reports**: cross-validate self-report vs care-seeking vs mortality, per kommune:
-- Self-report (Ungdata): `fhi-livskvalitet` (low score share inverted) + `fhi-depresjon`
+- Self-report (Ungdata): `fhi-livskvalitet` (low score share inverted) + `fhi-depresjon` + `fhi-smertestillende` (frequent painkiller use as a somatised-distress proxy)
 - Care-seeking (KPR P-codes): `fhi-kpr-1aar` filtered to `KODEGRUPPE` ∈ {P01_P29, P70_P99}
 - Mortality (smoothed): `fhi-selvmord`
 
-**Sources**: 4 above.
+**Sources**: 5 above.
 
 **Required relations**:
 - `dim_kommune` ✓
