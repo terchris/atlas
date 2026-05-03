@@ -1,4 +1,11 @@
 source_id,code,meaning,value_format,notes
+fhi-alkohol,GEO,Region (mixed kommune / fylke / bydel / nasjon),1- to 6-character numeric code,~409 codes
+fhi-alkohol,AAR,Year,"""YYYY_YYYY"" range string (single-year)","14 single-year periods, 2012–2025"
+fhi-alkohol,KJONN,Sex,3 codes,"""0"" both, ""1"" men, ""2"" women"
+fhi-alkohol,ALDER,Age band (Ungdata cohort grouping),1 code (degenerate),"Always ""1_6"" — Ungdata survey-cohort identifier (same as fhi-livskvalitet, fhi-depresjon, fhi-fortrolig-venn). Verify against Ungdata methodology."
+fhi-alkohol,ANTALL_GANGER,Frequency band — number of times the behaviour occurred,1 code (degenerate),"Always ""engangellerflere"" (one-or-more uses in the past year). Higher value = more youth report alcohol use = worse from a public-health framing (risk direction)."
+fhi-alkohol,SOES,Socioeconomic status,1 code (degenerate),"Always ""0"" — combined socioeconomic statuses (no breakdown in this slice)."
+fhi-alkohol,MEASURE_TYPE,Which number,2 codes,"SMR (standardised ratio vs national), MEIS (FHI mean / smoothed indicator). No TELLER / RATE — Ungdata is sample-based."
 fhi-befolkning,GEO,Region (mixed kommune / fylke / bydel / nasjon),1- to 6-character numeric code,"~409 codes — 0 (national), 2-digit fylke, 4-digit kommune, 6-digit bydel"
 fhi-befolkning,AAR,Year,"""YYYY_YYYY"" range string (single-year)","36 single-year periods, 1990–2025"
 fhi-befolkning,KJONN,Sex,3 codes,"""0"" both, ""1"" men, ""2"" women"
@@ -27,6 +34,13 @@ fhi-fortrolig-venn,ALDER,Age band (Ungdata cohort grouping),1 code (degenerate),
 fhi-fortrolig-venn,HARVENN,Has-confiding-friend response,1 code (degenerate),"Always ""Jatrorellerheltsikker"" (affirmative — ""yes, I think so or definitely""). The value is the share answering yes; higher = more youth report having a close friend = better outcome (protective direction)."
 fhi-fortrolig-venn,SOES,Socioeconomic status,1 code (degenerate),"Always ""0"" — combined socioeconomic statuses (no breakdown in this slice)."
 fhi-fortrolig-venn,MEASURE_TYPE,Which number,2 codes,"SMR (standardised ratio vs national), MEIS (FHI mean / smoothed indicator). No TELLER / RATE — Ungdata is sample-based."
+fhi-hasj,GEO,Region (mixed kommune / fylke / bydel / nasjon),1- to 6-character numeric code,~409 codes
+fhi-hasj,AAR,Year,"""YYYY_YYYY"" range string (single-year)","14 single-year periods, 2012–2025"
+fhi-hasj,KJONN,Sex,3 codes,"""0"" both, ""1"" men, ""2"" women"
+fhi-hasj,ALDER,Age band (Ungdata cohort grouping),1 code (degenerate),"Always ""1_6"" — Ungdata survey-cohort identifier (same as fhi-alkohol). Verify against Ungdata methodology."
+fhi-hasj,ANTALL_GANGER,Frequency band — number of times the behaviour occurred,1 code (degenerate),"Always ""engangellerflere"" (one-or-more uses in the past year). Higher value = more youth report cannabis use = worse from a public-health framing (risk direction)."
+fhi-hasj,SOES,Socioeconomic status,1 code (degenerate),"Always ""0"" — combined socioeconomic statuses (no breakdown in this slice)."
+fhi-hasj,MEASURE_TYPE,Which number,2 codes,"SMR (standardised ratio vs national), MEIS (FHI mean / smoothed indicator). No TELLER / RATE — Ungdata is sample-based. Suppression heavier than fhi-alkohol because cannabis prevalence at this cohort is lower."
 fhi-innvandrere,GEO,Region (mixed kommune / fylke / bydel / nasjon),1- to 6-character numeric code,~409 codes
 fhi-innvandrere,AAR,Year,"""YYYY_YYYY"" range string (single-year)","23 single-year periods, 2003–2025"
 fhi-innvandrere,ALDER,Age band,"""min_max"" range string","10 bands. Includes 0_120 (everyone) plus disjoint slices 0_17, 18_29, 30_44, 45_64, 45_120, etc."

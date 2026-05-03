@@ -1,4 +1,4 @@
-# Investigate: Reports & indicators we can build from the 33-source catalogue
+# Investigate: Reports & indicators we can build from the 35-source catalogue
 
 > **IMPLEMENTATION RULES:** Before implementing this plan, read and follow:
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
@@ -6,15 +6,15 @@
 
 ## Status: Backlog
 
-**Goal**: Survey the 33 sources Atlas now ingests, identify the **reports and composite indicators** they enable end-to-end (catalogue → ingest → mart → frontend), and document the **conformed dimensions, crosswalks, and reference seeds** that have to land in dbt before those indicators become queryable. Output: a sequenced list of indicator-PLAN candidates the user can pick from, plus a clean inventory of the dimensional plumbing each one depends on.
+**Goal**: Survey the 35 sources Atlas now ingests, identify the **reports and composite indicators** they enable end-to-end (catalogue → ingest → mart → frontend), and document the **conformed dimensions, crosswalks, and reference seeds** that have to land in dbt before those indicators become queryable. Output: a sequenced list of indicator-PLAN candidates the user can pick from, plus a clean inventory of the dimensional plumbing each one depends on.
 
 **Last Updated**: 2026-05-03
 
-**Origin**: Atlas's catalogue grew from 21 to 33 sources between 2026-04-30 and 2026-05-03 (PLAN-007 phase 2 + the FHI onboarding wave). Twelve new FHI sources extended Atlas from a Samfunnspuls-replication scope into broader public-health-statistics coverage — population projection, immigrant-background mix, youth wellbeing (Ungdata: QoL / depression / painkillers / confiding-friend), primary-care contacts (KPR), and 5-year suicide. The user asked: *"create an investigate file on the potential reports and stats we can create based on the data we have gathered. what relations we need to make them happen."* This document is the answer — it does not implement anything; it scopes the surface so a follow-up `PLAN-*` can land each indicator under PLAN-007's catalogue + frontend.
+**Origin**: Atlas's catalogue grew from 21 to 35 sources between 2026-04-30 and 2026-05-03 (PLAN-007 phase 2 + the FHI onboarding wave). Fourteen new FHI sources extended Atlas from a Samfunnspuls-replication scope into broader public-health-statistics coverage — population projection, immigrant-background mix, youth wellbeing (Ungdata: QoL / depression / painkillers / confiding-friend / alcohol / cannabis), primary-care contacts (KPR), and 5-year suicide. The user asked: *"create an investigate file on the potential reports and stats we can create based on the data we have gathered. what relations we need to make them happen."* This document is the answer — it does not implement anything; it scopes the surface so a follow-up `PLAN-*` can land each indicator under PLAN-007's catalogue + frontend.
 
 ---
 
-## The 33-source catalogue at a glance
+## The 35-source catalogue at a glance
 
 Tagged by `topic` (Atlas-domain), with `eu_theme` (DCAT-AP) and `geo`. All annual unless noted; all kommune-resolved unless noted.
 
@@ -47,7 +47,7 @@ Tagged by `topic` (Atlas-domain), with `eu_theme` (DCAT-AP) and `geo`. All annua
 | `fhi-mobbing` (377) | School bullying, 7th + 10th grade (3-year averages) |
 | `fhi-trangbodd` (794) | Overcrowded housing by education |
 
-### Youth & mental health (6 sources, eu_theme=HEAL or EDUC)
+### Youth & mental health (8 sources, eu_theme=HEAL or EDUC)
 | Source | What |
 |---|---|
 | `fhi-neet` (809) | Not in Education, Employment, or Training, by parents' education |
@@ -55,6 +55,8 @@ Tagged by `topic` (Atlas-domain), with `eu_theme` (DCAT-AP) and `geo`. All annua
 | `fhi-depresjon` (339) | Depressive symptoms — Ungdata sample-survey |
 | `fhi-smertestillende` (390) | At-least-weekly painkiller use — Ungdata sample-survey, marker of chronic pain / psychological distress |
 | `fhi-fortrolig-venn` (354) | Has-a-confiding-friend share — Ungdata sample-survey, **protective**-direction social-connectedness indicator |
+| `fhi-alkohol` (332) | Alcohol use one or more times — Ungdata sample-survey, risk-direction substance-use indicator |
+| `fhi-hasj` (363) | Cannabis use one or more times — Ungdata sample-survey, risk-direction substance-use indicator (heavier suppression than alkohol due to lower prevalence) |
 | `fhi-selvmord` (344) | Suicide deaths, 5-year rolling, smoothed MEIS |
 
 ### Welfare & social (3 sources, eu_theme=SOCI)
@@ -127,9 +129,11 @@ Each row below is an *indicator* or *report-page* that the catalogue currently s
 - Self-reported depression symptoms (`fhi-depresjon`)
 - At-least-weekly painkiller use (`fhi-smertestillende`)
 - Has-a-confiding-friend share (`fhi-fortrolig-venn`) — **protective** direction
+- Alcohol use share (`fhi-alkohol`) — risk direction
+- Cannabis use share (`fhi-hasj`) — risk direction
 - School bullying (`fhi-mobbing`, 7th + 10th grade)
 
-**Sources**: 7 indicators above.
+**Sources**: 9 indicators above.
 
 **Required relations**:
 - `dim_kommune` ✓
@@ -142,10 +146,11 @@ Each row below is an *indicator* or *report-page* that the catalogue currently s
 **Reports**: cross-validate self-report vs care-seeking vs mortality, per kommune:
 - Self-report risk axes (Ungdata): `fhi-livskvalitet` (low score share inverted) + `fhi-depresjon` + `fhi-smertestillende` (frequent painkiller use as a somatised-distress proxy)
 - Self-report protective axis (Ungdata): `fhi-fortrolig-venn` — having a close confiding friend is a known protective factor
+- Substance-use risk axes (Ungdata): `fhi-alkohol` + `fhi-hasj` — the two are correlated; their *gap* (cannabis high but alcohol low, or vice versa) is itself an interesting cluster signal
 - Care-seeking (KPR P-codes): `fhi-kpr-1aar` filtered to `KODEGRUPPE` ∈ {P01_P29, P70_P99}
 - Mortality (smoothed): `fhi-selvmord`
 
-**Sources**: 6 above.
+**Sources**: 8 above.
 
 **Required relations**:
 - `dim_kommune` ✓
@@ -348,4 +353,4 @@ The contributor guide ([`website/docs/contributors/ingest-modules.md`](../../../
 - [INVESTIGATE-data-discovery-surface.md](INVESTIGATE-data-discovery-surface.md) — the broader discovery / query / governance surface stack; this file is the per-indicator content layer that feeds it.
 - [INVESTIGATE-semantic-foundation-before-expansion.md](INVESTIGATE-semantic-foundation-before-expansion.md) — settled MCP via dbt-mcp + Postgres MCP; many of the relations here will surface there too.
 - `atlas-data/dbt/seeds/` — where `dim_kommune`, `dim_fylke`, existing `ref_*` seeds live; new dimensions and crosswalks land alongside.
-- `atlas-data/ingest/src/sources/` — the 33 manifest.yml files this investigation surveys.
+- `atlas-data/ingest/src/sources/` — the 35 manifest.yml files this investigation surveys.

@@ -77,11 +77,13 @@ uv run --directory atlas-data/dbt python scripts/build_sources_seed.py --readme 
 <!-- BEGIN auto-generated source table — do not edit; run `uv run python atlas-data/dbt/scripts/build_sources_seed.py --readme atlas-data/ingest/src/sources/README.md` -->
 | Source | Provider | What it is | Topic | EU theme | Geo | Cadence |
 |---|---|---|---|---|---|---|
+| [fhi-alkohol](./fhi-alkohol/) | fhi | FHI Folkehelsestatistikk table 332 — share of Ungdata respondents reporting alcohol use one or more times in the past year. Risk-directio… | health | HEAL | kommune | annual |
 | [fhi-befolkning](./fhi-befolkning/) | fhi | FHI Folkehelsestatistikk table 338 — Befolkningssammensetning. Population counts by region × sex × age band, used as the demographic deno… | demographics | SOCI | kommune | annual |
 | [fhi-befolkningsvekst](./fhi-befolkningsvekst/) | fhi | FHI Folkehelsestatistikk table 185 — year-over-year population growth per region (counts and percent rates). Pairs with fhi-befolkning (o… | demographics | SOCI | kommune | annual |
 | [fhi-bor-alene](./fhi-bor-alene/) | fhi | FHI Folkehelsestatistikk table 187 — "Personer som bor alene". Share of adults (16+) living alone, per region, annual. | demographics | SOCI | kommune | annual |
 | [fhi-depresjon](./fhi-depresjon/) | fhi | FHI Folkehelsestatistikk table 339 — share of youth reporting depressive symptoms in the Ungdata survey, by region × sex × socioeconomic… | health | HEAL | kommune | annual |
 | [fhi-fortrolig-venn](./fhi-fortrolig-venn/) | fhi | FHI Folkehelsestatistikk table 354 — share of Ungdata respondents reporting they have a close confiding friend. Protective-direction soci… | health | HEAL | kommune | annual |
+| [fhi-hasj](./fhi-hasj/) | fhi | FHI Folkehelsestatistikk table 363 — share of Ungdata respondents reporting cannabis use one or more times in the past year. Risk-directi… | health | HEAL | kommune | annual |
 | [fhi-innvandrere](./fhi-innvandrere/) | fhi | FHI Folkehelsestatistikk table 175 — population with immigrant background (1st-gen immigrants + Norwegian-born with two immigrant parents… | demographics | SOCI | kommune | annual |
 | [fhi-innvkat](./fhi-innvkat/) | fhi | FHI Folkehelsestatistikk table 650 — population by immigrant category (1st-gen / 2nd-gen / combined) per region × age band. Complements f… | demographics | SOCI | kommune | annual |
 | [fhi-kpr-1aar](./fhi-kpr-1aar/) | fhi | FHI Folkehelsestatistikk table 370 — KPR 1-year. Annual primary-care contact rates from the Kommunalt pasient- og brukerregister, by ICPC… | health | HEAL | kommune | annual |
