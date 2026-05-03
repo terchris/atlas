@@ -20,6 +20,13 @@ fhi-depresjon,ALDER,Age band (Ungdata cohort grouping),1 code (degenerate),"Alwa
 fhi-depresjon,DEPRESJON,Depression-symptom response,1 code (degenerate),"Always ""Ja"" — yes-respondents only. The value is the share reaching the symptomatic threshold."
 fhi-depresjon,SOES,Socioeconomic status,4 codes,"""0"" combined + ""1""/""2""/""3"" specific levels (typically low/middle/high family SES). Verify against Ungdata methodology."
 fhi-depresjon,MEASURE_TYPE,Which number,2 codes,"SMR (standardised ratio vs national), MEIS (FHI mean / smoothed indicator). No TELLER / RATE — Ungdata is sample-based."
+fhi-fortrolig-venn,GEO,Region (mixed kommune / fylke / bydel / nasjon),1- to 6-character numeric code,~409 codes
+fhi-fortrolig-venn,AAR,Year,"""YYYY_YYYY"" range string (single-year)","14 single-year periods, 2012–2025"
+fhi-fortrolig-venn,KJONN,Sex,3 codes,"""0"" both, ""1"" men, ""2"" women — girls historically report higher confiding-friend rates than boys"
+fhi-fortrolig-venn,ALDER,Age band (Ungdata cohort grouping),1 code (degenerate),"Always ""1_6"" — Ungdata survey-cohort identifier (same as fhi-livskvalitet, fhi-depresjon, fhi-smertestillende). Verify against Ungdata methodology."
+fhi-fortrolig-venn,HARVENN,Has-confiding-friend response,1 code (degenerate),"Always ""Jatrorellerheltsikker"" (affirmative — ""yes, I think so or definitely""). The value is the share answering yes; higher = more youth report having a close friend = better outcome (protective direction)."
+fhi-fortrolig-venn,SOES,Socioeconomic status,1 code (degenerate),"Always ""0"" — combined socioeconomic statuses (no breakdown in this slice)."
+fhi-fortrolig-venn,MEASURE_TYPE,Which number,2 codes,"SMR (standardised ratio vs national), MEIS (FHI mean / smoothed indicator). No TELLER / RATE — Ungdata is sample-based."
 fhi-innvandrere,GEO,Region (mixed kommune / fylke / bydel / nasjon),1- to 6-character numeric code,~409 codes
 fhi-innvandrere,AAR,Year,"""YYYY_YYYY"" range string (single-year)","23 single-year periods, 2003–2025"
 fhi-innvandrere,ALDER,Age band,"""min_max"" range string","10 bands. Includes 0_120 (everyone) plus disjoint slices 0_17, 18_29, 30_44, 45_64, 45_120, etc."

@@ -1,0 +1,52 @@
+# Bootstrapped by bootstrap-manifest.ts; auto-fillable fields populated by fill-manifest-todos.ts.
+# The dimensions: block is hand-authored — editorial semantics the catalogue can't compute.
+# After commit, this file is human-authored — ingest runs do NOT modify it.
+
+source_id: fhi-fortrolig-venn
+upstream_id: "354"
+upstream_url: https://statistikk-data.fhi.no/api/open/v1/nokkel/table/354
+upstream_landing_page: https://statistikk.fhi.no/nokkel/PnlTNkQXZx2WYq7cpkgIJ40JGIkZKjhylVzS429-rYQ?GEO=0,03&AAR=2020_2020,2021_2021,2022_2022,2023_2023,2024_2024,2025_2025&KJONN=0&ALDER=1_6&HARVENN=Jatrorellerheltsikker&SOES=0&MEASURE_TYPE=SMR
+upstream_title: "FORTROLIGVENN_Ungdata_KH"
+description: "FHI Folkehelsestatistikk table 354 — share of Ungdata respondents reporting they have a close confiding friend. Protective-direction social-connectedness indicator from the Ungdata cohort; complements the symptom-side family (depression, painkillers, suicide)."
+publisher: Folkehelseinstituttet
+license: NLOD
+license_url: https://data.norge.no/nlod/no/2.0
+periodicity: P1Y
+eu_theme: HEAL
+attribution: "Kilde: Folkehelseinstituttet, Folkehelsestatistikk tabell 354 (Ungdata)"
+
+tags:
+  provider: fhi
+  topic: health
+  geo: kommune
+  cadence: annual
+
+dimensions:
+  - code: GEO
+    meaning: Region (mixed kommune / fylke / bydel / nasjon)
+    value_format: 1- to 6-character numeric code
+    notes: "~409 codes"
+  - code: AAR
+    meaning: Year
+    value_format: '"YYYY_YYYY" range string (single-year)'
+    notes: 14 single-year periods, 2012–2025
+  - code: KJONN
+    meaning: Sex
+    value_format: 3 codes
+    notes: '"0" both, "1" men, "2" women — girls historically report higher confiding-friend rates than boys'
+  - code: ALDER
+    meaning: Age band (Ungdata cohort grouping)
+    value_format: 1 code (degenerate)
+    notes: 'Always "1_6" — Ungdata survey-cohort identifier (same as fhi-livskvalitet, fhi-depresjon, fhi-smertestillende). Verify against Ungdata methodology.'
+  - code: HARVENN
+    meaning: Has-confiding-friend response
+    value_format: 1 code (degenerate)
+    notes: 'Always "Jatrorellerheltsikker" (affirmative — "yes, I think so or definitely"). The value is the share answering yes; higher = more youth report having a close friend = better outcome (protective direction).'
+  - code: SOES
+    meaning: Socioeconomic status
+    value_format: 1 code (degenerate)
+    notes: 'Always "0" — combined socioeconomic statuses (no breakdown in this slice).'
+  - code: MEASURE_TYPE
+    meaning: Which number
+    value_format: 2 codes
+    notes: "SMR (standardised ratio vs national), MEIS (FHI mean / smoothed indicator). No TELLER / RATE — Ungdata is sample-based."

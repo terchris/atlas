@@ -22,6 +22,7 @@
     "ingest:fhi-befolkningsvekst": "tsx --env-file=.env src/sources/fhi-befolkningsvekst/index.ts",
     "ingest:fhi-bor-alene": "tsx --env-file=.env src/sources/fhi-bor-alene/index.ts",
     "ingest:fhi-depresjon": "tsx --env-file=.env src/sources/fhi-depresjon/index.ts",
+    "ingest:fhi-fortrolig-venn": "tsx --env-file=.env src/sources/fhi-fortrolig-venn/index.ts",
     "ingest:fhi-innvandrere": "tsx --env-file=.env src/sources/fhi-innvandrere/index.ts",
     "ingest:fhi-innvkat": "tsx --env-file=.env src/sources/fhi-innvkat/index.ts",
     "ingest:fhi-kpr-1aar": "tsx --env-file=.env src/sources/fhi-kpr-1aar/index.ts",
