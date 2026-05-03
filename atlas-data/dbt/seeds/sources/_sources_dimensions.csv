@@ -65,6 +65,27 @@ fhi-livskvalitet,ALDER,Age band (Ungdata cohort grouping),1 code (degenerate),"A
 fhi-livskvalitet,LIVSKVALITET,Quality-of-life score band,1 code (degenerate),"Always ""8_10"" — share of respondents reporting high quality of life (8–10 on a 0–10 self-report scale)."
 fhi-livskvalitet,SOES,Socioeconomic status,1 code (degenerate),"Always ""0"" — combined socioeconomic statuses (no breakdown in this slice)."
 fhi-livskvalitet,MEASURE_TYPE,Which number,2 codes,"SMR (standardised ratio vs national), MEIS (FHI mean / smoothed indicator). No TELLER / RATE — Ungdata is sample-based, not an enumeration."
+fhi-mediebruk-some,GEO,Region (mixed kommune / fylke / bydel / nasjon),1- to 6-character numeric code,~409 codes
+fhi-mediebruk-some,AAR,Year,"""YYYY_YYYY"" range string (single-year)","11 single-year periods, 2015–2025"
+fhi-mediebruk-some,KJONN,Sex,3 codes,"""0"" both, ""1"" men, ""2"" women — girls report markedly higher >3h/day social-media use than boys; composites must orient by KJONN slice or risk masking the gap"
+fhi-mediebruk-some,ALDER,Age band (Ungdata cohort grouping),1 code (degenerate),"Always ""1_6"" — Ungdata survey-cohort identifier. Verify against Ungdata methodology."
+fhi-mediebruk-some,MEDIEBRUK,Media-use frequency band,1 code (degenerate),"Always ""Merenn3timer"" (more than 3 hours per day). The value is the share reaching the threshold — risk direction."
+fhi-mediebruk-some,SOES,Socioeconomic status,1 code (degenerate),"Always ""0"" — combined SES."
+fhi-mediebruk-some,MEASURE_TYPE,Which number,2 codes,"SMR (standardised ratio vs national), MEIS (FHI mean / smoothed indicator). No TELLER / RATE — Ungdata is sample-based."
+fhi-mediebruk-spill,GEO,Region (mixed kommune / fylke / bydel / nasjon),1- to 6-character numeric code,~409 codes
+fhi-mediebruk-spill,AAR,Year,"""YYYY_YYYY"" range string (single-year)","13 single-year periods, 2013–2025"
+fhi-mediebruk-spill,KJONN,Sex,3 codes,"""0"" both, ""1"" men, ""2"" women — boys historically report higher >3h/day TV+gaming use than girls"
+fhi-mediebruk-spill,ALDER,Age band (Ungdata cohort grouping),1 code (degenerate),"Always ""1_6"" — Ungdata survey-cohort identifier (same as the other Ungdata sources). Verify against Ungdata methodology."
+fhi-mediebruk-spill,MEDIEBRUK,Media-use frequency band,1 code (degenerate),"Always ""Merenn3timer"" (more than 3 hours per day). The value is the share reaching the threshold — risk direction."
+fhi-mediebruk-spill,SOES,Socioeconomic status,1 code (degenerate),"Always ""0"" — combined SES (no breakdown in this slice)."
+fhi-mediebruk-spill,MEASURE_TYPE,Which number,2 codes,"SMR (standardised ratio vs national), MEIS (FHI mean / smoothed indicator). No TELLER / RATE — Ungdata is sample-based."
+fhi-mediebruk-underhold,GEO,Region (mixed kommune / fylke / bydel / nasjon),1- to 6-character numeric code,~409 codes
+fhi-mediebruk-underhold,AAR,Year,"""YYYY_YYYY"" range string (single-year)","8 single-year periods, 2018–2025 (shorter series than the other two media tables — streaming was a newer category)"
+fhi-mediebruk-underhold,KJONN,Sex,3 codes,"""0"" both, ""1"" men, ""2"" women"
+fhi-mediebruk-underhold,ALDER,Age band (Ungdata cohort grouping),1 code (degenerate),"Always ""1_6"" — Ungdata survey-cohort identifier. Verify against Ungdata methodology."
+fhi-mediebruk-underhold,MEDIEBRUK,Media-use frequency band,1 code (degenerate),"Always ""Merenn3timer"" (more than 3 hours per day). The value is the share reaching the threshold — risk direction (though weaker mental-health-outcome correlation than the SOME social-media table)."
+fhi-mediebruk-underhold,SOES,Socioeconomic status,1 code (degenerate),"Always ""0"" — combined SES."
+fhi-mediebruk-underhold,MEASURE_TYPE,Which number,2 codes,"SMR (standardised ratio vs national), MEIS (FHI mean / smoothed indicator). No TELLER / RATE — Ungdata is sample-based."
 fhi-mobbing,GEO,Region (mixed kommune / fylke / bydel / nasjon),1- to 6-character numeric code,~409 codes
 fhi-mobbing,AAR,3-year rolling period,"""YYYY_YYYY"" range string","7 periods, e.g. 2016_2018 through 2022_2024"
 fhi-mobbing,KJONN,Sex,1 code,"""0"" (both sexes only — table is sex-aggregated)"
