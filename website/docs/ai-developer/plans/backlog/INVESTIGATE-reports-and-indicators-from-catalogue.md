@@ -319,6 +319,27 @@ Reports 2, 6, 8 are higher-leverage but each opens a methodology question that b
 
 ---
 
+## Maintenance — keep this current as new sources land
+
+This document is the menu of reports the catalogue *currently supports*. When a new ingest source lands (the user pastes an FHI / SSB / etc. URL and we onboard it), this file MUST be refreshed in the same commit.
+
+**Per-new-source checklist:**
+
+1. **Update the source count** in the title, the `Goal` paragraph, the `Origin` paragraph, the `## The N-source catalogue at a glance` heading, and the `Cross-references` line that names `atlas-data/ingest/src/sources/` count.
+2. **Slot the new source into the right thematic cluster** under "The catalogue at a glance" — Demographics / Income / Education / Youth & mental health / Welfare / Health-services / NGO supply / Reference. Bump the cluster's source count in the heading.
+3. **Walk the 10 reports** and identify which gain a new column. Common patterns:
+   - A new Ungdata-shaped source slots into Report 3 (Youth Outcomes) and Report 4 (Mental-Health Triangulation).
+   - A new income / welfare source slots into Report 5.
+   - A new demographic source slots into Reports 1 + 6 + 9 + 10.
+   - A new health-services source slots into Reports 4 + 9.
+4. **Consider whether the new source enables a brand-new report** (an 11th, 12th…) — only when the source brings a genuinely new analytical axis (e.g. environmental data, transport flows, crime statistics — categories the current 10 don't cover). Add the new report with the same shape: short reports paragraph, source list, required relations, methodology question. Update the sequencing recommendation to slot it in.
+5. **Note any new dimension or crosswalk** the source introduces (e.g. new FHI dimension code like `KODEGRUPPE`, `INNVKAT`, `LANDBAK`) in the "Conformed dimensions Atlas needs" / "Crosswalks Atlas needs" tables.
+6. **Update `Last Updated`** at the top.
+
+The contributor guide ([`website/docs/contributors/ingest-modules.md`](../../../contributors/ingest-modules.md)) references this maintenance ritual in its adding-a-source workflow — don't ship a new source without doing the walk-through above.
+
+---
+
 ## Cross-references
 
 - [PLAN-007-data-display-open-by-default.md](../active/PLAN-007-data-display-open-by-default.md) — the catalogue + frontend plumbing every report below depends on.
@@ -327,4 +348,4 @@ Reports 2, 6, 8 are higher-leverage but each opens a methodology question that b
 - [INVESTIGATE-data-discovery-surface.md](INVESTIGATE-data-discovery-surface.md) — the broader discovery / query / governance surface stack; this file is the per-indicator content layer that feeds it.
 - [INVESTIGATE-semantic-foundation-before-expansion.md](INVESTIGATE-semantic-foundation-before-expansion.md) — settled MCP via dbt-mcp + Postgres MCP; many of the relations here will surface there too.
 - `atlas-data/dbt/seeds/` — where `dim_kommune`, `dim_fylke`, existing `ref_*` seeds live; new dimensions and crosswalks land alongside.
-- `atlas-data/ingest/src/sources/` — the 31 manifest.yml files this investigation surveys.
+- `atlas-data/ingest/src/sources/` — the 33 manifest.yml files this investigation surveys.

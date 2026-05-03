@@ -29,6 +29,7 @@ Most Atlas sources are API-based (SSB PxWebAPI, FHI's PxWebAPI, Red Cross Organi
 4. Bootstrap the manifest: `npm run sources:bootstrap-manifest -- <source-id>` then `npm run sources:fill-manifest-todos`. Review the generated `manifest.yml` and **author the `dimensions:` block** by hand (see schema).
 5. Add `"ingest:<source-id>": "tsx src/sources/<source-id>/index.ts"` to [`atlas-data/ingest/package.json`](https://github.com/terchris/atlas/blob/main/atlas-data/ingest/package.json).
 6. Regenerate the implemented-sources index: `cd atlas-data/dbt && uv run python scripts/build_sources_seed.py --readme`. This rebuilds the seed CSVs and the auto-generated table in [`atlas-data/ingest/src/sources/README.md`](https://github.com/terchris/atlas/blob/main/atlas-data/ingest/src/sources/README.md).
+7. **Refresh the reports / indicators investigation.** Open [`INVESTIGATE-reports-and-indicators-from-catalogue.md`](https://github.com/terchris/atlas/blob/main/website/docs/ai-developer/plans/backlog/INVESTIGATE-reports-and-indicators-from-catalogue.md) and follow the *Maintenance* checklist at the bottom: bump the source count, slot the new source into a thematic cluster, walk the 10 reports to identify which gain a column, and note any new dimensions / crosswalks the source introduces. This must land in the same commit as the source itself — the doc is the menu, and the menu has to match what the catalogue actually serves.
 
 Typical per-source effort for an SSB table: ~30 minutes. API ingests from NGOs (e.g. Red Cross) similar.
 
