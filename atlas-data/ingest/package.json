@@ -24,6 +24,7 @@
     "ingest:fhi-depresjon": "tsx --env-file=.env src/sources/fhi-depresjon/index.ts",
     "ingest:fhi-innvandrere": "tsx --env-file=.env src/sources/fhi-innvandrere/index.ts",
     "ingest:fhi-innvkat": "tsx --env-file=.env src/sources/fhi-innvkat/index.ts",
+    "ingest:fhi-kpr-1aar": "tsx --env-file=.env src/sources/fhi-kpr-1aar/index.ts",
     "ingest:fhi-livskvalitet": "tsx --env-file=.env src/sources/fhi-livskvalitet/index.ts",
     "ingest:fhi-mobbing": "tsx --env-file=.env src/sources/fhi-mobbing/index.ts",
     "ingest:fhi-neet": "tsx --env-file=.env src/sources/fhi-neet/index.ts",

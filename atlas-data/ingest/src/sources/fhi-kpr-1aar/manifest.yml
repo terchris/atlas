@@ -1,0 +1,48 @@
+# Bootstrapped by bootstrap-manifest.ts; auto-fillable fields populated by fill-manifest-todos.ts.
+# The dimensions: block is hand-authored — editorial semantics the catalogue can't compute.
+# After commit, this file is human-authored — ingest runs do NOT modify it.
+
+source_id: fhi-kpr-1aar
+upstream_id: "370"
+upstream_url: https://statistikk-data.fhi.no/api/open/v1/nokkel/table/370
+upstream_landing_page: https://statistikk.fhi.no/nokkel/FEh3FmY9SjEIMKlfUdTVsY9Qe8bwZpCq4IGSRgB9-ag?GEO=0,03&AAR=2020_2020,2021_2021,2022_2022,2023_2023,2024_2024&KJONN=0&ALDER=0_74,15_24&KODEGRUPPE=P01_P29ogP70_P99,P01_P29,P70_P99&MEASURE_TYPE=MEIS
+upstream_title: "KPR_1"
+description: "FHI Folkehelsestatistikk table 370 — KPR 1-year. Annual primary-care contact rates from the Kommunalt pasient- og brukerregister, by ICPC-2 code group × region × sex × age. Atlas's first healthcare-utilisation source; complements self-reported survey data from Ungdata."
+publisher: Folkehelseinstituttet
+license: NLOD
+license_url: https://data.norge.no/nlod/no/2.0
+periodicity: P1Y
+eu_theme: HEAL
+attribution: "Kilde: Folkehelseinstituttet, Folkehelsestatistikk tabell 370 (KPR_1)"
+
+tags:
+  provider: fhi
+  topic: health
+  geo: kommune
+  cadence: annual
+
+dimensions:
+  - code: GEO
+    meaning: Region (national / fylke / kommune — no bydel resolution)
+    value_format: 1- to 4-character numeric code
+    notes: "~373 codes — narrower than other FHI tables which include bydeler"
+  - code: AAR
+    meaning: Year
+    value_format: '"YYYY_YYYY" range string (single-year despite the range form)'
+    notes: 8 single-year periods upstream (2017–2024); Atlas pulls latest 1
+  - code: KJONN
+    meaning: Sex
+    value_format: 3 codes upstream; Atlas filters to 1
+    notes: '"0" combined (only value Atlas ingests). Sex-stratified analysis would need a sibling source.'
+  - code: ALDER
+    meaning: Age band
+    value_format: '"min_max" range string'
+    notes: 10 bands incl. 0_74 aggregate, 15_24, 25_44, 45_74 disjoint slices
+  - code: KODEGRUPPE
+    meaning: ICPC-2 code-group identifier (primary-care diagnoses / symptoms)
+    value_format: 11 code-range strings
+    notes: 'P01_P29 (psych symptoms), P70_P99 (psych diagnoses), P01_P29ogP70_P99 (combined chapter P — exclude from disjoint sums), K70_K99 (cardiovascular), L01_L29 / L70_L99 (musculoskeletal), Skader (injuries), plus specific symptom clusters.'
+  - code: MEASURE_TYPE
+    meaning: Which number
+    value_format: 4 codes upstream; Atlas filters to 1
+    notes: "RATE (per-1000 contact rate — only value Atlas ingests). TELLER / SMR / MEIS available upstream."

@@ -31,6 +31,12 @@ fhi-innvkat,ALDER,Age band,"""min_max"" range string","10 bands. Includes 0_120 
 fhi-innvkat,INNVKAT,Immigrant category,3 codes,"""2"" innvandrere (1st-gen), ""3"" norskfødte med innvandrerforeldre (2nd-gen), ""23"" combined (sum of 2 + 3 — exclude from disjoint-category sums)"
 fhi-innvkat,LANDBAK,Country background grouping,1 code,"Always ""0"" for this table — origin region is collapsed. Use fhi-innvandrere (table 175) for origin-region resolution."
 fhi-innvkat,MEASURE_TYPE,Which number,3 codes,"TELLER (count), RATE (percent), SMR (standardised ratio vs national)"
+fhi-kpr-1aar,GEO,Region (national / fylke / kommune — no bydel resolution),1- to 4-character numeric code,~373 codes — narrower than other FHI tables which include bydeler
+fhi-kpr-1aar,AAR,Year,"""YYYY_YYYY"" range string (single-year despite the range form)",8 single-year periods upstream (2017–2024); Atlas pulls latest 1
+fhi-kpr-1aar,KJONN,Sex,3 codes upstream; Atlas filters to 1,"""0"" combined (only value Atlas ingests). Sex-stratified analysis would need a sibling source."
+fhi-kpr-1aar,ALDER,Age band,"""min_max"" range string","10 bands incl. 0_74 aggregate, 15_24, 25_44, 45_74 disjoint slices"
+fhi-kpr-1aar,KODEGRUPPE,ICPC-2 code-group identifier (primary-care diagnoses / symptoms),11 code-range strings,"P01_P29 (psych symptoms), P70_P99 (psych diagnoses), P01_P29ogP70_P99 (combined chapter P — exclude from disjoint sums), K70_K99 (cardiovascular), L01_L29 / L70_L99 (musculoskeletal), Skader (injuries), plus specific symptom clusters."
+fhi-kpr-1aar,MEASURE_TYPE,Which number,4 codes upstream; Atlas filters to 1,RATE (per-1000 contact rate — only value Atlas ingests). TELLER / SMR / MEIS available upstream.
 fhi-livskvalitet,GEO,Region (mixed kommune / fylke / bydel / nasjon),1- to 6-character numeric code,~409 codes
 fhi-livskvalitet,AAR,Year,"""YYYY_YYYY"" range string (single-year)","5 single-year periods, 2021–2025"
 fhi-livskvalitet,KJONN,Sex,3 codes,"""0"" both, ""1"" men, ""2"" women"
