@@ -62,6 +62,12 @@ fhi-prognose,KJONN,Sex,3 codes upstream; Atlas filters to 1,"""0"" both (Atlas o
 fhi-prognose,ALDER,Age band,"""min_max"" range string","31 codes — includes the universal 0_120, 5-year disjoint slices (0_4, 5_9, …, 100_120), and aggregates (0_17, 45_64, 80_120). Pick a single non-overlapping partition downstream."
 fhi-prognose,PROGNOSEAAR,Year being projected to (target year),4-digit year as text,"26 codes upstream (per-year out to ~2050+). Atlas keeps 3 horizons: 2030, 2040, 2050. Add intermediate years as a sibling source if 5-year resolution is needed."
 fhi-prognose,MEASURE_TYPE,Which number,3 codes upstream; Atlas filters to 1,TELLER (count) only — RATE / SMR are derivable downstream from these counts.
+fhi-selvmord,GEO,Region (mixed kommune / fylke / bydel / nasjon),1- to 6-character numeric code,~409 codes
+fhi-selvmord,AAR,5-year rolling window (year-of-death),"""YYYY1_YYYY5"" 5-year period label","31 rolling windows upstream, from 1990–1994 to ~2020–2024. Atlas pulls latest 3."
+fhi-selvmord,KJONN,Sex,3 codes,"""0"" both, ""1"" men, ""2"" women — male suicide rates are markedly higher than female"
+fhi-selvmord,ALDER,Age band,"""min_max"" range string","13 bands incl. 0_120 aggregate, 0_74, 15_24 (youth), 25_44, 45_74, 75+, etc."
+fhi-selvmord,AARSAK,Cause of death,1 code (degenerate),"Always ""SELVMORD"" — table is pre-filtered to suicide. Stored for shape consistency with the wider FHI cause-of-death tables 342 / 343."
+fhi-selvmord,MEASURE_TYPE,Which number,4 codes upstream; Atlas filters to 1,MEIS only (FHI's smoothed indicator that pools across geography to stabilise small-area estimates). Raw RATE / TELLER / SMR available upstream for analyses where pooling is inappropriate.
 fhi-trangbodd,GEO,Region (mixed kommune / fylke / bydel / nasjon),1- to 6-character numeric code,~409 codes
 fhi-trangbodd,AAR,Year,"""YYYY_YYYY"" range string (single-year)","10 years, 2015_2015 through 2024_2024"
 fhi-trangbodd,ALDER,Age band,text band code,9 age bands

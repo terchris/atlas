@@ -29,6 +29,7 @@
     "ingest:fhi-mobbing": "tsx --env-file=.env src/sources/fhi-mobbing/index.ts",
     "ingest:fhi-neet": "tsx --env-file=.env src/sources/fhi-neet/index.ts",
     "ingest:fhi-prognose": "tsx --env-file=.env src/sources/fhi-prognose/index.ts",
+    "ingest:fhi-selvmord": "tsx --env-file=.env src/sources/fhi-selvmord/index.ts",
     "ingest:fhi-trangbodd": "tsx --env-file=.env src/sources/fhi-trangbodd/index.ts",
     "ingest:fhi-vgs-gjennomforing": "tsx --env-file=.env src/sources/fhi-vgs-gjennomforing/index.ts",
     "ingest:redcross-branches": "tsx --env-file=.env src/sources/redcross-branches/index.ts",
