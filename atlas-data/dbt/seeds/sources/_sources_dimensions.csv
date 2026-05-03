@@ -68,6 +68,13 @@ fhi-selvmord,KJONN,Sex,3 codes,"""0"" both, ""1"" men, ""2"" women — male suic
 fhi-selvmord,ALDER,Age band,"""min_max"" range string","13 bands incl. 0_120 aggregate, 0_74, 15_24 (youth), 25_44, 45_74, 75+, etc."
 fhi-selvmord,AARSAK,Cause of death,1 code (degenerate),"Always ""SELVMORD"" — table is pre-filtered to suicide. Stored for shape consistency with the wider FHI cause-of-death tables 342 / 343."
 fhi-selvmord,MEASURE_TYPE,Which number,4 codes upstream; Atlas filters to 1,MEIS only (FHI's smoothed indicator that pools across geography to stabilise small-area estimates). Raw RATE / TELLER / SMR available upstream for analyses where pooling is inappropriate.
+fhi-smertestillende,GEO,Region (mixed kommune / fylke / bydel / nasjon),1- to 6-character numeric code,~409 codes
+fhi-smertestillende,AAR,Year,"""YYYY_YYYY"" range string (single-year)","12 single-year periods, 2014–2025"
+fhi-smertestillende,KJONN,Sex,3 codes,"""0"" both, ""1"" men, ""2"" women — girls report higher painkiller use than boys"
+fhi-smertestillende,ALDER,Age band (Ungdata cohort grouping),1 code (degenerate),"Always ""1_6"" — Ungdata survey-cohort identifier (same as fhi-livskvalitet, fhi-depresjon). Verify against Ungdata methodology."
+fhi-smertestillende,STATUS,Painkiller-use frequency band,1 code (degenerate),"Always ""Minst_ukentlig"" (at-least-weekly use) — table reports the share reaching this frequency."
+fhi-smertestillende,SOES,Socioeconomic status,1 code (degenerate),"Always ""0"" — combined socioeconomic statuses (no breakdown in this slice)."
+fhi-smertestillende,MEASURE_TYPE,Which number,2 codes,"SMR (standardised ratio vs national), MEIS (FHI mean / smoothed indicator). No TELLER / RATE — Ungdata is sample-based."
 fhi-trangbodd,GEO,Region (mixed kommune / fylke / bydel / nasjon),1- to 6-character numeric code,~409 codes
 fhi-trangbodd,AAR,Year,"""YYYY_YYYY"" range string (single-year)","10 years, 2015_2015 through 2024_2024"
 fhi-trangbodd,ALDER,Age band,text band code,9 age bands
