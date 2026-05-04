@@ -1,6 +1,7 @@
 # Atlas — Agent Instructions
 
-See `CLAUDE.md` for full project context.
+See `CLAUDE.md` for full project context. If instructions conflict, `CLAUDE.md` and
+task-specific runbooks under `website/docs/ai-developer/` win.
 
 ## Cursor Cloud specific instructions
 
@@ -44,7 +45,13 @@ Documented in `website/docs/contributors/setup.md`. Key commands:
 
 ### Gotchas
 
-- `check-osmosis.sh` may fail if dbt-osmosis detects missing column descriptions — this is a pre-existing repo condition, not a setup error. The strict gate (`--check`) compares live DB state against schema.yml.
-- `dbt test` will show 2 expected failures on a fresh setup: `api_v1` schema tests (no PostgREST) and `dim_kommune` relationship tests (need additional ingests beyond `ssb-08764`).
-- Always run `npm install` after pulling main — stale `node_modules/` causes type drift.
+- During Cloud environment setup only, `check-osmosis.sh` can fail if the local
+  database state does not match the checked-out schema docs yet. For PR work,
+  especially source onboarding, this is still a required gate: fix missing
+  descriptions instead of bypassing the check.
+- `dbt test` can show expected failures in a fresh setup before all fixture
+  ingests / PostgREST objects exist. Do not treat those as acceptable for a PR
+  unless the task runbook explicitly says the live DB gates are out of scope.
+- Prefer `npm ci` when `package-lock.json` is present. Use `npm install` only
+  when intentionally updating dependencies or when a package lacks a lockfile.
 - The dbt Python venv is at `atlas-data/dbt/.venv/`; install deps with `uv pip install -r requirements.txt`.
