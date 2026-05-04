@@ -107,6 +107,7 @@ uv run --directory atlas-data/dbt python scripts/build_sources_seed.py --readme 
 | [ssb-07459](./ssb-07459/) | ssb | SSB statistikkbanktabell 07459 — Alders- og kjønnsfordeling i kommuner, fylker og hele landets befolkning. | demographics | SOCI | kommune | annual |
 | [ssb-08764](./ssb-08764/) | ssb | Ingestion module for SSB statistikkbanktabell 08764 — Personer under 18 år i husholdninger med lavinntekt (EU- og OECD-skala). | income | SOCI | kommune | annual |
 | [ssb-09429](./ssb-09429/) | ssb | SSB statistikkbanktabell 09429 — Utdanningsnivå, etter kommune og kjønn. Educational attainment distribution per kommune × education leve… | education | EDUC | kommune | annual |
+| [ssb-10826](./ssb-10826/) | ssb | SSB statistikkbanktabell 10826 — Alders- og kjønnsfordeling for befolkningen i bydeler. | demographics | SOCI | bydel | annual |
 | [ssb-12063](./ssb-12063/) | ssb | SSB KOSTRA 12063 — Kommunale fritidstilbud. Municipal leisure services for children/youth and counts of volunteer youth associations rece… | ngo-supply | SOCI | kommune | annual |
 | [ssb-12131](./ssb-12131/) | ssb | SSB KOSTRA 12131 — Stønadssatser for sosialhjelp. Monthly social-assistance rates set by each kommune. Same KOSTRA pattern as ssb-12292/1… | social | SOCI | kommune | annual |
 | [ssb-12132](./ssb-12132/) | ssb | SSB KOSTRA 12132 — Utgifter som inngår i stønadssatsene for økonomisk sosialhjelp. Per-kommune rules showing whether child benefit / chil… | social | SOCI | kommune | annual |

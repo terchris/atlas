@@ -328,6 +328,56 @@ sources:
             data_type: text
           - name: loaded_at
             data_type: timestamp with time zone
+      - name: ssb_10826
+        description: |
+          SSB statistikkbanktabell 10826 — Alders- og kjønnsfordeling for
+          befolkningen i bydeler. Five dimensions (Region × Kjonn × Alder ×
+          ContentsCode × Tid), with alphanumeric bydel-region codes for Oslo,
+          Stavanger, Bergen and Trondheim.
+          Populated by atlas-data/ingest/src/sources/ssb-10826.
+        loaded_at_field: loaded_at
+        freshness:
+          warn_after: {count: 400, period: day}
+          error_after: {count: 800, period: day}
+        columns:
+          - name: region_code
+            description: SSB Region code for city-total, bydel, unknown-bydel, and historical-bydel 
+              rows.
+            data_tests: [not_null]
+          - name: region_label
+            description: Human-readable SSB Region label.
+            data_tests: [not_null]
+          - name: sex
+            description: SSB Kjonn — '1' (Menn) or '2' (Kvinner).
+            data_tests:
+              - not_null
+              - accepted_values:
+                  values: ['1', '2']
+          - name: age
+            description: SSB Alder — '000'..'104' or '105+'.
+            data_tests: [not_null]
+          - name: year
+            description: Calendar year (from SSB's Tid dimension).
+            data_tests: [not_null]
+          - name: contents_code
+            description: SSB ContentsCode — Personer.
+            data_tests:
+              - not_null
+              - accepted_values:
+                  values: [Personer]
+
+          - name: contents_label
+            description: Human-readable label for contents_code, verbatim from upstream.
+            data_type: text
+          - name: value
+            description: Numeric resident count. NULL when upstream suppresses the cell.
+            data_type: numeric
+          - name: status
+            description: Upstream suppression / quality marker. NULL when value is present.
+            data_type: text
+          - name: loaded_at
+            description: Timestamp when the ingest module loaded the row into raw.ssb_10826.
+            data_type: timestamp with time zone
       - name: fhi_mobbing
         description: FHI 377 — bullying share 7./10. klasse, 3-year averages.
         loaded_at_field: loaded_at
