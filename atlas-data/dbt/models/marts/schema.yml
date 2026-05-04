@@ -20,7 +20,7 @@ models:
           - accepted_values:
               values: [ssb-08764, ssb-06913, ssb-06944, fhi-bor-alene, ssb-13995, ssb-06947, 
                     ssb-06083, ssb-12292, ssb-12063, ssb-12131, ssb-12132, ssb-09429, fhi-trangbodd, 
-                    fhi-mobbing, fhi-vgs-gjennomforing]
+                    fhi-mobbing, fhi-vgs-gjennomforing, ssb-crime-tables]
       - name: kommune_nr
         description: 4-digit kommune code. FK to dim_kommune.
         data_tests:

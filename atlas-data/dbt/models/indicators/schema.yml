@@ -7,55 +7,54 @@ models:
       the forthcoming indicator_values union.
     columns:
       - name: source_id
-        description: Always 'ssb-08764'. Distinguishes this source once unioned with others.
         data_tests:
           - not_null
           - accepted_values:
               values: [ssb-08764]
+        data_type: text
       - name: region_code
-        description: >-
-          SSB region code, verbatim. Includes kommune, fylke, nasjon and historical variants — mixed levels.
-          Use kommune_nr for kommune-only joins.
+        description: SSB region code — kommune, fylke, nasjon, or historical variant.
         data_tests:
           - not_null
+        data_type: text
       - name: kommune_nr
-        description: >-
-          4-digit kommune code — populated only for kommune-level rows (NULL for fylke/nasjon/historical).
-          Canonical join key to dim_kommune.
         data_tests:
           - relationships:
               to: ref('dim_kommune')
               field: kommune_nr
+        data_type: text
       - name: fylke_nr
-        description: 2-digit fylke code — populated only for fylke-level rows. NULL otherwise.
         data_tests:
           - relationships:
               to: ref('dim_fylke')
               field: fylke_nr
+        data_type: text
       - name: year
-        description: Calendar year.
+        description: Calendar year (from SSB's Tid dimension).
         data_tests:
           - not_null
           - dbt_utils.accepted_range:
               min_value: 2000
               max_value: 2040
+        data_type: integer
       - name: contents_code
-        description: Metric within the SSB table.
+        description: SSB ContentsCode — one of Personer / EUskala50 / EUskala60 / OECDskala50 / 
+          OECDskala60.
         data_tests:
           - not_null
           - accepted_values:
               values: [Personer, EUskala50, EUskala60, OECDskala50, OECDskala60]
+        data_type: text
       - name: contents_label
-        description: Human-readable label for contents_code, verbatim from upstream.
+        data_type: text
       - name: value
-        description: >-
-          Numeric value — count for Personer, percent for the others. NULL when suppressed (see status).
+        data_type: numeric
       - name: status
-        description: SSB suppression marker. NULL when the cell has a plain numeric value.
+        data_type: text
       - name: updated_at
-        description: When the raw row was last loaded into raw.ssb_08764 by the ingest module.
         data_tests:
           - not_null
+        data_type: timestamp with time zone
     data_tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns:
@@ -74,11 +73,11 @@ models:
           - not_null
           - accepted_values:
               values: [ssb-06913]
+        data_type: text
       - name: region_code
-        description: SSB region code with K_/F_/... prefix. Use kommune_nr for kommune joins.
         data_tests: [not_null]
+        data_type: text
       - name: kommune_nr
-        description: Kommune code extracted from K_xxxx prefixed rows. NULL for non-kommune rows.
         data_tests:
           # SSB 06913 retains historical kommune codes in its Region dimension
           # (mergers 1960-2024). dim_kommune currently holds active-today codes
@@ -89,8 +88,8 @@ models:
               field: kommune_nr
               config:
                 severity: warn
+        data_type: text
       - name: fylke_nr
-        description: Fylke code extracted from F_xx prefixed rows. NULL for non-fylke rows.
         data_tests:
           # Historical fylker (pre-2020 01-20 numbering) may appear — warn.
           - relationships:
@@ -98,25 +97,26 @@ models:
               field: fylke_nr
               config:
                 severity: warn
+        data_type: text
       - name: year
         data_tests:
           - not_null
           - dbt_utils.accepted_range:
               min_value: 1900
               max_value: 2050
+        data_type: integer
       - name: contents_code
         data_tests: [not_null]
+        data_type: text
       - name: contents_label
-        description: Human-readable label for contents_code, verbatim from upstream.
+        data_type: text
       - name: value
-        description: |
-          Numeric value of the metric. Unit depends on contents_code
-          (count, percent, NOK, or rate — see the source-specific notes).
-          NULL when upstream suppressed the cell (see status).
+        data_type: numeric
       - name: status
-        description: Upstream suppression / quality marker. NULL when value is present.
+        data_type: text
       - name: updated_at
         data_tests: [not_null]
+        data_type: timestamp with time zone
     data_tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns:
@@ -136,10 +136,11 @@ models:
           - not_null
           - accepted_values:
               values: [ssb-06944]
+        data_type: text
       - name: region_code
         data_tests: [not_null]
+        data_type: text
       - name: kommune_nr
-        description: 4-digit kommune code; NULL for bydel/fylke/nasjon/rest-of-fylke (XX99) rows.
         data_tests:
           # SSB 06944 includes Svalbard (21xx), Jan Mayen (22xx), continental
           # shelf (23xx) kommune-like codes that aren't in Klass 131 mainland.
@@ -149,8 +150,8 @@ models:
               field: kommune_nr
               config:
                 severity: warn
+        data_type: text
       - name: fylke_nr
-        description: 2-digit fylke code; NULL otherwise.
         data_tests:
           # SSB uses special 2-digit codes outside Klass 104 for Svalbard (21),
           # Jan Mayen (22), continental shelf (23), EU (25), abroad (26),
@@ -161,37 +162,40 @@ models:
               field: fylke_nr
               config:
                 severity: warn
+        data_type: text
       - name: household_type
-        description: SSB HusholdType code, '0000' = all households.
         data_tests:
           - not_null
           - relationships: {to: ref('ref_ssb_household_type'), field: code}
+        data_type: text
       - name: household_type_label_no
         data_tests: [not_null]
+        data_type: text
       - name: household_type_label_en
         data_tests: [not_null]
+        data_type: text
       - name: year
         data_tests:
           - not_null
           - dbt_utils.accepted_range:
               min_value: 2000
               max_value: 2050
+        data_type: integer
       - name: contents_code
         data_tests:
           - not_null
           - accepted_values:
               values: [SamletInntekt, InntSkatt, AntallHushold]
+        data_type: text
       - name: contents_label
-        description: Human-readable label for contents_code, verbatim from upstream.
+        data_type: text
       - name: value
-        description: |
-          Numeric value of the metric. Unit depends on contents_code
-          (count, percent, NOK, or rate — see the source-specific notes).
-          NULL when upstream suppressed the cell (see status).
+        data_type: numeric
       - name: status
-        description: Upstream suppression / quality marker. NULL when value is present.
+        data_type: text
       - name: updated_at
         data_tests: [not_null]
+        data_type: timestamp with time zone
     data_tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns:
@@ -208,50 +212,57 @@ models:
         data_tests:
           - not_null
           - accepted_values: {values: [ssb-09429]}
+        data_type: text
       - name: region_code
         data_tests: [not_null]
+        data_type: text
       - name: kommune_nr
         data_tests:
           - relationships:
               to: ref('dim_kommune')
               field: kommune_nr
               config: {severity: warn}
+        data_type: text
       - name: fylke_nr
         data_tests:
           - relationships:
               to: ref('dim_fylke')
               field: fylke_nr
               config: {severity: warn}
+        data_type: text
       - name: education_level
-        description: SSB Nivaa NUS2000 code (subject's own level). Joined to ref_ssb_nivaa.
         data_tests:
           - not_null
           - relationships: {to: ref('ref_ssb_nivaa'), field: code}
+        data_type: text
       - name: education_level_label_no
         data_tests: [not_null]
+        data_type: text
       - name: education_level_label_en
         data_tests: [not_null]
+        data_type: text
       - name: sex
         data_tests:
           - not_null
           - accepted_values: {values: [male, female, all]}
+        data_type: text
       - name: year
         data_tests:
           - not_null
           - dbt_utils.accepted_range: {min_value: 1970, max_value: 2050}
+        data_type: integer
       - name: contents_code
         data_tests: [not_null]
+        data_type: text
       - name: contents_label
-        description: Human-readable label for contents_code, verbatim from upstream.
+        data_type: text
       - name: value
-        description: |
-          Numeric value of the metric. Unit depends on contents_code
-          (count, percent, NOK, or rate — see the source-specific notes).
-          NULL when upstream suppressed the cell (see status).
+        data_type: numeric
       - name: status
-        description: Upstream suppression / quality marker. NULL when value is present.
+        data_type: text
       - name: updated_at
         data_tests: [not_null]
+        data_type: timestamp with time zone
     data_tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns: [source_id, region_code, education_level, sex, year, contents_code]
@@ -263,37 +274,41 @@ models:
         data_tests:
           - not_null
           - accepted_values: {values: [ssb-12063]}
+        data_type: text
       - name: region_code
         data_tests: [not_null]
+        data_type: text
       - name: kommune_nr
         data_tests:
           - relationships:
               to: ref('dim_kommune')
               field: kommune_nr
               config: {severity: warn}
+        data_type: text
       - name: fylke_nr
         data_tests:
           - relationships:
               to: ref('dim_fylke')
               field: fylke_nr
               config: {severity: warn}
+        data_type: text
       - name: year
         data_tests:
           - not_null
           - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
+        data_type: integer
       - name: contents_code
         data_tests: [not_null]
+        data_type: text
       - name: contents_label
-        description: Human-readable label for contents_code, verbatim from upstream.
+        data_type: text
       - name: value
-        description: |
-          Numeric value of the metric. Unit depends on contents_code
-          (count, percent, NOK, or rate — see the source-specific notes).
-          NULL when upstream suppressed the cell (see status).
+        data_type: numeric
       - name: status
-        description: Upstream suppression / quality marker. NULL when value is present.
+        data_type: text
       - name: updated_at
         data_tests: [not_null]
+        data_type: timestamp with time zone
     data_tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns: [source_id, region_code, year, contents_code]
@@ -305,37 +320,41 @@ models:
         data_tests:
           - not_null
           - accepted_values: {values: [ssb-12131]}
+        data_type: text
       - name: region_code
         data_tests: [not_null]
+        data_type: text
       - name: kommune_nr
         data_tests:
           - relationships:
               to: ref('dim_kommune')
               field: kommune_nr
               config: {severity: warn}
+        data_type: text
       - name: fylke_nr
         data_tests:
           - relationships:
               to: ref('dim_fylke')
               field: fylke_nr
               config: {severity: warn}
+        data_type: text
       - name: year
         data_tests:
           - not_null
           - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
+        data_type: integer
       - name: contents_code
         data_tests: [not_null]
+        data_type: text
       - name: contents_label
-        description: Human-readable label for contents_code, verbatim from upstream.
+        data_type: text
       - name: value
-        description: |
-          Numeric value of the metric. Unit depends on contents_code
-          (count, percent, NOK, or rate — see the source-specific notes).
-          NULL when upstream suppressed the cell (see status).
+        data_type: numeric
       - name: status
-        description: Upstream suppression / quality marker. NULL when value is present.
+        data_type: text
       - name: updated_at
         data_tests: [not_null]
+        data_type: timestamp with time zone
     data_tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns: [source_id, region_code, year, contents_code]
@@ -348,37 +367,41 @@ models:
         data_tests:
           - not_null
           - accepted_values: {values: [ssb-12132]}
+        data_type: text
       - name: region_code
         data_tests: [not_null]
+        data_type: text
       - name: kommune_nr
         data_tests:
           - relationships:
               to: ref('dim_kommune')
               field: kommune_nr
               config: {severity: warn}
+        data_type: text
       - name: fylke_nr
         data_tests:
           - relationships:
               to: ref('dim_fylke')
               field: fylke_nr
               config: {severity: warn}
+        data_type: text
       - name: year
         data_tests:
           - not_null
           - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
+        data_type: integer
       - name: contents_code
         data_tests: [not_null]
+        data_type: text
       - name: contents_label
-        description: Human-readable label for contents_code, verbatim from upstream.
+        data_type: text
       - name: value
-        description: |
-          Numeric value of the metric. Unit depends on contents_code
-          (count, percent, NOK, or rate — see the source-specific notes).
-          NULL when upstream suppressed the cell (see status).
+        data_type: numeric
       - name: status
-        description: Upstream suppression / quality marker. NULL when value is present.
+        data_type: text
       - name: updated_at
         data_tests: [not_null]
+        data_type: timestamp with time zone
     data_tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns: [source_id, region_code, year, contents_code]
@@ -390,37 +413,41 @@ models:
         data_tests:
           - not_null
           - accepted_values: {values: [ssb-12292]}
+        data_type: text
       - name: region_code
         data_tests: [not_null]
+        data_type: text
       - name: kommune_nr
         data_tests:
           - relationships:
               to: ref('dim_kommune')
               field: kommune_nr
               config: {severity: warn}
+        data_type: text
       - name: fylke_nr
         data_tests:
           - relationships:
               to: ref('dim_fylke')
               field: fylke_nr
               config: {severity: warn}
+        data_type: text
       - name: year
         data_tests:
           - not_null
           - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
+        data_type: integer
       - name: contents_code
         data_tests: [not_null]
+        data_type: text
       - name: contents_label
-        description: Human-readable label for contents_code, verbatim from upstream.
+        data_type: text
       - name: value
-        description: |
-          Numeric value of the metric. Unit depends on contents_code
-          (count, percent, NOK, or rate — see the source-specific notes).
-          NULL when upstream suppressed the cell (see status).
+        data_type: numeric
       - name: status
-        description: Upstream suppression / quality marker. NULL when value is present.
+        data_type: text
       - name: updated_at
         data_tests: [not_null]
+        data_type: timestamp with time zone
     data_tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns: [source_id, region_code, year, contents_code]
@@ -436,43 +463,45 @@ models:
           - not_null
           - accepted_values:
               values: [ssb-13995]
+        data_type: text
       - name: region_code
         data_tests: [not_null]
+        data_type: text
       - name: kommune_nr
-        description: 4-digit kommune code; NULL for XX99 aggregates / bydel / fylke / nasjon rows.
         data_tests:
           - relationships:
               to: ref('dim_kommune')
               field: kommune_nr
               config:
                 severity: warn
+        data_type: text
       - name: fylke_nr
-        description: 2-digit fylke code; NULL otherwise.
         data_tests:
           - relationships:
               to: ref('dim_fylke')
               field: fylke_nr
               config:
                 severity: warn
+        data_type: text
       - name: year
         data_tests:
           - not_null
           - dbt_utils.accepted_range:
               min_value: 2000
               max_value: 2050
+        data_type: integer
       - name: contents_code
         data_tests: [not_null]
+        data_type: text
       - name: contents_label
-        description: Human-readable label for contents_code, verbatim from upstream.
+        data_type: text
       - name: value
-        description: |
-          Numeric value of the metric. Unit depends on contents_code
-          (count, percent, NOK, or rate — see the source-specific notes).
-          NULL when upstream suppressed the cell (see status).
+        data_type: numeric
       - name: status
-        description: Upstream suppression / quality marker. NULL when value is present.
+        data_type: text
       - name: updated_at
         data_tests: [not_null]
+        data_type: timestamp with time zone
     data_tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns:
@@ -492,8 +521,10 @@ models:
           - not_null
           - accepted_values:
               values: [ssb-06083]
+        data_type: text
       - name: region_code
         data_tests: [not_null]
+        data_type: text
       - name: kommune_nr
         data_tests:
           - relationships:
@@ -501,6 +532,7 @@ models:
               field: kommune_nr
               config:
                 severity: warn
+        data_type: text
       - name: fylke_nr
         data_tests:
           - relationships:
@@ -508,31 +540,35 @@ models:
               field: fylke_nr
               config:
                 severity: warn
+        data_type: text
       - name: family_type
         data_tests:
           - not_null
           - relationships: {to: ref('ref_ssb_family_type'), field: code}
+        data_type: text
       - name: family_type_label_no
         data_tests: [not_null]
+        data_type: text
       - name: family_type_label_en
         data_tests: [not_null]
+        data_type: text
       - name: year
         data_tests:
           - not_null
           - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
+        data_type: integer
       - name: contents_code
         data_tests: [not_null]
+        data_type: text
       - name: contents_label
-        description: Human-readable label for contents_code, verbatim from upstream.
+        data_type: text
       - name: value
-        description: |
-          Numeric value of the metric. Unit depends on contents_code
-          (count, percent, NOK, or rate — see the source-specific notes).
-          NULL when upstream suppressed the cell (see status).
+        data_type: numeric
       - name: status
-        description: Upstream suppression / quality marker. NULL when value is present.
+        data_type: text
       - name: updated_at
         data_tests: [not_null]
+        data_type: timestamp with time zone
     data_tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns:
@@ -552,10 +588,11 @@ models:
           - not_null
           - accepted_values:
               values: [ssb-06947]
+        data_type: text
       - name: region_code
         data_tests: [not_null]
+        data_type: text
       - name: kommune_nr
-        description: 4-digit kommune code; NULL for XX99 aggregates / bydel / fylke / nasjon rows.
         data_tests:
           # Same pattern as ssb-06944 — includes historical + Svalbard + offshore codes.
           - relationships:
@@ -563,36 +600,37 @@ models:
               field: kommune_nr
               config:
                 severity: warn
+        data_type: text
       - name: fylke_nr
-        description: 2-digit fylke code; NULL otherwise.
         data_tests:
           - relationships:
               to: ref('dim_fylke')
               field: fylke_nr
               config:
                 severity: warn
+        data_type: text
       - name: year
         data_tests:
           - not_null
           - dbt_utils.accepted_range:
               min_value: 2000
               max_value: 2050
+        data_type: integer
       - name: contents_code
         data_tests:
           - not_null
           - accepted_values:
               values: [Personer, EUskala50, EUskala60, OECDskala50, OECDskala60]
+        data_type: text
       - name: contents_label
-        description: Human-readable label for contents_code, verbatim from upstream.
+        data_type: text
       - name: value
-        description: |
-          Numeric value of the metric. Unit depends on contents_code
-          (count, percent, NOK, or rate — see the source-specific notes).
-          NULL when upstream suppressed the cell (see status).
+        data_type: numeric
       - name: status
-        description: Upstream suppression / quality marker. NULL when value is present.
+        data_type: text
       - name: updated_at
         data_tests: [not_null]
+        data_type: timestamp with time zone
     data_tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns:
@@ -611,12 +649,11 @@ models:
           - not_null
           - accepted_values:
               values: [ssb-07459]
+        data_type: text
       - name: region_code
-        description: >-
-          SSB region code. Includes kommune, fylke, nasjon levels. Use kommune_nr for kommune joins.
         data_tests: [not_null]
+        data_type: text
       - name: kommune_nr
-        description: 4-digit kommune code; NULL for fylke/nasjon rows.
         data_tests:
           # SSB 07459 covers 1986-2026 in its Region dimension so it retains
           # ~593 historical 4-digit codes (old Østfold 01xx, etc.) with 0
@@ -627,8 +664,8 @@ models:
               field: kommune_nr
               config:
                 severity: warn
+        data_type: text
       - name: fylke_nr
-        description: 2-digit fylke code; NULL for kommune/nasjon rows.
         data_tests:
           # Pre-2020 fylker (01-20 numbering) appear here with zero values.
           - relationships:
@@ -636,47 +673,48 @@ models:
               field: fylke_nr
               config:
                 severity: warn
+        data_type: text
       - name: sex
-        description: >-
-          Biological/administrative sex via decode_sex(). 'all' is possible if SSB ever ships an aggregate
-          row in this table.
+        description: SSB Kjonn — '1' (Menn) or '2' (Kvinner).
         data_tests:
           - not_null
           - accepted_values: {values: [male, female, all]}
+        data_type: text
       - name: age
         data_tests: [not_null]
         description: SSB Alder — '000'..'104' or '105+'.
+        data_type: text
       - name: age_int
-        description: age as integer; NULL for the open-ended '105+' bucket.
         data_tests:
           - dbt_utils.accepted_range: {min_value: 0, max_value: 110}
+        data_type: integer
       - name: age_min
-        description: Sortable floor of age; 105 for '105+'.
         data_tests:
           - not_null
           - dbt_utils.accepted_range: {min_value: 0, max_value: 110}
+        data_type: integer
       - name: year
         data_tests:
           - not_null
           - dbt_utils.accepted_range:
               min_value: 1980
               max_value: 2050
+        data_type: integer
       - name: contents_code
         data_tests:
           - not_null
           - accepted_values:
               values: [Personer1]
+        data_type: text
       - name: contents_label
-        description: Human-readable label for contents_code, verbatim from upstream.
+        data_type: text
       - name: value
-        description: |
-          Numeric value of the metric. Unit depends on contents_code
-          (count, percent, NOK, or rate — see the source-specific notes).
-          NULL when upstream suppressed the cell (see status).
+        data_type: numeric
       - name: status
-        description: Upstream suppression / quality marker. NULL when value is present.
+        data_type: text
       - name: updated_at
         data_tests: [not_null]
+        data_type: timestamp with time zone
     data_tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns:
@@ -694,76 +732,78 @@ models:
       codes while deriving parent kommune and bydel slots for downstream city reports.
     columns:
       - name: source_id
-        description: Always 'ssb-10826'. Distinguishes this source once unioned with others.
         data_tests:
           - not_null
           - accepted_values:
               values: [ssb-10826]
+        data_type: text
       - name: region_code
-        description: >-
-          SSB Region code, verbatim. Includes city-total, bydel, unknown-bydel and historical-bydel rows.
+        description: SSB Region code for city-total, bydel, unknown-bydel, and historical-bydel 
+          rows.
         data_tests: [not_null]
+        data_type: text
       - name: region_label
-        description: Human-readable SSB Region label, verbatim.
+        description: Human-readable SSB Region label.
         data_tests: [not_null]
+        data_type: text
       - name: kommune_nr
-        description: >-
-          Parent 4-digit kommune code derived from the first four digits of SSB's bydel-region code.
         data_tests:
           - relationships:
               to: ref('dim_kommune')
               field: kommune_nr
               config:
                 severity: warn
+        data_type: text
       - name: bydel_code
-        description: >-
-          6-digit bydel code derived from region_code for bydel rows; NULL for city-total and unknown-bydel
-          rows.
+        data_type: text
       - name: bydel_name
-        description: >-
-          Bydel display name from region_label with trailing historical-period annotation removed; NULL
-          outside bydel rows.
+        data_type: text
       - name: sex
-        description: Biological/administrative sex via decode_sex().
+        description: SSB Kjonn — '1' (Menn) or '2' (Kvinner).
         data_tests:
           - not_null
           - accepted_values: {values: [male, female, all]}
+        data_type: text
       - name: age
         description: SSB Alder — '000'..'104' or '105+'.
         data_tests: [not_null]
+        data_type: text
       - name: age_int
-        description: Age as integer; NULL for the open-ended '105+' bucket.
         data_tests:
           - dbt_utils.accepted_range: {min_value: 0, max_value: 110}
+        data_type: integer
       - name: age_min
-        description: Sortable floor of age; 105 for '105+'.
         data_tests:
           - not_null
           - dbt_utils.accepted_range: {min_value: 0, max_value: 110}
+        data_type: integer
       - name: year
-        description: Calendar year.
+        description: Calendar year (from SSB's Tid dimension).
         data_tests:
           - not_null
           - dbt_utils.accepted_range:
               min_value: 2000
               max_value: 2050
+        data_type: integer
       - name: contents_code
-        description: Metric within the SSB table.
+        description: SSB ContentsCode — Personer.
         data_tests:
           - not_null
           - accepted_values:
               values: [Personer]
+        data_type: text
       - name: contents_label
         description: Human-readable label for contents_code, verbatim from upstream.
+        data_type: text
       - name: value
-        description: |
-          Numeric value of the metric. For 10826 this is resident count.
-          NULL when upstream suppressed the cell (see status).
+        description: Numeric resident count. NULL when upstream suppresses the cell.
+        data_type: numeric
       - name: status
         description: Upstream suppression / quality marker. NULL when value is present.
+        data_type: text
       - name: updated_at
-        description: When the raw row was last loaded into raw.ssb_10826 by the ingest module.
         data_tests: [not_null]
+        data_type: timestamp with time zone
     data_tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns:
@@ -774,6 +814,182 @@ models:
             - year
             - contents_code
 
+  - name: indicators__ssb_08484
+    description: |
+      SSB 08484 bundle slice — nationally reported offences (counts + per capita).
+      kommune_nr is intentionally NULL (no regional dimension upstream).
+    columns:
+      - name: source_id
+        description: Canonical catalogue identifier for this Px bundle — always ssb-crime-tables.
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: [ssb-crime-tables]
+      - name: kommune_nr
+        description: Always NULL — national geography only for this Px table.
+      - name: fylke_nr
+        description: Always NULL — no fylke dimension on 08484.
+      - name: year
+        description: Calendar observation year from SSB's Tid dimension.
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range: {min_value: 1990, max_value: 2050}
+      - name: contents_code
+        description: Composite key — LovbruddKrim offence code concatenated with SSB ContentsCode.
+        data_tests: [not_null]
+      - name: contents_label
+        description: Concatenated Norwegian labels for offence hierarchy and statistic variable.
+      - name: value
+        description: >
+          Count or rate per Px cell. NULL when SSB withheld the statistic (small counts / suppression
+          marker in status).
+      - name: status
+        description: PxWebAPI cell-status character when value is withheld; otherwise NULL.
+      - name: updated_at
+        description: ingest `loaded_at` from raw.ssb_08484 (landing write time).
+        data_tests: [not_null]
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - source_id
+            - year
+            - contents_code
+
+  - name: indicators__ssb_08487
+    description: |
+      SSB 08487 bundle slice — reported offences by place of offence; two-year averages.
+      contents_code embeds region_code plus offence × metric × interval for uniqueness.
+    columns:
+      - name: source_id
+        description: Canonical catalogue identifier — always ssb-crime-tables for this Px bundle.
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: [ssb-crime-tables]
+      - name: kommune_nr
+        description: >-
+          Derived 4-digit kommune code when Gjerningssted is exactly one active kommune row; otherwise
+          NULL for higher aggregates / historical codes ending in 99.
+        data_tests:
+          - relationships:
+              to: ref('dim_kommune')
+              field: kommune_nr
+              config:
+                severity: warn
+      - name: fylke_nr
+        description: Derived 2-digit fylkesnummer only when region_code matches a fylke code 
+          pattern.
+        data_tests:
+          - relationships:
+              to: ref('dim_fylke')
+              field: fylke_nr
+              config:
+                severity: warn
+      - name: year
+        description: >-
+          End calendar year parsed from Px two-year Tid code (YYYY-YYYY), used as fact-layer year.
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range: {min_value: 1990, max_value: 2050}
+      - name: contents_code
+        description: Composite key — region × offence × statistic × two-year interval (see SQL).
+        data_tests: [not_null]
+      - name: contents_label
+        description: Place label, offence label, metric label, and interval label concatenated for 
+          display.
+      - name: value
+        description: Two-year average count or per-1-000 rate; NULL when suppressed upstream.
+      - name: status
+        description: PxWebAPI cell-status character when value is withheld.
+      - name: updated_at
+        description: ingest `loaded_at` from raw.ssb_08487.
+        data_tests: [not_null]
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - source_id
+            - kommune_nr
+            - year
+            - contents_code
+
+  - name: indicators__ssb_09405
+    description: |
+      SSB 09405 bundle slice — investigated offences × police disposition (national).
+    columns:
+      - name: source_id
+        description: Canonical catalogue identifier — ssb-crime-tables Px bundle row.
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: [ssb-crime-tables]
+      - name: kommune_nr
+        description: Always NULL — Px table publishes national aggregates only.
+      - name: fylke_nr
+        description: Always NULL.
+      - name: year
+        description: Observation year from SSB Tid dimension.
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range: {min_value: 1990, max_value: 2050}
+      - name: contents_code
+        description: Composite offence code × Politiet disposition × Px ContentsCode identifier.
+        data_tests: [not_null]
+      - name: contents_label
+        description: Norwegian labels for offence, disposition, and measure concatenated for 
+          display.
+      - name: value
+        description: Investigative-outcome counts; NULL when suppressed.
+      - name: status
+        description: PxWebAPI cell-status when value withheld.
+      - name: updated_at
+        description: ingest `loaded_at` from raw.ssb_09405.
+        data_tests: [not_null]
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - source_id
+            - year
+            - contents_code
+
+  - name: indicators__ssb_09406
+    description: |
+      SSB 09406 bundle slice — investigated offence counts + clearance percentage (national).
+    columns:
+      - name: source_id
+        description: Canonical catalogue identifier — ssb-crime-tables Px bundle row.
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: [ssb-crime-tables]
+      - name: kommune_nr
+        description: Always NULL —Px table publishes national aggregates only.
+      - name: fylke_nr
+        description: Always NULL.
+      - name: year
+        description: Observation year from SSB Tid dimension.
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range: {min_value: 1990, max_value: 2050}
+      - name: contents_code
+        description: Concatenates LovbruddKrim Px code and ContentsCode statistic identifier.
+        data_tests: [not_null]
+      - name: contents_label
+        description: Concatenates offence taxonomy label with statistic label from Px metadata.
+      - name: value
+        description: >-
+          Offence counts or oppklaringsprosent; unit depends on contents_code; NULL when suppressed.
+      - name: status
+        description: PxWebAPI cell-status when value withheld.
+      - name: updated_at
+        description: ingest `loaded_at` from raw.ssb_09406.
+        data_tests: [not_null]
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - source_id
+            - year
+            - contents_code
+
   - name: indicators__fhi_mobbing
     description: Per-source passthrough for FHI 377 (bullying 7./10. klasse).
     columns:
@@ -781,61 +997,68 @@ models:
         data_tests:
           - not_null
           - accepted_values: {values: [fhi-mobbing]}
+        data_type: text
       - name: region_code
         data_tests: [not_null]
+        data_type: text
       - name: kommune_nr
         data_tests:
           - relationships:
               to: ref('dim_kommune')
               field: kommune_nr
               config: {severity: warn}
+        data_type: text
       - name: fylke_nr
         data_tests:
           - relationships:
               to: ref('dim_fylke')
               field: fylke_nr
               config: {severity: warn}
+        data_type: text
       - name: year
         data_tests:
           - not_null
           - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
+        data_type: integer
       - name: period
         data_tests: [not_null]
+        data_type: text
       - name: period_start_year
         data_tests:
           - not_null
           - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
+        data_type: integer
       - name: period_end_year
         data_tests:
           - not_null
           - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
+        data_type: integer
       - name: sex
         data_tests:
           - not_null
           - accepted_values: {values: [male, female, all]}
+        data_type: text
       - name: grade
         data_tests:
           - not_null
           - accepted_values: {values: ['7', '10']}
+        data_type: text
       - name: question_id
-        description: |
-          Survey-question identifier from FHI Folkehelsestatistikk. NULL
-          when the row is an aggregate not tied to a specific question.
+        data_type: text
       - name: contents_code
         data_tests:
           - not_null
           - accepted_values: {values: [RATE, SMR, MEIS]}
+        data_type: text
       - name: contents_label
-        description: Human-readable label for contents_code, verbatim from upstream.
+        data_type: text
       - name: value
-        description: |
-          Numeric value of the metric. Unit depends on contents_code
-          (count, percent, NOK, or rate — see the source-specific notes).
-          NULL when upstream suppressed the cell (see status).
+        data_type: numeric
       - name: status
-        description: Upstream suppression / quality marker. NULL when value is present.
+        data_type: text
       - name: updated_at
         data_tests: [not_null]
+        data_type: timestamp with time zone
     data_tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns: [source_id, region_code, period, sex, grade, question_id, 
@@ -848,68 +1071,77 @@ models:
         data_tests:
           - not_null
           - accepted_values: {values: [fhi-vgs-gjennomforing]}
+        data_type: text
       - name: region_code
         data_tests: [not_null]
+        data_type: text
       - name: kommune_nr
         data_tests:
           - relationships:
               to: ref('dim_kommune')
               field: kommune_nr
               config: {severity: warn}
+        data_type: text
       - name: fylke_nr
         data_tests:
           - relationships:
               to: ref('dim_fylke')
               field: fylke_nr
               config: {severity: warn}
+        data_type: text
       - name: year
         data_tests:
           - not_null
           - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
+        data_type: integer
       - name: period
         data_tests: [not_null]
+        data_type: text
       - name: period_start_year
         data_tests:
           - not_null
           - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
+        data_type: integer
       - name: period_end_year
         data_tests:
           - not_null
           - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
+        data_type: integer
       - name: sex
         data_tests:
           - not_null
           - accepted_values: {values: [male, female, all]}
+        data_type: text
       - name: parents_education
-        description: FHI UTDANN code (parents' education level). Joined to ref_fhi_utdann.
         data_tests:
           - not_null
           - relationships: {to: ref('ref_fhi_utdann'), field: code}
+        data_type: text
       - name: parents_education_label_no
         data_tests: [not_null]
+        data_type: text
       - name: immigration_category
-        description: FHI INNVKAT code. Joined to ref_fhi_innvkat (single-row seed today; 
-          future-proofed).
         data_tests:
           - not_null
           - relationships: {to: ref('ref_fhi_innvkat'), field: code}
+        data_type: text
       - name: immigration_category_label_no
         data_tests: [not_null]
+        data_type: text
       - name: contents_code
         data_tests:
           - not_null
           - accepted_values: {values: [RATE, SMR, MEIS, TELLER]}
+        data_type: text
       - name: contents_label
-        description: Human-readable label for contents_code, verbatim from upstream.
+        data_type: text
       - name: value
-        description: |
-          Numeric value of the metric. Unit depends on contents_code
-          (count, percent, NOK, or rate — see the source-specific notes).
-          NULL when upstream suppressed the cell (see status).
+        data_type: numeric
       - name: status
-        description: Upstream suppression / quality marker. NULL when value is present.
+        data_type: text
       - name: updated_at
         data_tests: [not_null]
+        data_type: timestamp with time zone
     data_tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns: [source_id, region_code, period, sex, parents_education, 
@@ -924,70 +1156,82 @@ models:
         data_tests:
           - not_null
           - accepted_values: {values: [fhi-trangbodd]}
+        data_type: text
       - name: region_code
         data_tests: [not_null]
+        data_type: text
       - name: kommune_nr
         data_tests:
           - relationships:
               to: ref('dim_kommune')
               field: kommune_nr
               config: {severity: warn}
+        data_type: text
       - name: fylke_nr
         data_tests:
           - relationships:
               to: ref('dim_fylke')
               field: fylke_nr
               config: {severity: warn}
+        data_type: text
       - name: year
         data_tests:
           - not_null
           - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
+        data_type: integer
       - name: period
         data_tests: [not_null]
+        data_type: text
       - name: period_start_year
         data_tests:
           - not_null
           - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
+        data_type: integer
       - name: period_end_year
         data_tests:
           - not_null
           - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
+        data_type: integer
       - name: age_group
         data_tests: [not_null]
+        data_type: text
       - name: age_group_min
         data_tests:
           - not_null
           - dbt_utils.accepted_range: {min_value: 0, max_value: 120}
+        data_type: integer
       - name: age_group_max
         data_tests:
           - not_null
           - dbt_utils.accepted_range: {min_value: 0, max_value: 120}
+        data_type: integer
       - name: parents_education
-        description: FHI UTDANN code (parents' education level). Joined to ref_fhi_utdann.
         data_tests:
           - not_null
           - relationships: {to: ref('ref_fhi_utdann'), field: code}
+        data_type: text
       - name: parents_education_label_no
         data_tests: [not_null]
+        data_type: text
       - name: housing_status
         data_tests:
           - not_null
           - accepted_values: {values: [trangt, uoppgitt]}
+        data_type: text
       - name: contents_code
         data_tests:
           - not_null
           - accepted_values: {values: [RATE]}
+        data_type: text
       - name: contents_label
-        description: Human-readable label for contents_code, verbatim from upstream.
+        data_type: text
       - name: value
-        description: |
-          Numeric value of the metric. Unit depends on contents_code
-          (count, percent, NOK, or rate — see the source-specific notes).
-          NULL when upstream suppressed the cell (see status).
+        data_type: numeric
       - name: status
-        description: Upstream suppression / quality marker. NULL when value is present.
+        data_type: text
       - name: updated_at
         data_tests: [not_null]
+        data_type: timestamp with time zone
     data_tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns: [source_id, region_code, period, age_group, parents_education, 
@@ -1005,65 +1249,70 @@ models:
           - not_null
           - accepted_values:
               values: [fhi-bor-alene]
+        data_type: text
       - name: region_code
         data_tests: [not_null]
+        data_type: text
       - name: kommune_nr
-        description: 4-digit kommune code; NULL for non-kommune rows. Joins to dim_kommune.
         data_tests:
           - relationships:
               to: ref('dim_kommune')
               field: kommune_nr
+        data_type: text
       - name: fylke_nr
-        description: 2-digit fylke code; NULL otherwise.
         data_tests:
           - relationships:
               to: ref('dim_fylke')
               field: fylke_nr
+        data_type: text
       - name: year
         data_tests:
           - not_null
           - dbt_utils.accepted_range:
               min_value: 2000
               max_value: 2050
+        data_type: integer
       - name: period
-        description: FHI AAR code, e.g. '2024_2024'.
         data_tests: [not_null]
+        data_type: text
       - name: period_start_year
         data_tests:
           - not_null
           - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
+        data_type: integer
       - name: period_end_year
         data_tests:
           - not_null
           - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
+        data_type: integer
       - name: age_group
-        description: FHI ALDER code in min_max form (e.g. '16_120').
         data_tests: [not_null]
+        data_type: text
       - name: age_group_min
         data_tests:
           - not_null
           - dbt_utils.accepted_range: {min_value: 0, max_value: 120}
+        data_type: integer
       - name: age_group_max
         data_tests:
           - not_null
           - dbt_utils.accepted_range: {min_value: 0, max_value: 120}
+        data_type: integer
       - name: contents_code
-        description: RATE | SMR | TELLER, from FHI MEASURE_TYPE.
         data_tests:
           - not_null
           - accepted_values:
               values: [RATE, SMR, TELLER]
+        data_type: text
       - name: contents_label
-        description: Human-readable label for contents_code, verbatim from upstream.
+        data_type: text
       - name: value
-        description: |
-          Numeric value of the metric. Unit depends on contents_code
-          (count, percent, NOK, or rate — see the source-specific notes).
-          NULL when upstream suppressed the cell (see status).
+        data_type: numeric
       - name: status
-        description: Upstream suppression / quality marker. NULL when value is present.
+        data_type: text
       - name: updated_at
         data_tests: [not_null]
+        data_type: timestamp with time zone
     data_tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns:
@@ -1081,71 +1330,75 @@ models:
       marts and will be handled by the downstream union/mart layer.
     columns:
       - name: region_code
-        description: >-
-          SSB region code. Includes kommune, bydel, fylke, nasjon levels. Use kommune_nr for kommune joins.
+        description: SSB region code.
         data_tests:
           - not_null
+        data_type: text
       - name: source_id
-        description: Always 'ssb-12944'.
         data_tests:
           - not_null
           - accepted_values:
               values: [ssb-12944]
+        data_type: text
       - name: kommune_nr
-        description: 4-digit kommune code; NULL for bydel/fylke/nasjon rows.
         data_tests:
           - relationships:
               to: ref('dim_kommune')
               field: kommune_nr
+        data_type: text
       - name: fylke_nr
-        description: 2-digit fylke code; NULL for kommune/bydel/nasjon rows.
         data_tests:
           - relationships:
               to: ref('dim_fylke')
               field: fylke_nr
+        data_type: text
       - name: age_group
-        description: SSB Alder code.
+        description: SSB Alder dimension — 999A (all ages), 00-17, 18-34, 35-49, 50-66, 067+.
         data_tests:
           - not_null
           - accepted_values:
               values: [999A, 00-17, 18-34, 35-49, 50-66, 067+]
+        data_type: text
       - name: age_group_min
-        description: Lower bound of age_group; NULL for cryptic 999A and any unparseable value.
         data_tests:
           - dbt_utils.accepted_range: {min_value: 0, max_value: 120}
+        data_type: integer
       - name: age_group_max
-        description: Upper bound of age_group; NULL for open-ended (067+) and 999A.
         data_tests:
           - dbt_utils.accepted_range: {min_value: 0, max_value: 120}
+        data_type: integer
       - name: period
-        description: Three-year rolling period as upstream code text.
+        description: Three-year rolling period, e.g. 2022-2024. Stored verbatim from upstream Tid.
         data_tests:
           - not_null
+        data_type: text
       - name: period_start_year
         data_tests:
           - not_null
           - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
+        data_type: integer
       - name: period_end_year
         data_tests:
           - not_null
           - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
+        data_type: integer
       - name: contents_code
-        description: SSB ContentsCode.
+        description: SSB ContentsCode — PersonerSeksti (count) or EUskalaSeksti (percent EU-60).
         data_tests:
           - not_null
           - accepted_values:
               values: [PersonerSeksti, EUskalaSeksti]
+        data_type: text
       - name: contents_label
-        description: Human-readable label for contents_code, verbatim from upstream.
+        data_type: text
       - name: value
-        description: >-
-          Numeric value — count for PersonerSeksti, percent for EUskalaSeksti. NULL when suppressed.
+        data_type: numeric
       - name: status
-        description: SSB suppression marker. NULL when the cell has a plain numeric value.
+        data_type: text
       - name: updated_at
-        description: When the raw row was last loaded.
         data_tests:
           - not_null
+        data_type: timestamp with time zone
     data_tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns:

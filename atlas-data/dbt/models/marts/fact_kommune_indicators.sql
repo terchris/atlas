@@ -183,6 +183,18 @@ ssb_09429 as (
   where kommune_nr is not null and sex = 'all'
 ),
 
+ssb_crime_tables_08487 as (
+  -- SSB 08487 only: reported offences by gjerningssted (kommune). National
+  -- tables 08484 / 09405 / 09406 have no kommune dimension and stay in their
+  -- indicator models until a national fact pattern exists.
+  select
+    source_id, kommune_nr, year,
+    contents_code, contents_label,
+    value, status, updated_at
+  from {{ ref('indicators__ssb_08487') }}
+  where kommune_nr is not null
+),
+
 all_indicators as (
   select * from ssb_08764
   union all
@@ -213,6 +225,8 @@ all_indicators as (
   select * from fhi_mobbing
   union all
   select * from fhi_vgs
+  union all
+  select * from ssb_crime_tables_08487
 )
 
 select

@@ -1,0 +1,46 @@
+# Hand-authored manifest for the SSB crime PxWeb bundle (four statbank tables).
+
+source_id: ssb-crime-tables
+upstream_id: 08484-08487-09405-09406
+upstream_url: https://www.ssb.no/statbank/table/08484
+upstream_landing_page: https://www.ssb.no/statbank/table/08487
+upstream_title: "SSB lovbruddsstatistikk (08484, 08487, 09405, 09406) — anmeldte og etterforskede lovbrudd"
+description: "SSB PxWeb bundle: reported offences (08484 national detail, 08487 by place of offence / two-year averages), investigated offences with police disposition (09405), investigated counts and clearance rate (09406)."
+publisher: Statistisk sentralbyrå
+license: NLOD
+license_url: https://data.norge.no/nlod/no/2.0
+periodicity: P1Y
+eu_theme: JUST
+attribution: "Kilde: Statistisk sentralbyrå, tabeller 08484, 08487, 09405 og 09406"
+
+tags:
+  provider: ssb
+  topic: social
+  geo: kommune
+  cadence: annual
+
+dimensions:
+  - code: LovbruddKrim
+    meaning: Offence type (hierarchical Lovbrudd/classification 146)
+    value_format: Alphanumeric Px code
+    notes: Applies to 08484, 08487, 09405, 09406; 08487 uses a coarse subset of groups only.
+  - code: ContentsCode
+    meaning: Statistic measure (counts, rates, clearance percentage)
+    value_format: SSB metric code(s) per table
+    notes: 08484 has counts and per-1–000 inhabitants; 09406 mixes absolute counts with clearance rate.
+  - code: Tid
+    meaning: Calendar year (08484, 09405, 09406)
+    value_format: YYYY integer in landing column year
+    notes: Not present as a labelled dimension row on 08487—08487 uses two-year interval codes instead (period_interval_* columns).
+  - code: intervall (år)
+    meaning: Rolling two-calendar-year window label (08487 only)
+    value_format: e.g. 2023-2024 as text interval code
+    notes: Px dimension name differs from Tid; ingest stores as period_interval_code / period_interval_label.
+  - code: Gjerningssted
+    meaning: Place of offence geography (klass 131)
+    value_format: SSB municipality / county / country / historical region code
+    notes: Present only on 08487; ingest stores as region_code / region_label.
+  - code: PolitiAvgjorelse
+    meaning: Final police investigative outcome bucket
+    value_format: SSB categorical code set
+    notes: Present only on 09405 alongside national offence totals.

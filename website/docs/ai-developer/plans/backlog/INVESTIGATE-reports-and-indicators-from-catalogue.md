@@ -1,4 +1,4 @@
-# Investigate: Reports & indicators we can build from the 39-source catalogue
+# Investigate: Reports & indicators we can build from the 40-source catalogue
 
 > **IMPLEMENTATION RULES:** Before implementing this plan, read and follow:
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
@@ -6,15 +6,15 @@
 
 ## Status: Backlog
 
-**Goal**: Survey the 39 sources Atlas now ingests, identify the **reports and composite indicators** they enable end-to-end (catalogue → ingest → mart → frontend), and document the **conformed dimensions, crosswalks, and reference seeds** that have to land in dbt before those indicators become queryable. Output: a sequenced list of indicator-PLAN candidates the user can pick from, plus a clean inventory of the dimensional plumbing each one depends on.
+**Goal**: Survey the 40 sources Atlas now ingests, identify the **reports and composite indicators** they enable end-to-end (catalogue → ingest → mart → frontend), and document the **conformed dimensions, crosswalks, and reference seeds** that have to land in dbt before those indicators become queryable. Output: a sequenced list of indicator-PLAN candidates the user can pick from, plus a clean inventory of the dimensional plumbing each one depends on.
 
-**Last Updated**: 2026-05-04 (onboarded `ssb-10826`, making Report #14's bydel-level population denominator available; source catalogue is now 39 sources)
+**Last Updated**: 2026-05-04 (onboarded `ssb-crime-tables`, first JUST-themed Px bundle: SSB 08484/08487/09405/09406; catalogue is now 40 sources)
 
 **Origin**: Atlas's catalogue grew from 21 to 38 sources between 2026-04-30 and 2026-05-03 (PLAN-007 phase 2 + the FHI onboarding wave). Seventeen new FHI sources extended Atlas from a Samfunnspuls-replication scope into broader public-health-statistics coverage — population projection, immigrant-background mix, youth wellbeing (Ungdata: QoL / depression / painkillers / confiding-friend / alcohol / cannabis / screen-time × 3), primary-care contacts (KPR), and 5-year suicide. The user asked: *"create an investigate file on the potential reports and stats we can create based on the data we have gathered. what relations we need to make them happen."* This document is the answer — it does not implement anything; it scopes the surface so a follow-up `PLAN-*` can land each indicator under PLAN-007's catalogue + frontend.
 
 ---
 
-## The 39-source catalogue at a glance
+## The 40-source catalogue at a glance
 
 Tagged by `topic` (Atlas-domain), with `eu_theme` (DCAT-AP) and `geo`. All annual unless noted; all kommune-resolved unless noted.
 
@@ -88,6 +88,12 @@ Tagged by `topic` (Atlas-domain), with `eu_theme` (DCAT-AP) and `geo`. All annua
 |---|---|
 | `ssb-klass-kommuner` | Canonical kommune-code list (Klass 131) |
 | `ssb-klass-fylker` | Canonical fylke-code list (Klass 104) |
+
+### Justice / public safety (1 source, eu_theme=JUST)
+
+| Source | What |
+|---|---|
+| `ssb-crime-tables` | SSB Px bundle 08484–09406 — reported + investigated offences (national series + kommune-by-place-of-offence averages for 08487) |
 
 ---
 
@@ -289,15 +295,15 @@ Each row below is an *indicator* or *report-page* that the catalogue currently s
 
 ## Forward-looking: reports unlocked by planned new sources
 
-The 10 reports above are what Atlas's *current* 39 sources support. The companion investigation [`INVESTIGATE-new-norwegian-public-sources.md`](./INVESTIGATE-new-norwegian-public-sources.md) (2026-05-04) still proposes ~16 additional sources across Bufdir, NAV, Husbanken, Udir, IMDi, Helfo, DSB, Brreg Frivillighetsregisteret + Lottstift, plus several SSB extensions (`ssb-13006`, crime tables) — and a Samfunnspuls cross-check that surfaced four additional Tier-1 source families. Each report below is a **new analytical surface** those sources unlock; reports already supported get *more columns*, captured inline above.
+The 10 reports above are what Atlas's *current* **40** sources support. The companion investigation [`INVESTIGATE-new-norwegian-public-sources.md`](./INVESTIGATE-new-norwegian-public-sources.md) (2026-05-04) still proposes additional sources across Bufdir, NAV, Husbanken, Udir, IMDi, Helfo, DSB, Brreg Frivillighetsregisteret + Lottstift, plus extensions such as `ssb-13006` (blocked on Px availability at last check) — and a Samfunnspuls cross-check that surfaced four additional Tier-1 source families. **Tier-2 crime tables** from that file are now onboarded as **`ssb-crime-tables`**; Report #11 gains real data (kommune slice from 08487 in `fact_kommune_indicators`, national slices via the companion indicator models). Each report below remains a **new analytical surface** beyond the base 10 whenever it still needs editorial or modelling work; updates are noted inline.
 
 The maintenance ritual at the bottom of this file says a new report is justified only when a source "brings a genuinely new analytical axis (categories the current 10 don't cover)". Six new reports below clear that bar — three for new themes (JUST, GOVE, HEAL provider-side), two for new geographic resolutions (bydel, per-school), and one for a domain (labor-market vulnerability) that was lurking inside Report #5 but deserves its own scope once NAV's four indicator families land.
 
 ### 11. Crime / Public-Safety Profile
 
-**Reports**: per-kommune anmeldte lovbrudd rate (overall + by type), siktede rate, victimisation rate by sex × age. First-ever JUST-themed Atlas report.
+**Reports**: per-kommune registered-offence statistics (two-year averages by place of offence) + national administrative series for investigation outcomes. First-ever JUST-themed Atlas source family.
 
-**Sources**: `ssb-08484` (anmeldte lovbrudd per kommune) + `ssb-08487` (etter type) + `ssb-09405` (offer per region × kjønn × alder) + `ssb-09406` (siktede per kommune) — all planned via the [new-sources INVESTIGATE Tier-2 #6](./INVESTIGATE-new-norwegian-public-sources.md). All reachable through Atlas's existing SSB ingest plumbing — zero new infrastructure.
+**Sources**: **`ssb-crime-tables`** ingests Px **08484** (national reported offences by offence type), **08487** (reported offences by *gjerningssted* — kommune and higher aggregates; two-year averages), **09405** (investigated offences × police disposition, national), **09406** (investigated counts + clearance percentage, national). The **kommune slice** (08487-derived rows with a 4-digit kommune code) is included in `fact_kommune_indicators`; national Px tables are exposed as `indicators__ssb_08484`, `indicators__ssb_09405`, and `indicators__ssb_09406` pending a dedicated national fact pattern.
 
 **Pairs naturally with**: `fhi-mobbing` (school violence), `fhi-alkohol` + `fhi-hasj` (substance use), `fhi-neet` (youth disengagement), `ssb-13995` (welfare receipt as economic-distress correlate).
 
@@ -482,7 +488,7 @@ Reports 2, 6, 8 are higher-leverage but each opens a methodology question that b
 8. **#10 → #16** — once `udir-gsi` lands for Report #10, the per-school resolution it pioneers (`dim_school`) makes Report #16 (School-System Effectiveness) the cheapest follow-up: same source family, same dim, more axes.
 9. **#1 → #14** — with `ssb-10826` landed, Report #14 (Bydel-Level City Profile) is the cheapest big-impact addition once the conformed `dim_bydel` / reusable bydel crosswalk work lands.
 10. **#5 → #15** — once the four NAV families land for Report #5's expansion, Report #15 (Labor-Market Distress Composite) folds them into a coherent labour-market story (with the same composite-vs-per-axis question as Reports #2, #4).
-11. **#11 Crime / Public Safety** — small lift (zero new infrastructure, just SSB ingest of 4 crime tables); first JUST-themed report. Ship soon after the SSB welfare-table additions.
+11. **#11 Crime / Public Safety** — SSB Px bundle **`ssb-crime-tables`** is ingested (`08484`, `08487`, `09405`, `09406`). **Product work** remaining: tighten customer-facing wording (Q18), optional `crosswalk_lovbrudd_type`, and richer joins with FHI survey registers already in Report #4/#3.
 12. **#13 Primary-Care Access** — once `helfo-fastlege` lands, separates *access* from *use* in the mental-health and care-services stack.
 13. **#12 Preparedness & Resilience** — last in the new-report wave because it depends on `dsb-kommuneundersokelsen` AND on the NGO-side activity filter. The most operationally useful report for Hjelpekorps / Beredskap stakeholders.
 
@@ -527,4 +533,4 @@ The contributor guide ([`website/docs/contributors/ingest-modules.md`](../../../
 - [INVESTIGATE-data-discovery-surface.md](INVESTIGATE-data-discovery-surface.md) — the broader discovery / query / governance surface stack; this file is the per-indicator content layer that feeds it.
 - [INVESTIGATE-semantic-foundation-before-expansion.md](INVESTIGATE-semantic-foundation-before-expansion.md) — settled MCP via dbt-mcp + Postgres MCP; many of the relations here will surface there too.
 - `atlas-data/dbt/seeds/` — where `dim_kommune`, `dim_fylke`, existing `ref_*` seeds live; new dimensions and crosswalks land alongside.
-- `atlas-data/ingest/src/sources/` — the 39 manifest.yml files this investigation surveys.
+- `atlas-data/ingest/src/sources/` — the 40 manifest.yml files this investigation surveys.

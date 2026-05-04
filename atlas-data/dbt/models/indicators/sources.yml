@@ -6,6 +6,136 @@ sources:
       by dbt.
     schema: raw
     tables:
+      - name: ssb_08484
+        description: |
+          SSB 08484 — reported offences nationally by offence classification.
+          Populated by atlas-data/ingest/src/sources/ssb-crime-tables.
+        loaded_at_field: loaded_at
+        freshness:
+          warn_after: {count: 400, period: day}
+          error_after: {count: 800, period: day}
+        columns:
+          - name: lovbrudd_krim_code
+            description: Px LovbruddKrim dimension identifier (classification 146 hierarchical 
+              code).
+            data_tests: [not_null]
+          - name: lovbrudd_krim_label
+            description: Px Norwegian label for the offence hierarchy slice.
+          - name: contents_code
+            description: SSB ContentsCode id (counts vs per capita).
+            data_tests: [not_null]
+          - name: contents_label
+            description: Norwegian label for ContentsCode statistic.
+          - name: year
+            description: Calendar year from Tid dimension.
+            data_tests: [not_null]
+          - name: value
+            description: Statistic numeric value; NULL when suppressed.
+          - name: status
+            description: PxWebAPI withholding marker attached to suppressed cells.
+          - name: loaded_at
+            description: WAL timestamp when ingest upsert touched the row.
+            data_type: timestamp with time zone
+      - name: ssb_08487
+        description: |
+          SSB 08487 — reported offences by gjerningssted (kommune and aggregates);
+          two-year averages. Populated by atlas-data/ingest/src/sources/ssb-crime-tables.
+        loaded_at_field: loaded_at
+        freshness:
+          warn_after: {count: 400, period: day}
+          error_after: {count: 800, period: day}
+        columns:
+          - name: region_code
+            description: Gjerningssted Px code — kommune, aggregate, county, or whole-country codes.
+            data_tests: [not_null]
+          - name: region_label
+            description: Px label for gjerningssted region list entry.
+          - name: lovbrudd_krim_code
+            description: Coarse Px LovbruddKrim offence-group code for kommunert series.
+            data_tests: [not_null]
+          - name: lovbrudd_krim_label
+            description: Px Norwegian offence-group label.
+          - name: contents_code
+            description: Px statistic variable id (annual average counts or per 1000).
+            data_tests: [not_null]
+          - name: contents_label
+            description: Norwegian label tied to ContentsCode.
+          - name: period_interval_code
+            description: Px two-calendar-year Tid code (YYYY-YYYY) as emitted by PxWebAPI.
+            data_tests: [not_null]
+          - name: period_interval_label
+            description: Human-readable Tid label mirrored from Px metadata categories.
+          - name: value
+            description: Two-year-average statistic numeric value; NULL when suppressed.
+          - name: status
+            description: PxWebAPI withholding marker.
+          - name: loaded_at
+            description: Landing-table write stamp from ingest.
+            data_type: timestamp with time zone
+      - name: ssb_09405
+        description: |
+          SSB 09405 — investigated offences by police disposition (national).
+          Populated by atlas-data/ingest/src/sources/ssb-crime-tables.
+        loaded_at_field: loaded_at
+        freshness:
+          warn_after: {count: 400, period: day}
+          error_after: {count: 800, period: day}
+        columns:
+          - name: lovbrudd_krim_code
+            description: Px LovbruddKrim offence code (national investigative series).
+            data_tests: [not_null]
+          - name: lovbrudd_krim_label
+            description: Px Norwegian offence label for LovbruddKrim.
+          - name: politi_avgjorelse_code
+            description: Px Politiet disposition / outcome bucket code.
+            data_tests: [not_null]
+          - name: politi_avgjorelse_label
+            description: Px Norwegian disposition label linked to statistic documentation.
+          - name: contents_code
+            description: Px metric id (investigated-offence statistic).
+            data_tests: [not_null]
+          - name: contents_label
+            description: Norwegian measure label emitted with ContentsCode dimension.
+          - name: year
+            description: Calendar year from Tid dimension.
+            data_tests: [not_null]
+          - name: value
+            description: Count of investigated offences in intersection; NULL if suppressed.
+          - name: status
+            description: PxWebAPI withholding marker.
+          - name: loaded_at
+            description: ingest write timestamp column.
+            data_type: timestamp with time zone
+      - name: ssb_09406
+        description: |
+          SSB 09406 — investigated offence counts and clearance rate (national).
+          Populated by atlas-data/ingest/src/sources/ssb-crime-tables.
+        loaded_at_field: loaded_at
+        freshness:
+          warn_after: {count: 400, period: day}
+          error_after: {count: 800, period: day}
+        columns:
+          - name: lovbrudd_krim_code
+            description: Px LovbruddKrim offence taxonomy code per national clearance series.
+            data_tests: [not_null]
+          - name: lovbrudd_krim_label
+            description: Px Norwegian offence label paired with LovbruddKrim.
+          - name: contents_code
+            description: Px metric id distinguishing absolute counts versus clearance-percent 
+              measure.
+            data_tests: [not_null]
+          - name: contents_label
+            description: Px Norwegian ContentsCode statistic label text.
+          - name: year
+            description: Calendar year from Tid dimension.
+            data_tests: [not_null]
+          - name: value
+            description: Count or clearance percentage numeric per ContentsCode semantics.
+          - name: status
+            description: PxWebAPI withholding marker.
+          - name: loaded_at
+            description: ingest write timestamp column.
+            data_type: timestamp with time zone
       - name: ssb_08764
         description: |
           SSB statistikkbanktabell 08764 — Personer under 18 år i husholdninger
