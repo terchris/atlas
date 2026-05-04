@@ -8,9 +8,60 @@ This is the **autonomous-agent runbook** for adding one upstream data source to 
 
 ## Inputs you receive
 
-The user kicks the agent off with a prompt that names **one candidate** from [`plans/backlog/INVESTIGATE-new-norwegian-public-sources.md`](./plans/backlog/INVESTIGATE-new-norwegian-public-sources.md) — for example "Onboard ssb-10826 (Tier-1 [Q48])". That document holds the per-candidate rationale, geographic resolution, access mechanism, licence, cadence, and any open questions. Read the entry for *your* candidate end-to-end before doing anything else; it will tell you the source's quirks and the editorial decisions the human has already made.
+The user kicks the agent off in one of two modes:
 
-If the prompt doesn't name a candidate, **stop and ask** — do not pick one yourself.
+1. **Queue mode (preferred after the first pilot)**: the prompt says to pick the
+   first open GitHub issue labelled `new-source` in `terchris/atlas`. Each issue
+   represents exactly one candidate from
+   [`plans/backlog/INVESTIGATE-new-norwegian-public-sources.md`](./plans/backlog/INVESTIGATE-new-norwegian-public-sources.md).
+2. **Named-candidate mode**: the prompt names **one candidate** directly — for
+   example "Onboard ssb-10826 (Tier-1 [Q48])".
+
+In both modes, read the candidate's entry in
+[`plans/backlog/INVESTIGATE-new-norwegian-public-sources.md`](./plans/backlog/INVESTIGATE-new-norwegian-public-sources.md)
+end-to-end before doing anything else. That document holds the per-candidate
+rationale, geographic resolution, access mechanism, licence, cadence, and any
+open questions. It will tell you the source's quirks and the editorial decisions
+the human has already made.
+
+If the prompt neither tells you to use the queue nor names a candidate, **stop and
+ask** — do not pick one yourself.
+
+---
+
+## Queue mode — claim one GitHub issue
+
+Use this section only when the prompt explicitly tells you to use the
+`new-source` issue queue.
+
+The issue queue is the source of truth for "what data is next". A merged PR with
+`Closes #<issue-number>` closes the issue automatically, so completed sources are
+not picked again. Atlas intentionally runs **one Cursor Cloud Agent at a time**;
+there is no distributed lock beyond the assignee marker.
+
+Pick and claim:
+
+```bash
+gh issue list --state open --label new-source --search "no:assignee" \
+  --json number,title,url --limit 1
+
+# If the list is empty: nothing to do; stop cleanly.
+# Otherwise:
+gh issue edit <issue-number> --add-assignee @me
+gh issue view <issue-number>
+```
+
+Then:
+
+- Treat the issue body as the task brief.
+- Identify the referenced candidate / `[Q<N>]` entry in
+  `INVESTIGATE-new-norwegian-public-sources.md`.
+- Create branch `feat/onboard-<source-id>`.
+- Include `Closes #<issue-number>` in the PR body so GitHub closes the queue
+  item when the human merges the PR.
+
+If an issue is already assigned, do not touch it. If all open `new-source` issues
+are assigned, stop and report that no unassigned source work is available.
 
 ---
 
@@ -250,3 +301,27 @@ A draft PR with `needs-human` and a clear `Stuck:` note is a successful run. Bur
 - [`plans/backlog/INVESTIGATE-cloud-agent-source-onboarding.md`](./plans/backlog/INVESTIGATE-cloud-agent-source-onboarding.md) — design rationale for this pipeline.
 - [`plans/backlog/INVESTIGATE-new-norwegian-public-sources.md`](./plans/backlog/INVESTIGATE-new-norwegian-public-sources.md) — the work queue (26 candidates).
 - [`plans/backlog/INVESTIGATE-reports-and-indicators-from-catalogue.md`](./plans/backlog/INVESTIGATE-reports-and-indicators-from-catalogue.md) — the report menu refreshed in step 9c.
+
+---
+
+## Example prompts
+
+Named-candidate pilot:
+
+```text
+Onboard ssb-10826 to Atlas per
+website/docs/ai-developer/AGENT-onboard-source.md. Read [Q48] in
+INVESTIGATE-new-norwegian-public-sources.md, use ssb-07459 as the template,
+open one PR, and stop.
+```
+
+Queue mode:
+
+```text
+Pick the first open GitHub issue labelled new-source in terchris/atlas.
+Assign it to yourself. Read the issue body and the referenced candidate entry in
+website/docs/ai-developer/plans/backlog/INVESTIGATE-new-norwegian-public-sources.md.
+Onboard exactly that one source per
+website/docs/ai-developer/AGENT-onboard-source.md.
+Open a PR with Closes #<issue-number>, then stop.
+```

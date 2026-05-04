@@ -21,7 +21,12 @@ If your candidate is FHI-shape, also read `atlas-data/ingest/src/sources/fhi-liv
 
 ## Your inputs
 
-The user's prompt names **one candidate** from `website/docs/ai-developer/plans/backlog/INVESTIGATE-new-norwegian-public-sources.md` (e.g. "Onboard ssb-10826"). Read that file's entry for *your* candidate end-to-end before doing anything else. If the prompt does not name a candidate, **stop and ask** — do not pick one.
+The user's prompt either:
+
+1. tells you to pick the first open GitHub issue labelled `new-source`, or
+2. names **one candidate** from `website/docs/ai-developer/plans/backlog/INVESTIGATE-new-norwegian-public-sources.md` (e.g. "Onboard ssb-10826").
+
+In queue mode, assign the issue to yourself, read the issue body, read the referenced candidate entry, and include `Closes #<issue-number>` in the PR body. In named-candidate mode, read that candidate entry directly. If the prompt does neither, **stop and ask** — do not pick one.
 
 ## Hard rules (do not break)
 
