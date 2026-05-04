@@ -1,0 +1,52 @@
+# Hand-authored catalogue metadata for Bufdir Barnefattigdom kommunemonitor.
+# Ingest runs do not modify this file.
+
+source_id: bufdir-barnefattigdom
+upstream_id: barnefattigdom-monitor
+upstream_url: https://apim-bufdirno.azure-api.net/app-stat-monitor-api/monitor/indicator-data/detailsmultiple
+upstream_landing_page: https://www.bufdir.no/statistikk-og-analyse/monitor/barnefattigdom/
+upstream_title: "Barnefattigdom kommunemonitor"
+description: |
+  Barne-, ungdoms- og familiedirektoratet (Bufdir) publishes the Barnefattigdom kommunemonitor as an open
+  web application backed by a public JSON API. The monitor aggregates several administrative and survey
+  sources (see Bufdir's own methodology pages); Atlas ingests the published indicator time series per
+  geographic code so analysts can compare Bufdir's kommune-level poverty lens with register-based sources
+  such as SSB low-income statistics.
+publisher: Barne-, ungdoms- og familiedirektoratet
+license: NLOD
+license_url: https://data.norge.no/nlod/no/2.0
+periodicity: P1Y
+eu_theme: SOCI
+attribution: "Kilde: Barne-, ungdoms- og familiedirektoratet, Barnefattigdom kommunemonitor"
+
+tags:
+  provider: bufdir
+  topic: income
+  geo: kommune
+  cadence: annual
+
+dimensions:
+  - code: indicator_api_id
+    meaning: Bufdir monitor API indicator identifier
+    value_format: 24-character hex string
+    notes: Assigned in Bufdir's CMS (Strapi); stable per indicator definition.
+  - code: region_code
+    meaning: Geographic code in the monitor API (kommune, fylke, land, or sub-kommune area)
+    value_format: "0 (land), 2-digit fylke, 4-digit kommune, or longer codes for bydel/delbydel"
+    notes: Ingest uses active 4-digit kommuner from SSB Klass 131 as the primary pull set; the API can return additional codes per indicator batch.
+  - code: category_unit
+    meaning: First axis of the indicator's category pair (Norwegian)
+    value_format: barn or husholdning
+    notes: Mirrors the public UI's ChildPoverty category tuples.
+  - code: category_format
+    meaning: Second axis — count vs share (Norwegian)
+    value_format: antall or prosent
+    notes: Paired with category_unit; four tuples ingested per indicator × region.
+  - code: year
+    meaning: Calendar year of the observation in the time series
+    value_format: 4-digit integer
+    notes: Years present vary by indicator; see values_json for the full spine.
+  - code: values_json
+    meaning: Verbatim year-to-value map returned by the details endpoint for the slice
+    value_format: JSON object with string year keys
+    notes: Preserves upstream shape for audit; mart uses the scalar value column for the requested year row.

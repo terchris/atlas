@@ -620,6 +620,69 @@ sources:
             data_type: text
           - name: loaded_at
             data_type: timestamp with time zone
+      - name: bufdir_barnefattigdom
+        description: |
+          Bufdir Barnefattigdom kommunemonitor — annual indicator time series from
+          Bufdir's public monitor API (Strapi metadata + Azure APIM indicator-data).
+          Populated by atlas-data/ingest/src/sources/bufdir-barnefattigdom.
+        loaded_at_field: loaded_at
+        freshness:
+          warn_after: {count: 400, period: day}
+          error_after: {count: 800, period: day}
+        columns:
+          - name: indicator_api_id
+            description: Bufdir monitor API indicator id (hex string from Strapi).
+            data_tests:
+              - not_null
+          - name: indicator_slug
+            description: >-
+              Normalised slug derived from the upstream indicator name for stable contents_code construction
+              in dbt.
+            data_tests:
+              - not_null
+          - name: indicator_group_slug
+            description: Strapi indicator-group slug (thematic bucket within the monitor).
+            data_tests:
+              - not_null
+          - name: indicator_name
+            description: Upstream machine-oriented indicator name (Norwegian / mixed).
+            data_tests:
+              - not_null
+          - name: indicator_title
+            description: Human-facing indicator title from Strapi.
+            data_tests:
+              - not_null
+          - name: link_text
+            description: Optional link label from Strapi; may be NULL.
+            data_type: text
+          - name: region_code
+            description: >-
+              Geographic code from the monitor API (kommune, fylke, land, or longer sub-kommune codes).
+            data_tests:
+              - not_null
+          - name: category_unit
+            description: Category axis — barn or husholdning (verbatim Norwegian from the API).
+            data_tests:
+              - not_null
+          - name: category_format
+            description: Category axis — prosent or antall (verbatim Norwegian from the API).
+            data_tests:
+              - not_null
+          - name: year
+            description: Calendar year key within the upstream values_json time series.
+            data_tests:
+              - not_null
+          - name: value
+            description: Numeric value for this year from the upstream time series; NULL when 
+              absent.
+            data_type: numeric
+          - name: values_json
+            description: >-
+              Verbatim JSON object of year-to-value pairs returned by the details endpoint for this slice.
+            data_tests:
+              - not_null
+          - name: loaded_at
+            data_type: timestamp with time zone
       - name: ssb_12944
         description: |
           SSB statistikkbanktabell 12944 — Personer i husholdninger med vedvarende

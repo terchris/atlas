@@ -1407,3 +1407,126 @@ models:
             - age_group
             - period
             - contents_code
+
+  - name: indicators__bufdir_barnefattigdom
+    description: |
+      Per-source passthrough for Bufdir Barnefattigdom kommunemonitor. One row per
+      (indicator, region_code, category pair, year). Exposes canonical `contents_code`
+      / `contents_label` derived from the upstream indicator slug and category axes so
+      the table unions cleanly with other indicator marts.
+    columns:
+      - name: source_id
+        description: Atlas catalogue id for this ingest — always bufdir-barnefattigdom.
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: [bufdir-barnefattigdom]
+        data_type: text
+      - name: indicator_api_id
+        description: Bufdir monitor API indicator identifier (hex string from Strapi).
+        data_tests:
+          - not_null
+        data_type: text
+      - name: indicator_slug
+        description: Normalised slug from the upstream indicator name; used as part of 
+          contents_code.
+        data_tests:
+          - not_null
+        data_type: text
+      - name: indicator_group_slug
+        description: Strapi indicator-group slug (thematic section within the monitor).
+        data_tests:
+          - not_null
+        data_type: text
+      - name: indicator_name
+        description: Upstream machine-oriented indicator name (verbatim from Strapi).
+        data_tests:
+          - not_null
+        data_type: text
+      - name: indicator_title
+        description: Human-facing indicator title from Strapi (Norwegian).
+        data_tests:
+          - not_null
+        data_type: text
+      - name: link_text
+        description: Optional Strapi link label for the indicator; NULL when not set upstream.
+        data_type: text
+      - name: region_code
+        description: Geographic code from the Bufdir monitor API (kommune, fylke, land, or longer 
+          codes).
+        data_tests:
+          - not_null
+        data_type: text
+      - name: kommune_nr
+        description: >-
+          Four-digit kommune code when region_code is exactly four digits; NULL for other geography levels.
+        data_tests:
+          - relationships:
+              to: ref('dim_kommune')
+              field: kommune_nr
+        data_type: text
+      - name: fylke_nr
+        description: Two-digit fylke code when region_code is exactly two digits; NULL otherwise.
+        data_tests:
+          - relationships:
+              to: ref('dim_fylke')
+              field: fylke_nr
+        data_type: text
+      - name: category_unit
+        description: First category axis from the API — barn (children) or husholdning (households).
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: [barn, husholdning]
+        data_type: text
+      - name: category_format
+        description: Second category axis — prosent (share) or antall (count).
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: [prosent, antall]
+        data_type: text
+      - name: year
+        description: Calendar year of the observation.
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 2000
+              max_value: 2050
+        data_type: integer
+      - name: contents_code
+        description: |
+          Atlas-normalised variable code: prefix `bf_`, the indicator slug, and the two
+          category axes joined with `__`, so each measure is filter-stable in the catalogue.
+        data_tests:
+          - not_null
+        data_type: text
+      - name: contents_label
+        description: Human-readable label combining the Strapi indicator title with the category 
+          axes.
+        data_tests:
+          - not_null
+        data_type: text
+      - name: value
+        description: Numeric value for this year; NULL when the upstream series omits this year.
+        data_type: numeric
+      - name: values_json
+        description: Verbatim upstream year-to-value map (JSON object) retained for audit and gap 
+          detection.
+        data_tests:
+          - not_null
+        data_type: jsonb
+      - name: updated_at
+        description: Timestamp when the row was last written by ingest (from raw.loaded_at).
+        data_tests:
+          - not_null
+        data_type: timestamp with time zone
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - source_id
+            - indicator_api_id
+            - region_code
+            - category_unit
+            - category_format
+            - year

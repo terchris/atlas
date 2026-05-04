@@ -1,4 +1,10 @@
 source_id,code,meaning,value_format,notes
+bufdir-barnefattigdom,indicator_api_id,Bufdir monitor API indicator identifier,24-character hex string,Assigned in Bufdir's CMS (Strapi); stable per indicator definition.
+bufdir-barnefattigdom,region_code,"Geographic code in the monitor API (kommune, fylke, land, or sub-kommune area)","0 (land), 2-digit fylke, 4-digit kommune, or longer codes for bydel/delbydel",Ingest uses active 4-digit kommuner from SSB Klass 131 as the primary pull set; the API can return additional codes per indicator batch.
+bufdir-barnefattigdom,category_unit,First axis of the indicator's category pair (Norwegian),barn or husholdning,Mirrors the public UI's ChildPoverty category tuples.
+bufdir-barnefattigdom,category_format,Second axis — count vs share (Norwegian),antall or prosent,Paired with category_unit; four tuples ingested per indicator × region.
+bufdir-barnefattigdom,year,Calendar year of the observation in the time series,4-digit integer,Years present vary by indicator; see values_json for the full spine.
+bufdir-barnefattigdom,values_json,Verbatim year-to-value map returned by the details endpoint for the slice,JSON object with string year keys,Preserves upstream shape for audit; mart uses the scalar value column for the requested year row.
 fhi-alkohol,GEO,Region (mixed kommune / fylke / bydel / nasjon),1- to 6-character numeric code,~409 codes
 fhi-alkohol,AAR,Year,"""YYYY_YYYY"" range string (single-year)","14 single-year periods, 2012–2025"
 fhi-alkohol,KJONN,Sex,3 codes,"""0"" both, ""1"" men, ""2"" women"
