@@ -191,6 +191,12 @@ ssb-12944,Tid,3-year rolling period,"""YYYY-YYYY"" period label",12 periods — 
 ssb-13995,KOKkommuneregion0000,KOSTRA region (kommune / fylke / aggregate),"Numeric code: 0 national, 2-digit fylke, 4-digit kommune; KOSTRA-specific codes for aggregates",~891 codes — mapped to region_code at ingest
 ssb-13995,ContentsCode,Statistic measure,34 codes,"Cases, recipients, share of population, amounts paid, support duration (kr og stønadstid)"
 ssb-13995,Tid,Year,4-digit year as text,2022–2025 (4 years)
+ssb-crime-tables,LovbruddKrim,Offence type (hierarchical Lovbrudd/classification 146),Alphanumeric Px code,"Applies to 08484, 08487, 09405, 09406; 08487 uses a coarse subset of groups only."
+ssb-crime-tables,ContentsCode,"Statistic measure (counts, rates, clearance percentage)",SSB metric code(s) per table,08484 has counts and per-1–000 inhabitants; 09406 mixes absolute counts with clearance rate.
+ssb-crime-tables,Tid,"Calendar year (08484, 09405, 09406)",YYYY integer in landing column year,Not present as a labelled dimension row on 08487—08487 uses two-year interval codes instead (period_interval_* columns).
+ssb-crime-tables,intervall (år),Rolling two-calendar-year window label (08487 only),e.g. 2023-2024 as text interval code,Px dimension name differs from Tid; ingest stores as period_interval_code / period_interval_label.
+ssb-crime-tables,Gjerningssted,Place of offence geography (klass 131),SSB municipality / county / country / historical region code,Present only on 08487; ingest stores as region_code / region_label.
+ssb-crime-tables,PolitiAvgjorelse,Final police investigative outcome bucket,SSB categorical code set,Present only on 09405 alongside national offence totals.
 ssb-klass-fylker,code,Fylke code,"2-digit numeric, zero-padded","16 codes — 15 real fylker (e.g. 03 Oslo, 11 Rogaland, 50 Trøndelag) + 99 Uoppgitt"
 ssb-klass-fylker,name,Fylke name (bokmål),text,
 ssb-klass-fylker,parent_code,Parent classification code,text or null,Always null (no parent level)

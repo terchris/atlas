@@ -114,6 +114,7 @@ uv run --directory atlas-data/dbt python scripts/build_sources_seed.py --readme 
 | [ssb-12292](./ssb-12292/) | ssb | SSB KOSTRA 12292 — Omsorgstjenester (supplerende grunnlagstall). Nursing-home and home-care service indicators per kommune. | health | HEAL | kommune | annual |
 | [ssb-12944](./ssb-12944/) | ssb | Ingestion module for SSB statistikkbanktabell 12944 — Personer i husholdninger med vedvarende lavinntekt (EU-60), 3-årsperiode. | income | SOCI | kommune | annual |
 | [ssb-13995](./ssb-13995/) | ssb | SSB statistikkbanktabell 13995 — Sosialhjelpstilfeller, utbetalt beløp og stønadstid. Per-kommune counts of social-assistance cases and r… | social | SOCI | kommune | annual |
+| [ssb-crime-tables](./ssb-crime-tables/) | ssb | SSB PxWeb bundle: reported offences (08484 national detail, 08487 by place of offence / two-year averages), investigated offences with po… | social | JUST | kommune | annual |
 | [ssb-klass-fylker](./ssb-klass-fylker/) | ssb | SSB Klass classification 104 — Fylker. The canonical active-fylker list. Feeds dim_fylke. | reference | GOVE | fylke | irregular |
 | [ssb-klass-kommuner](./ssb-klass-kommuner/) | ssb | SSB Klass classification 131 — Kommuner. The canonical active-kommuner list. Sourced from SSB's classification registry (Klass), not from… | reference | GOVE | kommune | irregular |
 <!-- END auto-generated source table -->
