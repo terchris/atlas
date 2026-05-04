@@ -167,6 +167,11 @@ ssb-09429,Nivaa,Education level (NUS2000),7 codes,"Grunnskole (primary), videreg
 ssb-09429,Kjonn,Sex,3 codes,"""0"" both, ""1"" men, ""2"" women"
 ssb-09429,ContentsCode,Statistic measure,2 codes,Person count and percentage share at the given education level
 ssb-09429,Tid,Year,4-digit year as text,1970–2024 (55 years)
+ssb-10826,Region,Region (city-total / bydel / unknown-bydel / historical bydel),Alphanumeric SSB bydel-region code,"99 codes covering Oslo, Stavanger, Bergen and Trondheim, including historical rows and city-total rows."
+ssb-10826,Kjonn,Sex,2 codes,"""1"" Menn (men), ""2"" Kvinner (women)"
+ssb-10826,Alder,Single-year age,3-character text code,"""000"" through ""104"" + ""105+"" residual; 106 codes total"
+ssb-10826,ContentsCode,Statistic measure,1 code,Personer (resident count)
+ssb-10826,Tid,Year,4-digit year as text,2001–2026 (26 years; default response is latest year only).
 ssb-12063,KOKkommuneregion0000,KOSTRA region (kommune / fylke / aggregate),"Numeric code: 0 national, 2-digit fylke, 4-digit kommune; KOSTRA-specific codes for aggregates",~891 codes — mapped to region_code at ingest
 ssb-12063,ContentsCode,Statistic measure,15 codes,Youth-centre count + capacity + voluntary-association counts receiving public support (kommunale fritidstilbud / frivillige ungdomsforeninger)
 ssb-12063,Tid,Year,4-digit year as text,2015–2024

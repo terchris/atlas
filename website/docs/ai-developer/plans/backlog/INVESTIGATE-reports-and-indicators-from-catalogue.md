@@ -1,4 +1,4 @@
-# Investigate: Reports & indicators we can build from the 38-source catalogue
+# Investigate: Reports & indicators we can build from the 39-source catalogue
 
 > **IMPLEMENTATION RULES:** Before implementing this plan, read and follow:
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
@@ -6,22 +6,23 @@
 
 ## Status: Backlog
 
-**Goal**: Survey the 38 sources Atlas now ingests, identify the **reports and composite indicators** they enable end-to-end (catalogue → ingest → mart → frontend), and document the **conformed dimensions, crosswalks, and reference seeds** that have to land in dbt before those indicators become queryable. Output: a sequenced list of indicator-PLAN candidates the user can pick from, plus a clean inventory of the dimensional plumbing each one depends on.
+**Goal**: Survey the 39 sources Atlas now ingests, identify the **reports and composite indicators** they enable end-to-end (catalogue → ingest → mart → frontend), and document the **conformed dimensions, crosswalks, and reference seeds** that have to land in dbt before those indicators become queryable. Output: a sequenced list of indicator-PLAN candidates the user can pick from, plus a clean inventory of the dimensional plumbing each one depends on.
 
-**Last Updated**: 2026-05-04 (added §"Forward-looking: reports unlocked by planned new sources" with Reports #11–#16, inline "Planned additions" notes on Reports #1, #2, #3, #4, #5, #7, #8, #9, #10, and 5 new dimensions / 5 new crosswalks / 5 new ref seeds covering Bydel, School, JUST, GOVE, NAV labour-family)
+**Last Updated**: 2026-05-04 (onboarded `ssb-10826`, making Report #14's bydel-level population denominator available; source catalogue is now 39 sources)
 
 **Origin**: Atlas's catalogue grew from 21 to 38 sources between 2026-04-30 and 2026-05-03 (PLAN-007 phase 2 + the FHI onboarding wave). Seventeen new FHI sources extended Atlas from a Samfunnspuls-replication scope into broader public-health-statistics coverage — population projection, immigrant-background mix, youth wellbeing (Ungdata: QoL / depression / painkillers / confiding-friend / alcohol / cannabis / screen-time × 3), primary-care contacts (KPR), and 5-year suicide. The user asked: *"create an investigate file on the potential reports and stats we can create based on the data we have gathered. what relations we need to make them happen."* This document is the answer — it does not implement anything; it scopes the surface so a follow-up `PLAN-*` can land each indicator under PLAN-007's catalogue + frontend.
 
 ---
 
-## The 38-source catalogue at a glance
+## The 39-source catalogue at a glance
 
 Tagged by `topic` (Atlas-domain), with `eu_theme` (DCAT-AP) and `geo`. All annual unless noted; all kommune-resolved unless noted.
 
-### Demographics (10 sources, eu_theme=SOCI mostly)
+### Demographics (11 sources, eu_theme=SOCI mostly)
 | Source | What |
 |---|---|
 | `ssb-07459` | Population by region × sex × single-year age (1986–2026) |
+| `ssb-10826` | Population by bydel/city-total region × sex × single-year age (2001–2026) |
 | `ssb-06083` | Families by family type — single-parent share is a vulnerability proxy |
 | `ssb-06913` | Population change — births, deaths, migration (1951–2026) |
 | `fhi-befolkning` (338) | FHI population composition (counts) |
@@ -107,7 +108,7 @@ Each row below is an *indicator* or *report-page* that the catalogue currently s
 - **`dim_period`** — splice annual observed (`ssb-07459`, `fhi-befolkning`), 3-year rolling growth (`fhi-befolkningsvekst`'s annual series), and projection (`fhi-prognose`).
 
 **Planned additions**:
-- `ssb-10826` — bydel-level age/sex denominator for Oslo (17 bydeler), Stavanger (9), Bergen (8), Trondheim (4). Doesn't change the kommune-resolved Profile, but unlocks the new **Report #14 (Bydel-Level City Profile)** as a sister view that turns 4 city-rows into 38 bydel-rows.
+- `ssb-10826` landed as the bydel-level age/sex denominator for Oslo, Stavanger, Bergen and Trondheim. It doesn't change the kommune-resolved Profile, but it closes the denominator gap for **Report #14 (Bydel-Level City Profile)** as a sister view that turns 4 city-rows into bydel rows.
 
 ### 2. Child Welfare / Vulnerability Composite
 
@@ -288,7 +289,7 @@ Each row below is an *indicator* or *report-page* that the catalogue currently s
 
 ## Forward-looking: reports unlocked by planned new sources
 
-The 10 reports above are what Atlas's *current* 38 sources support. The companion investigation [`INVESTIGATE-new-norwegian-public-sources.md`](./INVESTIGATE-new-norwegian-public-sources.md) (2026-05-04) proposes ~17 additional sources across Bufdir, NAV, Husbanken, Udir, IMDi, Helfo, DSB, Brreg Frivillighetsregisteret + Lottstift, plus several SSB extensions (`ssb-13006`, `ssb-10826`, crime tables) — and a Samfunnspuls cross-check that surfaced four additional Tier-1 source families. Each report below is a **new analytical surface** those sources unlock; reports already supported get *more columns*, captured inline above.
+The 10 reports above are what Atlas's *current* 39 sources support. The companion investigation [`INVESTIGATE-new-norwegian-public-sources.md`](./INVESTIGATE-new-norwegian-public-sources.md) (2026-05-04) still proposes ~16 additional sources across Bufdir, NAV, Husbanken, Udir, IMDi, Helfo, DSB, Brreg Frivillighetsregisteret + Lottstift, plus several SSB extensions (`ssb-13006`, crime tables) — and a Samfunnspuls cross-check that surfaced four additional Tier-1 source families. Each report below is a **new analytical surface** those sources unlock; reports already supported get *more columns*, captured inline above.
 
 The maintenance ritual at the bottom of this file says a new report is justified only when a source "brings a genuinely new analytical axis (categories the current 10 don't cover)". Six new reports below clear that bar — three for new themes (JUST, GOVE, HEAL provider-side), two for new geographic resolutions (bydel, per-school), and one for a domain (labor-market vulnerability) that was lurking inside Report #5 but deserves its own scope once NAV's four indicator families land.
 
@@ -343,7 +344,7 @@ The maintenance ritual at the bottom of this file says a new report is justified
 
 **Reports**: per-bydel demographic profile + per-capita normalisation of every existing bydel-resolved indicator, for Norway's four bydel-organised cities (Oslo 17 bydeler, Stavanger 9, Bergen 8, Trondheim 4). Demonstrates intra-city inequality — the gap between best-off and worst-off bydel within a city is often *larger* than the gap between rural kommuner.
 
-**Sources**: `ssb-10826` (bydel-level age/sex population denominator — planned via the Samfunnspuls cross-check, [Q48] in the new-sources INVESTIGATE) + Atlas's existing bydel-resolved FHI sources (FHI's `GEO` column already carries 6-digit bydel codes) + planned `bufdir-barnefattigdom` (bydel-for-Oslo).
+**Sources**: `ssb-10826` (bydel-level age/sex population denominator — onboarded from the Samfunnspuls cross-check, [Q48] in the new-sources INVESTIGATE) + Atlas's existing bydel-resolved FHI sources (FHI's `GEO` column already carries 6-digit bydel codes) + planned `bufdir-barnefattigdom` (bydel-for-Oslo).
 
 **Required relations**:
 - **`dim_bydel`** *(new)* — Klass 103 (Standard for bydelsinndeling). 38 active bydeler across 4 cities + historical entries; respect SSB's `(2001-2003)` / `(-2019)` annotations to avoid pre-reform double-counting (same pattern as `dim_kommune`'s `is_active` filter).
@@ -405,7 +406,7 @@ Below are the dbt-side artefacts each set of indicators depends on. Many partly 
 | `dim_kjonn` | trivial | Reports 1, 3, 4, 8 | Three rows — `0`/`1`/`2` to `all`/`male`/`female`. One-line seed. |
 | `dim_household_type` | **missing** | Report 5 | `ssb-06944.HusholdType` codes 0000..0004 — needs labels. Already partially in `ref_ssb_household_type` seed. |
 | `dim_indicator` | partial | Composites (Reports 2, 7) | An indicator-catalogue table: id, label, source, direction (+1/-1), unit, suppression-policy. Atlas already has scattered per-source indicator views; consolidating them gives Phase-4 frontend a uniform schema for indicator cards. |
-| `dim_bydel` | **needed** for Report 14 | Report 14 | Klass 103 bydel codes for Oslo (17), Stavanger (9), Bergen (8), Trondheim (4). Filter to active bydeler per year (Oslo restructure 2003, Bergen 2019). Lands with `ssb-10826` ingest. |
+| `dim_bydel` | **needed** for Report 14 | Report 14 | Klass 103 bydel codes for Oslo, Stavanger, Bergen and Trondheim. Filter to active bydeler per year (Oslo restructure 2003, Bergen 2019). `ssb-10826` now supplies bydel population facts; the conformed dimension remains to land. |
 | `dim_school` | **needed** for Report 16 | Report 16 | School org number as PK. Lands with `udir-gsi` ingest per [Q33] in [`INVESTIGATE-new-norwegian-public-sources.md`](./INVESTIGATE-new-norwegian-public-sources.md) — first-class catalogue dimension. |
 
 ## Crosswalks Atlas needs
@@ -419,7 +420,7 @@ Below are the dbt-side artefacts each set of indicators depends on. Many partly 
 | `crosswalk_landbak` | **missing** | Reports 1, 8 | FHI's 8 country-background codes. Hand-authored against FHI's dimension reference. |
 | `crosswalk_icpc2_chapter` | **missing** | Reports 4, 9 | ICPC-2 code-range identifier → chapter / topic. Hand-authored; ~10 entries given the table's KODEGRUPPE values. |
 | `crosswalk_aldersrelasjon_ungdata` | **missing** | Reports 3, 4 | Maps Ungdata's `ALDER="1_6"` cohort identifier to a meaningful age band — only after methodology verification with FHI. |
-| `crosswalk_bydel_to_kommune` | **needed** for Report 14 | Report 14 | First 4 digits of bydel-code = kommune-code. Trivial; lands with `ssb-10826`. |
+| `crosswalk_bydel_to_kommune` | partial | Report 14 | `ssb-10826` derives parent `kommune_nr` from the first four digits of bydel-like Region codes in its source mart. A reusable named crosswalk still needs to land for cross-source joins. |
 | `crosswalk_school_to_kommune` | **needed** for Reports 10, 16 | Reports 10, 16 | School org number → registered kommune (per [Q10] in `INVESTIGATE-new-norwegian-public-sources`). v2 may add catchment-vs-registered methodology. |
 | `crosswalk_lovbrudd_type` | **needed** for Report 11 | Report 11 | SSB lovbrudd-type codes → Atlas display labels. Hand-authored seed against SSB classification. |
 | `crosswalk_kostra_region_kostragroup` | **needed** for Reports 5, 9, 11 | Reports 5, 9, 11 | KOSTRA-group codes (EKG01-EKG17 visible in `ssb-13138` metadata). Useful for stratified comparisons (small-rural vs big-city kommuner). |
@@ -479,7 +480,7 @@ Reports 2, 6, 8 are higher-leverage but each opens a methodology question that b
 **Forward-looking reports (#11–16)** plug in once the corresponding planned sources land per the [new-sources INVESTIGATE](./INVESTIGATE-new-norwegian-public-sources.md) sequencing. Suggested layering on top of #1–#10:
 
 8. **#10 → #16** — once `udir-gsi` lands for Report #10, the per-school resolution it pioneers (`dim_school`) makes Report #16 (School-System Effectiveness) the cheapest follow-up: same source family, same dim, more axes.
-9. **#1 → #14** — once `ssb-10826` lands, Report #14 (Bydel-Level City Profile) is the cheapest big-impact addition (Norway's 4 biggest cities, ~38% of population, currently summed into 4 rows; bydel resolution turns them into 38).
+9. **#1 → #14** — with `ssb-10826` landed, Report #14 (Bydel-Level City Profile) is the cheapest big-impact addition once the conformed `dim_bydel` / reusable bydel crosswalk work lands.
 10. **#5 → #15** — once the four NAV families land for Report #5's expansion, Report #15 (Labor-Market Distress Composite) folds them into a coherent labour-market story (with the same composite-vs-per-axis question as Reports #2, #4).
 11. **#11 Crime / Public Safety** — small lift (zero new infrastructure, just SSB ingest of 4 crime tables); first JUST-themed report. Ship soon after the SSB welfare-table additions.
 12. **#13 Primary-Care Access** — once `helfo-fastlege` lands, separates *access* from *use* in the mental-health and care-services stack.
@@ -526,4 +527,4 @@ The contributor guide ([`website/docs/contributors/ingest-modules.md`](../../../
 - [INVESTIGATE-data-discovery-surface.md](INVESTIGATE-data-discovery-surface.md) — the broader discovery / query / governance surface stack; this file is the per-indicator content layer that feeds it.
 - [INVESTIGATE-semantic-foundation-before-expansion.md](INVESTIGATE-semantic-foundation-before-expansion.md) — settled MCP via dbt-mcp + Postgres MCP; many of the relations here will surface there too.
 - `atlas-data/dbt/seeds/` — where `dim_kommune`, `dim_fylke`, existing `ref_*` seeds live; new dimensions and crosswalks land alongside.
-- `atlas-data/ingest/src/sources/` — the 38 manifest.yml files this investigation surveys.
+- `atlas-data/ingest/src/sources/` — the 39 manifest.yml files this investigation surveys.

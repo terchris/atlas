@@ -687,6 +687,93 @@ models:
             - year
             - contents_code
 
+  - name: indicators__ssb_10826
+    description: |
+      Per-source indicator passthrough for SSB 10826 (population by bydel/city-total
+      region, sex, and single-year age). Preserves SSB's alphanumeric bydel region
+      codes while deriving parent kommune and bydel slots for downstream city reports.
+    columns:
+      - name: source_id
+        description: Always 'ssb-10826'. Distinguishes this source once unioned with others.
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: [ssb-10826]
+      - name: region_code
+        description: >-
+          SSB Region code, verbatim. Includes city-total, bydel, unknown-bydel and historical-bydel rows.
+        data_tests: [not_null]
+      - name: region_label
+        description: Human-readable SSB Region label, verbatim.
+        data_tests: [not_null]
+      - name: kommune_nr
+        description: >-
+          Parent 4-digit kommune code derived from the first four digits of SSB's bydel-region code.
+        data_tests:
+          - relationships:
+              to: ref('dim_kommune')
+              field: kommune_nr
+              config:
+                severity: warn
+      - name: bydel_code
+        description: >-
+          6-digit bydel code derived from region_code for bydel rows; NULL for city-total and unknown-bydel
+          rows.
+      - name: bydel_name
+        description: >-
+          Bydel display name from region_label with trailing historical-period annotation removed; NULL
+          outside bydel rows.
+      - name: sex
+        description: Biological/administrative sex via decode_sex().
+        data_tests:
+          - not_null
+          - accepted_values: {values: [male, female, all]}
+      - name: age
+        description: SSB Alder — '000'..'104' or '105+'.
+        data_tests: [not_null]
+      - name: age_int
+        description: Age as integer; NULL for the open-ended '105+' bucket.
+        data_tests:
+          - dbt_utils.accepted_range: {min_value: 0, max_value: 110}
+      - name: age_min
+        description: Sortable floor of age; 105 for '105+'.
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range: {min_value: 0, max_value: 110}
+      - name: year
+        description: Calendar year.
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 2000
+              max_value: 2050
+      - name: contents_code
+        description: Metric within the SSB table.
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: [Personer]
+      - name: contents_label
+        description: Human-readable label for contents_code, verbatim from upstream.
+      - name: value
+        description: |
+          Numeric value of the metric. For 10826 this is resident count.
+          NULL when upstream suppressed the cell (see status).
+      - name: status
+        description: Upstream suppression / quality marker. NULL when value is present.
+      - name: updated_at
+        description: When the raw row was last loaded into raw.ssb_10826 by the ingest module.
+        data_tests: [not_null]
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - source_id
+            - region_code
+            - sex
+            - age
+            - year
+            - contents_code
+
   - name: indicators__fhi_mobbing
     description: Per-source passthrough for FHI 377 (bullying 7./10. klasse).
     columns:

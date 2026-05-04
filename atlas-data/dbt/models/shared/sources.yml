@@ -36,6 +36,8 @@ sources:
             data_type: integer
           - name: notes
             data_type: text
+          - name: upstream_updated_at
+            data_type: timestamp with time zone
       - name: sitemap_log
         description: >-
           Per-URL discovery log, one row per (source_slug, url) across all scraping sources. Stores sitemap
