@@ -1,0 +1,52 @@
+# Bootstrapped by bootstrap-manifest.ts; auto-fillable fields populated by fill-manifest-todos.ts.
+# The dimensions: block is hand-authored — editorial semantics the catalogue can't compute.
+# After commit, this file is human-authored — ingest runs do NOT modify it.
+
+source_id: fhi-mediebruk-some
+upstream_id: "602"
+upstream_url: https://statistikk-data.fhi.no/api/open/v1/nokkel/table/602
+upstream_landing_page: ""  # TODO paste from statistikk.fhi.no — slug for table 602 (SOME)
+upstream_title: "Mediebruk_SOME_Ungdata_KH"
+description: "FHI Folkehelsestatistikk table 602 — share of Ungdata respondents reporting more than 3 hours per day on social media. The most analytically interesting of FHI's three screen-time tables: social-media use has the strongest mental-health-outcome correlation in the youth-research literature."
+publisher: Folkehelseinstituttet
+license: NLOD
+license_url: https://data.norge.no/nlod/no/2.0
+periodicity: P1Y
+eu_theme: HEAL
+attribution: "Kilde: Folkehelseinstituttet, Folkehelsestatistikk tabell 602 (Ungdata)"
+
+tags:
+  provider: fhi
+  topic: health
+  geo: kommune
+  cadence: annual
+
+dimensions:
+  - code: GEO
+    meaning: Region (mixed kommune / fylke / bydel / nasjon)
+    value_format: 1- to 6-character numeric code
+    notes: "~409 codes"
+  - code: AAR
+    meaning: Year
+    value_format: '"YYYY_YYYY" range string (single-year)'
+    notes: 11 single-year periods, 2015–2025
+  - code: KJONN
+    meaning: Sex
+    value_format: 3 codes
+    notes: '"0" both, "1" men, "2" women — girls report markedly higher >3h/day social-media use than boys; composites must orient by KJONN slice or risk masking the gap'
+  - code: ALDER
+    meaning: Age band (Ungdata cohort grouping)
+    value_format: 1 code (degenerate)
+    notes: 'Always "1_6" — Ungdata survey-cohort identifier. Verify against Ungdata methodology.'
+  - code: MEDIEBRUK
+    meaning: Media-use frequency band
+    value_format: 1 code (degenerate)
+    notes: 'Always "Merenn3timer" (more than 3 hours per day). The value is the share reaching the threshold — risk direction.'
+  - code: SOES
+    meaning: Socioeconomic status
+    value_format: 1 code (degenerate)
+    notes: 'Always "0" — combined SES.'
+  - code: MEASURE_TYPE
+    meaning: Which number
+    value_format: 2 codes
+    notes: "SMR (standardised ratio vs national), MEIS (FHI mean / smoothed indicator). No TELLER / RATE — Ungdata is sample-based."

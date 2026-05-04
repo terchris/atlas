@@ -1,0 +1,36 @@
+# Bootstrapped by bootstrap-manifest.ts; auto-fillable fields populated by fill-manifest-todos.ts.
+# The dimensions: block is hand-authored — editorial semantics the catalogue can't compute.
+# After commit, this file is human-authored — ingest runs do NOT modify it.
+
+source_id: ssb-08764
+upstream_id: 08764
+upstream_url: https://www.ssb.no/statbank/table/08764
+upstream_landing_page: https://www.ssb.no/statbank/table/08764
+upstream_title: "08764: Personer under 18 år i husholdninger med lavinntekt (EU- og OECD-skala). Antall og prosent (K) (B) 2005-2024"
+description: "Ingestion module for SSB statistikkbanktabell 08764 — Personer under 18 år i husholdninger med lavinntekt (EU- og OECD-skala)."
+publisher: Statistisk sentralbyrå
+license: NLOD
+license_url: https://data.norge.no/nlod/no/2.0
+periodicity: P1Y
+eu_theme: SOCI
+attribution: "Kilde: Statistisk sentralbyrå, tabell 08764"
+
+tags:
+  provider: ssb
+  topic: income
+  geo: kommune
+  cadence: annual
+
+dimensions:
+  - code: Region
+    meaning: Region (national / fylke / kommune / bydel / historical)
+    value_format: "Numeric code: 0 national, 2-digit fylke, 4-digit kommune, 6-digit bydel"
+    notes: ~1036 codes when pulling full range
+  - code: ContentsCode
+    meaning: Statistic measure
+    value_format: 5 codes
+    notes: Personer (count under 18), EUskala50/EUskala60 (% under 18 below 50%/60% of median, EU scale), OECDskala50/OECDskala60 (same, OECD scale). Samfunnspuls uses EUskala60.
+  - code: Tid
+    meaning: Year
+    value_format: 4-digit year as text
+    notes: 2005–2024 (20 years); default v2-beta response is latest year only

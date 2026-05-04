@@ -1,0 +1,52 @@
+# Bootstrapped by bootstrap-manifest.ts; auto-fillable fields populated by fill-manifest-todos.ts.
+# The dimensions: block is hand-authored — editorial semantics the catalogue can't compute.
+# After commit, this file is human-authored — ingest runs do NOT modify it.
+
+source_id: fhi-depresjon
+upstream_id: "339"
+upstream_url: https://statistikk-data.fhi.no/api/open/v1/nokkel/table/339
+upstream_landing_page: https://statistikk.fhi.no/nokkel/oeMEaMEosmYB-_HX2QxpL_txHoxxrNa5sWQZ-q7lqWU?GEO=0,03&AAR=2020_2020,2021_2021,2022_2022,2023_2023,2024_2024,2025_2025&KJONN=0&ALDER=1_6&DEPRESJON=Ja&SOES=0&MEASURE_TYPE=MEIS
+upstream_title: "Depressive symptomer_Ungdata_KH"
+description: "FHI Folkehelsestatistikk table 339 — share of youth reporting depressive symptoms in the Ungdata survey, by region × sex × socioeconomic status. Pairs with fhi-livskvalitet on the same Ungdata cohort."
+publisher: Folkehelseinstituttet
+license: NLOD
+license_url: https://data.norge.no/nlod/no/2.0
+periodicity: P1Y
+eu_theme: HEAL
+attribution: "Kilde: Folkehelseinstituttet, Folkehelsestatistikk tabell 339 (Ungdata)"
+
+tags:
+  provider: fhi
+  topic: health
+  geo: kommune
+  cadence: annual
+
+dimensions:
+  - code: GEO
+    meaning: Region (mixed kommune / fylke / bydel / nasjon)
+    value_format: 1- to 6-character numeric code
+    notes: "~409 codes"
+  - code: AAR
+    meaning: Year
+    value_format: '"YYYY_YYYY" range string (single-year)'
+    notes: 14 single-year periods upstream (2012–2025); Atlas pulls latest 4 to fit cell budget
+  - code: KJONN
+    meaning: Sex
+    value_format: 3 codes
+    notes: '"0" both, "1" men, "2" women — girls report markedly higher rates of depressive symptoms'
+  - code: ALDER
+    meaning: Age band (Ungdata cohort grouping)
+    value_format: 1 code (degenerate)
+    notes: 'Always "1_6" — Ungdata survey-cohort identifier (same as fhi-livskvalitet). Verify against Ungdata methodology.'
+  - code: DEPRESJON
+    meaning: Depression-symptom response
+    value_format: 1 code (degenerate)
+    notes: 'Always "Ja" — yes-respondents only. The value is the share reaching the symptomatic threshold.'
+  - code: SOES
+    meaning: Socioeconomic status
+    value_format: 4 codes
+    notes: '"0" combined + "1"/"2"/"3" specific levels (typically low/middle/high family SES). Verify against Ungdata methodology.'
+  - code: MEASURE_TYPE
+    meaning: Which number
+    value_format: 2 codes
+    notes: "SMR (standardised ratio vs national), MEIS (FHI mean / smoothed indicator). No TELLER / RATE — Ungdata is sample-based."

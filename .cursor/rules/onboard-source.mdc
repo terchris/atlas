@@ -1,0 +1,70 @@
+---
+description: Atlas — onboard a new upstream data source per AGENT-onboard-source.md. Always-applies rules + invariants for Cursor BG agents working from the source-onboarding queue.
+alwaysApply: true
+---
+
+# Atlas — onboard-source agent rules
+
+You are a Cursor Background Agent onboarding **one upstream data source** to Atlas. Atlas is an open semantic layer over Norwegian public data; the data side lives in `atlas-data/` (TypeScript ingest writes `raw.*`; dbt transforms to `marts.*`).
+
+## Read these first, in order
+
+1. `CLAUDE.md` — repo-wide agent instructions.
+2. `website/docs/ai-developer/AGENT-onboard-source.md` — **the canonical runbook for your task**. Follow it step by step.
+3. `website/docs/contributors/adding-a-source.md` — the 11-step human workflow your runbook tracks.
+4. `website/docs/contributors/ingest-modules.md` — per-source folder contract.
+5. `atlas-data/ingest/src/sources/README.md` — implemented-sources catalogue + `manifest.yml` schema.
+6. `docs/stack/naming-conventions.md` — canonical column vocabulary.
+7. `atlas-data/ingest/src/sources/ssb-08764/` — the canonical SSB-style template.
+
+If your candidate is FHI-shape, also read `atlas-data/ingest/src/sources/fhi-livskvalitet/` or `atlas-data/ingest/src/sources/fhi-mediebruk-some/`.
+
+## Your inputs
+
+The user's prompt names **one candidate** from `website/docs/ai-developer/plans/backlog/INVESTIGATE-new-norwegian-public-sources.md` (e.g. "Onboard ssb-10826"). Read that file's entry for *your* candidate end-to-end before doing anything else. If the prompt does not name a candidate, **stop and ask** — do not pick one.
+
+## Hard rules (do not break)
+
+1. **Never push to `main`.** Always `feat/onboard-<source-id>`.
+2. **Never enable auto-merge** on the PR. Never tag reviewers in PR comments.
+3. **Never run** `npm run migrate`, `npm run ingest:*`, `dbt run`, or `dbt test`. You have no database. These run post-merge by the human.
+4. **Never edit a previously-merged migration file.** Add a new one with the next sequential number.
+5. **Never let an upstream column name leak into `marts.*`.** Rename to canonical vocabulary at the dbt layer.
+6. **Never commit secrets**, `.env`, `.env.local`, or `.crawlee-cache/` contents.
+7. **Never edit `docs/research/samfunnspuls/data-sources.md`** — that's human-curated.
+8. **Never edit another source's `manifest.yml`.** You only write the manifest for *your* candidate.
+9. **Never bypass `check-osmosis.sh`** or the `build_sources_seed.py` validator. Fix the underlying issue.
+10. **Never invent a new `eu_theme`.** Pick from the 13-code allowlist in `atlas-data/dbt/seeds/sources/eu_data_theme.csv`.
+11. **Never guess editorial decisions.** If you can't determine the right answer (degenerate dimension, `meaning:`, which report this fills), add `# TODO: human-review` and flag in the PR body.
+
+## Gates you MUST run before opening the PR
+
+From the right working directories:
+
+```
+cd atlas-data/ingest && npm run typecheck          # must pass with zero errors
+cd atlas-data/dbt && uv run --env-file ../ingest/.env dbt parse   # must succeed
+cd atlas-data/dbt && ./check-osmosis.sh            # must pass with TOTAL = 0
+```
+
+If any gate fails after a reasonable fix attempt: open the PR as a **draft**, label `needs-human`, comment `Stuck: <reason>`, and stop.
+
+## When to escalate (open draft + `needs-human` + stop)
+
+- Upstream requires auth, captcha, or returns HTML where JSON was expected.
+- Candidate has no analogous template in `atlas-data/ingest/src/sources/` — do not invent scraper plumbing.
+- You've burned >2 retries on the same typecheck error.
+- `check-osmosis.sh` reports an issue you've tried to fix twice.
+- A step requires inventing an editorial decision (new report, new `dim_*`, new methodology).
+
+A clean draft + `needs-human` + clear `Stuck:` note is a **successful** run. Compute thrashing on an unsolvable problem is a failed run.
+
+## When you're done
+
+- Single commit on `feat/onboard-<source-id>`.
+- All three gates pass.
+- The reports-and-indicators INVESTIGATE refresh (step 9c in the runbook) lands in the same commit.
+- PR opened, body lists which gates ran and which gates the human runs post-merge.
+- **Stop.** Do not start another candidate.
+
+The runbook at `website/docs/ai-developer/AGENT-onboard-source.md` has the full step-by-step. Do not improvise outside it.

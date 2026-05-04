@@ -7,32 +7,115 @@ One folder per upstream data source. Each folder is a self-contained unit: the c
 - **One folder per source.** Folder name = source id (matches the id in `docs/research/samfunnspuls/data-sources.md`).
 - **Entry point is `index.ts`.** Exports `SOURCE_ID`, `run()`, and any types callers need.
 - **README.md alongside the code.** Implementation notes, observed quirks, known issues. Strategic/catalogue-level metadata stays in `docs/research/samfunnspuls/data-sources.md`, not duplicated here.
+- **manifest.yml alongside the code.** Catalogue-level metadata about the source (publisher, license, periodicity, tags). See [manifest.yml schema](#manifestyml-schema) below.
 - **npm script per source**: `"ingest:<id>": "tsx src/sources/<id>/index.ts"` in [`../../package.json`](../../package.json).
+- **`run()` wraps work in `recordIngestRun()`**. The wrapper inserts a row into `raw.ingest_runs` (start), executes the work, and updates the row with `rows_parsed` / `upstream_updated_at` / `exit_code` (finish). Source modules do NOT call `closeSql()` themselves — the wrapper owns sql lifecycle.
+
+### manifest.yml schema
+
+Every source folder ships a `manifest.yml` that drives the catalogue's `marts._sources_manifest` seed (PLAN-007 phase 2). After bootstrap, the file is human-authored — ingest runs do NOT modify it.
+
+**Required top-level fields:**
+
+| Field | Description |
+|---|---|
+| `source_id` | Folder name; primary key (e.g. `ssb-08764`). |
+| `upstream_id` | The upstream's own identifier (SSB table number, FHI dataset slug, etc.). |
+| `upstream_url` | Link to the data — typically the API endpoint or machine-readable URL Atlas's ingest module fetches. |
+| `upstream_landing_page` *(optional)* | Human-browsable web page describing the dataset (DCAT-AP `dcat:landingPage`). Use when the data URL is JSON-only (e.g. FHI's `/api/open/v1/...`); leave empty when `upstream_url` is already browsable (e.g. SSB statbank tables). Frontend falls back to `upstream_url` when this is empty. |
+| `upstream_title` | The source's authoritative title at the upstream (usually Norwegian). |
+| `description` | One paragraph for the customer-facing catalogue. |
+| `publisher` | Institution that publishes the data (often equals provider). |
+| `license` | License token. Default `NLOD` for Norwegian public-sector sources. |
+| `license_url` | URL to the license terms. |
+| `periodicity` | ISO 8601 — `P1Y` annual, `P3M` quarterly, `P1M` monthly, `P1D` daily, or `irregular`. |
+| `eu_theme` | EU Publications Office Data Theme code (one of: `AGRI`, `ECON`, `EDUC`, `ENER`, `ENVI`, `GOVE`, `HEAL`, `INTR`, `JUST`, `REGI`, `SOCI`, `TECH`, `TRAN`). Coarser than `tags.topic`; aligns Atlas with Felles datakatalog + DCAT-AP. Auto-derived from `topic` by `fill-manifest-todos.ts`. |
+| `attribution` | Citation string for academic / legal compliance (e.g. `Kilde: Statistisk sentralbyrå, tabell 08764`). Surfaced via `mart_meta_sources` so external developers can attribute Atlas data correctly. |
+
+**Required `tags:` namespaces** (exactly one value per namespace):
+
+| Namespace | Allowed values |
+|---|---|
+| `provider` | `ssb` / `fhi` / `redcross` / `brreg` |
+| `topic` | `demographics` / `income` / `education` / `health` / `social` / `ngo-supply` / `reference` |
+| `geo` | `kommune` / `fylke` / `national` / `bydel` |
+| `cadence` | `annual` / `quarterly` / `monthly` / `irregular` / `one-shot` |
+
+**Required `dimensions:` block** — list each upstream dimension the source delivers, with editorial semantic context the catalogue can't compute:
+
+```yaml
+dimensions:
+  - code: Region                  # upstream's own dimension code
+    meaning: Region (kommune / fylke / nasjon / bydel / historical)
+    value_format: "Numeric code: 0 national, 2-digit fylke, 4-digit kommune, 6-digit bydel"
+    notes: "~1036 codes when pulling full range"
+  - code: ContentsCode
+    meaning: Statistic measure
+    value_format: 5 codes
+    notes: "Personer (count), EUskala50/60 (% below 50%/60% of median, EU scale), …"
+```
+
+`code` and `meaning` are required per dimension; `value_format` and `notes` may be empty strings. The catalogue's Phase-3 `mart_meta_dimensions` joins this editorial seed with computed cardinality + example values from `raw.*` tables, so shoppers see "what each column means" + "what values it actually contains" in one view.
+
+**Authoring workflow** (see [`contributors/ingest-modules.md`](../../../../website/docs/contributors/ingest-modules.md) for the full walkthrough):
+
+1. `npm run sources:bootstrap-manifest -- <source_id>` — fetches upstream metadata + writes a skeleton.
+2. `npm run sources:fill-manifest-todos` — auto-fills description + tags from this source's README.
+3. Review the generated YAML; spot-check `tags.topic` (regex first-match-wins).
+4. Commit alongside the source code.
+
+After commit, future field changes happen via PR like any other code change. The seed CSV at `atlas-data/dbt/seeds/sources/_sources_manifest.csv` (and the `Implemented sources` table below) regenerate from these YAMLs via `uv run python atlas-data/dbt/scripts/build_sources_seed.py --readme`.
 
 ## Implemented sources
 
-| Source | Provider | What it is | Run | Notes |
-|---|---|---|---|---|
-| [fhi-bor-alene](./fhi-bor-alene/) | FHI | Share of adults (16+) living alone, per region, annual | `npm run ingest:fhi-bor-alene` | First non-SSB source. POST-only data endpoint, json-stat2 response |
-| [fhi-mobbing](./fhi-mobbing/) | FHI | Bullying share, 7th and 10th grade, 3-year averages | `npm run ingest:fhi-mobbing` | Substitute for `udir-elevundersokelsen` (bullying); FHI 377 |
-| [fhi-trangbodd](./fhi-trangbodd/) | FHI | Overcrowded-housing share by region × age × education × housing-status | `npm run ingest:fhi-trangbodd` | Public substitute for Samfunnspuls's bespoke SSB extract; RATE measure only |
-| [fhi-vgs-gjennomforing](./fhi-vgs-gjennomforing/) | FHI | Upper-secondary completion rate by region × sex × parents-ed × immigration-cat | `npm run ingest:fhi-vgs-gjennomforing` | Substitute for `udir-sluttet-vgs`; dropout = 100 − completion |
-| [ssb-06083](./ssb-06083/) | SSB | Families by type (couple with/without kids, single parent, etc.) | `npm run ingest:ssb-06083` | 4 dims (adds FamilieType); single-parent share = vulnerability proxy |
-| [ssb-06913](./ssb-06913/) | SSB | Population change — folketilvekst, fødsler, dødsfall, flyttinger, per kommune/fylke, annual | `npm run ingest:ssb-06913` | 3 dims, 8 ContentsCodes, includes projections in future years |
-| [ssb-06944](./ssb-06944/) | SSB | Household income (median), income tax, household count by region × household type | `npm run ingest:ssb-06944` | First economy indicator; includes bydeler (delområder) |
-| [ssb-07459](./ssb-07459/) | SSB | Population by region, sex and single-year age | `npm run ingest:ssb-07459` | 5 dims (adds Kjonn + Alder); ~210 k cells — largest pull so far |
-| [ssb-06947](./ssb-06947/) | SSB | Whole-population low income (EU/OECD) — complements ssb-08764 (children) | `npm run ingest:ssb-06947` | Same 5 content codes as 08764; 1 036 regions × 20 years |
-| [ssb-08764](./ssb-08764/) | SSB | Persons under 18 in low-income households (EU/OECD scale), per kommune, annual | `npm run ingest:ssb-08764` | Default response = latest year only; see README |
-| [ssb-09429](./ssb-09429/) | SSB | Educational attainment by kommune × sex × level | `npm run ingest:ssb-09429` | 5 dims (Nivaa + Kjonn); sex mapped to male/female/all |
-| [ssb-12063](./ssb-12063/) | SSB KOSTRA | Municipal leisure services / voluntary youth associations | `npm run ingest:ssb-12063` | KOSTRA pattern |
-| [ssb-12131](./ssb-12131/) | SSB KOSTRA | Social-assistance monthly rates | `npm run ingest:ssb-12131` | KOSTRA pattern |
-| [ssb-12132](./ssb-12132/) | SSB KOSTRA | Welfare benefit-income rules | `npm run ingest:ssb-12132` | KOSTRA pattern |
-| [ssb-12292](./ssb-12292/) | SSB KOSTRA | Omsorgstjenester — nursing home + home care indicators | `npm run ingest:ssb-12292` | 49 content codes, KOSTRA region dim |
-| [ssb-12944](./ssb-12944/) | SSB | Persons in households with persistent low income (EU-60), 3-year rolling periods, broken down by age group | `npm run ingest:ssb-12944` | 4 dims (adds Alder); Tid stored as period text like "2022-2024" |
-| [ssb-13995](./ssb-13995/) | SSB | Social-assistance cases, amounts paid, support duration — 34 content codes | `npm run ingest:ssb-13995` | KOSTRA table with `KOKkommuneregion0000` dim; 2022-2025 only |
-| [ssb-klass-fylker](./ssb-klass-fylker/) | SSB Klass | Canonical active-fylker list (classification 104) | `npm run ingest:ssb-klass-fylker` | Dimension source; feeds `dim_fylke`. Includes residual `"99 Uoppgitt"`. |
-| [ssb-klass-kommuner](./ssb-klass-kommuner/) | SSB Klass | Canonical active-kommuner list (classification 131) | `npm run ingest:ssb-klass-kommuner` | Dimension source; feeds `dim_kommune`. REST API, not PxWebAPI. |
-| [redcross-branches](./redcross-branches/) | Red Cross Organizations API | Branches (HQ + Distrikt + Lokalforening) with per-branch activities | `npm run ingest:redcross-branches` | First NGO supply source; static JSON dump in v1, live API deferred |
+The table below is auto-generated from each source's `manifest.yml`. To regenerate after editing a manifest, run from the repo root:
+
+```bash
+uv run --directory atlas-data/dbt python scripts/build_sources_seed.py --readme atlas-data/ingest/src/sources/README.md
+```
+
+<!-- BEGIN auto-generated source table — do not edit; run `uv run python atlas-data/dbt/scripts/build_sources_seed.py --readme atlas-data/ingest/src/sources/README.md` -->
+| Source | Provider | What it is | Topic | EU theme | Geo | Cadence |
+|---|---|---|---|---|---|---|
+| [fhi-alkohol](./fhi-alkohol/) | fhi | FHI Folkehelsestatistikk table 332 — share of Ungdata respondents reporting alcohol use one or more times in the past year. Risk-directio… | health | HEAL | kommune | annual |
+| [fhi-befolkning](./fhi-befolkning/) | fhi | FHI Folkehelsestatistikk table 338 — Befolkningssammensetning. Population counts by region × sex × age band, used as the demographic deno… | demographics | SOCI | kommune | annual |
+| [fhi-befolkningsvekst](./fhi-befolkningsvekst/) | fhi | FHI Folkehelsestatistikk table 185 — year-over-year population growth per region (counts and percent rates). Pairs with fhi-befolkning (o… | demographics | SOCI | kommune | annual |
+| [fhi-bor-alene](./fhi-bor-alene/) | fhi | FHI Folkehelsestatistikk table 187 — "Personer som bor alene". Share of adults (16+) living alone, per region, annual. | demographics | SOCI | kommune | annual |
+| [fhi-depresjon](./fhi-depresjon/) | fhi | FHI Folkehelsestatistikk table 339 — share of youth reporting depressive symptoms in the Ungdata survey, by region × sex × socioeconomic… | health | HEAL | kommune | annual |
+| [fhi-fortrolig-venn](./fhi-fortrolig-venn/) | fhi | FHI Folkehelsestatistikk table 354 — share of Ungdata respondents reporting they have a close confiding friend. Protective-direction soci… | health | HEAL | kommune | annual |
+| [fhi-hasj](./fhi-hasj/) | fhi | FHI Folkehelsestatistikk table 363 — share of Ungdata respondents reporting cannabis use one or more times in the past year. Risk-directi… | health | HEAL | kommune | annual |
+| [fhi-innvandrere](./fhi-innvandrere/) | fhi | FHI Folkehelsestatistikk table 175 — population with immigrant background (1st-gen immigrants + Norwegian-born with two immigrant parents… | demographics | SOCI | kommune | annual |
+| [fhi-innvkat](./fhi-innvkat/) | fhi | FHI Folkehelsestatistikk table 650 — population by immigrant category (1st-gen / 2nd-gen / combined) per region × age band. Complements f… | demographics | SOCI | kommune | annual |
+| [fhi-kpr-1aar](./fhi-kpr-1aar/) | fhi | FHI Folkehelsestatistikk table 370 — KPR 1-year. Annual primary-care contact rates from the Kommunalt pasient- og brukerregister, by ICPC… | health | HEAL | kommune | annual |
+| [fhi-livskvalitet](./fhi-livskvalitet/) | fhi | FHI Folkehelsestatistikk table 373 — youth quality-of-life from Ungdata, by region × sex × year. Sample-based regional aggregation; no co… | health | HEAL | kommune | annual |
+| [fhi-mediebruk-some](./fhi-mediebruk-some/) | fhi | FHI Folkehelsestatistikk table 602 — share of Ungdata respondents reporting more than 3 hours per day on social media. The most analytica… | health | HEAL | kommune | annual |
+| [fhi-mediebruk-spill](./fhi-mediebruk-spill/) | fhi | FHI Folkehelsestatistikk table 601 — share of Ungdata respondents reporting more than 3 hours per day on computer / TV / gaming. One of t… | health | HEAL | kommune | annual |
+| [fhi-mediebruk-underhold](./fhi-mediebruk-underhold/) | fhi | FHI Folkehelsestatistikk table 667 — share of Ungdata respondents reporting more than 3 hours per day on streaming / entertainment media… | health | HEAL | kommune | annual |
+| [fhi-mobbing](./fhi-mobbing/) | fhi | FHI Folkehelsestatistikk table 377 — Mobbing, 7. og 10. klasse, 3-årige tall. Share of pupils reporting bullying in 7th and 10th grade, 3… | education | EDUC | kommune | annual |
+| [fhi-neet](./fhi-neet/) | fhi | FHI Folkehelsestatistikk table 809 — NEET (Not in Education, Employment, or Training) share among young people, broken down by age band ×… | education | EDUC | kommune | annual |
+| [fhi-prognose](./fhi-prognose/) | fhi | FHI Folkehelsestatistikk table 171 — population projections (Befolkningsframskriving) by region × age band × forecast year. Pairs with fh… | demographics | SOCI | kommune | annual |
+| [fhi-selvmord](./fhi-selvmord/) | fhi | FHI Folkehelsestatistikk table 344 — suicide deaths per region, 5-year rolling windows, by sex and age band. Smoothed MEIS indicator only… | health | HEAL | kommune | annual |
+| [fhi-smertestillende](./fhi-smertestillende/) | fhi | FHI Folkehelsestatistikk table 390 — share of Ungdata respondents using painkillers at least weekly. Marker of chronic pain / psychologic… | health | HEAL | kommune | annual |
+| [fhi-trangbodd](./fhi-trangbodd/) | fhi | FHI Folkehelsestatistikk table 794 — Trangbodd_UTDANN. Share of population living in overcrowded housing by region × age × education × ho… | education | EDUC | kommune | annual |
+| [fhi-vgs-gjennomforing](./fhi-vgs-gjennomforing/) | fhi | FHI Folkehelsestatistikk table 360 — Gjennomforing i videregående skole (utdann_3). Upper-secondary completion rate per region × sex × pa… | education | EDUC | kommune | annual |
+| [frr](./frr/) | redcross | Norges Røde Kors's internal Frivillig Resource Register (FRR) — operational data on volunteer resources, status, and positions. Private;… | ngo-supply | SOCI | national | irregular |
+| [redcross-branches](./redcross-branches/) | redcross | First NGO-supply ingest. Reads Norges Røde Kors's Organizations API data and writes it to two raw.* tables — chapters and per-chapter act… | ngo-supply | SOCI | kommune | irregular |
+| [ssb-06083](./ssb-06083/) | ssb | SSB statistikkbanktabell 06083 — Familier, etter familietype. Family counts by type per region and year. | demographics | SOCI | kommune | annual |
+| [ssb-06913](./ssb-06913/) | ssb | SSB statistikkbanktabell 06913 — Folkemengde 1. januar og endringer i kalenderåret (folketilvekst, fødsler, dødsfall, inn- og utflyttinger). | demographics | SOCI | kommune | annual |
+| [ssb-06944](./ssb-06944/) | ssb | SSB statistikkbanktabell 06944 — Inntekt for husholdninger, etter husholdningstype. Median household income, income-tax, and household co… | income | SOCI | kommune | annual |
+| [ssb-06947](./ssb-06947/) | ssb | SSB statistikkbanktabell 06947 — Personer i husholdninger med lavinntekt (EU- og OECD-skala). Whole-population complement to ssb-08764 (c… | income | SOCI | kommune | annual |
+| [ssb-07459](./ssb-07459/) | ssb | SSB statistikkbanktabell 07459 — Alders- og kjønnsfordeling i kommuner, fylker og hele landets befolkning. | demographics | SOCI | kommune | annual |
+| [ssb-08764](./ssb-08764/) | ssb | Ingestion module for SSB statistikkbanktabell 08764 — Personer under 18 år i husholdninger med lavinntekt (EU- og OECD-skala). | income | SOCI | kommune | annual |
+| [ssb-09429](./ssb-09429/) | ssb | SSB statistikkbanktabell 09429 — Utdanningsnivå, etter kommune og kjønn. Educational attainment distribution per kommune × education leve… | education | EDUC | kommune | annual |
+| [ssb-12063](./ssb-12063/) | ssb | SSB KOSTRA 12063 — Kommunale fritidstilbud. Municipal leisure services for children/youth and counts of volunteer youth associations rece… | ngo-supply | SOCI | kommune | annual |
+| [ssb-12131](./ssb-12131/) | ssb | SSB KOSTRA 12131 — Stønadssatser for sosialhjelp. Monthly social-assistance rates set by each kommune. Same KOSTRA pattern as ssb-12292/1… | social | SOCI | kommune | annual |
+| [ssb-12132](./ssb-12132/) | ssb | SSB KOSTRA 12132 — Utgifter som inngår i stønadssatsene for økonomisk sosialhjelp. Per-kommune rules showing whether child benefit / chil… | social | SOCI | kommune | annual |
+| [ssb-12292](./ssb-12292/) | ssb | SSB KOSTRA 12292 — Omsorgstjenester (supplerende grunnlagstall). Nursing-home and home-care service indicators per kommune. | health | HEAL | kommune | annual |
+| [ssb-12944](./ssb-12944/) | ssb | Ingestion module for SSB statistikkbanktabell 12944 — Personer i husholdninger med vedvarende lavinntekt (EU-60), 3-årsperiode. | income | SOCI | kommune | annual |
+| [ssb-13995](./ssb-13995/) | ssb | SSB statistikkbanktabell 13995 — Sosialhjelpstilfeller, utbetalt beløp og stønadstid. Per-kommune counts of social-assistance cases and r… | social | SOCI | kommune | annual |
+| [ssb-klass-fylker](./ssb-klass-fylker/) | ssb | SSB Klass classification 104 — Fylker. The canonical active-fylker list. Feeds dim_fylke. | reference | GOVE | fylke | irregular |
+| [ssb-klass-kommuner](./ssb-klass-kommuner/) | ssb | SSB Klass classification 131 — Kommuner. The canonical active-kommuner list. Sourced from SSB's classification registry (Klass), not from… | reference | GOVE | kommune | irregular |
+<!-- END auto-generated source table -->
 
 ## Planned sources
 

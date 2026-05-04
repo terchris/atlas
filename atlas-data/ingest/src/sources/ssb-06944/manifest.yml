@@ -1,0 +1,40 @@
+# Bootstrapped by bootstrap-manifest.ts; auto-fillable fields populated by fill-manifest-todos.ts.
+# The dimensions: block is hand-authored — editorial semantics the catalogue can't compute.
+# After commit, this file is human-authored — ingest runs do NOT modify it.
+
+source_id: ssb-06944
+upstream_id: 06944
+upstream_url: https://www.ssb.no/statbank/table/06944
+upstream_landing_page: https://www.ssb.no/statbank/table/06944
+upstream_title: "06944: Inntekt for husholdninger, etter husholdningstype. Antall og median. Delområder (K) (B) 2005-2024"
+description: "SSB statistikkbanktabell 06944 — Inntekt for husholdninger, etter husholdningstype. Median household income, income-tax, and household count per region × household type × year."
+publisher: Statistisk sentralbyrå
+license: NLOD
+license_url: https://data.norge.no/nlod/no/2.0
+periodicity: P1Y
+eu_theme: SOCI
+attribution: "Kilde: Statistisk sentralbyrå, tabell 06944"
+
+tags:
+  provider: ssb
+  topic: income
+  geo: kommune
+  cadence: annual
+
+dimensions:
+  - code: Region
+    meaning: Region (kommune / fylke / nasjon / bydel / delområder)
+    value_format: "Numeric code: 0 national, 2-digit fylke, 4-digit kommune, 6-digit bydel/delområde"
+    notes: ~3283 codes — includes bydeler (delområder) for fine-grained urban geography
+  - code: HusholdType
+    meaning: Household type
+    value_format: 5 codes
+    notes: 0000 (all households) + 0001..0004 (specific household compositions)
+  - code: ContentsCode
+    meaning: Statistic measure
+    value_format: 3 codes
+    notes: SamletInntekt (median total income, NOK), InntSkatt (income tax, NOK), AntallHushold (household count)
+  - code: Tid
+    meaning: Year
+    value_format: 4-digit year as text
+    notes: 2005–2024 (20 years; default response is latest year only)

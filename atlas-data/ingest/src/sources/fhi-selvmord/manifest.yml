@@ -1,0 +1,48 @@
+# Bootstrapped by bootstrap-manifest.ts; auto-fillable fields populated by fill-manifest-todos.ts.
+# The dimensions: block is hand-authored — editorial semantics the catalogue can't compute.
+# After commit, this file is human-authored — ingest runs do NOT modify it.
+
+source_id: fhi-selvmord
+upstream_id: "344"
+upstream_url: https://statistikk-data.fhi.no/api/open/v1/nokkel/table/344
+upstream_landing_page: https://statistikk.fhi.no/nokkel/RTjn0fQXR547TPcEHive5-gh-ZnuYv3q6Z3Ol8rAZeM?GEO=0,03&AAR=2016_2020,2017_2021,2018_2022,2019_2023,2020_2024&KJONN=1,2&ALDER=0_120&AARSAK=SELVMORD&MEASURE_TYPE=TELLER
+upstream_title: "Selvmord femårig"
+description: "FHI Folkehelsestatistikk table 344 — suicide deaths per region, 5-year rolling windows, by sex and age band. Smoothed MEIS indicator only (raw rates are too noisy at kommune level due to small samples). Sensitive — downstream consumers should follow FHI's veileder for omtale av selvmord."
+publisher: Folkehelseinstituttet
+license: NLOD
+license_url: https://data.norge.no/nlod/no/2.0
+periodicity: P1Y
+eu_theme: HEAL
+attribution: "Kilde: Folkehelseinstituttet, Folkehelsestatistikk tabell 344"
+
+tags:
+  provider: fhi
+  topic: health
+  geo: kommune
+  cadence: annual
+
+dimensions:
+  - code: GEO
+    meaning: Region (mixed kommune / fylke / bydel / nasjon)
+    value_format: 1- to 6-character numeric code
+    notes: "~409 codes"
+  - code: AAR
+    meaning: 5-year rolling window (year-of-death)
+    value_format: '"YYYY1_YYYY5" 5-year period label'
+    notes: 31 rolling windows upstream, from 1990–1994 to ~2020–2024. Atlas pulls latest 3.
+  - code: KJONN
+    meaning: Sex
+    value_format: 3 codes
+    notes: '"0" both, "1" men, "2" women — male suicide rates are markedly higher than female'
+  - code: ALDER
+    meaning: Age band
+    value_format: '"min_max" range string'
+    notes: '13 bands incl. 0_120 aggregate, 0_74, 15_24 (youth), 25_44, 45_74, 75+, etc.'
+  - code: AARSAK
+    meaning: Cause of death
+    value_format: 1 code (degenerate)
+    notes: 'Always "SELVMORD" — table is pre-filtered to suicide. Stored for shape consistency with the wider FHI cause-of-death tables 342 / 343.'
+  - code: MEASURE_TYPE
+    meaning: Which number
+    value_format: 4 codes upstream; Atlas filters to 1
+    notes: "MEIS only (FHI's smoothed indicator that pools across geography to stabilise small-area estimates). Raw RATE / TELLER / SMR available upstream for analyses where pooling is inappropriate."

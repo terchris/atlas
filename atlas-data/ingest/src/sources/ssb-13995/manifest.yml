@@ -1,0 +1,36 @@
+# Bootstrapped by bootstrap-manifest.ts; auto-fillable fields populated by fill-manifest-todos.ts.
+# The dimensions: block is hand-authored — editorial semantics the catalogue can't compute.
+# After commit, this file is human-authored — ingest runs do NOT modify it.
+
+source_id: ssb-13995
+upstream_id: 13995
+upstream_url: https://www.ssb.no/statbank/table/13995
+upstream_landing_page: https://www.ssb.no/statbank/table/13995
+upstream_title: "13995: Sosialhjelpstilfeller, utbetalt beløp og stønadstid (K) 2022-2024"
+description: "SSB statistikkbanktabell 13995 — Sosialhjelpstilfeller, utbetalt beløp og stønadstid. Per-kommune counts of social-assistance cases and recipients, payouts, and support duration."
+publisher: Statistisk sentralbyrå
+license: NLOD
+license_url: https://data.norge.no/nlod/no/2.0
+periodicity: P1Y
+eu_theme: SOCI
+attribution: "Kilde: Statistisk sentralbyrå, tabell 13995"
+
+tags:
+  provider: ssb
+  topic: social
+  geo: kommune
+  cadence: annual
+
+dimensions:
+  - code: KOKkommuneregion0000
+    meaning: KOSTRA region (kommune / fylke / aggregate)
+    value_format: "Numeric code: 0 national, 2-digit fylke, 4-digit kommune; KOSTRA-specific codes for aggregates"
+    notes: ~891 codes — mapped to region_code at ingest
+  - code: ContentsCode
+    meaning: Statistic measure
+    value_format: 34 codes
+    notes: Cases, recipients, share of population, amounts paid, support duration (kr og stønadstid)
+  - code: Tid
+    meaning: Year
+    value_format: 4-digit year as text
+    notes: 2022–2025 (4 years)

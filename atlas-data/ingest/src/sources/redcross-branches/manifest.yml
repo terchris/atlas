@@ -1,0 +1,56 @@
+# Bootstrapped by bootstrap-manifest.ts; auto-fillable fields populated by fill-manifest-todos.ts.
+# The dimensions: block is hand-authored — editorial semantics the catalogue can't compute.
+# After commit, this file is human-authored — ingest runs do NOT modify it.
+
+source_id: redcross-branches
+upstream_id: organizations-api
+upstream_url: https://api.redcross.no/nrx/v1/organizations
+upstream_landing_page: https://www.rodekors.no/lokalforeninger/
+upstream_title: "Norges Røde Kors Organizations API — branches + per-branch activities"
+description: "First NGO-supply ingest. Reads Norges Røde Kors's Organizations API data and writes it to two raw.* tables — chapters and per-chapter activities."
+publisher: Norges Røde Kors
+license: permissive
+license_url: https://www.rodekors.no/personvern/
+periodicity: irregular
+eu_theme: SOCI
+attribution: "Norges Røde Kors, Organizations API"
+
+tags:
+  provider: redcross
+  topic: ngo-supply
+  geo: kommune
+  cadence: irregular
+
+dimensions:
+  # Not a statistical table — this is organisational data. The "dimensions"
+  # below describe the columns of raw.redcross_branches and
+  # raw.redcross_branch_activities (one row per branch / one row per
+  # branch × activity).
+  - code: branch_id
+    meaning: Branch UUID
+    value_format: text
+    notes: Stable identifier across snapshots
+  - code: branch_type
+    meaning: Branch type
+    value_format: 3 codes
+    notes: HQ (national), Distrikt (regional), Lokalforening (local chapter)
+  - code: branch_name
+    meaning: Branch name
+    value_format: text
+    notes: ""
+  - code: location
+    meaning: Location attributes
+    value_format: object
+    notes: kommune, county, region, postal/street addresses
+  - code: branch_status
+    meaning: Operational status
+    value_format: '{is_active, is_terminated, creation_date}'
+    notes: ""
+  - code: parent
+    meaning: Parent branch reference
+    value_format: '{branch_id, branch_number, branch_name, branch_type}'
+    notes: HQ has no parent; Lokalforening points at its Distrikt
+  - code: activities
+    meaning: Per-branch activities
+    value_format: list of {global_activity_name, local_activity_name}
+    notes: ~50 global activity types in the Red Cross catalogue; each branch lists its active subset

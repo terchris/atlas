@@ -1,0 +1,44 @@
+# Bootstrapped by bootstrap-manifest.ts; auto-fillable fields populated by fill-manifest-todos.ts.
+# The dimensions: block is hand-authored — editorial semantics the catalogue can't compute.
+# After commit, this file is human-authored — ingest runs do NOT modify it.
+
+source_id: ssb-klass-fylker
+upstream_id: 104
+upstream_url: https://www.ssb.no/klass/klassifikasjoner/104
+upstream_landing_page: https://www.ssb.no/klass/klassifikasjoner/104
+upstream_title: "Standard for fylkesinndeling"
+description: "SSB Klass classification 104 — Fylker. The canonical active-fylker list. Feeds dim_fylke."
+publisher: Statistisk sentralbyrå
+license: NLOD
+license_url: https://data.norge.no/nlod/no/2.0
+periodicity: irregular
+eu_theme: GOVE
+attribution: "Kilde: Statistisk sentralbyrå, Klass (classification 104)"
+
+tags:
+  provider: ssb
+  topic: reference
+  geo: fylke
+  cadence: irregular
+
+dimensions:
+  - code: code
+    meaning: Fylke code
+    value_format: 2-digit numeric, zero-padded
+    notes: 16 codes — 15 real fylker (e.g. 03 Oslo, 11 Rogaland, 50 Trøndelag) + 99 Uoppgitt
+  - code: name
+    meaning: Fylke name (bokmål)
+    value_format: text
+    notes: ""
+  - code: parent_code
+    meaning: Parent classification code
+    value_format: text or null
+    notes: Always null (no parent level)
+  - code: level
+    meaning: Hierarchy level
+    value_format: text
+    notes: Always "1" (flat list)
+  - code: valid_from / valid_to
+    meaning: Validity span
+    value_format: ISO date or null
+    notes: Codes carry their own valid_from/valid_to plus the validFromInRequestedRange computed at fetch time

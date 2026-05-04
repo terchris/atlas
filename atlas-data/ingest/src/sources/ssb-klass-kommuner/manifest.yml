@@ -1,0 +1,48 @@
+# Bootstrapped by bootstrap-manifest.ts; auto-fillable fields populated by fill-manifest-todos.ts.
+# The dimensions: block is hand-authored — editorial semantics the catalogue can't compute.
+# After commit, this file is human-authored — ingest runs do NOT modify it.
+
+source_id: ssb-klass-kommuner
+upstream_id: 131
+upstream_url: https://www.ssb.no/klass/klassifikasjoner/131
+upstream_landing_page: https://www.ssb.no/klass/klassifikasjoner/131
+upstream_title: "Standard for kommuneinndeling"
+description: "SSB Klass classification 131 — Kommuner. The canonical active-kommuner list. Sourced from SSB's classification registry (Klass), not from a statbank table."
+publisher: Statistisk sentralbyrå
+license: NLOD
+license_url: https://data.norge.no/nlod/no/2.0
+periodicity: irregular
+eu_theme: GOVE
+attribution: "Kilde: Statistisk sentralbyrå, Klass (classification 131)"
+
+tags:
+  provider: ssb
+  topic: reference
+  geo: kommune
+  cadence: irregular
+
+dimensions:
+  - code: code
+    meaning: Kommune code
+    value_format: 4-digit numeric, zero-padded
+    notes: ~358 active codes — first 2 digits encode fylke (e.g. 0301 Oslo)
+  - code: name
+    meaning: Kommune name (bokmål)
+    value_format: text
+    notes: ""
+  - code: parent_code
+    meaning: Parent classification code
+    value_format: text or null
+    notes: Typically null in a codesAt snapshot; fylke relationship is encoded in the first 2 digits of `code`
+  - code: level
+    meaning: Hierarchy level
+    value_format: text
+    notes: Always "1" for this classification
+  - code: valid_from / valid_to
+    meaning: Validity span
+    value_format: ISO date or null
+    notes: Both null in a codesAt snapshot; the historical range is captured in valid_from_in_range
+  - code: notes
+    meaning: Free-text notes
+    value_format: text or null
+    notes: Boundary changes, Sámi name variants, etc.

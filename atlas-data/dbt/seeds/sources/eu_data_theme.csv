@@ -1,0 +1,14 @@
+code,uri,label_en,label_no
+AGRI,http://publications.europa.eu/resource/authority/data-theme/AGRI,"Agriculture, fisheries, forestry and food","Landbruk, fiske, skogbruk og mat"
+ECON,http://publications.europa.eu/resource/authority/data-theme/ECON,Economy and finance,Økonomi og finans
+EDUC,http://publications.europa.eu/resource/authority/data-theme/EDUC,"Education, culture and sport","Utdanning, kultur og sport"
+ENER,http://publications.europa.eu/resource/authority/data-theme/ENER,Energy,Energi
+ENVI,http://publications.europa.eu/resource/authority/data-theme/ENVI,Environment,Miljø
+GOVE,http://publications.europa.eu/resource/authority/data-theme/GOVE,Government and public sector,Forvaltning og offentlig sektor
+HEAL,http://publications.europa.eu/resource/authority/data-theme/HEAL,Health,Helse
+INTR,http://publications.europa.eu/resource/authority/data-theme/INTR,International issues,Internasjonale spørsmål
+JUST,http://publications.europa.eu/resource/authority/data-theme/JUST,"Justice, legal system and public safety","Justis, rettssystem og offentlig sikkerhet"
+REGI,http://publications.europa.eu/resource/authority/data-theme/REGI,Regions and cities,Regioner og byer
+SOCI,http://publications.europa.eu/resource/authority/data-theme/SOCI,Population and society,Befolkning og samfunn
+TECH,http://publications.europa.eu/resource/authority/data-theme/TECH,Science and technology,Vitenskap og teknologi
+TRAN,http://publications.europa.eu/resource/authority/data-theme/TRAN,Transport,Transport

@@ -8,7 +8,8 @@ import { fileURLToPath } from "node:url";
 import { fetchKlassCodesRange } from "../../lib/klass.js";
 import { logger } from "../../lib/logger.js";
 import { writeNdjson } from "../../lib/output.js";
-import { closeSql, getSql, upsert } from "../../lib/postgres.js";
+import { getSql, upsert } from "../../lib/postgres.js";
+import { recordIngestRun } from "../../lib/ingest_run.js";
 
 type SsbKlassFylkerRow = {
   code: string;
@@ -58,83 +59,93 @@ export type SsbKlassFylkerSummary = {
 };
 
 export async function run(): Promise<SsbKlassFylkerSummary> {
-  logger.info("source.start", {
-    source_id: SOURCE_ID,
-    classification_id: CLASSIFICATION_ID,
-  });
-  const started = Date.now();
-
-  const snapshotDate = new Date().toISOString().slice(0, 10);
-  const resp = await fetchKlassCodesRange({
-    classificationId: CLASSIFICATION_ID,
-    from: HISTORY_FROM,
-    to: HISTORY_TO,
-    language: "nb",
-  });
-
-  const rows: SsbKlassFylkerRow[] = resp.codes
-    .filter((c): c is typeof c & { validFromInRequestedRange: string } =>
-      c.validFromInRequestedRange !== null,
-    )
-    .map((c) => ({
-      code: c.code,
-      name: c.name,
-      parent_code: c.parentCode,
-      level: c.level,
-      short_name: c.shortName || null,
-      valid_from: c.validFrom,
-      valid_to: c.validTo,
-      valid_from_in_range: c.validFromInRequestedRange,
-      valid_to_in_range: c.validToInRequestedRange,
-      notes: c.notes || null,
-    }));
-
-  await writeNdjson(OUTPUT_PATH, rows);
-
-  let rowsWritten = 0;
-  const wroteToPostgres = Boolean(process.env["DATABASE_URL"]);
-  if (wroteToPostgres) {
-    const sql = getSql();
-    const now = new Date();
-    const pgRows = rows.map((r) => ({ ...r, loaded_at: now }));
-    logger.info("postgres.upsert.start", { table: TARGET_TABLE, row_count: pgRows.length });
-    const upsertStart = Date.now();
-    rowsWritten = await upsert(sql, {
-      table: TARGET_TABLE,
-      rows: pgRows,
-      columns: WRITE_COLUMNS,
-      conflictKeys: CONFLICT_KEYS,
+  return recordIngestRun(SOURCE_ID, async () => {
+    logger.info("source.start", {
+      source_id: SOURCE_ID,
+      classification_id: CLASSIFICATION_ID,
     });
-    logger.info("postgres.upsert.done", {
-      table: TARGET_TABLE,
+    const started = Date.now();
+
+    const snapshotDate = new Date().toISOString().slice(0, 10);
+    const resp = await fetchKlassCodesRange({
+      classificationId: CLASSIFICATION_ID,
+      from: HISTORY_FROM,
+      to: HISTORY_TO,
+      language: "nb",
+    });
+
+    const rows: SsbKlassFylkerRow[] = resp.codes
+      .filter((c): c is typeof c & { validFromInRequestedRange: string } =>
+        c.validFromInRequestedRange !== null,
+      )
+      .map((c) => ({
+        code: c.code,
+        name: c.name,
+        parent_code: c.parentCode,
+        level: c.level,
+        short_name: c.shortName || null,
+        valid_from: c.validFrom,
+        valid_to: c.validTo,
+        valid_from_in_range: c.validFromInRequestedRange,
+        valid_to_in_range: c.validToInRequestedRange,
+        notes: c.notes || null,
+      }));
+
+    await writeNdjson(OUTPUT_PATH, rows);
+
+    let rowsWritten = 0;
+    const wroteToPostgres = Boolean(process.env["DATABASE_URL"]);
+    if (wroteToPostgres) {
+      const sql = getSql();
+      const now = new Date();
+      const pgRows = rows.map((r) => ({ ...r, loaded_at: now }));
+      logger.info("postgres.upsert.start", { table: TARGET_TABLE, row_count: pgRows.length });
+      const upsertStart = Date.now();
+      rowsWritten = await upsert(sql, {
+        table: TARGET_TABLE,
+        rows: pgRows,
+        columns: WRITE_COLUMNS,
+        conflictKeys: CONFLICT_KEYS,
+      });
+      logger.info("postgres.upsert.done", {
+        table: TARGET_TABLE,
+        rows_written: rowsWritten,
+        duration_ms: Date.now() - upsertStart,
+      });
+    } else {
+      logger.info("postgres.upsert.skipped", {
+        reason: "DATABASE_URL not set — ran in NDJSON-only mode",
+      });
+    }
+
+    const summary = {
+      source_id: SOURCE_ID,
+      row_count: rows.length,
+      duration_ms: Date.now() - started,
+      output_path: OUTPUT_PATH,
+      wrote_to_postgres: wroteToPostgres,
       rows_written: rowsWritten,
-      duration_ms: Date.now() - upsertStart,
-    });
-    await closeSql();
-  } else {
-    logger.info("postgres.upsert.skipped", {
-      reason: "DATABASE_URL not set — ran in NDJSON-only mode",
-    });
-  }
+      snapshot_date: snapshotDate,
+    };
+    logger.info("source.done", summary);
 
-  const summary = {
-    source_id: SOURCE_ID,
-    row_count: rows.length,
-    duration_ms: Date.now() - started,
-    output_path: OUTPUT_PATH,
-    wrote_to_postgres: wroteToPostgres,
-    rows_written: rowsWritten,
-    snapshot_date: snapshotDate,
-  };
-  logger.info("source.done", summary);
-
-  return {
-    rowCount: rows.length,
-    outputPath: OUTPUT_PATH,
-    wroteToPostgres,
-    rowsWritten,
-    snapshotDate,
-  };
+    return {
+      output: {
+        rowCount: rows.length,
+        outputPath: OUTPUT_PATH,
+        wroteToPostgres,
+        rowsWritten,
+        snapshotDate,
+      },
+      record: {
+        // KLASS classifications are versioned by valid_from / valid_to;
+        // there is no single "updated" timestamp per fetch.
+        rowsScraped: rows.length,
+        rowsParsed: rows.length,
+        upstreamUpdatedAt: null,
+      },
+    };
+  });
 }
 
 run().catch((err) => {

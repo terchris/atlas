@@ -72,3 +72,24 @@ seeds:
       icnpo_code_1: text
       icnpo_code_2: text
       icnpo_code_3: text
+      # _sources_manifest columns (PLAN-007 phase 2). upstream_id pinned
+      # to text so SSB table IDs like "08764" keep their leading zero;
+      # the rest are pinned to avoid CSV type-sniffing surprises.
+      source_id: text
+      upstream_id: text
+      upstream_url: text
+      upstream_title: text
+      publisher: text
+      license: text
+      license_url: text
+      periodicity: text
+      eu_theme: text
+      attribution: text
+      upstream_landing_page: text
+      tags: text
+      # eu_data_theme.csv columns
+      uri: text
+      # _sources_dimensions.csv columns
+      meaning: text
+      value_format: text
+      notes: text

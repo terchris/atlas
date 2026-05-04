@@ -21,6 +21,7 @@ import { readdir, readFile, stat } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { closeSql, getSql, upsert } from "../../lib/postgres.js";
+import { recordIngestRun } from "../../lib/ingest_run.js";
 import { logger } from "../../lib/logger.js";
 
 const SOURCE_ID = "frr";
@@ -94,12 +95,12 @@ async function loadJsonFiles(dir: string): Promise<FrrResource[]> {
   return all;
 }
 
-async function ingestNgo(slug: string, orgnr: string): Promise<number> {
+async function ingestNgo(slug: string, orgnr: string): Promise<{ inserted: number; latestSistOppdatert: Date | null }> {
   const dir = join(PRIVATE_DATA_ROOT, slug, "frr");
   const resources = await loadJsonFiles(dir);
   logger.info(`${SOURCE_ID}.parsed`, { slug, orgnr, resource_count: resources.length });
 
-  if (resources.length === 0) return 0;
+  if (resources.length === 0) return { inserted: 0, latestSistOppdatert: null };
 
   const rows = resources.map((r) => ({
     id: r.id,
@@ -113,6 +114,13 @@ async function ingestNgo(slug: string, orgnr: string): Promise<number> {
     throw new Error(`${slug}: ${missingIds} of ${rows.length} resources missing 'id'`);
   }
 
+  let latestSistOppdatert: Date | null = null;
+  for (const r of rows) {
+    if (r.sist_oppdatert && (!latestSistOppdatert || r.sist_oppdatert > latestSistOppdatert)) {
+      latestSistOppdatert = r.sist_oppdatert;
+    }
+  }
+
   const sql = getSql();
   const inserted = await upsert(sql, {
     table: TABLE,
@@ -122,31 +130,47 @@ async function ingestNgo(slug: string, orgnr: string): Promise<number> {
     chunkSize: 500,
   });
   logger.info(`${SOURCE_ID}.upserted`, { slug, table: TABLE, rows: inserted });
-  return inserted;
+  return { inserted, latestSistOppdatert };
 }
 
-async function main(): Promise<void> {
-  logger.info(`${SOURCE_ID}.start`, { root: PRIVATE_DATA_ROOT });
+export async function run(): Promise<void> {
+  return recordIngestRun(SOURCE_ID, async () => {
+    logger.info(`${SOURCE_ID}.start`, { root: PRIVATE_DATA_ROOT });
 
-  const slugToOrgnr = await loadSlugToOrgnr();
-  const ngoSlugs = await discoverNgoFolders();
-  logger.info(`${SOURCE_ID}.discovered`, { ngo_count: ngoSlugs.length, ngos: ngoSlugs });
+    const slugToOrgnr = await loadSlugToOrgnr();
+    const ngoSlugs = await discoverNgoFolders();
+    logger.info(`${SOURCE_ID}.discovered`, { ngo_count: ngoSlugs.length, ngos: ngoSlugs });
 
-  let total = 0;
-  for (const slug of ngoSlugs) {
-    const orgnr = slugToOrgnr.get(slug);
-    if (!orgnr) {
-      logger.warn(`${SOURCE_ID}.skip_unknown_slug`, { slug });
-      continue;
+    let total = 0;
+    let latestSistOppdatert: Date | null = null;
+    for (const slug of ngoSlugs) {
+      const orgnr = slugToOrgnr.get(slug);
+      if (!orgnr) {
+        logger.warn(`${SOURCE_ID}.skip_unknown_slug`, { slug });
+        continue;
+      }
+      const result = await ingestNgo(slug, orgnr);
+      total += result.inserted;
+      if (result.latestSistOppdatert && (!latestSistOppdatert || result.latestSistOppdatert > latestSistOppdatert)) {
+        latestSistOppdatert = result.latestSistOppdatert;
+      }
     }
-    total += await ingestNgo(slug, orgnr);
-  }
 
-  await closeSql();
-  logger.info(`${SOURCE_ID}.done`, { rows: total });
+    logger.info(`${SOURCE_ID}.done`, { rows: total });
+    return {
+      output: undefined,
+      record: {
+        rowsScraped: total,
+        rowsParsed: total,
+        // Per-resource sistOppdatert is FRR's own update timestamp;
+        // take the max across this run as the upstream freshness signal.
+        upstreamUpdatedAt: latestSistOppdatert,
+      },
+    };
+  });
 }
 
-main().catch(async (err) => {
+run().catch(async (err) => {
   logger.error(`${SOURCE_ID}.fatal`, { err: String(err) });
   await closeSql().catch(() => {});
   process.exit(1);

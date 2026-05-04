@@ -1,0 +1,48 @@
+# Bootstrapped by bootstrap-manifest.ts; auto-fillable fields populated by fill-manifest-todos.ts.
+# The dimensions: block is hand-authored — editorial semantics the catalogue can't compute.
+# After commit, this file is human-authored — ingest runs do NOT modify it.
+
+source_id: fhi-innvkat
+upstream_id: "650"
+upstream_url: https://statistikk-data.fhi.no/api/open/v1/nokkel/table/650
+upstream_landing_page: https://statistikk.fhi.no/nokkel/iTcQHmSn_g9PSQ0MRVD-gzOvgVzNXuZ_xJRCUnQ2Z1w?GEO=0&AAR=2020_2020,2021_2021,2022_2022,2023_2023,2024_2024,2025_2025&ALDER=0_120,0_29&INNVKAT=23,2,3&LANDBAK=0&MEASURE_TYPE=TELLER
+upstream_title: "INNVAND_INNVKAT"
+description: "FHI Folkehelsestatistikk table 650 — population by immigrant category (1st-gen / 2nd-gen / combined) per region × age band. Complements fhi-innvandrere (table 175) which has country-origin granularity but no INNVKAT split."
+publisher: Folkehelseinstituttet
+license: NLOD
+license_url: https://data.norge.no/nlod/no/2.0
+periodicity: P1Y
+eu_theme: SOCI
+attribution: "Kilde: Folkehelseinstituttet, Folkehelsestatistikk tabell 650"
+
+tags:
+  provider: fhi
+  topic: demographics
+  geo: kommune
+  cadence: annual
+
+dimensions:
+  - code: GEO
+    meaning: Region (mixed kommune / fylke / bydel / nasjon)
+    value_format: 1- to 6-character numeric code
+    notes: "~409 codes"
+  - code: AAR
+    meaning: Year
+    value_format: '"YYYY_YYYY" range string (single-year)'
+    notes: 23 single-year periods, 2003–2025
+  - code: ALDER
+    meaning: Age band
+    value_format: '"min_max" range string'
+    notes: "10 bands. Includes 0_120 (everyone) plus disjoint slices 0_29, 30_44, 45_64, 65_79, 80_120, etc."
+  - code: INNVKAT
+    meaning: Immigrant category
+    value_format: 3 codes
+    notes: '"2" innvandrere (1st-gen), "3" norskfødte med innvandrerforeldre (2nd-gen), "23" combined (sum of 2 + 3 — exclude from disjoint-category sums)'
+  - code: LANDBAK
+    meaning: Country background grouping
+    value_format: 1 code
+    notes: 'Always "0" for this table — origin region is collapsed. Use fhi-innvandrere (table 175) for origin-region resolution.'
+  - code: MEASURE_TYPE
+    meaning: Which number
+    value_format: 3 codes
+    notes: TELLER (count), RATE (percent), SMR (standardised ratio vs national)

@@ -8,55 +8,6 @@ Strategic metadata (Atlas use cases, Samfunnspuls citation, Atlas decision) live
 
 Fetches `https://data.ssb.no/api/pxwebapi/v2-beta/tables/12944/data?lang=no&outputFormat=json-stat2`, unflattens the JSON-stat2 response, writes NDJSON locally, and (if `DATABASE_URL` is set) upserts into `raw.ssb_12944`.
 
-## Upstream
-
-| Field | Value |
-|---|---|
-| Provider | Statistisk sentralbyrå (SSB) |
-| Table id | `12944` |
-| Auth | None |
-| Format | JSON-stat2 |
-| Rate limits | 30 req/min/IP, 800 000 cells/request |
-| Licence | NLOD 2.0 |
-| Attribution | *Kilde: Statistisk sentralbyrå, tabell 12944* |
-
-## Response shape
-
-**Four** dimensions — note the extra `Alder` (age) compared to `ssb-08764`, and that `Tid` values are three-year rolling periods, not single years:
-
-| Dimension | Values |
-|---|---|
-| `Region` | 1 036 codes — national, fylke, kommune, bydel, grunnkrets, historical variants |
-| `Alder` | 6 codes — `999A` (all ages), `00-17`, `18-34`, `35-49`, `50-66`, `067+` |
-| `ContentsCode` | 2 codes — `PersonerSeksti` (count), `EUskalaSeksti` (percent, EU-60) |
-| `Tid` | 12 periods — `2011-2013` through `2022-2024` |
-
-Full cartesian product is 1 036 × 6 × 2 × 12 = 149 184 cells; the default PxWebAPI v2-beta response returns only the latest period (as observed for 08764).
-
-## Row shape emitted
-
-One row per `(Region, Alder, Tid, ContentsCode)` cell:
-
-```json
-{
-  "region_code": "0301",
-  "age_group": "00-17",
-  "period": "2022-2024",
-  "contents_code": "EUskalaSeksti",
-  "contents_label": "Andel personer med vedvarende lavinntekt (EU-60)",
-  "value": 17.3,
-  "status": null
-}
-```
-
-## How to run locally
-
-From `atlas-data/ingest/`:
-
-```bash
-npm run ingest:ssb-12944
-```
-
 ## Known quirks
 
 ### `period` stored as text, not parsed into years

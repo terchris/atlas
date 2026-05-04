@@ -1,0 +1,48 @@
+# Bootstrapped by bootstrap-manifest.ts; auto-fillable fields populated by fill-manifest-todos.ts.
+# The dimensions: block is hand-authored — editorial semantics the catalogue can't compute.
+# After commit, this file is human-authored — ingest runs do NOT modify it.
+
+source_id: fhi-neet
+upstream_id: "809"
+upstream_url: https://statistikk-data.fhi.no/api/open/v1/nokkel/table/809
+upstream_landing_page: https://statistikk.fhi.no/nokkel/sGprm5F-rJQcpEqkZhAfGis_ImrcQCCkOBfyOWGUQnE?GEO=0&AAR=2019_2019,2020_2020,2021_2021,2022_2022,2023_2023,2024_2024&KJONN=0&ALDER=30_39&UTDANN=1,23&MEASURE_TYPE=TELLER
+upstream_title: "NEET_UTDANN"
+description: "FHI Folkehelsestatistikk table 809 — NEET (Not in Education, Employment, or Training) share among young people, broken down by age band × parents' education level."
+publisher: Folkehelseinstituttet
+license: NLOD
+license_url: https://data.norge.no/nlod/no/2.0
+periodicity: P1Y
+eu_theme: EDUC
+attribution: "Kilde: Folkehelseinstituttet, Folkehelsestatistikk tabell 809"
+
+tags:
+  provider: fhi
+  topic: education
+  geo: kommune
+  cadence: annual
+
+dimensions:
+  - code: GEO
+    meaning: Region (mixed kommune / fylke / bydel / nasjon)
+    value_format: 1- to 6-character numeric code
+    notes: "~409 codes"
+  - code: AAR
+    meaning: Year
+    value_format: '"YYYY_YYYY" range string (single-year)'
+    notes: 17 single-year periods, 2008–2024
+  - code: KJONN
+    meaning: Sex
+    value_format: 3 codes upstream; Atlas filters to 1
+    notes: '"0" both (Atlas only ingests this), "1" men, "2" women — re-ingest if a sex-stratified slice is needed'
+  - code: ALDER
+    meaning: Age band
+    value_format: '"min_max" range string'
+    notes: "14 bands — includes the canonical NEET span 15_29 and finer slices 15_19, 20_24, 25_29; pick a single non-overlapping partition downstream"
+  - code: UTDANN
+    meaning: Parents' education level (NOT the youth's own)
+    value_format: 5 codes
+    notes: "0 (all), 1 (grunnskole), 2 (videregående), 3 (høgskole/uni kort), 4 (høgskole/uni lang). Reflects socioeconomic context — children of higher-educated parents have markedly lower NEET rates."
+  - code: MEASURE_TYPE
+    meaning: Which number
+    value_format: 4 codes upstream; Atlas filters to 1
+    notes: "RATE (percent — Atlas keeps only this), TELLER, MEIS, SMR are derivable downstream"

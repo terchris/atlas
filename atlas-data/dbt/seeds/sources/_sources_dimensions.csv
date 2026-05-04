@@ -1,0 +1,199 @@
+source_id,code,meaning,value_format,notes
+fhi-alkohol,GEO,Region (mixed kommune / fylke / bydel / nasjon),1- to 6-character numeric code,~409 codes
+fhi-alkohol,AAR,Year,"""YYYY_YYYY"" range string (single-year)","14 single-year periods, 2012–2025"
+fhi-alkohol,KJONN,Sex,3 codes,"""0"" both, ""1"" men, ""2"" women"
+fhi-alkohol,ALDER,Age band (Ungdata cohort grouping),1 code (degenerate),"Always ""1_6"" — Ungdata survey-cohort identifier (same as fhi-livskvalitet, fhi-depresjon, fhi-fortrolig-venn). Verify against Ungdata methodology."
+fhi-alkohol,ANTALL_GANGER,Frequency band — number of times the behaviour occurred,1 code (degenerate),"Always ""engangellerflere"" (one-or-more uses in the past year). Higher value = more youth report alcohol use = worse from a public-health framing (risk direction)."
+fhi-alkohol,SOES,Socioeconomic status,1 code (degenerate),"Always ""0"" — combined socioeconomic statuses (no breakdown in this slice)."
+fhi-alkohol,MEASURE_TYPE,Which number,2 codes,"SMR (standardised ratio vs national), MEIS (FHI mean / smoothed indicator). No TELLER / RATE — Ungdata is sample-based."
+fhi-befolkning,GEO,Region (mixed kommune / fylke / bydel / nasjon),1- to 6-character numeric code,"~409 codes — 0 (national), 2-digit fylke, 4-digit kommune, 6-digit bydel"
+fhi-befolkning,AAR,Year,"""YYYY_YYYY"" range string (single-year)","36 single-year periods, 1990–2025"
+fhi-befolkning,KJONN,Sex,3 codes,"""0"" both, ""1"" men, ""2"" women"
+fhi-befolkning,ALDER,Age band,"""min_max"" range string","35 bands. Includes overlapping aggregates (0_120 = everyone) and disjoint slices (0_4, 5_14, 0_17, etc.); pick a single non-overlapping partition downstream."
+fhi-befolkning,MEASURE_TYPE,Which number,3 codes upstream; Atlas filters to 1,TELLER (count) only — RATE / SMR are derivable downstream from these counts.
+fhi-befolkningsvekst,GEO,Region (mixed kommune / fylke / bydel / nasjon),1- to 6-character numeric code,~409 codes
+fhi-befolkningsvekst,AAR,Year,"""YYYY_YYYY"" range string (single-year)","23 single-year periods, 2002–2024"
+fhi-befolkningsvekst,KJONN,Sex,1 code (degenerate),"Always ""0"" (both) — table is whole-population only"
+fhi-befolkningsvekst,ALDER,Age band,1 code (degenerate),"Always ""0_120"" (everyone) — table is whole-population only"
+fhi-befolkningsvekst,MEASURE_TYPE,Which number,2 codes,"TELLER (absolute change in resident count vs prior year), RATE (percent growth). Verify exact FHI semantics before labelling as a headline indicator."
+fhi-bor-alene,GEO,Region (mixed kommune / fylke / bydel / nasjon),1- to 6-character numeric code,"0 (national), 03 (Oslo fylke), 0301 (Oslo kommune), 030101 (bydel)"
+fhi-bor-alene,AAR,Year or period,"""YYYY_YYYY"" range string","2025_2025 for single-year, 2023_2025 for 3-year averages"
+fhi-bor-alene,ALDER,Age band,"""min_max"" range string","16_120 (all adults 16+), 16_29, 65_74, 75_84, 85_120"
+fhi-bor-alene,MEASURE_TYPE,Which number,3 codes,"RATE (percent), SMR (standardised ratio vs national), TELLER (absolute count)"
+fhi-depresjon,GEO,Region (mixed kommune / fylke / bydel / nasjon),1- to 6-character numeric code,~409 codes
+fhi-depresjon,AAR,Year,"""YYYY_YYYY"" range string (single-year)",14 single-year periods upstream (2012–2025); Atlas pulls latest 4 to fit cell budget
+fhi-depresjon,KJONN,Sex,3 codes,"""0"" both, ""1"" men, ""2"" women — girls report markedly higher rates of depressive symptoms"
+fhi-depresjon,ALDER,Age band (Ungdata cohort grouping),1 code (degenerate),"Always ""1_6"" — Ungdata survey-cohort identifier (same as fhi-livskvalitet). Verify against Ungdata methodology."
+fhi-depresjon,DEPRESJON,Depression-symptom response,1 code (degenerate),"Always ""Ja"" — yes-respondents only. The value is the share reaching the symptomatic threshold."
+fhi-depresjon,SOES,Socioeconomic status,4 codes,"""0"" combined + ""1""/""2""/""3"" specific levels (typically low/middle/high family SES). Verify against Ungdata methodology."
+fhi-depresjon,MEASURE_TYPE,Which number,2 codes,"SMR (standardised ratio vs national), MEIS (FHI mean / smoothed indicator). No TELLER / RATE — Ungdata is sample-based."
+fhi-fortrolig-venn,GEO,Region (mixed kommune / fylke / bydel / nasjon),1- to 6-character numeric code,~409 codes
+fhi-fortrolig-venn,AAR,Year,"""YYYY_YYYY"" range string (single-year)","14 single-year periods, 2012–2025"
+fhi-fortrolig-venn,KJONN,Sex,3 codes,"""0"" both, ""1"" men, ""2"" women — girls historically report higher confiding-friend rates than boys"
+fhi-fortrolig-venn,ALDER,Age band (Ungdata cohort grouping),1 code (degenerate),"Always ""1_6"" — Ungdata survey-cohort identifier (same as fhi-livskvalitet, fhi-depresjon, fhi-smertestillende). Verify against Ungdata methodology."
+fhi-fortrolig-venn,HARVENN,Has-confiding-friend response,1 code (degenerate),"Always ""Jatrorellerheltsikker"" (affirmative — ""yes, I think so or definitely""). The value is the share answering yes; higher = more youth report having a close friend = better outcome (protective direction)."
+fhi-fortrolig-venn,SOES,Socioeconomic status,1 code (degenerate),"Always ""0"" — combined socioeconomic statuses (no breakdown in this slice)."
+fhi-fortrolig-venn,MEASURE_TYPE,Which number,2 codes,"SMR (standardised ratio vs national), MEIS (FHI mean / smoothed indicator). No TELLER / RATE — Ungdata is sample-based."
+fhi-hasj,GEO,Region (mixed kommune / fylke / bydel / nasjon),1- to 6-character numeric code,~409 codes
+fhi-hasj,AAR,Year,"""YYYY_YYYY"" range string (single-year)","14 single-year periods, 2012–2025"
+fhi-hasj,KJONN,Sex,3 codes,"""0"" both, ""1"" men, ""2"" women"
+fhi-hasj,ALDER,Age band (Ungdata cohort grouping),1 code (degenerate),"Always ""1_6"" — Ungdata survey-cohort identifier (same as fhi-alkohol). Verify against Ungdata methodology."
+fhi-hasj,ANTALL_GANGER,Frequency band — number of times the behaviour occurred,1 code (degenerate),"Always ""engangellerflere"" (one-or-more uses in the past year). Higher value = more youth report cannabis use = worse from a public-health framing (risk direction)."
+fhi-hasj,SOES,Socioeconomic status,1 code (degenerate),"Always ""0"" — combined socioeconomic statuses (no breakdown in this slice)."
+fhi-hasj,MEASURE_TYPE,Which number,2 codes,"SMR (standardised ratio vs national), MEIS (FHI mean / smoothed indicator). No TELLER / RATE — Ungdata is sample-based. Suppression heavier than fhi-alkohol because cannabis prevalence at this cohort is lower."
+fhi-innvandrere,GEO,Region (mixed kommune / fylke / bydel / nasjon),1- to 6-character numeric code,~409 codes
+fhi-innvandrere,AAR,Year,"""YYYY_YYYY"" range string (single-year)","23 single-year periods, 2003–2025"
+fhi-innvandrere,ALDER,Age band,"""min_max"" range string","10 bands. Includes 0_120 (everyone) plus disjoint slices 0_17, 18_29, 30_44, 45_64, 45_120, etc."
+fhi-innvandrere,LANDBAK,Country background grouping,8 codes,"Codes spanning Norway-born and immigrant origin regions (Europe / Asia / Africa / Oceania / etc.) plus aggregates. Codes are not human-readable on their own — verify against FHI's dimension reference. Common: 100 ≈ no immigrant background, 456 = aggregate group."
+fhi-innvandrere,MEASURE_TYPE,Which number,3 codes upstream; Atlas filters to 1,TELLER (count) only — RATE / SMR are derivable downstream from these counts.
+fhi-innvkat,GEO,Region (mixed kommune / fylke / bydel / nasjon),1- to 6-character numeric code,~409 codes
+fhi-innvkat,AAR,Year,"""YYYY_YYYY"" range string (single-year)","23 single-year periods, 2003–2025"
+fhi-innvkat,ALDER,Age band,"""min_max"" range string","10 bands. Includes 0_120 (everyone) plus disjoint slices 0_29, 30_44, 45_64, 65_79, 80_120, etc."
+fhi-innvkat,INNVKAT,Immigrant category,3 codes,"""2"" innvandrere (1st-gen), ""3"" norskfødte med innvandrerforeldre (2nd-gen), ""23"" combined (sum of 2 + 3 — exclude from disjoint-category sums)"
+fhi-innvkat,LANDBAK,Country background grouping,1 code,"Always ""0"" for this table — origin region is collapsed. Use fhi-innvandrere (table 175) for origin-region resolution."
+fhi-innvkat,MEASURE_TYPE,Which number,3 codes,"TELLER (count), RATE (percent), SMR (standardised ratio vs national)"
+fhi-kpr-1aar,GEO,Region (national / fylke / kommune — no bydel resolution),1- to 4-character numeric code,~373 codes — narrower than other FHI tables which include bydeler
+fhi-kpr-1aar,AAR,Year,"""YYYY_YYYY"" range string (single-year despite the range form)",8 single-year periods upstream (2017–2024); Atlas pulls latest 1
+fhi-kpr-1aar,KJONN,Sex,3 codes upstream; Atlas filters to 1,"""0"" combined (only value Atlas ingests). Sex-stratified analysis would need a sibling source."
+fhi-kpr-1aar,ALDER,Age band,"""min_max"" range string","10 bands incl. 0_74 aggregate, 15_24, 25_44, 45_74 disjoint slices"
+fhi-kpr-1aar,KODEGRUPPE,ICPC-2 code-group identifier (primary-care diagnoses / symptoms),11 code-range strings,"P01_P29 (psych symptoms), P70_P99 (psych diagnoses), P01_P29ogP70_P99 (combined chapter P — exclude from disjoint sums), K70_K99 (cardiovascular), L01_L29 / L70_L99 (musculoskeletal), Skader (injuries), plus specific symptom clusters."
+fhi-kpr-1aar,MEASURE_TYPE,Which number,4 codes upstream; Atlas filters to 1,RATE (per-1000 contact rate — only value Atlas ingests). TELLER / SMR / MEIS available upstream.
+fhi-livskvalitet,GEO,Region (mixed kommune / fylke / bydel / nasjon),1- to 6-character numeric code,~409 codes
+fhi-livskvalitet,AAR,Year,"""YYYY_YYYY"" range string (single-year)","5 single-year periods, 2021–2025"
+fhi-livskvalitet,KJONN,Sex,3 codes,"""0"" both, ""1"" men, ""2"" women"
+fhi-livskvalitet,ALDER,Age band (Ungdata cohort grouping),1 code (degenerate),"Always ""1_6"" — likely an Ungdata survey-cohort identifier rather than literal ages 1-6. Verify against Ungdata methodology."
+fhi-livskvalitet,LIVSKVALITET,Quality-of-life score band,1 code (degenerate),"Always ""8_10"" — share of respondents reporting high quality of life (8–10 on a 0–10 self-report scale)."
+fhi-livskvalitet,SOES,Socioeconomic status,1 code (degenerate),"Always ""0"" — combined socioeconomic statuses (no breakdown in this slice)."
+fhi-livskvalitet,MEASURE_TYPE,Which number,2 codes,"SMR (standardised ratio vs national), MEIS (FHI mean / smoothed indicator). No TELLER / RATE — Ungdata is sample-based, not an enumeration."
+fhi-mediebruk-some,GEO,Region (mixed kommune / fylke / bydel / nasjon),1- to 6-character numeric code,~409 codes
+fhi-mediebruk-some,AAR,Year,"""YYYY_YYYY"" range string (single-year)","11 single-year periods, 2015–2025"
+fhi-mediebruk-some,KJONN,Sex,3 codes,"""0"" both, ""1"" men, ""2"" women — girls report markedly higher >3h/day social-media use than boys; composites must orient by KJONN slice or risk masking the gap"
+fhi-mediebruk-some,ALDER,Age band (Ungdata cohort grouping),1 code (degenerate),"Always ""1_6"" — Ungdata survey-cohort identifier. Verify against Ungdata methodology."
+fhi-mediebruk-some,MEDIEBRUK,Media-use frequency band,1 code (degenerate),"Always ""Merenn3timer"" (more than 3 hours per day). The value is the share reaching the threshold — risk direction."
+fhi-mediebruk-some,SOES,Socioeconomic status,1 code (degenerate),"Always ""0"" — combined SES."
+fhi-mediebruk-some,MEASURE_TYPE,Which number,2 codes,"SMR (standardised ratio vs national), MEIS (FHI mean / smoothed indicator). No TELLER / RATE — Ungdata is sample-based."
+fhi-mediebruk-spill,GEO,Region (mixed kommune / fylke / bydel / nasjon),1- to 6-character numeric code,~409 codes
+fhi-mediebruk-spill,AAR,Year,"""YYYY_YYYY"" range string (single-year)","13 single-year periods, 2013–2025"
+fhi-mediebruk-spill,KJONN,Sex,3 codes,"""0"" both, ""1"" men, ""2"" women — boys historically report higher >3h/day TV+gaming use than girls"
+fhi-mediebruk-spill,ALDER,Age band (Ungdata cohort grouping),1 code (degenerate),"Always ""1_6"" — Ungdata survey-cohort identifier (same as the other Ungdata sources). Verify against Ungdata methodology."
+fhi-mediebruk-spill,MEDIEBRUK,Media-use frequency band,1 code (degenerate),"Always ""Merenn3timer"" (more than 3 hours per day). The value is the share reaching the threshold — risk direction."
+fhi-mediebruk-spill,SOES,Socioeconomic status,1 code (degenerate),"Always ""0"" — combined SES (no breakdown in this slice)."
+fhi-mediebruk-spill,MEASURE_TYPE,Which number,2 codes,"SMR (standardised ratio vs national), MEIS (FHI mean / smoothed indicator). No TELLER / RATE — Ungdata is sample-based."
+fhi-mediebruk-underhold,GEO,Region (mixed kommune / fylke / bydel / nasjon),1- to 6-character numeric code,~409 codes
+fhi-mediebruk-underhold,AAR,Year,"""YYYY_YYYY"" range string (single-year)","8 single-year periods, 2018–2025 (shorter series than the other two media tables — streaming was a newer category)"
+fhi-mediebruk-underhold,KJONN,Sex,3 codes,"""0"" both, ""1"" men, ""2"" women"
+fhi-mediebruk-underhold,ALDER,Age band (Ungdata cohort grouping),1 code (degenerate),"Always ""1_6"" — Ungdata survey-cohort identifier. Verify against Ungdata methodology."
+fhi-mediebruk-underhold,MEDIEBRUK,Media-use frequency band,1 code (degenerate),"Always ""Merenn3timer"" (more than 3 hours per day). The value is the share reaching the threshold — risk direction (though weaker mental-health-outcome correlation than the SOME social-media table)."
+fhi-mediebruk-underhold,SOES,Socioeconomic status,1 code (degenerate),"Always ""0"" — combined SES."
+fhi-mediebruk-underhold,MEASURE_TYPE,Which number,2 codes,"SMR (standardised ratio vs national), MEIS (FHI mean / smoothed indicator). No TELLER / RATE — Ungdata is sample-based."
+fhi-mobbing,GEO,Region (mixed kommune / fylke / bydel / nasjon),1- to 6-character numeric code,~409 codes
+fhi-mobbing,AAR,3-year rolling period,"""YYYY_YYYY"" range string","7 periods, e.g. 2016_2018 through 2022_2024"
+fhi-mobbing,KJONN,Sex,1 code,"""0"" (both sexes only — table is sex-aggregated)"
+fhi-mobbing,TRINN,School grade,2 codes,"""7"" (7th grade), ""10"" (10th grade)"
+fhi-mobbing,SPM_ID,Question id (bullying composite),1 code,Single composite question only
+fhi-mobbing,MEASURE_TYPE,Which number,3 codes,"SMR (standardised ratio), MEIS (?), RATE (percent)"
+fhi-neet,GEO,Region (mixed kommune / fylke / bydel / nasjon),1- to 6-character numeric code,~409 codes
+fhi-neet,AAR,Year,"""YYYY_YYYY"" range string (single-year)","17 single-year periods, 2008–2024"
+fhi-neet,KJONN,Sex,3 codes upstream; Atlas filters to 1,"""0"" both (Atlas only ingests this), ""1"" men, ""2"" women — re-ingest if a sex-stratified slice is needed"
+fhi-neet,ALDER,Age band,"""min_max"" range string","14 bands — includes the canonical NEET span 15_29 and finer slices 15_19, 20_24, 25_29; pick a single non-overlapping partition downstream"
+fhi-neet,UTDANN,Parents' education level (NOT the youth's own),5 codes,"0 (all), 1 (grunnskole), 2 (videregående), 3 (høgskole/uni kort), 4 (høgskole/uni lang). Reflects socioeconomic context — children of higher-educated parents have markedly lower NEET rates."
+fhi-neet,MEASURE_TYPE,Which number,4 codes upstream; Atlas filters to 1,"RATE (percent — Atlas keeps only this), TELLER, MEIS, SMR are derivable downstream"
+fhi-prognose,GEO,Region (mixed kommune / fylke / bydel / nasjon),1- to 6-character numeric code,~409 codes
+fhi-prognose,AAR,Base year of the projection (anchor year),"""YYYY_YYYY"" range string",The year the forecast is anchored on — *not* the year being projected. PROGNOSEAAR is the target.
+fhi-prognose,KJONN,Sex,3 codes upstream; Atlas filters to 1,"""0"" both (Atlas only ingests this) — re-ingest for sex-stratified slice"
+fhi-prognose,ALDER,Age band,"""min_max"" range string","31 codes — includes the universal 0_120, 5-year disjoint slices (0_4, 5_9, …, 100_120), and aggregates (0_17, 45_64, 80_120). Pick a single non-overlapping partition downstream."
+fhi-prognose,PROGNOSEAAR,Year being projected to (target year),4-digit year as text,"26 codes upstream (per-year out to ~2050+). Atlas keeps 3 horizons: 2030, 2040, 2050. Add intermediate years as a sibling source if 5-year resolution is needed."
+fhi-prognose,MEASURE_TYPE,Which number,3 codes upstream; Atlas filters to 1,TELLER (count) only — RATE / SMR are derivable downstream from these counts.
+fhi-selvmord,GEO,Region (mixed kommune / fylke / bydel / nasjon),1- to 6-character numeric code,~409 codes
+fhi-selvmord,AAR,5-year rolling window (year-of-death),"""YYYY1_YYYY5"" 5-year period label","31 rolling windows upstream, from 1990–1994 to ~2020–2024. Atlas pulls latest 3."
+fhi-selvmord,KJONN,Sex,3 codes,"""0"" both, ""1"" men, ""2"" women — male suicide rates are markedly higher than female"
+fhi-selvmord,ALDER,Age band,"""min_max"" range string","13 bands incl. 0_120 aggregate, 0_74, 15_24 (youth), 25_44, 45_74, 75+, etc."
+fhi-selvmord,AARSAK,Cause of death,1 code (degenerate),"Always ""SELVMORD"" — table is pre-filtered to suicide. Stored for shape consistency with the wider FHI cause-of-death tables 342 / 343."
+fhi-selvmord,MEASURE_TYPE,Which number,4 codes upstream; Atlas filters to 1,MEIS only (FHI's smoothed indicator that pools across geography to stabilise small-area estimates). Raw RATE / TELLER / SMR available upstream for analyses where pooling is inappropriate.
+fhi-smertestillende,GEO,Region (mixed kommune / fylke / bydel / nasjon),1- to 6-character numeric code,~409 codes
+fhi-smertestillende,AAR,Year,"""YYYY_YYYY"" range string (single-year)","12 single-year periods, 2014–2025"
+fhi-smertestillende,KJONN,Sex,3 codes,"""0"" both, ""1"" men, ""2"" women — girls report higher painkiller use than boys"
+fhi-smertestillende,ALDER,Age band (Ungdata cohort grouping),1 code (degenerate),"Always ""1_6"" — Ungdata survey-cohort identifier (same as fhi-livskvalitet, fhi-depresjon). Verify against Ungdata methodology."
+fhi-smertestillende,STATUS,Painkiller-use frequency band,1 code (degenerate),"Always ""Minst_ukentlig"" (at-least-weekly use) — table reports the share reaching this frequency."
+fhi-smertestillende,SOES,Socioeconomic status,1 code (degenerate),"Always ""0"" — combined socioeconomic statuses (no breakdown in this slice)."
+fhi-smertestillende,MEASURE_TYPE,Which number,2 codes,"SMR (standardised ratio vs national), MEIS (FHI mean / smoothed indicator). No TELLER / RATE — Ungdata is sample-based."
+fhi-trangbodd,GEO,Region (mixed kommune / fylke / bydel / nasjon),1- to 6-character numeric code,~409 codes
+fhi-trangbodd,AAR,Year,"""YYYY_YYYY"" range string (single-year)","10 years, 2015_2015 through 2024_2024"
+fhi-trangbodd,ALDER,Age band,text band code,9 age bands
+fhi-trangbodd,UTDANN,Education level,5 codes,"""0"" (all education levels) + ""1""–""4"" (specific levels). Atlas filters to ""0"" at ingest to stay under the 50k-row cap."
+fhi-trangbodd,BODD,Housing crowding status,2 codes,"trangt (overcrowded), uoppgitt (unknown)"
+fhi-trangbodd,MEASURE_TYPE,Which number,3 codes,"RATE (percent — Atlas keeps only this), SMR (standardised ratio), TELLER (count)"
+fhi-vgs-gjennomforing,GEO,Region (mixed kommune / fylke / bydel / nasjon),1- to 6-character numeric code,~409 codes
+fhi-vgs-gjennomforing,AAR,3-year rolling cohort,"""YYYY_YYYY"" range string",11 cohorts
+fhi-vgs-gjennomforing,KJONN,Sex,3 codes,"""0"" both, ""1"" men, ""2"" women"
+fhi-vgs-gjennomforing,UTDANN,Parents' education level,5 codes,Highest parental education at child's birth — proxy for socioeconomic context
+fhi-vgs-gjennomforing,INNVKAT,Immigration category,1 code,Single category (collapsed in this slice)
+fhi-vgs-gjennomforing,MEASURE_TYPE,Which number,4 codes,"TELLER (count), RATE (completion %), SMR (standardised ratio), MEIS"
+frr,id,FRR resource UUID,text,Stable across snapshots; primary key
+frr,ngo_orgnr,Owning NGO orgnr (Brreg),9-digit numeric,Resolved from atlas-ngo-landscape/landscape.json at ingest; sample-ngo uses synthetic 999999999
+frr,sist_oppdatert,FRR-side last-updated timestamp,timestamptz,Per-resource freshness; max across run is captured as upstream_updated_at
+frr,raw_payload,FRR record payload,jsonb,"Verbatim JSON from FRR — schema is FRR-managed, mirrored without flattening"
+redcross-branches,branch_id,Branch UUID,text,Stable identifier across snapshots
+redcross-branches,branch_type,Branch type,3 codes,"HQ (national), Distrikt (regional), Lokalforening (local chapter)"
+redcross-branches,branch_name,Branch name,text,
+redcross-branches,location,Location attributes,object,"kommune, county, region, postal/street addresses"
+redcross-branches,branch_status,Operational status,"{is_active, is_terminated, creation_date}",
+redcross-branches,parent,Parent branch reference,"{branch_id, branch_number, branch_name, branch_type}",HQ has no parent; Lokalforening points at its Distrikt
+redcross-branches,activities,Per-branch activities,"list of {global_activity_name, local_activity_name}",~50 global activity types in the Red Cross catalogue; each branch lists its active subset
+ssb-06083,Region,Region (kommune / fylke / nasjon / bydel / historical),"Numeric code: 0 national, 2-digit fylke, 4-digit kommune, 6-digit bydel",~1051 codes
+ssb-06083,FamilieType,Family type,9 codes,"Couple with/without children, single mother, single father, etc."
+ssb-06083,ContentsCode,Statistic measure,1 code,Familier (family count)
+ssb-06083,Tid,Year,4-digit year as text,2005–2025 (annual)
+ssb-06913,Region,Region (kommune / fylke / nasjon / historical),"Numeric code: 0 national, 2-digit fylke, 4-digit kommune",~1288 codes including historical variants going back decades
+ssb-06913,ContentsCode,Statistic measure,8 codes,"Folkemengde, Levende (live births), Dode (deaths), Fodselsoverskudd (birth surplus), Innflyttinger (in-migration), Utflyttinger (out-migration), Nettoinnflytting (net migration), Folketilvekst (population growth)"
+ssb-06913,Tid,Year,4-digit year as text,1951–2026 (76 years; later years are projections)
+ssb-06944,Region,Region (kommune / fylke / nasjon / bydel / delområder),"Numeric code: 0 national, 2-digit fylke, 4-digit kommune, 6-digit bydel/delområde",~3283 codes — includes bydeler (delområder) for fine-grained urban geography
+ssb-06944,HusholdType,Household type,5 codes,0000 (all households) + 0001..0004 (specific household compositions)
+ssb-06944,ContentsCode,Statistic measure,3 codes,"SamletInntekt (median total income, NOK), InntSkatt (income tax, NOK), AntallHushold (household count)"
+ssb-06944,Tid,Year,4-digit year as text,2005–2024 (20 years; default response is latest year only)
+ssb-06947,Region,Region (kommune / fylke / nasjon / bydel / historical),"Numeric code: 0 national, 2-digit fylke, 4-digit kommune, 6-digit bydel",~1036 codes — bydeler exist for the 4 largest cities
+ssb-06947,ContentsCode,Statistic measure,5 codes,"Same vocabulary as ssb-08764 — Personer, EUskala50, EUskala60, OECDskala50, OECDskala60. ssb-08764 is the under-18 slice; this is whole-population."
+ssb-06947,Tid,Year,4-digit year as text,2005–2024
+ssb-07459,Region,Region (kommune / fylke / nasjon),"Numeric code: 0 national, 2-digit fylke, 4-digit kommune",~994 codes
+ssb-07459,Kjonn,Sex,2 codes,"""1"" Menn (men), ""2"" Kvinner (women)"
+ssb-07459,Alder,Single-year age,3-character text code,"""000"" through ""104"" + ""105+"" residual; 106 codes total"
+ssb-07459,ContentsCode,Statistic measure,1 code,Personer1 (resident count)
+ssb-07459,Tid,Year,4-digit year as text,1986–2026 (41 years; default response is latest year only). Largest pull in the catalogue at ~210 k cells when wildcarded.
+ssb-08764,Region,Region (national / fylke / kommune / bydel / historical),"Numeric code: 0 national, 2-digit fylke, 4-digit kommune, 6-digit bydel",~1036 codes when pulling full range
+ssb-08764,ContentsCode,Statistic measure,5 codes,"Personer (count under 18), EUskala50/EUskala60 (% under 18 below 50%/60% of median, EU scale), OECDskala50/OECDskala60 (same, OECD scale). Samfunnspuls uses EUskala60."
+ssb-08764,Tid,Year,4-digit year as text,2005–2024 (20 years); default v2-beta response is latest year only
+ssb-09429,Region,Region (kommune / fylke / nasjon / bydel / historical),"Numeric code: 0 national, 2-digit fylke, 4-digit kommune, 6-digit bydel",~979 codes
+ssb-09429,Nivaa,Education level (NUS2000),7 codes,"Grunnskole (primary), videregående skole (upper-secondary), universitets-/høgskoleutdanning kort (1–4 years) and lang (5+ years), forskerutdanning (PhD), uoppgitt (unknown)"
+ssb-09429,Kjonn,Sex,3 codes,"""0"" both, ""1"" men, ""2"" women"
+ssb-09429,ContentsCode,Statistic measure,2 codes,Person count and percentage share at the given education level
+ssb-09429,Tid,Year,4-digit year as text,1970–2024 (55 years)
+ssb-12063,KOKkommuneregion0000,KOSTRA region (kommune / fylke / aggregate),"Numeric code: 0 national, 2-digit fylke, 4-digit kommune; KOSTRA-specific codes for aggregates",~891 codes — mapped to region_code at ingest
+ssb-12063,ContentsCode,Statistic measure,15 codes,Youth-centre count + capacity + voluntary-association counts receiving public support (kommunale fritidstilbud / frivillige ungdomsforeninger)
+ssb-12063,Tid,Year,4-digit year as text,2015–2024
+ssb-12131,KOKkommuneregion0000,KOSTRA region (kommune / fylke / aggregate),"Numeric code: 0 national, 2-digit fylke, 4-digit kommune; KOSTRA-specific codes for aggregates",~891 codes — mapped to region_code at ingest
+ssb-12131,ContentsCode,Statistic measure,Multiple codes,Monthly social-assistance rates (stønadssatser) by household composition
+ssb-12131,Tid,Year,4-digit year as text,2015–2024
+ssb-12132,KOKkommuneregion0000,KOSTRA region (kommune / fylke / aggregate),"Numeric code: 0 national, 2-digit fylke, 4-digit kommune; KOSTRA-specific codes for aggregates",~891 codes — mapped to region_code at ingest
+ssb-12132,ContentsCode,Statistic measure,Multiple codes,Per-kommune rules — whether child benefit / children's own income / cash-for-childcare are counted as income when calculating welfare payments
+ssb-12132,Tid,Year,4-digit year as text,2015–2024
+ssb-12292,KOKkommuneregion0000,KOSTRA region (kommune / fylke / aggregate),"Numeric code: 0 national, 2-digit fylke, 4-digit kommune; KOSTRA-specific codes for aggregates",~891 codes — mapped to region_code at ingest
+ssb-12292,ContentsCode,Statistic measure,49 codes,"Care-service indicators — nursing home + home-care metrics (capacity, staffing, recipients, costs)"
+ssb-12292,Tid,Year,4-digit year as text,2015–2024
+ssb-12944,Region,Region (kommune / fylke / nasjon / bydel / grunnkrets / historical),"Numeric code: 0 national, 2-digit fylke, 4-digit kommune, 6-digit bydel",1036 codes
+ssb-12944,Alder,Age band,6 codes,"999A (all ages), 00-17, 18-34, 35-49, 50-66, 067+"
+ssb-12944,ContentsCode,Statistic measure,2 codes,"PersonerSeksti (count) and EUskalaSeksti (% below 60% of median, EU scale, 3-year persistent)"
+ssb-12944,Tid,3-year rolling period,"""YYYY-YYYY"" period label",12 periods — 2011-2013 through 2022-2024
+ssb-13995,KOKkommuneregion0000,KOSTRA region (kommune / fylke / aggregate),"Numeric code: 0 national, 2-digit fylke, 4-digit kommune; KOSTRA-specific codes for aggregates",~891 codes — mapped to region_code at ingest
+ssb-13995,ContentsCode,Statistic measure,34 codes,"Cases, recipients, share of population, amounts paid, support duration (kr og stønadstid)"
+ssb-13995,Tid,Year,4-digit year as text,2022–2025 (4 years)
+ssb-klass-fylker,code,Fylke code,"2-digit numeric, zero-padded","16 codes — 15 real fylker (e.g. 03 Oslo, 11 Rogaland, 50 Trøndelag) + 99 Uoppgitt"
+ssb-klass-fylker,name,Fylke name (bokmål),text,
+ssb-klass-fylker,parent_code,Parent classification code,text or null,Always null (no parent level)
+ssb-klass-fylker,level,Hierarchy level,text,"Always ""1"" (flat list)"
+ssb-klass-fylker,valid_from / valid_to,Validity span,ISO date or null,Codes carry their own valid_from/valid_to plus the validFromInRequestedRange computed at fetch time
+ssb-klass-kommuner,code,Kommune code,"4-digit numeric, zero-padded",~358 active codes — first 2 digits encode fylke (e.g. 0301 Oslo)
+ssb-klass-kommuner,name,Kommune name (bokmål),text,
+ssb-klass-kommuner,parent_code,Parent classification code,text or null,Typically null in a codesAt snapshot; fylke relationship is encoded in the first 2 digits of `code`
+ssb-klass-kommuner,level,Hierarchy level,text,"Always ""1"" for this classification"
+ssb-klass-kommuner,valid_from / valid_to,Validity span,ISO date or null,Both null in a codesAt snapshot; the historical range is captured in valid_from_in_range
+ssb-klass-kommuner,notes,Free-text notes,text or null,"Boundary changes, Sámi name variants, etc."
