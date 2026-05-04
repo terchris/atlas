@@ -6,11 +6,11 @@
 
 ## Status: Backlog
 
-**Goal**: Set up an asynchronous cloud-agent pipeline that picks one candidate from [`INVESTIGATE-new-norwegian-public-sources.md`](./INVESTIGATE-new-norwegian-public-sources.md), runs the source-onboarding workflow documented in [`website/docs/contributors/ingest-modules.md`](../../../contributors/ingest-modules.md), and opens a PR — all without a human at the keyboard. Multiple agents must safely operate in parallel without picking the same candidate.
+**Goal**: Set up an asynchronous cloud-agent pipeline that picks one candidate from [`INVESTIGATE-new-norwegian-public-sources.md`](./INVESTIGATE-new-norwegian-public-sources.md), runs the source-onboarding workflow documented in [`website/docs/contributors/ingest-modules.md`](../../../contributors/ingest-modules.md), and opens a PR — all without a human at the keyboard. **Single agent at a time** to keep the design simple: only one Cursor Background Agent runs at a time, eliminating concurrent-pick coordination from scope.
 
-**Last Updated**: 2026-05-04
+**Last Updated**: 2026-05-04 (rev 2: collapsed to single-agent / Cursor-only design — drops two-worker race-handling, migration-number-conflict logic, and parallel-PR INVESTIGATE-drift handling per user direction)
 
-**Origin**: Atlas's catalogue grew from 21 to 38 sources in four days through tight human-driven loops (the user pastes a portal URL → Claude in the keyboard onboards it). [`INVESTIGATE-new-norwegian-public-sources.md`](./INVESTIGATE-new-norwegian-public-sources.md) currently lists 26 more candidates ready to ingest. The user has a Claude Max ($100/mo) + Cursor ($25/mo) subscription giving access to cloud-based background agents. The user asked: *"can we get an agent running in the cloud to read the INVESTIGATE-new-norwegian-public-sources.md and pick one from the list. create a feature branch. Then create the folder for it and write the code. Then write a PR for it."* This investigation scopes that pipeline and the coordination machinery (no two agents working on the same candidate). Implementation is a follow-up `PLAN-*`.
+**Origin**: Atlas's catalogue grew from 21 to 38 sources in four days through tight human-driven loops (the user pastes a portal URL → Claude in the keyboard onboards it). [`INVESTIGATE-new-norwegian-public-sources.md`](./INVESTIGATE-new-norwegian-public-sources.md) currently lists 26 more candidates ready to ingest. The user has a Cursor ($25/mo) subscription with Background Agents that runs in cloud sandboxes — under-utilised on the user's machine, well-suited to async source onboarding. (The Claude Max $100/mo subscription stays at the keyboard for review + ingest work.) The user asked: *"can we get an agent running in the cloud to read the INVESTIGATE-new-norwegian-public-sources.md and pick one from the list. create a feature branch. Then create the folder for it and write the code. Then write a PR for it."* This investigation scopes that pipeline. **Concurrency constraint** (per user, 2026-05-04 rev 2): only one Cursor agent runs at a time — eliminates the entire double-pick / migration-collision / parallel-INVESTIGATE-drift problem class. Implementation is a follow-up `PLAN-*`.
 
 ---
 
@@ -32,13 +32,11 @@ Atlas's local Claude (i.e. me, paired with terje at the keyboard) takes over fro
 
 ## Questions to Answer
 
-1. **Coordination**: how do agents claim a candidate atomically? GitHub Issues, a lock file in the repo, a Project board, a queue service?
-2. **Tool choice**: Cursor Background Agents vs Claude Code in the cloud — which fits Atlas's workflow, and is one-of or both worthwhile?
-3. **DB access**: does the agent get a database connection to run live ingest, or does the human do that post-merge?
-4. **Migration-number conflicts**: today's `NNN_*.sql` scheme allocates sequentially. Two agents racing could both pick `046`. Renumber on merge, or switch the scheme?
-5. **INVESTIGATE-doc drift**: the maintenance ritual ([`INVESTIGATE-reports-and-indicators-from-catalogue.md`](./INVESTIGATE-reports-and-indicators-from-catalogue.md) bumps the source count). Two parallel PRs both bumping 38→39 race; the merge-second loses. How is that resolved?
-6. **Stuck-agent escalation**: agent encounters auth-walled API / weird upstream / typecheck error it can't fix — how does it surface that without burning hours of compute?
-7. **Cost**: how much of the $125/mo budget does each candidate consume, and is that economical?
+1. **Issue queue**: GitHub Issues is the natural primitive — one issue per candidate, agent picks the first unassigned one. With single-agent concurrency, no atomicity machinery is needed beyond `gh issue edit --add-assignee @me`. Confirm this is the right shape vs alternatives (Project board, in-repo TODO file).
+2. **DB access**: does the agent get a database connection to run live ingest, or does the human do that post-merge?
+3. **Stuck-agent escalation**: agent encounters auth-walled API / weird upstream / typecheck error it can't fix — how does it surface that without burning hours of compute?
+4. **Cost**: how much of the $25/mo Cursor budget does each candidate consume, and is that economical?
+5. **Trigger model**: agent runs on a schedule (cron-like), on-demand (user fires off a session), or on issue-creation (webhook)?
 
 ---
 
@@ -75,30 +73,30 @@ What's missing:
                         │  GitHub: atlas repo                     │
                         │                                         │
                         │  Issues (label: new-source)             │
-                        │   ├── #N: Onboard bufdir-barnefattigdom │ ◄── claim queue
+                        │   ├── #N: Onboard bufdir-barnefattigdom │ ◄── work queue
                         │   ├── #N+1: Onboard nav-uforetrygd      │
                         │   ├── #N+2: Onboard ssb-10826           │
                         │   └── ... (26 issues)                   │
                         │                                         │
                         │  PRs (one per onboarding)               │
-                        └────────┬───────────────┬────────────────┘
-                                 │ poll          │ open PR
-                       ┌─────────┴────────┐  ┌───┴────────────────┐
-                       │ Cursor BG Agent  │  │ Claude Code Cloud  │ ◄── workers
-                       │ (sandbox VM)     │  │ (sandbox VM)       │
-                       │                  │  │                    │
-                       │ - claim issue    │  │ - claim issue      │
-                       │ - branch + code  │  │ - branch + code    │
-                       │ - run gates      │  │ - run gates        │
-                       │ - open PR        │  │ - open PR          │
-                       └──────────────────┘  └────────────────────┘
-                                 ▲                 ▲
-                                 │ runbook         │ runbook
-                       ┌─────────┴─────────────────┴─────────────┐
-                       │ AGENT-RUNBOOK-onboard-source.md         │ ◄── single source-of-truth
-                       │ (committed to atlas/.cursor/ or         │
-                       │  atlas/website/docs/ai-developer/)      │
-                       └─────────────────────────────────────────┘
+                        └────────┬──────────────┬─────────────────┘
+                                 │ poll         │ open PR
+                       ┌─────────┴──────────────┴────────┐
+                       │ Cursor BG Agent (sandbox VM)    │ ◄── single worker
+                       │                                 │
+                       │ - pick first unassigned issue   │
+                       │ - assign self                   │
+                       │ - branch + write code           │
+                       │ - run quality gates             │
+                       │ - open PR                       │
+                       │ - stop                          │
+                       └─────────────────────────────────┘
+                                 ▲
+                                 │ runbook
+                       ┌─────────┴──────────────────────────┐
+                       │ AGENT-onboard-source.md (+         │ ◄── single source-of-truth
+                       │ .cursor/rules/onboard-source.mdc)  │
+                       └────────────────────────────────────┘
                                  ▲
                                  │ review + merge + run ingest
                        ┌─────────┴────────────────────────────┐
@@ -106,25 +104,24 @@ What's missing:
                        └──────────────────────────────────────┘
 ```
 
-Three pieces in scope: **the queue**, **the workers**, **the runbook**.
+Three pieces in scope: **the queue**, **the worker**, **the runbook**. Single-agent concurrency keeps every piece simple.
 
 ### The queue: GitHub Issues with the `new-source` label
 
-GitHub Issues is the right primitive: free, atomic-ish (single-writer assignment), already integrated with PRs (`Closes #N`), and visible to both humans and agents through the same `gh` CLI.
+GitHub Issues is the right primitive: free, integrates with PRs (`Closes #N`), and visible to both human and agent through the same `gh` CLI. With one agent running at a time, the assignment is just a "this one is in flight, don't redo it on the next run" marker — no race protection needed.
 
-**Claim protocol** (the load-bearing race-handling):
+**Pick protocol**:
 
 ```
-1. gh issue list --state open --label new-source --search "no:assignee" --json number,title --limit 5
-2. Pick the first → ISSUE_NUM
-3. gh issue edit ISSUE_NUM --add-assignee @me
-4. sleep 3   # let any concurrent claims settle
-5. gh issue view ISSUE_NUM --json assignees -q '.assignees[0].login'
-6. If assignee != $GITHUB_ACTOR: another agent won the race → release this and goto 1
-7. Otherwise: claim is mine; proceed
+1. gh issue list --state open --label new-source --search "no:assignee" \
+       --json number,title --limit 1
+2. If empty → nothing to do; exit cleanly.
+3. Otherwise pick that issue → ISSUE_NUM
+4. gh issue edit ISSUE_NUM --add-assignee @me
+5. Proceed with onboarding
 ```
 
-The `gh issue edit --add-assignee` is overwriting on GitHub's side — last-write-wins. The 3-second sleep + re-check resolves the rare-but-possible double-add. In the unlikely case both still claim, two PRs land and the human picks one to merge. Cost of duplicate work: one wasted run; not catastrophic.
+(If a previous agent run was interrupted mid-flight without opening a PR, the issue stays assigned to the agent's handle but with no PR link. The human un-assigns it on next review pass and the agent re-picks it on next run. Self-correcting on a single-day cadence.)
 
 **One-time bootstrap**: convert the 26 candidates in [`INVESTIGATE-new-norwegian-public-sources.md`](./INVESTIGATE-new-norwegian-public-sources.md) into 26 GitHub Issues. Suggested issue body template:
 
@@ -146,14 +143,11 @@ write code, run gates, open a PR with `Closes #<this>`, and stop.
 
 A small one-off Python script can generate all 26 from the markdown source.
 
-### The workers: Cursor Background Agents (primary), Claude Code Cloud (secondary)
+### The worker: Cursor Background Agent (single instance)
 
-| Platform | Cost (existing) | Strengths | Weaknesses |
-|---|---|---|---|
-| **Cursor Background Agents** | $25/mo (already paid) | Mature for "claim a GitHub issue → submit PR" workflows. Sandbox VM with full repo clone. Triggers via issue label or on-demand. | Less personalised than Claude — no project-memory continuity with the keyboard sessions. |
-| **Claude Code Cloud** | included in $100 Max | Same model that drives the keyboard work; CLAUDE.md + memory naturally shared. Excellent at long context. | Newer; cloud-agent UX is still evolving. |
+Cursor BG Agents fit the workflow well: sandbox VM, full repo clone, GitHub-integrated PR flow, triggered on demand or on-schedule. Single instance — at any moment either zero or one agent is running. The Cursor $25/mo subscription is already paid and underused on the user's machine, so this is essentially free capacity.
 
-**Recommendation**: pilot with **Cursor Background Agents first** because the $25 cost is already incurred and Cursor's BG agent UX for "issue → PR" is more mature today. Add Claude Code Cloud as a second worker once the runbook is stable — both can poll the same queue safely (the claim protocol guarantees no double-pick regardless of which platform an agent runs on).
+**Why not Claude Code Cloud as a second worker** (initial design proposed both — collapsed in rev 2 per user direction): adding a second worker brings concurrent-pick coordination back into scope (sleep + re-check protocol, migration-number races, parallel INVESTIGATE-doc drift). The single-agent constraint deletes all of that. If throughput later becomes a bottleneck — at the projected 4–8 candidates per day per agent, the 26-candidate backlog clears in 3–6 calendar days, which doesn't seem to need parallelism — the Claude Code Cloud worker can join later by re-introducing the race-protected claim protocol from rev 1 of this doc.
 
 ### The runbook: one markdown file the agent reads
 
@@ -177,31 +171,15 @@ Lives at `website/docs/ai-developer/AGENT-onboard-source.md` (loaded into the ag
 
 ---
 
-## Coordination concerns
+## Coordination — what's *not* a problem (and what is)
 
-### No double-pick
+The single-agent design eliminates every concurrent-PR coordination problem the rev-1 design had to handle: no double-pick (only one agent picks at a time), no migration-number conflicts (sequential), no parallel INVESTIGATE-doc drift (one PR per cycle merges before the next agent run starts). Documented here for completeness in case throughput pressure ever justifies a second worker.
 
-Solved by the claim protocol above. **Stronger guarantees** if needed (overkill for 26-candidate scale): a tiny Postgres lock table, or use GitHub's GraphQL with `If-Match` headers. Not needed at this volume.
+What *does* need handling even with one agent:
 
-### Migration-number conflicts
-
-Two agents on parallel branches both pick `046_…sql` based on the same `main` HEAD. Mitigation paths:
-
-- **Soft**: agents poll `git ls-remote` for other open `feat/onboard-*` branches and pick a number above any reservations. Fragile.
-- **Hard, status quo**: human bumps the second-merging migration number in the PR review. Cheap; happens after merge of the first.
-- **Hard, schema change**: switch the migration filename scheme to `YYYY-MM-DD-HHMMSS_<id>.sql` so collisions are vanishingly rare. Bigger change; defer.
-
-**Recommendation**: status quo + a one-line note in the agent runbook ("if your migration number collides at merge time, the human renumbers; don't worry about it during your run").
-
-### INVESTIGATE-doc drift
-
-The Maintenance ritual in [`INVESTIGATE-reports-and-indicators-from-catalogue.md`](./INVESTIGATE-reports-and-indicators-from-catalogue.md) requires the source count to bump on every onboarding. Two parallel PRs both go from 38→39 in the same file. Standard merge-conflict territory.
-
-**Mitigation**: agents always run the maintenance ritual against `main` HEAD at branch time. The merging human resolves the count when bringing the second PR up to date — a 5-second rebase fix. Not worth automating.
-
-### Concurrent ingest_runs
-
-Not an issue at this stage because agents don't run live ingest. If we later allow that: the `IngestInProgressError` lock in `lib/scraping/ingest_runs.ts` already prevents concurrent ingests of the same source.
+- **Stale claim from interrupted run**: the agent crashes mid-flight after assigning itself but before opening a PR. Resolution: human-driven. On next review pass, an issue assigned to the agent for >24h with no linked PR gets un-assigned by the human; the agent re-picks it next run. No machinery; just hygiene.
+- **Bad PR**: the agent opens a PR that fails review. Resolution: PR comments + close-don't-merge; the agent re-reads the runbook + the PR feedback in its next session. Standard PR review loop.
+- **Stuck mid-run** (auth wall, opaque upstream slug, typecheck error after retries): the agent opens a **draft** PR, labels it `needs-human`, comments on the issue with the blocker, and stops. The human triages.
 
 ---
 
@@ -217,11 +195,11 @@ A future optimisation could give agents a read-only role on a sandbox database t
 
 ## Cost & operational considerations
 
-**Per-candidate token estimate** (from the keyboard work I've been doing): ~150k tokens for a typical FHI Ungdata-shape source, ~250k for a structurally novel source (KPR-1aar, Selvmord). Across 26 candidates: ~5M tokens. At Claude Max billing rates, easily covered by the $100/mo quota — and with Cursor running in parallel, the per-candidate cost is closer to half that on each platform.
+**Per-candidate token estimate** (from the keyboard work I've been doing): ~150k tokens for a typical FHI Ungdata-shape source, ~250k for a structurally novel source (KPR-1aar, Selvmord). Across 26 candidates: ~5M tokens. Cursor's BG-agent allocation in the $25 plan accommodates this comfortably.
 
-**Per-run wall-clock**: ~10–15 minutes per candidate end-to-end (an agent doing one).
+**Per-run wall-clock**: ~10–15 minutes per candidate end-to-end.
 
-**Throughput at 2 parallel agents**: 8–12 candidates per day if the human reviews promptly. Full backlog cleared in ~3 calendar days of low human attention.
+**Throughput at one agent**: 4–8 candidates per day if the human reviews promptly. Full backlog (26 candidates) clears in ~3–6 calendar days of low human attention. Throughput is bounded by *human review pace*, not agent runtime — which is the right bottleneck for an unsupervised pipeline.
 
 **Failure cost**: a stuck agent burns ~30 minutes of compute before it gives up and labels `needs-human`. Bounded; not expensive.
 
@@ -229,25 +207,19 @@ A future optimisation could give agents a read-only role on a sandbox database t
 
 ## Open questions for decision
 
-1. **Scope of the v1 pilot**: one agent on one candidate end-to-end before we wire the second worker, or wire both at once and let them race for the second candidate?
-   *Recommendation: one first. The runbook will need a few corrections after the pilot; cheaper to learn from one run than two.*
-
-2. **Cursor vs Claude as primary**: is the user's Cursor BG-agent setup more familiar, or is "Claude in cloud" closer to the keyboard workflow?
-   *Recommendation: Cursor first because the GitHub-integration plumbing for BG agents is more mature; revisit after pilot.*
-
-3. **Migration-number scheme change**: do we accept the current sequential scheme + manual renumber on merge, or invest in a timestamp-based scheme now?
-   *Recommendation: defer; manual renumber is a 5-second fix and only happens on actual collisions, which at 26-candidate scale will be rare.*
-
-4. **DB access for agents**: dry-only forever, or eventually a sandbox?
+1. **DB access for the agent**: dry-only forever, or eventually a sandbox?
    *Recommendation: dry-only for v1. Reconsider if dbt-model-parse coverage isn't catching schema mistakes that ingest would catch immediately.*
 
-5. **Issue body content**: just the candidate's URL + tier, or full embedded INVESTIGATE-new-norwegian-public-sources entry?
+2. **Issue body content**: just the candidate's URL + tier, or full embedded INVESTIGATE-new-norwegian-public-sources entry?
    *Recommendation: full embedded (the [Q*] questions matter for the agent's choices); the issue is self-contained so the agent doesn't need to re-read 492 lines of INVESTIGATE.*
 
-6. **`needs-human` escalation**: how does the agent communicate? PR comment, issue comment, or both?
+3. **`needs-human` escalation**: how does the agent communicate? PR comment, issue comment, or both?
    *Recommendation: both; PR draft + issue comment with `Stuck: <reason>`. Keeps the issue queue clean.*
 
-7. **Auto-merge**: never. The PR review remains the human's quality gate. (Assert explicitly in the runbook; don't let an agent enable GitHub auto-merge.)
+4. **Trigger model**: how does the agent start a run? Cron-like schedule (e.g. once a day), on-demand (the user fires off a Cursor session), or webhook on issue-creation?
+   *Recommendation: on-demand for v1 — the user kicks off the agent when they want progress; review pace is the throughput bottleneck anyway. Schedule it later if review starts catching up.*
+
+5. **Auto-merge**: never. The PR review remains the human's quality gate. (Assert explicitly in the runbook; don't let the agent enable GitHub auto-merge.)
 
 ---
 
@@ -257,26 +229,25 @@ A future optimisation could give agents a read-only role on a sandbox database t
 
 1. Bootstrap script: convert the 26 candidates in [`INVESTIGATE-new-norwegian-public-sources.md`](./INVESTIGATE-new-norwegian-public-sources.md) → 26 GitHub Issues with label `new-source`.
 2. Author the runbook at `website/docs/ai-developer/AGENT-onboard-source.md` + `.cursor/rules/onboard-source.mdc`.
-3. Configure one Cursor Background Agent against the runbook.
+3. Configure the Cursor Background Agent against the runbook.
 
 **Phase 1 — pilot one end-to-end (1 candidate, agent-to-merge)**
 
-4. Pick a low-risk candidate (suggestion: `ssb-10826` bydel population — well-understood SSB shape, no auth, kommune-resolved). Issue gets pre-claimed by the pilot agent.
+4. Pick a low-risk candidate (suggestion: `ssb-10826` bydel population — well-understood SSB shape, no auth, kommune-resolved). The agent claims it on its first run.
 5. Watch the run. Read the PR. Address whatever the agent stumbled on (likely: dimension semantics, attribution string, eu_theme guess).
 6. Update the runbook based on the lessons.
 7. Merge. Run migrate + ingest + dbt test locally. Verify catalogue grew 38→39, dim count grew, the maintenance ritual fired correctly.
 
-**Phase 2 — scale to two parallel agents (1 day)**
+**Phase 2 — drain the backlog (3–6 calendar days)**
 
-8. Add Claude Code Cloud as a second worker against the same queue.
-9. Watch for race conditions in the claim protocol. Confirm no double-pick.
-10. Throughput: should clear 6–10 candidates with light human supervision.
+8. Trigger the agent on demand (or on a daily schedule) — it picks the next unassigned issue, opens a PR, stops.
+9. Human reviews + merges + runs live ingest after each merge.
+10. Triage `needs-human` PRs as they appear — these are the candidates that have actual quirks (auth, weird upstream shape) and need keyboard-Claude pairing.
+11. Capture per-candidate lessons in the runbook for future similar shapes.
 
-**Phase 3 — parallelism + escalation handling (1 week)**
+**Phase 3 — only if throughput pressure justifies it (defer)**
 
-11. Triage `needs-human` PRs — these are the candidates that have actual quirks (auth, weird upstream shape).
-12. The remainder of the 26 candidates land as PRs over the week.
-13. Capture per-candidate lessons in the runbook for future similar shapes.
+12. If 4–8 candidates/day proves too slow once review catches up, re-introduce the rev-1 race-protected claim protocol and add Claude Code Cloud as a second worker. The 26-candidate backlog at one-agent throughput is unlikely to need this.
 
 ---
 
@@ -287,6 +258,7 @@ A future optimisation could give agents a read-only role on a sandbox database t
 - **Multi-repo agents** — UIS coordination etc. is out of scope; this investigation is single-repo (atlas).
 - **Agents picking from non-onboarding queues** — a generic Atlas agent that does *anything* labelled `agent-ok` is overscoped; one queue, one task type.
 - **Deep ingestion of structurally novel sources** — sources that need new ingest-lib code (a new HTML scraper, a new auth-flow client) are outside what an agent can do reliably; flag those as `needs-human` from the start. Only Tier-1-style FHI/SSB shape sources are agent-friendly.
+- **Multi-agent parallelism** — the single-agent constraint is a deliberate scope choice; reintroducing a second worker means resurrecting the rev-1 race-handling design (claim re-check, migration-number reservation, parallel INVESTIGATE-drift handling) and isn't justified at the 26-candidate backlog size.
 
 ---
 
