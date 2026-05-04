@@ -43,6 +43,8 @@ Innovators meet Atlas through three distinct surfaces. Conflating them into one 
 
 Each surface has its own answer to "is this innovator-ready?" and its own tooling. This INVESTIGATE settles each independently.
 
+**Clients vs. surfaces.** The three rows above are *surfaces* — protocols / contracts Atlas exposes. **Clients** sit on top of them: JupyterHub (notebooks against the query surface), Metabase (visual SQL / BI client — pending in UIS, scoped internal-team-only per UIS's `INVESTIGATE-metabase.md` in the urbalurba-infrastructure repo), Open WebUI (chat client against MCP). Adding a client changes who can use Atlas, not what Atlas exposes. Whether Metabase stays internal or becomes innovator-facing is **[Q7]** below.
+
 ---
 
 ## UIS-stack services relevant to this question
@@ -58,6 +60,7 @@ The full inventory at [uis.sovereignsky.no](https://uis.sovereignsky.no/) lists 
 | **Gravitee** | Integration / API Gateway | Governance surface — keys, rate limits, plans in front of PostgREST |
 | **Authentik** | Identity / Auth | Governance surface — SSO / API keys for keyed-tier consumers |
 | **JupyterHub** | Analytics / Notebooks | Innovator analytical surface — notebooks against `api-atlas.helpers.no` or read-only Postgres role |
+| **Metabase** *(pending in UIS — Atlas is the request origin)* | Analytics / BI (planned) | Visual SQL / BI exploration client. UIS scopes it Tailscale-gated, internal-team-only (data-quality cross-source comparison, dim-spine modelling, ad-hoc team questions). **Caveat: Metabase is a SQL/JDBC client — it cannot connect to PostgREST.** See **[Q7]** below. |
 | **Qdrant** | Databases / Vector | Could power semantic search across catalog descriptions / source READMEs / common-schema prose |
 | **LiteLLM** | AI / API Gateway | LLM-routing layer; useful if Atlas hosts a "chat with the data" surface |
 | **Open WebUI** | AI / Chat | Hosted chat UI for non-coding innovators ("ask Atlas in natural language") |
@@ -76,17 +79,17 @@ Things UIS does **not** ship that this INVESTIGATE has to consider: **Cube.dev**
 - **(b) OpenMetadata only** — UIS already runs it. Has a dbt connector that ingests `manifest.json` automatically, so the catalogue stays in sync without parallel YAML. Renders lineage, supports glossary terms, supports search.
 - **(c) Both — dbt-MCP for agents, OpenMetadata for humans** — same source (dbt's `manifest.json` + `meta:` fields); two projections. The dbt-osmosis CI gate from PLAN-A in semantic-foundation already enforces "every column documented", which is the input both surfaces consume.
 - **(d) Backstage** — wrong shape. Backstage is a software catalog (services, components, APIs) and treats datasets as second-class. It can register `api-atlas.helpers.no` as one entity, but it doesn't show columns, lineage, or freshness the way OpenMetadata does.
-- **Tentative recommendation**: **(c)** — both, with dbt as single source of truth. Cost is one OpenMetadata dbt connector (UIS already runs the service). Benefit: human innovators land on a browse-able catalog without us building one; agents keep MCP. Verify before locking: how stable is OpenMetadata's dbt Core connector, and does UIS's instance accept external dbt projects, or is it tenant-scoped to UIS's own data? **[Q7]** below.
+- **Tentative recommendation**: **(c)** — both, with dbt as single source of truth. Cost is one OpenMetadata dbt connector (UIS already runs the service). Benefit: human innovators land on a browse-able catalog without us building one; agents keep MCP. Verify before locking: how stable is OpenMetadata's dbt Core connector, and does UIS's instance accept external dbt projects, or is it tenant-scoped to UIS's own data? **[Q8]** below.
 
 ### [Q2] Query / semantic surface — PostgREST alone, or PostgREST + a semantic layer?
 
 PostgREST already ships against `api_v1.*` and `api_v2.*` is the path forward for breaking changes (per [INVESTIGATE-developer-docs-surface.md](INVESTIGATE-developer-docs-surface.md) [Q4]). The question: do innovators need an additional **semantic layer** that declares joins / measures / dimensions on top of PostgREST?
 
 - **(a) PostgREST + great metadata only** — declare canonical join keys (`kommune_nr` → `dim_kommune`, `orgnr` → `dim_chapter`, `period_start_year` → time alignment) in dbt `meta:`, surface them via dbt-MCP, and document them in [website/docs/developers/concepts.md](../../../../developers/concepts.md). LLMs are given the OpenAPI spec + the join cheatsheet and figure out the joins. Cheapest. Most fragile for LLMs that mis-join (the `dim_kommune is_active` 5× row trap is a live example).
-- **(b) PostgREST + Cube.dev** — Cube reads dbt's `manifest.json`, declares `joins:` and `measures:` in YAML, and exposes a REST + GraphQL + SQL + **MCP** API. LLMs query the semantic layer; Cube enforces correct joins. Adds one service to operate (Cube core is OSS, deployable to UIS's k8s). Adds a second schema layer to maintain alongside dbt.
+- **(b) PostgREST + Cube.dev** — Cube reads dbt's `manifest.json`, declares `joins:` and `measures:` in YAML, and exposes a REST + GraphQL + SQL + **MCP** API. LLMs query the semantic layer; Cube enforces correct joins. Adds one service to operate (Cube core is OSS, deployable to UIS's k8s). Adds a second schema layer to maintain alongside dbt. **Prior context**: Cube was evaluated and rejected for the *separate* role of "multi-tenant end-user dashboards" (per UIS's `INVESTIGATE-metabase.md`). That rejection does not bind this question — agent-facing semantic-layer over `marts.*` is a different role — but the earlier reject is a useful precedent on operational-cost framing.
 - **(c) PostgREST + dbt's own Semantic Layer** — `semantic_models:` in the dbt project plus the dbt SL APIs. **Dead end for Atlas**: per [INVESTIGATE-semantic-foundation-before-expansion.md](INVESTIGATE-semantic-foundation-before-expansion.md) Option D, the consumption side of dbt SL is dbt-Cloud-only. Atlas runs dbt Core. Not viable without adopting dbt Cloud.
 - **(d) Defer** — ship (a) now; revisit Cube only when a real innovator says "I cannot write correct joins against PostgREST." YAGNI argument.
-- **Tentative recommendation**: **(d) → (a) → re-evaluate Cube on signal**. The dbt-osmosis "every column documented" gate plus declared join keys in `meta:` plus the dbt-MCP exposure means an LLM has structured access to "kommune_nr is the join key into dim_kommune (filter is_active=true)". That's the same primitive Cube would expose, without operating a second service. The case for Cube grows specifically if (1) we add many measures (rates, ratios, deltas) that aren't already in `marts.*`, or (2) external LLM consumers consistently mis-join. Trigger conditions in **[Q11]** below.
+- **Tentative recommendation**: **(d) → (a) → re-evaluate Cube on signal**. The dbt-osmosis "every column documented" gate plus declared join keys in `meta:` plus the dbt-MCP exposure means an LLM has structured access to "kommune_nr is the join key into dim_kommune (filter is_active=true)". That's the same primitive Cube would expose, without operating a second service. The case for Cube grows specifically if (1) we add many measures (rates, ratios, deltas) that aren't already in `marts.*`, or (2) external LLM consumers consistently mis-join. Trigger conditions in **[Q9]** below.
 
 ### [Q3] Governance surface — Unity Catalog / Gravitee / Authentik now, or deferred?
 
@@ -122,23 +125,38 @@ The user's framing was "innovators can create relations between the data". This 
 - **(c) Both** — (a) is the machine-readable source of truth; (b) is the human-readable rendering, generated from the same `meta:` blocks.
 - **Tentative recommendation**: **(c)**. (a) alone leaves humans needing to read JSON; (b) alone has drift risk. Together, the doc is generated from the `meta:` blocks at build time, so it can't drift. The generator is ~50 lines of TS that reads `manifest.json`. Same input feeds OpenMetadata + dbt-MCP, so this is one decision shipped three places.
 
+### [Q7] Exploration client — Metabase, internal-only (per UIS scope) or also innovator-facing?
+
+UIS is on track to deploy Metabase OSS — see UIS's `INVESTIGATE-metabase.md` (urbalurba-infrastructure repo). That investigation is **request-from-Atlas**: Atlas is the first consumer. UIS scopes Metabase as **internal team validation, Tailscale-gated** — for data-quality cross-source comparison, dim-spine modelling during `marts.*` development, and ad-hoc team questions. UIS's investigation explicitly excludes Metabase from "the public-facing Atlas portal", "public open-data APIs", and "multi-tenant end-user dashboards" (Cube was evaluated and rejected for that third role).
+
+The question for innovators: should Atlas *also* expose a public / innovator-facing Metabase, or is internal-only the right line?
+
+The hard architectural fact: **Metabase is a SQL/JDBC client, not a REST client.** It cannot connect to `api-atlas.helpers.no`. Using Metabase against Atlas requires Postgres access — which Atlas does not expose publicly today (PostgREST is the deliberate governed surface). Reversing that posture is a security expansion, not a UI tweak.
+
+- **(a) Internal-only — match UIS's scope.** Innovators get PostgREST + OpenMetadata (per **[Q1]**) + JupyterHub for code-shaped exploration. Customer frontend `atlas.helpers.no` is the end-user-facing exploration UI.
+- **(b) Add a separate public-ingress Metabase.** Second Metabase deployment with public auth (Authentik) or anonymous read-only. Costs: second JVM service to operate, query-cost / timeout / abuse-mitigation that Tailscale-gated internal use sidesteps, **and** a public read-only Postgres role that does not exist today.
+- **(c) Document the self-host pattern.** Innovator runs Metabase locally pointed at a public Postgres role on Atlas. Same Postgres-exposure decision as (b), no operational cost on Atlas side.
+- **(d) Embedded curated dashboards.** Atlas embeds Metabase question iframes into `atlas.helpers.no` (a "data tour" page). Pre-built views, not exploration. This is a customer-frontend feature, not an innovator surface.
+- **Tentative recommendation**: **(a) internal-only.** Deciding factor is the SQL-vs-REST architecture: making Metabase work for innovators requires opening a public Postgres surface, which is a meaningfully different security posture from "PostgREST is the public API" — that decision belongs in its own INVESTIGATE, not as a side-effect of choosing an exploration client. Innovators with SQL-shaped exploration needs use JupyterHub (UIS) or self-host their preferred client against PostgREST. (b) is reachable later if real demand surfaces *and* the Postgres-exposure question is answered separately. (d) revisits if `atlas.helpers.no` adds a data-tour page.
+
 ---
 
 ## Open questions
 
-- **[Q7]** **OpenMetadata + dbt Core**: how stable is the OpenMetadata dbt connector against dbt Core projects (vs. dbt Cloud)? Does UIS's instance accept external dbt project ingestion, or is it tenant-scoped? Spike: try ingesting Atlas's `manifest.json` into UIS OpenMetadata; document any rough edges.
-- **[Q8]** **Cube.dev re-evaluation trigger**: define the concrete signal that flips **[Q2]** from (d) to (b). Candidates: "the third LLM consumer mis-joins kommune_nr without `is_active` filter and produces wrong rows in production"; "Atlas adds 10+ derived measures that don't fit `marts.*`"; "an external developer files an issue specifically asking for typed joins".
-- **[Q9]** **Backstage as UIS-internal**: should Atlas appear in UIS's Backstage catalog at all? This is mostly a UIS contributor question; flag for the UIS-side conversation, do not decide here.
-- **[Q10]** **Qdrant for catalog semantic search**: out of scope for v1, but worth noting — once the catalogue has prose (definitions, source READMEs, `common-schema.md` chunks), Qdrant could power semantic search inside OpenMetadata or `developer-atlas.helpers.no`. Defer until catalogue content exists.
-- **[Q11]** **MCP host posture**: does Atlas *host* an MCP server (`mcp.atlas.helpers.no`?) or only document how innovators run dbt-mcp + Postgres MCP locally against Atlas's `manifest.json` and the read-only Postgres role? Hosted MCP is a new operational surface; client-side is free but raises the bar for integration. Cross-link to [INVESTIGATE-developer-docs-surface.md](INVESTIGATE-developer-docs-surface.md) `agent-integration.md` content.
-- **[Q12]** **Relationship to [INVESTIGATE-semantic-foundation-before-expansion.md](INVESTIGATE-semantic-foundation-before-expansion.md)**: this INVESTIGATE inherits its decisions on dbt-MCP and dbt-osmosis. Confirm it does not contradict any of its open questions ([Q24] dbt-mcp Core maturity, [Q25] dbt-docs sunset). Likely overlaps with [Q24] (resolving it resolves a prerequisite for both).
+- **[Q8]** **OpenMetadata + dbt Core**: how stable is the OpenMetadata dbt connector against dbt Core projects (vs. dbt Cloud)? Does UIS's instance accept external dbt project ingestion, or is it tenant-scoped? Spike: try ingesting Atlas's `manifest.json` into UIS OpenMetadata; document any rough edges.
+- **[Q9]** **Cube.dev re-evaluation trigger**: define the concrete signal that flips **[Q2]** from (d) to (b). Candidates: "the third LLM consumer mis-joins kommune_nr without `is_active` filter and produces wrong rows in production"; "Atlas adds 10+ derived measures that don't fit `marts.*`"; "an external developer files an issue specifically asking for typed joins".
+- **[Q10]** **Backstage as UIS-internal**: should Atlas appear in UIS's Backstage catalog at all? This is mostly a UIS contributor question; flag for the UIS-side conversation, do not decide here.
+- **[Q11]** **Qdrant for catalog semantic search**: out of scope for v1, but worth noting — once the catalogue has prose (definitions, source READMEs, `common-schema.md` chunks), Qdrant could power semantic search inside OpenMetadata or `developer-atlas.helpers.no`. Defer until catalogue content exists.
+- **[Q12]** **MCP host posture**: does Atlas *host* an MCP server (`mcp.atlas.helpers.no`?) or only document how innovators run dbt-mcp + Postgres MCP locally against Atlas's `manifest.json` and the read-only Postgres role? Hosted MCP is a new operational surface; client-side is free but raises the bar for integration. Cross-link to [INVESTIGATE-developer-docs-surface.md](INVESTIGATE-developer-docs-surface.md) `agent-integration.md` content.
+- **[Q13]** **Public Postgres role — separate INVESTIGATE?**: **[Q7]** option (b)/(c) requires a public read-only Postgres role on the Atlas DB. Atlas's current posture is "PostgREST is the public surface; Postgres stays cluster-internal." If a future innovator demand pushes (b) or (c), the Postgres-exposure question is a stand-alone decision (security, cost, abuse mitigation) and should get its own INVESTIGATE rather than being decided implicitly by adopting Metabase. Flag for now; create `INVESTIGATE-public-postgres-role.md` when demand materialises.
+- **[Q14]** **Relationship to [INVESTIGATE-semantic-foundation-before-expansion.md](INVESTIGATE-semantic-foundation-before-expansion.md)**: this INVESTIGATE inherits its decisions on dbt-MCP and dbt-osmosis. Confirm it does not contradict any of its open questions ([Q24] dbt-mcp Core maturity, [Q25] dbt-docs sunset). Likely overlaps with [Q24] (resolving it resolves a prerequisite for both).
 
 ---
 
 ## Out of scope for this INVESTIGATE
 
 - **Implementation of any chosen surface** — handled by follow-on PLANs.
-- **Cost / operations modelling** — UIS-stack services are already operated; Cube.dev is the only "new service" and its cost is bounded by whether the trigger in **[Q8]** fires.
+- **Cost / operations modelling** — UIS-stack services are already operated; Cube.dev is the only "new service" and its cost is bounded by whether the trigger in **[Q9]** fires.
 - **Re-deciding the MCP-as-machine-interface choice** — owned by [INVESTIGATE-semantic-foundation-before-expansion.md](INVESTIGATE-semantic-foundation-before-expansion.md).
 - **The OpenAPI spec rendering** — owned by [INVESTIGATE-developer-docs-surface.md](INVESTIGATE-developer-docs-surface.md) [Q2].
 - **Auth implementation details** — deferred per **[Q3]**.
@@ -150,7 +168,7 @@ The user's framing was "innovators can create relations between the data". This 
 
 **Discovery**: dbt-MCP (machine, settled in semantic-foundation INVESTIGATE) **+ OpenMetadata via UIS** (human, ingested from `manifest.json`). Single source of truth in dbt; two renderings.
 
-**Query / semantic**: PostgREST + declared join keys in `meta:` + generated canonical-IDs doc. **Defer Cube.dev** until **[Q8]** trigger fires.
+**Query / semantic**: PostgREST + declared join keys in `meta:` + generated canonical-IDs doc. **Defer Cube.dev** until **[Q9]** trigger fires.
 
 **Governance**: **Defer** Gravitee / Authentik / Unity Catalog. Lift defer on keyed-tier or private-deployment trigger.
 
@@ -158,15 +176,18 @@ The user's framing was "innovators can create relations between the data". This 
 
 **Chat / NL surface**: document the pattern on `agent-integration.md`; do not host an Atlas-branded Open WebUI in v1.
 
+**Exploration client (Metabase)**: **internal-only** per UIS's scope (Tailscale-gated, request-from-Atlas, first consumer is the Atlas dev team). Not innovator-facing in v1. Revisiting requires a separate INVESTIGATE on public Postgres exposure (**[Q13]**) before the question is even decidable.
+
 **Join discoverability** (the crux): `meta: { joins: [...] }` on dbt models, generated cheatsheet doc, surfaced to LLMs via dbt-MCP and to humans via the cheatsheet + OpenMetadata.
 
 The follow-on PLANs (numbering tentative):
 
 1. **PLAN — Declare joins in `meta:` + generate canonical-IDs cheatsheet** — adds the `meta: { joins: [...] }` blocks to all `marts.*` conformed models, plus a small TS generator that emits `developers/canonical-ids.md` from `manifest.json`, plus a CI check that fails when a model's join key isn't declared.
-2. **PLAN — Ingest Atlas dbt project into UIS OpenMetadata** — depends on **[Q7]** spike; wires OpenMetadata's dbt connector against `manifest.json` + the read-only Postgres role for sample-data preview.
-3. **PLAN (deferred, trigger-gated) — Adopt Cube.dev semantic layer** — only when **[Q8]** trigger fires; adds Cube as a service, declares joins / measures, exposes Cube's MCP server alongside dbt-MCP.
+2. **PLAN — Ingest Atlas dbt project into UIS OpenMetadata** — depends on **[Q8]** spike; wires OpenMetadata's dbt connector against `manifest.json` + the read-only Postgres role for sample-data preview.
+3. **PLAN — Provision `metabase_atlas_reader` role + register Atlas as a Metabase data source** — Atlas-side coordination work for UIS's Metabase deployment (PLAN-002 in their `INVESTIGATE-metabase.md`). Atlas owns the role provisioning + initial collection seeding (Data Quality / Dim Spine Validation / Atlas Exploration); UIS owns the Metabase install. Internal-team scope — not innovator-facing.
+4. **PLAN (deferred, trigger-gated) — Adopt Cube.dev semantic layer** — only when **[Q9]** trigger fires; adds Cube as a service, declares joins / measures, exposes Cube's MCP server alongside dbt-MCP.
 
-PLAN 1 is the highest-leverage and is the prerequisite for PLAN 2 (OpenMetadata picks up join metadata from `meta:` automatically). PLAN 3 stays in backlog with a written trigger.
+PLAN 1 is the highest-leverage and is the prerequisite for PLAN 2 (OpenMetadata picks up join metadata from `meta:` automatically). PLAN 3 is small, gated on UIS's Metabase deployment landing. PLAN 4 stays in backlog with a written trigger.
 
 ---
 
@@ -176,6 +197,7 @@ PLAN 1 is the highest-leverage and is the prerequisite for PLAN 2 (OpenMetadata 
 - [INVESTIGATE-developer-docs-surface.md](INVESTIGATE-developer-docs-surface.md) — owns `developer-atlas.helpers.no`; this INVESTIGATE confirms it as the innovator landing surface.
 - [INVESTIGATE-private-atlas-deployments.md](INVESTIGATE-private-atlas-deployments.md) — the trigger for governance work in **[Q3]**.
 - [INVESTIGATE-tag-indicators-sdg-icnpo.md](INVESTIGATE-tag-indicators-sdg-icnpo.md) — tagging is one form of cross-dataset relation; settles separately but feeds the same `meta:` and OpenMetadata surfaces.
+- UIS's `INVESTIGATE-metabase.md` (urbalurba-infrastructure repo, `website/docs/ai-developer/plans/backlog/`) — the request-from-Atlas Metabase deployment that **[Q7]** scopes against; also the source of the prior Cube reject precedent referenced in **[Q2]**.
 - [PLAN-004-postgrest-api-v1-wrapper.md](../completed/PLAN-004-postgrest-api-v1-wrapper.md) — the existing PostgREST query surface this INVESTIGATE builds on.
 - [`docs/research/common-schema.md`](../../../../docs/research/common-schema.md) — the prose entity model that becomes seed content for OpenMetadata's glossary terms.
 - [`docs/stack/naming-conventions.md`](../../../../../docs/stack/naming-conventions.md) — canonical IDs conventions; the generated cheatsheet links here for canonical content.
@@ -194,10 +216,10 @@ PLAN 1 is the highest-leverage and is the prerequisite for PLAN 2 (OpenMetadata 
 
 ## Next steps
 
-- [ ] User reviews **[Q1]** through **[Q6]** and confirms or redirects each tentative recommendation.
-- [ ] Resolve **[Q7]** (OpenMetadata + dbt Core spike) — small ~half-day investigation; needed before PLAN 2.
-- [ ] Decide whether **[Q11]** (hosted MCP vs. client-side) is in this INVESTIGATE or split out.
-- [ ] On acceptance, move this file `backlog/` → `active/` and split into PLANs 1–3 above.
-- [ ] On completion of all PLANs (or trigger-gated deferral of PLAN 3), move this file `active/` → `completed/`.
+- [ ] User reviews **[Q1]** through **[Q7]** and confirms or redirects each tentative recommendation.
+- [ ] Resolve **[Q8]** (OpenMetadata + dbt Core spike) — small ~half-day investigation; needed before PLAN 2.
+- [ ] Decide whether **[Q12]** (hosted MCP vs. client-side) is in this INVESTIGATE or split out.
+- [ ] On acceptance, move this file `backlog/` → `active/` and split into PLANs 1–4 above.
+- [ ] On completion of all PLANs (or trigger-gated deferral of PLAN 4), move this file `active/` → `completed/`.
 
 — signed, the Atlas implementation team (via Claude Code agent), 2026-05-01
