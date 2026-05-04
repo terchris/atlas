@@ -280,6 +280,7 @@ These extend the existing Tier-1 family entries above, plus one fully-new candid
 #### C.1 SSB-extension family
 
 - **[Q38] `ssb-13006` — Sosialhjelp, gjennomsnittlig stønadstid**. SSB statistikkbanktabell 13006. Annual at 31.12. Same SSB PxWebApi v2 plumbing Atlas already uses. Adds duration-on-welfare to Atlas's existing single-snapshot welfare picture — pairs naturally with `ssb-13995` (cases) and the existing welfare-policy tables. Trivial PLAN, ~3h. **Tier-1**, gap-fill into Report #5.
+  - **2026-05-04 onboarding blocker:** `https://www.ssb.no/statbank/table/13006` is browsable and Samfunnspuls still cites it, but SSB's current PxWebAPI v2/v2-beta table metadata returns 404, v2/v2-beta table search returns zero `13006` hits, and v0 metadata returns 400. # TODO: human-review — confirm whether `ssb-13006` moved, was discontinued, or should be replaced by a selected `ssb-13995` content-code subset before writing ingest code.
 
 #### C.2 Udir-family extensions (extend Tier-1 #4)
 
