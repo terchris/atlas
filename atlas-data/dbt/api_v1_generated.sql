@@ -31,6 +31,24 @@ COMMENT ON COLUMN api_v1.activity_catalog.chapter_count IS 'Count of distinct ac
 when the activity exists in dim_activity but no active chapter
 provides it (rare but possible during transitions).';
 
+-- bufdir_indicator_alias  ←  marts.mart_bufdir_indicator_alias
+CREATE OR REPLACE VIEW api_v1.bufdir_indicator_alias AS SELECT * FROM marts.mart_bufdir_indicator_alias;
+COMMENT ON COLUMN api_v1.bufdir_indicator_alias.source_id IS 'Source the alias applies to. Always `bufdir-barnefattigdom`
+today; forward-looking column kept so other ZIP sources can
+adopt the same convention without a schema migration.';
+COMMENT ON COLUMN api_v1.bufdir_indicator_alias.historical_id IS 'Previous `indicator_api_id` from an earlier bufdir release —
+the id consumers may have cached and now need to bridge to
+the current canonical id. Same shape as
+`indicators__bufdir_barnefattigdom.indicator_api_id`
+(`bf_zip_ind_<N>`).';
+COMMENT ON COLUMN api_v1.bufdir_indicator_alias.canonical_id IS 'Current `indicator_api_id`, or NULL when the historical
+indicator was retired without a successor. NULL is meaningful:
+consumers treat such rows as terminating series rather than
+orphans.';
+COMMENT ON COLUMN api_v1.bufdir_indicator_alias.note IS 'Editorial explanation of the renumbering event — why the
+historical id maps to this canonical id, or why no successor
+exists. One sentence; read by humans, not parsers.';
+
 -- coverage_gap_barnefattigdom  ←  marts.mart_coverage_gap_barnefattigdom
 CREATE OR REPLACE VIEW api_v1.coverage_gap_barnefattigdom AS SELECT * FROM marts.mart_coverage_gap_barnefattigdom;
 COMMENT ON COLUMN api_v1.coverage_gap_barnefattigdom.kommune_nr IS '4-digit zero-padded kommune code. FK to dim_kommune; only

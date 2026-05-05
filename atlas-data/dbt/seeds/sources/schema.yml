@@ -122,3 +122,42 @@ seeds:
         description: >-
           Editorial notes — code-list size, semantic gotchas, downstream filtering decisions. Empty string
           is fine.
+  - name: bufdir_indicator_alias
+    description: >-
+      Per-source alias seed for indicator_api_id renumbers. One row per
+      (historical_id, canonical_id) mapping consumers can join on for
+      cross-time-series continuity when bufdir-barnefattigdom (or any
+      other source adopting the same convention later) splits, retires,
+      or renumbers a workbook upstream.
+      Pre-populated from observed Bufdir history (Indikator 9 → 9a/9b
+      split; Indikator 10 retired). Refreshed by hand when a new bundle
+      release surfaces additional renumbering events — see
+      atlas-data/ingest/src/sources/bufdir-barnefattigdom/README.md
+      "Refresh checklist" for the maintenance ritual.
+      The downstream mart_bufdir_indicator_alias model under
+      models/marts/api/ thinly republishes this seed so the PLAN-004
+      generator auto-emits api_v1.bufdir_indicator_alias for external
+      consumers. See PLAN-bufdir-surrogate-id-migration.md.
+    columns:
+      - name: source_id
+        description: >-
+          Source the alias applies to (e.g. bufdir-barnefattigdom). Forward-looking — keeps the seed shape
+          stable when other ZIP sources adopt the same convention later. References _sources_manifest.source_id.
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('_sources_manifest')
+              field: source_id
+      - name: historical_id
+        description: >-
+          Previous indicator_api_id from earlier bufdir releases — the id consumers may have cached and
+          now need to bridge to the current canonical_id.
+        data_tests: [not_null]
+      - name: canonical_id
+        description: >-
+          Current indicator_api_id, or NULL when the historical indicator was retired without a successor
+          (consumers should treat such rows as terminating series).
+      - name: note
+        description: >-
+          Editorial explanation of the renumbering event — why the historical id maps to this canonical
+          id, or why no successor exists. One sentence is fine.

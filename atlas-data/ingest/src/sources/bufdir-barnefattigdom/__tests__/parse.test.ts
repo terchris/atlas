@@ -121,21 +121,64 @@ describe("parseCell", () => {
 // surrogate id + slug + basename helpers
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("surrogateIndicatorApiId", () => {
-  it("returns a stable bf_zip_<24 hex chars> id from the workbook stem", () => {
-    const id = surrogateIndicatorApiId("Indikator_17_barn_0-5_i_hush_som_leier_bolig_kun_pers");
-    expect(id).toMatch(/^bf_zip_[0-9a-f]{24}$/);
+describe("surrogateIndicatorApiId — number-prefix primary, hash fallback", () => {
+  it("returns bf_zip_ind_<N> for canonical Indikator_<N>_… filenames", () => {
+    expect(
+      surrogateIndicatorApiId("Indikator_17_barn_0-5_i_hush_som_leier_bolig_kun_pers"),
+    ).toEqual({ id: "bf_zip_ind_17", tier: "number-prefix" });
+  });
+
+  it("preserves the suffix-letter for split workbooks (9a, 9b)", () => {
+    expect(surrogateIndicatorApiId("Indikator_9a_barn_etc")).toEqual({
+      id: "bf_zip_ind_9a",
+      tier: "number-prefix",
+    });
+    expect(surrogateIndicatorApiId("Indikator_9b_barn_etc")).toEqual({
+      id: "bf_zip_ind_9b",
+      tier: "number-prefix",
+    });
+  });
+
+  it("handles two-digit indicator numbers (Indikator_22)", () => {
+    expect(surrogateIndicatorApiId("Indikator_22_hush_med_barn")).toEqual({
+      id: "bf_zip_ind_22",
+      tier: "number-prefix",
+    });
   });
 
   it("is deterministic across calls (same stem → same id)", () => {
     const stem = "Indikator_4_barn_i_hush_mottat_sosialhjelp_ila_året";
-    expect(surrogateIndicatorApiId(stem)).toBe(surrogateIndicatorApiId(stem));
+    expect(surrogateIndicatorApiId(stem)).toEqual(surrogateIndicatorApiId(stem));
   });
 
-  it("changes when the stem changes (warning bell on workbook rename)", () => {
+  it("returns DIFFERENT ids for 5 vs 5b — code never claims continuity it can't prove (Q1 conservative default; alias seed bridges if editorial decision says so)", () => {
     const a = surrogateIndicatorApiId("Indikator_5_old");
     const b = surrogateIndicatorApiId("Indikator_5b_new");
-    expect(a).not.toBe(b);
+    expect(a.id).toBe("bf_zip_ind_5");
+    expect(b.id).toBe("bf_zip_ind_5b");
+    expect(a.id).not.toBe(b.id);
+  });
+
+  it("survives slug refinements that don't change the indicator number — the same indicator stays the same id", () => {
+    // Real-world example: Bufdir adds a year suffix or rewords the slug
+    // between releases. Filename stem differs, indicator semantics don't.
+    const before = surrogateIndicatorApiId("Indikator_5_barn_i_hush_old_slug");
+    const after = surrogateIndicatorApiId(
+      "Indikator_5_barn_i_husholdninger_revised_slug_2025",
+    );
+    expect(before.id).toBe(after.id); // both → bf_zip_ind_5
+    expect(before.id).toBe("bf_zip_ind_5");
+  });
+
+  it("falls back to bf_zip_<24 hex> for non-conforming filenames (defensive — Bufdir adds non-numbered workbook)", () => {
+    const result = surrogateIndicatorApiId("ReadMe_metadata_not_an_indicator");
+    expect(result.tier).toBe("hash-fallback");
+    expect(result.id).toMatch(/^bf_zip_[0-9a-f]{24}$/);
+  });
+
+  it("hash fallback is also deterministic", () => {
+    const stem = "ReadMe_metadata_not_an_indicator";
+    expect(surrogateIndicatorApiId(stem)).toEqual(surrogateIndicatorApiId(stem));
   });
 });
 
@@ -172,7 +215,8 @@ describe("parseDataSheet (golden file: Indikator_17 — barn 0-5 leier bolig)", 
   it("emits the expected indicator metadata on every row", () => {
     expect(rows.length).toBeGreaterThan(0);
     const first = rows[0]!;
-    expect(first.indicator_api_id).toMatch(/^bf_zip_[0-9a-f]{24}$/);
+    // Number-prefix id derived from "Indikator_17_…" filename
+    expect(first.indicator_api_id).toBe("bf_zip_ind_17");
     expect(first.indicator_group_slug).toBe("barnefattigdom_zip");
     expect(first.indicator_title).toMatch(/^Tab\. 17:.*Barn 0-5 år.*leier bolig/);
     expect(first.indicator_name).toBe(first.indicator_title); // workbook has no separate name row
