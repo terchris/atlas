@@ -4,7 +4,9 @@
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Active (Phase 2 shipped via PR #36; Phase 3 in progress)
+## Status: Active (Phase 2 shipped via PR #36; Phase 3 shipped; Phase 4 next)
+
+**Phase 3 outcome (2026-05-05)**: `mart_meta_sources` (41 rows), `mart_meta_endpoints` (116 rows: 10 api_v1 + 59 marts + 47 raw), `mart_meta_dimensions` (215 rows) all built and auto-wrapped via the PLAN-004 generator into `api_v1.meta_sources` / `meta_endpoints` / `meta_dimensions`. Lineage extracted via new `scripts/extract_lineage.py` (129 edges) → `seeds/sources/lineage.csv`. Tag inheritance uses union semantics; `fact_kommune_indicators` for example picks up 18 tags from its many indicator sources. **Caveat**: `mart_meta_dimensions` shipped as v1 (editorial pass-through over the seed) — the `cardinality` / `example_values` / `null_count` columns from the original PLAN spec are deferred to a follow-up since the per-source column-name-from-dim-code mapping (e.g. `Region` → `region_code`, `Tid` → `year`, `MEASURE_TYPE` → `measure_type`) needs its own design pass. Full dbt test 513/514 PASS, 0 ERROR (1 WARN is the pre-existing postnummer relationship). Shipped via the next PR after this Phase 3 work — see commit history.
 
 **Goal**: Execute [INVESTIGATE-customer-frontend-data-display.md](INVESTIGATE-customer-frontend-data-display.md). After this PLAN, the customer frontend's `/data` page shows every queryable endpoint across `api_v1`, `marts`, and `raw` schemas (everything that isn't `private_marts`), each tagged with `provider`, `topic`, `geo`, `cadence`, `eu_theme`, and `layer`. A filter sidebar lets users slice the catalogue by any combination of tags. A first-class sources list (`/data/sources` + `api_v1.meta_sources`) carries provider, upstream URL, last-ingested timestamp, and downstream-model count for **every** Atlas ingest source — currently 38, growing as the cloud-agent pipeline drains the backlog.
 

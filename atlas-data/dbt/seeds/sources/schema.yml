@@ -122,6 +122,39 @@ seeds:
         description: >-
           Editorial notes — code-list size, semantic gotchas, downstream filtering decisions. Empty string
           is fine.
+  - name: lineage
+    description: >-
+      One row per (model_name, source_id) edge, derived from dbt's
+      manifest.json by atlas-data/dbt/scripts/extract_lineage.py. Walks
+      the dependency graph upward from every marts.* model to its root
+      raw.* sources and emits one row per edge. Multi-source models
+      (like fact_kommune_indicators, which derives from many indicator
+      sources) contribute one row per source.
+      mart_meta_sources joins on source_id to compute downstream_model_count.
+      mart_meta_endpoints uses the same join to inherit provider/topic/geo/
+      cadence/eu_theme tags from sources via the dbt lineage graph (union
+      semantics per PLAN-007 phase 3.2 — "this mart involves something
+      annual" is a more useful filter than "this mart is purely annual").
+      Refresh ritual: run `python scripts/extract_lineage.py` after
+      `dbt parse`. Drift gate: `python scripts/extract_lineage.py --check`
+      exits 1 if the file would change.
+    columns:
+      - name: model_name
+        description: >-
+          Bare dbt model name (e.g. `dim_kommune`, `fact_kommune_indicators`, `indicators__ssb_08764`).
+          Not schema-qualified — every Atlas model name is unique within the project, and PostgREST surfaces
+          unqualified table names too, so the seed mirrors that convention.
+        data_tests: [not_null]
+      - name: source_id
+        description: >-
+          Atlas canonical source_id (e.g. `ssb-08764`, `bufdir-barnefattigdom`). Translated from the dbt
+          source declaration's table name (underscores) to the catalogue id (hyphens) by `extract_lineage.py`.
+          Joins to `_sources_manifest.source_id`.
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('_sources_manifest')
+              field: source_id
   - name: bufdir_indicator_alias
     description: >-
       Per-source alias seed for indicator_api_id renumbers. One row per
