@@ -115,7 +115,7 @@ Requirements:
 
 - **Node** ≥ 20 (for both the Next.js frontend and the TypeScript ingest)
 - **Python** ≥ 3.11 (for dbt; see [`atlas-data/dbt/requirements.txt`](../../../atlas-data/dbt/requirements.txt))
-- **PostgreSQL** access — local for development, UIS-hosted in production. Connection string lives in `atlas-data/ingest/.env` (not committed) and `atlas-data/dbt/profiles.yml`.
+- **PostgreSQL** access — local for development, UIS-hosted in production. Connection string lives in `atlas-data/ingest/.env` (not committed) and `atlas-data/dbt/profiles.yml`. For the bootstrap workflow + post-reset recovery sequence (rotated password after a `rancher-desktop` reset, fresh laptop, or UIS image rebuild), see [`website/docs/contributors/setup.md` § Bootstrap atlas_db on UIS Postgres](../contributors/setup.md#bootstrap-atlas_db-on-uis-postgres).
 
 ---
 
@@ -188,6 +188,7 @@ The `docs/` folder is split into three. Read the relevant one before working in 
 
 | When you are... | Read first |
 |-----------------|------------|
+| Setting up your dev environment from scratch (first day) or recovering from a cluster reset (rotated Postgres password, fresh laptop, UIS image rebuild) | [`website/docs/contributors/setup.md`](../contributors/setup.md) — bootstrap workflow, `.env` shape, post-reset recovery sequence, `dbt debug` + `npm run migrate` ordering |
 | Adding or modifying a data source | [`atlas-data/ingest/src/sources/README.md`](../../../atlas-data/ingest/src/sources/README.md) — per-source pattern, the template, the catalogue table |
 | Working on the dbt models / dim spine / marts.* | [`atlas-data/dbt/`](../../../atlas-data/dbt/) and [`plans/completed/INVESTIGATE-data-journey-pattern.md`](plans/completed/INVESTIGATE-data-journey-pattern.md) (the worked end-to-end journey for one source — completed design investigation) |
 | Writing user-facing data documentation (concept definitions, "what does this row mean", measurement reference, source provenance for non-engineers) | [`website/README.md`](../../website/README.md) — folder layout, helpers-project conventions, when Docusaurus actually gets installed. Worked example: [`website/docs/getting-started/reading-a-row.md`](../../website/docs/getting-started/reading-a-row.md) |
