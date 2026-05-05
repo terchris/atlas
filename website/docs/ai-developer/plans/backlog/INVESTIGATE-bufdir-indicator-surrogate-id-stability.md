@@ -111,7 +111,7 @@ bf_zip_ind_9,bf_zip_ind_9a,Indikator 9 was split into 9a (innvandrerbakgrunn Afr
 bf_zip_ind_10,,Indikator 10 retired by Bufdir (no successor in the bundle as of 2026-05-04)
 ```
 
-The alias seed lives at `atlas-data/dbt/seeds/sources/bufdir_indicator_alias.csv` and feeds a `marts.bufdir_indicator_alias` table. Consumers explicitly join on it when they want historical continuity; the default `indicator_api_id` join still works without it.
+The alias seed lives at `atlas-data/dbt/seeds/sources/bufdir_indicator_alias.csv` and feeds a `marts.bufdir_indicator_alias` dbt model placed under `models/marts/api/` so the PLAN-004 generator auto-emits the `api_v1.bufdir_indicator_alias` wrapper. Consumers explicitly join on it when they want historical continuity; the default `indicator_api_id` join still works without it.
 
 - **Pro**: Handles the real renumbering events (b) can't, while keeping the common-case clean.
 - **Pro**: Human-curated — the editorial decision (*"is 9a the canonical successor of 9, or is the old 9 fully retired?"*) is captured per row, not invented by code.
@@ -140,7 +140,7 @@ Hit Bufdir's CMS (Strapi `/api/...`) instead of inferring from the workbook. The
 1. Change [`parse.ts:surrogateIndicatorApiId()`](../../../../atlas-data/ingest/src/sources/bufdir-barnefattigdom/parse.ts) to parse `Indikator_(\d+[a-z]?)` from the filename stem and emit `bf_zip_ind_<N>` (e.g. `bf_zip_ind_9a`). Filename-stem hashing falls away.
 2. Add a fallback path: if the filename doesn't match `Indikator_<N>` (defensive — maybe Bufdir adds a non-numbered workbook), fall back to the current SHA-256-of-stem to keep ingest from throwing. Log a warn so the operator notices.
 3. Add seed `atlas-data/dbt/seeds/sources/bufdir_indicator_alias.csv` with columns `historical_id, canonical_id, note`. Pre-populate the `9` → `9a` and the `10` → null entries from the existing observed history.
-4. Add `marts.bufdir_indicator_alias` (loads from the seed) + a `schema.yml` entry with descriptions for all three columns. **Not** wrapped into `api_v1.*` for v1 — alias is opt-in and consumers join explicitly.
+4. Add the dbt model at `atlas-data/dbt/models/marts/api/bufdir_indicator_alias.sql` (loads from the seed) + a `schema.yml` entry with descriptions for all four columns (`historical_id`, `canonical_id`, `note`, `source_id`). Placement under `models/marts/api/` means the next `./regenerate-api-v1.sh` run auto-emits `api_v1.bufdir_indicator_alias` — no per-source generator wiring. PostgREST's `marts.*` exposure (PLAN-007 Phase 1) will serve `GET /bufdir_indicator_alias` automatically once UIS lands the schema-list extension.
 5. Document the consumer pattern in [`bufdir-barnefattigdom/README.md`](../../../../atlas-data/ingest/src/sources/bufdir-barnefattigdom/README.md) and the upcoming Phase 4 `/data` page so external developers know to use it for historical continuity.
 6. Refresh `bufdir_indicator_alias.csv` as part of every new bufdir refresh — add to the maintenance checklist in the source README.
 
@@ -157,8 +157,25 @@ Hit Bufdir's CMS (Strapi `/api/...`) instead of inferring from the workbook. The
 
 - **[Q1]** Should `bf_zip_ind_5` and `bf_zip_ind_5b` be the same id (under the assumption that `5b` is a refinement of `5`) or different (under the assumption that `5` is retired and `5b` is a separate indicator)? **Recommendation**: keep them different by default; let the alias seed bridge when an editorial decision says so. Conservative — code never claims continuity it can't prove.
 - **[Q2]** Where does the alias seed live in the cluster — under `seeds/sources/` (alongside `_sources_manifest.csv`) or under `seeds/` (top-level)? **Recommendation**: `seeds/sources/` — same shape as the manifest seed, single seed-rebuilder script discovers everything in one directory.
-- **[Q3]** Should the alias table be exposed via `api_v1.bufdir_indicator_alias` so external consumers can join on it? **Recommendation**: Phase 4 decision (when frontend rewrites). For v1, keep it `marts.*`-only — it's a low-traffic lookup that doesn't need OpenAPI documentation yet.
-- **[Q4]** Should the same id-strategy apply to **other** ZIP-shaped sources Atlas might onboard later (DSB workbooks, Bufdir-barnevern XLSX exports, etc.)? **Recommendation**: defer to a separate INVESTIGATE per source. The number-prefix idea is bufdir-specific (the `Indikator_<N>` convention is Bufdir's). Other sources have other conventions.
+- **[Q3]** Should the alias table be exposed via `api_v1.bufdir_indicator_alias` so external consumers can join on it? **Recommendation**: yes, auto-exposed via both surfaces. Place the dbt model at `atlas-data/dbt/models/marts/api/bufdir_indicator_alias.sql` so the existing PLAN-004 generator (`regenerate-api-v1.sh`) emits the `api_v1.*` wrapper without per-source code, and so PostgREST's `marts.*` schema serves it directly once PLAN-007 Phase 1 lands the schema-list extension. **Auto-exposure over per-source decisions** — see the architectural note below.
+- **[Q4]** Should the same id-strategy apply to **other** ZIP-shaped sources Atlas might onboard later (DSB workbooks, Bufdir-barnevern XLSX exports, etc.)? **Recommendation**: yes by default. The `Indikator_<N>` *parsing rule* is bufdir-specific, but the convention "small alias seed in `seeds/sources/<source>_indicator_alias.csv` + dbt model under `models/marts/api/`" generalises trivially. Each future ZIP source can copy the pattern; no per-source INVESTIGATE required unless a source genuinely deviates (e.g. its own version-stable id baked into the workbook).
+
+---
+
+## Architectural principle: auto-exposure over per-source decisions
+
+This INVESTIGATE's Q3/Q4 answers lean on a broader principle worth recording explicitly so future ZIP/alias work doesn't re-litigate:
+
+> **New data should be served automatically.** Atlas already has two mechanisms that auto-expose data without per-source code:
+>
+> 1. **PostgREST schema-list extension** (PLAN-007 Phase 1, UIS-side, pending) — every new `marts.*` table is queryable as `GET /<table>` the moment it ships, no separate exposure step.
+> 2. **`regenerate-api-v1.sh` generator** (PLAN-004) — every dbt model under `models/marts/api/` auto-emits an `api_v1.<name>` wrapper view.
+>
+> Together, the right design move for any new lookup / dim / fact / mart is to **drop it under `models/marts/api/`** so both surfaces pick it up for free. No "should we expose this?" decision per source. No opt-in flag. No maintenance ritual gating on whether someone remembered to wire it up.
+>
+> Reverse-direction: an `api_v1.*` wrapper is *not* a meaningful commitment for a small reference / alias table that Atlas controls end-to-end (we'd never break its column shape arbitrarily anyway). The wrapper layer's value is uniform discovery, not a separate stability tier.
+
+This is the lens through which every future alias / lookup / catalogue artefact gets placed. Codified here so the next agent reading this INVESTIGATE doesn't re-debate "should the alias be in api_v1?" for whatever source comes after bufdir.
 
 ---
 
