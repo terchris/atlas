@@ -10,7 +10,7 @@ Bufdir **Barnefattigdom kommunemonitor** — annual child-poverty-related indica
 4. **Replace** `raw.bufdir_barnefattigdom` on each run (`DELETE` then batched `INSERT … ON CONFLICT …`) so surrogate ids stay consistent with workbook filenames.
 5. Mirror rows to `atlas-data/ingest/output/bufdir-barnefattigdom.ndjson`.
 
-`indicator_api_id` is **`bf_zip_` + first 24 hex chars of SHA-256(filename stem)** — the XLSX files do not expose Strapi's old hex ids, so this id is stable across runs for a given workbook name inside the ZIP.
+`indicator_api_id` is **`bf_zip_ind_<N>`** derived from the leading `Indikator_<N>` portion of each workbook's filename (e.g. `bf_zip_ind_5`, `bf_zip_ind_9a`, `bf_zip_ind_22`). Survives the most common upstream changes — slug refinements, year-suffix additions, methodology footnote rewrites — that don't renumber the indicator. For genuine renumbering events (the observed `Indikator 9` → `9a/9b` split; `Indikator 10` retired without successor), join on **`api_v1.bufdir_indicator_alias`** to bridge `historical_id` → `canonical_id`. Defensive fallback: filenames not matching `Indikator_<N>` produce `bf_zip_<24-hex SHA-256(stem)>` and the parser logs a warn so the operator notices. See [`parse.ts`](./parse.ts) `surrogateIndicatorApiId`.
 
 ## Known quirks / fragility
 
@@ -18,7 +18,7 @@ Bufdir **Barnefattigdom kommunemonitor** — annual child-poverty-related indica
 - **Decimals**: `prosent` cells arrive as Norwegian strings (`9,2` with spaces); the parser normalises before casting.
 - **Oslo bydel** rows can appear with longer `region_code` values; the dbt model still maps only **4-digit** codes to `kommune_nr` (see new-sources INVESTIGATE Q3).
 - **Indikator_10 is absent from the bundle.** The numbering Bufdir publishes goes `1, 2, 3, 4, 5, 6, 7, 8, 9a, 9b, 11, …, 22` — likely either retired by Bufdir or split into the `9a` / `9b` innvandrerbakgrunn pair. Not a parser gap; not something we filter out. Don't waste time looking for it.
-- **Surrogate `indicator_api_id`** is `bf_zip_<24 hex of SHA-256(filename stem)>`. If Bufdir renames a workbook (e.g. `Indikator_5b_X` → `Indikator_5_X`), every downstream row's id changes — consumers see a "new" indicator and the old one disappears. Open follow-up: investigate a more stable identity or add an alias table.
+- **Indicator id continuity** across renumbering events (e.g. the observed `Indikator 9` → `9a/9b` split, `Indikator 10` retirement) is handled by the `marts.bufdir_indicator_alias` table (auto-wrapped as `api_v1.bufdir_indicator_alias`). Consumers tracking a series across releases join on it explicitly. Maintenance: every new bundle release should diff filenames against `_sources_dimensions.csv` + the alias seed at [`atlas-data/dbt/seeds/sources/bufdir_indicator_alias.csv`](../../../../dbt/seeds/sources/bufdir_indicator_alias.csv) — see "Refresh checklist" below.
 
 ## Status — handoff for a wiped Postgres cluster
 
@@ -44,10 +44,24 @@ Atlas **resetting the Postgres cluster wipes all schemas**. This source needs no
 **Implementation snapshot (frozen at last edit):**
 
 - **Ingest** is ZIP-only (`index.ts`); no Strapi/APIM loops. NPM deps used here: **`adm-zip`**, **`xlsx`** (see `ingest/package.json`).
-- **`indicator_api_id`** is surrogate `bf_zip_*` (SHA-256 of workbook stem), not Bufdir Strapi ids — any workflow that depended on legacy hex ids must use **`contents_code`** / **`indicator_slug`** instead.
+- **`indicator_api_id`** is surrogate `bf_zip_ind_<N>` (number-prefix from filename), not Bufdir Strapi ids — any workflow that depended on legacy ids must use **`contents_code`** / **`indicator_slug`** plus `api_v1.bufdir_indicator_alias` for cross-release continuity.
 - **Breaking change vs first merge:** first deploy on empty DB loads only ZIP semantics; mart shape is unchanged, keys are surrogate.
+
+## Refresh checklist — when Bufdir publishes a new bundle release
+
+The ingest is fully automatic (one HTTP probe, one ZIP download, no manual steps), but the alias seed at `atlas-data/dbt/seeds/sources/bufdir_indicator_alias.csv` needs manual review whenever Bufdir updates the bundle. Renumbering events are rare but real (the observed `9 → 9a/9b` and `10 → retired` history is what the seed exists to record).
+
+When a new bundle release is detected (`upstream_updated_at` advances on the next ingest run):
+
+1. **Diff the filename set against the prior release.** From the new ZIP's `unzip -l` output, list `Indikator_<N>` codes and compare against the codes already present in the previous run's ingest (or in `marts.indicators__bufdir_barnefattigdom`'s distinct `indicator_api_id`).
+2. **For each renumbering event** (a code disappears + a new one appears, or a code splits into multiple new ones): add a row to `bufdir_indicator_alias.csv` mapping the historical id to the canonical successor (or NULL when retired without successor). Include a one-sentence editorial note in the `note` column.
+3. **Re-run** `dbt seed --select bufdir_indicator_alias && dbt run --select mart_bufdir_indicator_alias && ./apply-api-v1.sh` so consumers see the new mapping.
+4. **No code changes needed for the parser** — the `bf_zip_ind_<N>` id derivation handles new codes automatically; the alias seed is purely for cross-release continuity.
+
+Speculative pre-population is wasted maintenance; only add rows when an event is observed.
 
 ## References
 
 - Monitor + download link: https://www.bufdir.no/statistikk-og-analyse/monitor/barnefattigdom/
 - Shared helpers: `atlas-data/ingest/src/lib/postgres.ts`, `atlas-data/ingest/src/lib/output.ts`, `atlas-data/ingest/src/lib/ingest_run.ts`
+- Surrogate-id design: [`PLAN-bufdir-surrogate-id-migration.md`](../../../../../website/docs/ai-developer/plans/completed/PLAN-bufdir-surrogate-id-migration.md), [`INVESTIGATE-bufdir-indicator-surrogate-id-stability.md`](../../../../../website/docs/ai-developer/plans/backlog/INVESTIGATE-bufdir-indicator-surrogate-id-stability.md)

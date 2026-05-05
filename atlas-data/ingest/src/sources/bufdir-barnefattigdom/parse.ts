@@ -97,13 +97,44 @@ export function discoverZipUrl(html: string): DiscoveryMatch {
   );
 }
 
-/** Surrogate `indicator_api_id` from XLSX filename stem (without `.xlsx`). */
-export function surrogateIndicatorApiId(workbookStem: string): string {
+/**
+ * Surrogate `indicator_api_id` from the XLSX filename stem (without `.xlsx`).
+ *
+ * Two-tier strategy (per `PLAN-bufdir-surrogate-id-migration.md`):
+ *
+ * 1. **Number-prefix (canonical)**: extracts `Indikator_(\d+[a-z]?)` from the
+ *    leading filename portion and returns `bf_zip_ind_<N>` (e.g. `bf_zip_ind_5`,
+ *    `bf_zip_ind_9a`, `bf_zip_ind_22`). Survives slug refinements, year-suffix
+ *    additions, and methodology footnote rewrites — every Bufdir-side change
+ *    that *doesn't* renumber the indicator. Genuine renumbers (Indikator 9 →
+ *    9a / 9b, Indikator 10 retired) get bridged by the
+ *    `marts.bufdir_indicator_alias` table consumers join on.
+ *
+ * 2. **Hash fallback (defensive)**: if the filename doesn't match
+ *    `Indikator_<N>` (Bufdir adds a non-numbered workbook in some future
+ *    release), fall back to the legacy `bf_zip_<24-hex SHA-256>` shape so
+ *    ingest doesn't throw on a non-conforming filename. The caller logs a
+ *    warn so the operator notices.
+ *
+ * Returns `{ id, tier }` so the caller can log which path matched.
+ */
+const INDIKATOR_NUMBER_RE = /^Indikator_(\d+[a-z]?)/i;
+
+export type SurrogateIdResult = {
+  id: string;
+  tier: "number-prefix" | "hash-fallback";
+};
+
+export function surrogateIndicatorApiId(workbookStem: string): SurrogateIdResult {
+  const m = workbookStem.match(INDIKATOR_NUMBER_RE);
+  if (m) {
+    return { id: `bf_zip_ind_${m[1]!.toLowerCase()}`, tier: "number-prefix" };
+  }
   const body = createHash("sha256")
     .update(workbookStem, "utf8")
     .digest("hex")
     .slice(0, 24);
-  return `bf_zip_${body}`;
+  return { id: `bf_zip_${body}`, tier: "hash-fallback" };
 }
 
 /** Norwegian-friendly slug: lowercase, spaces→underscores, strip punctuation. */
@@ -198,7 +229,7 @@ export function parseDataSheet(
   fileBase: string,
 ): BufdirBarnefattigdomRow[] {
   const stem = fileBase.replace(/\.xlsx$/i, "");
-  const indicatorApiId = surrogateIndicatorApiId(stem);
+  const { id: indicatorApiId } = surrogateIndicatorApiId(stem);
   const slugPart = stem.replace(/^Indikator_\d+[a-z]?_/i, "").trim();
   const humanName = (
     slugPart.replace(/_/g, " ") || stem.replace(/_/g, " ")

@@ -598,3 +598,53 @@ models:
     data_tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns: [chapter_id, service_category_code]
+
+  - name: mart_bufdir_indicator_alias
+    description: |
+      Cross-release alias table for `bufdir-barnefattigdom`
+      `indicator_api_id` renumbers. One row per (historical_id,
+      canonical_id) mapping consumers join on for cross-time-series
+      continuity when Bufdir splits, retires, or renumbers a workbook
+      upstream — e.g. the observed `Indikator 9` → `9a` / `9b` split,
+      and `Indikator 10` retired without successor.
+
+      Thin republish of the editorial seed `bufdir_indicator_alias` so
+      the PLAN-004 generator auto-emits `api_v1.bufdir_indicator_alias`
+      (the leading `mart_` is stripped per `models/marts/api/README.md`
+      § Naming).
+
+      See `website/docs/ai-developer/plans/active/PLAN-bufdir-surrogate-id-migration.md`
+      for design rationale + the maintenance ritual that appends rows
+      when a new Bufdir bundle release surfaces additional renumbering.
+    columns:
+      - name: source_id
+        description: |
+          Source the alias applies to. Always `bufdir-barnefattigdom`
+          today; forward-looking column kept so other ZIP sources can
+          adopt the same convention without a schema migration.
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: [bufdir-barnefattigdom]
+      - name: historical_id
+        description: |
+          Previous `indicator_api_id` from an earlier bufdir release —
+          the id consumers may have cached and now need to bridge to
+          the current canonical id. Same shape as
+          `indicators__bufdir_barnefattigdom.indicator_api_id`
+          (`bf_zip_ind_<N>`).
+        data_tests:
+          - not_null
+      - name: canonical_id
+        description: |
+          Current `indicator_api_id`, or NULL when the historical
+          indicator was retired without a successor. NULL is meaningful:
+          consumers treat such rows as terminating series rather than
+          orphans.
+      - name: note
+        description: |
+          Editorial explanation of the renumbering event — why the
+          historical id maps to this canonical id, or why no successor
+          exists. One sentence; read by humans, not parsers.
+        data_tests:
+          - not_null

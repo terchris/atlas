@@ -1,0 +1,4 @@
+source_id,historical_id,canonical_id,note
+bufdir-barnefattigdom,bf_zip_ind_9,bf_zip_ind_9a,"Indikator 9 was split into 9a (innvandrerbakgrunn Afrika etc.) and 9b (EU etc.) — 9a is the closer successor in the Afrika-etc subcategory. See INVESTIGATE-bufdir-indicator-surrogate-id-stability.md for the editorial decision."
+bufdir-barnefattigdom,bf_zip_ind_9,bf_zip_ind_9b,"Same split as the row above — 9b is the closer successor in the EU-etc subcategory."
+bufdir-barnefattigdom,bf_zip_ind_10,,"Indikator 10 retired by Bufdir; no direct successor in the bundle as of 2026-05-04. Consumers comparing pre/post-retirement should treat 10's series as terminating; canonical_id is null by design."

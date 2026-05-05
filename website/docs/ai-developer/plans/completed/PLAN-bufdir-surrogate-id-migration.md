@@ -4,7 +4,21 @@
 > - [WORKFLOW.md](../../WORKFLOW.md) — The implementation process
 > - [PLANS.md](../../PLANS.md) — Plan structure and best practices
 
-## Status: Backlog
+## Status: Completed (2026-05-05)
+
+**Outcome**: Shipped end-to-end on the same branch as the PLAN draft (single PR per the half-day estimate).
+
+- **Phase 1** ✓ — `surrogateIndicatorApiId()` now returns `{ id, tier }` where `tier` is `"number-prefix"` (canonical) or `"hash-fallback"` (defensive). `parseDataSheet()` destructures the canonical path.
+- **Phase 2** ✓ — `__tests__/parse.test.ts` updated to pin the new id shape; 6 new cases cover number-prefix, 9a/9b suffix, two-digit numbers, slug-refinement-stability, the conservative 5/5b different-by-default decision (Q1), and the hash fallback. **34/34 passing**, full ingest test suite **88/88**.
+- **Phase 3** ✓ — `seeds/sources/bufdir_indicator_alias.csv` (3 rows: 9→9a, 9→9b, 10→null), `models/marts/api/mart_bufdir_indicator_alias.sql` (thin pass-through), schema.yml entries on both sides. `mart_` prefix follows the marts/api/ README convention; the generator strips it to emit `api_v1.bufdir_indicator_alias`.
+- **Phase 4** ✓ — `npm run ingest:bufdir-barnefattigdom` re-emitted all 395,420 rows with new ids in ~57s. Verified: 22 distinct `indicator_api_id` values, all matching `^bf_zip_ind_\d+[a-z]?$`, **zero legacy hex rows remain**. Full `dbt test`: **PASS=481, ERROR=0, WARN=1** (pre-existing postnummer warn). Hand-maintained `tests/api_v1_rowcount_matches_marts.sql` got the new union-all line.
+- **Phase 5** ✓ — bufdir README updated with id-shape paragraph + refresh-checklist subsection (diff filenames against the alias seed when a new bundle release lands).
+
+The PLAN's risk paragraph (breaking-change for cached legacy ids) is moot in retrospect — bufdir's public API hadn't been advertised yet, so no consumer was caching the old shape.
+
+---
+
+## Status (original): Backlog
 
 **Goal**: Replace bufdir's filename-stem-hash surrogate id with a number-prefix derivation + a small alias seed for editorial discontinuity events. After this PLAN, `bufdir-barnefattigdom`'s `indicator_api_id` is `bf_zip_ind_<N>` (stable across slug refinements), and `marts.bufdir_indicator_alias` (auto-wrapped as `api_v1.bufdir_indicator_alias`) carries `historical_id → canonical_id` mappings consumers can join on for cross-time-series continuity.
 

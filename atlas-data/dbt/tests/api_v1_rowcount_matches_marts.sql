@@ -46,6 +46,9 @@ with row_counts(view_name, api_count, mart_count) as (
   union all select 'ngo_overview',
          (select count(*) from api_v1.ngo_overview),
          (select count(*) from marts.mart_ngo_overview)
+  union all select 'bufdir_indicator_alias',
+         (select count(*) from api_v1.bufdir_indicator_alias),
+         (select count(*) from marts.mart_bufdir_indicator_alias)
 )
 select view_name, api_count, mart_count
 from row_counts
