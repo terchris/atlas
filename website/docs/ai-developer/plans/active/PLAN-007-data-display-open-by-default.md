@@ -4,13 +4,13 @@
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Active (Phase 2 complete; Phase 3 next)
+## Status: Active (Phase 2 shipped via PR #36; Phase 3 in progress)
 
-**Goal**: Execute [INVESTIGATE-customer-frontend-data-display.md](INVESTIGATE-customer-frontend-data-display.md). After this PLAN, the customer frontend's `/data` page shows every queryable endpoint across `api_v1`, `marts`, and `raw` schemas (everything that isn't `private_marts`), each tagged with `provider`, `topic`, `geo`, `cadence`, and `layer`. A filter sidebar lets users slice the catalogue by any combination of tags. A first-class sources list (`/data/sources` + `api_v1.meta_sources`) carries provider, upstream URL, last-ingested timestamp, and downstream-model count for each of Atlas's 21 ingest sources.
+**Goal**: Execute [INVESTIGATE-customer-frontend-data-display.md](INVESTIGATE-customer-frontend-data-display.md). After this PLAN, the customer frontend's `/data` page shows every queryable endpoint across `api_v1`, `marts`, and `raw` schemas (everything that isn't `private_marts`), each tagged with `provider`, `topic`, `geo`, `cadence`, `eu_theme`, and `layer`. A filter sidebar lets users slice the catalogue by any combination of tags. A first-class sources list (`/data/sources` + `api_v1.meta_sources`) carries provider, upstream URL, last-ingested timestamp, and downstream-model count for **every** Atlas ingest source — currently 38, growing as the cloud-agent pipeline drains the backlog.
 
-**Investigation**: [INVESTIGATE-customer-frontend-data-display.md](INVESTIGATE-customer-frontend-data-display.md) — settled the open-by-default principle, the per-source `manifest.yml` shape ([Q2]), the dbt-model-as-substrate path ([Q3]), and the multi-namespace tag UX ([Q4]).
+**Investigation**: [INVESTIGATE-customer-frontend-data-display.md](INVESTIGATE-customer-frontend-data-display.md) — settled the open-by-default principle, the per-source `manifest.yml` shape ([Q2]), the dbt-model-as-substrate path ([Q3]), and the multi-namespace tag UX ([Q4]). Phase 2.10 + 2.11 extended the namespace set with `eu_theme:` (DCAT-AP alignment) and the editorial `dimensions:` block.
 
-**Last Updated**: 2026-05-01
+**Last Updated**: 2026-05-05 (Phase 2 shipped via PR #36 — catalogue 21 → 38 sources; Phase 3 expanded to include `mart_meta_dimensions` consuming the `_sources_dimensions` seed; counts refreshed to "currently 38, growing")
 
 **Prerequisites**:
 - PostgREST live with `api_v1.*` (PLAN-004 + UIS PLAN-002 — verified 2026-04-30).
@@ -201,8 +201,8 @@ Promote the existing Markdown table at `atlas-data/ingest/src/sources/README.md`
 ### Validation
 
 ```bash
-# All 21 sources have a manifest.yml
-ls atlas-data/ingest/src/sources/*/manifest.yml | wc -l                       # → 21
+# Every source folder has a manifest.yml (live count)
+ls atlas-data/ingest/src/sources/*/manifest.yml | wc -l                       # → live count from current catalogue
 
 # No remaining TODOs after the auto-fill pass
 grep -l "TODO" atlas-data/ingest/src/sources/*/manifest.yml | wc -l           # → 0
@@ -244,66 +244,86 @@ uv run --env-file ../ingest/.env dbt seed --select _sources_manifest          # 
 
 ---
 
-## Phase 3: `marts.meta_sources` + `marts.meta_endpoints` dbt models
+## Phase 3: `marts.meta_sources` + `marts.meta_endpoints` + `marts.meta_dimensions` dbt models
 
-The joins. After this phase, two new `mart_*` views exist (and via the PLAN-004 generator, two new `api_v1.meta_*` wrappers) that carry the full tagged catalogue.
+The joins. After this phase, three new `mart_*` views exist (and via the PLAN-004 generator, three new `api_v1.meta_*` wrappers) that carry the full tagged catalogue: per-source metadata + freshness, per-endpoint inventory + tag inheritance, and per-dimension editorial semantics joined with computed cardinality.
 
 ### Tasks
 
 - [ ] 3.1 Add `atlas-data/dbt/models/marts/api/mart_meta_sources.sql`:
-  - From: `marts._sources_manifest` (Phase 2 seed)
+  - From: `marts._sources_manifest` (Phase 2 seed; currently 38 rows, growing)
   - Left-join to `raw.ingest_runs` aggregates per source:
     - `last_ingested_at`: `MAX(finished_at) WHERE exit_code = 0`
     - `last_upstream_update_at`: `MAX(upstream_updated_at) WHERE exit_code = 0` (nullable — only populated for sources whose ingest module captures it)
     - `latest_row_count`: `rows_parsed` from the most recent successful run
     - `total_runs`: `COUNT(*) FILTER (WHERE exit_code = 0)`
   - Add `downstream_model_count`: count of distinct downstream models from the lineage seed (Phase 3.3).
-  - Output columns: `source_id`, `upstream_id`, `upstream_url`, `upstream_title`, `description`, `publisher`, `license`, `license_url`, `periodicity`, `tags` (text[]), `last_ingested_at`, `last_upstream_update_at`, `latest_row_count`, `total_runs`, `downstream_model_count`.
+  - Output columns: `source_id`, `upstream_id`, `upstream_url`, `upstream_landing_page`, `upstream_title`, `description`, `publisher`, `license`, `license_url`, `periodicity`, `eu_theme`, `attribution`, `tags` (text[]), `last_ingested_at`, `last_upstream_update_at`, `latest_row_count`, `total_runs`, `downstream_model_count`.
   - Add full `schema.yml` description per column (PLAN-001's gate enforces this).
 - [ ] 3.2 Add `atlas-data/dbt/models/marts/api/mart_meta_endpoints.sql`:
-  - From: `information_schema.tables` filtered to `table_schema in ('api_v1','marts','raw')` (and `not in ('private_marts')` defensively)
+  - From: `information_schema.tables` filtered to `table_schema in ('api_v1','marts','raw')` (and `not in ('private_marts')` defensively). Skip `marts._*` private seeds (`_sources_manifest`, `_sources_dimensions`, `eu_data_theme`, `lineage`).
   - Output columns: `endpoint`, `schema`, `table`, `tags` (text[]), `row_count` (via dynamic SQL or a daily-refreshed snapshot — see 3.3 for lineage), `is_public_api` (boolean: schema='api_v1')
-  - Tags: derive `layer:<schema>` from the schema; inherit `provider:` / `topic:` / `geo:` / `cadence:` from the source(s) the endpoint derives from (via the lineage extraction in 3.3).
+  - Tag derivation: `layer:<schema>` from the schema; **union** of all `provider:` / `topic:` / `geo:` / `cadence:` / `eu_theme:` tags from the source(s) the endpoint derives from (via the lineage seed in 3.3). Union over intersection: a `mart_*` derived from 17 indicator sources picks up *every* source's tag — easier to filter, "this mart involves something annual" is a more useful signal than "this mart is purely annual." Decision recorded inline so 3.2 doesn't re-litigate it.
   - Add full `schema.yml` description per column.
-- [ ] 3.3 Add `atlas-data/dbt/scripts/extract_lineage.py` that reads `target/manifest.json` after `dbt parse`, walks the dependency graph from each `api_v1.*` and `marts.*` model up to its root `raw.*` ancestors, and emits a dbt seed CSV at `seeds/sources/lineage.csv` with rows `(model_name, source_id)` — one row per (model, source) edge. Multiple rows per model when it derives from multiple sources (e.g. `fact_kommune_indicators` → 17 indicator sources).
-- [ ] 3.4 Run `./regenerate-api-v1.sh` + `./apply-api-v1.sh`. The PLAN-004 generator picks up `mart_meta_sources` and `mart_meta_endpoints`, emits `api_v1.meta_sources` and `api_v1.meta_endpoints` wrappers, all five validation gates pass.
+- [ ] 3.3 Add `atlas-data/dbt/scripts/extract_lineage.py` that reads `target/manifest.json` after `dbt parse`, walks the dependency graph from each `api_v1.*` and `marts.*` model up to its root `raw.*` ancestors, and emits a dbt seed CSV at `seeds/sources/lineage.csv` with rows `(model_name, source_id)` — one row per (model, source) edge. Multiple rows per model when it derives from multiple sources (e.g. `fact_kommune_indicators` → many indicator sources).
+- [ ] 3.4 Add `atlas-data/dbt/models/marts/api/mart_meta_dimensions.sql`:
+  - From: `marts._sources_dimensions` (Phase 2.11 seed; ~198 rows = sum of dimensions across all 38 sources). Left-joined to per-(source, dimension) introspection of the corresponding `raw.*` table.
+  - For every (source_id, dim_code) pair, compute against the raw table:
+    - `cardinality`: `COUNT(DISTINCT <dim_column>)` — how many unique values appear.
+    - `example_values`: array of up to ~10 distinct values (sorted by frequency desc, then alpha) for users to see what the dimension actually contains.
+    - `null_count`: rows where the dim value is null (should be 0 for non-degenerate dims).
+  - Output columns: `source_id`, `code` (upstream dim name), `meaning`, `value_format`, `notes` (from the seed), `cardinality`, `example_values` (text[]), `null_count`. Frontend renders "what each column means × what values it actually contains" in one card.
+  - Implementation note: introspecting raw.* tables means generating one SELECT per (source × dim) pair via dbt Jinja iteration over the seed contents. Use `run_query()` at parse time to read the seed; build a per-source UNION ALL. Keep an eye on dbt-Core's parse-time query budget — if it slows, fall back to a static CTE per source the seed-gen script emits.
+  - Add full `schema.yml` description per column.
+- [ ] 3.5 Run `./regenerate-api-v1.sh` + `./apply-api-v1.sh`. The PLAN-004 generator picks up `mart_meta_sources`, `mart_meta_endpoints`, and `mart_meta_dimensions`, emits `api_v1.meta_sources` / `api_v1.meta_endpoints` / `api_v1.meta_dimensions` wrappers, all five validation gates pass.
 
 ### Validation
+
+Counts assume the catalogue at the moment of running. Substitute the live count from `select count(*) from marts._sources_manifest;` for any "X rows" assertion below — the catalogue grows continuously.
 
 ```bash
 cd atlas-data/dbt
 uv run --env-file ../ingest/.env dbt seed --select sources
-uv run --env-file ../ingest/.env dbt run --select mart_meta_sources mart_meta_endpoints
+uv run --env-file ../ingest/.env dbt run --select mart_meta_sources mart_meta_endpoints mart_meta_dimensions
 ./regenerate-api-v1.sh && ./apply-api-v1.sh
 
-# meta_sources has 21 rows
-curl -sS "http://api-atlas.localhost/meta_sources" | jq 'length'              # → 21
+# meta_sources row count matches manifest seed
+N=$(psql "$DATABASE_URL" -tAc 'select count(*) from marts._sources_manifest;')
+curl -sS "http://api-atlas.localhost/meta_sources" | jq 'length'              # → $N
 
-# Every row has the new required fields
-curl -sS "http://api-atlas.localhost/meta_sources" | jq '[.[] | select(.license == null or .publisher == null or .upstream_title == null or .periodicity == null)] | length'  # → 0
+# Every row has the required fields
+curl -sS "http://api-atlas.localhost/meta_sources" | jq '[.[] | select(.license == null or .publisher == null or .upstream_title == null or .periodicity == null or .eu_theme == null)] | length'  # → 0
 
-# Every row has all four tag namespaces
-curl -sS "http://api-atlas.localhost/meta_sources" | jq '[.[] | select(.tags | length < 4)] | length'   # → 0
+# Every row has all five declared tag namespaces (provider/topic/geo/cadence/eu_theme)
+curl -sS "http://api-atlas.localhost/meta_sources" | jq '[.[] | select(.tags | length < 5)] | length'   # → 0
 
 # Filter by tag
-curl -sS "http://api-atlas.localhost/meta_sources?tags=cs.{provider:ssb}" | jq 'length'  # → 14 (the 14 SSB sources)
+curl -sS "http://api-atlas.localhost/meta_sources?tags=cs.{provider:ssb}" | jq 'length'  # > 0
 
-# SSB sources have last_upstream_update_at populated; non-SSB are null (acceptable for v1)
-curl -sS "http://api-atlas.localhost/meta_sources?tags=cs.{provider:ssb}" | jq '[.[] | select(.last_upstream_update_at != null)] | length'  # → 14 (after one full SSB ingest cycle)
+# SSB sources have last_upstream_update_at populated
+curl -sS "http://api-atlas.localhost/meta_sources?tags=cs.{provider:ssb}" | jq '[.[] | select(.last_upstream_update_at != null)] | length'  # > 0 after a full ingest cycle
 
-# meta_endpoints has ~60 rows
-curl -sS "http://api-atlas.localhost/meta_endpoints" | jq 'length'            # → 60+
+# meta_endpoints row count: roughly N indicators marts + dims + facts + supply marts + api_v1 wrappers
+curl -sS "http://api-atlas.localhost/meta_endpoints" | jq 'length'            # → ~80+ at 38 sources, grows linearly
 
 # Endpoints inherit tags from sources
 curl -sS "http://api-atlas.localhost/meta_endpoints?tags=cs.{topic:income}" | jq 'length'  # > 0
+
+# meta_dimensions has one row per (source × upstream-dimension); ~198 rows at 38 sources
+curl -sS "http://api-atlas.localhost/meta_dimensions" | jq 'length'           # > 0
+curl -sS "http://api-atlas.localhost/meta_dimensions?source_id=eq.ssb-08764" | jq 'length'  # → 3 (Region, ContentsCode, Tid)
+
+# Every dimension row has cardinality + example_values populated
+curl -sS "http://api-atlas.localhost/meta_dimensions" | jq '[.[] | select(.cardinality == null or (.example_values | length) == 0)] | length'  # → 0
 ```
 
 ### Done when
 
-- `marts.meta_sources` exists with 21 rows; each has `provider`, `topic`, `geo`, `cadence` tags + `latest_run_at` from `raw.ingest_runs`.
-- `marts.meta_endpoints` exists with one row per public endpoint; each has a `layer:` tag plus inherited source tags.
-- `api_v1.meta_sources` and `api_v1.meta_endpoints` wrap them; all PLAN-004 validation gates pass.
-- PostgREST's `Prefer: count=exact` returns 21 for `/meta_sources` and 60+ for `/meta_endpoints`.
+- `marts.meta_sources` exists; each row has `provider`, `topic`, `geo`, `cadence`, `eu_theme` tags + `latest_run_at` from `raw.ingest_runs`. Row count = `_sources_manifest` row count.
+- `marts.meta_endpoints` exists with one row per public endpoint (skipping `marts._*` private seeds + `private_marts.*`); each has a `layer:` tag plus inherited source tags via the union rule.
+- `marts.meta_dimensions` exists with one row per (source_id × upstream-dim); each has hand-authored `meaning`/`value_format`/`notes` joined with computed `cardinality` and `example_values` from `raw.*`.
+- `api_v1.meta_sources`, `api_v1.meta_endpoints`, and `api_v1.meta_dimensions` wrap them; all PLAN-004 validation gates pass.
+- PostgREST returns the same row counts under `Prefer: count=exact` for the three `meta_*` endpoints.
 
 ---
 
@@ -348,7 +368,7 @@ curl -sS -o /dev/null -w "%{http_code}\n" "http://localhost:3001/data/sources/no
 ### Done when
 
 - `/data` renders the tag-filter sidebar + cards layout against the live API.
-- All ~60 endpoints visible (when no filter active); filtering by any tag combination works via URL params.
+- Every public endpoint visible (when no filter active); filtering by any tag combination works via URL params.
 - `/data/sources/[source_id]` renders for valid source IDs; 404 for invalid.
 - All PLAN-005 routes (`/data/[endpoint]` table viewer + `/data/[endpoint]/spec` viewer) carry forward unchanged.
 
@@ -382,14 +402,15 @@ All four doc files reflect the new shape; no stale references to "the 9 endpoint
 ## Acceptance criteria
 
 - [ ] PostgREST serves `api_v1.* + marts.* + raw.*` (private_marts stays excluded). Verified via `curl api-atlas.localhost/dim_kommune` and `curl api-atlas.localhost/ssb_08764`.
-- [ ] All 21 source folders have a valid `manifest.yml` with all eight required top-level fields (`source_id`, `upstream_id`, `upstream_url`, `upstream_title`, `description`, `publisher`, `license`, `license_url`, `periodicity`) + four declared tag namespaces.
-- [ ] `raw.ingest_runs.upstream_updated_at` column exists; SSB ingest modules populate it.
-- [ ] `marts.meta_sources` (and its `api_v1.meta_sources` wrapper) carries 21 rows, each with full tags + license + publisher + periodicity + `last_ingested_at` + `last_upstream_update_at` (where the source supports it).
-- [ ] `marts.meta_endpoints` (and its `api_v1.meta_endpoints` wrapper) carries 60+ rows, each with `layer:` + inherited source tags.
+- [x] Every source folder in `atlas-data/ingest/src/sources/` contains a valid `manifest.yml` with the required top-level fields (`source_id`, `upstream_id`, `upstream_url`, `upstream_title`, `description`, `publisher`, `license`, `license_url`, `periodicity`, `eu_theme`, `attribution`) + the four declared tag namespaces (`provider`, `topic`, `geo`, `cadence`) + a hand-authored `dimensions:` block. (Phase 2 — currently 38 sources.)
+- [x] `raw.ingest_runs.upstream_updated_at` column exists; the `recordIngestRun()` wrapper populates it for SSB / FHI sources. (Phase 2.)
+- [ ] `marts.meta_sources` (and its `api_v1.meta_sources` wrapper) carries one row per source in `_sources_manifest`, each with full tags + license + publisher + periodicity + eu_theme + `last_ingested_at` + `last_upstream_update_at` (where the source supports it).
+- [ ] `marts.meta_endpoints` (and its `api_v1.meta_endpoints` wrapper) carries one row per public endpoint, each with `layer:` + inherited source tags via the union rule.
+- [ ] `marts.meta_dimensions` (and its `api_v1.meta_dimensions` wrapper) carries one row per (source × upstream-dimension), with hand-authored `meaning`/`value_format`/`notes` joined with computed `cardinality` and `example_values` from `raw.*` introspection.
 - [ ] All five PLAN-004 validation gates still pass (drift, coverage, static description, runtime description, row-count parity).
-- [ ] Customer frontend `/data` renders the tag-filter sidebar + cards layout; URL state is bookmarkable; ~60 endpoints visible.
-- [ ] `/data/sources/[source_id]` per-source detail renders for all 21; 404 otherwise.
-- [ ] Contributor docs (`setup.md`, `ingest-modules.md`) describe the manifest.yml convention + the tag namespaces.
+- [ ] Customer frontend `/data` renders the tag-filter sidebar + cards layout; URL state is bookmarkable; every public endpoint visible.
+- [ ] `/data/sources/[source_id]` per-source detail renders for every source in `_sources_manifest`; 404 otherwise.
+- [ ] Contributor docs (`setup.md`, `ingest-modules.md`) describe the manifest.yml convention + the tag namespaces + the `dimensions:` block.
 - [ ] Developer docs (`developers/index.md`) describe the open-by-default principle + the tag-filter URL pattern.
 
 ---
@@ -397,7 +418,7 @@ All four doc files reflect the new shape; no stale references to "the 9 endpoint
 ## Files to modify
 
 **New (atlas-data):**
-- `atlas-data/ingest/src/sources/<id>/manifest.yml` — 21 new files, one per source (auto-bootstrapped + auto-filled)
+- `atlas-data/ingest/src/sources/<id>/manifest.yml` — one per source, currently 38 (auto-bootstrapped + auto-filled + hand-authored `dimensions:` block)
 - `atlas-data/ingest/scripts/bootstrap-manifest.ts` — provider-aware bootstrap (SSB PxWebAPI extractor + FHI extractor + fallback template); npm alias `sources:bootstrap-manifest`
 - `atlas-data/ingest/scripts/fill-manifest-todos.ts` — README-parsing TODO-filler (description, upstream_id, upstream_title, license, tags) with topic/geo regex rules + `MANUAL_OVERRIDES` for redcross-branches/frr; npm alias `sources:fill-manifest-todos`
 - `atlas-data/ingest/src/lib/ingest_run.ts` — shared `recordIngestRun(sourceId, work)` wrapper that owns start/finish + sql lifecycle; replaces the original "one-place change" plan
@@ -411,7 +432,8 @@ All four doc files reflect the new shape; no stale references to "the 9 endpoint
 - `atlas-data/dbt/seeds/sources/lineage.csv` — generated, committed
 - `atlas-data/dbt/models/marts/api/mart_meta_sources.sql`
 - `atlas-data/dbt/models/marts/api/mart_meta_endpoints.sql`
-- `atlas-data/dbt/models/marts/api/schema.yml` — descriptions for both new models
+- `atlas-data/dbt/models/marts/api/mart_meta_dimensions.sql`
+- `atlas-data/dbt/models/marts/api/schema.yml` — descriptions for all three new models
 
 **Updated (atlas-data):**
 - `atlas-data/dbt/dbt_project.yml` — seed config for `seeds/sources/`
@@ -462,8 +484,9 @@ All four doc files reflect the new shape; no stale references to "the 9 endpoint
 
 ## Implementation notes
 
-- **Phase 1 has cross-repo asynchrony.** Don't block all of Phase 2/3 on it — manifest.yml authorship and `meta_sources`/`meta_endpoints` model work doesn't need the schema exposure to be live (it can use the existing `api_v1.*` exposure for development; the new schemas appear when UIS lands the change). Sequence: kick off Phase 1 in parallel with Phase 2 + 3, then Phase 4 once both have landed.
-- **Tag inheritance from sources to endpoints (Phase 3.2)** is the trickiest part. A `mart_*` derived from multiple sources (e.g. `fact_kommune_indicators` from 17 indicator sources) inherits the *intersection* of their tags — meaning if all 17 are `cadence: annual` it's annual; if they differ, no `cadence:` tag. Or take the union (every source's tag) — cleaner, more surface area exposed. **Recommendation: union.** Easier to filter; "this mart involves something annual" is more useful than "this mart is purely annual."
-- **The `_sources_manifest` seed** is private dbt data, not a `mart_*`. Keep it under `marts._sources_manifest` (underscored = "internal") so the auto-generator skips it. Only `mart_meta_sources` (which reads from it) gets wrapped into `api_v1.meta_sources`.
-- **Tagging the 21 existing sources (Phase 2.3)** is editorial work, not technical. Allocate ~1 hour: 3 minutes per source × 21. Consult each source's README + the upstream documentation. Not all tags will be obvious — `topic:` for `ssb-09429` (educational attainment) might be `education` or `demographics` depending on framing. Pick once, document choice in a comment in `manifest.yml` if non-obvious. Refining later is one-line edits.
+- **Phase 1 has cross-repo asynchrony.** Don't block all of Phase 2/3 on it — manifest.yml authorship and `meta_sources`/`meta_endpoints`/`meta_dimensions` model work doesn't need the schema exposure to be live (it can use the existing `api_v1.*` exposure for development; the new schemas appear when UIS lands the change). Sequence: kick off Phase 1 in parallel with Phase 2 + 3, then Phase 4 once both have landed.
+- **Tag inheritance — union, not intersection.** Recorded inline at Phase 3.2. A `mart_*` derived from many sources picks up the union of source tags so filters like `topic:income` surface every mart that *involves* income data, not just marts where every source happens to be income-shaped. Don't re-litigate.
+- **`marts._*` private seeds stay out of `mart_meta_endpoints`.** `_sources_manifest`, `_sources_dimensions`, `eu_data_theme`, and the future `lineage` seed are dbt internals — they live in `marts` (so models can `ref()` them) but the underscore prefix marks them not-for-API. The auto-generator at `regenerate-api-v1.sh` already skips them by convention. `mart_meta_endpoints`'s `information_schema.tables` query needs an explicit `WHERE table_name NOT LIKE '\_%'` filter to match.
+- **Editorial vs computed in `mart_meta_dimensions`.** The `_sources_dimensions` seed carries hand-authored editorial content (`meaning`, `value_format`, `notes` — what the dimension is). The mart joins it with introspection of `raw.*` (`cardinality`, `example_values` — what the dimension actually contains). Both are valuable; one without the other gives only half the picture. The seed is deliberately the only source of editorial truth — don't add computed fields to the seed itself, and don't add hand-authored fields to the introspection layer.
 - **Don't over-engineer the lineage extraction.** A flat `(model_name, source_id)` seed is enough — recursive walks of the dbt graph happen at extract time, not at query time. PostgREST consumers see `meta_endpoints.tags` as an already-flattened array.
+- **Catalogue grows continuously.** Every Cursor BG run lands a new source. The PLAN's validation gates expressed as live `count(*)` queries against `_sources_manifest` rather than fixed numbers — keeps the doc maintainable as the catalogue moves from 38 → 50 → 100+.
