@@ -61,11 +61,31 @@ This creates the `atlas_db` database, generates an `atlas` Postgres role with a 
 
 Copy the credentials into `atlas-data/ingest/.env` (or run the dedicated env-write step in [Set up the ingest layer](#set-up-the-ingest-layer) below). Treat the password like any other secret — `.env` is gitignored.
 
-Verify the connection from your host:
+### Verify the connection from your host
+
+Three checks, in increasing order of confidence. Run at least one before considering the bootstrap done.
+
+**Reachability only** (fastest, doesn't authenticate — useful when you suspect the port-forward dropped):
 
 ```bash
 nc -z localhost 35432 && echo "ok"
 ```
+
+**Authenticated query — host has `psql`:**
+
+```bash
+psql "postgresql://atlas:<password>@localhost:35432/atlas_db" -c 'select 1'
+```
+
+**Authenticated query — host has no `psql`** (default on macOS unless you `brew install libpq`). Run `psql` from a throwaway docker container that talks back through `host.docker.internal` to the same port-forward — same auth path, no host-side install needed:
+
+```bash
+docker run --rm postgres:16-alpine \
+  psql "postgresql://atlas:<password>@host.docker.internal:35432/atlas_db" \
+  -c 'select 1'
+```
+
+Either authenticated query should print `?column?\n----------\n        1\n(1 row)`. The docker fallback works because `host.docker.internal` is Docker's magic DNS for "your host machine from inside a container" — the connection still ends up at the cluster's port-forward at `localhost:35432`.
 
 If `dbt debug --connection` later reports `connection refused` on `localhost:35432`, the auto-expose dropped (it ends with the UIS container session). Re-attach with:
 
@@ -81,6 +101,54 @@ kubectl logs -n default postgresql-0 --tail=20
 ```
 
 Pod logs typically show `database system is ready to accept connections` when Postgres is up.
+
+### After a cluster reset / fresh start
+
+When you wipe the cluster (rancher-desktop reset, fresh laptop, UIS-image rebuild, anything that purges Postgres data) the `atlas` role's password rotates and `atlas_db` ceases to exist. The credentials previously written into `atlas-data/ingest/.env` are now stale. Bring Atlas back online in this order:
+
+1. Confirm the Postgres pod is up again — usually the cluster bootstrap deploys it automatically:
+
+   ```bash
+   kubectl get pod -n default -l app.kubernetes.io/name=postgresql
+   ```
+
+2. Re-bootstrap `atlas_db` and capture the new credentials. **Same command** as the first-time bootstrap; idempotent in the sense that the role + database get re-created with a fresh random password:
+
+   ```bash
+   ./uis configure postgresql --app atlas --database atlas_db --json
+   ```
+
+3. Update `atlas-data/ingest/.env` with the new password from the JSON output. The `DATABASE_URL` (with `localhost` not `host.docker.internal`) and `PGPASSWORD` lines are the only fields that need rotating; everything else (`PGHOST=localhost`, `PGPORT=35432`, `PGUSER=atlas`, `PGDATABASE=atlas_db`, `ATLAS_SCRAPE_CONTACT_EMAIL`) stays unchanged.
+
+4. Verify with one of the authenticated checks above + `dbt debug`:
+
+   ```bash
+   cd atlas-data/dbt && uv run --env-file ../ingest/.env dbt debug
+   ```
+
+   `All checks passed!` is the green light.
+
+5. Replay the migrations against the empty `atlas_db`:
+
+   ```bash
+   cd ../ingest && npm run migrate
+   ```
+
+   This brings `raw.*` schema (and any helpers in `marts.*`) back to the latest committed migration. Idempotent — every migration uses `if not exists`.
+
+6. Re-run dbt seeds + models (the `marts.*` data lives in dbt models that materialize from `raw.*`, so this re-creates them):
+
+   ```bash
+   cd ../dbt && uv run --env-file ../ingest/.env dbt seed && uv run --env-file ../ingest/.env dbt run && uv run --env-file ../ingest/.env dbt test
+   ```
+
+7. (Optional) replay one or more ingests so `raw.*` has rows again — the rebuild is data-empty until you do. Pick a fast one as smoke first, then larger ones as needed:
+
+   ```bash
+   cd ../ingest && npm run ingest:ssb-08764
+   ```
+
+If anything in steps 4–7 fails, fix before declaring the rebuild done.
 
 ### How Atlas reaches Postgres — dev vs production
 
