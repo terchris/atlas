@@ -63,6 +63,7 @@
     "test:watch": "vitest"
   },
   "devDependencies": {
+    "@types/adm-zip": "^0.5.8",
     "@types/node": "^22.7.0",
     "openapi-typescript": "^7.13.0",
     "tsx": "^4.19.0",
@@ -73,9 +74,11 @@
     "node": ">=20.0.0"
   },
   "dependencies": {
+    "adm-zip": "^0.5.17",
     "crawlee": "^3.16.0",
     "fast-json-stable-stringify": "^2.1.0",
     "openapi-fetch": "^0.17.0",
-    "postgres": "^3.4.9"
+    "postgres": "^3.4.9",
+    "xlsx": "^0.18.5"
   }
 }

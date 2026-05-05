@@ -1,40 +1,36 @@
 /**
  * Bufdir Barnefattigdom kommunemonitor — kommune-level child poverty indicators.
  *
- * Discovers indicators from Strapi (`statistikk.bufdir.no`), fetches time series from
- * Bufdir's Azure APIM monitor API (`indicator-data/detailsmultiple`), and upserts
- * into `raw.bufdir_barnefattigdom`.
+ * Fetches the monitor landing page once to resolve the canonical **bulk ZIP** URL,
+ * downloads that ZIP (~22 `Indikator_*.xlsx` workbooks), parses sheet `Data`,
+ * and upserts into `raw.bufdir_barnefattigdom` (replacing rows from prior runs).
+ *
+ * Stable `indicator_api_id` values are surrogate keys (`bf_zip_` + filename hash),
+ * because the XLSX export does not carry Strapi's legacy hex ids.
  */
+import { createHash } from "node:crypto";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { logger } from "../../lib/logger.js";
-import { writeNdjson } from "../../lib/output.js";
-import { getSql, upsert } from "../../lib/postgres.js";
+import AdmZip from "adm-zip";
+import XLSX from "xlsx";
 import { recordIngestRun } from "../../lib/ingest_run.js";
-import { fetchKlassCodesAt } from "../../lib/klass.js";
+import { logger } from "../../lib/logger.js";
+import { ndjsonStreamingWriter } from "../../lib/output.js";
+import { getSql, upsert } from "../../lib/postgres.js";
 
 export const SOURCE_ID = "bufdir-barnefattigdom";
 
-const STRAPI_MONITOR_DOCUMENT_ID = "xkqt5cladsk0o0218ikji4ul";
-const STRAPI_POPULATE =
-  "populate%5BindicatorGroups%5D%5Bpopulate%5D%5Bindicators%5D%5Bpopulate%5D=indicator";
+const MONITOR_PAGE =
+  "https://www.bufdir.no/statistikk-og-analyse/monitor/barnefattigdom/";
+
+/** Fixed bucket replacing Strapi indicator groups for ZIP-backed rows. */
+const INDICATOR_GROUP_SLUG_ZIP = "barnefattigdom_zip";
 
 const TARGET_TABLE = "raw.bufdir_barnefattigdom";
 const OUTPUT_PATH = resolve(
   dirname(fileURLToPath(import.meta.url)),
   "../../../output/bufdir-barnefattigdom.ndjson",
 );
-
-const KOMMUNE_BATCH = 80;
-const DETAILS_CHUNK = 8;
-
-/** Category pairs the public UI requests for ChildPoverty monitors (see bufdir.no bundle). */
-const CHILD_POVERTY_CATEGORY_PAIRS: ReadonlyArray<readonly [string, string]> = [
-  ["barn", "prosent"],
-  ["barn", "antall"],
-  ["husholdning", "prosent"],
-  ["husholdning", "antall"],
-];
 
 const WRITE_COLUMNS = [
   "indicator_api_id",
@@ -75,155 +71,202 @@ type BufdirBarnefattigdomRow = {
   values_json: unknown;
 };
 
-type StrapiIndicator = {
-  id: number;
-  linkText?: string | null;
-  indicator?: {
-    id: number;
-    title?: string | null;
-    name?: string | null;
-    indicatorApiId?: string | null;
-  } | null;
-};
-
-type StrapiIndicatorGroup = {
-  id: number;
-  title?: string | null;
-  slug?: string | null;
-  indicators?: StrapiIndicator[] | null;
-};
-
-type StrapiMonitor = {
-  documentId: string;
-  slug?: string | null;
-  title?: string | null;
-  monitorType?: string | null;
-  monitorApiUrl?: string | null;
-  updatedAt?: string | null;
-  indicatorGroups?: StrapiIndicatorGroup[] | null;
-};
-
-type StrapiMonitorResponse = { data: StrapiMonitor | null };
-
-type DetailsRow = {
-  indicatorId: string;
-  regionCode: string;
-  values: Record<string, number>;
-  categories: [string, string];
-};
+const UA_HEADERS = {
+  "user-agent": "AtlasDataIngest/bufdir-barnefattigdom",
+} as const;
 
 function slugFromIndicatorName(name: string): string {
   const s = name.trim().toLowerCase().replace(/\s+/g, "_");
   return s.replace(/[^a-z0-9_-]/g, "_").replace(/_+/g, "_");
 }
 
-function chunk<T>(arr: readonly T[], size: number): T[][] {
-  const out: T[][] = [];
-  for (let i = 0; i < arr.length; i += size) {
-    out.push(arr.slice(i, i + size) as T[]);
-  }
-  return out;
+function basenameOnly(entryPath: string): string {
+  const parts = entryPath.replace(/\\/g, "/").split("/");
+  return parts[parts.length - 1] ?? entryPath;
 }
 
-function buildDetailsQuery(
-  indicatorIds: readonly string[],
-  regionCodes: readonly string[],
-  categories: readonly [string, string],
-): string {
-  const parts: string[] = [];
-  for (const id of indicatorIds) {
-    parts.push(`indicatorIds=${encodeURIComponent(id)}`);
-  }
-  for (const rc of regionCodes) {
-    parts.push(`regionCode=${encodeURIComponent(rc)}`);
-  }
-  parts.push(`categories=${encodeURIComponent(categories[0])}`);
-  parts.push(`categories=${encodeURIComponent(categories[1])}`);
-  return parts.join("&");
+function surrogateIndicatorApiId(workbookStem: string): string {
+  const body = createHash("sha256")
+    .update(workbookStem, "utf8")
+    .digest("hex")
+    .slice(0, 24);
+  return `bf_zip_${body}`;
 }
 
-async function fetchJson<T>(url: string, label: string): Promise<T> {
-  const started = Date.now();
-  const res = await fetch(url, {
-    headers: { "user-agent": "AtlasDataIngest/bufdir-barnefattigdom" },
-  });
-  if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    throw new Error(`${label}: HTTP ${res.status} ${res.statusText} — ${body.slice(0, 400)}`);
+function parseCell(raw: unknown, tallformat: string): number | null {
+  if (raw === null || raw === undefined || raw === "") return null;
+  if (typeof raw === "number")
+    return Number.isFinite(raw) ? raw : null;
+  let s = String(raw).trim();
+  if (!s || s === "." || s === "..") return null;
+  s = s.replace(/\s/g, "");
+  if (tallformat === "prosent") {
+    s = s.replace(",", ".");
+    const n = Number.parseFloat(s);
+    return Number.isFinite(n) ? n : null;
   }
-  const json = (await res.json()) as T;
-  logger.info("http.json.ok", { label, url, duration_ms: Date.now() - started });
-  return json;
+  const n = Number.parseInt(s, 10);
+  return Number.isFinite(n) ? n : null;
 }
 
-function collectIndicators(monitor: StrapiMonitor): Array<{
-  indicatorApiId: string;
-  indicatorSlug: string;
-  indicatorName: string;
-  indicatorTitle: string;
-  linkText: string | null;
-  groupSlug: string;
-}> {
-  const out: Array<{
-    indicatorApiId: string;
-    indicatorSlug: string;
-    indicatorName: string;
-    indicatorTitle: string;
-    linkText: string | null;
-    groupSlug: string;
-  }> = [];
-  for (const g of monitor.indicatorGroups ?? []) {
-    const groupSlug = (g.slug ?? `group-${g.id}`).trim();
-    for (const li of g.indicators ?? []) {
-      const ind = li.indicator;
-      if (!ind) continue;
-      const apiId = ind.indicatorApiId?.trim();
-      const name = ind.name?.trim();
-      if (!apiId || !name) continue;
-      out.push({
-        indicatorApiId: apiId,
-        indicatorSlug: slugFromIndicatorName(name),
-        indicatorName: name,
-        indicatorTitle: (ind.title ?? name).trim(),
-        linkText: li.linkText?.trim() ?? null,
-        groupSlug,
-      });
+function findHeaderRow(aoa: unknown[][]): number {
+  for (let i = 0; i < aoa.length; i++) {
+    const c0 = aoa[i]?.[0];
+    if (typeof c0 === "string" && c0.trim().toLowerCase() === "region") {
+      return i;
     }
   }
-  return out;
+  throw new Error("No header row starting with Region in Data sheet");
 }
 
-function detailsToRows(
-  meta: {
-    indicatorSlug: string;
-    groupSlug: string;
-    indicatorName: string;
-    indicatorTitle: string;
-    linkText: string | null;
-  },
-  details: DetailsRow[],
+function indicatorTitleAboveHeader(hdrIx: number, aoa: unknown[][]): string {
+  const parts: string[] = [];
+  for (let i = 0; i < hdrIx; i++) {
+    const c = aoa[i]?.[0];
+    if (typeof c !== "string" || !c.trim()) continue;
+    parts.push(
+      c
+        .replace(/\r\n/g, "\n")
+        .replace(/\n/g, " ")
+        .replace(/\s+/g, " ")
+        .trim(),
+    );
+  }
+  return parts.join(" — ") || "unnamed indicator";
+}
+
+function discoverZipUrl(html: string): string {
+  const m = html.match(
+    /https:\/\/[^\s"'<>]+\/uploads\/\d{4}_\d{2}_\d{2}_barnefattigdom_monitor_[a-z0-9]+\.zip/i,
+  );
+  if (!m) {
+    throw new Error(
+      "Could not find barnefattigdom_monitor YYYY_MM_DD_barnefattigdom_monitor_<hash>.zip URL in monitor page HTML",
+    );
+  }
+  return m[0];
+}
+
+async function fetchText(url: string, label: string): Promise<string> {
+  const started = Date.now();
+  const res = await fetch(url, { headers: UA_HEADERS });
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    throw new Error(
+      `${label}: HTTP ${res.status} ${res.statusText} — ${body.slice(0, 400)}`,
+    );
+  }
+  const text = await res.text();
+  logger.info("http.text.ok", { label, url, duration_ms: Date.now() - started });
+  return text;
+}
+
+async function fetchZip(
+  url: string,
+  label: string,
+): Promise<{ buffer: Buffer; lastModified: Date | null }> {
+  const started = Date.now();
+  const res = await fetch(url, { headers: UA_HEADERS });
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    throw new Error(
+      `${label}: HTTP ${res.status} ${res.statusText} — ${body.slice(0, 400)}`,
+    );
+  }
+  const lm = res.headers.get("last-modified");
+  const buffer = Buffer.from(await res.arrayBuffer());
+  logger.info("http.buffer.ok", {
+    label,
+    url,
+    bytes: buffer.length,
+    duration_ms: Date.now() - started,
+  });
+  return {
+    buffer,
+    lastModified: lm ? new Date(lm) : null,
+  };
+}
+
+function parseDataSheet(
+  workbookBytes: Buffer,
+  fileBase: string,
 ): BufdirBarnefattigdomRow[] {
+  const stem = fileBase.replace(/\.xlsx$/i, "");
+  const indicatorApiId = surrogateIndicatorApiId(stem);
+  const slugPart = stem.replace(/^Indikator_\d+[a-z]?_/i, "").trim();
+  const humanName = (slugPart.replace(/_/g, " ") || stem.replace(/_/g, " ")).trim();
+  const indicatorSlug = slugFromIndicatorName(humanName);
+
+  const wb = XLSX.read(workbookBytes, { type: "buffer", cellDates: false });
+  const sheet = wb.Sheets["Data"];
+  if (!sheet) {
+    throw new Error(`${fileBase}: missing Data sheet`);
+  }
+
+  const aoa = XLSX.utils.sheet_to_json<unknown[]>(sheet, {
+    header: 1,
+    raw: true,
+    defval: null,
+  }) as unknown[][];
+
+  const hdrIx = findHeaderRow(aoa);
+  const indicatorTitle = indicatorTitleAboveHeader(hdrIx, aoa);
+  const indicatorName = indicatorTitle;
+
+  const headerRow = aoa[hdrIx] ?? [];
+  const yearCols: { col: number; year: number }[] = [];
+  for (let j = 4; j < headerRow.length; j++) {
+    const h = headerRow[j];
+    const y =
+      typeof h === "number" && Number.isFinite(h)
+        ? Math.trunc(h)
+        : Number.parseInt(String(h ?? ""), 10);
+    if (Number.isFinite(y) && y >= 1990 && y <= 2100) {
+      yearCols.push({ col: j, year: y });
+    }
+  }
+  if (yearCols.length === 0) {
+    throw new Error(`${fileBase}: no year columns after Tallformat`);
+  }
+
   const rows: BufdirBarnefattigdomRow[] = [];
-  for (const d of details) {
-    const years = Object.keys(d.values)
-      .map((y) => Number.parseInt(y, 10))
-      .filter((n) => Number.isFinite(n));
-    for (const year of years) {
-      const v = d.values[String(year)];
-      const num = typeof v === "number" && Number.isFinite(v) ? v : null;
+  for (let r = hdrIx + 1; r < aoa.length; r++) {
+    const row = aoa[r];
+    if (!row?.length) continue;
+    const regionRaw = row[0];
+    if (regionRaw === null || regionRaw === undefined || regionRaw === "")
+      continue;
+    const region_code = String(regionRaw).trim();
+    if (!region_code) continue;
+
+    const unit = String(row[2] ?? "")
+      .trim()
+      .toLowerCase();
+    const fmt = String(row[3] ?? "")
+      .trim()
+      .toLowerCase();
+    if (unit !== "barn" && unit !== "husholdning") continue;
+    if (fmt !== "antall" && fmt !== "prosent") continue;
+
+    const valuesJson: Record<string, number | null> = {};
+    for (const { col, year } of yearCols) {
+      valuesJson[String(year)] = parseCell(row[col], fmt);
+    }
+
+    for (const { year } of yearCols) {
       rows.push({
-        indicator_api_id: d.indicatorId,
-        indicator_slug: meta.indicatorSlug,
-        indicator_group_slug: meta.groupSlug,
-        indicator_name: meta.indicatorName,
-        indicator_title: meta.indicatorTitle,
-        link_text: meta.linkText,
-        region_code: d.regionCode,
-        category_unit: d.categories[0],
-        category_format: d.categories[1],
+        indicator_api_id: indicatorApiId,
+        indicator_slug: indicatorSlug,
+        indicator_group_slug: INDICATOR_GROUP_SLUG_ZIP,
+        indicator_name: indicatorName,
+        indicator_title: indicatorTitle,
+        link_text: null,
+        region_code,
+        category_unit: unit,
+        category_format: fmt,
         year,
-        value: num,
-        values_json: d.values,
+        value: valuesJson[String(year)] ?? null,
+        values_json: valuesJson,
       });
     }
   }
@@ -231,11 +274,12 @@ function detailsToRows(
 }
 
 export type BufdirBarnefattigdomSummary = {
-  indicators: number;
+  workbooks: number;
   regionCodes: number;
   rowsWritten: number;
   outputPath: string;
   wroteToPostgres: boolean;
+  zipUrl: string;
 };
 
 export async function run(): Promise<BufdirBarnefattigdomSummary> {
@@ -243,102 +287,97 @@ export async function run(): Promise<BufdirBarnefattigdomSummary> {
     logger.info("source.start", { source_id: SOURCE_ID });
     const started = Date.now();
 
-    const strapiUrl =
-      `https://statistikk.bufdir.no/api/monitors/${STRAPI_MONITOR_DOCUMENT_ID}` +
-      `?${STRAPI_POPULATE}`;
-    const strapi = await fetchJson<StrapiMonitorResponse>(strapiUrl, "strapi.monitor");
-    const monitor = strapi.data;
-    if (!monitor?.monitorApiUrl) {
-      throw new Error("Strapi monitor payload missing monitorApiUrl");
-    }
-    if (monitor.monitorType !== "ChildPoverty") {
-      logger.warn("monitor.unexpected_type", {
-        monitorType: monitor.monitorType,
-        expected: "ChildPoverty",
-      });
-    }
+    const monitorHtml = await fetchText(MONITOR_PAGE, "monitor.html");
+    const zipUrl = discoverZipUrl(monitorHtml);
+    logger.info("zip.discovered", { zip_url: zipUrl });
 
-    const indicators = collectIndicators(monitor);
-    if (indicators.length === 0) {
-      throw new Error("No indicators with indicatorApiId found in Strapi response");
-    }
+    const { buffer: zipBuffer, lastModified } = await fetchZip(
+      zipUrl,
+      "monitor.zip",
+    );
 
-    const klass = await fetchKlassCodesAt({
-      classificationId: "131",
-      date: new Date().toISOString().slice(0, 10),
-      language: "nb",
-    });
-    const kommuneCodes = klass.codes
-      .filter((c) => c.level === "1")
-      .map((c) => c.code)
-      .filter((code) => /^\d{4}$/.test(code));
-    if (kommuneCodes.length < 300) {
-      throw new Error(`Expected ~350 active kommuner from Klass; got ${kommuneCodes.length}`);
+    const zip = new AdmZip(zipBuffer);
+    const entries = zip
+      .getEntries()
+      .filter((e) => {
+        if (e.isDirectory) return false;
+        const base = basenameOnly(e.entryName);
+        if (base.startsWith("._")) return false;
+        if (!/^indikator_\d/i.test(base)) return false;
+        return base.toLowerCase().endsWith(".xlsx");
+      })
+      .sort((a, b) => basenameOnly(a.entryName).localeCompare(b.entryName));
+
+    if (entries.length === 0) {
+      throw new Error("ZIP contained no Indikator_*.xlsx workbooks");
     }
 
-    const apimBase = monitor.monitorApiUrl.replace(/\/$/, "");
-    const allRows: BufdirBarnefattigdomRow[] = [];
+    const nd = await ndjsonStreamingWriter(OUTPUT_PATH);
+    let rowTotal = 0;
+    let rowsWrittenToPg = 0;
+    const pgBuffer: BufdirBarnefattigdomRow[] = [];
+    const wroteToPostgres = Boolean(process.env["DATABASE_URL"]);
+    const sql = wroteToPostgres ? getSql() : null;
+    const regionCodes = new Set<string>();
 
-    for (const ind of indicators) {
-      for (const kommBatch of chunk(kommuneCodes, KOMMUNE_BATCH)) {
-        const overviewUrl =
-          `${apimBase}/indicator-data/overview?` +
-          `indicatorIds=${encodeURIComponent(ind.indicatorApiId)}` +
-          `&categories=barn&categories=prosent&` +
-          kommBatch.map((c) => `regionCode=${encodeURIComponent(c)}`).join("&");
-        const overview = await fetchJson<
-          Array<{
-            indicatorId: string;
-            regions?: Record<string, number>;
-          }>
-        >(overviewUrl, "apim.overview");
+    const UPSERT_BATCH = 500;
 
-        const regionBatch: string[] = [];
-        const o0 = overview[0];
-        if (o0?.regions) {
-          regionBatch.push(...Object.keys(o0.regions));
-        }
-        if (regionBatch.length === 0) {
-          logger.warn("overview.empty_regions", { indicator: ind.indicatorApiId });
-          continue;
-        }
+    if (sql) {
+      await sql`delete from raw.bufdir_barnefattigdom`;
+      logger.info("postgres.table_cleared", { table: TARGET_TABLE });
+    }
 
-        for (const cat of CHILD_POVERTY_CATEGORY_PAIRS) {
-          for (const rcChunk of chunk(regionBatch, DETAILS_CHUNK)) {
-            const q = buildDetailsQuery([ind.indicatorApiId], rcChunk, cat);
-            const detailsUrl = `${apimBase}/indicator-data/detailsmultiple?${q}`;
-            const details = await fetchJson<DetailsRow[]>(detailsUrl, "apim.detailsmultiple");
-            allRows.push(
-              ...detailsToRows(
-                {
-                  indicatorSlug: ind.indicatorSlug,
-                  groupSlug: ind.groupSlug,
-                  indicatorName: ind.indicatorName,
-                  indicatorTitle: ind.indicatorTitle,
-                  linkText: ind.linkText,
-                },
-                details,
-              ),
-            );
-          }
-        }
+    async function flushPg(forceAll: boolean): Promise<void> {
+      if (!sql) return;
+      const target = forceAll ? pgBuffer.length : UPSERT_BATCH;
+      while (pgBuffer.length >= target || (forceAll && pgBuffer.length > 0)) {
+        const take = forceAll ? pgBuffer.length : UPSERT_BATCH;
+        const slice = pgBuffer.splice(0, Math.min(take, pgBuffer.length));
+        if (slice.length === 0) break;
+        const stamp = new Date();
+        rowsWrittenToPg += await upsert(sql, {
+          table: TARGET_TABLE,
+          rows: slice.map((r) => ({ ...r, loaded_at: stamp })),
+          columns: WRITE_COLUMNS,
+          conflictKeys: CONFLICT_KEYS,
+        });
       }
     }
 
-    await writeNdjson(OUTPUT_PATH, allRows);
+    async function emitRows(rs: BufdirBarnefattigdomRow[]): Promise<void> {
+      rowTotal += rs.length;
+      for (const r of rs) {
+        regionCodes.add(r.region_code);
+        await nd.writeRow(r);
+      }
+      if (wroteToPostgres) {
+        pgBuffer.push(...rs);
+        await flushPg(false);
+      }
+    }
 
-    let rowsWritten = 0;
-    const wroteToPostgres = Boolean(process.env["DATABASE_URL"]);
-    if (wroteToPostgres) {
-      const sql = getSql();
-      const now = new Date();
-      rowsWritten = await upsert(sql, {
-        table: TARGET_TABLE,
-        rows: allRows.map((r) => ({ ...r, loaded_at: now })),
-        columns: WRITE_COLUMNS,
-        conflictKeys: CONFLICT_KEYS,
+    for (const entry of entries) {
+      const base = basenameOnly(entry.entryName);
+      const bytes = entry.getData();
+      const workbookRows = parseDataSheet(Buffer.from(bytes), base);
+      if (workbookRows.length === 0) {
+        logger.warn("workbook.no_rows", { file: base });
+      }
+      await emitRows(workbookRows);
+      logger.info("workbook.done", {
+        file: base,
+        rows: workbookRows.length,
       });
-      logger.info("postgres.upsert.done", { table: TARGET_TABLE, rows_written: rowsWritten });
+    }
+
+    await flushPg(true);
+    await nd.close();
+
+    if (wroteToPostgres) {
+      logger.info("postgres.upsert.done", {
+        table: TARGET_TABLE,
+        rows_written: rowsWrittenToPg,
+      });
     } else {
       logger.info("postgres.upsert.skipped", {
         reason: "DATABASE_URL not set — NDJSON outputs only",
@@ -348,28 +387,27 @@ export async function run(): Promise<BufdirBarnefattigdomSummary> {
     logger.info("source.done", {
       source_id: SOURCE_ID,
       duration_ms: Date.now() - started,
-      indicators: indicators.length,
-      region_codes: kommuneCodes.length,
-      rows: allRows.length,
-      rows_written: rowsWritten,
+      workbooks: entries.length,
+      region_codes: regionCodes.size,
+      rows: rowTotal,
+      rows_written: rowsWrittenToPg,
     });
 
-    const upstreamUpdatedAt = monitor.updatedAt ? new Date(monitor.updatedAt) : null;
-
     const summary: BufdirBarnefattigdomSummary = {
-      indicators: indicators.length,
-      regionCodes: kommuneCodes.length,
-      rowsWritten,
+      workbooks: entries.length,
+      regionCodes: regionCodes.size,
+      rowsWritten: rowsWrittenToPg,
       outputPath: OUTPUT_PATH,
       wroteToPostgres,
+      zipUrl,
     };
 
     return {
       output: summary,
       record: {
-        rowsScraped: indicators.length * kommuneCodes.length * CHILD_POVERTY_CATEGORY_PAIRS.length,
-        rowsParsed: allRows.length,
-        upstreamUpdatedAt,
+        rowsScraped: 2,
+        rowsParsed: rowTotal,
+        upstreamUpdatedAt: lastModified,
       },
     };
   });
