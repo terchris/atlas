@@ -9,6 +9,9 @@
     "indicator_missing_kommuner",
     "indicator_summary",
     "kommune_local_chapters",
+    "meta_dimensions",
+    "meta_endpoints",
+    "meta_sources",
     "ngo_index",
     "ngo_overview"
   ]

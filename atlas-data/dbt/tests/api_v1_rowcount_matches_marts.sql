@@ -49,6 +49,15 @@ with row_counts(view_name, api_count, mart_count) as (
   union all select 'bufdir_indicator_alias',
          (select count(*) from api_v1.bufdir_indicator_alias),
          (select count(*) from marts.mart_bufdir_indicator_alias)
+  union all select 'meta_sources',
+         (select count(*) from api_v1.meta_sources),
+         (select count(*) from marts.mart_meta_sources)
+  union all select 'meta_endpoints',
+         (select count(*) from api_v1.meta_endpoints),
+         (select count(*) from marts.mart_meta_endpoints)
+  union all select 'meta_dimensions',
+         (select count(*) from api_v1.meta_dimensions),
+         (select count(*) from marts.mart_meta_dimensions)
 )
 select view_name, api_count, mart_count
 from row_counts

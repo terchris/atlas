@@ -173,6 +173,77 @@ COMMENT ON COLUMN api_v1.kommune_local_chapters.sort_order IS 'Display order fro
 to render service categories in a consistent sequence; carry
 on the row so consumers can sort without a separate query.';
 
+-- meta_dimensions  ←  marts.mart_meta_dimensions
+CREATE OR REPLACE VIEW api_v1.meta_dimensions AS SELECT * FROM marts.mart_meta_dimensions;
+COMMENT ON COLUMN api_v1.meta_dimensions.source_id IS 'Source the dimension belongs to. Joins to
+`mart_meta_sources.source_id` and `_sources_manifest.source_id`.';
+COMMENT ON COLUMN api_v1.meta_dimensions.code IS 'Upstream''s own dimension code (e.g. `Region`, `Tid`,
+`ContentsCode` for SSB; `GEO`, `AAR`, `KJONN`, `MEASURE_TYPE`
+for FHI). Verbatim from the source''s API/export — not
+translated to canonical Atlas vocabulary.';
+COMMENT ON COLUMN api_v1.meta_dimensions.meaning IS 'Short human-readable description of what the dimension
+represents. Hand-authored editorial content from each source''s
+`manifest.yml` `dimensions:` block.';
+COMMENT ON COLUMN api_v1.meta_dimensions.value_format IS 'Encoding of values within the dimension (e.g. "4-digit year as
+text", "1- to 6-character numeric code"). Empty string when no
+specific format applies.';
+COMMENT ON COLUMN api_v1.meta_dimensions.notes IS 'Editorial notes — code-list size, semantic gotchas, downstream
+filtering decisions. Empty string when no notes apply.';
+
+-- meta_endpoints  ←  marts.mart_meta_endpoints
+CREATE OR REPLACE VIEW api_v1.meta_endpoints AS SELECT * FROM marts.mart_meta_endpoints;
+COMMENT ON COLUMN api_v1.meta_endpoints.endpoint IS 'Schema-qualified table/view identifier (`<schema>.<table>`).
+Primary key.';
+COMMENT ON COLUMN api_v1.meta_endpoints.schema_name IS 'One of `api_v1`, `marts`, `raw`.';
+COMMENT ON COLUMN api_v1.meta_endpoints.table_name IS 'Bare table/view name without schema qualification.';
+COMMENT ON COLUMN api_v1.meta_endpoints.tags IS '`text[]` carrying the layer tag (`layer:<schema>`) plus inherited
+source tags via union semantics. Filter via PostgREST''s
+`?tags=cs.{...}` array-contains operator.';
+COMMENT ON COLUMN api_v1.meta_endpoints.is_public_api IS '`true` when `schema_name = ''api_v1''`. Lets clients distinguish
+stable-contract endpoints from the broader `marts.*` / `raw.*`
+surfaces that are queryable but not version-guaranteed.';
+COMMENT ON COLUMN api_v1.meta_endpoints.table_type IS '`BASE TABLE` for tables (most `marts.*`, all `raw.*`) and
+`VIEW` for views (all `api_v1.*` wrappers). Useful for
+distinguishing materialised marts from auto-wrapped views.';
+
+-- meta_sources  ←  marts.mart_meta_sources
+CREATE OR REPLACE VIEW api_v1.meta_sources AS SELECT * FROM marts.mart_meta_sources;
+COMMENT ON COLUMN api_v1.meta_sources.source_id IS 'Atlas catalogue id; primary key. Matches `_sources_manifest.source_id`.';
+COMMENT ON COLUMN api_v1.meta_sources.upstream_id IS 'Upstream''s own identifier (SSB table number, FHI dataset slug, etc.).';
+COMMENT ON COLUMN api_v1.meta_sources.upstream_url IS 'Canonical link to the data on the upstream''s site (often the API endpoint).';
+COMMENT ON COLUMN api_v1.meta_sources.upstream_landing_page IS 'Human-browsable web page describing the dataset (DCAT-AP `dcat:landingPage`).
+Empty when `upstream_url` is already browsable; clients fall back to that.';
+COMMENT ON COLUMN api_v1.meta_sources.upstream_title IS 'Source''s authoritative title at the upstream (usually Norwegian).';
+COMMENT ON COLUMN api_v1.meta_sources.description IS 'One-paragraph framing for the customer-facing catalogue.';
+COMMENT ON COLUMN api_v1.meta_sources.publisher IS 'Institution that publishes the data.';
+COMMENT ON COLUMN api_v1.meta_sources.license IS 'License token (e.g. `NLOD`); see `license_url` for terms.';
+COMMENT ON COLUMN api_v1.meta_sources.license_url IS 'URL of the license terms.';
+COMMENT ON COLUMN api_v1.meta_sources.periodicity IS 'Update cadence as ISO 8601 (`P1Y` / `P3M` / `P1M` / `P1D`)
+or `irregular`. More precise than the `cadence:` tag.';
+COMMENT ON COLUMN api_v1.meta_sources.eu_theme IS 'EU Publications Office Data Theme code (one of 13: `AGRI`, `ECON`,
+`EDUC`, `ENER`, `ENVI`, `GOVE`, `HEAL`, `INTR`, `JUST`, `REGI`,
+`SOCI`, `TECH`, `TRAN`). Aligns with Felles datakatalog / DCAT-AP.';
+COMMENT ON COLUMN api_v1.meta_sources.attribution IS 'Citation string for academic / legal compliance (e.g.
+"Kilde: Statistisk sentralbyrå, tabell 08764").';
+COMMENT ON COLUMN api_v1.meta_sources.tags IS '`text[]` of namespaced tags: `provider:<X>`, `topic:<X>`,
+`geo:<X>`, `cadence:<X>`, `eu_theme:<X>`. Filter via PostgREST''s
+`?tags=cs.{...}` array-contains operator. Always 5 entries (one
+per declared namespace).';
+COMMENT ON COLUMN api_v1.meta_sources.last_ingested_at IS '`MAX(finished_at)` from `raw.ingest_runs` filtered to
+successful runs (`exit_code = 0`). NULL until the source has
+at least one successful run on the current cluster.';
+COMMENT ON COLUMN api_v1.meta_sources.last_upstream_update_at IS '`MAX(upstream_updated_at)` from successful ingest runs.
+NULL when the source hasn''t run yet OR its ingest module
+doesn''t capture the upstream''s "updated" field (Red Cross
+web scrape, Brreg per-entity fetch).';
+COMMENT ON COLUMN api_v1.meta_sources.latest_row_count IS '`rows_parsed` from the most recent successful run. NULL when
+the source has zero successful runs on the current cluster.';
+COMMENT ON COLUMN api_v1.meta_sources.total_runs IS 'Count of successful runs ever recorded for this source. 0 when
+no successful run exists.';
+COMMENT ON COLUMN api_v1.meta_sources.downstream_model_count IS 'Number of distinct downstream dbt models that derive from this
+source via the `lineage` seed. 0 for sources not yet wired
+into a mart.';
+
 -- ngo_index  ←  marts.mart_ngo_index
 CREATE OR REPLACE VIEW api_v1.ngo_index AS SELECT * FROM marts.mart_ngo_index;
 COMMENT ON COLUMN api_v1.ngo_index.orgnr IS '9-digit Brreg organisasjonsnummer (text — leading zeros are

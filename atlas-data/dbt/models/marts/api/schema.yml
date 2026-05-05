@@ -648,3 +648,219 @@ models:
           exists. One sentence; read by humans, not parsers.
         data_tests:
           - not_null
+
+  - name: mart_meta_sources
+    description: |
+      Per-source catalogue row — one per ingest source in
+      `_sources_manifest`, joined to `raw.ingest_runs` aggregates so
+      consumers see freshness alongside the static metadata. Wraps to
+      `api_v1.meta_sources` and backs `/data/sources` in the customer
+      frontend (PLAN-007 phase 4).
+
+      Tags column is a Postgres `text[]` carrying the four declared
+      namespaces (`provider:`, `topic:`, `geo:`, `cadence:`) plus the
+      `eu_theme:` namespace. The customer frontend renders each as a
+      filter pill; PostgREST consumers filter via `?tags=cs.{provider:ssb}`.
+
+      `last_ingested_at` and `last_upstream_update_at` come from
+      `raw.ingest_runs` aggregated over successful (`exit_code = 0`)
+      runs. Sources whose ingest module hasn't yet captured the
+      upstream's "updated" field leave `last_upstream_update_at` NULL —
+      that's the design (`raw.ingest_runs.upstream_updated_at` is
+      nullable per migration 028).
+
+      `downstream_model_count` is the number of distinct dbt models
+      that derive from this source via the `lineage` seed (Phase 3.3).
+      0 for sources whose data hasn't yet been wired into a mart.
+    columns:
+      - name: source_id
+        description: Atlas catalogue id; primary key. Matches `_sources_manifest.source_id`.
+        data_tests:
+          - not_null
+          - unique
+      - name: upstream_id
+        description: Upstream's own identifier (SSB table number, FHI dataset slug, etc.).
+        data_tests: [not_null]
+      - name: upstream_url
+        description: Canonical link to the data on the upstream's site (often the API endpoint).
+        data_tests: [not_null]
+      - name: upstream_landing_page
+        description: |
+          Human-browsable web page describing the dataset (DCAT-AP `dcat:landingPage`).
+          Empty when `upstream_url` is already browsable; clients fall back to that.
+      - name: upstream_title
+        description: Source's authoritative title at the upstream (usually Norwegian).
+        data_tests: [not_null]
+      - name: description
+        description: One-paragraph framing for the customer-facing catalogue.
+        data_tests: [not_null]
+      - name: publisher
+        description: Institution that publishes the data.
+        data_tests: [not_null]
+      - name: license
+        description: License token (e.g. `NLOD`); see `license_url` for terms.
+        data_tests: [not_null]
+      - name: license_url
+        description: URL of the license terms.
+        data_tests: [not_null]
+      - name: periodicity
+        description: |
+          Update cadence as ISO 8601 (`P1Y` / `P3M` / `P1M` / `P1D`)
+          or `irregular`. More precise than the `cadence:` tag.
+        data_tests: [not_null]
+      - name: eu_theme
+        description: |
+          EU Publications Office Data Theme code (one of 13: `AGRI`, `ECON`,
+          `EDUC`, `ENER`, `ENVI`, `GOVE`, `HEAL`, `INTR`, `JUST`, `REGI`,
+          `SOCI`, `TECH`, `TRAN`). Aligns with Felles datakatalog / DCAT-AP.
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('eu_data_theme')
+              field: code
+      - name: attribution
+        description: |
+          Citation string for academic / legal compliance (e.g.
+          "Kilde: Statistisk sentralbyrå, tabell 08764").
+        data_tests: [not_null]
+      - name: tags
+        description: |
+          `text[]` of namespaced tags: `provider:<X>`, `topic:<X>`,
+          `geo:<X>`, `cadence:<X>`, `eu_theme:<X>`. Filter via PostgREST's
+          `?tags=cs.{...}` array-contains operator. Always 5 entries (one
+          per declared namespace).
+        data_tests: [not_null]
+      - name: last_ingested_at
+        description: |
+          `MAX(finished_at)` from `raw.ingest_runs` filtered to
+          successful runs (`exit_code = 0`). NULL until the source has
+          at least one successful run on the current cluster.
+      - name: last_upstream_update_at
+        description: |
+          `MAX(upstream_updated_at)` from successful ingest runs.
+          NULL when the source hasn't run yet OR its ingest module
+          doesn't capture the upstream's "updated" field (Red Cross
+          web scrape, Brreg per-entity fetch).
+      - name: latest_row_count
+        description: |
+          `rows_parsed` from the most recent successful run. NULL when
+          the source has zero successful runs on the current cluster.
+      - name: total_runs
+        description: |
+          Count of successful runs ever recorded for this source. 0 when
+          no successful run exists.
+        data_tests: [not_null]
+      - name: downstream_model_count
+        description: |
+          Number of distinct downstream dbt models that derive from this
+          source via the `lineage` seed. 0 for sources not yet wired
+          into a mart.
+        data_tests: [not_null]
+  - name: mart_meta_endpoints
+    description: |
+      One row per queryable Atlas endpoint, with tags inherited from
+      upstream sources via the lineage graph and a `layer:<schema>` tag
+      from the schema. Wraps to `api_v1.meta_endpoints` and backs the
+      tag-filter catalogue at `/data` in the customer frontend
+      (PLAN-007 phase 4).
+
+      Includes endpoints from `api_v1.*`, `marts.*`, and `raw.*`
+      (Atlas's three open-by-default schemas; `private_marts.*` stays
+      auth-gated and is excluded). Skips internal seeds prefixed `_`
+      (`_sources_manifest`, `_sources_dimensions`) and any `dbt_*`
+      diagnostic tables.
+
+      Tag inheritance uses the **union** rule: a `mart_*` derived from
+      many sources picks up every source's `provider:`, `topic:`,
+      `geo:`, `cadence:`, and `eu_theme:` tag, deduped. Filter
+      "involves something annual" beats "purely annual" — see PLAN-007
+      phase 3.2 for the design rationale.
+    columns:
+      - name: endpoint
+        description: |
+          Schema-qualified table/view identifier (`<schema>.<table>`).
+          Primary key.
+        data_tests:
+          - not_null
+          - unique
+      - name: schema_name
+        description: One of `api_v1`, `marts`, `raw`.
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: [api_v1, marts, raw]
+      - name: table_name
+        description: Bare table/view name without schema qualification.
+        data_tests: [not_null]
+      - name: tags
+        description: |
+          `text[]` carrying the layer tag (`layer:<schema>`) plus inherited
+          source tags via union semantics. Filter via PostgREST's
+          `?tags=cs.{...}` array-contains operator.
+        data_tests: [not_null]
+      - name: is_public_api
+        description: |
+          `true` when `schema_name = 'api_v1'`. Lets clients distinguish
+          stable-contract endpoints from the broader `marts.*` / `raw.*`
+          surfaces that are queryable but not version-guaranteed.
+        data_tests: [not_null]
+      - name: table_type
+        description: |
+          `BASE TABLE` for tables (most `marts.*`, all `raw.*`) and
+          `VIEW` for views (all `api_v1.*` wrappers). Useful for
+          distinguishing materialised marts from auto-wrapped views.
+        data_tests: [not_null]
+  - name: mart_meta_dimensions
+    description: |
+      Per-source × per-dimension catalogue. Backs the "what does this
+      column mean" panel on `/data/sources/[source_id]` (customer
+      frontend, PLAN-007 phase 4) and exposes editorial semantics
+      shoppers would otherwise have to leave Atlas to find on the
+      upstream's docs site.
+
+      v1 scope (this PR): editorial pass-through over the
+      `_sources_dimensions` seed (4 columns: `meaning`, `value_format`,
+      `notes`). The `cardinality`, `example_values`, and `null_count`
+      columns from PLAN-007 phase 3.4's full spec require introspecting
+      `raw.<source>` tables with per-source column-name rules — deferred
+      to a follow-up PR. See `mart_meta_dimensions.sql` header for the
+      open question (Jinja loop vs separate Python extract script vs
+      per-source `column_name:` field in manifest.yml).
+
+      Row count = same as `_sources_dimensions` (~216, growing with
+      every new source × upstream-dimension).
+    columns:
+      - name: source_id
+        description: |
+          Source the dimension belongs to. Joins to
+          `mart_meta_sources.source_id` and `_sources_manifest.source_id`.
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('_sources_manifest')
+              field: source_id
+      - name: code
+        description: |
+          Upstream's own dimension code (e.g. `Region`, `Tid`,
+          `ContentsCode` for SSB; `GEO`, `AAR`, `KJONN`, `MEASURE_TYPE`
+          for FHI). Verbatim from the source's API/export — not
+          translated to canonical Atlas vocabulary.
+        data_tests: [not_null]
+      - name: meaning
+        description: |
+          Short human-readable description of what the dimension
+          represents. Hand-authored editorial content from each source's
+          `manifest.yml` `dimensions:` block.
+        data_tests: [not_null]
+      - name: value_format
+        description: |
+          Encoding of values within the dimension (e.g. "4-digit year as
+          text", "1- to 6-character numeric code"). Empty string when no
+          specific format applies.
+      - name: notes
+        description: |
+          Editorial notes — code-list size, semantic gotchas, downstream
+          filtering decisions. Empty string when no notes apply.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [source_id, code]
