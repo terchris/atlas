@@ -14,9 +14,11 @@ Bufdir **Barnefattigdom kommunemonitor** — annual child-poverty-related indica
 
 ## Known quirks / fragility
 
-- **Discovery regex** depends on Bufdir keeping `barnefattigdom_monitor_<hash>.zip` under `/uploads/` on the CDN host referenced from the Markdown block. If the page structure changes, the ingest will throw until the matcher is updated.
+- **Discovery regex is multi-tier** with progressive fallback (`canonical` → `loose-date-format` → `loose-monitor` → `loose-bare`); the matched tier is logged on each run and a `zip.discovery.fallback_tier` warn fires if anything other than `canonical` matches. See [`parse.ts`](./parse.ts) `discoverZipUrl`. Survives most upstream rearrangements (filename pattern, hostname, path) but a wholesale page restructure still throws.
 - **Decimals**: `prosent` cells arrive as Norwegian strings (`9,2` with spaces); the parser normalises before casting.
 - **Oslo bydel** rows can appear with longer `region_code` values; the dbt model still maps only **4-digit** codes to `kommune_nr` (see new-sources INVESTIGATE Q3).
+- **Indikator_10 is absent from the bundle.** The numbering Bufdir publishes goes `1, 2, 3, 4, 5, 6, 7, 8, 9a, 9b, 11, …, 22` — likely either retired by Bufdir or split into the `9a` / `9b` innvandrerbakgrunn pair. Not a parser gap; not something we filter out. Don't waste time looking for it.
+- **Surrogate `indicator_api_id`** is `bf_zip_<24 hex of SHA-256(filename stem)>`. If Bufdir renames a workbook (e.g. `Indikator_5b_X` → `Indikator_5_X`), every downstream row's id changes — consumers see a "new" indicator and the old one disappears. Open follow-up: investigate a more stable identity or add an alias table.
 
 ## Status — handoff for a wiped Postgres cluster
 
