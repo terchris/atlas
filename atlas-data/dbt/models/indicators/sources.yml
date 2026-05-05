@@ -623,7 +623,7 @@ sources:
       - name: bufdir_barnefattigdom
         description: |
           Bufdir Barnefattigdom kommunemonitor — annual indicator time series from
-          Bufdir's public monitor API (Strapi metadata + Azure APIM indicator-data).
+          the official bulk ZIP of `Indikator_*.xlsx` exports (monitor page resolves the CDN ZIP URL).
           Populated by atlas-data/ingest/src/sources/bufdir-barnefattigdom.
         loaded_at_field: loaded_at
         freshness:
@@ -631,7 +631,9 @@ sources:
           error_after: {count: 800, period: day}
         columns:
           - name: indicator_api_id
-            description: Bufdir monitor API indicator id (hex string from Strapi).
+            description: |-
+              Stable surrogate bf_zip_<24 hex> keyed on the workbook filename inside the Bufdir ZIP
+              (SHA-256 stem); legacy Strapi `indicatorApiId` is no longer sourced.
             data_tests:
               - not_null
           - name: indicator_slug
@@ -641,35 +643,39 @@ sources:
             data_tests:
               - not_null
           - name: indicator_group_slug
-            description: Strapi indicator-group slug (thematic bucket within the monitor).
+            description: |-
+              Zip ingest uses the fixed literal barnefattigdom_zip (Strapi group slugs do not ship in the XLSX).
             data_tests:
               - not_null
           - name: indicator_name
-            description: Upstream machine-oriented indicator name (Norwegian / mixed).
+            description: Concatenated title text from workbook rows above the Data header (Norwegian).
             data_tests:
               - not_null
           - name: indicator_title
-            description: Human-facing indicator title from Strapi.
+            description: Same as indicator_name — derived from the workbook title rows.
             data_tests:
               - not_null
           - name: link_text
-            description: Optional link label from Strapi; may be NULL.
+            description: Unused for ZIP ingest; always NULL.
             data_type: text
           - name: region_code
             description: >-
-              Geographic code from the monitor API (kommune, fylke, land, or longer sub-kommune codes).
+              Geographic code from workbook column Region (same semantics as historic API geography keys).
             data_tests:
               - not_null
           - name: category_unit
-            description: Category axis — barn or husholdning (verbatim Norwegian from the API).
+            description: |-
+              Column Enhet (barn or husholdning), normalised lowercase in ingest.
             data_tests:
               - not_null
           - name: category_format
-            description: Category axis — prosent or antall (verbatim Norwegian from the API).
+            description: |-
+              Column Tallformat (prosent or antall), normalised lowercase in ingest.
             data_tests:
               - not_null
           - name: year
-            description: Calendar year key within the upstream values_json time series.
+            description: |-
+              Calendar year keyed from workbook header columns (same row as scalar value).
             data_tests:
               - not_null
           - name: value
@@ -677,8 +683,8 @@ sources:
               absent.
             data_type: numeric
           - name: values_json
-            description: >-
-              Verbatim JSON object of year-to-value pairs returned by the details endpoint for this slice.
+            description: |-
+              Parsed year-to-value pairs for this Region × category slice (spreadsheet blanks / .. → JSON null).
             data_tests:
               - not_null
           - name: loaded_at

@@ -3,15 +3,16 @@
 
 source_id: bufdir-barnefattigdom
 upstream_id: barnefattigdom-monitor
-upstream_url: https://apim-bufdirno.azure-api.net/app-stat-monitor-api/monitor/indicator-data/detailsmultiple
+upstream_url: https://www.bufdir.no/statistikk-og-analyse/monitor/barnefattigdom/
 upstream_landing_page: https://www.bufdir.no/statistikk-og-analyse/monitor/barnefattigdom/
 upstream_title: "Barnefattigdom kommunemonitor"
 description: |
-  Barne-, ungdoms- og familiedirektoratet (Bufdir) publishes the Barnefattigdom kommunemonitor as an open
-  web application backed by a public JSON API. The monitor aggregates several administrative and survey
-  sources (see Bufdir's own methodology pages); Atlas ingests the published indicator time series per
-  geographic code so analysts can compare Bufdir's kommune-level poverty lens with register-based sources
-  such as SSB low-income statistics.
+  Barne-, ungdoms- og familiedirektoratet (Bufdir) publishes the Barnefattigdom kommunemonitor on
+  bufdir.no and ships a single bulk ZIP of `Indikator_*.xlsx` workbooks ("last ned hele datasettet").
+  Atlas downloads that ZIP (URL discovered from the monitor page), parses sheet `Data` in each
+  workbook, and loads kommune- and sub-kommune-level time series into `raw.bufdir_barnefattigdom`
+  so analysts can compare Bufdir's poverty lens with register-based sources such as SSB low-income
+  statistics.
 publisher: Barne-, ungdoms- og familiedirektoratet
 license: NLOD
 license_url: https://data.norge.no/nlod/no/2.0
@@ -27,26 +28,26 @@ tags:
 
 dimensions:
   - code: indicator_api_id
-    meaning: Bufdir monitor API indicator identifier
-    value_format: 24-character hex string
-    notes: Assigned in Bufdir's CMS (Strapi); stable per indicator definition.
+    meaning: Stable surrogate indicator key for ZIP workbook rows (not Strapi)
+    value_format: bf_zip_<24 lowercase hex>
+    notes: Derived as SHA-256 fingerprint of the `Indikator_*.xlsx` filename stem; breaks if Bufdir renames workbook files inside the ZIP.
   - code: region_code
-    meaning: Geographic code in the monitor API (kommune, fylke, land, or sub-kommune area)
+    meaning: Geographic code from workbook column Region
     value_format: "0 (land), 2-digit fylke, 4-digit kommune, or longer codes for bydel/delbydel"
-    notes: Ingest uses active 4-digit kommuner from SSB Klass 131 as the primary pull set; the API can return additional codes per indicator batch.
+    notes: Rows follow whatever geography levels each indicator publishes.
   - code: category_unit
-    meaning: First axis of the indicator's category pair (Norwegian)
+    meaning: Workbook column Enhet (first category axis), normalised lowercase
     value_format: barn or husholdning
-    notes: Mirrors the public UI's ChildPoverty category tuples.
+    notes: Mirrors the paired rows in each Data sheet for child vs household units.
   - code: category_format
-    meaning: Second axis — count vs share (Norwegian)
+    meaning: Workbook column Tallformat (second category axis), normalised lowercase
     value_format: antall or prosent
-    notes: Paired with category_unit; four tuples ingested per indicator × region.
+    notes: Paired with category_unit — four tuples per workbook × geography when all rows exist upstream.
   - code: year
-    meaning: Calendar year of the observation in the time series
+    meaning: Calendar year column from workbook header row
     value_format: 4-digit integer
-    notes: Years present vary by indicator; see values_json for the full spine.
+    notes: Spines differ by indicator — see values_json for the full year map before filtering NAs.
   - code: values_json
-    meaning: Verbatim year-to-value map returned by the details endpoint for the slice
-    value_format: JSON object with string year keys
-    notes: Preserves upstream shape for audit; mart uses the scalar value column for the requested year row.
+    meaning: Parsed year→value map for the geography and Enhet/Tallformat tuple
+    value_format: JSON object with string year keys; suppressed cells as null
+    notes: Matches prior raw semantics (full spine per slice); mart reads scalar `value` for the keyed year row.

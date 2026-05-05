@@ -1409,11 +1409,9 @@ models:
             - contents_code
 
   - name: indicators__bufdir_barnefattigdom
-    description: |
+    description: |-
       Per-source passthrough for Bufdir Barnefattigdom kommunemonitor. One row per
-      (indicator, region_code, category pair, year). Exposes canonical `contents_code`
-      / `contents_label` derived from the upstream indicator slug and category axes so
-      the table unions cleanly with other indicator marts.
+      (indicator, region_code, category pair, year) parsed from ZIP `Indikator_*.xlsx` workbook Data sheets.
     columns:
       - name: source_id
         description: Atlas catalogue id for this ingest — always bufdir-barnefattigdom.
@@ -1423,7 +1421,7 @@ models:
               values: [bufdir-barnefattigdom]
         data_type: text
       - name: indicator_api_id
-        description: Bufdir monitor API indicator identifier (hex string from Strapi).
+        description: Stable surrogate workbook id — bf_zip_<24 hex fingerprint of the XLSX filename stem>.
         data_tests:
           - not_null
         data_type: text
@@ -1434,26 +1432,26 @@ models:
           - not_null
         data_type: text
       - name: indicator_group_slug
-        description: Strapi indicator-group slug (thematic section within the monitor).
+        description: Fixed literal barnefattigdom_zip for ZIP-ingested rows (replaces legacy Strapi group slugs).
         data_tests:
           - not_null
         data_type: text
       - name: indicator_name
-        description: Upstream machine-oriented indicator name (verbatim from Strapi).
+        description: Workbook-derived indicator title concatenated above the Region header rows.
         data_tests:
           - not_null
         data_type: text
       - name: indicator_title
-        description: Human-facing indicator title from Strapi (Norwegian).
+        description: Same human-facing title chain as indicator_name after ZIP parsing.
         data_tests:
           - not_null
         data_type: text
       - name: link_text
-        description: Optional Strapi link label for the indicator; NULL when not set upstream.
+        description: NULL for workbook-backed rows (legacy Strapi link label not present upstream).
         data_type: text
       - name: region_code
-        description: Geographic code from the Bufdir monitor API (kommune, fylke, land, or longer 
-          codes).
+        description: |-
+          Geographic code string from workbook column Region (same levels as the legacy API: land, fylke, kommune, longer bydel codes).
         data_tests:
           - not_null
         data_type: text
@@ -1473,7 +1471,7 @@ models:
               field: fylke_nr
         data_type: text
       - name: category_unit
-        description: First category axis from the API — barn (children) or husholdning (households).
+        description: First category axis from column Enhet — barn (children) or husholdning (households).
         data_tests:
           - not_null
           - accepted_values:
@@ -1502,8 +1500,8 @@ models:
           - not_null
         data_type: text
       - name: contents_label
-        description: Human-readable label combining the Strapi indicator title with the category 
-          axes.
+        description: |-
+          Human-readable label combining workbook title rows with barn/husholdning and prosent/antall verbs.
         data_tests:
           - not_null
         data_type: text
@@ -1511,8 +1509,7 @@ models:
         description: Numeric value for this year; NULL when the upstream series omits this year.
         data_type: numeric
       - name: values_json
-        description: Verbatim upstream year-to-value map (JSON object) retained for audit and gap 
-          detection.
+        description: Parse of Data sheet rows into year keys (spreadsheet blanks / suppression → JSON null values).
         data_tests:
           - not_null
         data_type: jsonb
