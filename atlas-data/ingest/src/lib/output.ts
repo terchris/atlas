@@ -1,28 +1,52 @@
-import { mkdir, writeFile } from "node:fs/promises";
+import { createWriteStream } from "node:fs";
+import { mkdir } from "node:fs/promises";
 import { dirname } from "node:path";
+import { once } from "node:events";
+import { finished } from "node:stream/promises";
 
 /**
  * Write a list of objects as newline-delimited JSON. Shared across source
  * modules so the local-development output format stays consistent.
  *
- * Chunks the serialisation to avoid building one huge intermediate string for
- * large payloads (we've seen ~100 k rows per ingest).
+ * Streams one line at a time so very large payloads (e.g. bufdir barnefattigdom)
+ * do not hit V8 `Invalid string length` from joining multi‑MB chunks.
  */
 export async function writeNdjson<T>(path: string, rows: T[]): Promise<void> {
   await mkdir(dirname(path), { recursive: true });
-  const CHUNK = 2_000;
-  const lines: string[] = [];
-  let buffered = 0;
-  const chunks: string[] = [];
-  for (const row of rows) {
-    lines.push(JSON.stringify(row));
-    buffered++;
-    if (buffered >= CHUNK) {
-      chunks.push(lines.join("\n"));
-      lines.length = 0;
-      buffered = 0;
+  const stream = createWriteStream(path, { encoding: "utf8" });
+  stream.setMaxListeners(0);
+  try {
+    for (const row of rows) {
+      const line = JSON.stringify(row) + "\n";
+      const ok = stream.write(line);
+      if (!ok) await once(stream, "drain");
     }
+  } finally {
+    stream.end();
   }
-  if (lines.length) chunks.push(lines.join("\n"));
-  await writeFile(path, chunks.join("\n") + "\n", "utf8");
+  await finished(stream);
+}
+
+/** Stream NDJSON incrementally — use for ingests larger than heap-safe arrays. */
+export async function ndjsonStreamingWriter(path: string): Promise<{
+  writeRow: (row: unknown) => Promise<void>;
+  close: () => Promise<void>;
+}> {
+  await mkdir(dirname(path), { recursive: true });
+  const stream = createWriteStream(path, { encoding: "utf8" });
+  stream.setMaxListeners(0);
+
+  async function writeRow(row: unknown): Promise<void> {
+    const line = JSON.stringify(row) + "\n";
+    const ok = stream.write(line);
+    if (!ok) await once(stream, "drain");
+  }
+
+  return {
+    writeRow,
+    close: async () => {
+      stream.end();
+      await finished(stream);
+    },
+  };
 }
