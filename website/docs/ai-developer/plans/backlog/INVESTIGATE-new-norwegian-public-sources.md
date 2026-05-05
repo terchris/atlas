@@ -279,7 +279,7 @@ These extend the existing Tier-1 family entries above, plus one fully-new candid
 
 #### C.1 SSB-extension family
 
-- **[Q38] `ssb-13006` — Sosialhjelp, gjennomsnittlig stønadstid**. SSB statistikkbanktabell 13006. Annual at 31.12. Same SSB PxWebApi v2 plumbing Atlas already uses. Adds duration-on-welfare to Atlas's existing single-snapshot welfare picture — pairs naturally with `ssb-13995` (cases) and the existing welfare-policy tables. Trivial PLAN, ~3h. **Tier-1**, gap-fill into Report #5.
+- **[Q38] `ssb-13006` — Sosialhjelp, gjennomsnittlig stønadstid.** **Resolved 2026-05-05 — phantom table; data already in `ssb-13995`.** A Cursor BG onboarding attempt (PR #56, issue #55) confirmed `13006` is **not exposed via SSB's PxWebApi v2-beta** (metadata 404, search 0 hits, v0 metadata 400). The statbank UI URL returns 200 but that's the SPA shell, not a working data endpoint. Direct SSB API search for `stønadstid` returns four tables — `08856`, `08857`, `13995`, `12404` — **not 13006**. Atlas's existing `ssb-13995` ingest already carries the same data: its `ContentsCode` dimension exposes 8+ stønadstid codes including `KOSsosgjantmnd0000` (overall mean duration), `KOSgjsnitt18240000` (18–24 yrs), `KOSgj25290000` / `30390000` / `40490000` / `50670000` per age band, and `KOSgjsnittvklo0000` (mean duration when sosialhjelp is the main income). Anyone wanting "duration on welfare" should query `marts.indicators__ssb_13995` filtered by those content codes. **No PLAN required; no separate folder.** [Q50]'s 2026-05-04 wording said `13138` was split into `13995 + 13006`; the actual SSB restructure consolidated the duration data into `13995`'s ContentsCode dimension, so `13006` was never created (or never re-published) as a standalone table.
 
 #### C.2 Udir-family extensions (extend Tier-1 #4)
 
@@ -307,11 +307,11 @@ The prior Samfunnspuls research file flagged three table-ID open questions that 
 
 - **[Q48] `ssb-10826` — Alders- og kjønnsfordeling for befolkningen i bydeler (B), 2001–2026**. Verified live: bydel-level companion to `ssb-07459` (which Atlas already ingests at kommune/fylke/national). Covers Oslo (17 bydeler), Stavanger (7 + Finnøy/Rennesøy), Bergen (8 bydeler), Trondheim (4 bydeler) — single-year ages 0–105+, both sexes. **Genuine net-new value**: Atlas currently has zero bydel-resolution population denominator. With FHI sources at bydel level (per `crosswalk_geo_to_kommune` which already handles 6-digit bydel codes) and Bufdir at bydel level for Oslo (per [Q3]), a bydel population denominator unlocks per-capita normalisation for every existing bydel-resolved indicator. **Recommendation**: Tier-1, ingest immediately after `ssb-07459` plumbing is verified to extend cleanly. ~3h PLAN.
 - **[Q49] `ssb-04362` — companion to `ssb-07459`** (cited jointly in Samfunnspuls's Om tallene block per the field notes, but never separately catalogued). The prior research's open question was: "Atlas should decide whether to consolidate on 07459 only or treat the trio as one logical 'population' source." **Recommendation**: leave as deferred — verify during the `ssb-10826` PLAN whether `ssb-04362` adds a temporal extension (older years), an alternative grouping, or is fully redundant with `ssb-07459`. If redundant, document as superseded; if not, fold as a sibling table in the same `ssb-07459` source folder rather than a new folder.
-- **[Q50] `ssb-13138` — Sosialhjelpstilfeller, utbetalt beløp og stønadstid (K) (avslutta serie) 2015–2021**. **Resolved by metadata fetch 2026-05-04**: this is a *discontinued series* (`avslutta serie`, last year 2021) that SSB split into `ssb-13995` (cases) and `ssb-13006` (duration) when the welfare statistikk was restructured. Both successor tables are covered (`ssb-13995` already in Atlas; `ssb-13006` added as [Q38] above). Samfunnspuls's Power BI dataset name "ssb-13138" is therefore stale tooling-side metadata referring to the predecessor — no action needed beyond resolving the open question that flagged the mismatch. **No PLAN required.**
+- **[Q50] `ssb-13138` — Sosialhjelpstilfeller, utbetalt beløp og stønadstid (K) (avslutta serie) 2015–2021**. **Resolved by metadata fetch 2026-05-04**: this is a *discontinued series* (`avslutta serie`, last year 2021). SSB consolidated the data into `ssb-13995` (cases + amounts + duration as ContentsCode entries) when the welfare statistikk was restructured. Atlas's existing `ssb-13995` ingest covers everything from the predecessor. Samfunnspuls's Power BI dataset name "ssb-13138" is therefore stale tooling-side metadata referring to the predecessor — no action needed beyond resolving the open question that flagged the mismatch. **No PLAN required.** *(2026-05-05 footnote: this entry originally said `13138` was split into `13995` + `13006`; that was wrong — only `13995` exists as a successor. See [Q38] resolution for the full story.)*
 
 ### D. What this means for sequencing
 
-The Phase 1 PLAN sequence in the section above expands by 4 PLANs (`ssb-sosialhjelp-stønadstid`, `udir-fravar`, `udir-sluttet-vgs`, `nav-helt-ledige`, plus the IMDi extensions folded into the existing IMDi PLAN). Updated phase 1 sequence:
+The Phase 1 PLAN sequence in the section above expands by 3 PLANs (`udir-fravar`, `udir-sluttet-vgs`, `nav-helt-ledige`, plus the IMDi extensions folded into the existing IMDi PLAN). The `ssb-sosialhjelp-stønadstid` PLAN that originally appeared here was dropped on 2026-05-05 after Cursor BG (PR #56) confirmed `ssb-13006` is a phantom and the data is already in Atlas via `ssb-13995`'s ContentsCode dimension — see [Q38] resolution above. Updated phase 1 sequence:
 
 ```
 Phase 1 — Tier-1 ingests (parallelisable after Phase 0)
@@ -328,8 +328,9 @@ Phase 1 — Tier-1 ingests (parallelisable after Phase 0)
   PLAN-012-udir-nasjonale-prover.md
   PLAN-013-udir-fravar.md              ← NEW (Samfunnspuls cross-check)
   PLAN-014-udir-sluttet-vgs.md         ← NEW (Samfunnspuls cross-check)
-  PLAN-015-ssb-sosialhjelp-stønadstid.md  ← NEW (Samfunnspuls cross-check; smallest SSB add)
-  PLAN-016-ssb-bydel-population.md        ← NEW (Samfunnspuls cross-check; ssb-10826 — bydel-level age/sex; unblocks per-capita normalisation for every bydel-resolved indicator)
+  PLAN-015-ssb-bydel-population.md     ← NEW (Samfunnspuls cross-check; ssb-10826 — bydel-level age/sex; unblocks per-capita normalisation for every bydel-resolved indicator)
+  -- (PLAN-015-ssb-sosialhjelp-stønadstid.md was originally listed here but
+  --  dropped 2026-05-05 — see [Q38] resolution. Numbers shifted accordingly.)
 ```
 
 Phase 2 / Phase 3 unchanged from the original sequencing — but renumber subsequent PLANs (the ssb-crime / helfo-fastlege / dsb / brreg-frivillighetsregisteret PLANs become PLAN-017+).
@@ -340,11 +341,11 @@ Phase 2 / Phase 3 unchanged from the original sequencing — but renumber subseq
 10. **[Q41]** `udir-grunnskoler` is a sub-step of the Udir GSI PLAN, not a standalone PLAN. Resolved 2026-05-04.
 11. **[Q47]** `rk-internal-medlemmer-frivillige` belongs in [`INVESTIGATE-multi-ngo-supply-model-extensions.md`](./INVESTIGATE-multi-ngo-supply-model-extensions.md), not here. Resolved 2026-05-04.
 12. **[Q48]** `ssb-10826` (bydel-level age/sex) is Tier-1 — verified live, ingested as `PLAN-016-ssb-bydel-population.md` after the kommune-level `ssb-07459` plumbing. Resolved 2026-05-04.
-13. **[Q50]** `ssb-13138` is a discontinued series (`avslutta serie 2015-2021`) superseded by `ssb-13995` + `ssb-13006`. Atlas already covers both successors; no PLAN needed. Resolved 2026-05-04 via SSB metadata fetch.
+13. **[Q50]** `ssb-13138` is a discontinued series (`avslutta serie 2015-2021`); the data lives in `ssb-13995`'s ContentsCode dimension which Atlas already ingests. No PLAN needed. Resolved 2026-05-04 via SSB metadata fetch; corrected 2026-05-05 (originally said `13138 → 13995 + 13006`; the actual restructure consolidated everything into `13995`).
+14. **[Q38]** `ssb-13006` is a phantom — not in SSB's PxWebApi v2-beta; data already covered by `ssb-13995`'s ContentsCode dimension (8+ stønadstid codes). PR #56 / issue #55 closed without merging. Resolved 2026-05-05 via Cursor BG escalation + manual SSB API verification.
 
 ### F. Open questions added by the cross-check
 
-26. **[Q38]** `ssb-13006` placement — own folder (`ssb-13006`) or extend an existing welfare-source folder. Recommendation: own folder for consistency with Atlas's "one SSB table = one folder" pattern.
 27. **[Q39]** `udir-fravar` ingest mechanism — Skoleporten programmatic endpoint vs HTML scrape (Samfunnspuls uses an R-script auto-update). Investigate during the Udir PLAN.
 28. **[Q40]** `udir-sluttet-vgs` vs `fhi-vgs-gjennomforing` — Atlas already has the completion side; document the methodological difference (annual dropout-during-year vs 3-year-cohort completion) so consumers don't double-count.
 29. **[Q42]** IMDi-extension scope — fold `imdi-innvandringsgrunn-kjonn` into the same `imdi` source family as `imdi-bosetting`, so one PLAN (`PLAN-009-imdi-bosetting`) covers all three IMDi indicators.
