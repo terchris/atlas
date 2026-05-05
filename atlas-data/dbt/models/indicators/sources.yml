@@ -643,12 +643,14 @@ sources:
             data_tests:
               - not_null
           - name: indicator_group_slug
-            description: |-
-              Zip ingest uses the fixed literal barnefattigdom_zip (Strapi group slugs do not ship in the XLSX).
+            description: >-
+              Zip ingest uses the fixed literal barnefattigdom_zip (Strapi group slugs do not ship in
+              the XLSX).
             data_tests:
               - not_null
           - name: indicator_name
-            description: Concatenated title text from workbook rows above the Data header (Norwegian).
+            description: Concatenated title text from workbook rows above the Data header 
+              (Norwegian).
             data_tests:
               - not_null
           - name: indicator_title
@@ -664,18 +666,16 @@ sources:
             data_tests:
               - not_null
           - name: category_unit
-            description: |-
-              Column Enhet (barn or husholdning), normalised lowercase in ingest.
+            description: Column Enhet (barn or husholdning), normalised lowercase in ingest.
             data_tests:
               - not_null
           - name: category_format
-            description: |-
-              Column Tallformat (prosent or antall), normalised lowercase in ingest.
+            description: Column Tallformat (prosent or antall), normalised lowercase in ingest.
             data_tests:
               - not_null
           - name: year
-            description: |-
-              Calendar year keyed from workbook header columns (same row as scalar value).
+            description: Calendar year keyed from workbook header columns (same row as scalar 
+              value).
             data_tests:
               - not_null
           - name: value
@@ -683,8 +683,9 @@ sources:
               absent.
             data_type: numeric
           - name: values_json
-            description: |-
-              Parsed year-to-value pairs for this Region × category slice (spreadsheet blanks / .. → JSON null).
+            description: >-
+              Parsed year-to-value pairs for this Region × category slice (spreadsheet blanks / .. → JSON
+              null).
             data_tests:
               - not_null
           - name: loaded_at

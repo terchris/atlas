@@ -1421,7 +1421,8 @@ models:
               values: [bufdir-barnefattigdom]
         data_type: text
       - name: indicator_api_id
-        description: Stable surrogate workbook id — bf_zip_<24 hex fingerprint of the XLSX filename stem>.
+        description: Stable surrogate workbook id — bf_zip_<24 hex fingerprint of the XLSX filename 
+          stem>.
         data_tests:
           - not_null
         data_type: text
@@ -1432,7 +1433,8 @@ models:
           - not_null
         data_type: text
       - name: indicator_group_slug
-        description: Fixed literal barnefattigdom_zip for ZIP-ingested rows (replaces legacy Strapi group slugs).
+        description: >-
+          Fixed literal barnefattigdom_zip for ZIP-ingested rows (replaces legacy Strapi group slugs).
         data_tests:
           - not_null
         data_type: text
@@ -1450,8 +1452,9 @@ models:
         description: NULL for workbook-backed rows (legacy Strapi link label not present upstream).
         data_type: text
       - name: region_code
-        description: |-
-          Geographic code string from workbook column Region (same levels as the legacy API: land, fylke, kommune, longer bydel codes).
+        description: >-
+          Geographic code string from workbook column Region (same levels as the legacy API: land, fylke,
+          kommune, longer bydel codes).
         data_tests:
           - not_null
         data_type: text
@@ -1471,7 +1474,8 @@ models:
               field: fylke_nr
         data_type: text
       - name: category_unit
-        description: First category axis from column Enhet — barn (children) or husholdning (households).
+        description: First category axis from column Enhet — barn (children) or husholdning 
+          (households).
         data_tests:
           - not_null
           - accepted_values:
@@ -1500,8 +1504,9 @@ models:
           - not_null
         data_type: text
       - name: contents_label
-        description: |-
-          Human-readable label combining workbook title rows with barn/husholdning and prosent/antall verbs.
+        description: >-
+          Human-readable label combining workbook title rows with barn/husholdning and prosent/antall
+          verbs.
         data_tests:
           - not_null
         data_type: text
@@ -1509,7 +1514,8 @@ models:
         description: Numeric value for this year; NULL when the upstream series omits this year.
         data_type: numeric
       - name: values_json
-        description: Parse of Data sheet rows into year keys (spreadsheet blanks / suppression → JSON null values).
+        description: >-
+          Parse of Data sheet rows into year keys (spreadsheet blanks / suppression → JSON null values).
         data_tests:
           - not_null
         data_type: jsonb
