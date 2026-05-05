@@ -18,6 +18,7 @@
     "refresh:brreg-enheter": "tsx --env-file=.env src/seed-sources/brreg-enheter/index.ts",
     "refresh:bring-postnummer": "tsx src/seed-sources/bring-postnummer/index.ts",
     "refresh:atlas-ngo-landscape": "tsx src/seed-sources/atlas-ngo-landscape/index.ts",
+    "ingest:bufdir-barnefattigdom": "tsx --env-file=.env src/sources/bufdir-barnefattigdom/index.ts",
     "ingest:fhi-alkohol": "tsx --env-file=.env src/sources/fhi-alkohol/index.ts",
     "ingest:fhi-befolkning": "tsx --env-file=.env src/sources/fhi-befolkning/index.ts",
     "ingest:fhi-befolkningsvekst": "tsx --env-file=.env src/sources/fhi-befolkningsvekst/index.ts",

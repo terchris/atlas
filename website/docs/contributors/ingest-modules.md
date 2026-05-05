@@ -15,7 +15,7 @@ For the full end-to-end workflow that ties this into dbt and the catalogue, see 
 - **`run()` wraps work in `recordIngestRun()`** — the wrapper inserts into `raw.ingest_runs` and owns sql lifecycle. Source modules do NOT call `closeSql()` themselves.
 - **npm script per source**: `"ingest:<id>": "tsx src/sources/<id>/index.ts"` in [`atlas-data/ingest/package.json`](https://github.com/terchris/atlas/blob/main/atlas-data/ingest/package.json).
 
-The full implemented-sources catalogue (currently 20 sources — SSB, FHI, Brreg, Red Cross) is in the in-source [`atlas-data/ingest/src/sources/README.md`](https://github.com/terchris/atlas/blob/main/atlas-data/ingest/src/sources/README.md). New entries land there during step 6 of [adding-a-source.md](./adding-a-source.md).
+The full implemented-sources catalogue (SSB, FHI, Brreg, Red Cross, Bufdir, and other providers) is in the in-source [`atlas-data/ingest/src/sources/README.md`](https://github.com/terchris/atlas/blob/main/atlas-data/ingest/src/sources/README.md) (auto-generated table). New entries land there during step 6 of [adding-a-source.md](./adding-a-source.md).
 
 ---
 

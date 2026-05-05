@@ -1,4 +1,4 @@
-# Investigate: Reports & indicators we can build from the 40-source catalogue
+# Investigate: Reports & indicators we can build from the 41-source catalogue
 
 > **IMPLEMENTATION RULES:** Before implementing this plan, read and follow:
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
@@ -6,15 +6,15 @@
 
 ## Status: Backlog
 
-**Goal**: Survey the 40 sources Atlas now ingests, identify the **reports and composite indicators** they enable end-to-end (catalogue → ingest → mart → frontend), and document the **conformed dimensions, crosswalks, and reference seeds** that have to land in dbt before those indicators become queryable. Output: a sequenced list of indicator-PLAN candidates the user can pick from, plus a clean inventory of the dimensional plumbing each one depends on.
+**Goal**: Survey the 41 sources Atlas now ingests, identify the **reports and composite indicators** they enable end-to-end (catalogue → ingest → mart → frontend), and document the **conformed dimensions, crosswalks, and reference seeds** that have to land in dbt before those indicators become queryable. Output: a sequenced list of indicator-PLAN candidates the user can pick from, plus a clean inventory of the dimensional plumbing each one depends on.
 
-**Last Updated**: 2026-05-04 (onboarded `ssb-crime-tables`, first JUST-themed Px bundle: SSB 08484/08487/09405/09406; catalogue is now 40 sources)
+**Last Updated**: 2026-05-04 (onboarded `bufdir-barnefattigdom` — Bufdir Barnefattigdom kommunemonitor API; catalogue is now 41 sources)
 
 **Origin**: Atlas's catalogue grew from 21 to 38 sources between 2026-04-30 and 2026-05-03 (PLAN-007 phase 2 + the FHI onboarding wave). Seventeen new FHI sources extended Atlas from a Samfunnspuls-replication scope into broader public-health-statistics coverage — population projection, immigrant-background mix, youth wellbeing (Ungdata: QoL / depression / painkillers / confiding-friend / alcohol / cannabis / screen-time × 3), primary-care contacts (KPR), and 5-year suicide. The user asked: *"create an investigate file on the potential reports and stats we can create based on the data we have gathered. what relations we need to make them happen."* This document is the answer — it does not implement anything; it scopes the surface so a follow-up `PLAN-*` can land each indicator under PLAN-007's catalogue + frontend.
 
 ---
 
-## The 40-source catalogue at a glance
+## The 41-source catalogue at a glance
 
 Tagged by `topic` (Atlas-domain), with `eu_theme` (DCAT-AP) and `geo`. All annual unless noted; all kommune-resolved unless noted.
 
@@ -32,13 +32,14 @@ Tagged by `topic` (Atlas-domain), with `eu_theme` (DCAT-AP) and `geo`. All annua
 | `fhi-innvkat` (650) | 1st-gen / 2nd-gen / combined immigrant categories |
 | `fhi-bor-alene` (187) | Adults living alone (16+, by age band) |
 
-### Income & poverty (4 sources, eu_theme=SOCI)
+### Income & poverty (5 sources, eu_theme=SOCI)
 | Source | What |
 |---|---|
 | `ssb-08764` | Children under 18 in low-income households (EU/OECD scales) |
 | `ssb-06947` | Whole-population low-income (EU/OECD scales) |
 | `ssb-12944` | Persistent low-income, 3-year rolling, by age group |
 | `ssb-06944` | Household income median by household type |
+| `bufdir-barnefattigdom` | Bufdir Barnefattigdom kommunemonitor — kommune-level child-poverty indicator family (annual API time series; triangulates with `ssb-08764` on methodology) |
 
 ### Education (4 sources, eu_theme=EDUC)
 | Source | What |
@@ -135,7 +136,7 @@ Each row below is an *indicator* or *report-page* that the catalogue currently s
 
 **Planned additions** (from [`INVESTIGATE-new-norwegian-public-sources.md`](./INVESTIGATE-new-norwegian-public-sources.md)):
 - `bufdir-barnevern` — adds the formal-intervention axis Atlas currently lacks (the prior research notes barnevern as the canonical kommune-level child-welfare measurement).
-- `bufdir-barnefattigdom` — cross-validates `ssb-08764` (different methodology, same kommune; useful triangulation).
+- `bufdir-barnefattigdom` — **onboarded** (kommune-level time series from the public monitor API). Still pending for this report: explicit composite wiring + Oslo **bydel** crosswalk alignment (Q3) before the vulnerability card treats Bufdir as a full peer to `ssb-08764` at sub-kommune resolution.
 - `husbanken-statistikkbank` — adds the housing-policy-response axis (bostøtte recipients, kommunal bolig stock) to complement Atlas's existing `fhi-trangbodd` *symptom* side.
 
 ### 3. Youth Outcomes Report
@@ -295,7 +296,7 @@ Each row below is an *indicator* or *report-page* that the catalogue currently s
 
 ## Forward-looking: reports unlocked by planned new sources
 
-The 10 reports above are what Atlas's *current* **40** sources support. The companion investigation [`INVESTIGATE-new-norwegian-public-sources.md`](./INVESTIGATE-new-norwegian-public-sources.md) (2026-05-04) still proposes additional sources across Bufdir, NAV, Husbanken, Udir, IMDi, Helfo, DSB, Brreg Frivillighetsregisteret + Lottstift, plus extensions such as `ssb-13006` (blocked on Px availability at last check) — and a Samfunnspuls cross-check that surfaced four additional Tier-1 source families. **Tier-2 crime tables** from that file are now onboarded as **`ssb-crime-tables`**; Report #11 gains real data (kommune slice from 08487 in `fact_kommune_indicators`, national slices via the companion indicator models). Each report below remains a **new analytical surface** beyond the base 10 whenever it still needs editorial or modelling work; updates are noted inline.
+The 10 reports above are what Atlas's *current* **41** sources support. The companion investigation [`INVESTIGATE-new-norwegian-public-sources.md`](./INVESTIGATE-new-norwegian-public-sources.md) (2026-05-04) still proposes additional sources across Bufdir, NAV, Husbanken, Udir, IMDi, Helfo, DSB, Brreg Frivillighetsregisteret + Lottstift, plus extensions such as `ssb-13006` (blocked on Px availability at last check) — and a Samfunnspuls cross-check that surfaced four additional Tier-1 source families. **Tier-2 crime tables** from that file are now onboarded as **`ssb-crime-tables`**; Report #11 gains real data (kommune slice from 08487 in `fact_kommune_indicators`, national slices via the companion indicator models). Each report below remains a **new analytical surface** beyond the base 10 whenever it still needs editorial or modelling work; updates are noted inline.
 
 The maintenance ritual at the bottom of this file says a new report is justified only when a source "brings a genuinely new analytical axis (categories the current 10 don't cover)". Six new reports below clear that bar — three for new themes (JUST, GOVE, HEAL provider-side), two for new geographic resolutions (bydel, per-school), and one for a domain (labor-market vulnerability) that was lurking inside Report #5 but deserves its own scope once NAV's four indicator families land.
 
@@ -350,7 +351,7 @@ The maintenance ritual at the bottom of this file says a new report is justified
 
 **Reports**: per-bydel demographic profile + per-capita normalisation of every existing bydel-resolved indicator, for Norway's four bydel-organised cities (Oslo 17 bydeler, Stavanger 9, Bergen 8, Trondheim 4). Demonstrates intra-city inequality — the gap between best-off and worst-off bydel within a city is often *larger* than the gap between rural kommuner.
 
-**Sources**: `ssb-10826` (bydel-level age/sex population denominator — onboarded from the Samfunnspuls cross-check, [Q48] in the new-sources INVESTIGATE) + Atlas's existing bydel-resolved FHI sources (FHI's `GEO` column already carries 6-digit bydel codes) + planned `bufdir-barnefattigdom` (bydel-for-Oslo).
+**Sources**: `ssb-10826` (bydel-level age/sex population denominator — onboarded from the Samfunnspuls cross-check, [Q48] in the new-sources INVESTIGATE) + Atlas's existing bydel-resolved FHI sources (FHI's `GEO` column already carries 6-digit bydel codes) + `bufdir-barnefattigdom` (kommune series live; **Oslo bydel rows** still need a confirmed Klass/crosswalk before this report can join Bufdir at bydel resolution — see Q3 in the new-sources INVESTIGATE).
 
 **Required relations**:
 - **`dim_bydel`** *(new)* — Klass 103 (Standard for bydelsinndeling). 38 active bydeler across 4 cities + historical entries; respect SSB's `(2001-2003)` / `(-2019)` annotations to avoid pre-reform double-counting (same pattern as `dim_kommune`'s `is_active` filter).
@@ -533,4 +534,4 @@ The contributor guide ([`website/docs/contributors/ingest-modules.md`](../../../
 - [INVESTIGATE-data-discovery-surface.md](INVESTIGATE-data-discovery-surface.md) — the broader discovery / query / governance surface stack; this file is the per-indicator content layer that feeds it.
 - [INVESTIGATE-semantic-foundation-before-expansion.md](INVESTIGATE-semantic-foundation-before-expansion.md) — settled MCP via dbt-mcp + Postgres MCP; many of the relations here will surface there too.
 - `atlas-data/dbt/seeds/` — where `dim_kommune`, `dim_fylke`, existing `ref_*` seeds live; new dimensions and crosswalks land alongside.
-- `atlas-data/ingest/src/sources/` — the 40 manifest.yml files this investigation surveys.
+- `atlas-data/ingest/src/sources/` — the 41 manifest.yml files this investigation surveys.

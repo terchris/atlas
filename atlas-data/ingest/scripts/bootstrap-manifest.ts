@@ -15,6 +15,7 @@
  *   - ssb-NNNNN          → SSB PxWebAPI metadata (lib/pxweb.ts)
  *   - ssb-klass-*        → SSB KLASS classification API (lib/klass.ts)
  *   - fhi-*              → FHI Norgeshelsa metadata (lib/fhi.ts)
+ *   - bufdir-*           → fallback template (manual TODOs)
  *   - everything else    → fallback template (manual TODOs)
  *
  * Per PLAN-007: subsequent ingest runs DO NOT touch the manifest. This script
@@ -40,7 +41,7 @@ type ManifestStub = {
   description: string | null;
 };
 
-type Provider = "ssb" | "ssb-klass" | "fhi" | "redcross" | "frr" | "unknown";
+type Provider = "ssb" | "ssb-klass" | "fhi" | "redcross" | "frr" | "bufdir" | "unknown";
 
 const NLOD_URL = "https://data.norge.no/nlod/no/2.0";
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
@@ -51,6 +52,7 @@ function detectProvider(sourceId: string): Provider {
   if (/^ssb-\d+$/.test(sourceId)) return "ssb";
   if (sourceId.startsWith("fhi-")) return "fhi";
   if (sourceId.startsWith("redcross-")) return "redcross";
+  if (sourceId.startsWith("bufdir-")) return "bufdir";
   if (sourceId === "frr") return "frr";
   return "unknown";
 }
@@ -252,6 +254,7 @@ function guessProviderTag(sourceId: string): string {
   if (sourceId.startsWith("ssb-")) return "ssb";
   if (sourceId.startsWith("fhi-")) return "fhi";
   if (sourceId.startsWith("redcross-")) return "redcross";
+  if (sourceId.startsWith("bufdir-")) return "bufdir";
   if (sourceId === "frr") return "redcross";
   return "TODO";
 }
@@ -314,6 +317,12 @@ async function main(): Promise<void> {
       break;
     case "redcross":
       stub = extractRedCross(sourceId);
+      break;
+    case "bufdir":
+      stub = extractFallback(sourceId);
+      stub.publisher = "Barne-, ungdoms- og familiedirektoratet";
+      stub.license = "NLOD";
+      stub.license_url = NLOD_URL;
       break;
     case "frr":
       stub = extractFallback(sourceId);
