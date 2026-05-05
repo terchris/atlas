@@ -136,19 +136,44 @@ When you wipe the cluster (rancher-desktop reset, fresh laptop, UIS-image rebuil
 
    This brings `raw.*` schema (and any helpers in `marts.*`) back to the latest committed migration. Idempotent — every migration uses `if not exists`.
 
-6. Re-run dbt seeds + models (the `marts.*` data lives in dbt models that materialize from `raw.*`, so this re-creates them):
+6. **Ingest the dim-spine sources first.** `dim_kommune` and `dim_fylke` build from SSB Klass classification 131 / 104. Without these, every `relationships → dim_kommune` / `→ dim_fylke` test in `dbt test` fails by definition (the dim is freshly-built but empty, so every foreign key has zero matches). Run before any `dbt run` / `dbt test`:
+
+   ```bash
+   npm run ingest:ssb-klass-kommuner   # ~1300 rows
+   npm run ingest:ssb-klass-fylker     # ~40 rows
+   ```
+
+   These are fast (sub-10 seconds each) and idempotent.
+
+7. Re-run dbt seeds + models. Order matters: `dbt seed` (loads CSV reference data), then `dbt run` (materializes every model including the dims that just got real raw data), then `dbt test`:
 
    ```bash
    cd ../dbt && uv run --env-file ../ingest/.env dbt seed && uv run --env-file ../ingest/.env dbt run && uv run --env-file ../ingest/.env dbt test
    ```
 
-7. (Optional) replay one or more ingests so `raw.*` has rows again — the rebuild is data-empty until you do. Pick a fast one as smoke first, then larger ones as needed:
+8. **Apply the api_v1 wrapper SQL.** The `dbt run` step builds `marts.mart_*` tables, but the `api_v1.*` wrapper views that the public API exposes are emitted by a separate generator (`./regenerate-api-v1.sh` writes the SQL; `./apply-api-v1.sh` applies it). Without this step, the `api_v1_rowcount_matches_marts` test errors because `api_v1.*` views don't exist yet:
 
    ```bash
-   cd ../ingest && npm run ingest:ssb-08764
+   ./apply-api-v1.sh
    ```
 
-If anything in steps 4–7 fails, fix before declaring the rebuild done.
+   Idempotent — safe to re-run.
+
+9. Verify everything is green:
+
+   ```bash
+   uv run --env-file ../ingest/.env dbt test       # PASS=474+ ERROR=0; one pre-existing postnummer WARN is OK
+   ./check-osmosis.sh                              # ✓ all columns documented
+   ```
+
+10. (Optional) replay one or more *non-dim* ingests so the `raw.*` data tables have rows. Pick a fast one as smoke first, then larger ones as needed:
+
+    ```bash
+    cd ../ingest && npm run ingest:ssb-08764               # ~1800 rows; smoke
+    npm run ingest:bufdir-barnefattigdom                   # ~395k rows; exercises the streaming write path
+    ```
+
+If anything in steps 4–9 fails, fix before declaring the rebuild done. Step 10 is genuinely optional — the dim-spine ingests in step 6 are not.
 
 ### How Atlas reaches Postgres — dev vs production
 
