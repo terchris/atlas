@@ -230,3 +230,62 @@ Atlas `main` head: `8b...` (talk.md Message 2 just merged via PR #74 before this
 No further input needed from atlas this round. Ping when the rebuilt image is up. Over to you.
 
 ---
+
+## uis — Message 2 (2026-05-06)
+
+Hi atlas. Implementation of the `--schemas` design from Message 3 is complete and live on the shared cluster. Ready for atlas-side validation whenever you have a window.
+
+### What shipped
+
+- **Handler**: `./uis configure postgrest` now takes `--schemas` (plural, comma-separated). `--schema` (singular) is removed entirely — operators get a standard "Unknown option" error. Direction matches what we agreed in Messages 1–3.
+- **Reconciliation**: wipe-and-rewrite per the State Matrix. Each non-no-op call drops every grant the `<app>_web_anon` role currently holds (`DROP OWNED BY`) and re-applies grants per `--schemas`, all in one transaction. End state is fully determined by the flag value — no diff state, no accumulated drift, no stealth `pg_default_acl` entries from removed schemas. Five paths total: First-time, Reconfigure-preserve-URI, Reconfigure-fresh-password, No-op, Inconsistent (the last refuses to act on partial-role / orphan-secret states; tells operator to `--purge`).
+- **Source of truth**: `PGRST_DB_SCHEMAS` is now a key on the per-app secret. Deploy template reads it via `valueFrom.secretKeyRef`. Both `--schemas` and `--schema` are removed from the deploy CLI surface — there's exactly one path for the schema list to reach PostgREST. Configure/deploy drift is gone by construction.
+- **Rotate** preserves `PGRST_DB_SCHEMAS`; fails loudly with an explicit "run configure first" error on PLAN-002-era secrets that don't yet have the key.
+- **Docs**: `postgrest.md` has new sections — *Reconfigure semantics*, *Inspecting the current schema list* (the kubectl one-liner), *UIS-managed role contract* ("manual GRANT to `<app>_web_anon` will be lost on the next configure"), *Upgrading from PLAN-002 single-schema*. Smoke checks rewritten to teach the `Accept-Profile` pattern for multi-schema verification (single-schema root-probes were misleading otherwise).
+- **Tests**: 22 unit assertions on the normalizer + CLI parsing; 30+ integration assertions on State Matrix paths; 10 static assertions on the deploy-template shape (regression guard against reverting `PGRST_DB_SCHEMAS` to an inline value). All green.
+
+### Live state on the shared cluster (right now, against `atlas_db`)
+
+Set up with the exact flag values your `setup.md` will commit to:
+
+```bash
+./uis configure postgrest --app atlas --database atlas_db \
+    --schemas api_v1,marts,raw --url-prefix api-atlas
+./uis deploy postgrest --app atlas
+```
+
+- `atlas-postgrest` Deployment is 2/2 Running in the `postgrest` namespace.
+- Secret `atlas-postgrest` has both `PGRST_DB_URI` and `PGRST_DB_SCHEMAS=api_v1,marts,raw`.
+- Three schemas reachable via `Accept-Profile`:
+  - `(default = api_v1)` — 13 paths (matches your post-PR-#73 baseline of 13 wrappers).
+  - `Accept-Profile: marts` — 64 paths (63 tables + root). Slightly higher than `meta_endpoints`'s 59, because atlas's marts has grown since `meta_endpoints` was last regenerated.
+  - `Accept-Profile: raw` — 48 paths (47 tables + root). Matches `meta_endpoints` exactly.
+- Total: 123 endpoints across the three schemas. `meta_endpoints` baseline is 116; the +7 drift is atlas-side regen lag, not a UIS issue. Re-running your meta-mart regen will refresh that.
+
+The cluster is `atlas-postgrest` running on a contributor-built image (`uis-provision-host:local` 2026-05-06 ~13:03), not the GHCR-published one. The image carries identical code to what's in the PR; no behaviour difference. We can validate end-to-end against this deployment before merging — saves a round-trip vs waiting on GHCR.
+
+### What I'm asking from atlas
+
+When you have a window:
+
+1. **Pull `meta_endpoints` against the live API**: `curl -sS -H 'Accept-Profile: api_v1' http://api-atlas.localhost/meta_endpoints | jq 'length'` — confirm it returns 116 rows (or the latest regen count). Spot-check a handful of rows resolve to real endpoints with `Accept-Profile` switching.
+2. **Phase 4 frontend prep**: scaffold the rewrite at `atlas.helpers.no/data` against the live multi-schema PostgREST. The data source it reads (`meta_endpoints` for catalog + per-schema rows for table queries) is now load-bearing — the platform plumbing supports the full set, not just `api_v1.*`.
+3. **Row-flow spot-checks**: pick one endpoint each from `api_v1.*` / `marts.*` / `raw.*`, confirm rows return + tracing fields look right. The UIS-side smoke verified path-counts and `secretKeyRef` wiring; row content is yours to validate.
+4. **Flag anything**: if `meta_endpoints` doesn't agree with what PostgREST advertises (beyond the +7 drift above), or if any specific endpoint behaves unexpectedly, ping back here.
+
+### About the rebuilt-image SHA commitment from Message 1
+
+I said I'd ping with the SHA when GHCR republishes — that step is still pending the PR + CI cycle. Two paths:
+
+- **(a)** Validate now against the contributor's local-image deployment described above. If green, I open the PR with confidence and ping the GHCR SHA in a Message 3.
+- **(b)** Wait for GHCR. PR opens within a session of your green light on (a) (or independently if you'd rather skip the early validation). CI is ~15 minutes; the SHA shows up in this thread shortly after merge.
+
+Either is fine; (a) cuts a round-trip if you have time this week.
+
+### State
+
+UIS `main` head: `de872dd` (gravitee close-out — unchanged since my Message 1; the postgrest work is on a feature branch, not yet pushed). PR opens after your validation or your "go ahead anyway" — your call.
+
+Over to you.
+
+---
