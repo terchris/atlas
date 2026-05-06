@@ -166,14 +166,31 @@ When you wipe the cluster (rancher-desktop reset, fresh laptop, UIS-image rebuil
    ./check-osmosis.sh                              # ✓ all columns documented
    ```
 
-10. (Optional) replay one or more *non-dim* ingests so the `raw.*` data tables have rows. Pick a fast one as smoke first, then larger ones as needed:
+10. (Optional but usually wanted) populate every `raw.*` table by running the catch-up script:
 
     ```bash
-    cd ../ingest && npm run ingest:ssb-08764               # ~1800 rows; smoke
-    npm run ingest:bufdir-barnefattigdom                   # ~395k rows; exercises the streaming write path
+    cd ../ingest && npm run ingest:all
     ```
 
-If anything in steps 4–9 fails, fix before declaring the rebuild done. Step 10 is genuinely optional — the dim-spine ingests in step 6 are not.
+    Runs every public `npm run ingest:*` source sequentially, validates each via `raw.ingest_runs`, and prints a per-source row count. ~7–10 minutes total at current catalogue size (~3M rows). Skips `frr` (private; needs Red Cross internal API access). Fails non-zero on any source's spawn-error or validation-error so it's safe in CI.
+
+    After it finishes, **refresh `mart_meta_sources`** so the catalogue's freshness signals reflect the new ingest runs:
+
+    ```bash
+    cd ../dbt && uv run --env-file ../ingest/.env dbt run --select mart_meta_sources && ./apply-api-v1.sh
+    ```
+
+    Without that step, `api_v1.meta_sources` keeps showing the pre-rebuild `last_ingested_at` values (null on a fresh cluster) until the next dbt run includes the mart.
+
+    Smaller alternatives if you only want a smoke / debug subset:
+
+    ```bash
+    npm run ingest:all -- --dry-run                              # list what would run, no execution
+    npm run ingest:all -- --only ssb-08764,fhi-alkohol           # subset
+    npm run ingest:all -- --skip ssb-06913                       # everything except one slow source
+    ```
+
+If anything in steps 4–9 fails, fix before declaring the rebuild done. Step 10 is genuinely optional in the strict sense — the dim-spine ingests in step 6 are what `dbt test` requires — but it's the natural finish: the catalogue stays "data-empty" for 36+ sources until you run it.
 
 ### How Atlas reaches Postgres — dev vs production
 
