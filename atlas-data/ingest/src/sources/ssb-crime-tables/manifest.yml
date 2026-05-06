@@ -13,6 +13,17 @@ periodicity: P1Y
 eu_theme: JUST
 attribution: "Kilde: Statistisk sentralbyrå, tabeller 08484, 08487, 09405 og 09406"
 
+# raw_tables: optional list of raw.* table names this source ingests into.
+# Used by extract_lineage.py to map dbt source nodes back to atlas catalogue
+# source_ids. Default when absent: [source_id.replace('-', '_')]. List
+# explicitly only when the source folder owns multiple raw tables (this case)
+# or when the table name doesn't match the underscore-translation rule.
+raw_tables:
+  - ssb_08484
+  - ssb_08487
+  - ssb_09405
+  - ssb_09406
+
 tags:
   provider: ssb
   topic: social
