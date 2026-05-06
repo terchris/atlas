@@ -15,6 +15,13 @@ periodicity: irregular
 eu_theme: SOCI
 attribution: "Norges Røde Kors, Organizations API"
 
+# raw_tables: this source folder owns two raw.* tables (parent + per-chapter
+# activities) — explicit list because the default underscore-translation rule
+# would only emit redcross_branches. Used by extract_lineage.py.
+raw_tables:
+  - redcross_branches
+  - redcross_branch_activities
+
 tags:
   provider: redcross
   topic: ngo-supply

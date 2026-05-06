@@ -36,6 +36,8 @@ import sys
 from pathlib import Path
 from typing import Iterable
 
+import yaml
+
 
 def _walk_to_root_sources(
     node_id: str, nodes: dict, sources: dict, seen: set[str] | None = None
@@ -64,40 +66,62 @@ def _walk_to_root_sources(
     return out
 
 
-# Raw tables that don't follow the simple `_` → `-` rule (e.g. one source
-# folder owns multiple raw tables, or the table is operational and has no
-# catalogue source_id at all). Update this map when a new multi-table source
-# lands or when an existing source's raw layout changes.
-#
-# Long-term, the right home for this is a `raw_tables: [...]` field on each
-# source's manifest.yml — see PLAN-007 phase 3 follow-up notes. For now the
-# explicit map keeps the lineage seed accurate without a wider schema change.
-_RAW_TABLE_OVERRIDES: dict[str, str | None] = {
-    # ssb-crime-tables: one source folder, four raw landing tables (each Px
-    # endpoint is a separate table by SSB convention).
-    "ssb_08484": "ssb-crime-tables",
-    "ssb_08487": "ssb-crime-tables",
-    "ssb_09405": "ssb-crime-tables",
-    "ssb_09406": "ssb-crime-tables",
-    # redcross-branches: one source folder, parent + activities tables.
-    "redcross_branch_activities": "redcross-branches",
-    # Operational tables — no catalogue source_id. Map to None so lineage
-    # explicitly drops these edges (we don't want them appearing in the
-    # downstream-model-count or tag-inheritance joins).
-    "ingest_runs": None,
-    "sitemap_log": None,
-}
+def _build_raw_table_map(sources_root: Path) -> dict[str, str]:
+    """Scan every `<sources_root>/<source_id>/manifest.yml` and return a map
+    `raw_table_name → source_id` covering all multi-table + simple-rename
+    sources.
 
+    Each manifest declares its raw tables in one of two ways:
 
-def _table_name_to_source_id(table_name: str) -> str | None:
-    """Translate dbt source table_name → Atlas source_id, or None to drop the edge.
+      raw_tables:           # explicit list when the source owns >1 raw table
+        - ssb_08484         # or when the table name doesn't match the
+        - ssb_08487         # `source_id.replace('-', '_')` default rule
+        - ssb_09405
+        - ssb_09406
 
-    Default rule: replace `_` with `-`. Override map handles multi-table
-    source folders and operational tables that don't fit the rule.
+    Or the field is omitted, in which case the default is
+    `[source_id.replace('-', '_')]` — single raw table whose name matches the
+    folder name with hyphens translated to underscores.
+
+    Operational raw tables that no source folder claims (`raw.ingest_runs`,
+    `raw.sitemap_log`) simply don't appear in the resulting map; lineage
+    edges to them are dropped naturally.
     """
-    if table_name in _RAW_TABLE_OVERRIDES:
-        return _RAW_TABLE_OVERRIDES[table_name]
-    return table_name.replace("_", "-")
+    mapping: dict[str, str] = {}
+    if not sources_root.exists():
+        return mapping
+    for manifest_path in sorted(sources_root.glob("*/manifest.yml")):
+        try:
+            data = yaml.safe_load(manifest_path.read_text(encoding="utf-8")) or {}
+        except yaml.YAMLError:
+            continue
+        source_id = data.get("source_id")
+        if not source_id or not isinstance(source_id, str):
+            continue
+        raw_tables = data.get("raw_tables")
+        if raw_tables is None:
+            raw_tables = [source_id.replace("-", "_")]
+        if not isinstance(raw_tables, list):
+            continue
+        for table in raw_tables:
+            if isinstance(table, str) and table:
+                mapping[table] = source_id
+    return mapping
+
+
+def _table_name_to_source_id(
+    table_name: str, raw_table_map: dict[str, str]
+) -> str | None:
+    """Look up the source_id for a raw table name; return None when no source
+    folder claims it (e.g. operational tables `ingest_runs`, `sitemap_log`).
+
+    The map is built from `<atlas-data>/ingest/src/sources/*/manifest.yml`'s
+    `raw_tables:` field; see `_build_raw_table_map`. No fallback to the bare
+    `replace('-', '_')` rule — every legitimate source must declare its raw
+    tables in its manifest (the default value for a single-table source is
+    derived from `source_id` automatically).
+    """
+    return raw_table_map.get(table_name)
 
 
 def _model_qualifies(node: dict) -> bool:
@@ -118,8 +142,16 @@ def _model_qualifies(node: dict) -> bool:
     return True
 
 
-def extract_lineage(manifest: dict) -> list[tuple[str, str]]:
-    """Return [(model_name, source_id), ...] sorted, deduped."""
+def extract_lineage(
+    manifest: dict, raw_table_map: dict[str, str]
+) -> list[tuple[str, str]]:
+    """Return [(model_name, source_id), ...] sorted, deduped.
+
+    `raw_table_map` is built once at startup from each manifest.yml's
+    `raw_tables:` field via `_build_raw_table_map`. Lineage edges to raw
+    tables not in the map (operational tables like `raw.ingest_runs`) are
+    dropped silently.
+    """
     nodes = manifest.get("nodes", {})
     sources = manifest.get("sources", {})
 
@@ -137,11 +169,11 @@ def extract_lineage(manifest: dict) -> list[tuple[str, str]]:
             if src.get("source_name") != "raw":
                 continue
             table_name = src.get("name") or ""
-            source_id = _table_name_to_source_id(table_name)
+            source_id = _table_name_to_source_id(table_name, raw_table_map)
             if source_id is None:
-                # Operational table (raw.ingest_runs, raw.sitemap_log) — no
-                # catalogue source_id; drop the edge so the lineage seed
-                # cleanly joins on _sources_manifest.
+                # Operational table or a source folder that hasn't declared
+                # this raw table in its manifest — drop the edge so the
+                # lineage seed cleanly joins on _sources_manifest.
                 continue
             edges.add((node.get("name", ""), source_id))
     return sorted(edges)
@@ -159,12 +191,19 @@ def write_csv(edges: Iterable[tuple[str, str]], path: Path) -> None:
 def main() -> int:
     here = Path(__file__).resolve().parent
     project_root = here.parent
+    repo_root = project_root.parent.parent  # atlas-data/dbt → atlas-data → repo
+    sources_root = repo_root / "atlas-data" / "ingest" / "src" / "sources"
 
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument(
         "--manifest",
         default=str(project_root / "target" / "manifest.json"),
         help="Path to dbt's target/manifest.json (default: <project>/target/manifest.json)",
+    )
+    p.add_argument(
+        "--sources-root",
+        default=str(sources_root),
+        help="Path to the per-source manifest.yml folder root (default: <repo>/atlas-data/ingest/src/sources)",
     )
     p.add_argument(
         "--out-csv",
@@ -180,6 +219,7 @@ def main() -> int:
 
     manifest_path = Path(args.manifest)
     out_path = Path(args.out_csv)
+    sources_root_path = Path(args.sources_root)
 
     if not manifest_path.exists():
         print(
@@ -188,11 +228,22 @@ def main() -> int:
         )
         return 2
 
+    raw_table_map = _build_raw_table_map(sources_root_path)
+    if not raw_table_map:
+        print(
+            f"WARNING: no raw_tables found by scanning {sources_root_path} — "
+            f"emitting an empty lineage seed. Did the sources path move?",
+            file=sys.stderr,
+        )
+
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    edges = extract_lineage(manifest)
+    edges = extract_lineage(manifest, raw_table_map)
 
     if args.check:
-        # Build the would-be CSV in memory and compare.
+        # Build the would-be CSV in memory and compare. csv.writer emits CRLF
+        # line endings; read_text normalises CRLF to LF on read. Strip both to
+        # LF before comparing so the gate doesn't false-positive on platform
+        # line-ending differences.
         from io import StringIO
 
         sio = StringIO()
@@ -200,9 +251,10 @@ def main() -> int:
         w.writerow(["model_name", "source_id"])
         for m, s in edges:
             w.writerow([m, s])
-        new_text = sio.getvalue()
-        existing = out_path.read_text(encoding="utf-8") if out_path.exists() else ""
-        if new_text.strip() == existing.strip():
+        new_text = sio.getvalue().replace("\r\n", "\n").rstrip("\n")
+        existing_raw = out_path.read_text(encoding="utf-8") if out_path.exists() else ""
+        existing = existing_raw.replace("\r\n", "\n").rstrip("\n")
+        if new_text == existing:
             print(f"ok: {out_path} is up to date ({len(edges)} edges)")
             return 0
         print(

@@ -57,6 +57,27 @@ dimensions:
 
 `code` and `meaning` are required per dimension; `value_format` and `notes` may be empty strings. The catalogue's Phase-3 `mart_meta_dimensions` joins this editorial seed with computed cardinality + example values from `raw.*` tables, so shoppers see "what each column means" + "what values it actually contains" in one view.
 
+**Optional `raw_tables:` field** — list of `raw.*` table names this source ingests into. Used by `atlas-data/dbt/scripts/extract_lineage.py` to map dbt source nodes back to atlas catalogue source_ids:
+
+```yaml
+# Most sources don't need this — the field defaults to:
+#   raw_tables: [<source_id with - replaced by _>]
+# i.e. ssb-08764 → raw.ssb_08764, bufdir-barnefattigdom → raw.bufdir_barnefattigdom.
+
+# Declare explicitly only when:
+#  (a) the source folder owns multiple raw tables (one source, several upstream
+#      tables ingested by the same module), or
+#  (b) the table name doesn't match the source_id underscore-translation rule.
+
+raw_tables:
+  - ssb_08484          # ssb-crime-tables case: one source folder,
+  - ssb_08487          # four raw landing tables (one per Px endpoint).
+  - ssb_09405
+  - ssb_09406
+```
+
+Operational raw tables that no source folder claims (`raw.ingest_runs`, `raw.sitemap_log`) are simply absent from any manifest's `raw_tables:` and don't appear in lineage edges.
+
 **Authoring workflow** (see [`contributors/ingest-modules.md`](../../../../website/docs/contributors/ingest-modules.md) for the full walkthrough):
 
 1. `npm run sources:bootstrap-manifest -- <source_id>` — fetches upstream metadata + writes a skeleton.
