@@ -291,17 +291,23 @@ cd atlas-data/dbt
 ./apply-api-v1.sh         # applies the generated SQL to atlas_db
 
 # 2. Configure + deploy PostgREST for the atlas app (UIS-side, run from your UIS CLI)
-./uis configure postgrest --app atlas --database atlas_db --url-prefix api-atlas --json
+./uis configure postgrest --app atlas --database atlas_db --schemas api_v1,marts,raw --url-prefix api-atlas --json
 ./uis deploy postgrest --app atlas
 
-# 3. Smoke test the live endpoint
+# 3. Smoke test the live endpoints across all three exposed schemas
 curl -s http://api-atlas.localhost/ | jq '{swagger, version: .info.version}'
 # expect: {"swagger":"2.0","version":"14.10"}
 curl -s http://api-atlas.localhost/indicator_summary | jq '.[0:3]'
-# expect: 3 rows from marts.mart_indicator_summary
+# expect: 3 rows from marts.mart_indicator_summary (api_v1 schema, default)
+curl -s -H 'Accept-Profile: marts' http://api-atlas.localhost/dim_kommune?limit=3 | jq 'length'
+# expect: 3 (marts.dim_kommune via Accept-Profile header)
+curl -s -H 'Accept-Profile: raw' http://api-atlas.localhost/ssb_08764?limit=3 | jq 'length'
+# expect: 3 (raw.ssb_08764 via Accept-Profile header)
 ```
 
-The configure step creates `atlas_authenticator` + `atlas_web_anon` Postgres roles in `atlas_db` (anonymous read-only access to `api_v1.*` only — `marts.*`, `private_marts.*`, etc. stay hidden). The deploy step renders a per-app Deployment + Service + IngressRoute in the `postgrest` namespace.
+The `--schemas` flag (plural, comma-separated) is what tells UIS's configure handler to grant the `atlas_web_anon` role on each named schema and pin them as PostgREST's `db-schemas` value. Atlas opts into three schemas: **`api_v1`** (the curated wrapper views — production-stable contract), **`marts`** (every dbt-built table for "open by default" data exploration), and **`raw`** (verbatim ingest landings for full provenance). `private_marts` and `private_raw` stay outside this list deliberately — FRR personal data lives there and the public `atlas_web_anon` role doesn't get any grants on those schemas. Hitting `/frr_resources` returns 404 by default and 406 with `Accept-Profile: private_marts` because PostgREST refuses any schema name not in its configured list.
+
+The configure step creates `atlas_authenticator` + `atlas_web_anon` Postgres roles in `atlas_db` and grants the anonymous role read access on `api_v1.*` + `marts.*` + `raw.*`. The deploy step renders a per-app Deployment + Service + IngressRoute in the `postgrest` namespace; `PGRST_DB_SCHEMAS` lives on the per-app secret so configure and deploy can't drift.
 
 After adding a new mart to `models/marts/api/`, re-run `./regenerate-api-v1.sh` + `./apply-api-v1.sh` + `psql "$DATABASE_URL" -c "NOTIFY pgrst, 'reload schema';"` — no PostgREST redeploy needed.
 
