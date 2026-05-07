@@ -1,15 +1,22 @@
 /**
- * Generic table viewer for any api_v1.* endpoint.
+ * Generic table viewer for any endpoint across api_v1 / marts / raw schemas.
  *
- * URL-driven state (all server-rendered, no client JS):
- *   - ?page=N&pageSize=M            pagination
- *   - ?sort=col.asc | ?sort=col.desc  click column header to cycle
+ * URL: /data/<schema>/<table>
+ *   - schema: "api_v1" | "marts" | "raw" — passed to PostgREST as
+ *     `Accept-Profile: <schema>`. The api_v1 case omits the header (default).
+ *   - table:  the unqualified table or view name within that schema.
+ *
+ * URL-driven query state (all server-rendered, no client JS):
+ *   - ?page=N&pageSize=M             pagination
+ *   - ?sort=col.asc | ?sort=col.desc click column header to cycle
  *   - ?q=text                        global search across string columns
- *                                    (PostgREST or= ilike across the spec's
- *                                    string-typed columns)
+ *                                    (PostgREST `or=` ilike across the
+ *                                    string-typed columns from the spec)
  *
- * Adding a new mart_* view + regenerating api_v1 makes a new browseable
- * table appear at /data/<endpoint> with no code change here.
+ * Adding a new model under `models/marts/api/` + regenerating api_v1 makes
+ * a new browseable table appear at `/data/api_v1/<endpoint>` automatically.
+ * Adding any new model anywhere in `models/` makes one appear at
+ * `/data/marts/<endpoint>` (or `/data/raw/<endpoint>` for ingest tables).
  */
 
 import Link from "next/link";
@@ -24,12 +31,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type { components } from "@/lib/api-types";
 
 export const revalidate = 60;
 
 const DEFAULT_PAGE_SIZE = 50;
 const MAX_PAGE_SIZE = 250;
+
+const VALID_SCHEMAS = new Set(["api_v1", "marts", "raw"]);
 
 type Spec = {
   paths: Record<string, unknown>;
@@ -52,8 +60,8 @@ type Column = {
   description: string;
 };
 
-function loadColumns(spec: Spec, endpoint: string): Column[] {
-  const def = spec.definitions?.[endpoint];
+function loadColumns(spec: Spec, table: string): Column[] {
+  const def = spec.definitions?.[table];
   if (!def?.properties) return [];
   return Object.entries(def.properties).map(([name, meta]) => ({
     name,
@@ -63,8 +71,8 @@ function loadColumns(spec: Spec, endpoint: string): Column[] {
   }));
 }
 
-function endpointExists(spec: Spec, endpoint: string): boolean {
-  return Object.prototype.hasOwnProperty.call(spec.paths, `/${endpoint}`);
+function tableExists(spec: Spec, table: string): boolean {
+  return Object.prototype.hasOwnProperty.call(spec.paths, `/${table}`);
 }
 
 function renderCell(value: unknown): React.ReactNode {
@@ -108,12 +116,17 @@ function buildFilterQueryParts(
   return parts;
 }
 
+function basePath(schema: string, table: string): string {
+  return `/data/${schema}/${table}`;
+}
+
 /**
  * Build the URL for a sort-toggle link on a column header. Cycles
  * unsorted → asc → desc → unsorted. Always resets page=1.
  */
 function buildSortHref(
-  endpoint: string,
+  schema: string,
+  table: string,
   colName: string,
   currentSort: string,
   q: string,
@@ -135,11 +148,12 @@ function buildSortHref(
   if (q) params.set("q", q);
   if (pageSize !== DEFAULT_PAGE_SIZE) params.set("pageSize", String(pageSize));
   const qs = params.toString();
-  return `/data/${endpoint}${qs ? `?${qs}` : ""}`;
+  return `${basePath(schema, table)}${qs ? `?${qs}` : ""}`;
 }
 
 function buildPageHref(
-  endpoint: string,
+  schema: string,
+  table: string,
   page: number,
   pageSize: number,
   sort: string,
@@ -151,7 +165,7 @@ function buildPageHref(
   if (sort) params.set("sort", sort);
   if (q) params.set("q", q);
   const qs = params.toString();
-  return `/data/${endpoint}${qs ? `?${qs}` : ""}`;
+  return `${basePath(schema, table)}${qs ? `?${qs}` : ""}`;
 }
 
 function sortIndicator(colName: string, sort: string): string {
@@ -165,11 +179,15 @@ export default async function EndpointTablePage({
   params,
   searchParams,
 }: {
-  params: Promise<{ endpoint: string }>;
+  params: Promise<{ schema: string; table: string }>;
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const { endpoint } = await params;
+  const { schema, table } = await params;
   const sp = await searchParams;
+
+  if (!VALID_SCHEMAS.has(schema)) {
+    notFound();
+  }
 
   const page = Math.max(1, parseInt(String(sp.page ?? "1"), 10) || 1);
   const requestedPageSize =
@@ -178,12 +196,12 @@ export default async function EndpointTablePage({
   const sort = String(sp.sort ?? "");
   const q = String(sp.q ?? "").trim();
 
-  const spec = (await fetchSpec()) as Spec;
-  if (!endpointExists(spec, endpoint)) {
+  const spec = (await fetchSpec({ acceptProfile: schema })) as Spec;
+  if (!tableExists(spec, table)) {
     notFound();
   }
 
-  const columns = loadColumns(spec, endpoint);
+  const columns = loadColumns(spec, table);
   const filterParts = buildFilterQueryParts(q, sort, columns);
   const filterQuery = filterParts.length ? `?${filterParts.join("&")}` : "";
   const offset = (page - 1) * pageSize;
@@ -191,18 +209,17 @@ export default async function EndpointTablePage({
   const pagedQuery = `${filterQuery}${sep}limit=${pageSize}&offset=${offset}`;
 
   const [rowsRaw, totalRaw] = await Promise.all([
-    fetchRows(endpoint as keyof components["schemas"], pagedQuery).catch(
-      (err) => {
-        if (err instanceof ApiError) return [];
-        throw err;
-      },
-    ),
-    fetchCount(endpoint, filterQuery).catch(() => null),
+    fetchRows(table, pagedQuery, { acceptProfile: schema }).catch((err) => {
+      if (err instanceof ApiError) return [];
+      throw err;
+    }),
+    fetchCount(table, filterQuery, { acceptProfile: schema }).catch(() => null),
   ]);
   const rows = rowsRaw;
   const total = totalRaw;
 
-  const totalPages = total !== null ? Math.max(1, Math.ceil(total / pageSize)) : 1;
+  const totalPages =
+    total !== null ? Math.max(1, Math.ceil(total / pageSize)) : 1;
   const hasFilter = q.length > 0;
   const hasSort = sort.length > 0;
   const stringColumnCount = columns.filter((c) => c.type === "string").length;
@@ -219,7 +236,7 @@ export default async function EndpointTablePage({
           </Link>
           <span className="text-zinc-300 dark:text-zinc-700">·</span>
           <Link
-            href={`/data/${endpoint}/spec`}
+            href={`${basePath(schema, table)}/spec`}
             className="text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-50"
           >
             View spec
@@ -227,9 +244,14 @@ export default async function EndpointTablePage({
         </nav>
 
         <header className="flex flex-col gap-2">
-          <h1 className="font-mono text-2xl font-semibold text-zinc-950 dark:text-zinc-50">
-            /{endpoint}
-          </h1>
+          <div className="flex items-baseline gap-3">
+            <span className="rounded-full bg-zinc-200 px-2.5 py-0.5 text-xs font-medium uppercase tracking-wide text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+              {schema}
+            </span>
+            <h1 className="font-mono text-2xl font-semibold text-zinc-950 dark:text-zinc-50">
+              {table}
+            </h1>
+          </div>
           <p className="text-sm text-zinc-600 dark:text-zinc-400">
             {total !== null ? (
               <>
@@ -250,7 +272,11 @@ export default async function EndpointTablePage({
           </p>
         </header>
 
-        <form method="GET" action={`/data/${endpoint}`} className="flex gap-2">
+        <form
+          method="GET"
+          action={basePath(schema, table)}
+          className="flex gap-2"
+        >
           <input
             type="text"
             name="q"
@@ -275,7 +301,7 @@ export default async function EndpointTablePage({
           </button>
           {hasFilter && (
             <Link
-              href={buildPageHref(endpoint, 1, pageSize, sort, "")}
+              href={buildPageHref(schema, table, 1, pageSize, sort, "")}
               className="flex items-center rounded-md border border-zinc-300 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
             >
               Clear
@@ -289,7 +315,7 @@ export default async function EndpointTablePage({
               <span className="rounded-full bg-zinc-100 px-2.5 py-0.5 dark:bg-zinc-900">
                 sort: <code className="font-mono">{sort}</code>{" "}
                 <Link
-                  href={buildPageHref(endpoint, 1, pageSize, "", q)}
+                  href={buildPageHref(schema, table, 1, pageSize, "", q)}
                   className="text-zinc-700 hover:underline dark:text-zinc-300"
                 >
                   ✕
@@ -316,7 +342,8 @@ export default async function EndpointTablePage({
                       <TableHead key={col.name}>
                         <Link
                           href={buildSortHref(
-                            endpoint,
+                            schema,
+                            table,
                             col.name,
                             sort,
                             q,
@@ -373,7 +400,14 @@ export default async function EndpointTablePage({
             <div className="flex gap-2">
               {page > 1 ? (
                 <Link
-                  href={buildPageHref(endpoint, page - 1, pageSize, sort, q)}
+                  href={buildPageHref(
+                    schema,
+                    table,
+                    page - 1,
+                    pageSize,
+                    sort,
+                    q,
+                  )}
                   className="rounded-md border border-zinc-300 px-3 py-1.5 text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
                 >
                   ← Prev
@@ -385,7 +419,14 @@ export default async function EndpointTablePage({
               )}
               {page < totalPages ? (
                 <Link
-                  href={buildPageHref(endpoint, page + 1, pageSize, sort, q)}
+                  href={buildPageHref(
+                    schema,
+                    table,
+                    page + 1,
+                    pageSize,
+                    sort,
+                    q,
+                  )}
                   className="rounded-md border border-zinc-300 px-3 py-1.5 text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
                 >
                   Next →
@@ -402,8 +443,9 @@ export default async function EndpointTablePage({
         <footer className="border-t border-zinc-200 pt-4 text-xs text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
           Source:{" "}
           <code className="font-mono">
+            curl{schema !== "api_v1" ? ` -H 'Accept-Profile: ${schema}'` : ""}{" "}
             {process.env.NEXT_PUBLIC_API_URL ?? "http://api-atlas.localhost"}
-            /{endpoint}
+            /{table}
             {pagedQuery}
           </code>
         </footer>
