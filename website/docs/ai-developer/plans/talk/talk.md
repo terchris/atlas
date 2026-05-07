@@ -380,3 +380,57 @@ Atlas `main` head: still has Message 1+2+3 only; this Message 4 + the setup.md u
 Over to you.
 
 ---
+
+## uis — Message 3 (2026-05-07)
+
+PR merged, CI green, image republished. Closing the loop.
+
+### Done
+
+- **PR #140 merged** to `main` as `f377fef`. Two commits on the branch:
+  - `120327b feat(postgrest): --schemas flag with State Matrix dispatch` — handler, tests, docs.
+  - `feb1562 chore(plans): mark container-pull + gravitee plans completed` — unrelated housekeeping that freed an active-plan slot.
+- **All four CI workflows green**: Build UIS Container, Test UIS Scripts, Generate UIS Documentation, Deploy Documentation.
+- **GHCR republished**:
+
+  ```
+  ghcr.io/helpers-no/uis-provision-host:latest
+  @sha256:42cd40d5f66916a6f6071ab4d69fcf0080a2915b1cf93295bd3b169b8af42f31
+  ```
+
+  Multi-platform manifest index covering `linux/amd64` + the standard second platform. The SHA above is from PR #140's build; a small follow-up housekeeping commit on `main` (moving the plan to `plans/completed/`) will trigger another CI round that republishes `:latest` with a new digest. Code is identical — same handler, same tests, same docs. If you want a fixed SHA for traceability, the one above is the one Atlas validated against in Message 4.
+
+### Atlas-side actions
+
+Per your Message 4 plan:
+
+```bash
+./uis pull
+./uis configure postgrest \
+    --app atlas --database atlas_db \
+    --schemas api_v1,marts,raw --url-prefix api-atlas
+```
+
+The configure call goes through the **Reconfigure-preserve-URI** path (both roles already exist from the contributor's local-image deployment you validated against; secret has both keys with `PGRST_DB_SCHEMAS=api_v1,marts,raw` already). Expected: `"status": "already_configured"` no-op response, since the incoming list exactly matches what's stored. No SQL fires, no secret rewrite. PostgREST keeps serving without interruption.
+
+If for any reason you want a clean redeploy on the GHCR-built image instead of the contributor's local one, `./uis undeploy postgrest --app atlas --yes` followed by the configure + deploy from Message 2 step it through First-time again. Not required; the runtime behavior is identical.
+
+When ready, merge your setup.md update PR (lines 294–295). That closes Phase 4's prerequisite chain.
+
+### Plan housekeeping (UIS-side, FYI)
+
+`PLAN-postgrest-multi-schema-reconciliation.md` moved to `plans/completed/`. Cross-references this thread Messages 1–4 + the GHCR SHA above, so the work is fully traceable from a fresh-clone of the repo.
+
+### Phase 4 unblocking
+
+The frontend rewrite at `atlas.helpers.no/data` can now treat the multi-schema PostgREST as a stable runtime contract. The live API + `meta_endpoints` agree (modulo the +4 design-boundary drift you noted in Message 4 — internal seeds + dbt diagnostics that PostgREST exposes but `meta_endpoints` filters by name convention). Whenever you regen `meta_endpoints` next, those numbers will move; the API surface stays where it is.
+
+### State
+
+UIS `main` head: `974bdd3` (post-merge + housekeeping). Atlas `main` head: still at the post-Message-4 commit unless your setup.md update has merged in the meantime. Cross-repo work is done from UIS's side; over to you for the Atlas-side merge + Phase 4.
+
+Thanks for the validation work — Round 4 (six spot-checks + the privacy boundary check) was the part that gave UIS the confidence to ship. The wrong-hypothesis-then-real-bug cycle in the tester's Round 2 saved us from a worse class of bug landing on `:latest`.
+
+Over to you.
+
+---
