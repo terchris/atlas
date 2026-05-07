@@ -4,23 +4,41 @@
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Active (Phase 2 shipped via PR #36; Phase 3 shipped; Phase 4 next)
+## Status: Active (Phases 1-3 shipped + Phase 4 partial; Phase 4 task 4.1 + Phase 5 remain)
 
-**Phase 3 outcome (2026-05-05)**: `mart_meta_sources` (41 rows), `mart_meta_endpoints` (116 rows: 10 api_v1 + 59 marts + 47 raw), `mart_meta_dimensions` (215 rows) all built and auto-wrapped via the PLAN-004 generator into `api_v1.meta_sources` / `meta_endpoints` / `meta_dimensions`. Lineage extracted via new `scripts/extract_lineage.py` (129 edges) → `seeds/sources/lineage.csv`. Tag inheritance uses union semantics; `fact_kommune_indicators` for example picks up 18 tags from its many indicator sources. **Caveat**: `mart_meta_dimensions` shipped as v1 (editorial pass-through over the seed) — the `cardinality` / `example_values` / `null_count` columns from the original PLAN spec are deferred to a follow-up since the per-source column-name-from-dim-code mapping (e.g. `Region` → `region_code`, `Tid` → `year`, `MEASURE_TYPE` → `measure_type`) needs its own design pass. Full dbt test 513/514 PASS, 0 ERROR (1 WARN is the pre-existing postnummer relationship). Shipped via the next PR after this Phase 3 work — see commit history.
+**Last Updated**: 2026-05-07 (Phase 1 closed: UIS PR #140 merged + GHCR republished; Phase 4 task 4.3 partial via PR #79; this update reflects the actual ship state vs the original plan).
 
-**Goal**: Execute [INVESTIGATE-customer-frontend-data-display.md](INVESTIGATE-customer-frontend-data-display.md). After this PLAN, the customer frontend's `/data` page shows every queryable endpoint across `api_v1`, `marts`, and `raw` schemas (everything that isn't `private_marts`), each tagged with `provider`, `topic`, `geo`, `cadence`, `eu_theme`, and `layer`. A filter sidebar lets users slice the catalogue by any combination of tags. A first-class sources list (`/data/sources` + `api_v1.meta_sources`) carries provider, upstream URL, last-ingested timestamp, and downstream-model count for **every** Atlas ingest source — currently 38, growing as the cloud-agent pipeline drains the backlog.
+### What's done
 
-**Investigation**: [INVESTIGATE-customer-frontend-data-display.md](INVESTIGATE-customer-frontend-data-display.md) — settled the open-by-default principle, the per-source `manifest.yml` shape ([Q2]), the dbt-model-as-substrate path ([Q3]), and the multi-namespace tag UX ([Q4]). Phase 2.10 + 2.11 extended the namespace set with `eu_theme:` (DCAT-AP alignment) and the editorial `dimensions:` block.
+- **Phase 1 — UIS schema exposure**: ✅ closed 2026-05-07. UIS shipped the `--schemas api_v1,marts,raw` flag (per-app explicit opt-in, not the original "global default" framing). UIS PR #140 merged as `f377fef`; `ghcr.io/helpers-no/uis-provision-host:latest` @sha256:`42cd40d5f66916a6f6071ab4d69fcf0080a2915b1cf93295bd3b169b8af42f31`. Atlas's `setup.md` updated via PR #76. Schema-list flag thread documented end-to-end in [`talk.md`](../talk/talk.md) (Messages 1-4 atlas + 1-3 uis). The reconfigure-already-deployed step is user-managed via the UIS tester CLI.
 
-**Last Updated**: 2026-05-05 (Phase 2 shipped via PR #36 — catalogue 21 → 38 sources; Phase 3 expanded to include `mart_meta_dimensions` consuming the `_sources_dimensions` seed; counts refreshed to "currently 38, growing")
+- **Phase 2 — manifest registry**: ✅ shipped via PR #36 (catalogue 21 → 38 sources; manifest schema includes `eu_theme`, `attribution`, `dimensions:` block; `recordIngestRun()` lifecycle wrapper landed; `_sources_manifest.csv` + `_sources_dimensions.csv` seeds materialised at `marts._sources_manifest` / `_sources_dimensions`). Catalogue is now **41 sources** after subsequent FHI / SSB / Bufdir / Cursor BG additions.
 
-**Prerequisites**:
-- PostgREST live with `api_v1.*` (PLAN-004 + UIS PLAN-002 — verified 2026-04-30).
-- Customer frontend with `/data`, `/data/[endpoint]`, `/data/[endpoint]/spec` (PLAN-005 — shipped at `2266f21`).
-- `raw.ingest_runs` populated by every ingest module (already in place since the scraping-infrastructure PLAN).
+- **Phase 3 — meta marts + auto-wrap**: ✅ shipped via PR #73 (3 new marts under `models/marts/api/`) + PR #77 (override-map → manifest.yml `raw_tables:` field refactor). `api_v1.meta_sources` (41 rows), `api_v1.meta_endpoints` (121 rows after refresh: 13 api_v1 + 61 marts + 47 raw), `api_v1.meta_dimensions` (215 rows). Lineage seed via new `scripts/extract_lineage.py` (129 edges). Tag inheritance uses union semantics; `fact_kommune_indicators` picks up 18 tags from its many indicator sources. **`mart_meta_dimensions` cardinality enrichment deferred** to a follow-up — see [INVESTIGATE-mart-meta-dimensions-cardinality.md](../backlog/INVESTIGATE-mart-meta-dimensions-cardinality.md) (PR #78) for the design.
 
-**Blocks**:
-- The customer frontend's tag-filter view of `marts.*` and `raw.*` endpoints depends on Phase 1 (UIS schema exposure) landing.
+- **Phase 4 — frontend rewrite**: 🟡 partial. PR #79 shipped `/data/sources/page.tsx` (sources index, grouped by provider, reads `api_v1.meta_sources` live). Tasks 4.1 (full `/data` rewrite with tag-filter sidebar against `meta_endpoints`), 4.2 (`api:types` regen against the multi-schema spec), 4.3 (per-source detail page at `/data/sources/[source_id]`), 4.4 (homepage copy), 4.5 (README) are open. Phase 1 unblocking landed 2026-05-07; remaining 4.x work is now atlas-only.
+
+- **Phase 5 — docs**: ❌ not started.
+
+### Goal (unchanged)
+
+Execute [INVESTIGATE-customer-frontend-data-display.md](INVESTIGATE-customer-frontend-data-display.md). After this PLAN, the customer frontend's `/data` page shows every queryable endpoint across `api_v1`, `marts`, and `raw` schemas (everything that isn't `private_marts`), each tagged with `provider`, `topic`, `geo`, `cadence`, `eu_theme`, and `layer`. A filter sidebar lets users slice the catalogue by any combination of tags. A first-class sources list (`/data/sources` + `api_v1.meta_sources`) carries provider, upstream URL, last-ingested timestamp, and downstream-model count for **every** Atlas ingest source — currently 41, growing as the cloud-agent pipeline drains the backlog.
+
+### Investigation
+
+[INVESTIGATE-customer-frontend-data-display.md](INVESTIGATE-customer-frontend-data-display.md) — settled the open-by-default principle, the per-source `manifest.yml` shape ([Q2]), the dbt-model-as-substrate path ([Q3]), and the multi-namespace tag UX ([Q4]). Phase 2.10 + 2.11 extended the namespace set with `eu_theme:` (DCAT-AP alignment) and the editorial `dimensions:` block.
+
+### Prerequisites
+
+- ✅ PostgREST live with `api_v1.*` (PLAN-004 + UIS PLAN-002 — verified 2026-04-30).
+- ✅ PostgREST also serves `marts.*` and `raw.*` via `Accept-Profile` header (UIS PR #140 — Phase 1 of this PLAN).
+- ✅ Customer frontend with `/data`, `/data/[endpoint]`, `/data/[endpoint]/spec` (PLAN-005 — shipped at `2266f21`).
+- ✅ `raw.ingest_runs` populated by every ingest module (lifecycle wrapper from Phase 2.8).
+- ✅ `api_v1.meta_sources` / `meta_endpoints` / `meta_dimensions` live (Phase 3).
+
+### Blocks
+
+- None remaining — UIS Phase 1 dependency closed 2026-05-07.
 
 ---
 
@@ -108,11 +126,11 @@ Cross-repo coordination with the UIS contributor. Atlas's `atlas-postgrest` inst
 
 ### Tasks
 
-- [x] 1.1 Open a new round of cross-repo coordination via `talk.md` (currently the empty placeholder). Inaugural message from atlas to uis lays out the change asked for: extend `PGRST_DB_SCHEMAS` from `api_v1` to `api_v1,marts,raw`; add matching `GRANT USAGE ON SCHEMA marts, raw TO <app>_web_anon` and `GRANT SELECT ON ALL TABLES IN SCHEMA marts, raw TO <app>_web_anon` plus `ALTER DEFAULT PRIVILEGES IN SCHEMA marts, raw GRANT SELECT ON TABLES TO <app>_web_anon` to `configure-postgrest.sh`. `private_marts` stays excluded.
-- [ ] 1.2 Wait for UIS contributor's response + PR. Review their patch.
-- [ ] 1.3 Once UIS PR merges and the rebuilt image is published, run `./uis pull` + `./uis configure postgrest --app atlas --database atlas_db --url-prefix api-atlas --json` (re-runs the configure step against the new image, picks up the additional grants). Then `./uis deploy postgrest --app atlas` (no-op if already deployed) or restart the pod to pick up the updated `PGRST_DB_SCHEMAS` env var.
+- [x] 1.1 Open a new round of cross-repo coordination via `talk.md`. Inaugural message from atlas to uis lays out the change asked for: extend `PGRST_DB_SCHEMAS` from `api_v1` to `api_v1,marts,raw`; add matching `GRANT USAGE ON SCHEMA marts, raw TO <app>_web_anon` and `GRANT SELECT ON ALL TABLES IN SCHEMA marts, raw TO <app>_web_anon` plus `ALTER DEFAULT PRIVILEGES IN SCHEMA marts, raw GRANT SELECT ON TABLES TO <app>_web_anon` to `configure-postgrest.sh`. `private_marts` stays excluded.
+- [x] 1.2 UIS contributor responded + shipped. Six-message thread in [`talk.md`](../talk/talk.md) settled the design (UIS pushed back on the global-default framing in their Message 1; atlas accepted in Message 3 — the per-app `--schemas` flag avoids the GRANT-failure trap for non-Atlas consumers and keeps dbt-isms out of the platform tool). UIS PR #140 merged as `f377fef` on 2026-05-07; State Matrix dispatch with 5 reconcile paths; `--schema` (singular) removed entirely; `PGRST_DB_SCHEMAS` lives on the per-app secret + read by deploy template via `secretKeyRef` so configure/deploy can't drift.
+- [x] 1.3 Atlas-side validation passed against the contributor's local-image deployment (`talk.md` Message 4) — six spot-checks across api_v1 / marts / raw plus the privacy-boundary check confirming `private_marts.frr_resources` returns 404 by default and 406 with `Accept-Profile: private_marts`. Atlas's `setup.md` updated via PR #76 (configure line gains `--schemas api_v1,marts,raw`). The user's `./uis pull` + reconfigure step is the final ack — runs through their UIS tester CLI; expected `"status": "already_configured"` no-op since the contributor's local image had identical semantics.
 
-**Outcome (Phase 1, partial — 2026-05-01):** atlas Message 1 to uis is written into [`talk.md`](../talk/talk.md). 1.2 + 1.3 are blocked on UIS contributor response — Atlas-side Phase 2/3 work continues in parallel per the implementation note below.
+**Outcome (Phase 1 — closed 2026-05-07):** schema-list extension landed end-to-end. Single-day round-trip from atlas Message 4 (validation) to UIS Message 3 (PR + GHCR rebuild). PostgREST now serves `marts.*` and `raw.*` via `Accept-Profile` in addition to the default `api_v1`; private schemas (`private_raw`, `private_marts`) stay excluded by design. GHCR `:latest` SHA: `42cd40d5f66916a6f6071ab4d69fcf0080a2915b1cf93295bd3b169b8af42f31`.
 
 ### Validation
 
@@ -342,8 +360,8 @@ Replace the existing flat catalogue with the tag-filter sidebar layout. Add a pe
   - Render a two-column layout: filter sidebar on the left (namespace-grouped checkboxes, count per option, derived from the unfiltered tag set), endpoint cards on the right.
   - Each card shows endpoint name, description, layer indicator, and tag pills (clickable to add to filter).
   - URL-driven; no client JS needed.
-- [ ] 4.2 Update `npm run api:types` so the new `meta_sources` and `meta_endpoints` endpoint types appear in `api-types.ts`. (No work — `swagger2openapi → openapi-typescript` regenerates from the spec automatically.)
-- [ ] 4.3 Add `atlas-frontend/src/app/data/sources/[source_id]/page.tsx` — per-source detail:
+- [ ] 4.2 Update `npm run api:types` so the new `meta_sources` and `meta_endpoints` endpoint types appear in `api-types.ts`. (No work — `swagger2openapi → openapi-typescript` regenerates from the spec automatically.) Now unblocked since UIS PR #140 ships the multi-schema spec.
+- [~] 4.3 **Partial via PR #79.** Sources index page shipped at `atlas-frontend/src/app/data/sources/page.tsx` — reads `api_v1.meta_sources` live, groups by `provider:` namespace, shows per-source freshness + tag pills + upstream link. **Per-source detail page** at `atlas-frontend/src/app/data/sources/[source_id]/page.tsx` is the remaining sub-task:
   - Fetch `api_v1.meta_sources` for the requested source_id; 404 if not found.
   - Render a card with provider, upstream URL (linked, target=_blank), description, last-ingested timestamp, total ingest invocations.
   - Below: list of derived endpoints (filter `meta_endpoints` by lineage to this source) with click-throughs to `/data/<endpoint>` (the table viewer) and `/data/<endpoint>/spec`.
@@ -472,6 +490,40 @@ All four doc files reflect the new shape; no stale references to "the 9 endpoint
 
 ---
 
+## Related work shipped during PLAN-007 execution
+
+Captured here so the PLAN serves as project documentation, not just an aspirational checklist. Each entry is work that surfaced *during* the PLAN's execution but didn't fit a numbered task.
+
+### Catalogue growth + cloud-agent pipeline (parallel to Phase 2/3)
+- **Catalogue grew 21 → 41 sources** during the FHI / Bufdir / SSB-crime onboarding waves (2026-04-30 → 2026-05-06). 17 FHI sources from human-driven onboarding; 4 ssb-crime tables + bufdir-barnefattigdom + ssb-10826 from Cursor BG cloud-agent runs.
+- **Cloud-agent runbook** (`AGENT-onboard-source.md` + `.cursor/rules/onboard-source.mdc`) shipped via PR #36, refined via subsequent commits to support both queue-mode (issue-claim) and named-candidate-mode invocations.
+- **`npm run ingest:all`** catch-up script + raw.ingest_runs validation shipped via PR #80 — discovers every `ingest:*` script in package.json, runs sequentially, validates each via the `recordIngestRun()` lifecycle wrapper, prints per-source row count + duration. Closes the post-reset workflow's "ingest 36 sources by hand" gap.
+
+### Bufdir hardening track (PRs #67, #68, #69, #70, #71)
+- PR #67: split `bufdir-barnefattigdom/index.ts` into pure `parse.ts` + 29 golden-file tests; multi-tier ZIP-URL discovery (canonical → loose-date-format → loose-monitor → loose-bare with logged fallback tier).
+- PR #71: surrogate `indicator_api_id` migration — `bf_zip_<24-hex>` → `bf_zip_ind_<N>` (number-prefix); alias seed `bufdir_indicator_alias.csv` for renumbering events (Indikator 9 → 9a/9b split, Indikator 10 retired). Wraps via PLAN-004 generator as `api_v1.bufdir_indicator_alias`.
+- The `lib/output.ts` per-line streaming refactor (`writeNdjson` + new `ndjsonStreamingWriter`) shipped along the way to fix a V8 `Invalid string length` crash on bufdir's 395k-row output.
+
+### Cluster rebuild + setup workflow hardening (PRs #62, #65, #66)
+- Postgres + UIS cluster wiped + rebuilt 2026-05-05 (rancher-desktop reset). Surfaced gaps in the post-reset workflow:
+  - PR #62: `setup.md` gains the docker-psql fallback for hosts without `libpq` + an explicit "After a cluster reset / fresh start" recovery sequence.
+  - PR #66: Klass dim-spine ingests (ssb-klass-kommuner + ssb-klass-fylker) made mandatory in step 6 — without them, every `relationships → dim_kommune` test fails by definition (the dim builds but is empty).
+  - PR #65: dbt-osmosis canonicalisation fix for the YAML-style drift introduced by Cursor BG's bufdir descriptions.
+
+### Frontend scaffolding (PR #79; partial Phase 4 task 4.3)
+- `/data/sources/page.tsx` — sources index reading `api_v1.meta_sources` live. Same introspection-driven pattern as PLAN-005's `/data` catalog. Grouped by provider (pragmatic v1; full tag-filter sidebar is task 4.1).
+
+### Doc / process improvements (PRs #58, #59, #66, #76, #77)
+- PR #59: validated INVESTIGATE + PLAN, added `mart_meta_dimensions` to Phase 3 task list (it was missing despite the seed being built for it).
+- PR #76: `setup.md` `--schemas api_v1,marts,raw` flag added to `./uis configure postgrest` line (paired with UIS PR #140's flag landing).
+- PR #77: moved `extract_lineage.py`'s hardcoded multi-table override map into manifest.yml `raw_tables:` field. Closes a follow-up flagged in PR #73's outcome notes.
+- PR #78: INVESTIGATE for `mart_meta_dimensions` cardinality enrichment (deferred from Phase 3.4).
+
+### Open follow-ups (tracked outside PLAN-007)
+- **`mart_meta_dimensions` cardinality + example_values + null_count** — design in [INVESTIGATE-mart-meta-dimensions-cardinality.md](../backlog/INVESTIGATE-mart-meta-dimensions-cardinality.md). Recommends Python extract script (analogous to `extract_lineage.py`) + optional `column_name:` field on each dim entry. Estimated half-day implementation once accepted.
+
+---
+
 ## Cross-references
 
 - [INVESTIGATE-customer-frontend-data-display.md](INVESTIGATE-customer-frontend-data-display.md) — the architectural commitments this PLAN executes.
@@ -486,7 +538,7 @@ All four doc files reflect the new shape; no stale references to "the 9 endpoint
 
 ## Implementation notes
 
-- **Phase 1 has cross-repo asynchrony.** Don't block all of Phase 2/3 on it — manifest.yml authorship and `meta_sources`/`meta_endpoints`/`meta_dimensions` model work doesn't need the schema exposure to be live (it can use the existing `api_v1.*` exposure for development; the new schemas appear when UIS lands the change). Sequence: kick off Phase 1 in parallel with Phase 2 + 3, then Phase 4 once both have landed.
+- **Phase 1 had cross-repo asynchrony — and the parallel sequencing worked as intended.** Atlas Phase 2 + 3 + Phase 4 task 4.3 (sources index) all shipped against the existing single-schema PostgREST while UIS's PR was in flight. UIS Message 1 pushed back on the original "global default" framing in favour of an explicit per-app `--schemas` flag; atlas accepted in Message 3; UIS's PR #140 merged 2026-05-07 (single-day round-trip from atlas Message 4 validation to UIS Message 3 close-out). Total elapsed: 8 days from atlas Message 1 to Phase 1 close. Lesson for future cross-repo asks: validate against the contributor's local-image deployment before they push the PR — saved a CI round-trip here.
 - **Tag inheritance — union, not intersection.** Recorded inline at Phase 3.2. A `mart_*` derived from many sources picks up the union of source tags so filters like `topic:income` surface every mart that *involves* income data, not just marts where every source happens to be income-shaped. Don't re-litigate.
 - **`marts._*` private seeds stay out of `mart_meta_endpoints`.** `_sources_manifest`, `_sources_dimensions`, `eu_data_theme`, and the future `lineage` seed are dbt internals — they live in `marts` (so models can `ref()` them) but the underscore prefix marks them not-for-API. The auto-generator at `regenerate-api-v1.sh` already skips them by convention. `mart_meta_endpoints`'s `information_schema.tables` query needs an explicit `WHERE table_name NOT LIKE '\_%'` filter to match.
 - **Editorial vs computed in `mart_meta_dimensions`.** The `_sources_dimensions` seed carries hand-authored editorial content (`meaning`, `value_format`, `notes` — what the dimension is). The mart joins it with introspection of `raw.*` (`cardinality`, `example_values` — what the dimension actually contains). Both are valuable; one without the other gives only half the picture. The seed is deliberately the only source of editorial truth — don't add computed fields to the seed itself, and don't add hand-authored fields to the introspection layer.
