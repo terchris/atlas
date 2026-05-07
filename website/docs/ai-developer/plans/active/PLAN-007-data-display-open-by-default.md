@@ -4,7 +4,7 @@
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Active (Phases 1-3 shipped + Phase 4 partial; Phase 4 task 4.1 + Phase 5 remain)
+## Status: Active (Phases 1-3 shipped + Phase 4 task 4.1 shipped; tasks 4.3 (per-source detail) + 4.4 + 4.5 + Phase 5 remain)
 
 **Last Updated**: 2026-05-07 (Phase 1 closed: UIS PR #140 merged + GHCR republished; Phase 4 task 4.3 partial via PR #79; this update reflects the actual ship state vs the original plan).
 
@@ -16,7 +16,7 @@
 
 - **Phase 3 — meta marts + auto-wrap**: ✅ shipped via PR #73 (3 new marts under `models/marts/api/`) + PR #77 (override-map → manifest.yml `raw_tables:` field refactor). `api_v1.meta_sources` (41 rows), `api_v1.meta_endpoints` (121 rows after refresh: 13 api_v1 + 61 marts + 47 raw), `api_v1.meta_dimensions` (215 rows). Lineage seed via new `scripts/extract_lineage.py` (129 edges). Tag inheritance uses union semantics; `fact_kommune_indicators` picks up 18 tags from its many indicator sources. **`mart_meta_dimensions` cardinality enrichment deferred** to a follow-up — see [INVESTIGATE-mart-meta-dimensions-cardinality.md](../backlog/INVESTIGATE-mart-meta-dimensions-cardinality.md) (PR #78) for the design.
 
-- **Phase 4 — frontend rewrite**: 🟡 partial. PR #79 shipped `/data/sources/page.tsx` (sources index, grouped by provider, reads `api_v1.meta_sources` live). Tasks 4.1 (full `/data` rewrite with tag-filter sidebar against `meta_endpoints`), 4.2 (`api:types` regen against the multi-schema spec), 4.3 (per-source detail page at `/data/sources/[source_id]`), 4.4 (homepage copy), 4.5 (README) are open. Phase 1 unblocking landed 2026-05-07; remaining 4.x work is now atlas-only.
+- **Phase 4 — frontend rewrite**: 🟡 partial. PR #79 shipped `/data/sources/page.tsx` (sources index, grouped by provider). Task 4.1 shipped 2026-05-07: full `/data` rewrite with tag-filter sidebar against `meta_endpoints` (119 cards, 6 namespace-grouped facets, faceted-search counts), plus the `/data/[endpoint]/` → `/data/[schema]/[table]/` route restructure so the table + spec viewers send `Accept-Profile` for non-default schemas. Tasks 4.2 (api:types regen — now non-blocker since the catalog reads dynamic schemas), 4.3 (per-source detail page at `/data/sources/[source_id]`), 4.4 (homepage copy), 4.5 (README) remain.
 
 - **Phase 5 — docs**: ❌ not started.
 
@@ -357,13 +357,15 @@ Replace the existing flat catalogue with the tag-filter sidebar layout. Add a pe
 
 ### Tasks
 
-- [ ] 4.1 Rewrite `atlas-frontend/src/app/data/page.tsx`:
-  - Fetch `api_v1.meta_endpoints` (server component).
-  - Read `searchParams` for active tag filters (`?tag=topic:income&tag=layer:api-v1`).
-  - Apply filters server-side via PostgREST `?tags=cs.{...}` query params.
-  - Render a two-column layout: filter sidebar on the left (namespace-grouped checkboxes, count per option, derived from the unfiltered tag set), endpoint cards on the right.
-  - Each card shows endpoint name, description, layer indicator, and tag pills (clickable to add to filter).
-  - URL-driven; no client JS needed.
+- [x] 4.1 Rewrite `atlas-frontend/src/app/data/page.tsx`:
+  - ✅ Fetches `api_v1.meta_endpoints` directly via server component (`fetch()` with `next: { revalidate: 60 }`).
+  - ✅ Reads `searchParams.tag` (string | string[]) for active filters; URL state `?tag=topic:income&tag=geo:kommune&q=oslo`.
+  - ✅ Filtering happens **in node**, not via PostgREST `?tags=cs.{...}` (the original plan said server-side via PostgREST). Pivot rationale: meta_endpoints is 119 rows; node-side filter trivially fast and supports the full faceted-search semantics (AND across namespaces, OR within) without composing complex PostgREST `or=()` clauses. Pure helpers extracted to [`src/lib/catalog-filter.ts`](../../../../atlas-frontend/src/lib/catalog-filter.ts) for testability.
+  - ✅ Two-column layout: sidebar (18rem fixed) with 6 namespace-grouped checkboxes + faceted-search counts (counts re-compute as filters apply); endpoint cards on the right.
+  - ✅ Cards show layer-coloured badge (api_v1 emerald, marts sky, raw zinc), `table_name` in mono, layer-stripped tag pills (clickable to add), and right-aligned "View as table" + "View spec" links to `/data/{schema}/{table}` and `/data/{schema}/{table}/spec`.
+  - ✅ Pure URL-driven, no client JS, no React state.
+
+  **Bundled scope (extension to original plan, atlas Phase 4.1 PR):** the `/data/[endpoint]/` route was restructured to `/data/[schema]/[table]/` so the table + spec viewers know which schema to send `Accept-Profile` for. Without this, marts/raw cards on the new catalog would 404 on click. The route is hard-cut (no back-compat redirect from `/data/[endpoint]`); old URLs aren't externally linked yet. The viewers' `fetchSpec` / `fetchRows` / `fetchCount` calls all gain `{ acceptProfile: schema }`; the lib drops the header for `api_v1` so default-schema requests stay header-less (matches the talk40 gotcha note above).
 - [ ] 4.2 Update `npm run api:types` so the new `meta_sources` and `meta_endpoints` endpoint types appear in `api-types.ts`. (No work — `swagger2openapi → openapi-typescript` regenerates from the spec automatically.) Now unblocked since UIS PR #140 ships the multi-schema spec.
 - [~] 4.3 **Partial via PR #79.** Sources index page shipped at `atlas-frontend/src/app/data/sources/page.tsx` — reads `api_v1.meta_sources` live, groups by `provider:` namespace, shows per-source freshness + tag pills + upstream link. **Per-source detail page** at `atlas-frontend/src/app/data/sources/[source_id]/page.tsx` is the remaining sub-task:
   - Fetch `api_v1.meta_sources` for the requested source_id; 404 if not found.
