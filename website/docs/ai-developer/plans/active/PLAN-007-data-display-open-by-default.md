@@ -270,7 +270,7 @@ The joins. After this phase, three new `mart_*` views exist (and via the PLAN-00
 
 ### Tasks
 
-- [ ] 3.1 Add `atlas-data/dbt/models/marts/api/mart_meta_sources.sql`:
+- [x] 3.1 Add `atlas-data/dbt/models/marts/api/mart_meta_sources.sql`:
   - From: `marts._sources_manifest` (Phase 2 seed; currently 38 rows, growing)
   - Left-join to `raw.ingest_runs` aggregates per source:
     - `last_ingested_at`: `MAX(finished_at) WHERE exit_code = 0`
@@ -280,13 +280,13 @@ The joins. After this phase, three new `mart_*` views exist (and via the PLAN-00
   - Add `downstream_model_count`: count of distinct downstream models from the lineage seed (Phase 3.3).
   - Output columns: `source_id`, `upstream_id`, `upstream_url`, `upstream_landing_page`, `upstream_title`, `description`, `publisher`, `license`, `license_url`, `periodicity`, `eu_theme`, `attribution`, `tags` (text[]), `last_ingested_at`, `last_upstream_update_at`, `latest_row_count`, `total_runs`, `downstream_model_count`.
   - Add full `schema.yml` description per column (PLAN-001's gate enforces this).
-- [ ] 3.2 Add `atlas-data/dbt/models/marts/api/mart_meta_endpoints.sql`:
+- [x] 3.2 Add `atlas-data/dbt/models/marts/api/mart_meta_endpoints.sql`:
   - From: `information_schema.tables` filtered to `table_schema in ('api_v1','marts','raw')` (and `not in ('private_marts')` defensively). Skip `marts._*` private seeds (`_sources_manifest`, `_sources_dimensions`, `eu_data_theme`, `lineage`).
   - Output columns: `endpoint`, `schema`, `table`, `tags` (text[]), `row_count` (via dynamic SQL or a daily-refreshed snapshot — see 3.3 for lineage), `is_public_api` (boolean: schema='api_v1')
   - Tag derivation: `layer:<schema>` from the schema; **union** of all `provider:` / `topic:` / `geo:` / `cadence:` / `eu_theme:` tags from the source(s) the endpoint derives from (via the lineage seed in 3.3). Union over intersection: a `mart_*` derived from 17 indicator sources picks up *every* source's tag — easier to filter, "this mart involves something annual" is a more useful signal than "this mart is purely annual." Decision recorded inline so 3.2 doesn't re-litigate it.
   - Add full `schema.yml` description per column.
-- [ ] 3.3 Add `atlas-data/dbt/scripts/extract_lineage.py` that reads `target/manifest.json` after `dbt parse`, walks the dependency graph from each `api_v1.*` and `marts.*` model up to its root `raw.*` ancestors, and emits a dbt seed CSV at `seeds/sources/lineage.csv` with rows `(model_name, source_id)` — one row per (model, source) edge. Multiple rows per model when it derives from multiple sources (e.g. `fact_kommune_indicators` → many indicator sources).
-- [ ] 3.4 Add `atlas-data/dbt/models/marts/api/mart_meta_dimensions.sql`:
+- [x] 3.3 Add `atlas-data/dbt/scripts/extract_lineage.py` that reads `target/manifest.json` after `dbt parse`, walks the dependency graph from each `api_v1.*` and `marts.*` model up to its root `raw.*` ancestors, and emits a dbt seed CSV at `seeds/sources/lineage.csv` with rows `(model_name, source_id)` — one row per (model, source) edge. Multiple rows per model when it derives from multiple sources (e.g. `fact_kommune_indicators` → many indicator sources). Hardcoded multi-table override map shipped via PR #73; **moved into manifest.yml's `raw_tables:` field via PR #77** so the script is now generic.
+- [~] 3.4 Add `atlas-data/dbt/models/marts/api/mart_meta_dimensions.sql`. **Editorial pass-through shipped (PR #73)**; `cardinality` / `example_values` / `null_count` columns deferred — design in [INVESTIGATE-mart-meta-dimensions-cardinality.md](../backlog/INVESTIGATE-mart-meta-dimensions-cardinality.md) (PR #78).
   - From: `marts._sources_dimensions` (Phase 2.11 seed; ~198 rows = sum of dimensions across all 38 sources). Left-joined to per-(source, dimension) introspection of the corresponding `raw.*` table.
   - For every (source_id, dim_code) pair, compute against the raw table:
     - `cardinality`: `COUNT(DISTINCT <dim_column>)` — how many unique values appear.
@@ -295,7 +295,7 @@ The joins. After this phase, three new `mart_*` views exist (and via the PLAN-00
   - Output columns: `source_id`, `code` (upstream dim name), `meaning`, `value_format`, `notes` (from the seed), `cardinality`, `example_values` (text[]), `null_count`. Frontend renders "what each column means × what values it actually contains" in one card.
   - Implementation note: introspecting raw.* tables means generating one SELECT per (source × dim) pair via dbt Jinja iteration over the seed contents. Use `run_query()` at parse time to read the seed; build a per-source UNION ALL. Keep an eye on dbt-Core's parse-time query budget — if it slows, fall back to a static CTE per source the seed-gen script emits.
   - Add full `schema.yml` description per column.
-- [ ] 3.5 Run `./regenerate-api-v1.sh` + `./apply-api-v1.sh`. The PLAN-004 generator picks up `mart_meta_sources`, `mart_meta_endpoints`, and `mart_meta_dimensions`, emits `api_v1.meta_sources` / `api_v1.meta_endpoints` / `api_v1.meta_dimensions` wrappers, all five validation gates pass.
+- [x] 3.5 Run `./regenerate-api-v1.sh` + `./apply-api-v1.sh`. The PLAN-004 generator picks up `mart_meta_sources`, `mart_meta_endpoints`, and `mart_meta_dimensions`, emits `api_v1.meta_sources` / `api_v1.meta_endpoints` / `api_v1.meta_dimensions` wrappers, all five validation gates pass. Wrapper count went 10 → 13.
 
 ### Validation
 
