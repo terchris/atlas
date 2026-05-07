@@ -67,10 +67,13 @@ Plus tertiary: Magnus (active volunteer QC), Henrik (corporate partnerships), Å
 
 ## Repository structure
 
+> **Why two frontends?** Atlas has two Next.js apps with deliberately different access patterns: a public customer app that talks only to the PostgREST API (`atlas-frontend/`), and an internal diagnostics app with direct Postgres access for verifying ingestion + dbt output (`atlas-contributor-frontend/`). Full rationale at [`website/docs/contributors/frontends.md`](website/docs/contributors/frontends.md). The split is forced by the customer app being designed as a forkable reference for external developers — it can't import `atlas-data/` types or use a DB driver.
+
 ```
 ./
 ├── README.md                                — this file
-├── atlas-frontend/                          — Next.js App Router app (atlas.helpers.no)
+├── atlas-frontend/                          — public customer Next.js app (atlas.helpers.no)
+│   │                                          — PostgREST consumer; no DB role; forkable reference. Default port 3001.
 │   ├── app/                                 — App Router pages and layouts
 │   ├── src/                                 — shared code (components, lib)
 │   ├── public/                              — static assets
@@ -78,6 +81,11 @@ Plus tertiary: Magnus (active volunteer QC), Henrik (corporate partnerships), Å
 │   ├── package.json                         — frontend deps (Node 20+)
 │   ├── postcss.config.mjs, components.json  — PostCSS, shadcn config
 │   └── design-tokens/                       — Digdir Designsystemet token sources
+├── atlas-contributor-frontend/              — internal diagnostics Next.js app (NOT deployed publicly)
+│   │                                          — direct Postgres reads (uses `postgres.js`); for ingest/dbt verification. Default port 4000.
+│   ├── app/                                 — App Router pages: /admin, /coverage-gap, /data, /kommuner, /ngo
+│   ├── src/                                 — components + lib
+│   └── package.json                         — depends on `postgres` driver (not present in atlas-frontend)
 ├── atlas-data/                              — TypeScript ingest + dbt + raw migrations (writes marts.* in Postgres)
 │   ├── ingest/                              — one folder per upstream source under ingest/src/sources/
 │   ├── dbt/                                 — dbt Core project (raw.* → marts.*)
