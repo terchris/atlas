@@ -4,7 +4,7 @@
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Active (Phases 1-4 shipped; Phase 5 docs remain)
+## Status: Completed 2026-05-07 (Phases 1-5 shipped)
 
 **Last Updated**: 2026-05-07 (Phase 1 closed: UIS PR #140 merged + GHCR republished; Phase 4 task 4.3 partial via PR #79; this update reflects the actual ship state vs the original plan).
 
@@ -18,7 +18,7 @@
 
 - **Phase 4 — frontend rewrite**: ✅ closed 2026-05-07. PR #79 shipped sources index. PR #85 shipped task 4.1 (full `/data` rewrite with tag-filter sidebar against `meta_endpoints`, 119 cards, 6 namespace-grouped facets, faceted-search counts) + the `/data/[endpoint]/` → `/data/[schema]/[table]/` route restructure (Accept-Profile dispatch) + the cache-no-store fix for first-load-empty + homepage copy update (4.4). PR #88 (this PR) shipped task 4.3 (per-source detail page at `/data/sources/[source_id]/page.tsx` rendering source metadata + freshness + raw ingest link + derived endpoints joined live against the `marts.lineage` seed) + task 4.5 (atlas-frontend README refresh covering every route, the lib's `acceptProfile` option, and the bookmarkable Tag URL patterns). Task 4.2 closed as no-op — the tag-driven catalog reads dynamic schemas from `meta_endpoints`, the typed `api-types.ts` union is no longer load-bearing for discovery; regen is now an optional contributor maintenance step.
 
-- **Phase 5 — docs**: ❌ not started.
+- **Phase 5 — docs**: ✅ closed 2026-05-07 in PR #88. Four files updated: `setup.md` (manifest convention + corrected customer-frontend section), `ingest-modules.md` (expanded manifest workflow with heuristic warnings), `developers/index.md` (open-by-default + Accept-Profile + tag-filter URL pattern), `atlas-data/ingest/src/sources/README.md` (added programmatic-access callout pointing at `api_v1.meta_sources`).
 
 ### Goal (unchanged)
 
@@ -401,16 +401,10 @@ curl -sS -o /dev/null -w "%{http_code}\n" "http://localhost:3001/data/sources/no
 
 ### Tasks
 
-- [ ] 5.1 Update [`website/docs/contributors/setup.md`](../../../contributors/setup.md): add a section on the per-source `manifest.yml` convention (where it lives, required fields, tag namespaces), placed near the existing "Set up the ingest layer" section.
-- [ ] 5.2 Update [`website/docs/contributors/ingest-modules.md`](../../../contributors/ingest-modules.md): "Adding a new ingest source" section gets a step on the bootstrap-then-fill-then-review workflow:
-  1. After scaffolding `index.ts` + `README.md`, run `npm run sources:bootstrap-manifest -- <source_id>` to produce the skeleton manifest with upstream metadata pre-filled.
-  2. Run `npm run sources:fill-manifest-todos` to auto-fill `description` + `tags` from the README. Idempotent — re-running on a fully-filled manifest is a no-op.
-  3. Review the generated `manifest.yml`. The auto-fill is heuristic; spot-check `tags.topic` (regex first-match-wins) and `tags.geo` (kommune > fylke > bydel priority). For sources without an `## Upstream` table in the README, add an entry to `MANUAL_OVERRIDES` in `fill-manifest-todos.ts`.
-  4. Commit the manifest alongside the source code.
-  5. Subsequent ingest runs do not modify the manifest; future field changes happen via PR like any other code change.
-  Show the schema with example values for each declared namespace.
-- [ ] 5.3 Update [`website/docs/developers/index.md`](../../../developers/index.md) (currently a stub from PLAN-005): add a section on the open-by-default principle + the tag-filter URL pattern (`?tag=topic:income&tag=geo:kommune`) external developers can use to fetch subsets via the API.
-- [ ] 5.4 Update [`atlas-data/ingest/src/sources/README.md`](../../../../../atlas-data/ingest/src/sources/README.md): per the Phase 2.6 decision, either replace the hand-maintained table with auto-generation from YAMLs (preferred, via the Python helper) or replace it with a pointer at `api_v1.meta_sources`.
+- [x] 5.1 [`setup.md`](../../../contributors/setup.md): new "Per-source `manifest.yml`" subsection after "Set up the ingest layer", documenting the 11 required top-level fields (incl. `eu_theme`, `attribution`), the four `tags:` namespaces with allowed values, and the `dimensions:` block with example. Plus the "Set up the customer frontend" section refreshed to list the actual routes shipped (`/data`, `/data/sources`, `/data/sources/[source_id]`, `/data/[schema]/[table]`) instead of the stale "lists every api_v1.* endpoint" copy.
+- [x] 5.2 [`ingest-modules.md`](../../../contributors/ingest-modules.md): the manifest workflow at step 4 expanded into 4 explicit sub-steps (bootstrap → fill → review-with-heuristic-warnings → commit). Names the topic-regex first-match-wins behaviour and the geo priority (kommune > fylke > bydel). Documents `MANUAL_OVERRIDES` for sources without an `## Upstream` README table. Closes with the "manifest is human-authored after commit; ingest runs don't modify it" rule.
+- [x] 5.3 [`developers/index.md`](../../../developers/index.md): new "Open by default" section explaining the three-schema posture (`api_v1` / `marts` / `raw`), how to reach non-default schemas via `Accept-Profile`, the catalog-as-queryable-endpoint pattern, and a tag-filter URL pattern table (7 examples) external developers can use to deep-link filtered views. The customer-app section's description updated to reflect the multi-schema dispatch + lib's `acceptProfile` option.
+- [x] 5.4 [`atlas-data/ingest/src/sources/README.md`](../../../../../atlas-data/ingest/src/sources/README.md): the auto-generated table from `build_sources_seed.py --readme` was already in place (BEGIN/END markers since Phase 2.9). Added a "Programmatic access" callout above the table pointing at `api_v1.meta_sources` as the canonical live view, with a `curl` example, so external developers see the API path alongside the offline Markdown table.
 
 ### Validation
 
