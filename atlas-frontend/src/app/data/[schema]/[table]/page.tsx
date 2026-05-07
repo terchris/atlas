@@ -32,7 +32,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-export const revalidate = 60;
+// Always-fresh: rows + counts come from no-store fetches; the page has
+// dynamic params + query string so caching at the route level would be
+// pointless. See src/lib/api.ts fetchRows comment for the rationale.
+export const dynamic = "force-dynamic";
 
 const DEFAULT_PAGE_SIZE = 50;
 const MAX_PAGE_SIZE = 250;

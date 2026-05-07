@@ -18,7 +18,7 @@ import { notFound } from "next/navigation";
 
 import { fetchSpec } from "@/lib/api";
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic"; // see src/lib/api.ts fetchSpec comment
 
 const VALID_SCHEMAS = new Set(["api_v1", "marts", "raw"]);
 

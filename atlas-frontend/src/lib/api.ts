@@ -117,9 +117,12 @@ export async function fetchRows(
   const url = buildUrl(`/${endpoint}${query}`);
   const res = await fetch(url, {
     headers: buildHeaders(options),
-    // Server components: cache at request time but allow ISR to revalidate.
-    // Override at the call site if a route needs harder freshness guarantees.
-    next: { revalidate: 60 },
+    // No caching: row data must be live. Caching at the fetch level (the
+    // previous `next: { revalidate: 60 }`) caused first-load-empty,
+    // refresh-shows-data symptoms when a fetch coincided with a dbt
+    // rebuild or PostgREST schema reload — the empty response got cached
+    // for 60s before the next refresh forced a fresh fetch.
+    cache: "no-store",
   });
   if (!res.ok) {
     throw new ApiError(url, res.status, await res.text().catch(() => ""));
@@ -153,7 +156,7 @@ export async function fetchCount(
   const url = buildUrl(`/${endpoint}${query}${sep}limit=0`);
   const res = await fetch(url, {
     headers: buildHeaders(options, { Prefer: "count=exact" }),
-    next: { revalidate: 60 },
+    cache: "no-store", // count must be live; see fetchRows comment
   });
   if (!res.ok) {
     throw new ApiError(url, res.status, await res.text().catch(() => ""));
@@ -178,7 +181,7 @@ export async function fetchSpec(options: FetchOptions = {}): Promise<unknown> {
   const url = buildUrl("/");
   const res = await fetch(url, {
     headers: buildHeaders(options),
-    next: { revalidate: 300 },
+    cache: "no-store", // see fetchRows comment — same first-load-empty risk
   });
   if (!res.ok) {
     throw new ApiError(url, res.status, await res.text().catch(() => ""));

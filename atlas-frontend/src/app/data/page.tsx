@@ -32,14 +32,16 @@ import {
   orderedNamespaces,
 } from "@/lib/catalog-filter";
 
-export const revalidate = 60;
+// No page-level ISR + no fetch-level caching. Catalogue data must be live
+// — see src/lib/api.ts fetchRows comment for the full rationale.
+export const dynamic = "force-dynamic";
 
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL ?? "http://api-atlas.localhost";
 
 async function fetchEndpoints(): Promise<Endpoint[]> {
   const res = await fetch(`${API_URL}/meta_endpoints?order=endpoint`, {
-    next: { revalidate: 60 },
+    cache: "no-store",
   });
   if (!res.ok) {
     throw new Error(

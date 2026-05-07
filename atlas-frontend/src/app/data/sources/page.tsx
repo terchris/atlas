@@ -20,7 +20,9 @@
 
 import Link from "next/link";
 
-export const revalidate = 60;
+// No page-level ISR + no fetch-level caching. See src/lib/api.ts fetchRows
+// comment for the rationale (first-load-empty risk on data rebuilds).
+export const dynamic = "force-dynamic";
 
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL ?? "http://api-atlas.localhost";
@@ -45,7 +47,7 @@ type MetaSource = {
 
 async function fetchSources(): Promise<MetaSource[]> {
   const res = await fetch(`${API_URL}/meta_sources?order=source_id`, {
-    next: { revalidate: 60 },
+    cache: "no-store",
   });
   if (!res.ok) {
     throw new Error(
