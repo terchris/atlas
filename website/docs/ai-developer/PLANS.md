@@ -11,15 +11,26 @@ How we plan, track, and implement features and fixes.
 ```
 plans/
 ├── backlog/      # Approved plans waiting for implementation
+│   └── 1PRIORITY.md  # Priority view across INVESTIGATE files (see "Keeping 1PRIORITY.md current" below)
 ├── active/       # Currently being worked on (max 1-2 at a time)
 └── completed/    # Done - kept for reference
 ```
 
 ### Flow
 
+PLAN files and INVESTIGATE files have **different** lifecycles:
+
 ```
-Idea/Problem → INVESTIGATE file (if unclear) → PLAN file in backlog/ → active/ → completed/
+PLAN-*.md:        backlog/ → active/ → completed/
+
+INVESTIGATE-*.md: backlog/ ─────────────────────► completed/
+                     │
+                     └─ spawns 1+ child PLAN-*.md files (each on its own backlog → active → completed loop)
 ```
+
+An INVESTIGATE stays in `backlog/` for its **whole life** — including while its child PLANs are being executed. It only moves to `completed/` once **every** child PLAN it spawned has shipped. INVESTIGATEs never live in `active/` — the live thing is the PLAN executing the recommendation, not the INVESTIGATE itself. Keeping the INVESTIGATE in `backlog/` avoids creating two parallel "where is current state?" trackers.
+
+If an INVESTIGATE's recommendation has been accepted but no child PLAN has been drafted yet, it still stays in `backlog/` — note the acceptance in its `## Status` line.
 
 ---
 
@@ -561,3 +572,16 @@ When a plan changes behaviour that's documented on a `website/docs/contributors/
 This convention is rule #8 in [`docs/stack/naming-conventions.md`](../../../docs/stack/naming-conventions.md). Reviewer responsibility to flag PRs that ship behaviour changes without the matching docs update. No tooling enforces this in v1; if drift becomes a real problem, revisit and add a `check-docs.sh` similar to [`check-osmosis.sh`](../../../atlas-data/dbt/check-osmosis.sh).
 
 When drafting a plan that changes documented behaviour, include the docs update in the **Files to Modify** list and as an explicit task line in the relevant phase. Don't list it under "What's next" — that's where the convention slips.
+
+## Keeping `backlog/1PRIORITY.md` current
+
+[`plans/backlog/1PRIORITY.md`](plans/backlog/1PRIORITY.md) is the priority view across all open INVESTIGATE files — it tiers them by what to investigate next, what to defer pending prereqs, and what's still an idea (not a real investigation yet). It's a triage tool, not a roadmap.
+
+Update it when any of the following happens:
+
+- A new `INVESTIGATE-*.md` is added to `backlog/` → place it in the right tier.
+- An INVESTIGATE moves to `completed/` → strike its row, promote its Tier-3 dependents up if their prereq just landed.
+- A child PLAN of an INVESTIGATE ships → re-rank the parent INVESTIGATE if the partial-completion changes its priority.
+- An idea (Tier 4) becomes concrete enough to investigate → promote it to a real tier with a brief rationale.
+
+The doc itself explains how to use it (see its "How to use this doc" section). Re-rank quarterly or after every 3 INVESTIGATEs ship — whichever comes first.
