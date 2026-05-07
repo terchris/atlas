@@ -20,7 +20,9 @@
 
 import Link from "next/link";
 
-export const revalidate = 60;
+// No page-level ISR + no fetch-level caching. See src/lib/api.ts fetchRows
+// comment for the rationale (first-load-empty risk on data rebuilds).
+export const dynamic = "force-dynamic";
 
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL ?? "http://api-atlas.localhost";
@@ -45,7 +47,7 @@ type MetaSource = {
 
 async function fetchSources(): Promise<MetaSource[]> {
   const res = await fetch(`${API_URL}/meta_sources?order=source_id`, {
-    next: { revalidate: 60 },
+    cache: "no-store",
   });
   if (!res.ok) {
     throw new Error(
@@ -133,9 +135,13 @@ export default async function SourcesPage() {
                   className="rounded-lg border border-zinc-200 bg-white p-4 transition-colors hover:border-zinc-300 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:border-zinc-700"
                 >
                   <div className="flex flex-wrap items-baseline justify-between gap-3">
-                    <code className="font-mono text-sm font-medium text-zinc-950 dark:text-zinc-50">
-                      {src.source_id}
-                    </code>
+                    <Link
+                      href={`/data/raw/${src.source_id.replaceAll("-", "_")}`}
+                      className="font-mono text-sm font-medium text-zinc-950 hover:underline dark:text-zinc-50"
+                      title={`Browse raw.${src.source_id.replaceAll("-", "_")}`}
+                    >
+                      {src.source_id} →
+                    </Link>
                     <span className="text-xs text-zinc-500 dark:text-zinc-400">
                       ingested {relativeTime(src.last_ingested_at)} ·{" "}
                       {src.latest_row_count !== null
@@ -158,6 +164,18 @@ export default async function SourcesPage() {
                     ))}
                   </div>
                   <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-zinc-500 dark:text-zinc-400">
+                    <Link
+                      href={`/data/raw/${src.source_id.replaceAll("-", "_")}`}
+                      className="font-medium text-zinc-700 underline-offset-2 hover:underline dark:text-zinc-300"
+                    >
+                      Browse ingested data →
+                    </Link>
+                    <Link
+                      href={`/data?tag=provider:${src.tags.find((t) => t.startsWith("provider:"))?.slice(9) ?? ""}`}
+                      className="font-medium text-zinc-700 underline-offset-2 hover:underline dark:text-zinc-300"
+                    >
+                      Related endpoints →
+                    </Link>
                     <a
                       href={src.upstream_landing_page ?? src.upstream_url}
                       target="_blank"

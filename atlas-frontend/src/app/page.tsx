@@ -18,14 +18,26 @@ export default function Home() {
           </p>
         </header>
 
-        <section className="flex flex-col gap-4">
+        <section className="flex flex-wrap gap-3">
           <Link
             href="/data"
             className="inline-flex w-fit items-center gap-2 rounded-full bg-zinc-950 px-5 py-3 text-base font-medium text-zinc-50 transition-colors hover:bg-zinc-800 dark:bg-zinc-50 dark:text-zinc-950 dark:hover:bg-zinc-200"
           >
-            Browse the data →
+            Browse all endpoints →
+          </Link>
+          <Link
+            href="/data/sources"
+            className="inline-flex w-fit items-center gap-2 rounded-full border border-zinc-300 bg-white px-5 py-3 text-base font-medium text-zinc-900 transition-colors hover:border-zinc-400 hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100 dark:hover:border-zinc-600 dark:hover:bg-zinc-900"
+          >
+            Sources →
           </Link>
         </section>
+        <p className="-mt-4 text-sm text-zinc-500 dark:text-zinc-500">
+          <strong>Endpoints</strong> — every queryable table grouped by tag
+          (provider, topic, geography, …).{" "}
+          <strong>Sources</strong> — every upstream Atlas ingests, with
+          freshness + provenance.
+        </p>
 
         <section className="flex flex-col gap-2 border-t border-zinc-200 pt-6 text-sm text-zinc-600 dark:border-zinc-800 dark:text-zinc-400">
           <p>

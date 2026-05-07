@@ -53,29 +53,81 @@ export class ApiError extends Error {
 }
 
 /**
- * Fetch a list of rows from a curated PostgREST endpoint with full type
- * inference. Pass any PostgREST query string in `path` (filters, order,
- * limit, select, etc.).
+ * Options for fetch helpers that need to reach a non-default schema.
+ *
+ * PostgREST routes header-less requests to the FIRST schema in
+ * `--schemas` (Atlas's default = api_v1). To reach `marts.*` or `raw.*`,
+ * pass the matching schema name; the helper sends `Accept-Profile: <schema>`.
+ * Header-omission against a non-default schema returns 404 — that's correct
+ * routing, not a bug. Atlas hit this on 2026-05-07; see
+ * `docs/ai-developer/plans/active/PLAN-007-...md` Phase 1 outcome.
+ */
+export type FetchOptions = {
+  /** Routes the request to a non-default PostgREST schema. */
+  acceptProfile?: string;
+};
+
+function buildHeaders(
+  options: FetchOptions = {},
+  extra: Record<string, string> = {},
+): HeadersInit {
+  const headers: Record<string, string> = {
+    Accept: "application/json",
+    ...extra,
+  };
+  if (options.acceptProfile && options.acceptProfile !== "api_v1") {
+    headers["Accept-Profile"] = options.acceptProfile;
+  }
+  return headers;
+}
+
+/**
+ * Fetch a list of rows from a PostgREST endpoint. Pass any PostgREST query
+ * string in `query` (filters, order, limit, select, etc.).
+ *
+ * For curated `api_v1.*` endpoints, the typed overload gives row-shape
+ * inference from `api-types.ts`. For `marts.*` / `raw.*` endpoints
+ * (catalogue pages where the endpoint is dynamic), pass `acceptProfile`
+ * and accept that rows come back as `unknown`.
  *
  * @example
+ *   // typed (api_v1 default schema)
  *   const rows = await fetchRows("coverage_gap_barnefattigdom",
  *     "?order=value_pct.desc&limit=10");
+ *
+ *   // dynamic (marts schema)
+ *   const rows = await fetchRows("dim_kommune",
+ *     "?limit=50", { acceptProfile: "marts" });
  */
 export async function fetchRows<K extends keyof components["schemas"]>(
   endpoint: K,
+  query?: string,
+  options?: FetchOptions,
+): Promise<Schema<K>[]>;
+export async function fetchRows(
+  endpoint: string,
+  query?: string,
+  options?: FetchOptions,
+): Promise<unknown[]>;
+export async function fetchRows(
+  endpoint: string,
   query: string = "",
-): Promise<Schema<K>[]> {
-  const url = buildUrl(`/${String(endpoint)}${query}`);
+  options: FetchOptions = {},
+): Promise<unknown[]> {
+  const url = buildUrl(`/${endpoint}${query}`);
   const res = await fetch(url, {
-    headers: { Accept: "application/json" },
-    // Server components: cache at request time but allow ISR to revalidate.
-    // Override at the call site if a route needs harder freshness guarantees.
-    next: { revalidate: 60 },
+    headers: buildHeaders(options),
+    // No caching: row data must be live. Caching at the fetch level (the
+    // previous `next: { revalidate: 60 }`) caused first-load-empty,
+    // refresh-shows-data symptoms when a fetch coincided with a dbt
+    // rebuild or PostgREST schema reload — the empty response got cached
+    // for 60s before the next refresh forced a fresh fetch.
+    cache: "no-store",
   });
   if (!res.ok) {
     throw new ApiError(url, res.status, await res.text().catch(() => ""));
   }
-  return (await res.json()) as Schema<K>[];
+  return (await res.json()) as unknown[];
 }
 
 /**
@@ -85,25 +137,26 @@ export async function fetchRows<K extends keyof components["schemas"]>(
  *
  * Pass an optional `query` to count rows matching a filter (e.g.
  * `"?or=(name.ilike.*oslo*,fylke_name.ilike.*oslo*)"`). The function adds
- * `limit=0` so no rows are returned.
+ * `limit=0` so no rows are returned. Pass `acceptProfile` to count rows
+ * in a non-default schema.
  *
  * @example
  *   const total = await fetchCount("indicator_summary");  // → 163
  *   const filtered = await fetchCount("kommune_local_chapters",
  *     "?or=(kommune_name.ilike.*oslo*)");                 // → 4
+ *   const martCount = await fetchCount("dim_kommune", "",
+ *     { acceptProfile: "marts" });                        // → 357
  */
 export async function fetchCount(
   endpoint: string,
   query: string = "",
+  options: FetchOptions = {},
 ): Promise<number> {
   const sep = query.includes("?") ? "&" : "?";
   const url = buildUrl(`/${endpoint}${query}${sep}limit=0`);
   const res = await fetch(url, {
-    headers: {
-      Accept: "application/json",
-      Prefer: "count=exact",
-    },
-    next: { revalidate: 60 },
+    headers: buildHeaders(options, { Prefer: "count=exact" }),
+    cache: "no-store", // count must be live; see fetchRows comment
   });
   if (!res.ok) {
     throw new ApiError(url, res.status, await res.text().catch(() => ""));
@@ -115,20 +168,20 @@ export async function fetchCount(
 }
 
 /**
- * Fetch the full OpenAPI/Swagger spec served at `GET /`. Used by the
- * data-catalog page (`app/data/page.tsx`) for introspection — listing
- * every available endpoint with its column types and descriptions, with
- * no hardcoded endpoint names.
+ * Fetch the OpenAPI/Swagger spec served at `GET /`. PostgREST returns one
+ * spec per schema — the default schema unless `acceptProfile` is set, in
+ * which case the spec for that schema. Used by the catalog + table-viewer
+ * pages for introspection (column types, descriptions, filterable params).
  *
  * Returns the spec as `unknown` because PostgREST 14.x emits Swagger 2.0
- * which has a slightly different shape from OpenAPI 3.x. The catalog page
- * narrows it where needed.
+ * which has a slightly different shape from OpenAPI 3.x. Callers narrow it
+ * where needed.
  */
-export async function fetchSpec(): Promise<unknown> {
+export async function fetchSpec(options: FetchOptions = {}): Promise<unknown> {
   const url = buildUrl("/");
   const res = await fetch(url, {
-    headers: { Accept: "application/json" },
-    next: { revalidate: 300 },
+    headers: buildHeaders(options),
+    cache: "no-store", // see fetchRows comment — same first-load-empty risk
   });
   if (!res.ok) {
     throw new ApiError(url, res.status, await res.text().catch(() => ""));
