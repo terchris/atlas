@@ -136,9 +136,9 @@ export default async function SourcesPage() {
                 >
                   <div className="flex flex-wrap items-baseline justify-between gap-3">
                     <Link
-                      href={`/data/raw/${src.source_id.replaceAll("-", "_")}`}
+                      href={`/data/sources/${src.source_id}`}
                       className="font-mono text-sm font-medium text-zinc-950 hover:underline dark:text-zinc-50"
-                      title={`Browse raw.${src.source_id.replaceAll("-", "_")}`}
+                      title={`Open source detail page for ${src.source_id}`}
                     >
                       {src.source_id} →
                     </Link>
@@ -165,10 +165,16 @@ export default async function SourcesPage() {
                   </div>
                   <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-zinc-500 dark:text-zinc-400">
                     <Link
+                      href={`/data/sources/${src.source_id}`}
+                      className="font-medium text-zinc-700 underline-offset-2 hover:underline dark:text-zinc-300"
+                    >
+                      Source detail →
+                    </Link>
+                    <Link
                       href={`/data/raw/${src.source_id.replaceAll("-", "_")}`}
                       className="font-medium text-zinc-700 underline-offset-2 hover:underline dark:text-zinc-300"
                     >
-                      Browse ingested data →
+                      Raw data →
                     </Link>
                     <Link
                       href={`/data?tag=provider:${src.tags.find((t) => t.startsWith("provider:"))?.slice(9) ?? ""}`}
