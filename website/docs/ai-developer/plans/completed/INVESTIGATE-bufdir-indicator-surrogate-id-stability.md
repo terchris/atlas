@@ -4,7 +4,44 @@
 > - [WORKFLOW.md](../../WORKFLOW.md) — The implementation process
 > - [PLANS.md](../../PLANS.md) — Plan structure and best practices
 
-## Status: Backlog
+## Status
+
+**Completed (2026-05-07)** — recommendation **(d)** accepted and shipped.
+
+### Outcome
+
+Recommendation (d) — number-prefix surrogate id (`bf_zip_ind_<N>`) plus a curated alias seed — landed in **PR #71** (`PLAN-bufdir-surrogate-id-migration.md`, now in `completed/`). Implementation summary:
+
+- `parse.ts:surrogateIndicatorApiId()` rewritten: parses `Indikator_(\d+[a-z]?)` from filename, emits `bf_zip_ind_<N>`; SHA-256 path retained as defensive fallback with a warn log if Bufdir ever ships a non-numbered workbook.
+- Alias seed shipped at `atlas-data/dbt/seeds/sources/bufdir_indicator_alias.csv` with `historical_id, canonical_id, note` columns and pre-populated `Indikator 9 → 9a/9b` and `Indikator 10` retirement entries from the observed history.
+- dbt model lives under `atlas-data/dbt/models/marts/api/bufdir_indicator_alias.sql`, so `regenerate-api-v1.sh` auto-emits `api_v1.bufdir_indicator_alias`. Once UIS lands the PostgREST `marts.*` schema-list extension (PLAN-007 Phase 1), the alias surface is queryable on the public API without per-source wiring.
+- Live state on main: `marts.indicators__bufdir_barnefattigdom` carries 22 distinct `bf_zip_ind_<N>` ids; `marts.bufdir_indicator_alias` carries the historical bridge rows.
+- README updated with the consumer-pattern note (when to join on the alias for cross-time continuity).
+
+### Open questions (from this INVESTIGATE) — resolutions
+
+- **Q1** (`5` vs `5b` same id?) — Resolved as recommended: kept different by default; alias seed bridges editorial-decision continuity. PR #71 alias rows reflect this.
+- **Q2** (alias seed location) — Resolved: lives under `seeds/sources/`, alongside `_sources_manifest.csv`.
+- **Q3** (expose via `api_v1.*`?) — Resolved: yes, auto-exposed via the model's placement under `models/marts/api/`. The "auto-exposure over per-source decisions" principle in this INVESTIGATE became repo-wide convention; documented in [PLAN-004 generator notes](../completed/PLAN-004-postgrest-api-v1-wrapper.md).
+- **Q4** (does this generalise to other ZIP sources?) — Resolved: yes — convention is "alias seed under `seeds/sources/<source>_indicator_alias.csv` + dbt model under `models/marts/api/`". Future ZIP sources copy the pattern; no per-source INVESTIGATE required unless the source has a workbook-stable id of its own.
+
+### Related work
+
+- **PR #77** (`raw_tables:` field on `manifest.yml`) lets the catalogue surface bufdir's raw → mart lineage explicitly; this is the metadata trail that lets external consumers see "bf_zip_ind_5 came from `Indikator_5_…xlsx`" without needing to re-derive the surrogate-id rule.
+- **PR #67** (parse.ts split + 29 golden-file tests) pinned the parse output before PR #71's id rewrite; the id-strategy change rode on green tests instead of bespoke validation.
+
+### Next steps section from this INVESTIGATE
+
+All four next-step items are done:
+
+1. ✅ User reviewed and accepted recommendation (d).
+2. ✅ `PLAN-bufdir-surrogate-id-migration.md` drafted, executed, and moved to `completed/`.
+3. n/a — accepted, not deferred.
+4. ✅ This INVESTIGATE moves backlog/ → completed/ in this housekeeping pass.
+
+---
+
+## Status (original): Backlog
 
 **Goal**: Decide a stable identity strategy for `indicators__bufdir_barnefattigdom.indicator_api_id` so consumers of the public API don't see indicators "disappear" and "reappear" when Bufdir renames or splits a workbook upstream. Output: a recommended strategy + scope of any code/data migration, **not** the implementation itself (a follow-up `PLAN-*` would do that if the recommendation is more invasive than the current scheme).
 

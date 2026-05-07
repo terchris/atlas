@@ -2,8 +2,39 @@
 
 ## Status
 
-**Backlog investigation** — 2026-05-05  
-**Motivation:** Operational simplicity; avoid interfacing catalog + numeric HTTP APIs end-to-end when Bufdir publishes a **single “whole dataset” ZIP** from [Barnefattigdom kommunemonitor](https://www.bufdir.no/statistikk-og-analyse/monitor/barnefattigdom/).
+**Completed (2026-05-07)** — recommendation accepted and shipped end-to-end.
+
+### Outcome
+
+The investigation recommended switching from the live Strapi/APIM API path to the ZIP bulk export. That switch shipped via **PR #60** (Cursor BG / Composer-2 — fully replaced the Strapi+APIM ingest with one HTTP fetch of the monitor page → regex-extract ZIP URL → `adm-zip` extract → `xlsx` parse → row stream). Subsequent hardening work closed the open follow-ups this INVESTIGATE flagged:
+
+- **PR #67** (parse.ts split + multi-tier discovery + 29 golden-file tests) — addressed the "Discovering the ZIP URL without hard-coding eternally" question (Option A in the original investigation, with progressive fallback tiers added so a Bufdir hostname/filename change doesn't crash ingest).
+- **PR #71** (`indicator_api_id` migration) — addressed the "Indicator id parity" caveat the INVESTIGATE called out. Surrogate id moved from `bf_zip_<sha256>` to `bf_zip_ind_<N>` (number-prefix derived from filename); alias seed `bufdir_indicator_alias` carries `historical_id → canonical_id` mappings for renumbering events (e.g. Indikator 9 → 9a/9b split, Indikator 10 retired). Design rationale in [`INVESTIGATE-bufdir-indicator-surrogate-id-stability.md`](INVESTIGATE-bufdir-indicator-surrogate-id-stability.md) (closed); implementation in [`PLAN-bufdir-surrogate-id-migration.md`](../completed/PLAN-bufdir-surrogate-id-migration.md) (closed).
+- **PR #60** also added the V8-string-length streaming fix to `lib/output.ts` (per-line `writeNdjson` + new `ndjsonStreamingWriter`) — the original Strapi/APIM path didn't hit this because it never accumulated multi-MB row buffers, but the ZIP path's 395k-row output triggered V8's `String::kMaxLength` limit on the old chunked-buffer implementation.
+
+### Live state on main (2026-05-07)
+
+- Source folder: `atlas-data/ingest/src/sources/bufdir-barnefattigdom/`
+- Migration: `atlas-data/migrations/048_raw_bufdir_barnefattigdom.sql` (zip-derived columns) + `049_bufdir_barnefattigdom_zip_comments.sql` (comment refresh)
+- Ingest: 22 workbooks → 395,420 rows in ~55s; `match_tier: canonical` logged on the live URL
+- dbt: `marts.indicators__bufdir_barnefattigdom` builds; relationship tests pass once `dim_kommune` is populated (see post-reset workflow)
+- Tests: 29 golden-file assertions on parser + discovery; all green
+
+### Next-steps section from this INVESTIGATE
+
+All five sub-items in the original "Recommended next steps (if product chooses ZIP path)" section are done:
+
+1. ✅ Confirm completeness — 22 workbooks ingested cleanly; coverage audit (PR #67) confirmed zero rows silently dropped by the parser's unit/format filters.
+2. ✅ Pick discovery — Option A (page scrape) shipped; PR #67 added multi-tier fallback.
+3. ✅ Parser spike — `parse.ts` extracted from `index.ts` with the row shape pinned by golden tests.
+4. ✅ Schema decision — Option A (replace ingest entirely) shipped; surrogate-id discontinuity bridged via the alias seed.
+5. ✅ Deprecate batch APIM ingest — already removed in PR #60.
+
+---
+
+## Status (original): Backlog investigation — 2026-05-05
+
+**Motivation:** Operational simplicity; avoid interfacing catalog + numeric HTTP APIs end-to-end when Bufdir publishes a **single "whole dataset" ZIP** from [Barnefattigdom kommunemonitor](https://www.bufdir.no/statistikk-og-analyse/monitor/barnefattigdom/).
 
 **Current implementation (merged):** `feat/onboard bufdir-barnefattigdom` — Strapi (`statistikk.bufdir.no`) + Azure APIM `indicator-data/*` + SSB Klass 131 kommune batches.
 
