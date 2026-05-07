@@ -4,11 +4,11 @@
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Active (PLAN-007 phase 2 shipped; phase 3 in progress)
+## Status: Backlog (recommendation accepted; execution tracked in [PLAN-007](../active/PLAN-007-data-display-open-by-default.md))
 
 **Goal**: Reframe what the customer frontend's `/data` displays. Today it shows the 9 curated `api_v1.*` endpoints — a small slice of the data Atlas actually holds. Atlas is a *play-with-the-data* platform, so the rule is: **open by default; only data explicitly defined as gated is hidden**. Plus an explicit requirement: a per-source list with last-ingestion timestamps. Output is the implementation shape (PostgREST schema exposure, grants, frontend layout) — not the implementation itself (a follow-on PLAN handles that).
 
-**Last Updated**: 2026-05-05 (status flip + count refresh + add `eu_theme` and `dimensions:` to namespace narrative now that PLAN-007 phase 2 has shipped)
+**Last Updated**: 2026-05-05 (added `eu_theme` namespace + `dimensions:` block to the design)
 
 **Origin**: After PLAN-005 shipped, terje observed that `/data` shows just the 9 `api_v1.*` endpoints, a small fraction of what Atlas has. He set the architectural rule: *"Atlas is a place everyone can play with data. Unless we specifically define the data to be behind login, it is open and should be visible for the user on the `/data` path."* Plus: *"we must list all data sources we ingest and when we ingested them."*
 
@@ -112,12 +112,12 @@ With ~80 endpoints today and continuous growth (each new ingest source lands ≥
 | `topic:` | `income`, `education`, `health`, `demographics`, `ngo-supply`, `reference` | per-source `manifest.yml` (declared, curated) |
 | `geo:` | `kommune`, `fylke`, `national`, `bydel` | per-source `manifest.yml` (declared) |
 | `cadence:` | `annual`, `quarterly`, `irregular`, `one-shot` | per-source `manifest.yml` (declared) |
-| `eu_theme:` | `AGRI`, `ECON`, `EDUC`, `ENER`, `ENVI`, `GOVE`, `HEAL`, `INTR`, `JUST`, `REGI`, `SOCI`, `TECH`, `TRAN` | per-source `manifest.yml` top-level field (added in PLAN-007 phase 2.10); aligns Atlas with Felles datakatalog / DCAT-AP-NO. Auto-derived from `topic:` by `fill-manifest-todos.ts`. Lookup table at `seeds/sources/eu_data_theme.csv`. |
+| `eu_theme:` | `AGRI`, `ECON`, `EDUC`, `ENER`, `ENVI`, `GOVE`, `HEAL`, `INTR`, `JUST`, `REGI`, `SOCI`, `TECH`, `TRAN` | per-source `manifest.yml` top-level field; aligns Atlas with Felles datakatalog / DCAT-AP-NO. Auto-derived from `topic:` by `fill-manifest-todos.ts`. Lookup table at `seeds/sources/eu_data_theme.csv`. |
 | `layer:` | `raw`, `indicator`, `dim`, `fact`, `supply`, `mart`, `api-v1` | derived from the schema + dbt model path; not declared |
 
 A source has 1 tag per namespace except `layer:`. Derived endpoints (in `marts.*`, `api_v1.*`) inherit the source's tags via dbt lineage and add their own `layer:` tag.
 
-**Plus a `dimensions:` block** (added in PLAN-007 phase 2.11) — a hand-authored list of `{code, meaning, value_format, notes}` per upstream dimension on each source. This is editorial semantic content the catalogue can't compute (e.g. *"FHI's `ALDER='1_6'` is the Ungdata cohort identifier — verify against Ungdata methodology"*). Phase 3's `mart_meta_dimensions` joins this seed with computed cardinality + example values from `raw.*` introspection so the customer frontend can render "what each column means × what values it actually contains" in one place.
+**Plus a `dimensions:` block** — a hand-authored list of `{code, meaning, value_format, notes}` per upstream dimension on each source. This is editorial semantic content the catalogue can't compute (e.g. *"FHI's `ALDER='1_6'` is the Ungdata cohort identifier — verify against Ungdata methodology"*). A downstream `meta_dimensions` mart joins this seed with computed cardinality + example values from `raw.*` introspection so the customer frontend can render "what each column means × what values it actually contains" in one place.
 
 **UX shape on `/data`** (single page, no tabs):
 
@@ -162,7 +162,7 @@ Tag taxonomy maintenance: keep it lightweight. A new tag value is just a new str
 The follow-on PLAN-007 ships in roughly five phases:
 
 1. **UIS-side schema exposure**: cross-repo coordination + UIS PR. Atlas's `atlas-postgrest` instance starts serving `marts.*` and `raw.*` alongside `api_v1.*`. Verify with `curl api-atlas.localhost/dim_kommune?limit=3` and similar.
-2. **Sources registry promotion + tagging**: write a `manifest.yml` for every source folder, lifting fields from `atlas-data/ingest/src/sources/README.md` and the per-source READMEs, plus a first pass at `provider/topic/geo/cadence/eu_theme` tags + a hand-authored `dimensions:` block. Add a small Python helper in `atlas-data/dbt/scripts/` (`build_sources_seed.py`) that emits dbt seed CSVs from the YAMLs (one row per source for `_sources_manifest`, one row per source × dimension for `_sources_dimensions`). Convention for new sources documented in `ingest-modules.md` + `AGENT-onboard-source.md` runbook for the cloud-agent pipeline. **Phase 2 shipped 2026-05-04 covering 38 sources (21 initial + 17 from the FHI onboarding wave); the `eu_theme` field and `dimensions:` block were added during Phase 2 as schema extensions.**
+2. **Sources registry promotion + tagging**: write a `manifest.yml` for every source folder, lifting fields from `atlas-data/ingest/src/sources/README.md` and the per-source READMEs, plus a first pass at `provider/topic/geo/cadence/eu_theme` tags + a hand-authored `dimensions:` block. Add a small Python helper in `atlas-data/dbt/scripts/` (`build_sources_seed.py`) that emits dbt seed CSVs from the YAMLs (one row per source for `_sources_manifest`, one row per source × dimension for `_sources_dimensions`). Convention for new sources documented in `ingest-modules.md` + `AGENT-onboard-source.md` runbook for the cloud-agent pipeline.
 3. **`marts.meta_sources` + `marts.meta_endpoints` + `marts.meta_dimensions` models**: the joins. `meta_sources` joins manifest seed + `raw.ingest_runs` aggregates + downstream-model count. `meta_endpoints` joins schema/table inventory (via Postgres `information_schema`) + dbt lineage to inherit source tags via the **union** rule. `meta_dimensions` joins the editorial `_sources_dimensions` seed with computed cardinality + example values from `raw.*` introspection. Wrap all three as `api_v1.meta_*` via the PLAN-004 generator.
 4. **Customer-frontend rewrite of `/data`**: replace the existing flat catalog with the tag-filter sidebar + cards layout. Filter state in URL. New `/data/sources/[source_id]` detail route. The existing `/data/[endpoint]` table viewer + `/data/[endpoint]/spec` viewer carry forward unchanged.
 5. **Docs**: extend the contributor `setup.md` + `ingest-modules.md` to describe the per-source `manifest.yml` and the four declared tag namespaces. Extend `developers/index.md` to describe the tag-filter URL pattern (`?tag=topic:income`) — useful for external developers pulling subsets via the API. Decide on `atlas-data/ingest/src/sources/README.md`: auto-generate from YAMLs (one-way), or replace with a pointer at `api_v1.meta_sources`.
