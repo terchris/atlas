@@ -11,6 +11,8 @@ Atlas is an open semantic layer over Norwegian public data (SSB, FHI, Brreg) and
 - [`atlas-frontend/`](https://github.com/terchris/atlas/tree/main/atlas-frontend) — Next.js customer app consuming the public PostgREST API at `api-atlas.helpers.no`. Deploys to `atlas.helpers.no`. **No DB role.** Self-contained / forkable as a reference implementation for external developers. Default port `3001`.
 - [`website/`](https://github.com/terchris/atlas/tree/main/website) — Docusaurus-bound docs source.
 
+The two-frontend split is deliberate — one is the public customer app (PostgREST-only, forkable); the other is the internal diagnostics app (direct Postgres, never deployed). See [frontends.md](./frontends.md) for when to use which.
+
 Read [data-journey.md](./data-journey.md) for the end-to-end walkthrough — it traces SSB 08764 from upstream to a user's browser. Reading that first makes everything else here make sense.
 
 ---

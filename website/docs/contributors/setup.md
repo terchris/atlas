@@ -32,6 +32,8 @@ The repo has four top-level codebases:
 - [`atlas-frontend/`](https://github.com/terchris/atlas/tree/main/atlas-frontend) — Next.js customer app consuming the public PostgREST API at `api-atlas.helpers.no`. Deploys to `atlas.helpers.no`. **No DB role.** Self-contained / forkable as a reference implementation for external developers. Default port `3001`.
 - [`website/`](https://github.com/terchris/atlas/tree/main/website) — Docusaurus-bound docs source (this site).
 
+The two-frontend split (one PostgREST-only public app, one direct-Postgres internal diagnostics app) is deliberate and load-bearing — see [frontends.md](./frontends.md) for when to use which and why the split exists.
+
 ---
 
 ## Bootstrap `atlas_db` on UIS Postgres
@@ -334,7 +336,7 @@ For more on the wrapper layer, the generator, and the validation gates, see [api
 
 ## (Optional) Set up the frontends
 
-Atlas has two Next.js apps. Pick the one(s) you want to run.
+Atlas has two Next.js apps. Pick the one(s) you want to run. If you're not sure which fits your task, read [frontends.md](./frontends.md) first.
 
 ### Contributor frontend — direct Postgres, for ingestion verification
 
