@@ -132,20 +132,24 @@ Cross-repo coordination with the UIS contributor. Atlas's `atlas-postgrest` inst
 
 **Outcome (Phase 1 — closed 2026-05-07):** schema-list extension landed end-to-end. Single-day round-trip from atlas Message 4 (validation) to UIS Message 3 (PR + GHCR rebuild). PostgREST now serves `marts.*` and `raw.*` via `Accept-Profile` in addition to the default `api_v1`; private schemas (`private_raw`, `private_marts`) stay excluded by design. GHCR `:latest` SHA: `42cd40d5f66916a6f6071ab4d69fcf0080a2915b1cf93295bd3b169b8af42f31`.
 
+**Operational gotcha logged for Phase 4 (talk40 Round 4 closeout):** PostgREST routes header-less requests to the **default** schema only — the first one in `--schemas`, i.e. `api_v1`. To reach `marts.*` or `raw.*`, callers send `Accept-Profile: <schema>` on each request. Naive `curl /dim_kommune` returns 404 because PostgREST resolves it as `api_v1.dim_kommune` (which doesn't exist) — that's correct routing, not a misconfiguration. Symmetric for the OpenAPI document: `curl /` advertises only the default schema's ~14 paths; `curl -H 'Accept-Profile: marts' /` advertises ~64 marts paths. Sum across profiles ≈ 123, which matches what `api_v1.meta_endpoints` carries (119 rows after the latest regen). The Phase 4.1 frontend rewrite must send `Accept-Profile` per row, keyed off `meta_endpoints.schema`.
+
 ### Validation
 
 ```bash
-# Direct PostgREST query: a marts.* table is now reachable
-curl -fsS "http://api-atlas.localhost/dim_kommune?limit=3" | jq 'length'      # → 3
+# Marts table is reachable via Accept-Profile
+curl -fsS -H 'Accept-Profile: marts' "http://api-atlas.localhost/dim_kommune?limit=3" | jq 'length'      # → 3
 
-# A raw.* table is reachable
-curl -fsS "http://api-atlas.localhost/ssb_08764?limit=2" | jq 'length'        # → 2
+# Raw table is reachable via Accept-Profile
+curl -fsS -H 'Accept-Profile: raw' "http://api-atlas.localhost/ssb_08764?limit=2" | jq 'length'          # → 2
 
-# private_marts.* is NOT reachable
-curl -sS -o /dev/null -w "%{http_code}\n" "http://api-atlas.localhost/frr_resources"  # → 404
+# private_marts.* is NOT reachable, even with explicit profile
+curl -sS -o /dev/null -w "%{http_code}\n" "http://api-atlas.localhost/frr_resources"                                            # → 404
+curl -sS -o /dev/null -w "%{http_code}\n" -H 'Accept-Profile: private_marts' "http://api-atlas.localhost/frr_resources"          # → 406
 
-# OpenAPI spec lists more endpoints than before
-curl -sS http://api-atlas.localhost/ | jq '.paths | keys | length'            # → ~60+ (was 9)
+# OpenAPI: default profile (api_v1) advertises ~14 paths; multi-schema sum is exposed via meta_endpoints
+curl -sS "http://api-atlas.localhost/" | jq '.paths | keys | length'                                                             # → 14 (api_v1 default)
+curl -sS -i "http://api-atlas.localhost/meta_endpoints?limit=0" -H 'Prefer: count=exact' | grep -i 'content-range'                # → */119
 ```
 
 ### Done when
