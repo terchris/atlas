@@ -8,7 +8,7 @@
 
 **Goal**: Decide the surface stack — **discovery** (browse / search / lineage), **query / semantic** (typed joins, measures, programmatic access), and **governance** (auth, rate-limit, audit) — that exposes Atlas's `marts.*` data to innovators (developers, developers paired with LLMs, researchers). Output is a per-surface decision plus a map of which UIS-stack services play which role, and which surfaces are deferred. Not the implementation — that follows in one or more PLANs once decisions land.
 
-**Last Updated**: 2026-05-01
+**Last Updated**: 2026-05-07 (added Atlas-native discovery refinement to **[Q1]** + new PLAN; original 2026-05-01 recommendations preserved)
 
 **Origin**: Conversation with the user about how to make Atlas data available so innovators can "create relations between the data". Cube.dev was raised as a candidate semantic layer; the UIS stack ([uis.sovereignsky.no](https://uis.sovereignsky.no/)) ships OpenMetadata, Unity Catalog, Backstage, PostgREST, JupyterHub, Qdrant, LiteLLM, Open WebUI, and several others that overlap or compete with that idea. This INVESTIGATE settles which surfaces Atlas builds, which UIS services we lean on, and what stays out of scope until a real consumer pulls on it.
 
@@ -166,7 +166,10 @@ The hard architectural fact: **Metabase is a SQL/JDBC client, not a REST client.
 
 ## Recommended outcome (subject to user review)
 
-**Discovery**: dbt-MCP (machine, settled in semantic-foundation INVESTIGATE) **+ OpenMetadata via UIS** (human, ingested from `manifest.json`). Single source of truth in dbt; two renderings.
+**Discovery**:
+- **Machine**: dbt-MCP (settled in semantic-foundation INVESTIGATE).
+- **Human, near-term**: **Atlas-native** — extend the existing `/data` catalog (PLAN-007 Phase 4.1) with (a) Scalar for the spec viewer at `/data/[schema]/[table]/spec`, (b) a per-endpoint lineage panel reading `lineage.csv`, (c) auto-hosted dbt docs at `/lineage/`. See "Atlas-native human discovery" below for the rationale; PLAN-008 is the implementation.
+- **Human, mid-to-long-term**: **OpenMetadata via UIS** if the Atlas-native surface proves insufficient or innovator demand pulls for a federated catalogue. Single source of truth in dbt; two renderings.
 
 **Query / semantic**: PostgREST + declared join keys in `meta:` + generated canonical-IDs doc. **Defer Cube.dev** until **[Q9]** trigger fires.
 
@@ -182,12 +185,52 @@ The hard architectural fact: **Metabase is a SQL/JDBC client, not a REST client.
 
 The follow-on PLANs (numbering tentative):
 
-1. **PLAN — Declare joins in `meta:` + generate canonical-IDs cheatsheet** — adds the `meta: { joins: [...] }` blocks to all `marts.*` conformed models, plus a small TS generator that emits `developers/canonical-ids.md` from `manifest.json`, plus a CI check that fails when a model's join key isn't declared.
-2. **PLAN — Ingest Atlas dbt project into UIS OpenMetadata** — depends on **[Q8]** spike; wires OpenMetadata's dbt connector against `manifest.json` + the read-only Postgres role for sample-data preview.
-3. **PLAN — Provision `metabase_atlas_reader` role + register Atlas as a Metabase data source** — Atlas-side coordination work for UIS's Metabase deployment (PLAN-002 in their `INVESTIGATE-metabase.md`). Atlas owns the role provisioning + initial collection seeding (Data Quality / Dim Spine Validation / Atlas Exploration); UIS owns the Metabase install. Internal-team scope — not innovator-facing.
-4. **PLAN (deferred, trigger-gated) — Adopt Cube.dev semantic layer** — only when **[Q9]** trigger fires; adds Cube as a service, declares joins / measures, exposes Cube's MCP server alongside dbt-MCP.
+1. **[PLAN-008 — Atlas-native developer discovery](PLAN-008-developer-discovery-surface.md)** — Scalar spec viewer + per-endpoint lineage panel + auto-hosted dbt docs. Cheapest, ships in days, validates the Atlas-native-first stance before committing to OpenMetadata. Direct extension of PLAN-007's `/data` rewrite.
+2. **PLAN — Declare joins in `meta:` + generate canonical-IDs cheatsheet** — adds the `meta: { joins: [...] }` blocks to all `marts.*` conformed models, plus a small TS generator that emits `developers/canonical-ids.md` from `manifest.json`, plus a CI check that fails when a model's join key isn't declared.
+3. **PLAN — Ingest Atlas dbt project into UIS OpenMetadata** — depends on **[Q8]** spike; wires OpenMetadata's dbt connector against `manifest.json` + the read-only Postgres role for sample-data preview. Lift from "future" to "in flight" only if PLAN-008's Atlas-native surface proves insufficient — use the trigger criteria in "Atlas-native human discovery" below.
+4. **PLAN — Provision `metabase_atlas_reader` role + register Atlas as a Metabase data source** — Atlas-side coordination work for UIS's Metabase deployment (PLAN-002 in their `INVESTIGATE-metabase.md`). Atlas owns the role provisioning + initial collection seeding (Data Quality / Dim Spine Validation / Atlas Exploration); UIS owns the Metabase install. Internal-team scope — not innovator-facing.
+5. **PLAN (deferred, trigger-gated) — Adopt Cube.dev semantic layer** — only when **[Q9]** trigger fires; adds Cube as a service, declares joins / measures, exposes Cube's MCP server alongside dbt-MCP.
 
-PLAN 1 is the highest-leverage and is the prerequisite for PLAN 2 (OpenMetadata picks up join metadata from `meta:` automatically). PLAN 3 is small, gated on UIS's Metabase deployment landing. PLAN 4 stays in backlog with a written trigger.
+PLAN 1 ships first — fastest validation that Atlas-native discovery is enough; doesn't preclude OpenMetadata. PLAN 2 is the highest-leverage prerequisite for PLAN 3 (OpenMetadata picks up join metadata from `meta:` automatically). PLAN 4 is small, gated on UIS's Metabase deployment landing. PLAN 5 stays in backlog with a written trigger.
+
+---
+
+## Atlas-native human discovery — the lighter near-term path (added 2026-05-07)
+
+Before PLAN-007 Phase 4.1 shipped, "human discovery" essentially meant browsing dbt docs. The original [Q1] tentative landed on **OpenMetadata via UIS** as the answer. PLAN-007 Phase 4.1 then shipped a tag-driven `/data` catalog over `api_v1.meta_endpoints` with Atlas-specific UX (organisation-neutral, tag-filterable, multi-schema via Accept-Profile). That changes what "human discovery" needs from a *new* tool to fill out three remaining gaps:
+
+| Gap on `/data` today | Atlas-native option | UIS-OpenMetadata option |
+|---|---|---|
+| Spec rendering at `/data/[schema]/[table]/spec` is a JSON dump | Embed **Scalar** (`@scalar/api-reference-react`, MIT, React 19 explicit, built-in try-it client) | Lean on OpenMetadata's API tab |
+| No per-endpoint lineage view ("where does this data come from?") | Read `seeds/sources/lineage.csv` (already populated by `extract_lineage.py`); render a "Built from N sources" panel on the table viewer with click-throughs | OpenMetadata renders lineage natively |
+| No full DAG visualisation | Auto-generate `dbt docs` in CI; serve at `atlas.helpers.no/lineage/`; link from each card | OpenMetadata renders DAGs natively |
+
+**Why the Atlas-native path wins for v1**:
+
+- All three pieces ship in days, not weeks. Scalar ~30 min; lineage panel half a day; dbt docs hosting an hour of CI config.
+- Zero new infrastructure. dbt docs is a static site generated by tooling Atlas already uses; Scalar is an npm dep; lineage seed already exists.
+- Preserves Atlas's organisation-neutral, consumer-facing UX. OpenMetadata's vocabulary (mart, source, ref, glossary term, classification) is inside-baseball for the data-engineer audience and confusing for the journalist / NGO-staff personas Atlas targets.
+- Doesn't preclude OpenMetadata. If demand for federated catalogue / data-asset registry / column-level governance shows up later, OpenMetadata stays available — and the Atlas-native panels degrade naturally to "links over to the deep view" once OpenMetadata lands.
+- Forkability: the customer-frontend (`atlas-frontend/`) is positioned as a forkable reference. A fork can ship without OpenMetadata — adding Scalar + a lineage panel keeps the fork self-contained. A fork that depends on OpenMetadata pulls in a multi-service deployment burden.
+
+**Trigger to lift OpenMetadata from "deferred" to "in flight"** (lift the soft-defer in the recommendation table above when ANY of these holds):
+
+1. An external developer or research team explicitly asks for federated lineage / glossary / data-asset registry features that don't fit on `/data`.
+2. Atlas onboards a sister dataset (private NGO data, partner-org data, etc.) where federation across multiple datasets becomes load-bearing for discovery.
+3. Atlas-native lineage (PLAN-008's panel + dbt docs link) is shipped, used, and feedback says "this is too shallow — I need more."
+
+**What the Atlas-native path explicitly does NOT solve**:
+
+- Glossary / canonical concept terminology (e.g. defining "kommune" once and linking every mention). OpenMetadata has this; Atlas-native doesn't. Defer.
+- Cross-dataset search beyond tag filtering (e.g. "show me every endpoint that has a `kommune_nr` column"). Atlas-native could be extended with a column-level search on `meta_endpoints`, but the richer "search across all column descriptions" is OpenMetadata territory.
+- Programmatic catalogue access for federated discovery. Atlas-native exposes via `api_v1.meta_endpoints` / `meta_sources` / `meta_dimensions` — that *is* a programmatic catalogue; whether innovators want a richer API surface is a separate question.
+
+**On the other tools considered** (compared via web research, 2026-05-07):
+
+- **Scalar > Redoc** for Atlas's spec viewer — both MIT, but Scalar has a built-in "try it out" interactive client free, whereas Redoc gates that behind their commercial portal. Atlas's PostgREST endpoints are *meant* to be poked at; the interactive panel turns the spec page into a working playground. Redoc remains a fine drop-in if bundle size becomes the dominant constraint (verified ~290 KB gz vs Scalar's ~400-600 KB est).
+- **Stoplight Elements** rejected — heaviest bundle, post-acquisition drift since SmartBear bought Stoplight, sparse releases.
+- **Swagger UI** rejected — peerDep capped at React <20, dated UX, awkward in App Router.
+- **Zudoku** rejected — wrong shape entirely (it's a Docusaurus-style framework that owns the site, not an embeddable component).
 
 ---
 
