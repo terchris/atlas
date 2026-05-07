@@ -106,7 +106,7 @@ Pod logs typically show `database system is ready to accept connections` when Po
 
 ### After a cluster reset / fresh start
 
-When you wipe the cluster (rancher-desktop reset, fresh laptop, UIS-image rebuild, anything that purges Postgres data) the `atlas` role's password rotates and `atlas_db` ceases to exist. The credentials previously written into `atlas-data/ingest/.env` are now stale. Bring Atlas back online in this order:
+When you wipe the cluster (rancher-desktop reset, fresh laptop, UIS-image rebuild, anything that purges Postgres data) the `atlas` role's password rotates and `atlas_db` ceases to exist. The credentials previously written into `atlas-data/ingest/.env` are now stale. Bring Atlas back online with **four** commands:
 
 1. Confirm the Postgres pod is up again — usually the cluster bootstrap deploys it automatically:
 
@@ -122,77 +122,43 @@ When you wipe the cluster (rancher-desktop reset, fresh laptop, UIS-image rebuil
 
 3. Update `atlas-data/ingest/.env` with the new password from the JSON output. The `DATABASE_URL` (with `localhost` not `host.docker.internal`) and `PGPASSWORD` lines are the only fields that need rotating; everything else (`PGHOST=localhost`, `PGPORT=35432`, `PGUSER=atlas`, `PGDATABASE=atlas_db`, `ATLAS_SCRAPE_CONTACT_EMAIL`) stays unchanged.
 
-4. Verify with one of the authenticated checks above + `dbt debug`:
+4. **Run the data bootstrap** — one command, walks every phase:
 
    ```bash
-   cd atlas-data/dbt && uv run --env-file ../ingest/.env dbt debug
+   cd atlas-data/ingest && npm run bootstrap
    ```
 
-   `All checks passed!` is the green light.
+   Seven sequential phases, all idempotent:
 
-5. Replay the migrations against the empty `atlas_db`:
+   | Phase | What it does | Typical duration on fresh cluster |
+   |---|---|---|
+   | 1. `migrate` | Applies pending `raw.*` migrations. Brings the schema to the latest committed shape. | seconds |
+   | 2. `refresh` | Runs every `refresh:*` seed-source whose `index.ts` writes to a `raw.*` table (auto-detected; today just `refresh:brreg-enheter`). The other `refresh:*` sources update committed CSV seeds and don't need re-running on a cluster reset. | 1–3 min |
+   | 3. `ingest` | Runs every `npm run ingest:*` (41 sources today), validating each via `raw.ingest_runs`. Skips `frr` (private; needs Red Cross internal API access). | 7–10 min |
+   | 4. `seed` | `dbt seed` — loads committed `seeds/*.csv` into `marts.*` (reference dims like `dim_postnummer`, `dim_ngo`, etc.). | seconds |
+   | 5. `run` | `dbt run` — builds every dbt model. | 1–3 min |
+   | 6. `api` | `apply-api-v1.sh` (creates `api_v1.*` wrapper views) + re-grants SELECT on `marts.*` + `raw.*` to `atlas_web_anon` + `NOTIFY pgrst, 'reload schema'`. The regrants are needed because dbt's CREATE TABLE in phase 5 doesn't reliably inherit the schema-level grants UIS configured via `ALTER DEFAULT PRIVILEGES` — without them, `Accept-Profile: marts` requests get 401. Guarded by `IF EXISTS` on the role so it's a no-op when PostgREST isn't deployed yet. | seconds |
+   | 7. `test` | `dbt test` — runs every `not_null` / `relationships` / `accepted_values` test. | 1–3 min |
+
+   On any failure the script exits non-zero with the specific retry command (`npm run refresh:brreg-enheter`, `npm run ingest:<source>`, `(cd atlas-data/dbt && uv run --env-file ../ingest/.env dbt run)`, etc.). Re-running the whole bootstrap is also safe — every phase is idempotent.
+
+   Useful flags for partial / debug runs:
 
    ```bash
-   cd ../ingest && npm run migrate
+   npm run bootstrap -- --dry-run                       # list phase order, no execution
+   npm run bootstrap -- --only migrate,refresh          # run only the data-loading phases
+   npm run bootstrap -- --only api                      # just re-apply api_v1 + regrant (cheap)
+   npm run bootstrap -- --skip test                     # everything except dbt test
+   npm run bootstrap -- --include frr                   # also run the private frr ingest
    ```
 
-   This brings `raw.*` schema (and any helpers in `marts.*`) back to the latest committed migration. Idempotent — every migration uses `if not exists`.
-
-6. **Ingest the dim-spine sources first.** `dim_kommune` and `dim_fylke` build from SSB Klass classification 131 / 104. Without these, every `relationships → dim_kommune` / `→ dim_fylke` test in `dbt test` fails by definition (the dim is freshly-built but empty, so every foreign key has zero matches). Run before any `dbt run` / `dbt test`:
+5. (Optional) Verify everything is green:
 
    ```bash
-   npm run ingest:ssb-klass-kommuner   # ~1300 rows
-   npm run ingest:ssb-klass-fylker     # ~40 rows
+   cd ../dbt && ./check-osmosis.sh                # ✓ all columns documented
    ```
 
-   These are fast (sub-10 seconds each) and idempotent.
-
-7. Re-run dbt seeds + models. Order matters: `dbt seed` (loads CSV reference data), then `dbt run` (materializes every model including the dims that just got real raw data), then `dbt test`:
-
-   ```bash
-   cd ../dbt && uv run --env-file ../ingest/.env dbt seed && uv run --env-file ../ingest/.env dbt run && uv run --env-file ../ingest/.env dbt test
-   ```
-
-8. **Apply the api_v1 wrapper SQL.** The `dbt run` step builds `marts.mart_*` tables, but the `api_v1.*` wrapper views that the public API exposes are emitted by a separate generator (`./regenerate-api-v1.sh` writes the SQL; `./apply-api-v1.sh` applies it). Without this step, the `api_v1_rowcount_matches_marts` test errors because `api_v1.*` views don't exist yet:
-
-   ```bash
-   ./apply-api-v1.sh
-   ```
-
-   Idempotent — safe to re-run.
-
-9. Verify everything is green:
-
-   ```bash
-   uv run --env-file ../ingest/.env dbt test       # PASS=474+ ERROR=0; one pre-existing postnummer WARN is OK
-   ./check-osmosis.sh                              # ✓ all columns documented
-   ```
-
-10. (Optional but usually wanted) populate every `raw.*` table by running the catch-up script:
-
-    ```bash
-    cd ../ingest && npm run ingest:all
-    ```
-
-    Runs every public `npm run ingest:*` source sequentially, validates each via `raw.ingest_runs`, and prints a per-source row count. ~7–10 minutes total at current catalogue size (~3M rows). Skips `frr` (private; needs Red Cross internal API access). Fails non-zero on any source's spawn-error or validation-error so it's safe in CI.
-
-    After it finishes, **refresh `mart_meta_sources`** so the catalogue's freshness signals reflect the new ingest runs:
-
-    ```bash
-    cd ../dbt && uv run --env-file ../ingest/.env dbt run --select mart_meta_sources && ./apply-api-v1.sh
-    ```
-
-    Without that step, `api_v1.meta_sources` keeps showing the pre-rebuild `last_ingested_at` values (null on a fresh cluster) until the next dbt run includes the mart.
-
-    Smaller alternatives if you only want a smoke / debug subset:
-
-    ```bash
-    npm run ingest:all -- --dry-run                              # list what would run, no execution
-    npm run ingest:all -- --only ssb-08764,fhi-alkohol           # subset
-    npm run ingest:all -- --skip ssb-06913                       # everything except one slow source
-    ```
-
-If anything in steps 4–9 fails, fix before declaring the rebuild done. Step 10 is genuinely optional in the strict sense — the dim-spine ingests in step 6 are what `dbt test` requires — but it's the natural finish: the catalogue stays "data-empty" for 36+ sources until you run it.
+If step 4 fails, the script's failure summary names the specific retry command — fix the underlying cause and either rerun just that piece or re-run the whole bootstrap.
 
 ### How Atlas reaches Postgres — dev vs production
 
