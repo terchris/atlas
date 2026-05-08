@@ -128,7 +128,7 @@ When you wipe the cluster (rancher-desktop reset, fresh laptop, UIS-image rebuil
    cd atlas-data/ingest && npm run bootstrap
    ```
 
-   Seven sequential phases, all idempotent:
+   Eight sequential phases, all idempotent:
 
    | Phase | What it does | Typical duration on fresh cluster |
    |---|---|---|
@@ -139,6 +139,7 @@ When you wipe the cluster (rancher-desktop reset, fresh laptop, UIS-image rebuil
    | 5. `run` | `dbt run` — builds every dbt model. | 1–3 min |
    | 6. `api` | `apply-api-v1.sh` (creates `api_v1.*` wrapper views) + re-grants SELECT on `marts.*` + `raw.*` to `atlas_web_anon` + `NOTIFY pgrst, 'reload schema'`. The regrants are needed because dbt's CREATE TABLE in phase 5 doesn't reliably inherit the schema-level grants UIS configured via `ALTER DEFAULT PRIVILEGES` — without them, `Accept-Profile: marts` requests get 401. Guarded by `IF EXISTS` on the role so it's a no-op when PostgREST isn't deployed yet. | seconds |
    | 7. `test` | `dbt test` — runs every `not_null` / `relationships` / `accepted_values` test. | 1–3 min |
+   | 8. `docs` | `dbt docs generate` — refreshes `target/catalog.json` so the dbt-docs UI reflects the post-Phase-6 schema (api_v1.* views included). Without this phase, `target/catalog.json` drifts every time models change but no one runs `dbt docs generate` manually. | seconds |
 
    On any failure the script exits non-zero with the specific retry command (`npm run refresh:brreg-enheter`, `npm run ingest:<source>`, `(cd atlas-data/dbt && uv run --env-file ../ingest/.env dbt run)`, etc.). Re-running the whole bootstrap is also safe — every phase is idempotent.
 
@@ -148,9 +149,18 @@ When you wipe the cluster (rancher-desktop reset, fresh laptop, UIS-image rebuil
    npm run bootstrap -- --dry-run                       # list phase order, no execution
    npm run bootstrap -- --only migrate,refresh          # run only the data-loading phases
    npm run bootstrap -- --only api                      # just re-apply api_v1 + regrant (cheap)
+   npm run bootstrap -- --only docs                     # just regenerate dbt docs (catalog.json)
    npm run bootstrap -- --skip test                     # everything except dbt test
    npm run bootstrap -- --include frr                   # also run the private frr ingest
    ```
+
+   **Companion alias** for the post-edit cycle (you changed a model SQL or added one new ingest source — but everything else is already in place):
+
+   ```bash
+   npm run dbt:rebuild     # alias: bootstrap -- --only run,api,test,docs
+   ```
+
+   Runs the four cheap phases that any model/seed change requires — `dbt run` rebuilds models, `apply-api-v1.sh` recreates wrappers, `dbt test` verifies, `dbt docs generate` refreshes `target/catalog.json`. ~3-5 min total. Use this instead of full `bootstrap` when you're not adding ingest sources or wiping the cluster. See [`ingest-modules.md` § When to re-run what](./ingest-modules.md#when-to-re-run-what--the-trigger-matrix) for the full trigger matrix.
 
 5. (Optional) Verify everything is green:
 

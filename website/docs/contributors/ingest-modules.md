@@ -34,8 +34,24 @@ Most Atlas sources are API-based (SSB PxWebAPI, FHI's PxWebAPI, Red Cross Organi
 5. Add `"ingest:<source-id>": "tsx src/sources/<source-id>/index.ts"` to [`atlas-data/ingest/package.json`](https://github.com/terchris/atlas/blob/main/atlas-data/ingest/package.json).
 6. Regenerate the implemented-sources index: `cd atlas-data/dbt && uv run python scripts/build_sources_seed.py --readme`. This rebuilds the seed CSVs and the auto-generated table in [`atlas-data/ingest/src/sources/README.md`](https://github.com/terchris/atlas/blob/main/atlas-data/ingest/src/sources/README.md).
 7. **Refresh the reports / indicators investigation.** Open [`INVESTIGATE-reports-and-indicators-from-catalogue.md`](https://github.com/terchris/atlas/blob/main/website/docs/ai-developer/plans/backlog/INVESTIGATE-reports-and-indicators-from-catalogue.md) and follow the *Maintenance* checklist at the bottom: bump the source count, slot the new source into a thematic cluster, walk the 10 reports to identify which gain a column, and note any new dimensions / crosswalks the source introduces. This must land in the same commit as the source itself — the doc is the menu, and the menu has to match what the catalogue actually serves.
+8. **Bring the data + catalog to consistent state**: `npm run ingest:<source-id>` to populate the new `raw.<source>` table, then `npm run dbt:rebuild` to rebuild marts + apply the api_v1 wrappers + run tests + regenerate dbt docs against the new shape. Without this last step, `marts.*` won't include any models that join the new source, and `target/catalog.json` (which the dbt docs UI introspects) will reference a stale schema.
 
 Typical per-source effort for an SSB table: ~30 minutes. API ingests from NGOs (e.g. Red Cross) similar.
+
+### When to re-run what — the trigger matrix
+
+After any change to dbt models, manifests, or seeds, several artefacts can fall out of sync. The matrix below names the right command for each kind of change.
+
+| You changed | Run | What it does |
+|---|---|---|
+| Added a new ingest source (new folder + manifest) | `npm run ingest:<source>` then `npm run dbt:rebuild` | Populates `raw.<source>`; rebuilds marts + api_v1 + tests + docs against the new raw table |
+| Edited a model SQL (`models/marts/.../*.sql`) | `npm run dbt:rebuild` | `dbt run` rebuilds the touched models + downstream; `apply-api-v1.sh` recreates api_v1 wrappers; tests verify; docs regenerate |
+| Edited a `schema.yml` description | `npm run dbt:rebuild` | Same as above — descriptions flow from schema.yml → dbt-osmosis → COMMENT ON COLUMN → PostgREST spec → `target/catalog.json` |
+| Edited a `manifest.yml` | `cd ../dbt && uv run python scripts/build_sources_seed.py --readme` then `npm run dbt:rebuild` | Regenerates the `_sources_manifest` + `_sources_dimensions` seed CSVs, then runs the cheap end of the pipeline |
+| Added a new committed seed CSV | `npm run bootstrap -- --only seed,run,api,test,docs` | Loads the seed, rebuilds dependents, refreshes |
+| Cluster reset (post-rancher-desktop reset, fresh laptop) | `npm run bootstrap` | Full 8-phase pipeline — migrate, refresh raw-writing seeds, all ingests, dbt seed/run, api_v1, test, docs |
+
+`npm run dbt:rebuild` is shorthand for `npm run bootstrap -- --only run,api,test,docs` — runs the four cheap phases that any model/seed change requires. ~3-5 min total. Idempotent — safe to re-run.
 
 ### `index.ts` required structure
 
