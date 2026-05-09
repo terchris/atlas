@@ -14,6 +14,65 @@
 
 ---
 
+## The desired end-state — single editorial input, every consumer fed automatically
+
+The intent of this work, plain: **adding a new dataset should mean adding the source's editorial content in exactly one place — `manifest.yml` — and having that flow automatically into every system that needs it.** No per-surface re-authorship. No "did you remember to update `models/indicators/schema.yml` too?" checklist item.
+
+**The contributor's workflow before vs after**:
+
+```
+BEFORE (today)                              AFTER (this INVESTIGATE's outcome)
+──────────────                              ─────────────────────────────────
+1. Scaffold folder + index.ts               1. Scaffold folder + index.ts
+2. Write prose README.md                    2. Write prose README.md
+3. sources:bootstrap-manifest               3. sources:bootstrap-manifest
+4. sources:fill-manifest-todos              4. sources:fill-manifest-todos
+5. Hand-author dimensions: in manifest.yml  5. Hand-author dimensions: in manifest.yml  ← SAME (still editorial)
+6. Add ingest:<id> to package.json          6. Add ingest:<id> to package.json
+7. Hand-edit schema.yml column descriptions ← (skipped 75 % of the time today)
+8. ingest:<id> + dbt:rebuild                7. ingest:<id> + dbt:rebuild  ← schema.yml regenerates
+                                                                           inside dbt:rebuild
+```
+
+**The integration point**: a new `schema-gen` phase inside `npm run dbt:rebuild` (and `npm run bootstrap`), running after `seed` and before `run` (since `dbt run` parses schema.yml as part of model compilation):
+
+```
+seed → schema-gen → run → api → test → docs
+        ↑ NEW
+```
+
+Generator inputs:
+- Every `atlas-data/ingest/src/sources/<id>/manifest.yml` `dimensions:` block (per-source editorial content)
+- One shared `atlas-data/dbt/conformed-column-descriptions.yml` (~10 entries — `source_id`, `kommune_nr`, `period_start`, etc.) — hand-authored once, reused for every source forever
+- A column-name mapping (manifest dimension `Region` → schema column `region_code`) — auto-derived from each indicator model's SQL, with explicit overrides where heuristics fail
+
+Generator output: `models/indicators/schema.yml`, regenerated deterministically.
+
+**Editorial work that stays human, vs work that disappears**:
+
+| Surface | Editorial input today | Editorial input after this PLAN |
+|---|---|---|
+| `/data/sources/<id>` catalog card (description + dimensions) | `manifest.yml` (description + dimensions:) | Same — one place |
+| `mart_meta_dimensions` editorial pass-through | `manifest.yml` `dimensions:` (via Phase 2.11 `_sources_dimensions` seed) | Same — one place |
+| `models/indicators/schema.yml` column descriptions | **Hand-edited per source** (skipped 75 % of the time) | **Generated** from manifest + conformed dict |
+| pg_description (Postgres COMMENT ON) | Already auto via `+persist_docs` (PR #89), but only for descriptions that exist in schema.yml | Now actually populated — generated schema.yml feeds it |
+| PostgREST OpenAPI spec | Auto from pg_description | Auto from pg_description |
+| atlas-frontend `/data/[schema]/[table]` column tooltips | Auto from PostgREST spec | Auto from PostgREST spec |
+| dbt docs catalog.json | Auto from `dbt docs generate` (Phase 8 of bootstrap) | Auto from `dbt docs generate` |
+| MCP tool definitions for AI agents | Auto from pg_description / dbt manifest | Auto from pg_description / dbt manifest |
+| Future `developer-atlas.helpers.no` API reference | Auto from PostgREST spec via Scalar (PLAN-008 Phase 1) | Auto from PostgREST spec via Scalar |
+
+Net editorial input per new dataset: **one `dimensions:` block in `manifest.yml`** (3-5 entries, written from upstream API knowledge — the contributor needs to know the data anyway). That single input feeds eight downstream surfaces. The generator + persist_docs + apply-api-v1.sh + dbt docs generate are the plumbing that fans it out.
+
+**What this still doesn't auto-fix** (worth being explicit so the "fully automatic" claim doesn't oversell):
+
+- The `dimensions:` block still needs human authorship. A generator can't invent what `EUskala60` means or what region-code prefixes signify. But it's once, in one file, in the contributor's natural catalog-authorship workflow.
+- The conformed-columns dict needs first-time authorship (~10 entries × 1 paragraph each = ~1 hour, one time).
+- New atlas-conformed columns added in the future (rare; `period_start` doesn't change shape often) need an entry in the dict.
+- Models OUTSIDE indicators (`dim_*`, `fact_*`, `mart_*`, `supply__*` for now — see [Q3]) still have hand-written schema.yml. Generator scope is `indicators__*` for v1.
+
+---
+
 ## The actual gap
 
 Numbers as of 2026-05-09:
@@ -137,9 +196,11 @@ Bump `check-osmosis.sh` (or add a sister gate) to fail when an `indicators__*` m
 
 ---
 
-## Tentative recommendation
+## Recommendation
 
-**(b) + (e)**: build the generator, run it once to fill the 249 gap, and add a CI gate that ensures future indicator columns either get a manifest dimension entry OR a hand-written description. Specifically:
+**(b) + (e)** — generator + CI gate. This is the only option that delivers the "single editorial input → every consumer fed" end-state described above; the others either keep contributor labor proportional to source count (a, d) or punt on the open-by-default gap (c) or stop the bleeding without healing it (e alone).
+
+Specifically:
 
 1. Author `atlas-data/dbt/conformed-column-descriptions.yml` — one entry per atlas-conformed column (~10 columns × ~1 paragraph each). One-time editorial pass; ~1 hour.
 2. Build `atlas-data/dbt/scripts/generate-indicator-descriptions.py` — reads manifest.yml dimensions + the conformed dict, emits a regenerated `models/indicators/schema.yml`. ~150 lines.
