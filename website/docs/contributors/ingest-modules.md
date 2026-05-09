@@ -53,6 +53,43 @@ After any change to dbt models, manifests, or seeds, several artefacts can fall 
 
 `npm run dbt:rebuild` is shorthand for `npm run bootstrap -- --only run,api,test,docs` — runs the four cheap phases that any model/seed change requires. ~3-5 min total. Idempotent — safe to re-run.
 
+### How descriptions flow — schema.yml → PostgREST → MCP
+
+When you write a description in `schema.yml`, it ends up in *seven* places. Knowing the chain helps when something goes stale.
+
+```
+schema.yml description
+  │
+  ├─→ dbt-osmosis  (propagates the description ACROSS the dbt graph,
+  │                  so dim_kommune.kommune_nr's description flows to
+  │                  every downstream mart/api_v1 model that selects it)
+  │
+  ├─→ pg_description  (Postgres-native COMMENT ON; written by dbt's
+  │                    +persist_docs setting on every dbt run for
+  │                    every model + seed; written by api_v1_generated.sql
+  │                    for api_v1.* wrappers; written by raw migrations
+  │                    for raw.*)
+  │
+  ├─→ PostgREST OpenAPI spec  (auto-included as `description` per
+  │                            column whenever pg_description has a row)
+  │
+  ├─→ /data/[schema]/[table]  (customer-frontend table viewer, reads
+  │                            the OpenAPI spec)
+  │
+  ├─→ atlas-frontend api-types.ts  (typed surface, regenerated via
+  │                                  `npm run api:types`)
+  │
+  ├─→ target/catalog.json  (dbt docs UI, refreshed by `dbt docs generate`
+  │                         in bootstrap Phase 8)
+  │
+  └─→ MCP tool definitions  (LLM agents introspecting via Postgres MCP
+                              or dbt-MCP read pg_description / manifest.json)
+```
+
+The `+persist_docs` config in [`atlas-data/dbt/dbt_project.yml`](https://github.com/terchris/atlas/blob/main/atlas-data/dbt/dbt_project.yml) is what physically pushes schema.yml descriptions into Postgres. Without it, only api_v1.* views had descriptions (via `apply-api-v1.sh`'s explicit COMMENT ON statements); marts.* and seed-loaded marts had none, which made the multi-schema PostgREST surface useless to AI agents discovering Atlas through the marts schema. dbt-osmosis (propagation) and persist_docs (DB write) are complementary, not competing — Atlas needs both.
+
+**Raw.\*** is the exception: descriptions on `raw.*` columns come from explicit `COMMENT ON COLUMN` statements in the migration SQL files (e.g. `migrations/032_raw_fhi_innvkat.sql`), not from dbt sources YAML. If you want richer raw.* descriptions, edit the migration; persist_docs doesn't apply to dbt sources.
+
 ### `index.ts` required structure
 
 - **`import` shared helpers** from `../../lib/*` (`pxweb`, `klass`, `postgres`, `logger`, `output`, `types`). Don't reimplement what's in `lib/`.
