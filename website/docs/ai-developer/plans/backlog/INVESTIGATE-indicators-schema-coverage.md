@@ -6,7 +6,7 @@
 
 ## Status: Backlog
 
-**Goal**: Decide a sustainable shape for column-level descriptions across the ~30 `models/indicators/indicators__<source>.sql` per-source pass-through models — currently 25 % covered, hard to fill by hand, repetitive across sources, but increasingly load-bearing now that `+persist_docs` (PR #89) pushes schema.yml descriptions into `pg_description` and PostgREST → MCP agents see them.
+**Goal**: Decide a sustainable shape for column-level descriptions across the 23 `models/indicators/indicators__<source>.sql` per-source pass-through models — currently 25 % covered (72 of 288 columns documented), hard to fill by hand, repetitive across sources, but increasingly load-bearing now that `+persist_docs` (PR #89) pushes schema.yml descriptions into `pg_description` and PostgREST → MCP agents see them.
 
 **Last Updated**: 2026-05-09
 
@@ -43,8 +43,8 @@ seed → schema-gen → run → api → test → docs
 
 Generator inputs:
 - Every `atlas-data/ingest/src/sources/<id>/manifest.yml` `dimensions:` block (per-source editorial content)
-- One shared `atlas-data/dbt/conformed-column-descriptions.yml` (~10 entries — `source_id`, `kommune_nr`, `period_start`, etc.) — hand-authored once, reused for every source forever
-- A column-name mapping (manifest dimension `Region` → schema column `region_code`) — auto-derived from each indicator model's SQL, with explicit overrides where heuristics fail
+- One shared `atlas-data/dbt/conformed-column-descriptions.yml` (~7 entries — `source_id`, `kommune_nr`, `fylke_nr`, `contents_label`, `value`, `status`, `updated_at`) — hand-authored once, reused for every source forever
+- A column-name mapping (manifest dimension `Region` → schema column `region_code`, `Tid` → `year`, `ContentsCode` → `contents_code`) — see [Q1] for shape (per-source override file vs explicit `column_map:` field on manifest vs auto-derive from SQL — the last is fragile against CTEs and macros)
 
 Generator output: `models/indicators/schema.yml`, regenerated deterministically.
 
@@ -57,18 +57,43 @@ Generator output: `models/indicators/schema.yml`, regenerated deterministically.
 | `models/indicators/schema.yml` column descriptions | **Hand-edited per source** (skipped 75 % of the time) | **Generated** from manifest + conformed dict |
 | pg_description (Postgres COMMENT ON) | Already auto via `+persist_docs` (PR #89), but only for descriptions that exist in schema.yml | Now actually populated — generated schema.yml feeds it |
 | PostgREST OpenAPI spec | Auto from pg_description | Auto from pg_description |
-| atlas-frontend `/data/[schema]/[table]` column tooltips | Auto from PostgREST spec | Auto from PostgREST spec |
+| atlas-frontend `/data/[schema]/[table]` column descriptions | Auto from PostgREST spec | Auto from PostgREST spec |
 | dbt docs catalog.json | Auto from `dbt docs generate` (Phase 8 of bootstrap) | Auto from `dbt docs generate` |
 | MCP tool definitions for AI agents | Auto from pg_description / dbt manifest | Auto from pg_description / dbt manifest |
 | Future `developer-atlas.helpers.no` API reference | Auto from PostgREST spec via Scalar (PLAN-008 Phase 1) | Auto from PostgREST spec via Scalar |
 
 Net editorial input per new dataset: **one `dimensions:` block in `manifest.yml`** (3-5 entries, written from upstream API knowledge — the contributor needs to know the data anyway). That single input feeds eight downstream surfaces. The generator + persist_docs + apply-api-v1.sh + dbt docs generate are the plumbing that fans it out.
 
+**Runtime fan-out** (post-generator, post-PR-#89):
+
+```
+manifest.yml dimensions  ─┐
+conformed-cols dict       ┤
+                          ▼
+       generator (runs in dbt:rebuild Phase "schema-gen")
+                          ▼
+       models/indicators/schema.yml (regenerated, committed)
+                          │
+                          ▼
+                    dbt run (+persist_docs)
+                          ▼
+               pg_description (Postgres COMMENT ON)
+                          │
+        ┌──────┬──────────┼──────────┬──────────┐
+        ▼      ▼          ▼          ▼          ▼
+   PostgREST  /data    dbt docs    MCP       api-types.ts
+   OpenAPI    catalog  catalog     tools     (codegen)
+   spec       UI       JSON        for AI
+                                   agents
+```
+
+Five real-world surfaces, one editorial input, one generator run.
+
 **What this still doesn't auto-fix** (worth being explicit so the "fully automatic" claim doesn't oversell):
 
 - The `dimensions:` block still needs human authorship. A generator can't invent what `EUskala60` means or what region-code prefixes signify. But it's once, in one file, in the contributor's natural catalog-authorship workflow.
-- The conformed-columns dict needs first-time authorship (~10 entries × 1 paragraph each = ~1 hour, one time).
-- New atlas-conformed columns added in the future (rare; `period_start` doesn't change shape often) need an entry in the dict.
+- The conformed-columns dict needs first-time authorship (~7 entries × 1 paragraph each = ~30 min, one time).
+- New atlas-conformed columns added in the future (rare — Atlas's mart shape has been stable since PLAN-001) need an entry in the dict.
 - Models OUTSIDE indicators (`dim_*`, `fact_*`, `mart_*`, `supply__*` for now — see [Q3]) still have hand-written schema.yml. Generator scope is `indicators__*` for v1.
 
 ---
@@ -90,7 +115,7 @@ $ grep -c "        description:" indicators/schema.yml    # column-level descrip
 → 25 % column coverage
 ```
 
-Per-model breakdown for the SSB indicator models:
+Per-model breakdown for the SSB indicator models (23 indicators models total across SSB / FHI / Bufdir; 9 SSB ones shown):
 
 ```
 indicators__ssb_08764    3/10 documented  ← the only one with any coverage
@@ -102,28 +127,29 @@ indicators__ssb_12063    0/10
 indicators__ssb_12131    0/10
 indicators__ssb_12132    0/10
 indicators__ssb_13995    0/10
-… (all 14+ SSB pass-throughs sit at 0)
 ```
 
 FHI / Bufdir / SSB-crime indicators — same pattern, mostly zero.
 
-`indicators__ssb_08764` is the lone documented one because it was the worked example for the original PLAN-001 schema.yml hygiene push; the rest predate `+persist_docs` and there was no incentive to write column-level descriptions for them (the api_v1 wrappers — which DO have full descriptions — were the only consumer-facing surface).
+The 3 columns that ARE documented on `indicators__ssb_08764` are `region_code`, `year`, `contents_code` — the **source-specific** ones (mapped from upstream `Region`, `Tid`, `ContentsCode` dimensions). The 7 atlas-conformed columns (`source_id`, `kommune_nr`, `fylke_nr`, `contents_label`, `value`, `status`, `updated_at`) are undocumented even there. Why this matters: it confirms the manifest-dimensions → indicator-columns mapping is the right shape — every existing description ALREADY corresponds 1:1 to a manifest dimension entry. Migration concern in [Q4] is therefore well-bounded.
 
 ---
 
 ## Why hand-filling is the wrong shape
 
-`indicators__*` models follow a near-identical column shape across sources:
+`indicators__*` models follow a near-identical column shape across sources. Verified against `indicators__ssb_08764` and `indicators__ssb_06913`:
 
-| Atlas-conformed columns (consistent across all indicators models) | Source-specific columns |
+| Atlas-conformed columns (consistent across indicators models) | Source-specific columns (from upstream dimensions) |
 |---|---|
-| `source_id` | `region_code` (sometimes) |
-| `kommune_nr`, `fylke_nr` | `contents_code`, `contents_label` |
-| `period_start`, `period_end` | upstream-specific encoding columns |
-| `value`, `value_unit` | (varies per source) |
-| `loaded_at` (provenance) | |
+| `source_id` (always `'<provider>-<table-id>'`) | `region_code` (mapped from upstream `Region`-like dim) |
+| `kommune_nr` (FK to `dim_kommune`) | `year` (mapped from upstream `Tid`/year dim) |
+| `fylke_nr` (FK to `dim_fylke`) | `contents_code` (mapped from upstream `ContentsCode`-like dim) |
+| `contents_label` (decoded label) | (some sources have additional source-specific dims) |
+| `value` (numeric) | |
+| `status` (e.g. `'..'` for suppressed) | |
+| `updated_at` (loaded timestamp) | |
 
-That's ~7-9 atlas-conformed columns repeated across 30 sources = ~250 hand-written-but-identical descriptions if we hand-fill. The remaining ~30 source-specific columns ARE per-source content. Hand-filling all 250 is real labor and creates the wrong incentive — the indicator descriptions become the primary place to update if conformed-column semantics change, instead of the dim/fact models that own those concepts.
+That's ~7 atlas-conformed columns × 23 sources ≈ 161 conformed-column descriptions, plus ~3 source-specific × 23 ≈ 69 source-specific = ~230 total schema.yml descriptions in the load-bearing fully-documented state. Today only 72 are written. Hand-filling the remaining ~160 is real labor and creates the wrong incentive — the conformed-column descriptions become the primary place to update if `kommune_nr` semantics change across all 23 sources at once, instead of the canonical dim/fact models that own those concepts.
 
 Equally, `dbt-osmosis` (already in use) propagates descriptions across the dbt graph but **only when there's a parent description to propagate**. Today most `indicators__*` parents (`raw.*` sources via `models/sources/sources.yml`) have *table*-level descriptions but few *column*-level ones. So osmosis has nothing to lift.
 
@@ -135,14 +161,14 @@ So the question this INVESTIGATE settles is: **how do we close this gap without 
 
 ## Options
 
-### (a) Hand-fill all ~216 missing descriptions
+### (a) Hand-fill all 216 missing indicator-column descriptions
 
-Just write them. ~30 sources × ~7-9 columns each. ~1-2 days of mechanical work.
+Just write them. 23 sources × ~7 conformed + ~3 source-specific = ~230 descriptions, of which 72 are already written, leaving ~158-216 (counting depends on which models have which columns). ~1-2 days of mechanical work.
 
 - **Pro**: simple, no new tooling, every column gets a tailored description.
 - **Pro**: easy to refine post-hoc — no generator to re-run.
-- **Con**: ~250 descriptions for repeated columns are near-copies. Drift risk: ssb-12063's `kommune_nr` description vs ssb-12131's `kommune_nr` description will differ over time if no canonical source exists.
-- **Con**: every new ingest source repeats the work. With Cursor BG / cloud-agent landing more sources, this becomes a recurring tax.
+- **Con**: ~160 conformed-column descriptions are near-copies of each other. Drift risk: ssb-12063's `kommune_nr` description vs ssb-12131's `kommune_nr` description will differ over time if no canonical source exists.
+- **Con**: every new ingest source repeats the work. As the cloud-agent pipeline (opened 2026-05-04) onboards more sources, this becomes a recurring tax.
 - **Verdict**: works in the short term; fragile as the source count grows. Skip if a generator path is viable.
 
 ### (b) Generate `indicators__*` descriptions from manifest.yml dimensions + a shared atlas-conformed-columns dictionary
@@ -151,11 +177,11 @@ A small generator (TypeScript, lives at `atlas-data/dbt/scripts/generate-indicat
 
 1. Read every `atlas-data/ingest/src/sources/<source_id>/manifest.yml`.
 2. For each source, walk its `dimensions:` block — map upstream dimension `code` to the corresponding indicator column name (e.g. `Region` → `region_code`; `Tid` → `year`; `ContentsCode` → `contents_code`). Per-source override map handles nonstandard mappings.
-3. Combine with a single shared `atlas-data/dbt/conformed-column-descriptions.yml` (~10 entries) that documents the atlas-conformed columns once: `source_id`, `kommune_nr`, `fylke_nr`, `period_start`, `period_end`, `value`, `value_unit`, `loaded_at`. Hand-authored once; reused 30 times.
-4. Emit per-source schema.yml fragments (or rewrite the consolidated `indicators/schema.yml`) with column descriptions populated from those two sources.
+3. Combine with a single shared `atlas-data/dbt/conformed-column-descriptions.yml` (~7 entries) that documents the atlas-conformed columns once: `source_id`, `kommune_nr`, `fylke_nr`, `contents_label`, `value`, `status`, `updated_at`. Hand-authored once; reused 23 times.
+4. Rewrite the consolidated `models/indicators/schema.yml` (Atlas's dbt-osmosis convention is one schema.yml per directory; the generator preserves that shape).
 5. Wire as a pre-commit hook or CI step that fails if the generated output doesn't match the committed schema.yml — analogous to `check-osmosis.sh`'s existing gate.
 
-- **Pro**: 250 descriptions become 1 conformed-columns file + 30 manifest dimensions blocks (which Atlas already maintains for the catalogue).
+- **Pro**: ~230 descriptions become 1 conformed-columns file (7 entries) + 23 manifest `dimensions:` blocks (which Atlas already maintains for the catalogue per Phase 2.11).
 - **Pro**: New ingest sources auto-document themselves once the contributor authors `dimensions:` (a Phase 2.11 step they already do).
 - **Pro**: dbt-osmosis stays compatible — the generator emits standard schema.yml; osmosis still propagates descriptions downstream from indicators to facts/marts.
 - **Con**: new tooling — one generator script + one conformed-columns YAML + one CI gate. ~150 lines of code.
@@ -176,21 +202,21 @@ Lean on the fact that api_v1.* views (Atlas's "stable contract" surface) are 100
 
 Splits (b)'s scope:
 
-- The ~7-9 atlas-conformed columns generated from a single shared dictionary (covers 80 % of the missing volume).
-- The ~3-5 source-specific columns hand-written in each `indicators__<source>` schema.yml (covers the remaining 20 %).
+- The ~7 atlas-conformed columns generated from a single shared dictionary (covers ~70 % of the missing volume — 161 of ~230 total).
+- The ~3 source-specific columns hand-written in each `indicators__<source>` schema.yml (covers the remaining ~30 %).
 
 - **Pro**: smaller initial generator (no manifest.yml integration; just a shared dict and a list of sources).
 - **Pro**: source-specific columns get hand-tailored descriptions where the editorial work has high payoff.
 - **Con**: contributor still has to write something per new source — a regression vs (b) where dimensions:-block authoring covers source-specific automatically.
 - **Verdict**: plausible if (b)'s manifest-dimension mapping turns out to be too brittle. Keep as Plan B.
 
-### (e) Enforce going forward via `check-osmosis.sh`, accept the 249-column debt
+### (e) Enforce going forward via `check-osmosis.sh`, accept the 216-column debt
 
-Bump `check-osmosis.sh` (or add a sister gate) to fail when an `indicators__*` model has a column without a `description:` line. Don't fix the 249 today; require all NEW columns to be documented; over time the debt clears as sources are touched.
+Bump `check-osmosis.sh` (or add a sister gate) to fail when an `indicators__*` model has a column without a `description:` line. Don't fix the 216 today; require all NEW columns to be documented; over time the debt clears as sources are touched.
 
 - **Pro**: stops the bleeding. Zero immediate fixing required.
 - **Pro**: the gate is cheap (one grep).
-- **Con**: doesn't help today's AI / MCP consumers. The 249 stay missing for months/years.
+- **Con**: doesn't help today's AI / MCP consumers. The 216 stay missing for months/years.
 - **Con**: makes adding a new ingest source slightly more painful (the contributor now has to author column descriptions hand-by-hand, which is the labor (b) explicitly avoids).
 - **Verdict**: a reasonable *complement* to (b) — generator fills today's gap, the gate prevents tomorrow's. Not a standalone answer.
 
@@ -202,15 +228,15 @@ Bump `check-osmosis.sh` (or add a sister gate) to fail when an `indicators__*` m
 
 Specifically:
 
-1. Author `atlas-data/dbt/conformed-column-descriptions.yml` — one entry per atlas-conformed column (~10 columns × ~1 paragraph each). One-time editorial pass; ~1 hour.
+1. Author `atlas-data/dbt/conformed-column-descriptions.yml` — one entry per atlas-conformed column (~7 columns × ~1 paragraph each). One-time editorial pass; ~30 min.
 2. Build `atlas-data/dbt/scripts/generate-indicator-descriptions.py` — reads manifest.yml dimensions + the conformed dict, emits a regenerated `models/indicators/schema.yml`. ~150 lines.
-3. Add per-source override map in the script for column-name mismatches (`Region` → `region_code` etc). ~15 entries to start.
+3. Add per-source override map in the script for column-name mismatches (`Region` → `region_code` etc). ~15 entries to start (Q1 settles the shape).
 4. Run the generator; commit the regenerated schema.yml; verify with `npm run dbt:rebuild` that pg_description gains the missing descriptions.
 5. Extend `check-osmosis.sh` (or add a sibling check) to fail if `models/indicators/schema.yml` doesn't match the regenerated output (deterministic — like `dbt parse` checks).
 
 **Why not (c)**: the open-by-default posture is recently load-bearing; lifting `marts.*` to a first-class API surface and then declining to document it is incoherent.
 
-**Why not (a)**: short-term tax compounds with each new ingest source. Atlas adds ~1 source/week via the cloud-agent pipeline; (a) makes that more expensive forever.
+**Why not (a)**: the conformed-column tax compounds with each new ingest source. As the cloud-agent pipeline (opened 2026-05-04) onboards more sources, (a) keeps contributor labor proportional to source count forever — exactly the lock-in this INVESTIGATE is set up to avoid.
 
 **Why not (d) only**: misses the auto-population of source-specific columns. Contributor still has to author per-column descriptions every time, which is the cost (b) eliminates.
 
@@ -218,7 +244,11 @@ Specifically:
 
 ## Open questions
 
-- **[Q1] What's the canonical column-name → manifest-dimension mapping?** The generator needs to know that SSB sources call it `region_code` while some FHI sources might use `geo` or `kommune_id`. A first pass is to read each indicator model's SQL and discover the column-rename mapping (`SELECT region as region_code` etc.). Could also live as an explicit `column_map:` field per manifest. Decide before building.
+- **[Q1] What's the canonical column-name → manifest-dimension mapping?** The generator needs to know that the manifest dimension `Region` corresponds to the schema column `region_code` (and that FHI sources may use different naming). Three shapes:
+  - **(i) Auto-derive from each indicator model's SQL** — regex-parse `SELECT … as region_code` patterns from `indicators__*.sql`. Works for Atlas's current SSB-pattern SQL but **fragile** against CTEs, macros, or `*` selects with later renames. Maintenance trap.
+  - **(ii) Explicit `column_map:` field per `manifest.yml`** — contributor writes `column_map: { Region: region_code, Tid: year }` once per source. Author cost: 3-5 entries per source. Discoverable next to where the contributor already writes `dimensions:`.
+  - **(iii) Per-source override file in the generator** — central `mapping_overrides.yml` keyed by `source_id`. Generator falls back to "manifest dim code lowercased" as the default; the override file handles exceptions. Smallest contributor footprint; centralised maintenance burden.
+  - Tentative recommendation: **(ii)** — keeps editorial content next to its source-of-truth; per-source overrides risk drift across the project.
 - **[Q2] Where does the conformed-columns dictionary live?** Options: (i) `atlas-data/dbt/conformed-column-descriptions.yml`, (ii) `seeds/sources/conformed_columns.csv` so it's queryable, (iii) inline as a fragment in `models/indicators/schema.yml` that the generator preserves. Tentatively (i) — keeps dbt project unchanged; generator reads YAML and emits YAML.
 - **[Q3] Should this also cover the `supply__*` per-NGO models?** Same shape — per-NGO pass-throughs from raw to a normalized indicator-style mart. If yes, the generator scope grows. If no, supply gets its own follow-up. Tentatively yes for v1; it's the same generator with a different model-prefix filter.
 - **[Q4] Migration strategy for the lone `indicators__ssb_08764` already-documented case.** The 3 hand-written column descriptions might be richer than what the generator produces from manifest.yml dimensions. Options: (i) regenerator overwrites them (loses content), (ii) generator preserves hand-edits via a marker comment (`# hand-authored — do not regenerate`), (iii) merge what's hand-written into manifest.yml dimensions, then regenerate everything. Tentatively (iii) — single source of truth.
