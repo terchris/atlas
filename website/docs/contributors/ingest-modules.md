@@ -51,7 +51,7 @@ After any change to dbt models, manifests, or seeds, several artefacts can fall 
 | Added a new committed seed CSV | `npm run bootstrap -- --only seed,run,api,test,docs` | Loads the seed, rebuilds dependents, refreshes |
 | Cluster reset (post-rancher-desktop reset, fresh laptop) | `npm run bootstrap` | Full 8-phase pipeline — migrate, refresh raw-writing seeds, all ingests, dbt seed/run, api_v1, test, docs |
 
-`npm run dbt:rebuild` is shorthand for `npm run bootstrap -- --only run,api,test,docs` — runs the four cheap phases that any model/seed change requires. ~3-5 min total. Idempotent — safe to re-run.
+`npm run dbt:rebuild` is shorthand for `npm run bootstrap -- --only seed,run,api,test,docs` — runs the five cheap phases that any model/seed/manifest change requires. **~35-50 min total** (dbt test is the long pole at ~30-45 min on full-volume facts). For fast iteration when you don't need test verification, use `npm run bootstrap -- --only seed,run,api,docs` (~5-8 min). Idempotent — safe to re-run.
 
 ### How descriptions flow — schema.yml → PostgREST → MCP
 

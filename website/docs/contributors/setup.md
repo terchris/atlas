@@ -136,9 +136,9 @@ When you wipe the cluster (rancher-desktop reset, fresh laptop, UIS-image rebuil
    | 2. `refresh` | Runs every `refresh:*` seed-source whose `index.ts` writes to a `raw.*` table (auto-detected; today just `refresh:brreg-enheter`). The other `refresh:*` sources update committed CSV seeds and don't need re-running on a cluster reset. | 1–3 min |
    | 3. `ingest` | Runs every `npm run ingest:*` (41 sources today), validating each via `raw.ingest_runs`. Skips `frr` (private; needs Red Cross internal API access). | 7–10 min |
    | 4. `seed` | `dbt seed` — loads committed `seeds/*.csv` into `marts.*` (reference dims like `dim_postnummer`, `dim_ngo`, etc.). | seconds |
-   | 5. `run` | `dbt run` — builds every dbt model. | 1–3 min |
+   | 5. `run` | `dbt run` — builds every dbt model. With `+persist_docs` enabled (`atlas-data/dbt/dbt_project.yml`), this also issues `COMMENT ON COLUMN` / `COMMENT ON TABLE` per materialised model so PostgREST's spec exposes the schema.yml descriptions. | 5-7 min |
    | 6. `api` | `apply-api-v1.sh` (creates `api_v1.*` wrapper views) + re-grants SELECT on `marts.*` + `raw.*` to `atlas_web_anon` + `NOTIFY pgrst, 'reload schema'`. The regrants are needed because dbt's CREATE TABLE in phase 5 doesn't reliably inherit the schema-level grants UIS configured via `ALTER DEFAULT PRIVILEGES` — without them, `Accept-Profile: marts` requests get 401. Guarded by `IF EXISTS` on the role so it's a no-op when PostgREST isn't deployed yet. | seconds |
-   | 7. `test` | `dbt test` — runs every `not_null` / `relationships` / `accepted_values` test. | 1–3 min |
+   | 7. `test` | `dbt test` — runs every `not_null` / `relationships` / `accepted_values` test. **Slow**: 30-45 min on full-volume facts (`fact_kommune_indicators` × `dim_kommune` relationship is the long-pole). | 30-45 min |
    | 8. `docs` | `dbt docs generate` — refreshes `target/catalog.json` so the dbt-docs UI reflects the post-Phase-6 schema (api_v1.* views included). Without this phase, `target/catalog.json` drifts every time models change but no one runs `dbt docs generate` manually. | seconds |
 
    On any failure the script exits non-zero with the specific retry command (`npm run refresh:brreg-enheter`, `npm run ingest:<source>`, `(cd atlas-data/dbt && uv run --env-file ../ingest/.env dbt run)`, etc.). Re-running the whole bootstrap is also safe — every phase is idempotent.
@@ -157,10 +157,10 @@ When you wipe the cluster (rancher-desktop reset, fresh laptop, UIS-image rebuil
    **Companion alias** for the post-edit cycle (you changed a model SQL or added one new ingest source — but everything else is already in place):
 
    ```bash
-   npm run dbt:rebuild     # alias: bootstrap -- --only run,api,test,docs
+   npm run dbt:rebuild     # alias: bootstrap -- --only seed,run,api,test,docs
    ```
 
-   Runs the four cheap phases that any model/seed change requires — `dbt run` rebuilds models, `apply-api-v1.sh` recreates wrappers, `dbt test` verifies, `dbt docs generate` refreshes `target/catalog.json`. ~3-5 min total. Use this instead of full `bootstrap` when you're not adding ingest sources or wiping the cluster. See [`ingest-modules.md` § When to re-run what](./ingest-modules.md#when-to-re-run-what--the-trigger-matrix) for the full trigger matrix.
+   Runs the five cheap phases that any model/seed change requires — `dbt seed` reloads committed CSVs (so seed schema.yml description edits flow), `dbt run` rebuilds models, `apply-api-v1.sh` recreates wrappers, `dbt test` verifies, `dbt docs generate` refreshes `target/catalog.json`. **Roughly 35-50 min total — `dbt test` is the long pole.** Use this instead of full `bootstrap` when you're not adding ingest sources or wiping the cluster. If you want to skip the test phase for fast iteration: `npm run bootstrap -- --only seed,run,api,docs` (~5-8 min). See [`ingest-modules.md` § When to re-run what](./ingest-modules.md#when-to-re-run-what--the-trigger-matrix) for the full trigger matrix.
 
 5. (Optional) Verify everything is green:
 

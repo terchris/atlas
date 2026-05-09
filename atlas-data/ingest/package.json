@@ -7,7 +7,7 @@
   "scripts": {
     "migrate": "tsx --env-file=.env scripts/migrate.ts",
     "bootstrap": "tsx --env-file=.env scripts/bootstrap.ts",
-    "dbt:rebuild": "tsx --env-file=.env scripts/bootstrap.ts --only run,api,test,docs",
+    "dbt:rebuild": "tsx --env-file=.env scripts/bootstrap.ts --only seed,run,api,test,docs",
     "sources:bootstrap-manifest": "tsx scripts/bootstrap-manifest.ts",
     "sources:fill-manifest-todos": "tsx scripts/fill-manifest-todos.ts",
     "refresh:ssb-family-type": "tsx src/seed-sources/ssb-family-type/index.ts",
