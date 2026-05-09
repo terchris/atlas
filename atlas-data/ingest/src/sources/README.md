@@ -95,6 +95,14 @@ The table below is auto-generated from each source's `manifest.yml`. To regenera
 uv run --directory atlas-data/dbt python scripts/build_sources_seed.py --readme atlas-data/ingest/src/sources/README.md
 ```
 
+> **Programmatic access**: the same per-source metadata (with live freshness signals — `last_ingested_at`, `latest_row_count`, `total_runs`, `downstream_model_count`) is queryable via the public PostgREST API at `api_v1.meta_sources`. See the customer-facing browser at <https://atlas.helpers.no/data/sources> or query directly:
+>
+> ```bash
+> curl -s "https://api-atlas.helpers.no/meta_sources?source_id=eq.bufdir-barnefattigdom" | jq '.[0]'
+> ```
+>
+> The Markdown table below is the offline / repo-clone view; `api_v1.meta_sources` is the canonical live view.
+
 <!-- BEGIN auto-generated source table — do not edit; run `uv run python atlas-data/dbt/scripts/build_sources_seed.py --readme atlas-data/ingest/src/sources/README.md` -->
 | Source | Provider | What it is | Topic | EU theme | Geo | Cadence |
 |---|---|---|---|---|---|---|

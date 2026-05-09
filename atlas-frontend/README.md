@@ -29,12 +29,35 @@ The folder is **self-contained**: zero imports from elsewhere in the Atlas monor
 
 ## What's in here
 
-- **`src/lib/api.ts`** (Phase 3 of PLAN-005): typed fetch helpers against `api-atlas.helpers.no/`.
-- **`src/lib/api-types.ts`** (Phase 3): regenerable TypeScript types from PostgREST's OpenAPI spec — run `npm run api:types` after the spec changes.
-- **`app/data/page.tsx`** (Phase 4): introspection-driven catalogue listing every `api_v1.*` endpoint with row counts, sourced from PostgREST itself.
-- **`app/page.tsx`** (Phase 4): homepage; links to `/data`.
+**Library:**
+- **`src/lib/api.ts`**: PostgREST fetch helpers (`fetchRows`, `fetchCount`, `fetchSpec`). Each accepts an optional `acceptProfile` for non-default schemas — required for reaching `marts.*` and `raw.*` (the default schema is `api_v1`). All helpers use `cache: "no-store"` so data displays are always live; see the `fetchRows` jsdoc for the rationale.
+- **`src/lib/api-types.ts`**: regenerable TypeScript types from PostgREST's OpenAPI spec — run `npm run api:types` after the spec changes.
+- **`src/lib/catalog-filter.ts`**: pure helpers for the `/data` tag-filter sidebar (faceted-search semantics: AND across namespaces, OR within).
 
-The full architectural rationale lives at [`website/docs/ai-developer/plans/completed/INVESTIGATE-frontend-data-access-architecture.md`](../website/docs/ai-developer/plans/completed/INVESTIGATE-frontend-data-access-architecture.md). The phased build log is in [`website/docs/ai-developer/plans/completed/PLAN-005-frontend-split-and-rebuild.md`](../website/docs/ai-developer/plans/completed/PLAN-005-frontend-split-and-rebuild.md).
+**Routes:**
+- **`app/page.tsx`**: homepage with two calls-to-action — *Browse all endpoints* and *Sources*.
+- **`app/data/page.tsx`**: tag-filtered endpoint catalog. Reads `api_v1.meta_endpoints` (119 rows across `api_v1` + `marts` + `raw` schemas) and renders a sidebar with 6 namespace-grouped facets (`provider`, `topic`, `geo`, `cadence`, `eu_theme`, `layer`) plus endpoint cards. URL-driven filter state — see *Tag URLs* below.
+- **`app/data/[schema]/[table]/page.tsx`**: per-endpoint table viewer. Sends `Accept-Profile: <schema>` for non-default schemas; supports `?page=`, `?pageSize=`, `?sort=`, `?q=` (full-text across string columns).
+- **`app/data/[schema]/[table]/spec/page.tsx`**: per-endpoint OpenAPI spec viewer.
+- **`app/data/sources/page.tsx`**: sources index — every upstream Atlas ingests, grouped by provider, with freshness signals + tag pills.
+- **`app/data/sources/[source_id]/page.tsx`**: per-source detail page — manifest metadata + freshness + raw ingest table link + list of derived endpoints (joined live against the lineage seed).
+
+### Tag URLs
+
+The `/data` page is fully URL-driven. Bookmarkable filter combinations:
+
+```
+/data?tag=topic:income                                  # every income-related endpoint
+/data?tag=topic:income&tag=geo:kommune                  # AND across namespaces
+/data?tag=topic:income&tag=topic:education              # OR within a namespace
+/data?tag=provider:ssb&tag=cadence:annual               # SSB tables published annually
+/data?tag=layer:api_v1                                  # only the curated public-API surface
+/data?q=oslo                                            # free-text search over endpoint names + tags
+```
+
+Tag pills on each card are clickable to add to the active filter; clicking again removes them.
+
+The full architectural rationale lives at [`website/docs/ai-developer/plans/completed/INVESTIGATE-frontend-data-access-architecture.md`](../website/docs/ai-developer/plans/completed/INVESTIGATE-frontend-data-access-architecture.md). The phased build logs are at [PLAN-005](../website/docs/ai-developer/plans/completed/PLAN-005-frontend-split-and-rebuild.md) (initial split + introspection-driven catalog) and [PLAN-007](../website/docs/ai-developer/plans/completed/PLAN-007-data-display-open-by-default.md) (open-by-default rewrite + tag filter + multi-schema routes).
 
 ## What's deliberately not in here
 

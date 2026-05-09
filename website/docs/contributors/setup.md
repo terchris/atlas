@@ -228,6 +228,49 @@ psql "$DATABASE_URL" -c "select count(*) from raw.ssb_08764;"
 
 For more on each ingest module's shape, see [ingest-modules.md](./ingest-modules.md).
 
+### Per-source `manifest.yml`
+
+Every source folder under `atlas-data/ingest/src/sources/<id>/` carries a `manifest.yml` alongside the `index.ts` ingest module. It's the **single source of truth** for the source's catalogue metadata — provider, license, periodicity, EU theme, attribution, tags, and a hand-authored `dimensions:` block describing each upstream dimension. Per the contract in [PLAN-007 Phase 2.11](../ai-developer/plans/active/PLAN-007-data-display-open-by-default.md), all *structured* metadata lives here; the per-source `README.md` is prose-only (what the script does, quirks, references).
+
+Required top-level fields:
+
+| Field | Purpose |
+|---|---|
+| `source_id` | Folder name (kebab-case); primary key (e.g. `ssb-08764`). |
+| `upstream_id` | Upstream's own identifier (SSB table number, FHI dataset slug, etc.). |
+| `upstream_url` | Canonical link to the source on the upstream's site. |
+| `upstream_title` | The source's authoritative title (usually Norwegian). |
+| `description` | One paragraph framing the dataset for the customer-facing catalogue. |
+| `publisher` | Institution that publishes the data. |
+| `license` + `license_url` | Default `NLOD` for Norwegian public-sector sources. |
+| `periodicity` | ISO 8601 — `P1Y` annual, `P3M` quarterly, `P1M` monthly, `irregular` for ad-hoc. |
+| `eu_theme` | EU Data Theme code (one of `AGRI`, `ECON`, `EDUC`, `ENER`, `ENVI`, `GOVE`, `HEAL`, `INTR`, `JUST`, `REGI`, `SOCI`, `TECH`, `TRAN`). Aligns Atlas with Felles datakatalog (DCAT-AP). Auto-derived from `tags.topic` by `fill-manifest-todos.ts`. |
+| `attribution` | Citation string for academic / legal compliance. |
+
+Plus the four declared `tags:` namespaces (each takes exactly one value per source):
+
+```yaml
+tags:
+  provider: ssb           # ssb / fhi / redcross / brreg / bufdir / folkehjelp / …
+  topic: income           # income / education / health / demographics / social / ngo-supply / reference
+  geo: kommune            # kommune / fylke / national / bydel
+  cadence: annual         # annual / quarterly / monthly / irregular / one-shot
+```
+
+And the editorial `dimensions:` block — one entry per upstream dimension, hand-authored:
+
+```yaml
+dimensions:
+  - code: Region
+    meaning: Region (national / fylke / kommune / bydel / historical)
+    value_format: "Numeric code: 0 national, 2-digit fylke, 4-digit kommune, 6-digit bydel"
+    notes: "~1036 codes when pulling full range"
+```
+
+Authoring a manifest for a new source is described in [ingest-modules.md § Adding a new ingest source](./ingest-modules.md#adding-a-new-ingest-source) — three steps: bootstrap (auto), fill (auto), edit dimensions (by hand).
+
+**After commit, the manifest is human-authored** — `npm run ingest:<source>` does not modify it. Field changes happen via PR like any other code change.
+
 ---
 
 ## Set up the dbt layer
@@ -323,7 +366,13 @@ npm install
 npm run dev
 ```
 
-Default port `3001` (so it coexists with the contributor frontend on `4000`). No DB role; reads only via HTTP from `NEXT_PUBLIC_API_URL`. Visit <http://localhost:3001> for the homepage and <http://localhost:3001/data> for the introspection-driven data catalog (lists every `api_v1.*` endpoint with row counts and column descriptions, sourced live from PostgREST's spec).
+Default port `3001` (so it coexists with the contributor frontend on `4000`). No DB role; reads only via HTTP from `NEXT_PUBLIC_API_URL`. Notable routes:
+
+- <http://localhost:3001> — homepage, two CTAs (*Browse all endpoints*, *Sources*).
+- <http://localhost:3001/data> — tag-filtered catalog. ~120 endpoints across `api_v1`, `marts`, `raw` schemas. Sidebar facets: provider / topic / geo / cadence / eu_theme / layer. Bookmarkable filter URLs (e.g. `?tag=topic:income&tag=geo:kommune`).
+- <http://localhost:3001/data/sources> — every upstream Atlas ingests, grouped by provider, with freshness signals.
+- <http://localhost:3001/data/sources/ssb-08764> — per-source detail with manifest metadata + raw-table link + derived endpoints joined live against the lineage seed.
+- <http://localhost:3001/data/api_v1/distrikt_summary> (or `/data/marts/dim_kommune`, `/data/raw/ssb_08764`) — per-endpoint table viewer with sort + search + pagination. Schema is dispatched via `Accept-Profile` per the multi-schema PostgREST contract.
 
 For the customer frontend to return data, PostgREST has to be reachable at the configured `NEXT_PUBLIC_API_URL` — see the *(Optional) Serve `api_v1.*` via PostgREST* section above.
 
