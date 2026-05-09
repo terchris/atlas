@@ -24,6 +24,7 @@
 | 5 | [multi-ngo-supply-model-extensions](INVESTIGATE-multi-ngo-supply-model-extensions.md) | M | Small schema change (`dim_chapter.source_url`, `chapter_subtype`, `chapter_kommune_coverage`) that unblocks both supply-frontend-display and folkehjelp-supply. Cheap; high downstream payoff. |
 | 6 | [developer-docs-surface](INVESTIGATE-developer-docs-surface.md) | M | Once PLAN-007 lands and `marts.*` + `raw.*` are publicly queryable, external developers will arrive without docs. Investigate the shape of `developer-atlas.helpers.no` before users land, not after. |
 | 7 | [data-freshness-surface](INVESTIGATE-data-freshness-surface.md) | M | Catalogue UX gap: non-technical personas can't tell "is this current?". Independent of other tiers; ships value to the customer-frontend on its own. |
+| 8 | [indicators-schema-coverage](INVESTIGATE-indicators-schema-coverage.md) | S-M | PR #89 enabled `+persist_docs` so marts.* column descriptions reach PostgREST and MCP agents. Surfaced that 249 of ~566 marts columns lack descriptions, mostly `indicators__*` per-source pass-throughs (25 % coverage). Independent of other tiers; settles whether to hand-fill, generate from manifest.yml dimensions, or punt. |
 
 ## Tier 3 — defer until prereqs ship
 
