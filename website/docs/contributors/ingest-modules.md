@@ -34,8 +34,61 @@ Most Atlas sources are API-based (SSB PxWebAPI, FHI's PxWebAPI, Red Cross Organi
 5. Add `"ingest:<source-id>": "tsx src/sources/<source-id>/index.ts"` to [`atlas-data/ingest/package.json`](https://github.com/terchris/atlas/blob/main/atlas-data/ingest/package.json).
 6. Regenerate the implemented-sources index: `cd atlas-data/dbt && uv run python scripts/build_sources_seed.py --readme`. This rebuilds the seed CSVs and the auto-generated table in [`atlas-data/ingest/src/sources/README.md`](https://github.com/terchris/atlas/blob/main/atlas-data/ingest/src/sources/README.md).
 7. **Refresh the reports / indicators investigation.** Open [`INVESTIGATE-reports-and-indicators-from-catalogue.md`](https://github.com/terchris/atlas/blob/main/website/docs/ai-developer/plans/backlog/INVESTIGATE-reports-and-indicators-from-catalogue.md) and follow the *Maintenance* checklist at the bottom: bump the source count, slot the new source into a thematic cluster, walk the 10 reports to identify which gain a column, and note any new dimensions / crosswalks the source introduces. This must land in the same commit as the source itself — the doc is the menu, and the menu has to match what the catalogue actually serves.
+8. **Bring the data + catalog to consistent state**: `npm run ingest:<source-id>` to populate the new `raw.<source>` table, then `npm run dbt:rebuild` to rebuild marts + apply the api_v1 wrappers + run tests + regenerate dbt docs against the new shape. Without this last step, `marts.*` won't include any models that join the new source, and `target/catalog.json` (which the dbt docs UI introspects) will reference a stale schema.
 
 Typical per-source effort for an SSB table: ~30 minutes. API ingests from NGOs (e.g. Red Cross) similar.
+
+### When to re-run what — the trigger matrix
+
+After any change to dbt models, manifests, or seeds, several artefacts can fall out of sync. The matrix below names the right command for each kind of change.
+
+| You changed | Run | What it does |
+|---|---|---|
+| Added a new ingest source (new folder + manifest) | `npm run ingest:<source>` then `npm run dbt:rebuild` | Populates `raw.<source>`; rebuilds marts + api_v1 + tests + docs against the new raw table |
+| Edited a model SQL (`models/marts/.../*.sql`) | `npm run dbt:rebuild` | `dbt run` rebuilds the touched models + downstream; `apply-api-v1.sh` recreates api_v1 wrappers; tests verify; docs regenerate |
+| Edited a `schema.yml` description | `npm run dbt:rebuild` | Same as above — descriptions flow from schema.yml → dbt-osmosis → COMMENT ON COLUMN → PostgREST spec → `target/catalog.json` |
+| Edited a `manifest.yml` | `cd ../dbt && uv run python scripts/build_sources_seed.py --readme` then `npm run dbt:rebuild` | Regenerates the `_sources_manifest` + `_sources_dimensions` seed CSVs, then runs the cheap end of the pipeline |
+| Added a new committed seed CSV | `npm run bootstrap -- --only seed,run,api,test,docs` | Loads the seed, rebuilds dependents, refreshes |
+| Cluster reset (post-rancher-desktop reset, fresh laptop) | `npm run bootstrap` | Full 8-phase pipeline — migrate, refresh raw-writing seeds, all ingests, dbt seed/run, api_v1, test, docs |
+
+`npm run dbt:rebuild` is shorthand for `npm run bootstrap -- --only seed,run,api,test,docs` — runs the five cheap phases that any model/seed/manifest change requires. **~35-50 min total** (dbt test is the long pole at ~30-45 min on full-volume facts). For fast iteration when you don't need test verification, use `npm run bootstrap -- --only seed,run,api,docs` (~5-8 min). Idempotent — safe to re-run.
+
+### How descriptions flow — schema.yml → PostgREST → MCP
+
+When you write a description in `schema.yml`, it ends up in *seven* places. Knowing the chain helps when something goes stale.
+
+```
+schema.yml description
+  │
+  ├─→ dbt-osmosis  (propagates the description ACROSS the dbt graph,
+  │                  so dim_kommune.kommune_nr's description flows to
+  │                  every downstream mart/api_v1 model that selects it)
+  │
+  ├─→ pg_description  (Postgres-native COMMENT ON; written by dbt's
+  │                    +persist_docs setting on every dbt run for
+  │                    every model + seed; written by api_v1_generated.sql
+  │                    for api_v1.* wrappers; written by raw migrations
+  │                    for raw.*)
+  │
+  ├─→ PostgREST OpenAPI spec  (auto-included as `description` per
+  │                            column whenever pg_description has a row)
+  │
+  ├─→ /data/[schema]/[table]  (customer-frontend table viewer, reads
+  │                            the OpenAPI spec)
+  │
+  ├─→ atlas-frontend api-types.ts  (typed surface, regenerated via
+  │                                  `npm run api:types`)
+  │
+  ├─→ target/catalog.json  (dbt docs UI, refreshed by `dbt docs generate`
+  │                         in bootstrap Phase 8)
+  │
+  └─→ MCP tool definitions  (LLM agents introspecting via Postgres MCP
+                              or dbt-MCP read pg_description / manifest.json)
+```
+
+The `+persist_docs` config in [`atlas-data/dbt/dbt_project.yml`](https://github.com/terchris/atlas/blob/main/atlas-data/dbt/dbt_project.yml) is what physically pushes schema.yml descriptions into Postgres. Without it, only api_v1.* views had descriptions (via `apply-api-v1.sh`'s explicit COMMENT ON statements); marts.* and seed-loaded marts had none, which made the multi-schema PostgREST surface useless to AI agents discovering Atlas through the marts schema. dbt-osmosis (propagation) and persist_docs (DB write) are complementary, not competing — Atlas needs both.
+
+**Raw.\*** is the exception: descriptions on `raw.*` columns come from explicit `COMMENT ON COLUMN` statements in the migration SQL files (e.g. `migrations/032_raw_fhi_innvkat.sql`), not from dbt sources YAML. If you want richer raw.* descriptions, edit the migration; persist_docs doesn't apply to dbt sources.
 
 ### `index.ts` required structure
 

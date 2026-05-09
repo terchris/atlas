@@ -3,7 +3,7 @@
  * One-command bootstrap from a fresh cluster to "every queryable endpoint
  * has rows". Replaces the multi-step post-reset workflow.
  *
- * Seven phases, sequential, idempotent:
+ * Eight phases, sequential, idempotent:
  *
  *   1. migrate                 — applies every pending raw.* migration
  *   2. refresh:<id>            — runs every refresh:* whose seed-source
@@ -25,6 +25,15 @@
  *                                its schema cache.
  *   7. dbt test                — runs every dbt test (relationship,
  *                                not_null, accepted_values, etc.)
+ *   8. dbt docs generate       — refreshes target/catalog.json so the
+ *                                dbt-docs UI introspects the post-Phase-6
+ *                                schema (api_v1.* views included). Without
+ *                                this phase, the catalog drifts every
+ *                                time models change. The companion
+ *                                `npm run dbt:rebuild` alias re-runs the
+ *                                cheap end of this pipeline (run + api +
+ *                                test + docs) for the "I edited a model"
+ *                                / "I added one new ingest source" cases.
  *
  * Why this exists:
  *   After a cluster reset, the contributor needs to repopulate raw.*,
@@ -41,7 +50,7 @@
  *   npm run bootstrap -- --only migrate,refresh   # run only listed phases
  *
  * Phase IDs for --skip / --only:
- *   migrate, refresh, ingest, seed, run, api, test
+ *   migrate, refresh, ingest, seed, run, api, test, docs
  *
  * Exit codes:
  *   0  every phase succeeded
@@ -76,7 +85,8 @@ type PhaseId =
   | "seed"
   | "run"
   | "api"
-  | "test";
+  | "test"
+  | "docs";
 
 const ALL_PHASES: PhaseId[] = [
   "migrate",
@@ -86,6 +96,7 @@ const ALL_PHASES: PhaseId[] = [
   "run",
   "api",
   "test",
+  "docs",
 ];
 
 type Args = {
@@ -529,6 +540,37 @@ async function phaseDbtTest(): Promise<StepResult> {
   return { phase: "test", step: "dbt test", status: "ok", durationMs };
 }
 
+async function phaseDbtDocs(): Promise<StepResult> {
+  header("Phase 8: dbt docs generate (refresh catalog.json)");
+  step("dbt docs generate");
+  // Runs after Phase 6 (api) so the catalog introspection picks up the
+  // api_v1.* wrapper views as well as marts.* + raw.*. Without this phase,
+  // target/catalog.json drifts every time models change but no one runs
+  // `dbt docs generate` manually — the dbt docs UI then shows stale column
+  // metadata and tooltips reference dropped tables. Should run on every
+  // bootstrap and on every "I added/edited a dbt model" cycle (see the
+  // `npm run dbt:rebuild` alias for the latter).
+  const { exitCode, durationMs } = await runCommand(
+    "uv",
+    ["run", "--env-file", "../ingest/.env", "dbt", "docs", "generate"],
+    DBT_DIR,
+  );
+  if (exitCode !== 0) {
+    fail(`exit ${exitCode}, ${formatDuration(durationMs)}`);
+    return {
+      phase: "docs",
+      step: "dbt docs generate",
+      status: "failed",
+      durationMs,
+      notes: `exit ${exitCode}`,
+      retryCommand:
+        "(cd atlas-data/dbt && uv run --env-file ../ingest/.env dbt docs generate)",
+    };
+  }
+  ok(formatDuration(durationMs));
+  return { phase: "docs", step: "dbt docs generate", status: "ok", durationMs };
+}
+
 // ── Orchestrator ────────────────────────────────────────────────────────
 
 async function main(): Promise<number> {
@@ -599,6 +641,9 @@ async function main(): Promise<number> {
         break;
       case "test":
         stepResults = [await phaseDbtTest()];
+        break;
+      case "docs":
+        stepResults = [await phaseDbtDocs()];
         break;
     }
     allResults.push(...stepResults);

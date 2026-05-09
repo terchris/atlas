@@ -23,6 +23,17 @@ models:
     # dbt-osmosis: keep one schema.yml per directory (existing convention).
     # See atlas-data/dbt/check-osmosis.sh and PLAN-001 phase 1.
     +dbt-osmosis: schema.yml
+    # Push column + table descriptions into pg_description (Postgres
+    # native COMMENT ON statements) on every dbt run. PostgREST's
+    # OpenAPI spec then includes them per column, and any MCP server
+    # / catalogue introspection tool reading the DB sees the semantic
+    # context Atlas writes in schema.yml. Without this, marts.* columns
+    # appear in the API spec with names only — useless for AI agents
+    # trying to understand "what is org_nr?" without the
+    # dbt-osmosis-propagated description.
+    +persist_docs:
+      relation: true
+      columns: true
     # Per-source indicator passthroughs live in models/indicators/ and are
     # materialised as tables in the marts schema.
     indicators:
@@ -45,6 +56,13 @@ seeds:
     # land in marts so consuming models can join them without cross-schema
     # syntax. Refresh policy: see seeds/README.md.
     +schema: marts
+    # Mirror models' persist_docs setting — schema.yml descriptions for
+    # seeds (e.g. dim_postnummer, ref_brreg_icnpo) flow into pg_description
+    # the same way model descriptions do. Important because seeds are
+    # exposed via PostgREST's marts.* schema to consumers.
+    +persist_docs:
+      relation: true
+      columns: true
     # Pin types so dbt's CSV sniffing doesn't strip leading zeros from
     # codes that look numeric (e.g. ICNPO "1100", postnummer "0150").
     # A column type listed here is only applied if the CSV has that column;
