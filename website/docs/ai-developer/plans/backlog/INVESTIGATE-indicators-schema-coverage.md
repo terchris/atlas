@@ -222,7 +222,7 @@ Bump `check-osmosis.sh` (or add a sister gate) to fail when an `indicators__*` m
 
 ---
 
-## Recommendation
+## Decision
 
 **(b) + (e)** — generator + CI gate. This is the only option that delivers the "single editorial input → every consumer fed" end-state described above; the others either keep contributor labor proportional to source count (a, d) or punt on the open-by-default gap (c) or stop the bleeding without healing it (e alone).
 
@@ -279,7 +279,7 @@ Specifically:
 
 ## Next steps
 
-- [ ] User reviews + accepts (or refines) the **(b) + (e)** recommendation.
+- [x] **(b) + (e)** decision settled (2026-05-10).
 - [ ] Resolve **[Q1]** — column-name mapping shape (per-source override file vs auto-discovery from SQL vs a `column_map:` field on manifest.yml).
 - [ ] Spike the generator (~half day) on a single source (ssb-08764) to prove the manifest-dimensions → column-descriptions mapping works.
 - [ ] On acceptance, draft `PLAN-indicators-schema-generator.md` with the generator design, conformed-columns dict authorship, CI gate extension, and the migration path for the existing hand-authored ssb-08764 case **[Q4]**.
