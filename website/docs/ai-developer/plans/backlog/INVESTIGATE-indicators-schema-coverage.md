@@ -8,7 +8,7 @@
 
 **Goal**: Decide a sustainable shape for column-level descriptions across the 23 `models/indicators/indicators__<source>.sql` per-source pass-through models — currently 25 % covered (72 of 288 columns documented), hard to fill by hand, repetitive across sources, but increasingly load-bearing now that `+persist_docs` (PR #89) pushes schema.yml descriptions into `pg_description` and PostgREST → MCP agents see them.
 
-**Last Updated**: 2026-05-09
+**Last Updated**: 2026-05-10 (spike findings + manifest schema refined to `derives:` + period-pattern templates; original 2026-05-09 framing preserved)
 
 **Origin**: PR #89 enabled `+persist_docs: { relation: true, columns: true }` on dbt models + seeds. Live verification surfaced that only 267 of ~566 `marts.*` columns gained descriptions — the missing 249 are mostly `indicators__*` per-source pass-throughs. Hand-counted: of 288 total column entries in `models/indicators/schema.yml`, only 72 have a `description:` line (25 %). The `marts.*` API surface is now visible to AI agents but most of the indicators layer reads as naked column names.
 
@@ -41,10 +41,14 @@ seed → schema-gen → run → api → test → docs
         ↑ NEW
 ```
 
-Generator inputs:
-- Every `atlas-data/ingest/src/sources/<id>/manifest.yml` `dimensions:` block (per-source editorial content)
-- One shared `atlas-data/dbt/conformed-column-descriptions.yml` (~7 entries — `source_id`, `kommune_nr`, `fylke_nr`, `contents_label`, `value`, `status`, `updated_at`) — hand-authored once, reused for every source forever
-- A `column_map:` field on each `manifest.yml` (resolved per [Q1]) — contributor writes `column_map: { Region: region_code, Tid: year, ContentsCode: contents_code }` once per source, alongside `dimensions:`. Generator reads it directly; no SQL parsing or central override file.
+Generator inputs (refined post-spike, see "Spike findings" below):
+
+- Every `atlas-data/ingest/src/sources/<id>/manifest.yml` — three sections feed the generator:
+  - `dimensions:` blocks with **`derives:`** per dim (the dim's editorial content fanned out across the schema columns it produces — handles 1:1 *and* 1:N derivations cleanly), optionally replaced by `derived_via: <template_name>` to reference a shared period-pattern template
+  - **`enriched_columns:`** at the top level — for join-derived columns that don't trace back to an upstream dim (e.g. bufdir's `indicator_slug` from the `bufdir_indicator_alias` seed)
+- One shared `atlas-data/dbt/conformed-column-descriptions.yml` carrying:
+  - `conformed_columns:` (~7 entries — `source_id`, `kommune_nr`, `fylke_nr`, `contents_label`, `value`, `status`, `updated_at`)
+  - `period_templates:` — reusable definitions for common period shapes (`annual`, `rolling_period_3yr`, future `quarterly`, `monthly`). Each template defines the description for every derived column it produces. Multiple sources reference the same template via `derived_via:`.
 
 Generator output: `models/indicators/schema.yml`, regenerated deterministically.
 
@@ -132,6 +136,92 @@ indicators__ssb_13995    0/10
 FHI / Bufdir / SSB-crime indicators — same pattern, mostly zero.
 
 The 3 columns that ARE documented on `indicators__ssb_08764` are `region_code`, `year`, `contents_code` — the **source-specific** ones (mapped from upstream `Region`, `Tid`, `ContentsCode` dimensions). The 7 atlas-conformed columns (`source_id`, `kommune_nr`, `fylke_nr`, `contents_label`, `value`, `status`, `updated_at`) are undocumented even there. Why this matters: it confirms the manifest-dimensions → indicator-columns mapping is the right shape — every existing description ALREADY corresponds 1:1 to a manifest dimension entry. Migration concern in [Q4] is therefore well-bounded.
+
+---
+
+## Spike findings (2026-05-10) — manifest schema needs `derives:` + `enriched_columns:`
+
+Did a 30-min thought-experiment spike against three indicator-shape examples to verify the original Q1 `column_map:` design held up. **It didn't fully** — three real issues surfaced. Findings below; the resolved Q1 was updated to absorb them.
+
+| Source | Manifest dims | Schema columns | 1:1 mapping works? |
+|---|---|---|---|
+| `indicators__ssb_08764` | 3 (Region, ContentsCode, Tid) | 10 (3 src-specific + 7 conformed) | ✅ Clean — every src-specific column maps to one dim |
+| `indicators__fhi_mobbing` | 6 (GEO, AAR, KJONN, TRINN, SPM_ID, MEASURE_TYPE) | 16 columns | ❌ **AAR derives 4 columns** (`period`, `period_start_year`, `period_end_year`, `year`) — simple `column_map:` covers only 1 |
+| `indicators__bufdir_barnefattigdom` | 6 (`indicator_api_id`, `region_code`, `category_unit`, `category_format`, `year`, `values_json`) | 8+ columns including `indicator_slug`, `indicator_group_slug`, `indicator_name`, `indicator_title`, `link_text` | ❌ **Schema has join-enriched columns** (from `bufdir_indicator_alias` seed) that don't exist as upstream dims at all |
+
+### Three issues
+
+1. **Multi-column derivation from one dim** (fhi-mobbing). Atlas's data model deliberately *explodes* a 3-year period like `AAR='2022_2024'` into four schema columns: `period` (raw string), `period_start_year` (2022), `period_end_year` (2024), `year` (midpoint = 2023). One upstream dim → four schema columns. The simple `column_map: { AAR: period }` only covers one. **This is intentional architecture** — Atlas's "midpoint-year + period evidence" pattern is what makes cross-source temporal joins possible (mobbing's 3-year rolling × ssb's annual income data, both align on `year`); it can't be removed without crippling the join story.
+
+2. **Join-enriched columns** (bufdir). `indicators__bufdir_barnefattigdom` joins with the `bufdir_indicator_alias` seed to add `indicator_slug`, `indicator_name`, `link_text`, etc. These columns aren't upstream — they're Atlas-side enrichments produced by the indicator model's SQL JOIN. The manifest's `dimensions:` block can't represent them because they have no upstream-dim source.
+
+3. **Conformed/source-specific gray zone**. `region_code` looks conformed (atlas-side standardisation, FK target shape) but actually carries the upstream raw region code with semantics that differ per source (SSB's 6-digit bydel codes vs FHI's mixed-length codes). The simple two-dict (manifest + conformed) doesn't capture this. Resolution: treat `region_code` as derived-from-dim per source rather than conformed; the conformed-cols dict no longer claims it.
+
+### How the schema extension absorbs all three
+
+Manifest schema gains two optional fields. Worked example for fhi-mobbing:
+
+```yaml
+dimensions:
+  - code: AAR
+    meaning: 3-year rolling period
+    value_format: '"YYYY_YYYY" range string'
+    notes: "7 periods, e.g. 2016_2018 through 2022_2024"
+    derived_via: rolling_period_3yr   # ← references shared template (covers issue 1)
+
+  - code: KJONN
+    meaning: Sex
+    derives:
+      sex: ~                          # ← `~` = "use the dim's meaning + value_format + notes"
+
+  - code: SPM_ID
+    meaning: Question id (bullying composite)
+    derives:
+      question_id: ~
+
+# (other dims similar)
+```
+
+For bufdir's join-enriched columns:
+
+```yaml
+enriched_columns:                     # ← top-level (covers issue 2)
+  - name: indicator_slug
+    description: "Stable slug from bufdir_indicator_alias seed; renumbering events bridge through the alias historical_id → canonical_id mapping."
+  - name: indicator_name
+    description: "Display name from bufdir_indicator_alias seed."
+  - name: link_text
+    description: "Anchor text for the upstream-page deep link, from bufdir_indicator_alias."
+```
+
+Period-pattern templates living in `conformed-column-descriptions.yml`:
+
+```yaml
+period_templates:
+  annual:
+    year: "Calendar year, 4-digit integer."
+    period: "Same as year (single-year sources)."
+    period_start_year: "Equals year (single-year period)."
+    period_end_year: "Equals year (single-year period)."
+
+  rolling_period_3yr:
+    period: "Raw 3-year period string passed through (e.g. '2022_2024')."
+    period_start_year: "First year of the rolling 3-year window."
+    period_end_year: "Last year of the rolling 3-year window."
+    year: "Midpoint year of the window. Use this for cross-source temporal joins; preserves the join-on-year invariant Atlas's fact tables rely on."
+```
+
+Future quarterly / monthly sources add `quarterly`, `monthly` templates the same way. Each template is the period-merging policy in template form — the shared library where Atlas's "midpoint year + period evidence" pattern is documented as code. **No separate "Atlas period-merging policy" INVESTIGATE needed — the templates are the policy.**
+
+### Coverage after the refinement
+
+For the three spike-tested sources:
+
+- **ssb-08764**: 10/10 documented — 3 src-specific dims with `derives: { col: ~ }` + 7 conformed.
+- **fhi-mobbing**: 16/16 documented — AAR uses `derived_via: rolling_period_3yr` (4 cols), 5 other dims with `derives:`, 7 conformed.
+- **bufdir-barnefattigdom**: 8+/8+ documented — 6 dims with `derives:` (some 1:1, some 1:N), 5 enriched columns at top level.
+
+Net: every column gets a description after one editorial pass per source.
 
 ---
 
@@ -247,8 +337,13 @@ Specifically:
 All five settled 2026-05-10. Original options + analysis preserved for historical record; the **Resolved →** line at the top of each is the firm answer.
 
 - **[Q1] Column-name → manifest-dimension mapping shape.**
-  - **Resolved →** **(ii) explicit `column_map:` field on `manifest.yml`**. Contributor writes `column_map: { Region: region_code, Tid: year, ContentsCode: contents_code }` once per source. Author cost: 3-5 entries × 23 sources ≈ 80 entries one-time. Decided over (i) auto-derive (fragile against CTEs/macros — SSB's actual mappings need overrides regardless, so the default rule wouldn't carry weight) and (iii) central override file (centralisation hides the editorial intent; per-source `column_map:` keeps the dim-name → column-name relationship next to the dim definition itself).
-  - **Loss accepted**: ~80 lines of contributor-authored mapping content versus a "zero-touch" generator. Reliability wins.
+  - **Resolved (initial 2026-05-10) →** (ii) explicit `column_map:` field on manifest.yml.
+  - **Refined post-spike (2026-05-10) →** **`derives:` field per dim + `enriched_columns:` top-level + period-pattern templates in the conformed-cols dict.** The original `column_map:` design assumed a 1:1 dim→column relationship that doesn't hold across all sources (fhi-mobbing's `AAR` derives 4 columns; bufdir has join-enriched columns with no upstream dim). The refined shape:
+    - Each dim's `derives:` block maps the dim to one or more schema columns; `derives: { col: ~ }` inherits the dim's meaning+value_format+notes (the 1:1 case); `derives: { col: "..." }` overrides with a column-specific description.
+    - `derived_via: <template>` references a shared period-pattern template (e.g. `rolling_period_3yr`, `annual`) that defines descriptions for all derived columns the pattern produces. Avoids re-authoring identical period descriptions across 3-year-rolling FHI sources.
+    - Top-level `enriched_columns:` declares descriptions for join-derived columns that don't trace back to an upstream dim.
+  - Decided over (i) auto-derive (fragile against CTEs/macros) and (iii) central override file (drift across files). The `derives:` shape keeps the dim's editorial content next to its column-list; templates absorb the cross-source repetition without forcing a centralised override file.
+  - **Loss accepted**: contributors author `derives:` per dim + `derived_via:` references + occasionally `enriched_columns:`. ~5-8 manifest fields per source on average vs the original "zero-touch" promise. Reliability + full coverage win.
 
 - **[Q2] Conformed-columns dictionary location.**
   - **Resolved →** **(i) standalone YAML** at `atlas-data/dbt/conformed-column-descriptions.yml`. Decided over (ii) seed CSV (multi-line prose descriptions are awful in CSV) and (iii) inline-with-marker (generator-preserved fragments tend to drift).
@@ -293,8 +388,14 @@ All five settled 2026-05-10. Original options + analysis preserved for historica
 
 - [x] **(b) + (e)** decision settled (2026-05-10).
 - [x] Q1-Q5 resolved (2026-05-10) — see "Resolved sub-decisions" above.
-- [ ] Spike the generator (~half day) on a single source (`ssb-08764`) to prove the manifest-dimensions + `column_map:` + conformed-cols dict pipeline produces the expected `models/indicators/schema.yml` shape. Sanity-check by running `npm run dbt:rebuild` after and verifying that `marts.indicators__ssb_08764` columns gain descriptions in pg_description.
-- [ ] Draft `PLAN-indicators-schema-generator.md` against the resolved decisions. Phases: (1) author conformed-cols YAML, (2) build generator with model-family registry, (3) add `column_map:` to all 23 manifests, (4) regenerate `models/indicators/schema.yml`, (5) extend `check-osmosis.sh` with the diff gate, (6) wire `schema-gen` phase into bootstrap + `dbt:rebuild`.
+- [x] Spike done (2026-05-10) — three real issues found; manifest schema refined to `derives:` + `enriched_columns:` + period-pattern templates. See "Spike findings" section above. Q1's resolution updated to absorb the changes.
+- [ ] Draft `PLAN-indicators-schema-generator.md` against the refined design. Phases:
+    1. Author `atlas-data/dbt/conformed-column-descriptions.yml` — `conformed_columns:` (~7 entries) + `period_templates:` (`annual` + `rolling_period_3yr` for v1; future `quarterly` / `monthly` added incrementally).
+    2. Build generator with model-family registry — `indicators__*` registered; reads dims (with `derives:`/`derived_via:`), enriched_columns, and the conformed-cols + templates dict.
+    3. Migrate all 23 manifests — add `derives:` per dim (often `~` for 1:1) and `derived_via:` for period-rolling sources; add `enriched_columns:` to bufdir-barnefattigdom.
+    4. Regenerate `models/indicators/schema.yml`; verify via `npm run dbt:rebuild` that pg_description gains the missing descriptions.
+    5. Extend `check-osmosis.sh` with a generator-diff gate (committed schema.yml must match regenerated output).
+    6. Wire `schema-gen` phase into bootstrap + `dbt:rebuild` (between `seed` and `run`).
 - [ ] On PLAN ship, this INVESTIGATE moves backlog/ → completed/.
 
 — signed, the Atlas implementation team (via Claude Code agent), 2026-05-09
