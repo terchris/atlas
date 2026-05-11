@@ -30,6 +30,12 @@ const SOURCE_URL = process.env.PGRST_SOURCE_URL ?? 'http://api-atlas.localhost/'
 // and re-snapshot, or flip these defaults.
 const PUBLISH_HOST = process.env.PGRST_PUBLISH_HOST ?? 'api-atlas.localhost';
 const PUBLISH_SCHEME = process.env.PGRST_PUBLISH_SCHEME ?? 'http';
+// URL-prefix versioning per Atlas's API convention: every endpoint lives under
+// `/v1/...` (matches Stripe/OpenAI). Mapping from URL prefix to PostgREST
+// schema is handled by a UIS-side Traefik path-rewrite (see talk.md Message 5).
+// Until that ships, `/v1/...` requests will 404 — Scalar's curls document the
+// intended public shape, not what's reachable today.
+const PUBLISH_BASEPATH = process.env.PGRST_PUBLISH_BASEPATH ?? '/v1';
 const OUTPUT = 'static/openapi.json';
 
 const res = await fetch(SOURCE_URL);
@@ -41,12 +47,12 @@ const spec = await res.json();
 
 spec.host = PUBLISH_HOST;
 spec.schemes = [PUBLISH_SCHEME];
-spec.basePath = '/';
+spec.basePath = PUBLISH_BASEPATH;
 
 writeFileSync(OUTPUT, JSON.stringify(spec));
 
 const paths = Object.keys(spec.paths ?? {}).length;
 const defs = Object.keys(spec.definitions ?? {}).length;
 console.log(
-  `snapshot updated: ${OUTPUT} (host: ${PUBLISH_SCHEME}://${PUBLISH_HOST}/, ${paths} paths, ${defs} definitions)`
+  `snapshot updated: ${OUTPUT} (base: ${PUBLISH_SCHEME}://${PUBLISH_HOST}${PUBLISH_BASEPATH}, ${paths} paths, ${defs} definitions)`
 );
