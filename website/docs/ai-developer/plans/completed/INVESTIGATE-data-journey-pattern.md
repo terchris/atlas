@@ -13,7 +13,7 @@
 
 ---
 
-> **Status note (2026-04-22):** This is a **completed design investigation**. The pattern walked through here was adopted and 19 sources have been built using it. For the **current source pattern** (folder layout, command names, conventions) see [`../../../../../atlas-data/ingest/src/sources/README.md`](../../../../../atlas-data/ingest/src/sources/README.md). This document is preserved for historical/onboarding reference — it shows the *why* behind the current shape.
+> **Status note (2026-04-22):** This is a **completed design investigation**. The pattern walked through here was adopted and 19 sources have been built using it. For the **current source pattern** (folder layout, command names, conventions) see [`../../../../../atlas-data/ingest/src/sources/README.md`](https://github.com/terchris/atlas/tree/main/atlas-data/ingest/src/sources/README.md). This document is preserved for historical/onboarding reference — it shows the *why* behind the current shape.
 >
 > Specific drift to be aware of: the original walkthrough used `pnpm` and `src/ingest/sources/<id>.ts` (file per source); the implemented pattern uses `npm` and `src/sources/<id>/index.ts` (folder per source).
 
@@ -48,8 +48,8 @@ What had been settled when this was written:
 
 What was provisional then, but has since been ratified:
 
-- **dbt** for the Postgres transformation layer — ✅ now ratified, see "dbt scope" in [`../../../../docs/stack/suggested-stack.md`](../../../../docs/stack/suggested-stack.md)
-- **MapLibre GL** for the map rendering — 🟡 still open at time of completion (`goal.md` says "likely MapLibre or Leaflet"); see "Open items still to settle" in [`../../../../docs/stack/suggested-stack.md`](../../../../docs/stack/suggested-stack.md)
+- **dbt** for the Postgres transformation layer — ✅ now ratified, see "dbt scope" in [`../../../../docs/stack/suggested-stack.md`](https://github.com/terchris/atlas/tree/main/docs/stack/suggested-stack.md)
+- **MapLibre GL** for the map rendering — 🟡 still open at time of completion (`goal.md` says "likely MapLibre or Leaflet"); see "Open items still to settle" in [`../../../../docs/stack/suggested-stack.md`](https://github.com/terchris/atlas/tree/main/docs/stack/suggested-stack.md)
 - **Kartverket** GeoJSON as the source of kommune boundary geometry — 🟡 still open at time of completion
 
 ---
@@ -394,7 +394,7 @@ For the other 10 sources, there are deviations worth naming:
 - **Red Cross internal (×1)** — bespoke feed, access model TBD. Likely a CSV drop in object storage rather than a pull API. Parking.
 - **SSB bespoke extract (×1, covering 3 reports)** — no public table id; the source catalogue entry's `open_questions` flags finding a public-API equivalent.
 
-Adding a new source follows the same motions for any measurement-kind entry — see [`../../../../../atlas-data/ingest/src/sources/README.md`](../../../../../atlas-data/ingest/src/sources/README.md) for the current step-by-step.
+Adding a new source follows the same motions for any measurement-kind entry — see [`../../../../../atlas-data/ingest/src/sources/README.md`](https://github.com/terchris/atlas/tree/main/atlas-data/ingest/src/sources/README.md) for the current step-by-step.
 
 No new infra for each source. That's the point.
 
@@ -404,8 +404,8 @@ No new infra for each source. That's the point.
 
 These were flagged as "to confirm before locking the pattern". Status as of completion (2026-04-22):
 
-1. **dbt** — recommended but not explicitly ratified at time of investigation. ✅ **Now ratified** in [`../../../../docs/stack/suggested-stack.md`](../../../../docs/stack/suggested-stack.md) "dbt scope" section, with a deliberately narrow seven-pattern surface.
-2. **Map library** — MapLibre GL assumed. 🟡 **Still open** — see [`../../../../docs/stack/suggested-stack.md`](../../../../docs/stack/suggested-stack.md) "Open items still to settle".
+1. **dbt** — recommended but not explicitly ratified at time of investigation. ✅ **Now ratified** in [`../../../../docs/stack/suggested-stack.md`](https://github.com/terchris/atlas/tree/main/docs/stack/suggested-stack.md) "dbt scope" section, with a deliberately narrow seven-pattern surface.
+2. **Map library** — MapLibre GL assumed. 🟡 **Still open** — see [`../../../../docs/stack/suggested-stack.md`](https://github.com/terchris/atlas/tree/main/docs/stack/suggested-stack.md) "Open items still to settle".
 3. **Kommune boundary source** — Kartverket GeoJSON as a static build-time asset assumed. 🟡 **Still open**.
 4. **Route-level caching**: Next.js `revalidate` tied to asset cadence, or Postgres listen/notify to invalidate on materialisation. 🟡 **Implementation detail**, deferred.
 5. **Attribution generation**: sidebar text generated from `om_tallene_kilde`. ✅ **Pattern adopted**.
@@ -414,8 +414,8 @@ These were flagged as "to confirm before locking the pattern". Status as of comp
 
 ## What this investigation is not
 
-- Not a current source-pattern reference — see [`../../../../../atlas-data/ingest/src/sources/README.md`](../../../../../atlas-data/ingest/src/sources/README.md) for live conventions.
-- Not the v1 stack decision document — that lives in [`../../../../docs/stack/suggested-stack.md`](../../../../docs/stack/suggested-stack.md).
-- Not the data-strategy / scaling document — that lives in [`../../../../docs/stack/data-strategy.md`](../../../../docs/stack/data-strategy.md).
+- Not a current source-pattern reference — see [`../../../../../atlas-data/ingest/src/sources/README.md`](https://github.com/terchris/atlas/tree/main/atlas-data/ingest/src/sources/README.md) for live conventions.
+- Not the v1 stack decision document — that lives in [`../../../../docs/stack/suggested-stack.md`](https://github.com/terchris/atlas/tree/main/docs/stack/suggested-stack.md).
+- Not the data-strategy / scaling document — that lives in [`../../../../docs/stack/data-strategy.md`](https://github.com/terchris/atlas/tree/main/docs/stack/data-strategy.md).
 
 This is the *historical record* of how the v1 stack was grounded in a concrete worked example before commitment.

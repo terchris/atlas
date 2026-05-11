@@ -20,12 +20,12 @@ This investigation is downstream of [INVESTIGATE-semantic-foundation-before-expa
 
 The audience is **innovators building new things on top of Atlas data**:
 
-- **Developers** — forking [`atlas-frontend/`](../../../../../atlas-frontend/), building their own SPA / CLI / mobile app / ETL pipeline against `api-atlas.helpers.no`.
+- **Developers** — forking [`atlas-frontend/`](https://github.com/terchris/atlas/tree/main/atlas-frontend/), building their own SPA / CLI / mobile app / ETL pipeline against `api-atlas.helpers.no`.
 - **Developers paired with LLMs** — using Claude / GPT / Cursor / an MCP-aware agent to ideate, scaffold, retrieve, and write code against Atlas. The LLM is doing the discovery; the human is reviewing.
 - **Researchers / journalists with technical skills** — notebooks against PostgREST, possibly via UIS's JupyterHub, possibly via Open WebUI's chat-with-data flow.
 - **Future agentic clients** — autonomous agents that need to introspect Atlas's schema, find joinable datasets, and pull rows without human-in-the-loop schema reading.
 
-Shared need across all four: **understand which datasets relate to which** (kommune_nr is the join key into SSB indicators; orgnr is the join key into Brreg + Folkehjelp + Red Cross supply; year is the join key for time-series alignment). Today that knowledge lives in dbt model descriptions, [`docs/research/common-schema.md`](../../../../docs/research/common-schema.md), and per-source READMEs — readable by humans, partially readable by LLMs, not introspectable as data.
+Shared need across all four: **understand which datasets relate to which** (kommune_nr is the join key into SSB indicators; orgnr is the join key into Brreg + Folkehjelp + Red Cross supply; year is the join key for time-series alignment). Today that knowledge lives in dbt model descriptions, [`docs/research/common-schema.md`](https://github.com/terchris/atlas/tree/main/docs/research/common-schema.md), and per-source READMEs — readable by humans, partially readable by LLMs, not introspectable as data.
 
 Out of audience: Atlas contributors (covered by `website/docs/contributors/`); end-users browsing `atlas.helpers.no` (the customer app itself is their surface); UIS platform operators (covered by their own docs).
 
@@ -85,7 +85,7 @@ Things UIS does **not** ship that this INVESTIGATE has to consider: **Cube.dev**
 
 PostgREST already ships against `api_v1.*` and `api_v2.*` is the path forward for breaking changes (per [INVESTIGATE-developer-docs-surface.md](INVESTIGATE-developer-docs-surface.md) [Q4]). The question: do innovators need an additional **semantic layer** that declares joins / measures / dimensions on top of PostgREST?
 
-- **(a) PostgREST + great metadata only** — declare canonical join keys (`kommune_nr` → `dim_kommune`, `orgnr` → `dim_chapter`, `period_start_year` → time alignment) in dbt `meta:`, surface them via dbt-MCP, and document them in [website/docs/developers/concepts.md](../../../../developers/concepts.md). LLMs are given the OpenAPI spec + the join cheatsheet and figure out the joins. Cheapest. Most fragile for LLMs that mis-join (the `dim_kommune is_active` 5× row trap is a live example).
+- **(a) PostgREST + great metadata only** — declare canonical join keys (`kommune_nr` → `dim_kommune`, `orgnr` → `dim_chapter`, `period_start_year` → time alignment) in dbt `meta:`, surface them via dbt-MCP, and document them in [website/docs/developers/](../../../developers/index.md). LLMs are given the OpenAPI spec + the join cheatsheet and figure out the joins. Cheapest. Most fragile for LLMs that mis-join (the `dim_kommune is_active` 5× row trap is a live example).
 - **(b) PostgREST + Cube.dev** — Cube reads dbt's `manifest.json`, declares `joins:` and `measures:` in YAML, and exposes a REST + GraphQL + SQL + **MCP** API. LLMs query the semantic layer; Cube enforces correct joins. Adds one service to operate (Cube core is OSS, deployable to UIS's k8s). Adds a second schema layer to maintain alongside dbt. **Prior context**: Cube was evaluated and rejected for the *separate* role of "multi-tenant end-user dashboards" (per UIS's `INVESTIGATE-metabase.md`). That rejection does not bind this question — agent-facing semantic-layer over `marts.*` is a different role — but the earlier reject is a useful precedent on operational-cost framing.
 - **(c) PostgREST + dbt's own Semantic Layer** — `semantic_models:` in the dbt project plus the dbt SL APIs. **Dead end for Atlas**: per [INVESTIGATE-semantic-foundation-before-expansion.md](INVESTIGATE-semantic-foundation-before-expansion.md) Option D, the consumption side of dbt SL is dbt-Cloud-only. Atlas runs dbt Core. Not viable without adopting dbt Cloud.
 - **(d) Defer** — ship (a) now; revisit Cube only when a real innovator says "I cannot write correct joins against PostgREST." YAGNI argument.
@@ -121,7 +121,7 @@ Some innovators (especially journalists, NGO staff, policy researchers) won't wr
 The user's framing was "innovators can create relations between the data". This is the question that decides whether (a) or (b) wins in **[Q2]**. Three concrete sub-options:
 
 - **(a) Declarative `meta:` on dbt models** — every `marts.*` model gets `meta: { joins: [{ key: "kommune_nr", to: "dim_kommune", filter: "is_active = true" }] }`. dbt-osmosis + a small CI check enforces presence. dbt-MCP exposes it. The OpenAPI spec gets a `x-atlas-joins` extension. LLMs read it directly.
-- **(b) A canonical-IDs cheatsheet doc** — one page (`developers/canonical-ids.md` or extending [`docs/stack/naming-conventions.md`](../../../../../docs/stack/naming-conventions.md)) listing every join key + which datasets share it + the gotchas (the `dim_kommune is_active` trap is the worked example). Linked from the API reference page. LLMs are given this doc as part of their system prompt.
+- **(b) A canonical-IDs cheatsheet doc** — one page (`developers/canonical-ids.md` or extending [`docs/stack/naming-conventions.md`](https://github.com/terchris/atlas/tree/main/docs/stack/naming-conventions.md)) listing every join key + which datasets share it + the gotchas (the `dim_kommune is_active` trap is the worked example). Linked from the API reference page. LLMs are given this doc as part of their system prompt.
 - **(c) Both** — (a) is the machine-readable source of truth; (b) is the human-readable rendering, generated from the same `meta:` blocks.
 - **Tentative recommendation**: **(c)**. (a) alone leaves humans needing to read JSON; (b) alone has drift risk. Together, the doc is generated from the `meta:` blocks at build time, so it can't drift. The generator is ~50 lines of TS that reads `manifest.json`. Same input feeds OpenMetadata + dbt-MCP, so this is one decision shipped three places.
 
@@ -242,8 +242,8 @@ Before PLAN-007 Phase 4.1 shipped, "human discovery" essentially meant browsing 
 - [INVESTIGATE-tag-indicators-sdg-icnpo.md](INVESTIGATE-tag-indicators-sdg-icnpo.md) — tagging is one form of cross-dataset relation; settles separately but feeds the same `meta:` and OpenMetadata surfaces.
 - UIS's `INVESTIGATE-metabase.md` (urbalurba-infrastructure repo, `website/docs/ai-developer/plans/backlog/`) — the request-from-Atlas Metabase deployment that **[Q7]** scopes against; also the source of the prior Cube reject precedent referenced in **[Q2]**.
 - [PLAN-004-postgrest-api-v1-wrapper.md](../completed/PLAN-004-postgrest-api-v1-wrapper.md) — the existing PostgREST query surface this INVESTIGATE builds on.
-- [`docs/research/common-schema.md`](../../../../docs/research/common-schema.md) — the prose entity model that becomes seed content for OpenMetadata's glossary terms.
-- [`docs/stack/naming-conventions.md`](../../../../../docs/stack/naming-conventions.md) — canonical IDs conventions; the generated cheatsheet links here for canonical content.
+- [`docs/research/common-schema.md`](https://github.com/terchris/atlas/tree/main/docs/research/common-schema.md) — the prose entity model that becomes seed content for OpenMetadata's glossary terms.
+- [`docs/stack/naming-conventions.md`](https://github.com/terchris/atlas/tree/main/docs/stack/naming-conventions.md) — canonical IDs conventions; the generated cheatsheet links here for canonical content.
 - UIS service docs — the inventory at [uis.sovereignsky.no](https://uis.sovereignsky.no/), specifically:
   - [OpenMetadata](https://uis.sovereignsky.no/docs/services/analytics/openmetadata)
   - [Unity Catalog](https://uis.sovereignsky.no/docs/services/analytics/unity-catalog)

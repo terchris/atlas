@@ -20,7 +20,7 @@ Two PLAN expectations were off; verified actual is correct:
 
 ## Phase 1 outcome (2026-04-27)
 
-Phase 1 ran. dbt-osmosis baseline propagation surfaced **180 columns** in existing models that have no description (initial pass surfaced 164; a second pass — required for full convergence — surfaced 16 more). Per **option D** (resolved during Phase 1), these are accepted as-is and tracked separately in [PLAN-002-fill-schema-yml-description-gaps.md](../backlog/PLAN-002-fill-schema-yml-description-gaps.md). The check script `atlas-data/dbt/check-osmosis.sh` is strict on `models/marts/api/` (the new mart_* views from this PLAN) and lenient (report-only) on existing models. As PLAN-002 phases land, the gap count goes down.
+Phase 1 ran. dbt-osmosis baseline propagation surfaced **180 columns** in existing models that have no description (initial pass surfaced 164; a second pass — required for full convergence — surfaced 16 more). Per **option D** (resolved during Phase 1), these are accepted as-is and tracked separately in [PLAN-002-fill-schema-yml-description-gaps.md](../completed/PLAN-002-fill-schema-yml-description-gaps.md). The check script `atlas-data/dbt/check-osmosis.sh` is strict on `models/marts/api/` (the new mart_* views from this PLAN) and lenient (report-only) on existing models. As PLAN-002 phases land, the gap count goes down.
 
 Verification at Phase 1 close:
 - `dbt parse` clean, `dbt test` 521 PASS / 20 WARN / 0 ERROR / 541 TOTAL
@@ -38,7 +38,7 @@ Net Phase 1 deliverables:
 
 **Investigation**: [INVESTIGATE-public-api-surface.md](INVESTIGATE-public-api-surface.md)
 
-**Prerequisites**: None blocking. May overlap with PLAN-A from [`INVESTIGATE-semantic-foundation-before-expansion.md`](INVESTIGATE-semantic-foundation-before-expansion.md) (dbt MCP + dbt-osmosis); both share the schema.yml hygiene work in Phase 1 below. Either plan can install dbt-osmosis; the other inherits.
+**Prerequisites**: None blocking. May overlap with PLAN-A from [`INVESTIGATE-semantic-foundation-before-expansion.md`](../backlog/INVESTIGATE-semantic-foundation-before-expansion.md) (dbt MCP + dbt-osmosis); both share the schema.yml hygiene work in Phase 1 below. Either plan can install dbt-osmosis; the other inherits.
 
 ---
 
@@ -54,7 +54,7 @@ Atlas's Next.js code today executes hand-written SQL with CTEs and ad-hoc joins 
 These query shapes can't be expressed cleanly via PostgREST's column-projection API, but they *can* be expressed as dbt views. Promoting each one to a `mart_<feature>` view:
 
 1. Lets PostgREST project them as stable OpenAPI endpoints (PLAN-D.2).
-2. Keeps the [naming-conventions doctrine](../../../../docs/stack/naming-conventions.md#when-to-add-a-new-mart_feature) intact: query logic in dbt, API stays projection.
+2. Keeps the [naming-conventions doctrine](https://github.com/terchris/atlas/tree/main/docs/stack/naming-conventions.md#when-to-add-a-new-mart_feature) intact: query logic in dbt, API stays projection.
 3. Consolidates the SQL — currently scattered across Next.js page files and `atlas-frontend/src/lib/{indicators,supply}.ts` — into the proper dbt layer.
 4. Adds dbt tests on each view, catching shape regressions automatically.
 
@@ -91,7 +91,7 @@ All six decision points settled before implementation begins.
 
 ## Phase 1: dbt-osmosis + schema.yml CI gate
 
-Install dbt-osmosis as the schema.yml safety net before any new mart views land. Coordinate with PLAN-A from [`INVESTIGATE-semantic-foundation-before-expansion.md`](INVESTIGATE-semantic-foundation-before-expansion.md) — whichever PLAN runs first installs it; the other inherits.
+Install dbt-osmosis as the schema.yml safety net before any new mart views land. Coordinate with PLAN-A from [`INVESTIGATE-semantic-foundation-before-expansion.md`](../backlog/INVESTIGATE-semantic-foundation-before-expansion.md) — whichever PLAN runs first installs it; the other inherits.
 
 ### Tasks
 
@@ -205,7 +205,7 @@ Row counts: `mart_ngo_index` = 11 (matches `dim_ngo`); `mart_ngo_overview` = 11;
 
 - [ ] 7.1 Full `dbt build` against the whole project. All 9 new views materialise; all tests pass; schema.yml coverage gate (Phase 1) passes.
 - [ ] 7.2 Spot-check 2-3 of the new views in the database directly (`uv run --env-file ../ingest/.env dbt show --select mart_<view> --limit 5`).
-- [ ] 7.3 Update [`atlas-data/dbt/seeds/README.md`](../../../../../atlas-data/dbt/seeds/README.md) or `atlas-data/dbt/models/marts/api/README.md` (new) explaining the `mart_*` family — what it's for (PostgREST API surface), naming convention, when to add a new one.
+- [ ] 7.3 Update [`atlas-data/dbt/seeds/README.md`](https://github.com/terchris/atlas/tree/main/atlas-data/dbt/seeds/README.md) or `atlas-data/dbt/models/marts/api/README.md` (new) explaining the `mart_*` family — what it's for (PostgREST API surface), naming convention, when to add a new one.
 
 ### Validation
 

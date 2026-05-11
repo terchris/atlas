@@ -377,10 +377,10 @@ All five settled 2026-05-10. Original options + analysis preserved for historica
 
 - [PLAN-007 Phase 2.11](../completed/PLAN-007-data-display-open-by-default.md) — introduced the `dimensions:` block on `manifest.yml` that this generator would consume.
 - [PLAN-008 — Atlas-native developer discovery](PLAN-008-developer-discovery-surface.md) — Phase 2's lineage panel reads `meta_endpoints`; the descriptions surfaced via persist_docs feed every endpoint card.
-- [`atlas-data/dbt/check-osmosis.sh`](../../../../atlas-data/dbt/check-osmosis.sh) — the existing description-coverage gate this generator would extend.
-- [`atlas-data/dbt/dbt_project.yml`](../../../../atlas-data/dbt/dbt_project.yml) — `+persist_docs` config (PR #89) that makes column descriptions show up in pg_description.
+- [`atlas-data/dbt/check-osmosis.sh`](https://github.com/terchris/atlas/tree/main/atlas-data/dbt/check-osmosis.sh) — the existing description-coverage gate this generator would extend.
+- [`atlas-data/dbt/dbt_project.yml`](https://github.com/terchris/atlas/tree/main/atlas-data/dbt/dbt_project.yml) — `+persist_docs` config (PR #89) that makes column descriptions show up in pg_description.
 - [PR #89](https://github.com/terchris/atlas/pull/89) — landed `+persist_docs`; the live verification of that PR is what surfaced the 249-column gap.
-- [`atlas-data/dbt/models/indicators/schema.yml`](../../../../atlas-data/dbt/models/indicators/schema.yml) — the file this generator would regenerate.
+- [`atlas-data/dbt/models/indicators/schema.yml`](https://github.com/terchris/atlas/tree/main/atlas-data/dbt/models/indicators/schema.yml) — the file this generator would regenerate.
 
 ---
 

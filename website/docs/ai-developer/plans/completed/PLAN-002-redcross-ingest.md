@@ -6,7 +6,7 @@
 
 ## Status: Completed
 
-**Goal**: Land Atlas's first NGO supply ingest. Read the Red Cross Organizations API dump at [`docs/research/api-getOrganizations-output-21apr26.json`](../../../../docs/research/api-getOrganizations-output-21apr26.json), populate `raw.redcross_branches` and `raw.redcross_branch_activities`, and build the first three supply-side dbt entities — `dim_chapter`, `dim_activity`, `fact_chapter_activities` — against the foundation PLAN-001 laid. After this plan, Atlas can answer cross-NGO questions like *"how many providers of homework help in kommune X?"* — for one NGO. PLAN-003 (Folkehjelp) adds the second.
+**Goal**: Land Atlas's first NGO supply ingest. Read the Red Cross Organizations API dump at [`docs/research/api-getOrganizations-output-21apr26.json`](https://github.com/terchris/atlas/tree/main/docs/research/api-getOrganizations-output-21apr26.json), populate `raw.redcross_branches` and `raw.redcross_branch_activities`, and build the first three supply-side dbt entities — `dim_chapter`, `dim_activity`, `fact_chapter_activities` — against the foundation PLAN-001 laid. After this plan, Atlas can answer cross-NGO questions like *"how many providers of homework help in kommune X?"* — for one NGO. PLAN-003 (Folkehjelp) adds the second.
 
 **Last Updated**: 2026-04-23
 **Completed**: 2026-04-23 — all 5 phases done. **391 chapters** (1 dump duplicate of L192 Stryn deduped), **1 941 fact rows**, **35 distinct activities**. dbt build PASS=520 / WARN=19 / ERROR=0. ERD grew 31 → 36 entities, 48 → 62 relationships. One dump-data quirk caught (duplicate branch row); dedup added before ON CONFLICT. See Plan deviations at the bottom.
@@ -53,18 +53,18 @@ Five phases, ~5–7h. The ingest dump is static (per [Q39](INVESTIGATE-ngo-suppl
   - `raw.redcross_branches` — columns: `branch_id text PRIMARY KEY`, `branch_number text`, `organization_number text`, `branch_type text`, `branch_name text`, `is_active boolean`, `is_terminated boolean`, `creation_date date`, `parent_branch_id text`, `parent_branch_name text`, `parent_branch_type text`, `municipality text`, `county text`, `region text`, `postal_address_line1 text`, `postal_code text`, `post_office text`, `street_address_line1 text`, `phone text`, `email text`, `web text`, `loaded_at timestamptz default now()`.
   - `raw.redcross_branch_activities` — columns: `branch_id text` (FK in spirit, no constraint), `global_activity_name text`, `local_activity_name text`, `loaded_at timestamptz default now()`. PK on `(branch_id, global_activity_name)`.
 - [x] 1.2 Run `npm run migrate` from `atlas-data/ingest/`. Verify both tables exist (empty).
-- [x] 1.3 Create [`atlas-data/ingest/src/sources/redcross-branches/index.ts`](../../../../../atlas-data/ingest/src/sources/) exporting `SOURCE_ID = 'redcross-branches'` and `run()` that:
+- [x] 1.3 Create [`atlas-data/ingest/src/sources/redcross-branches/index.ts`](https://github.com/terchris/atlas/tree/main/atlas-data/ingest/src/sources/) exporting `SOURCE_ID = 'redcross-branches'` and `run()` that:
   - Reads `docs/research/api-getOrganizations-output-21apr26.json` (path resolved relative to the script).
   - Parses the 392 branches.
   - For each branch, extracts the fields listed above. Handles missing optional fields (e.g. `branchParent` for HQ row) with explicit `null`.
   - Upserts to `raw.redcross_branches` keyed on `branch_id`.
   - For each branch with a `branchActivities` array, emits one row per activity to `raw.redcross_branch_activities`. Upserts on `(branch_id, global_activity_name)`.
   - Logs counts at the end (X branches, Y branch-activity rows).
-- [x] 1.4 Create alongside: [`atlas-data/ingest/src/sources/redcross-branches/README.md`](../../../../../atlas-data/ingest/src/sources/) explaining: source = static dump, planned live-API client, schema notes.
-- [x] 1.5 Add `ingest:redcross-branches` script to [`atlas-data/ingest/package.json`](../../../../../atlas-data/ingest/package.json), following the existing `ingest:<source-id>` pattern.
-- [x] 1.6 Add a row for `redcross-branches` to [`atlas-data/ingest/src/sources/README.md`](../../../../../atlas-data/ingest/src/sources/README.md) catalogue table.
+- [x] 1.4 Create alongside: [`atlas-data/ingest/src/sources/redcross-branches/README.md`](https://github.com/terchris/atlas/tree/main/atlas-data/ingest/src/sources/) explaining: source = static dump, planned live-API client, schema notes.
+- [x] 1.5 Add `ingest:redcross-branches` script to [`atlas-data/ingest/package.json`](https://github.com/terchris/atlas/tree/main/atlas-data/ingest/package.json), following the existing `ingest:<source-id>` pattern.
+- [x] 1.6 Add a row for `redcross-branches` to [`atlas-data/ingest/src/sources/README.md`](https://github.com/terchris/atlas/tree/main/atlas-data/ingest/src/sources/README.md) catalogue table.
 - [x] 1.7 Run `npm run ingest:redcross-branches`. Verify: 392 branches, ~2 400 activity rows.
-- [x] 1.8 Add the source to [`atlas-data/dbt/models/indicators/sources.yml`](../../../../../atlas-data/dbt/models/indicators/sources.yml) — actually, supply sources may want their own `models/supply/sources.yml`. Decide path during implementation; align with whatever folder structure Phase 2 picks for the supply__ models.
+- [x] 1.8 Add the source to [`atlas-data/dbt/models/indicators/sources.yml`](https://github.com/terchris/atlas/tree/main/atlas-data/dbt/models/indicators/sources.yml) — actually, supply sources may want their own `models/supply/sources.yml`. Decide path during implementation; align with whatever folder structure Phase 2 picks for the supply__ models.
 
 ### Validation
 
@@ -90,7 +90,7 @@ User confirms output matches the API dump's branch-type distribution: 1 Nasjonal
 
 - [x] 2.1 Decide model folder layout: `models/supply/` (parallels `models/indicators/`) or extend `models/dimensions/` with the supply staging models alongside dim_chapter. Recommendation: **new `models/supply/` folder** for the staging models, leave `dim_chapter` in `models/dimensions/`. Mirrors the indicators pattern (staging in `indicators/`, dims in `dimensions/`).
 - [x] 2.2 Create `models/supply/sources.yml` declaring `raw.redcross_branches` and `raw.redcross_branch_activities` as dbt sources (with `loaded_at_field: loaded_at` for freshness checks later).
-- [x] 2.3 Create [`models/supply/supply__redcross_branches.sql`](../../../../../atlas-data/dbt/models/supply/) — reshapes `raw.redcross_branches` into `dim_chapter`-shape. Output columns: `chapter_id`, `ngo_orgnr`, `chapter_level`, `parent_chapter_id`, `chapter_orgnr`, `name`, `kommune_nr`, `is_active`, `address_line1`, `postal_code`, `post_office`, `phone`, `email`, `web`, `updated_at`.
+- [x] 2.3 Create [`models/supply/supply__redcross_branches.sql`](https://github.com/terchris/atlas/tree/main/atlas-data/dbt/models/supply/) — reshapes `raw.redcross_branches` into `dim_chapter`-shape. Output columns: `chapter_id`, `ngo_orgnr`, `chapter_level`, `parent_chapter_id`, `chapter_orgnr`, `name`, `kommune_nr`, `is_active`, `address_line1`, `postal_code`, `post_office`, `phone`, `email`, `web`, `updated_at`.
   - `chapter_id`: `'redcross-' || branch_id` (composite key — Red Cross's branch_id is just an internal alphanumeric code; namespaced for cross-NGO uniqueness in `dim_chapter`).
   - `ngo_orgnr`: hardcoded `'864139442'`.
   - `chapter_level`: CASE on `branch_type`: `'Nasjonalkontoret' → 'national'`, `'Distrikt' → 'regional'`, `'Lokalforening' → 'local'`, `'Ukjent' → 'local'` (per [P2.Q7]).
@@ -98,8 +98,8 @@ User confirms output matches the API dump's branch-type distribution: 1 Nasjonal
   - `chapter_orgnr`: from `organization_number` (Red Cross local branches each have own orgnr).
   - `kommune_nr`: lookup via `LEFT JOIN dim_postnummer ON postal_code = postnummer` per [P2.Q8]. NULL for branches without a postnummer.
   - `is_active`: per [Q44](INVESTIGATE-ngo-supply-data-model.md#open-questions) — `not is_terminated and (branch_type = 'Lokalforening' or branch_type = 'Distrikt' or branch_type = 'Nasjonalkontoret')`. Ukjent → `false`.
-- [x] 2.4 Create [`models/dimensions/dim_chapter.sql`](../../../../../atlas-data/dbt/models/dimensions/) — UNION ALL of all `supply__<ngo>_branches` models. For PLAN-002: just `supply__redcross_branches`. PLAN-003 adds Folkehjelp; the model gets a new UNION clause. Materialised as `table` in `marts`.
-- [x] 2.5 schema.yml entry for `dim_chapter` in [`models/dimensions/schema.yml`](../../../../../atlas-data/dbt/models/dimensions/schema.yml):
+- [x] 2.4 Create [`models/dimensions/dim_chapter.sql`](https://github.com/terchris/atlas/tree/main/atlas-data/dbt/models/dimensions/) — UNION ALL of all `supply__<ngo>_branches` models. For PLAN-002: just `supply__redcross_branches`. PLAN-003 adds Folkehjelp; the model gets a new UNION clause. Materialised as `table` in `marts`.
+- [x] 2.5 schema.yml entry for `dim_chapter` in [`models/dimensions/schema.yml`](https://github.com/terchris/atlas/tree/main/atlas-data/dbt/models/dimensions/schema.yml):
   - `not_null + unique` on `chapter_id`
   - `not_null + relationships` on `ngo_orgnr` → `dim_ngo.orgnr`
   - `not_null + accepted_values: ['national', 'regional', 'local']` on `chapter_level`
@@ -121,10 +121,10 @@ User confirms `dim_chapter` has 392 rows with the right level distribution + cor
 
 ### Tasks
 
-- [x] 3.1 Create [`models/supply/supply__redcross_branch_activities.sql`](../../../../../atlas-data/dbt/models/supply/) — reshapes `raw.redcross_branch_activities` into a per-(chapter, activity) row with category resolved. Output columns: `chapter_id` (FK to dim_chapter), `ngo_orgnr` (hardcoded), `canonical_name` (= global_activity_name), `local_activity_name`, `service_category_code`, `is_service` (boolean), `updated_at`.
+- [x] 3.1 Create [`models/supply/supply__redcross_branch_activities.sql`](https://github.com/terchris/atlas/tree/main/atlas-data/dbt/models/supply/) — reshapes `raw.redcross_branch_activities` into a per-(chapter, activity) row with category resolved. Output columns: `chapter_id` (FK to dim_chapter), `ngo_orgnr` (hardcoded), `canonical_name` (= global_activity_name), `local_activity_name`, `service_category_code`, `is_service` (boolean), `updated_at`.
   - The CASE WHEN for `service_category_code` covers all 50 globalActivityName values per Appendix A (~30 obvious + 6 ambiguous + 14 non-service).
   - `is_service = false` for the 14 non-service activities (Administrative oppgaver, Lokalstyre, Distriktsstyre, etc. — see Appendix A's "filtered" section). These rows are kept for completeness but won't surface as `dim_activity` rows.
-- [x] 3.2 Create [`models/dimensions/dim_activity.sql`](../../../../../atlas-data/dbt/models/dimensions/) — `SELECT DISTINCT` from all `supply__<ngo>_branch_activities` where `is_service = true`. Adds `activity_id` derivation: `ngo_slug || '-' || slugify(canonical_name)`. Materialised as `table` in `marts`.
+- [x] 3.2 Create [`models/dimensions/dim_activity.sql`](https://github.com/terchris/atlas/tree/main/atlas-data/dbt/models/dimensions/) — `SELECT DISTINCT` from all `supply__<ngo>_branch_activities` where `is_service = true`. Adds `activity_id` derivation: `ngo_slug || '-' || slugify(canonical_name)`. Materialised as `table` in `marts`.
 - [x] 3.3 schema.yml entry for `dim_activity`:
   - `not_null + unique` on `activity_id`
   - `not_null + relationships` on `ngo_orgnr` → `dim_ngo.orgnr`
@@ -150,7 +150,7 @@ User confirms the per-category distribution matches Appendix A's mappings.
 
 ### Tasks
 
-- [x] 4.1 Create [`models/marts/fact_chapter_activities.sql`](../../../../../atlas-data/dbt/models/marts/) — joins per-NGO supply__*_branch_activities to dim_chapter (for chapter_id) and dim_activity (for activity_id). Output columns: `chapter_id`, `activity_id`, `ngo_orgnr` (denorm), `kommune_nr` (denorm from dim_chapter), `local_activity_name`, `is_active` (the chapter's is_active; activity-level dormancy not modelled in v1), `source_id`, `updated_at`. Materialised as `table` in `marts` with indexes on `(chapter_id)`, `(activity_id)`, `(kommune_nr)`, `(ngo_orgnr)`.
+- [x] 4.1 Create [`models/marts/fact_chapter_activities.sql`](https://github.com/terchris/atlas/tree/main/atlas-data/dbt/models/marts/) — joins per-NGO supply__*_branch_activities to dim_chapter (for chapter_id) and dim_activity (for activity_id). Output columns: `chapter_id`, `activity_id`, `ngo_orgnr` (denorm), `kommune_nr` (denorm from dim_chapter), `local_activity_name`, `is_active` (the chapter's is_active; activity-level dormancy not modelled in v1), `source_id`, `updated_at`. Materialised as `table` in `marts` with indexes on `(chapter_id)`, `(activity_id)`, `(kommune_nr)`, `(ngo_orgnr)`.
 - [x] 4.2 schema.yml entry for `fact_chapter_activities`:
   - `not_null + relationships` on `chapter_id` → `dim_chapter.chapter_id`
   - `not_null + relationships` on `activity_id` → `dim_activity.activity_id`
@@ -182,7 +182,7 @@ User confirms the fact table loads, the unique-combination test passes, and the 
 
 ### Tasks
 
-- [x] 5.1 Extend [`docs/stack/naming-conventions.md`](../../../../docs/stack/naming-conventions.md) with the new canonical fields:
+- [x] 5.1 Extend [`docs/stack/naming-conventions.md`](https://github.com/terchris/atlas/tree/main/docs/stack/naming-conventions.md) with the new canonical fields:
   - `chapter_id` (text, composite key like `'redcross-L098'`)
   - `chapter_level` (text, one of `'national'` / `'regional'` / `'local'`)
   - `parent_chapter_id` (text, FK self-reference on `dim_chapter`)
@@ -266,7 +266,7 @@ Edit:
 
 - [INVESTIGATE-ngo-supply-data-model.md](INVESTIGATE-ngo-supply-data-model.md) — parent investigation; PLAN-B at [Q26].
 - [PLAN-001-ngo-supply-foundation.md](../completed/PLAN-001-ngo-supply-foundation.md) — prerequisite (dim_ngo + ref_atlas_service_category).
-- [`docs/research/api-getOrganizations-output-21apr26.json`](../../../../docs/research/api-getOrganizations-output-21apr26.json) — the Red Cross API dump (1.0 MB, 392 branches, 50 globalActivityName values).
+- [`docs/research/api-getOrganizations-output-21apr26.json`](https://github.com/terchris/atlas/tree/main/docs/research/api-getOrganizations-output-21apr26.json) — the Red Cross API dump (1.0 MB, 392 branches, 50 globalActivityName values).
 
 ---
 

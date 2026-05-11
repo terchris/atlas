@@ -48,10 +48,10 @@ All 6 phases landed across 6 commits on `feature/plan-003-phase-1-foundation` (P
 
 Today's contributor-onboarding content is scattered across:
 
-- [`atlas-data/CONTRIBUTING.md`](../../../../../atlas-data/CONTRIBUTING.md) — 11-step "add a data source" workflow
-- [`atlas-data/ingest/src/sources/README.md`](../../../../../atlas-data/ingest/src/sources/README.md) — ingest-module template + 19 examples + planned-sources catalogue
-- [`atlas-data/dbt/README.md`](../../../../../atlas-data/dbt/README.md) — dbt commands + the "schema.yml hygiene — dbt-osmosis + check-osmosis.sh" prose
-- [`atlas-data/dbt/check-osmosis.sh`](../../../../../atlas-data/dbt/check-osmosis.sh) — top-of-file comment explains the strict + lenient checks
+- [`atlas-data/CONTRIBUTING.md`](https://github.com/terchris/atlas/tree/main/atlas-data/CONTRIBUTING.md) — 11-step "add a data source" workflow
+- [`atlas-data/ingest/src/sources/README.md`](https://github.com/terchris/atlas/tree/main/atlas-data/ingest/src/sources/README.md) — ingest-module template + 19 examples + planned-sources catalogue
+- [`atlas-data/dbt/README.md`](https://github.com/terchris/atlas/tree/main/atlas-data/dbt/README.md) — dbt commands + the "schema.yml hygiene — dbt-osmosis + check-osmosis.sh" prose
+- [`atlas-data/dbt/check-osmosis.sh`](https://github.com/terchris/atlas/tree/main/atlas-data/dbt/check-osmosis.sh) — top-of-file comment explains the strict + lenient checks
 - [`docs/ai-developer/GIT.md`](../../GIT.md), [`WORKTREE.md`](../../WORKTREE.md) — git workflow conventions
 - [`INVESTIGATE-data-journey-pattern.md`](../completed/INVESTIGATE-data-journey-pattern.md) — full SSB 08764 worked example
 

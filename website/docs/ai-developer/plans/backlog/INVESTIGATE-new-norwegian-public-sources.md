@@ -16,8 +16,8 @@
 
 Read first:
 - [`INVESTIGATE-reports-and-indicators-from-catalogue.md`](./INVESTIGATE-reports-and-indicators-from-catalogue.md) — the 10-report menu the 38 current sources support, and the per-report gap notes that motivate every Tier-1 candidate below.
-- [`atlas-data/ingest/src/sources/README.md`](../../../../../atlas-data/ingest/src/sources/README.md) — the implemented-sources catalogue + manifest.yml schema every new source must conform to.
-- [`docs/research/data-sources.md`](../../../../../docs/research/data-sources.md) — the broader ~90-source roadmap. URLs were verified there 2026-04-18; spot-checks for this file (2026-05-04) flagged a couple of moves recorded inline below.
+- [`atlas-data/ingest/src/sources/README.md`](https://github.com/terchris/atlas/tree/main/atlas-data/ingest/src/sources/README.md) — the implemented-sources catalogue + manifest.yml schema every new source must conform to.
+- [`docs/research/data-sources.md`](https://github.com/terchris/atlas/tree/main/docs/research/data-sources.md) — the broader ~90-source roadmap. URLs were verified there 2026-04-18; spot-checks for this file (2026-05-04) flagged a couple of moves recorded inline below.
 
 Don't duplicate data-sources.md. This file's job is to *select* and *justify*, not to re-list.
 
@@ -50,14 +50,14 @@ These are the highest-leverage adds: each one upgrades a specific report from "i
 - **Licence**: NLOD (verify on first dataset fetch)
 - **Geo**: kommune; bydel for Oslo
 - **Cadence**: annual; 2024 data live, 2025 Barnefattigdom expected June 2026
-- **Provider tag**: `bufdir` (new — extends the [manifest.yml `provider` namespace](../../../../../atlas-data/ingest/src/sources/README.md#manifestyml-schema))
+- **Provider tag**: `bufdir` (new — extends the [manifest.yml `provider` namespace](https://github.com/terchris/atlas/tree/main/atlas-data/ingest/src/sources/README.md#manifestyml-schema))
 - **EU theme**: `SOCI`
 
 **Plugs into**: Report #2 (Child Welfare / Vulnerability Composite). Today the composite has child low-income (`ssb-08764`), persistent low-income (`ssb-12944`), single-parent share (`ssb-06083`), bullying (`fhi-mobbing`), and overcrowded housing (`fhi-trangbodd`) — but **no barnevern axis at all**. Bufdir's Barnevern monitor is the canonical kommune-level child-welfare measurement and is a named-gap fill. Atlas can additionally cross-validate `ssb-08764` against Bufdir's Barnefattigdom (different methodology, same kommune — useful triangulation).
 
 **Source-specific quirks**:
 - **[Q1]** Bufdir's monitors merge several upstream methodologies (KOSTRA, NUDB, EU-SILC); each indicator has its own `data_quality_kind` per [INVESTIGATE-reports-and-indicators §5](./INVESTIGATE-reports-and-indicators-from-catalogue.md#open-questions-for-decision). Worth ingesting one indicator family per source folder (`bufdir-barnefattigdom`, `bufdir-barnevern`) rather than one mega-source, so manifest dimensions stay clean.
-- **[Q2]** New `provider` value in `manifest.yml` enum. Trivial schema bump; PLAN must update [`atlas-data/ingest/src/sources/README.md`](../../../../../atlas-data/ingest/src/sources/README.md#manifestyml-schema) in the same commit.
+- **[Q2]** New `provider` value in `manifest.yml` enum. Trivial schema bump; PLAN must update [`atlas-data/ingest/src/sources/README.md`](https://github.com/terchris/atlas/tree/main/atlas-data/ingest/src/sources/README.md#manifestyml-schema) in the same commit.
 - **[Q3]** Bydel resolution for Oslo. Atlas's [`crosswalk_geo_to_kommune`](./INVESTIGATE-reports-and-indicators-from-catalogue.md#crosswalks-atlas-needs) already handles 6-digit bydel codes for FHI; Bufdir likely uses a different bydel coding scheme — confirm against the Klass register before writing the dbt model.
 
 ### 2. NAV statistikk — uføretrygd, sykefravær, AAP per kommune
@@ -191,7 +191,7 @@ These don't fill an existing report — they enable an *11th, 12th, 13th* report
 
 ### 9. Brreg Frivillighetsregisteret + Lottstift Tilskudd — voluntary-sector supply
 
-- **URLs**: Frivillighetsregisteret API at `https://data.brreg.no/frivillighetsregisteret/` (note: `https://www.brreg.no/produkter-og-tjenester/apne-data/` is the new browse portal — see [Moves & deprecations](../../../../../docs/research/data-sources.md#moves-and-deprecations-what-changed-since-the-prior-pass)); Lottstift Tilskudd at `https://tilskudd.lottstift.no/`
+- **URLs**: Frivillighetsregisteret API at `https://data.brreg.no/frivillighetsregisteret/` (note: `https://www.brreg.no/produkter-og-tjenester/apne-data/` is the new browse portal — see [Moves & deprecations](https://github.com/terchris/atlas/tree/main/docs/research/data-sources.md#moves-and-deprecations-what-changed-since-the-prior-pass)); Lottstift Tilskudd at `https://tilskudd.lottstift.no/`
 - **Format**: JSON (Brreg) + Excel (Lottstift momskompensasjon lists)
 - **Auth**: none
 - **Licence**: NLOD
@@ -253,7 +253,7 @@ These are real candidates but each is either narrower in impact or has a known c
 
 ## Cross-check against Samfunnspuls (Røde Kors's older system)
 
-Samfunnspuls (`samfunnspuls.rodekors.no`) is Røde Kors's existing kunnskapsbank — a 37-report Power-BI front-end over the same upstream-public-data sources Atlas wants to consume. Each statistikk page exposes an "Om tallene" block that names the upstream provider + table ID exactly. Re-crawled live 2026-05-04 (37 reports across 6 themes, matching the 2026-04-21 baseline in [`docs/research/samfunnspuls/data-sources.md`](../../../../../docs/research/samfunnspuls/data-sources.md) — no new reports added since the prior pass).
+Samfunnspuls (`samfunnspuls.rodekors.no`) is Røde Kors's existing kunnskapsbank — a 37-report Power-BI front-end over the same upstream-public-data sources Atlas wants to consume. Each statistikk page exposes an "Om tallene" block that names the upstream provider + table ID exactly. Re-crawled live 2026-05-04 (37 reports across 6 themes, matching the 2026-04-21 baseline in [`docs/research/samfunnspuls/data-sources.md`](https://github.com/terchris/atlas/tree/main/docs/research/samfunnspuls/data-sources.md) — no new reports added since the prior pass).
 
 The 37 reports collapse to **24 unique upstream sources**; the reconciliation against Atlas (38 implemented sources) and against the Tier-1/2/3 candidates above resolves into three buckets.
 
@@ -363,7 +363,7 @@ These are decisions worth resolving once across all Tier-1 PLANs, not per-source
 
 ### A. New `provider` enum values
 
-- **[Q31]** Atlas's `manifest.yml` `provider` namespace currently allows `ssb / fhi / redcross / brreg`. Tier 1 alone adds `bufdir`, `nav`, `husbanken`, `udir`, `imdi`. Tier 2 adds `helsedirektoratet`, `dsb`, `lottstift`. Decision: add all eight in a single schema-bump commit at the start of the batch, with an updated [`manifest.yml schema`](../../../../../atlas-data/ingest/src/sources/README.md#manifestyml-schema) section. Trying to extend the enum incrementally per PLAN risks merge churn.
+- **[Q31]** Atlas's `manifest.yml` `provider` namespace currently allows `ssb / fhi / redcross / brreg`. Tier 1 alone adds `bufdir`, `nav`, `husbanken`, `udir`, `imdi`. Tier 2 adds `helsedirektoratet`, `dsb`, `lottstift`. Decision: add all eight in a single schema-bump commit at the start of the batch, with an updated [`manifest.yml schema`](https://github.com/terchris/atlas/tree/main/atlas-data/ingest/src/sources/README.md#manifestyml-schema) section. Trying to extend the enum incrementally per PLAN risks merge churn.
 
 ### B. New `eu_theme` values used
 
@@ -375,11 +375,11 @@ The current enum already covers all needed values: `JUST` (crime), `HEAL` (Helfo
 
 ### D. New geographic resolutions
 
-- **[Q33]** Udir at school level (org number) and IMDi at kommune-with-bydel breakouts both push beyond Atlas's current kommune/fylke/bydel scheme. Decide whether `dim_school` and bydel coverage become first-class catalogue dimensions, or whether they live in source-specific marts only. **Recommendation**: first-class — Atlas's value is conformed dimensions; a school dim that lives only in the Udir mart breaks the [introspection-driven catalogue at `/data`](../../../../../atlas-frontend/) story.
+- **[Q33]** Udir at school level (org number) and IMDi at kommune-with-bydel breakouts both push beyond Atlas's current kommune/fylke/bydel scheme. Decide whether `dim_school` and bydel coverage become first-class catalogue dimensions, or whether they live in source-specific marts only. **Recommendation**: first-class — Atlas's value is conformed dimensions; a school dim that lives only in the Udir mart breaks the [introspection-driven catalogue at `/data`](https://github.com/terchris/atlas/tree/main/atlas-frontend/) story.
 
 ### E. Power-BI-backed sources
 
-- **[Q34]** Husbanken, Helfo, Helsedir NKI, Bufdir all front their data with Power BI dashboards. None expose a clean JSON endpoint *from* Power BI — but each has a separate machine-readable distribution (Excel, developer-portal API, or backing dataset). **Convention**: never scrape Power BI iframes. Always trace to the underlying dataset. Document this as a rule in [`atlas-data/ingest/src/sources/README.md`](../../../../../atlas-data/ingest/src/sources/README.md).
+- **[Q34]** Husbanken, Helfo, Helsedir NKI, Bufdir all front their data with Power BI dashboards. None expose a clean JSON endpoint *from* Power BI — but each has a separate machine-readable distribution (Excel, developer-portal API, or backing dataset). **Convention**: never scrape Power BI iframes. Always trace to the underlying dataset. Document this as a rule in [`atlas-data/ingest/src/sources/README.md`](https://github.com/terchris/atlas/tree/main/atlas-data/ingest/src/sources/README.md).
 
 ### F. Sensitivity tagging propagation
 
@@ -488,6 +488,6 @@ Each PLAN follows the standard Atlas pattern (per-source folder under `atlas-dat
 - [`INVESTIGATE-data-discovery-surface.md`](./INVESTIGATE-data-discovery-surface.md) — the broader discovery / governance surface stack; new sources must be discoverable through the same MCP / API surface.
 - [`INVESTIGATE-folkehjelp-supply.md`](./INVESTIGATE-folkehjelp-supply.md) — pattern reference for HTML-scrape sources (IMDi PLAN reuses the same scraping infra).
 - [`PLAN-001-brreg-enheter`](../completed/PLAN-001-brreg-enheter.md) — pattern reference for cross-NGO Brreg ingest (PLAN-015 extends this).
-- [`atlas-data/ingest/src/sources/README.md`](../../../../../atlas-data/ingest/src/sources/README.md) — manifest.yml schema and the conventions every new source must conform to.
-- [`docs/research/data-sources.md`](../../../../../docs/research/data-sources.md) — broader Norwegian + Red-Cross-ecosystem source catalogue (the menu this investigation selects from).
-- [`docs/research/samfunnspuls/data-sources.md`](../../../../../docs/research/samfunnspuls/data-sources.md) — the prior Samfunnspuls cross-reference research (24-source catalogue, 2026-04-21). The cross-check in §"Cross-check against Samfunnspuls" above is the live (2026-05-04) reconciliation against this baseline.
+- [`atlas-data/ingest/src/sources/README.md`](https://github.com/terchris/atlas/tree/main/atlas-data/ingest/src/sources/README.md) — manifest.yml schema and the conventions every new source must conform to.
+- [`docs/research/data-sources.md`](https://github.com/terchris/atlas/tree/main/docs/research/data-sources.md) — broader Norwegian + Red-Cross-ecosystem source catalogue (the menu this investigation selects from).
+- [`docs/research/samfunnspuls/data-sources.md`](https://github.com/terchris/atlas/tree/main/docs/research/samfunnspuls/data-sources.md) — the prior Samfunnspuls cross-reference research (24-source catalogue, 2026-04-21). The cross-check in §"Cross-check against Samfunnspuls" above is the live (2026-05-04) reconciliation against this baseline.

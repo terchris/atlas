@@ -149,7 +149,7 @@ User confirms: coverage rows exist for Red Cross distrikter.
 
 ### Tasks
 
-- [ ] 3.1 Extend [`docs/stack/naming-conventions.md`](../../../../docs/stack/naming-conventions.md):
+- [ ] 3.1 Extend [`docs/stack/naming-conventions.md`](https://github.com/terchris/atlas/tree/main/docs/stack/naming-conventions.md):
   - Add `chapter_subtype` to Canonical vocabulary: list the 5-value v1 vocabulary (`youth-political`, `youth-health`, `student`, `hospital`, `umbrella`) and note it's free-text in v1, promoted to `accepted_values` once 3+ NGOs use it.
   - Add `chapter_kommune_coverage` to Model naming: mention it's a link table in `marts/` following the per-source staging + UNION ALL pattern.
 - [ ] 3.2 Regenerate the ERD: `cd atlas-data/dbt && ./regenerate-erd.sh`. Verify `CHAPTER_KOMMUNE_COVERAGE` appears in `docs/stack/erd.md` with edges to `DIM_CHAPTER` and `DIM_KOMMUNE`.

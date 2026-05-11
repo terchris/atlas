@@ -174,11 +174,11 @@ Hit Bufdir's CMS (Strapi `/api/...`) instead of inferring from the workbook. The
 
 **(d) — number-prefix + alias seed.** Specifically:
 
-1. Change [`parse.ts:surrogateIndicatorApiId()`](../../../../atlas-data/ingest/src/sources/bufdir-barnefattigdom/parse.ts) to parse `Indikator_(\d+[a-z]?)` from the filename stem and emit `bf_zip_ind_<N>` (e.g. `bf_zip_ind_9a`). Filename-stem hashing falls away.
+1. Change [`parse.ts:surrogateIndicatorApiId()`](https://github.com/terchris/atlas/tree/main/atlas-data/ingest/src/sources/bufdir-barnefattigdom/parse.ts) to parse `Indikator_(\d+[a-z]?)` from the filename stem and emit `bf_zip_ind_<N>` (e.g. `bf_zip_ind_9a`). Filename-stem hashing falls away.
 2. Add a fallback path: if the filename doesn't match `Indikator_<N>` (defensive — maybe Bufdir adds a non-numbered workbook), fall back to the current SHA-256-of-stem to keep ingest from throwing. Log a warn so the operator notices.
 3. Add seed `atlas-data/dbt/seeds/sources/bufdir_indicator_alias.csv` with columns `historical_id, canonical_id, note`. Pre-populate the `9` → `9a` and the `10` → null entries from the existing observed history.
 4. Add the dbt model at `atlas-data/dbt/models/marts/api/bufdir_indicator_alias.sql` (loads from the seed) + a `schema.yml` entry with descriptions for all four columns (`historical_id`, `canonical_id`, `note`, `source_id`). Placement under `models/marts/api/` means the next `./regenerate-api-v1.sh` run auto-emits `api_v1.bufdir_indicator_alias` — no per-source generator wiring. PostgREST's `marts.*` exposure (PLAN-007 Phase 1) will serve `GET /bufdir_indicator_alias` automatically once UIS lands the schema-list extension.
-5. Document the consumer pattern in [`bufdir-barnefattigdom/README.md`](../../../../atlas-data/ingest/src/sources/bufdir-barnefattigdom/README.md) and the upcoming Phase 4 `/data` page so external developers know to use it for historical continuity.
+5. Document the consumer pattern in [`bufdir-barnefattigdom/README.md`](https://github.com/terchris/atlas/tree/main/atlas-data/ingest/src/sources/bufdir-barnefattigdom/README.md) and the upcoming Phase 4 `/data` page so external developers know to use it for historical continuity.
 6. Refresh `bufdir_indicator_alias.csv` as part of every new bufdir refresh — add to the maintenance checklist in the source README.
 
 **Migration concern**: existing `indicator_api_id` values in `marts.indicators__bufdir_barnefattigdom` are `bf_zip_<24-char-hex>`. After this change they become `bf_zip_ind_<N>`. **This is a breaking change** for any consumer that has cached the old ids. The bufdir source has been live for less than a week and the public API for it has not been advertised, so the breaking-change cost is essentially zero today. Land before any external integration starts depending on the current id shape.
@@ -226,12 +226,12 @@ This is the lens through which every future alias / lookup / catalogue artefact 
 
 ## Cross-references
 
-- [`atlas-data/ingest/src/sources/bufdir-barnefattigdom/parse.ts`](../../../../atlas-data/ingest/src/sources/bufdir-barnefattigdom/parse.ts) — current `surrogateIndicatorApiId()` lives here; option (b) implementation lands here.
-- [`atlas-data/ingest/src/sources/bufdir-barnefattigdom/README.md`](../../../../atlas-data/ingest/src/sources/bufdir-barnefattigdom/README.md) — Known-quirks line on surrogate id (added in PR #68) is the user-facing flag this investigation closes.
+- [`atlas-data/ingest/src/sources/bufdir-barnefattigdom/parse.ts`](https://github.com/terchris/atlas/tree/main/atlas-data/ingest/src/sources/bufdir-barnefattigdom/parse.ts) — current `surrogateIndicatorApiId()` lives here; option (b) implementation lands here.
+- [`atlas-data/ingest/src/sources/bufdir-barnefattigdom/README.md`](https://github.com/terchris/atlas/tree/main/atlas-data/ingest/src/sources/bufdir-barnefattigdom/README.md) — Known-quirks line on surrogate id (added in PR #68) is the user-facing flag this investigation closes.
 - [`INVESTIGATE-bufdir-barnefattigdom-zip-ingest.md`](./INVESTIGATE-bufdir-barnefattigdom-zip-ingest.md) — Composer-2's original investigation that flagged this question and deferred it.
 - [PR #60](https://github.com/terchris/atlas/pull/60) — the streaming ingest that introduced the surrogate-id strategy.
 - [PR #67](https://github.com/terchris/atlas/pull/67) — the `parse.ts` split + golden-file tests; covers the filename-derivation logic this INVESTIGATE proposes changing.
-- [PLAN-007 Phase 3 — `mart_meta_dimensions`](../active/PLAN-007-data-display-open-by-default.md#phase-3) — when Phase 3 ships, the alias seed shape may want to be reflected in the catalogue's metadata views.
+- [PLAN-007 Phase 3 — `mart_meta_dimensions`](../completed/PLAN-007-data-display-open-by-default.md#phase-3) — when Phase 3 ships, the alias seed shape may want to be reflected in the catalogue's metadata views.
 
 ---
 

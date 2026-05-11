@@ -198,7 +198,7 @@ curl -sS "http://localhost:3001/data/api_v1/distrikt_summary" | grep -oE 'href="
 ## Cross-references
 
 - [INVESTIGATE-data-discovery-surface.md](INVESTIGATE-data-discovery-surface.md) — parent INVESTIGATE; this PLAN executes the "Atlas-native human discovery" recommendation.
-- [PLAN-007 — data display open by default](../active/PLAN-007-data-display-open-by-default.md) — the `/data` rewrite this PLAN extends. Phase 4.1's `/data/[schema]/[table]/page.tsx` is the file that gets the lineage panel.
+- [PLAN-007 — data display open by default](../completed/PLAN-007-data-display-open-by-default.md) — the `/data` rewrite this PLAN extends. Phase 4.1's `/data/[schema]/[table]/page.tsx` is the file that gets the lineage panel.
 - [PLAN-004 — postgrest api_v1 wrapper](../completed/PLAN-004-postgrest-api-v1-wrapper.md) — the wrapper-generation pipeline that emits `api_v1.meta_endpoints` (which gets the new `source_ids` column).
 - `atlas-data/dbt/seeds/sources/lineage.csv` (PR #77) — the lineage data substrate Phase 2's panel reads.
 - Scalar — [github.com/scalar/scalar](https://github.com/scalar/scalar). MIT, npm package `@scalar/api-reference-react`.

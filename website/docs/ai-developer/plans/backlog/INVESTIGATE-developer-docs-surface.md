@@ -67,7 +67,7 @@ Proposed initial structure (a content outline; iteration expected):
 | `index.md` | Landing — who this section is for, the three things you can do (read API reference, fork the customer app, integrate as an agent) |
 | `getting-started.md` | First `curl http://api-atlas.helpers.no/indicator_summary` walkthrough; shows real output; explains anonymous-read posture |
 | `api-reference.md` | Embedded Swagger UI (per [Q2]) showing all `api_v1.*` endpoints |
-| `concepts.md` | Canonical conventions: `kommune_nr` (4-digit zero-padded), `fylke_nr`, `orgnr`, etc. — same content [`docs/stack/naming-conventions.md`](../../../../../docs/stack/naming-conventions.md) covers for contributors, but framed for consumers |
+| `concepts.md` | Canonical conventions: `kommune_nr` (4-digit zero-padded), `fylke_nr`, `orgnr`, etc. — same content [`docs/stack/naming-conventions.md`](https://github.com/terchris/atlas/tree/main/docs/stack/naming-conventions.md) covers for contributors, but framed for consumers |
 | `forking-the-customer-app.md` | Atlas's `atlas-frontend/` is the canonical reference Next.js consumer; here's how to fork it, set `NEXT_PUBLIC_API_URL`, deploy your own |
 | `agent-integration.md` | How to wire the API into an LLM agent or MCP server — example tool definitions, prompt patterns. Probably stub initially; grows when a real agent integration ships |
 | `versioning.md` | The `api_v1` ↔ `api_v2` deprecation policy (resolved in [Q4]) |
@@ -157,7 +157,7 @@ The follow-on **PLAN-006-developer-docs-content** ships these pages, in approxim
 - [INVESTIGATE-deployment-pipeline.md](INVESTIGATE-deployment-pipeline.md) — Docusaurus deploy + custom domain; separate concern from content.
 - [INVESTIGATE-public-api-surface.md](../completed/INVESTIGATE-public-api-surface.md) — the parent that mentioned PLAN-F (publish OpenAPI + docs); this INVESTIGATE realises that work.
 - [PLAN-004-postgrest-api-v1-wrapper.md](../completed/PLAN-004-postgrest-api-v1-wrapper.md) — produces the schema descriptions that flow through to the API reference.
-- [`docs/stack/naming-conventions.md`](../../../../../docs/stack/naming-conventions.md) — canonical conventions; `developers/concepts.md` reframes for API consumers + links here.
+- [`docs/stack/naming-conventions.md`](https://github.com/terchris/atlas/tree/main/docs/stack/naming-conventions.md) — canonical conventions; `developers/concepts.md` reframes for API consumers + links here.
 
 ---
 

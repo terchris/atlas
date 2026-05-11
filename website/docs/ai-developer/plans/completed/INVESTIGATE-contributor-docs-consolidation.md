@@ -10,7 +10,7 @@
 
 **Last Updated**: 2026-04-28
 
-**Origin**: After PLAN-001 + PLAN-002 landed (9 mart_* views + dbt-osmosis CI gate + 180 column descriptions filled), the strongest contributor docs are scattered across the atlas repo: [`atlas-data/CONTRIBUTING.md`](../../../../../atlas-data/CONTRIBUTING.md), [`atlas-data/ingest/src/sources/README.md`](../../../../../atlas-data/ingest/src/sources/README.md), [`atlas-data/dbt/README.md`](../../../../../atlas-data/dbt/README.md), the top-of-file comment in [`atlas-data/dbt/check-osmosis.sh`](../../../../../atlas-data/dbt/check-osmosis.sh), and [INVESTIGATE-data-journey-pattern.md](../completed/INVESTIGATE-data-journey-pattern.md). The Docusaurus site at `website/docs/` has no Contributing section — only About, Sector, Getting Started (1 page), Concepts, Measurements, Sources (mostly placeholders).
+**Origin**: After PLAN-001 + PLAN-002 landed (9 mart_* views + dbt-osmosis CI gate + 180 column descriptions filled), the strongest contributor docs are scattered across the atlas repo: [`atlas-data/CONTRIBUTING.md`](https://github.com/terchris/atlas/tree/main/atlas-data/CONTRIBUTING.md), [`atlas-data/ingest/src/sources/README.md`](https://github.com/terchris/atlas/tree/main/atlas-data/ingest/src/sources/README.md), [`atlas-data/dbt/README.md`](https://github.com/terchris/atlas/tree/main/atlas-data/dbt/README.md), the top-of-file comment in [`atlas-data/dbt/check-osmosis.sh`](https://github.com/terchris/atlas/tree/main/atlas-data/dbt/check-osmosis.sh), and [INVESTIGATE-data-journey-pattern.md](../completed/INVESTIGATE-data-journey-pattern.md). The Docusaurus site at `website/docs/` has no Contributing section — only About, Sector, Getting Started (1 page), Concepts, Measurements, Sources (mostly placeholders).
 
 A new contributor today has to know to look in three different `README.md` files inside the cloned repo. A new *developer* (someone who wants to consume Atlas data, not modify it) has nowhere obvious to land. Conflating these two audiences in scattered in-repo docs is the symptom; the fix is to separate them and make Contributing first-class on the public site.
 
@@ -44,10 +44,10 @@ The site is currently plain markdown — Docusaurus install/config is **not yet 
 
 | File | Audience | Content |
 |---|---|---|
-| [`atlas-data/CONTRIBUTING.md`](../../../../../atlas-data/CONTRIBUTING.md) | Contributor | 11-step "add a data source" workflow with completion criteria |
-| [`atlas-data/ingest/src/sources/README.md`](../../../../../atlas-data/ingest/src/sources/README.md) | Contributor | Ingest-module template + 19 examples + planned-sources catalogue |
-| [`atlas-data/dbt/README.md`](../../../../../atlas-data/dbt/README.md) | Contributor | dbt project layout, commands, schema.yml hygiene section |
-| [`atlas-data/dbt/check-osmosis.sh`](../../../../../atlas-data/dbt/check-osmosis.sh) (top-of-file comment) | Contributor | What the strict + lenient checks do, when to run |
+| [`atlas-data/CONTRIBUTING.md`](https://github.com/terchris/atlas/tree/main/atlas-data/CONTRIBUTING.md) | Contributor | 11-step "add a data source" workflow with completion criteria |
+| [`atlas-data/ingest/src/sources/README.md`](https://github.com/terchris/atlas/tree/main/atlas-data/ingest/src/sources/README.md) | Contributor | Ingest-module template + 19 examples + planned-sources catalogue |
+| [`atlas-data/dbt/README.md`](https://github.com/terchris/atlas/tree/main/atlas-data/dbt/README.md) | Contributor | dbt project layout, commands, schema.yml hygiene section |
+| [`atlas-data/dbt/check-osmosis.sh`](https://github.com/terchris/atlas/tree/main/atlas-data/dbt/check-osmosis.sh) (top-of-file comment) | Contributor | What the strict + lenient checks do, when to run |
 | [INVESTIGATE-data-journey-pattern.md](../completed/INVESTIGATE-data-journey-pattern.md) | Contributor (pedagogical) | Full end-to-end SSB 08764 example: raw → indicators → marts |
 | [`docs/ai-developer/GIT.md`](../../GIT.md) | Contributor | Branch / commit / PR conventions |
 | [`docs/ai-developer/WORKTREE.md`](../../WORKTREE.md) | Contributor | git worktree usage |
@@ -65,7 +65,7 @@ The site is currently plain markdown — Docusaurus install/config is **not yet 
 
 Two sibling projects already run public Docusaurus sites with contributor docs. Atlas should match where the convention is clear; the sister patterns resolve several of the open questions below.
 
-| Topic | [`urbalurba-infrastructure/website/`](../../../../../../urbalurba-infrastructure/website/) | [`devcontainer-toolbox/website/`](../../../../../devcontainer-toolbox/website/) | Atlas should adopt |
+| Topic | [`urbalurba-infrastructure/website/`](https://github.com/helpers-no/urbalurba-infrastructure/tree/main/website/) | [`devcontainer-toolbox/website/`](https://github.com/helpers-no/devcontainer-toolbox/tree/main/website/) | Atlas should adopt |
 |---|---|---|---|
 | Sidebar section name | **"Contributors"** (plural), explicit sidebar item near the bottom | "Contributors", auto-generated from filesystem structure | **"Contributors"** (plural) — matches both |
 | In-repo `/docs/` folder | Metadata-only — `README.md` + `CLAUDE.md`, points to website | `docs/README.md` (45 lines) — points to website, no canonical content | **Metadata-only**, point to website |

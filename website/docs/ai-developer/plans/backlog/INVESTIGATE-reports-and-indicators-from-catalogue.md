@@ -527,7 +527,7 @@ The contributor guide ([`website/docs/contributors/ingest-modules.md`](../../../
 
 ## Cross-references
 
-- [PLAN-007-data-display-open-by-default.md](../active/PLAN-007-data-display-open-by-default.md) — the catalogue + frontend plumbing every report below depends on.
+- [PLAN-007-data-display-open-by-default.md](../completed/PLAN-007-data-display-open-by-default.md) — the catalogue + frontend plumbing every report below depends on.
 - [`INVESTIGATE-new-norwegian-public-sources.md`](./INVESTIGATE-new-norwegian-public-sources.md) — the catalogue of planned new sources that unlock Reports #11–#16 and the inline "Planned additions" notes on Reports #1–#10. Updates to that file should trigger updates here.
 - [INVESTIGATE-tag-indicators-sdg-icnpo.md](INVESTIGATE-tag-indicators-sdg-icnpo.md) — separately motivates SDG / ICNPO tagging on the indicator catalogue (could feed `dim_indicator`).
 - [INVESTIGATE-felles-datakatalog-classification.md](INVESTIGATE-felles-datakatalog-classification.md) — DCAT-AP / EU-theme classification on the source side; not the indicator side.

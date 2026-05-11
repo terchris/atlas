@@ -9,7 +9,7 @@
 **Goal**: Decide a single principled convention for **all reference/dimension tables Atlas will need** — what to name them, where they live in `marts.*`, how they refresh, and which authoritative sources own them — before we start sprinkling `dim_*` / `ref_*` / `dim_postnummer` / `ref_icnpo` / `vocab_*` ad-hoc as different investigations promote to PLANs.
 
 **Last Updated**: 2026-04-23
-**Completed**: 2026-04-23 — adopted Option A+D. Convention codified in [`docs/stack/naming-conventions.md`](../../../../docs/stack/naming-conventions.md) via [PLAN-reference-tables-convention](../completed/PLAN-reference-tables-convention.md).
+**Completed**: 2026-04-23 — adopted Option A+D. Convention codified in [`docs/stack/naming-conventions.md`](https://github.com/terchris/atlas/tree/main/docs/stack/naming-conventions.md) via [PLAN-reference-tables-convention](../completed/PLAN-reference-tables-convention.md).
 
 **Origin**: [INVESTIGATE-ngo-supply-data-model.md](INVESTIGATE-ngo-supply-data-model.md) is about to introduce 6+ new tables of this kind (`dim_postnummer`, `dim_ngo`, `ref_icnpo`, `ref_sdg`, `ref_service_category`, `crosswalk_*`). The user observed: we don't have a common name for this category, and we should pick one before the new tables land. This investigation establishes the rule once so every future addition follows it without case-by-case argument.
 
@@ -220,7 +220,7 @@ These are the four buckets. Each new table fits into one — choose at creation 
 
 3. **ICNPO codes inside `dim_ngo`** — the convention says external taxonomies live in their own `ref_*` table. But each NGO carries up to 3 ICNPO codes natively in Brreg. Should `dim_ngo` carry them as denormalised columns (`icnpo_code_1`, `icnpo_code_2`, `icnpo_code_3`) with a relationships test to `ref_brreg_icnpo`, or as a separate junction `crosswalk_ngo_to_icnpo` with one row per (ngo, icnpo) pair? Recommendation: denormalised columns because the cardinality is hard-capped at 3 and the ranking matters; junction table would lose the ordering without an extra column anyway.
 
-4. **Naming-conventions.md update** — this convention belongs in [`docs/stack/naming-conventions.md`](../../../../docs/stack/naming-conventions.md), which already has model-naming guidance (`dim_*`, `indicators__*`, `fact_*`, `mart_*`). Adding `ref_<owner>_<concept>` and `crosswalk_<from>_<to>` extends that section. Should be part of the implementing PLAN.
+4. **Naming-conventions.md update** — this convention belongs in [`docs/stack/naming-conventions.md`](https://github.com/terchris/atlas/tree/main/docs/stack/naming-conventions.md), which already has model-naming guidance (`dim_*`, `indicators__*`, `fact_*`, `mart_*`). Adding `ref_<owner>_<concept>` and `crosswalk_<from>_<to>` extends that section. Should be part of the implementing PLAN.
 
 5. **Should `ssb-klass-kommuner` ingest pattern be reused for all SSB Klass-sourced reference tables?** The existing `ssb-klass-kommuner` and `ssb-klass-fylker` ingests both fetch from SSB Klass. New tables (`dim_postnummer` from Klass 488, `ref_helseregion` from Klass 100, etc.) could follow the same pattern: one ingest folder per Klass table. **Recommendation: yes, for consistency.** But that's an implementation detail for the implementing PLAN, not a convention question.
 
@@ -241,7 +241,7 @@ This convention covers every reference/dimension table currently planned through
 
 ## Next Steps
 
-- [ ] **PLAN-reference-tables-convention.md** — update [`docs/stack/naming-conventions.md`](../../../../docs/stack/naming-conventions.md) with the prefix rule, the owner-token pattern for `ref_*`, the crosswalk pattern, and the four refresh buckets. Cross-link from `INVESTIGATE-ngo-supply-data-model.md` so its PLAN-A picks up the convention. Estimated effort: ~1 hour, mostly doc work.
+- [ ] **PLAN-reference-tables-convention.md** — update [`docs/stack/naming-conventions.md`](https://github.com/terchris/atlas/tree/main/docs/stack/naming-conventions.md) with the prefix rule, the owner-token pattern for `ref_*`, the crosswalk pattern, and the four refresh buckets. Cross-link from `INVESTIGATE-ngo-supply-data-model.md` so its PLAN-A picks up the convention. Estimated effort: ~1 hour, mostly doc work.
 
 ### Not in scope for this investigation
 
@@ -259,7 +259,7 @@ This convention covers every reference/dimension table currently planned through
   - [Brreg available NGO categories (ICNPO)](https://www.brreg.no/en/associations-2/register-a-club-or-an-association/registration-in-the-register-of-non-profit-organisations/available-categories-of-the-activity/) — the canonical 12+30 list.
   - [UN SDGs](https://sdgs.un.org/goals) — 17 goals.
 - **Atlas-internal:**
-  - [`docs/stack/naming-conventions.md`](../../../../docs/stack/naming-conventions.md) — current vocabulary, will be extended.
+  - [`docs/stack/naming-conventions.md`](https://github.com/terchris/atlas/tree/main/docs/stack/naming-conventions.md) — current vocabulary, will be extended.
   - [`docs/ai-developer/plans/backlog/INVESTIGATE-ngo-supply-data-model.md`](INVESTIGATE-ngo-supply-data-model.md) — the consumer of this convention.
   - [`docs/ai-developer/plans/completed/INVESTIGATE-code-label-mapping.md`](../completed/INVESTIGATE-code-label-mapping.md) — the prior art that established `ref_<owner>_<concept>`.
-  - [`docs/stack/erd.md`](../../../../docs/stack/erd.md) — auto-generated ERD; will pick up new tables as they land.
+  - [`docs/stack/erd.md`](https://github.com/terchris/atlas/tree/main/docs/stack/erd.md) — auto-generated ERD; will pick up new tables as they land.

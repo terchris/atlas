@@ -266,7 +266,7 @@ A future optimisation could give agents a read-only role on a sandbox database t
 
 - [INVESTIGATE-new-norwegian-public-sources.md](./INVESTIGATE-new-norwegian-public-sources.md) — the 26-candidate queue this pipeline drains.
 - [INVESTIGATE-reports-and-indicators-from-catalogue.md](./INVESTIGATE-reports-and-indicators-from-catalogue.md) — the maintenance ritual the agent must execute (step 7 in `contributors/ingest-modules.md`).
-- [PLAN-007-data-display-open-by-default.md](../active/PLAN-007-data-display-open-by-default.md) — the catalogue plumbing that every onboarded source feeds into.
+- [PLAN-007-data-display-open-by-default.md](../completed/PLAN-007-data-display-open-by-default.md) — the catalogue plumbing that every onboarded source feeds into.
 - [`website/docs/contributors/ingest-modules.md`](../../../contributors/ingest-modules.md) — the 7-step adding-a-source workflow that is the agent's runbook.
-- [`feedback_reports-investigate-stays-current.md`](../../../../../../.claude/projects/-Users-terje-christensen-learn-helpers-atlas/memory/feedback_reports-investigate-stays-current.md) — the memory that codifies the maintenance ritual; the agent will be running into the same bar.
+- [`feedback_reports-investigate-stays-current.md`](#) — the memory that codifies the maintenance ritual; the agent will be running into the same bar.
 - [WORKTREE.md](../../WORKTREE.md), [GIT.md](../../GIT.md) — multi-agent / multi-branch hygiene that becomes load-bearing once agents push concurrently.

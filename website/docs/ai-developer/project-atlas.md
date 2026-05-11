@@ -4,13 +4,13 @@ Atlas is an organisation-neutral information platform that aggregates public dat
 
 Atlas runs on the **Urbalurba Infrastructure Stack (UIS)** at [uis.sovereignsky.no](https://uis.sovereignsky.no/) — a sovereign Kubernetes platform that already provides Postgres, observability, identity, networking, and GitOps deploy. New platform services Atlas needs (Dagster, Metabase, PostgREST) are filed as `INVESTIGATE-*.md` documents in the UIS repo's `website/docs/ai-developer/plans/backlog/`.
 
-For the user-facing description, personas, status, and key product decisions, read the repo-root [README.md](../../README.md) first — that is the authoritative product overview.
+For the user-facing description, personas, status, and key product decisions, read the repo-root [README.md](https://github.com/terchris/atlas/blob/main/README.md) first — that is the authoritative product overview.
 
 ---
 
 ## Repository structure
 
-This repo holds three co-located concerns: the **customer-facing Next.js app** (`atlas-frontend/`, PostgREST consumer; rebuilt under PLAN-005), the **contributor diagnostic Next.js app** (`atlas-contributor-frontend/`, direct Postgres for ingestion verification), and the **data platform** (`atlas-data/`, intended to be split into a separate `atlas-data` repo later — see [`atlas-data/README.md`](../../../atlas-data/README.md) for the split-trigger conditions).
+This repo holds three co-located concerns: the **customer-facing Next.js app** (`atlas-frontend/`, PostgREST consumer; rebuilt under PLAN-005), the **contributor diagnostic Next.js app** (`atlas-contributor-frontend/`, direct Postgres for ingestion verification), and the **data platform** (`atlas-data/`, intended to be split into a separate `atlas-data` repo later — see [`atlas-data/README.md`](https://github.com/terchris/atlas/tree/main/atlas-data/README.md) for the split-trigger conditions).
 
 ```
 atlas/
@@ -103,7 +103,7 @@ Browser (MapLibre map + Digdir Designsystemet UI)
 
 The **public HTTP API** (PostgREST) is the hard contract between `atlas-data/` and consumers. Atlas's own Next.js dogfoods this surface — it goes through the same API external developers use, no direct DB role. The data pipeline owns `raw.*` and `marts.*`; it never touches frontend code. **No API gateway, no auth in v1** — added later via Authentik+Gravitee (UIS) / Okta+APIM (Azure prod) when keyed users or rate-limit pressure emerges.
 
-In **v2**, Dagster sits between the ingest scripts and `raw.*` (and between dbt and `marts.*`) for orchestration. v1 ingest runs as CLI — pod-spawnable so v2 insertion is clean. See [`docs/stack/suggested-stack.md`](../../../docs/stack/suggested-stack.md) for the full v1/Future split and [`plans/completed/INVESTIGATE-public-api-surface.md`](plans/completed/INVESTIGATE-public-api-surface.md) for the API plan.
+In **v2**, Dagster sits between the ingest scripts and `raw.*` (and between dbt and `marts.*`) for orchestration. v1 ingest runs as CLI — pod-spawnable so v2 insertion is clean. See [`docs/stack/suggested-stack.md`](https://github.com/terchris/atlas/tree/main/docs/stack/suggested-stack.md) for the full v1/Future split and [`plans/completed/INVESTIGATE-public-api-surface.md`](plans/completed/INVESTIGATE-public-api-surface.md) for the API plan.
 
 ---
 
@@ -114,8 +114,8 @@ In **v2**, Dagster sits between the ingest scripts and `raw.*` (and between dbt 
 Requirements:
 
 - **Node** ≥ 20 (for both the Next.js frontend and the TypeScript ingest)
-- **Python** ≥ 3.11 (for dbt; see [`atlas-data/dbt/requirements.txt`](../../../atlas-data/dbt/requirements.txt))
-- **PostgreSQL** access — local for development, UIS-hosted in production. Connection string lives in `atlas-data/ingest/.env` (not committed) and `atlas-data/dbt/profiles.yml`. For the bootstrap workflow + post-reset recovery sequence (rotated password after a `rancher-desktop` reset, fresh laptop, or UIS image rebuild), see [`website/docs/contributors/setup.md` § Bootstrap atlas_db on UIS Postgres](../contributors/setup.md#bootstrap-atlas_db-on-uis-postgres).
+- **Python** ≥ 3.11 (for dbt; see [`atlas-data/dbt/requirements.txt`](https://github.com/terchris/atlas/tree/main/atlas-data/dbt/requirements.txt))
+- **PostgreSQL** access — local for development, UIS-hosted in production. Connection string lives in `atlas-data/ingest/.env` (not committed) and `atlas-data/dbt/profiles.yml`. For the bootstrap workflow + post-reset recovery sequence (rotated password after a `rancher-desktop` reset, fresh laptop, or UIS image rebuild), see [`website/docs/contributors/setup.md` § Bootstrap atlas_db on UIS Postgres](../contributors/setup.md#connecting-to-postgres-in-uis).
 
 ---
 
@@ -144,7 +144,7 @@ npm run ingest:<source-id>   # run a single source (19 currently implemented)
 npm run typecheck            # tsc --noEmit
 ```
 
-The full list of `ingest:*` scripts is in [`atlas-data/ingest/package.json`](../../../atlas-data/ingest/package.json) and documented per-source in [`atlas-data/ingest/src/sources/README.md`](../../../atlas-data/ingest/src/sources/README.md).
+The full list of `ingest:*` scripts is in [`atlas-data/ingest/package.json`](https://github.com/terchris/atlas/tree/main/atlas-data/ingest/package.json) and documented per-source in [`atlas-data/ingest/src/sources/README.md`](https://github.com/terchris/atlas/tree/main/atlas-data/ingest/src/sources/README.md).
 
 ### dbt (`atlas-data/dbt/`)
 
@@ -175,10 +175,10 @@ How it's wired:
 - `uv` (Astral) manages the project-local Python 3.12 venv at `atlas-data/dbt/.venv/`.
 - `--env-file ../ingest/.env` pulls `PGHOST/PGPORT/PGUSER/PGPASSWORD/PGDATABASE` from the same `.env` the TypeScript ingest uses — single source of truth for credentials.
 - `profiles.yml` lives next to `dbt_project.yml` (dbt 1.5+ auto-discovers it) and reads those env vars via `env_var()`.
-- Schema-name override macro at [`atlas-data/dbt/macros/generate_schema_name.sql`](../../../atlas-data/dbt/macros/generate_schema_name.sql) means `+schema: marts` produces `marts`, not dbt's default `{target}_marts`.
-- In production (per [`docs/stack/suggested-stack.md`](../../../docs/stack/suggested-stack.md)) dbt runs inside Dagster-spawned pods using the same uv-pinned environment — local and prod parity is preserved.
+- Schema-name override macro at [`atlas-data/dbt/macros/generate_schema_name.sql`](https://github.com/terchris/atlas/tree/main/atlas-data/dbt/macros/generate_schema_name.sql) means `+schema: marts` produces `marts`, not dbt's default `{target}_marts`.
+- In production (per [`docs/stack/suggested-stack.md`](https://github.com/terchris/atlas/tree/main/docs/stack/suggested-stack.md)) dbt runs inside Dagster-spawned pods using the same uv-pinned environment — local and prod parity is preserved.
 
-Full reference: [`atlas-data/dbt/README.md`](../../../atlas-data/dbt/README.md).
+Full reference: [`atlas-data/dbt/README.md`](https://github.com/terchris/atlas/tree/main/atlas-data/dbt/README.md).
 
 ---
 
@@ -189,16 +189,16 @@ The `docs/` folder is split into three. Read the relevant one before working in 
 | When you are... | Read first |
 |-----------------|------------|
 | Setting up your dev environment from scratch (first day) or recovering from a cluster reset (rotated Postgres password, fresh laptop, UIS image rebuild) | [`website/docs/contributors/setup.md`](../contributors/setup.md) — bootstrap workflow, `.env` shape, post-reset recovery sequence, `dbt debug` + `npm run migrate` ordering |
-| Adding or modifying a data source | [`atlas-data/ingest/src/sources/README.md`](../../../atlas-data/ingest/src/sources/README.md) — per-source pattern, the template, the catalogue table |
-| Working on the dbt models / dim spine / marts.* | [`atlas-data/dbt/`](../../../atlas-data/dbt/) and [`plans/completed/INVESTIGATE-data-journey-pattern.md`](plans/completed/INVESTIGATE-data-journey-pattern.md) (the worked end-to-end journey for one source — completed design investigation) |
-| Writing user-facing data documentation (concept definitions, "what does this row mean", measurement reference, source provenance for non-engineers) | [`website/README.md`](../../website/README.md) — folder layout, helpers-project conventions, when Docusaurus actually gets installed. Worked example: [`website/docs/getting-started/reading-a-row.md`](../../website/docs/getting-started/reading-a-row.md) |
-| Thinking about modelling, scaling beyond 19 sources, or the metric/catalogue/dictionary layers | [`docs/stack/data-strategy.md`](../../../docs/stack/data-strategy.md) — established patterns, what mid-size teams run, what Atlas needs when |
-| Adding or renaming a field — establishing the canonical Atlas vocabulary | [`docs/stack/naming-conventions.md`](../../../docs/stack/naming-conventions.md) |
-| Deciding how to decode a coded field for a new source (enum mapping, label lookup, structured parse) | [`plans/backlog/INVESTIGATE-code-label-mapping.md`](plans/backlog/INVESTIGATE-code-label-mapping.md) — open decision with hybrid recommendation |
-| Making a stack-level decision (new platform service, install vs reuse, etc.) | [`docs/stack/suggested-stack.md`](../../../docs/stack/suggested-stack.md) — the v1-narrowed stack with explicit "removed from v1" rationales |
-| Working on the Next.js frontend | Repo root: [`README.md`](../../README.md), [`app/`](../../app/), [`src/`](../../src/). UI components: [Digdir Designsystemet docs](https://designsystemet.no). Maps: [MapLibre docs](https://maplibre.org). |
-| Researching the NGO sector or a specific organisation | [`docs/research/`](../../../docs/research/) — personas, NGO profiles, sector landscape, data-source catalogues |
-| Investigating a specific Samfunnspuls source | [`docs/research/samfunnspuls/`](../../../docs/research/samfunnspuls/) — the 24-source catalogue, field notes, data-sources.md |
+| Adding or modifying a data source | [`atlas-data/ingest/src/sources/README.md`](https://github.com/terchris/atlas/tree/main/atlas-data/ingest/src/sources/README.md) — per-source pattern, the template, the catalogue table |
+| Working on the dbt models / dim spine / marts.* | [`atlas-data/dbt/`](https://github.com/terchris/atlas/tree/main/atlas-data/dbt/) and [`plans/completed/INVESTIGATE-data-journey-pattern.md`](plans/completed/INVESTIGATE-data-journey-pattern.md) (the worked end-to-end journey for one source — completed design investigation) |
+| Writing user-facing data documentation (concept definitions, "what does this row mean", measurement reference, source provenance for non-engineers) | [`website/README.md`](https://github.com/terchris/atlas/blob/main/website/README.md) — folder layout, helpers-project conventions, when Docusaurus actually gets installed. Worked example: [`website/docs/getting-started/reading-a-row.md`](../getting-started/reading-a-row.md) |
+| Thinking about modelling, scaling beyond 19 sources, or the metric/catalogue/dictionary layers | [`docs/stack/data-strategy.md`](https://github.com/terchris/atlas/tree/main/docs/stack/data-strategy.md) — established patterns, what mid-size teams run, what Atlas needs when |
+| Adding or renaming a field — establishing the canonical Atlas vocabulary | [`docs/stack/naming-conventions.md`](https://github.com/terchris/atlas/tree/main/docs/stack/naming-conventions.md) |
+| Deciding how to decode a coded field for a new source (enum mapping, label lookup, structured parse) | [`plans/completed/INVESTIGATE-code-label-mapping.md`](plans/completed/INVESTIGATE-code-label-mapping.md) — hybrid recommendation, completed |
+| Making a stack-level decision (new platform service, install vs reuse, etc.) | [`docs/stack/suggested-stack.md`](https://github.com/terchris/atlas/tree/main/docs/stack/suggested-stack.md) — the v1-narrowed stack with explicit "removed from v1" rationales |
+| Working on the Next.js frontend | Repo root: [`README.md`](https://github.com/terchris/atlas/blob/main/README.md), [`app/`](https://github.com/terchris/atlas/tree/main/atlas-frontend/src/app/), [`src/`](https://github.com/terchris/atlas/tree/main/atlas-frontend/src/). UI components: [Digdir Designsystemet docs](https://designsystemet.no). Maps: [MapLibre docs](https://maplibre.org). |
+| Researching the NGO sector or a specific organisation | [`docs/research/`](https://github.com/terchris/atlas/tree/main/docs/research/) — personas, NGO profiles, sector landscape, data-source catalogues |
+| Investigating a specific Samfunnspuls source | [`docs/research/samfunnspuls/`](https://github.com/terchris/atlas/tree/main/docs/research/samfunnspuls/) — the 24-source catalogue, field notes, data-sources.md |
 | Filing a request for a new platform service in UIS | UIS repo: `~/learn/helpers/urbalurba-infrastructure/website/docs/ai-developer/plans/backlog/INVESTIGATE-*.md` — see existing examples (Dagster, Metabase, PostgREST) for the format |
 
 ---
@@ -215,11 +215,11 @@ These are non-negotiable constraints. They are the things that take longer to un
 - `atlas-data/` (ingest + dbt) **owns** `raw.*` and `marts.*`. PostgREST projects `marts.*` views and tables as REST endpoints; it doesn't write anywhere.
 - A schema change to anything PostgREST exposes is a breaking change to the API consumers. Coordinate it explicitly.
 - **v1 = no API gateway, no auth.** PostgREST sits behind Cloudflare Tunnel, public + anonymous + read-only. Auth and rate-limiting come later via Authentik+Gravitee (UIS) / Okta+APIM (Azure prod) when triggers fire (keyed users, abuse pressure, write endpoints).
-- API-shaped views in `marts.*` follow the [`mart_<feature>`](../../../docs/stack/naming-conventions.md#when-to-add-a-new-mart_feature) convention. Query logic lives in dbt views; PostgREST stays a thin projection.
+- API-shaped views in `marts.*` follow the [`mart_<feature>`](https://github.com/terchris/atlas/tree/main/docs/stack/naming-conventions.md#when-to-add-a-new-mart_feature) convention. Query logic lives in dbt views; PostgREST stays a thin projection.
 
 See [`plans/completed/INVESTIGATE-public-api-surface.md`](plans/completed/INVESTIGATE-public-api-surface.md) for the full plan, the per-route audit, and the phased migration (PLAN-D.1 → D.2 → E → F → G).
 
-**Migration status** (2026-04-30, PLAN-005 shipped): the original `atlas-frontend/` was renamed to [`atlas-contributor-frontend/`](../../../atlas-contributor-frontend/) (it was contributor-shaped throughout) and a fresh customer-facing [`atlas-frontend/`](../../../atlas-frontend/) was scaffolded as a PostgREST consumer with no DB role. See [INVESTIGATE-frontend-data-access-architecture.md](plans/completed/INVESTIGATE-frontend-data-access-architecture.md) for the architectural rationale and [PLAN-005-frontend-split-and-rebuild.md](plans/completed/PLAN-005-frontend-split-and-rebuild.md) for the implementation log.
+**Migration status** (2026-04-30, PLAN-005 shipped): the original `atlas-frontend/` was renamed to [`atlas-contributor-frontend/`](https://github.com/terchris/atlas/tree/main/atlas-contributor-frontend/) (it was contributor-shaped throughout) and a fresh customer-facing [`atlas-frontend/`](https://github.com/terchris/atlas/tree/main/atlas-frontend/) was scaffolded as a PostgREST consumer with no DB role. See [INVESTIGATE-frontend-data-access-architecture.md](plans/completed/INVESTIGATE-frontend-data-access-architecture.md) for the architectural rationale and [PLAN-005-frontend-split-and-rebuild.md](plans/completed/PLAN-005-frontend-split-and-rebuild.md) for the implementation log.
 
 ### Always run `dbt test` after pipeline changes
 
@@ -230,13 +230,13 @@ See [`plans/completed/INVESTIGATE-public-api-surface.md`](plans/completed/INVEST
 ### The atlas-data split
 
 - `atlas-data/` is structured as if it were already a separate repo. Imports do not cross the boundary in either direction except via the database.
-- When the split happens (trigger conditions in [`atlas-data/README.md`](../../../atlas-data/README.md)), it should be a clean `git subtree split` with no code changes required.
+- When the split happens (trigger conditions in [`atlas-data/README.md`](https://github.com/terchris/atlas/tree/main/atlas-data/README.md)), it should be a clean `git subtree split` with no code changes required.
 
 ### One folder per data source
 
 - Every data source ingested by Atlas lives in its own folder under `atlas-data/ingest/src/sources/<source-id>/`.
 - Folder name = source id, matching the id in `docs/research/samfunnspuls/data-sources.md`.
-- Entry point is `index.ts` exporting `SOURCE_ID` and `run()`. README.md alongside. Add a row to the table in [`atlas-data/ingest/src/sources/README.md`](../../../atlas-data/ingest/src/sources/README.md). Add an `ingest:<id>` script to `package.json`.
+- Entry point is `index.ts` exporting `SOURCE_ID` and `run()`. README.md alongside. Add a row to the table in [`atlas-data/ingest/src/sources/README.md`](https://github.com/terchris/atlas/tree/main/atlas-data/ingest/src/sources/README.md). Add an `ingest:<id>` script to `package.json`.
 - Implementation details and catalogue-level metadata are not duplicated — implementation details live in the per-source README, catalogue metadata in `docs/research/samfunnspuls/data-sources.md`.
 
 ### Stack decisions are recorded, not re-argued
@@ -246,8 +246,8 @@ See [`plans/completed/INVESTIGATE-public-api-surface.md`](plans/completed/INVEST
 
 ### User-facing documentation goes in `website/docs/`
 
-- Documentation aimed at **consumers of `marts.*`** — concept definitions ("what is a `kommune`?"), measurement reference ("what does `EUskala50` mean?"), worked examples ("how do I read a row?"), source provenance for non-engineers — lives in [`website/docs/`](../../website/docs/).
-- The folder is shaped to match Docusaurus conventions used by sister Helpers projects ([UIS](https://github.com/helpers-no/urbalurba-infrastructure), [DCT](https://github.com/helpers-no/devcontainer-toolbox)) so the eventual install requires no restructuring. Docusaurus is **not yet installed**; pages render as plain MD on GitHub for now. See [`website/README.md`](../../website/README.md) for layout, conventions inherited from the sister sites, and Docusaurus-install triggers.
+- Documentation aimed at **consumers of `marts.*`** — concept definitions ("what is a `kommune`?"), measurement reference ("what does `EUskala50` mean?"), worked examples ("how do I read a row?"), source provenance for non-engineers — lives in [`website/docs/`](../).
+- The folder is shaped to match Docusaurus conventions used by sister Helpers projects ([UIS](https://github.com/helpers-no/urbalurba-infrastructure), [DCT](https://github.com/helpers-no/devcontainer-toolbox)) so the eventual install requires no restructuring. Docusaurus is **not yet installed**; pages render as plain MD on GitHub for now. See [`website/README.md`](https://github.com/terchris/atlas/blob/main/website/README.md) for layout, conventions inherited from the sister sites, and Docusaurus-install triggers.
 - Audience split — keep these separate, do not mix:
   - `website/docs/` — for **consumers** of `marts.*` (Dev/Ola/Lisa/journalist personas, future LLM agents)
   - `docs/research/` — for the team **thinking about** the model (NGO profiles, common-schema, sector landscape)

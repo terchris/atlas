@@ -4,7 +4,7 @@
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Backlog (recommendation accepted; execution tracked in [PLAN-007](../active/PLAN-007-data-display-open-by-default.md))
+## Status: Backlog (recommendation accepted; execution tracked in [PLAN-007](../completed/PLAN-007-data-display-open-by-default.md))
 
 **Goal**: Reframe what the customer frontend's `/data` displays. Today it shows the 9 curated `api_v1.*` endpoints — a small slice of the data Atlas actually holds. Atlas is a *play-with-the-data* platform, so the rule is: **open by default; only data explicitly defined as gated is hidden**. Plus an explicit requirement: a per-source list with last-ingestion timestamps. Output is the implementation shape (PostgREST schema exposure, grants, frontend layout) — not the implementation itself (a follow-on PLAN handles that).
 
@@ -58,7 +58,7 @@ Atlas already has the substrate. Three artefacts exist; the gap is the join.
 
 | Artefact | Where it lives today | What it gives us |
 |---|---|---|
-| **Hand-maintained Markdown registry** of all 20 implemented sources | [`atlas-data/ingest/src/sources/README.md`](../../../../../atlas-data/ingest/src/sources/README.md) | Source ID + provider + one-line description + npm-run command + notes. Source of truth for the static metadata today, just unstructured. |
+| **Hand-maintained Markdown registry** of all 20 implemented sources | [`atlas-data/ingest/src/sources/README.md`](https://github.com/terchris/atlas/tree/main/atlas-data/ingest/src/sources/README.md) | Source ID + provider + one-line description + npm-run command + notes. Source of truth for the static metadata today, just unstructured. |
 | **Per-source READMEs** (20 of 21 sources have one) | `atlas-data/ingest/src/sources/<id>/README.md` | Richer per-source notes: implementation, schema quirks, observed issues. Free-form prose — not a registry, but useful provenance for the upstream URL + description fields. |
 | **`raw.ingest_runs` table** (already populated, queryable) | atlas_db | One row per ingest invocation: `source_slug`, `started_at`, `finished_at`, `exit_code`, `rows_scraped`, `rows_parsed`, `warnings_count`, `errors_count`, `notes`. Both timestamp and row-count fields the sources list needs are already here, just not joined to source-level metadata or exposed via PostgREST. |
 | **`atlas-data/dbt/models/indicators/sources.yml`** | dbt project | 17 declarations of `raw.*` indicator tables as dbt sources, with column-level descriptions. Subset only — doesn't include redcross-branches, ssb-klass-*, frr. |
@@ -176,7 +176,7 @@ The follow-on PLAN-007 ships in roughly five phases:
 - [PLAN-005-frontend-split-and-rebuild.md](../completed/PLAN-005-frontend-split-and-rebuild.md) — built the introspection-driven `/data` catalog this INVESTIGATE extends.
 - [INVESTIGATE-private-atlas-deployments.md](INVESTIGATE-private-atlas-deployments.md) — sibling concern; auth-gated `private_marts.*` access pattern. When that ships, the open-everything rule here gains its complement.
 - [INVESTIGATE-data-freshness-surface.md](INVESTIGATE-data-freshness-surface.md) — sibling; how to surface freshness signals to non-technical personas. The `meta_sources.latest_run_at` field this INVESTIGATE introduces is the queryable substrate that one will visualise.
-- [`atlas-data/ingest/src/sources/`](../../../../../atlas-data/ingest/src/sources/) — where the per-source metadata YAML/JSON registry will live.
+- [`atlas-data/ingest/src/sources/`](https://github.com/terchris/atlas/tree/main/atlas-data/ingest/src/sources/) — where the per-source metadata YAML/JSON registry will live.
 
 ---
 

@@ -61,7 +61,7 @@ The 13 EU Data Theme codes:
 ## Current state
 
 After PLAN-007 Phase 2 lands, Atlas has:
-- 21 `manifest.yml` files under [`atlas-data/ingest/src/sources/`](../../../../atlas-data/ingest/src/sources/) with 4 tag namespaces (`provider`, `topic`, `geo`, `cadence`).
+- 21 `manifest.yml` files under [`atlas-data/ingest/src/sources/`](https://github.com/terchris/atlas/tree/main/atlas-data/ingest/src/sources/) with 4 tag namespaces (`provider`, `topic`, `geo`, `cadence`).
 - Atlas-domain topic vocabulary: `ngo-supply`, `reference`, `income`, `education`, `health`, `social`, `demographics`.
 - Publisher field already keyed to Norwegian organisation names (SSB, FHI, Norges Røde Kors).
 - No EU Data Theme tags. No LOS tags. No DCAT-AP-NO catalogue endpoint.

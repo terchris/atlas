@@ -2,7 +2,7 @@
 
 A note from the UIS contributor to the Atlas team.
 
-**Trigger**: This is a follow-up to your [`NOTE-from-atlas-postgrest-verification.md`](../../../../../urbalurba-infrastructure/website/docs/ai-developer/plans/backlog/NOTE-from-atlas-postgrest-verification.md) (2026-04-29). All four findings are addressed; the work landed on `main` of `helpers-no/urbalurba-infrastructure` via [PR #129](https://github.com/helpers-no/urbalurba-infrastructure/pull/129).
+**Trigger**: This is a follow-up to your [`NOTE-from-atlas-postgrest-verification.md`](https://github.com/helpers-no/urbalurba-infrastructure/tree/main/website/docs/ai-developer/plans/backlog/NOTE-from-atlas-postgrest-verification.md) (2026-04-29). All four findings are addressed; the work landed on `main` of `helpers-no/urbalurba-infrastructure` via [PR #129](https://github.com/helpers-no/urbalurba-infrastructure/pull/129).
 
 **TL;DR**: PostgREST documentation is shipped; PostgREST is **not yet deployable** (PLAN-002 ships that). Three things would be useful to hear back on before PLAN-002 starts.
 

@@ -10,7 +10,7 @@
 
 **Last Updated**: 2026-04-23
 
-**Origin**: Once [PLAN-foundation-reference-tables.md](PLAN-foundation-reference-tables.md) lands `ref_un_sdg` and `ref_brreg_icnpo`, the demand-side data Atlas already has gains a natural rollup story: each indicator (FHI mobbing, SSB child poverty, FHI overcrowded housing, etc.) maps to one or more SDGs and to an ICNPO category. That mapping doesn't exist yet. This investigation decides what tagging to do, where the mappings live, and what queries become possible afterwards.
+**Origin**: Once [PLAN-foundation-reference-tables.md](../completed/PLAN-foundation-reference-tables.md) lands `ref_un_sdg` and `ref_brreg_icnpo`, the demand-side data Atlas already has gains a natural rollup story: each indicator (FHI mobbing, SSB child poverty, FHI overcrowded housing, etc.) maps to one or more SDGs and to an ICNPO category. That mapping doesn't exist yet. This investigation decides what tagging to do, where the mappings live, and what queries become possible afterwards.
 
 ---
 
@@ -33,7 +33,7 @@ After PLAN-foundation-reference-tables (when it lands), Atlas has:
 - `marts.fact_kommune_indicators` — 135 698 rows from 19 sources, no SDG or ICNPO column.
 - `marts.indicators__*` — 17 per-source models with their own dim columns; no SDG/ICNPO context.
 
-The supply-side investigation [INVESTIGATE-ngo-supply-data-model.md](INVESTIGATE-ngo-supply-data-model.md) establishes that `dim_ngo` carries up to 3 ICNPO codes per NGO (from Brreg). But that's about organisations, not indicators. Whether *indicators* should also be tagged is the open question.
+The supply-side investigation [INVESTIGATE-ngo-supply-data-model.md](../completed/INVESTIGATE-ngo-supply-data-model.md) establishes that `dim_ngo` carries up to 3 ICNPO codes per NGO (from Brreg). But that's about organisations, not indicators. Whether *indicators* should also be tagged is the open question.
 
 ---
 
@@ -128,20 +128,20 @@ A hybrid is plausible: build the topic layer (Option E) **now** with SDG + ICNPO
 ### Not in scope for this investigation
 
 - Building any of the tagging tables — that's the PLAN that follows.
-- Tagging NGO supply data with SDG/ICNPO — that's already covered by `dim_ngo.icnpo_code_*` (PLAN-A of [INVESTIGATE-ngo-supply-data-model.md](INVESTIGATE-ngo-supply-data-model.md)).
+- Tagging NGO supply data with SDG/ICNPO — that's already covered by `dim_ngo.icnpo_code_*` (PLAN-A of [INVESTIGATE-ngo-supply-data-model.md](../completed/INVESTIGATE-ngo-supply-data-model.md)).
 - Tagging indicators with non-standard frameworks (Helsedirektoratet outcome categories, EU social-inclusion indicators) — separate work if it ever comes up.
 
 ### Prerequisites
 
-- [PLAN-foundation-reference-tables.md](PLAN-foundation-reference-tables.md) must land first — `ref_un_sdg` and `ref_brreg_icnpo` are required for any tagging work.
+- [PLAN-foundation-reference-tables.md](../completed/PLAN-foundation-reference-tables.md) must land first — `ref_un_sdg` and `ref_brreg_icnpo` are required for any tagging work.
 
 ---
 
 ## Cross-references
 
-- [`docs/ai-developer/plans/backlog/PLAN-foundation-reference-tables.md`](PLAN-foundation-reference-tables.md) — the prerequisite that creates `ref_un_sdg` and `ref_brreg_icnpo`.
-- [`docs/ai-developer/plans/backlog/INVESTIGATE-ngo-supply-data-model.md`](INVESTIGATE-ngo-supply-data-model.md) — the supply-side counterpart; ICNPO tagging there is well-grounded (NGOs have ICNPO codes natively at Brreg).
-- [`docs/stack/naming-conventions.md`](../../../../docs/stack/naming-conventions.md) — naming convention for any new `crosswalk_*` or `ref_atlas_*` table this work introduces.
+- [`docs/ai-developer/plans/backlog/PLAN-foundation-reference-tables.md`](../completed/PLAN-foundation-reference-tables.md) — the prerequisite that creates `ref_un_sdg` and `ref_brreg_icnpo`.
+- [`docs/ai-developer/plans/backlog/INVESTIGATE-ngo-supply-data-model.md`](../completed/INVESTIGATE-ngo-supply-data-model.md) — the supply-side counterpart; ICNPO tagging there is well-grounded (NGOs have ICNPO codes natively at Brreg).
+- [`docs/stack/naming-conventions.md`](https://github.com/terchris/atlas/tree/main/docs/stack/naming-conventions.md) — naming convention for any new `crosswalk_*` or `ref_atlas_*` table this work introduces.
 - [UN SDGs](https://sdgs.un.org/goals).
 - [Brreg ICNPO categories](https://www.brreg.no/en/associations-2/register-a-club-or-an-association/registration-in-the-register-of-non-profit-organisations/available-categories-of-the-activity/).
 - [SSB satellittregnskap for ideelle og frivillige organisasjoner](https://www.ssb.no/nasjonalregnskap-og-konjunkturer/nasjonalregnskap/statistikk/satellittregnskap-for-ideelle-og-frivillige-organisasjoner) — example of a third-party that already tags Norwegian data with ICNPO; worth checking whether their methodology is published.

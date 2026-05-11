@@ -6,7 +6,7 @@
 
 ## Status: Completed
 
-**Goal**: Codify the reference/dimension table convention from [INVESTIGATE-reference-tables-convention.md](INVESTIGATE-reference-tables-convention.md) into [`docs/stack/naming-conventions.md`](../../../../docs/stack/naming-conventions.md), and align the wording in [INVESTIGATE-ngo-supply-data-model.md](INVESTIGATE-ngo-supply-data-model.md) to use the convention. Doc-only change, no data tables built.
+**Goal**: Codify the reference/dimension table convention from [INVESTIGATE-reference-tables-convention.md](INVESTIGATE-reference-tables-convention.md) into [`docs/stack/naming-conventions.md`](https://github.com/terchris/atlas/tree/main/docs/stack/naming-conventions.md), and align the wording in [INVESTIGATE-ngo-supply-data-model.md](INVESTIGATE-ngo-supply-data-model.md) to use the convention. Doc-only change, no data tables built.
 
 **Last Updated**: 2026-04-23
 **Completed**: 2026-04-23
@@ -34,7 +34,7 @@ No naming churn for existing tables — `dim_kommune`, `dim_fylke`, and the five
 
 ### Tasks
 
-- [x] 1.1 In [`docs/stack/naming-conventions.md`](../../../../docs/stack/naming-conventions.md), extended the **Model naming** table with `ref_<owner>_<concept>` and `crosswalk_<from>_<to>` rows. Owner-token rule documented; existing `ref_ssb_*` and `ref_fhi_*` already conform.
+- [x] 1.1 In [`docs/stack/naming-conventions.md`](https://github.com/terchris/atlas/tree/main/docs/stack/naming-conventions.md), extended the **Model naming** table with `ref_<owner>_<concept>` and `crosswalk_<from>_<to>` rows. Owner-token rule documented; existing `ref_ssb_*` and `ref_fhi_*` already conform.
   - `ref_<owner>_<concept>` — examples: `ref_ssb_family_type`, `ref_brreg_icnpo`, `ref_un_sdg`, `ref_atlas_service_category`. ✓
   - `crosswalk_<from>_<to>` — examples: `crosswalk_kommune_name`, `crosswalk_activity_to_category`. ✓
 - [x] 1.2 Tightened the `dim_*` row description (owner is implicit, no second token). ✓
@@ -44,7 +44,7 @@ No naming churn for existing tables — `dim_kommune`, `dim_fylke`, and the five
 
 ### Validation
 
-User reads the updated [`docs/stack/naming-conventions.md`](../../../../docs/stack/naming-conventions.md) and confirms:
+User reads the updated [`docs/stack/naming-conventions.md`](https://github.com/terchris/atlas/tree/main/docs/stack/naming-conventions.md) and confirms:
 - The two new naming patterns are clear and example-backed.
 - The four refresh buckets read as actionable, not abstract.
 - No conflict with existing rules (no rename of existing tables required).
@@ -55,7 +55,7 @@ User reads the updated [`docs/stack/naming-conventions.md`](../../../../docs/sta
 
 ### Tasks
 
-- [x] 2.1 Renamed in [`INVESTIGATE-ngo-supply-data-model.md`](../backlog/INVESTIGATE-ngo-supply-data-model.md):
+- [x] 2.1 Renamed in [`INVESTIGATE-ngo-supply-data-model.md`](../completed/INVESTIGATE-ngo-supply-data-model.md):
   - `ref_icnpo` → `ref_brreg_icnpo` ✓
   - `ref_service_category` → `ref_atlas_service_category` ✓
   - `ref_sdg` was never present as a table (only mentioned as a `sdg_goals` attribute on `ref_atlas_service_category`); no rename needed. ✓
@@ -69,7 +69,7 @@ User confirms the renamed references read consistently and PLAN-A — when draft
 
 ## Acceptance Criteria
 
-- [ ] [`docs/stack/naming-conventions.md`](../../../../docs/stack/naming-conventions.md) lists `ref_<owner>_<concept>` and `crosswalk_<from>_<to>` in the Model naming table with at least two examples each.
+- [ ] [`docs/stack/naming-conventions.md`](https://github.com/terchris/atlas/tree/main/docs/stack/naming-conventions.md) lists `ref_<owner>_<concept>` and `crosswalk_<from>_<to>` in the Model naming table with at least two examples each.
 - [ ] The "Reference table refresh cadence" subsection lists the four buckets (never / rare / periodic / curated) with examples and a one-line guidance on choosing.
 - [ ] [`INVESTIGATE-ngo-supply-data-model.md`](INVESTIGATE-ngo-supply-data-model.md) uses `ref_brreg_icnpo`, `ref_un_sdg`, `ref_atlas_service_category` consistently (no leftover short forms).
 - [ ] Both files cross-link to [`INVESTIGATE-reference-tables-convention.md`](INVESTIGATE-reference-tables-convention.md) so future contributors can find the rationale.
@@ -82,7 +82,7 @@ User confirms the renamed references read consistently and PLAN-A — when draft
 - **No CI gate / automated check.** Convention compliance is enforced socially by reviewing new `marts.*` tables in PRs, like the rest of `naming-conventions.md`.
 - **Existing tables are grandfathered.** The convention reads forward; `dim_kommune` and `ref_ssb_family_type` already conform. No rename, no migration.
 - **The seed schema.yml from PLAN-003** (`atlas-data/dbt/seeds/schema.yml`) doesn't need to change — it already documents the existing five seeds. New seeds added under the convention will get entries there per the existing pattern.
-- **The ERD ([`docs/stack/erd.md`](../../../../docs/stack/erd.md)) doesn't change** — it auto-regenerates from the dbt manifest when new tables are added; the convention only changes table names, not how dbterd reads them.
+- **The ERD ([`docs/stack/erd.md`](https://github.com/terchris/atlas/tree/main/docs/stack/erd.md)) doesn't change** — it auto-regenerates from the dbt manifest when new tables are added; the convention only changes table names, not how dbterd reads them.
 
 ---
 

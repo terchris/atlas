@@ -172,10 +172,10 @@ Pick **the first raw table in `raw_tables:`** (or the default-derived one) for c
 
 ## Cross-references
 
-- [PLAN-007-data-display-open-by-default.md § Phase 3.4](../active/PLAN-007-data-display-open-by-default.md#phase-3-marts.meta_sources--marts.meta_endpoints--marts.meta_dimensions-dbt-models) — the original spec that deferred this work.
+- [PLAN-007-data-display-open-by-default.md § Phase 3.4](../completed/PLAN-007-data-display-open-by-default.md#phase-3) — the original spec that deferred this work.
 - [PR #73](https://github.com/terchris/atlas/pull/73) — Phase 3 v1 that shipped the editorial pass-through; outcome notes flagged this as the open follow-up.
 - [PR #77](https://github.com/terchris/atlas/pull/77) — `raw_tables:` field in manifest.yml; the same pattern this INVESTIGATE recommends for `column_name:`.
-- [`extract_lineage.py`](../../../../atlas-data/dbt/scripts/extract_lineage.py) — the analogous Python extract script (option (b) follows its shape).
+- [`extract_lineage.py`](https://github.com/terchris/atlas/tree/main/atlas-data/dbt/scripts/extract_lineage.py) — the analogous Python extract script (option (b) follows its shape).
 
 ---
 

@@ -29,14 +29,14 @@
 **Out of scope (per-NGO investigations own these):**
 - Actual URLs, sitemap structure, HTML selectors, Brreg matching for any specific NGO
 - Activity → service_category mapping (each NGO has its own taxonomy)
-- Multi-NGO data-model extensions — see [`INVESTIGATE-multi-ngo-supply-model-extensions.md`](./INVESTIGATE-multi-ngo-supply-model-extensions.md)
-- Sub-activity / events / minisites — see [`INVESTIGATE-ngo-events-and-minisites.md`](./INVESTIGATE-ngo-events-and-minisites.md)
+- Multi-NGO data-model extensions — see [`INVESTIGATE-multi-ngo-supply-model-extensions.md`](../backlog/INVESTIGATE-multi-ngo-supply-model-extensions.md)
+- Sub-activity / events / minisites — see [`INVESTIGATE-ngo-events-and-minisites.md`](../backlog/INVESTIGATE-ngo-events-and-minisites.md)
 
 ---
 
 ## Why this exists
 
-Atlas needs supply data for ~10 Tier A NGOs (Red Cross, Folkehjelp, N.K.S., Frelsesarmeen, Kirkens Bymisjon, Mental Helse, Diabetesforbundet, Nasjonalforeningen, Blindeforbundet, LHL — see [`ngo-landscape.md`](../../../../docs/research/ngo-landscape.md)). Of these, **only Red Cross has a usable API** (`api.redcross.no`, key required). The other nine all require some combination of HTML scraping, Brreg lookup, and possibly per-NGO outreach for direct data access.
+Atlas needs supply data for ~10 Tier A NGOs (Red Cross, Folkehjelp, N.K.S., Frelsesarmeen, Kirkens Bymisjon, Mental Helse, Diabetesforbundet, Nasjonalforeningen, Blindeforbundet, LHL — see [`ngo-landscape.md`](https://github.com/terchris/atlas/tree/main/docs/research/ngo-landscape.md)). Of these, **only Red Cross has a usable API** (`api.redcross.no`, key required). The other nine all require some combination of HTML scraping, Brreg lookup, and possibly per-NGO outreach for direct data access.
 
 ### Target scale: ~15 NGOs maximum
 
@@ -328,7 +328,7 @@ Canonical body for `html_raw_hash` = strip `<head>`, strip per-render nonces and
 
 ### C.5 Mandatory columns for scraper raw tables — **[Q20]**
 
-**Scope.** This applies to raw tables produced by the scraping infrastructure defined in this investigation. Non-scraper raw tables — SSB API, FHI, Brreg, and other file- or API-sourced ingests — follow their own conventions per [`atlas-data/CONTRIBUTING.md`](../../../../../atlas-data/CONTRIBUTING.md) and are **not** subject to this column set.
+**Scope.** This applies to raw tables produced by the scraping infrastructure defined in this investigation. Non-scraper raw tables — SSB API, FHI, Brreg, and other file- or API-sourced ingests — follow their own conventions per [`atlas-data/CONTRIBUTING.md`](https://github.com/terchris/atlas/tree/main/atlas-data/CONTRIBUTING.md) and are **not** subject to this column set.
 
 Every scraper `raw.<source>_*` table representing a top-level scraped entity (chapter, branch, standalone activity record, etc.) must include the following columns. This consolidates the conventions introduced across §C and §E.1:
 
@@ -338,7 +338,7 @@ Every scraper `raw.<source>_*` table representing a top-level scraped entity (ch
 | `record_hash` | `TEXT NOT NULL` | Skip signal — sha256 of canonical JSON of the extracted record (§C.3). 64 hex chars. |
 | `html_raw_hash` | `TEXT` (nullable) | Audit-only hash for template-drift forensics (§C.3.1). Nullable because audit signals aren't load-bearing. |
 | `is_active` | `BOOLEAN NOT NULL DEFAULT true` | Set `false` on fetch-time 404 or sitemap orphan (§E.1). Preserves history instead of deleting. |
-| `loaded_at` | `TIMESTAMPTZ NOT NULL DEFAULT now()` | Ingest timestamp per project convention — see [`atlas-data/CONTRIBUTING.md`](../../../../../atlas-data/CONTRIBUTING.md). |
+| `loaded_at` | `TIMESTAMPTZ NOT NULL DEFAULT now()` | Ingest timestamp per project convention — see [`atlas-data/CONTRIBUTING.md`](https://github.com/terchris/atlas/tree/main/atlas-data/CONTRIBUTING.md). |
 
 `url` must be **unique** within each scraper raw table — either declare `UNIQUE(url)` or use `url` as the primary key. The orphan-detection and fetch-skip joins against `raw.sitemap_log` (§C.2) require one-to-one URL correspondence; duplicate `url` values would make these queries ambiguous.
 
@@ -607,7 +607,7 @@ None remaining — all resolved as of 2026-04-24. Open Questions may reappear he
   - Add the 3-column `mart_ingest_health` view to dbt (§E.3).
   - Documentation: `atlas-data/ingest/src/sources/README.md` documents the per-source folder convention; `atlas-data/ingest/README.md` lists the three env vars from §F.
 
-This PLAN is a prerequisite for [`INVESTIGATE-folkehjelp-supply.md`](./INVESTIGATE-folkehjelp-supply.md)'s scrape PLAN.
+This PLAN is a prerequisite for [`INVESTIGATE-folkehjelp-supply.md`](../backlog/INVESTIGATE-folkehjelp-supply.md)'s scrape PLAN.
 
 ---
 
@@ -629,12 +629,12 @@ This PLAN is a prerequisite for [`INVESTIGATE-folkehjelp-supply.md`](./INVESTIGA
 
 **Documentation:**
 - `atlas-data/ingest/src/sources/README.md` — per-source folder convention.
-- Extend [`docs/stack/naming-conventions.md`](../../../../docs/stack/naming-conventions.md) with: `source_slug`, `record_hash`, `html_raw_hash`, `url` (raw-table convention per §C.2), `raw.ingest_runs`, `raw.sitemap_log`.
+- Extend [`docs/stack/naming-conventions.md`](https://github.com/terchris/atlas/tree/main/docs/stack/naming-conventions.md) with: `source_slug`, `record_hash`, `html_raw_hash`, `url` (raw-table convention per §C.2), `raw.ingest_runs`, `raw.sitemap_log`.
 
 ---
 
 ## Companion investigations
 
-- [`INVESTIGATE-multi-ngo-supply-model-extensions.md`](./INVESTIGATE-multi-ngo-supply-model-extensions.md) — `dim_chapter.source_url`, `dim_chapter.chapter_subtype`, `chapter_kommune_coverage` link table.
-- [`INVESTIGATE-folkehjelp-supply.md`](./INVESTIGATE-folkehjelp-supply.md) — first concrete consumer of this infrastructure.
-- [`INVESTIGATE-ngo-events-and-minisites.md`](./INVESTIGATE-ngo-events-and-minisites.md) — sub-activity granularity (deferred parking lot).
+- [`INVESTIGATE-multi-ngo-supply-model-extensions.md`](../backlog/INVESTIGATE-multi-ngo-supply-model-extensions.md) — `dim_chapter.source_url`, `dim_chapter.chapter_subtype`, `chapter_kommune_coverage` link table.
+- [`INVESTIGATE-folkehjelp-supply.md`](../backlog/INVESTIGATE-folkehjelp-supply.md) — first concrete consumer of this infrastructure.
+- [`INVESTIGATE-ngo-events-and-minisites.md`](../backlog/INVESTIGATE-ngo-events-and-minisites.md) — sub-activity granularity (deferred parking lot).

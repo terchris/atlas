@@ -33,7 +33,7 @@
 
 ## Why this exists
 
-`atlas.helpers.no` is by design a public, organisation-neutral, read-only portal with no auth (see [`goal.md`](../../../../docs/research/goal.md) — "Non-goals for v1" and "Stance on what we'll do to build this"). Two recent use cases put pressure on that frame:
+`atlas.helpers.no` is by design a public, organisation-neutral, read-only portal with no auth (see [`goal.md`](https://github.com/terchris/atlas/tree/main/docs/research/goal.md) — "Non-goals for v1" and "Stance on what we'll do to build this"). Two recent use cases put pressure on that frame:
 
 1. **Vipps donation transactions to Røde Kors** — per-donor, per-transaction records. Clearly PII / financial data. Belongs to Red Cross. Some internal Red Cross staff need to see it alongside chapter and activity context from Atlas.
 2. **Equipment inventory for Røde Kors** — beredskap equipment locations, counts, readiness status. Operational-security sensitive. Belongs to Red Cross. Mette-the-emergency-response-coordinator and Arne-the-district-coordinator need it alongside the public chapter map.
@@ -139,7 +139,7 @@ The private deployment's Postgres holds three classes of data, each with its own
 | Layer | Schema | Shape owned by | Data ingested by | Example tables |
 |---|---|---|---|---|
 | **L1 — Public open data** | `marts.*` | atlas.helpers.no | atlas.helpers.no (restored via [Q1] data contract) | `dim_kommune`, `dim_chapter`, `fact_kommune_indicators` |
-| **L2 — Conformed private** | `private_marts.*` | atlas.helpers.no (shape contract in [`private-marts-shapes.md`](../../../../docs/stack/private-marts-shapes.md)) | The NGO from their own systems | `fact_resources` (FRR-aligned, includes org units as `ressurstype='organisatorisk enhet'`), `fact_resource_position`, `fact_resource_status`, `dim_resource_phone` |
+| **L2 — Conformed private** | `private_marts.*` | atlas.helpers.no (shape contract in [`private-marts-shapes.md`](https://github.com/terchris/atlas/tree/main/docs/stack/private-marts-shapes.md)) | The NGO from their own systems | `fact_resources` (FRR-aligned, includes org units as `ressurstype='organisatorisk enhet'`), `fact_resource_position`, `fact_resource_status`, `dim_resource_phone` |
 | **L3 — NGO-specific private** | `private_marts_<ngo>.*` (e.g. `private_marts_redcross.*`) | The NGO | The NGO from their own systems | `private_marts_redcross.fact_beredskap_excercises` |
 
 Plus one staging schema:
@@ -357,7 +357,7 @@ This section covers **Layer 2 only** (per the §C.1 three-layer table). Layer 3 
 
 Some categories of private data exist at every operational NGO: equipment registries (FRR for Red Cross; analogous systems at Folkehjelp, NKS, Frelsesarmeen, etc.), internal org units (committees / working groups / divisions), and likely future categories (member systems, training records, donor segments). The data shape is the same across NGOs; only the source system varies.
 
-**Decision**: Atlas defines the canonical `private_marts.*` shape **once**, in a long-lived contract document — [`docs/stack/private-marts-shapes.md`](../../../../docs/stack/private-marts-shapes.md). Each NGO's private repo ships a per-NGO `supply__<ngo>_<entity>.sql` staging that maps their source into the canonical shape. The `private_marts.*` table is a UNION ALL of all per-NGO stagings — same pattern as the public side (`dim_chapter` UNIONs `supply__<ngo>_branches.sql`).
+**Decision**: Atlas defines the canonical `private_marts.*` shape **once**, in a long-lived contract document — [`docs/stack/private-marts-shapes.md`](https://github.com/terchris/atlas/tree/main/docs/stack/private-marts-shapes.md). Each NGO's private repo ships a per-NGO `supply__<ngo>_<entity>.sql` staging that maps their source into the canonical shape. The `private_marts.*` table is a UNION ALL of all per-NGO stagings — same pattern as the public side (`dim_chapter` UNIONs `supply__<ngo>_branches.sql`).
 
 **Why a separate contract doc and not inline schema in this investigation**: investigations capture decisions and freeze in time; contract docs are kept current and frequently consulted. Per-NGO ingest authors need a 200-line scannable reference, not a 600-line investigation.
 
@@ -366,7 +366,7 @@ Some categories of private data exist at every operational NGO: equipment regist
 - **Resources — FRR-aligned**: Atlas adopts FRR's schema verbatim (it's a Norwegian government standard the FORF NGOs all use). Tables: `private_marts.fact_resources` (one row per FRR resource, denormalised current state — *includes org units as `ressurstype='organisatorisk enhet'`*), `fact_resource_position` (history), `fact_resource_status` (history), `dim_resource_phone` (PII-redacted in place).
 - **Org units** are NOT a separate Layer 2 shape — for FRR-participating NGOs they're already in `fact_resources`. NGOs not in FRR who want internal-org-unit display surfaces use Layer 3 (`private_marts_<ngo>.*`); no Atlas Layer 2 contract for it.
 
-**Doctrine for new shapes** (codified in [`private-marts-shapes.md`](../../../../docs/stack/private-marts-shapes.md) "Adding new shapes"): always check for an external standard first. Adopt verbatim if it exists. Invent an Atlas-defined shape only when no external standard does the job.
+**Doctrine for new shapes** (codified in [`private-marts-shapes.md`](https://github.com/terchris/atlas/tree/main/docs/stack/private-marts-shapes.md) "Adding new shapes"): always check for an external standard first. Adopt verbatim if it exists. Invent an Atlas-defined shape only when no external standard does the job.
 
 **Where the dbt files live — [Q-priv-18] Revised 2026-04-24 (split by source ownership)**:
 
@@ -414,7 +414,7 @@ Recommendation: **(a) for v1**. Layer 3 views are still React components reading
 
 ### J.4 When to use Layer 3 vs propose a new Layer 2 shape
 
-Default: try Layer 2 first. If 2+ NGOs have a similar concept (e.g., "training records") that fits a conformed shape with NGO-specific code mappings, propose extending [`private-marts-shapes.md`](../../../../docs/stack/private-marts-shapes.md) with a new shape.
+Default: try Layer 2 first. If 2+ NGOs have a similar concept (e.g., "training records") that fits a conformed shape with NGO-specific code mappings, propose extending [`private-marts-shapes.md`](https://github.com/terchris/atlas/tree/main/docs/stack/private-marts-shapes.md) with a new shape.
 
 Use Layer 3 when:
 
@@ -422,7 +422,7 @@ Use Layer 3 when:
 - A conformed shape would force fitting square pegs into round holes.
 - The view is genuinely one-off and isn't expected to generalise.
 
-A Layer 3 table can be **promoted to Layer 2** later if a second NGO wants similar data — it's not a one-way decision. The promotion is: write a migration to rename the schema, propose the shape in [`private-marts-shapes.md`](../../../../docs/stack/private-marts-shapes.md), update the per-NGO staging to map to the canonical column names.
+A Layer 3 table can be **promoted to Layer 2** later if a second NGO wants similar data — it's not a one-way decision. The promotion is: write a migration to rename the schema, propose the shape in [`private-marts-shapes.md`](https://github.com/terchris/atlas/tree/main/docs/stack/private-marts-shapes.md), update the per-NGO staging to map to the canonical column names.
 
 ---
 
@@ -463,7 +463,7 @@ These were initially Open Questions; resolved during the discussion that produce
 - ~~**[Q-priv-6]**~~ Data inventory doc? **Yes** — `docs/stack/data-inventory.md` as the single source of truth listing every ingested source with `(source_id, name, visibility, owner_ngo, cadence, raw_schema, populating_script)`. See §H.
 - ~~**[Q-priv-13]**~~ Repo organisation for private code? **Sibling directory `atlas-private-data-repo/<ngo>/` mirroring `atlas-data/`'s shape**, gitignored at the public-repo level. Each NGO subdirectory is its own private git repo. See §G.
 - ~~**[Q1]**~~ Public export ships `raw.*` too? **No** — `marts.*` only. Private instances don't need raw; their own dbt builds against the conformed marts dimensions / facts. Drops dump size and contract surface considerably. **Resolved 2026-04-24.**
-- ~~**[Q-priv-16]**~~ Conformed private mart shapes (Layer 2)? **Yes** — Atlas defines the shape once in [`docs/stack/private-marts-shapes.md`](../../../../docs/stack/private-marts-shapes.md); per-NGO stagings map their source into the canonical shape; `private_marts.*` is a UNION ALL. See §I. **Resolved 2026-04-24.**
+- ~~**[Q-priv-16]**~~ Conformed private mart shapes (Layer 2)? **Yes** — Atlas defines the shape once in [`docs/stack/private-marts-shapes.md`](https://github.com/terchris/atlas/tree/main/docs/stack/private-marts-shapes.md); per-NGO stagings map their source into the canonical shape; `private_marts.*` is a UNION ALL. See §I. **Resolved 2026-04-24.**
 - ~~**[Q-priv-18]**~~ Where do Layer 2 + Layer 3 dbt files live? **Revised 2026-04-24 — split by source ownership**: standards-based sources (FRR) live in `atlas-data/dbt/models/{supply,private_marts}/` tagged `private`; NGO-specific sources (Layer 3) live in `atlas-private-data-repo/<ngo>/dbt/`. Original Option B over-corrected by duplicating identical FRR SQL per NGO. Per-NGO data files always live in `atlas-private-data-repo/<ngo>/<source>/` (gitignored); synthetic onboarding data in `atlas-private-data-repo/sample-ngo/` (committed). See §I + §J.
 
 ---
@@ -530,7 +530,7 @@ If any of the three middle PLANs gets stuck (contract versioning, OIDC integrati
 **New documentation (PLAN-A + PLAN-D):**
 - `docs/stack/public-data-contract.md` — what ships (marts only), versioning rules, how to consume, example restore script.
 - `docs/stack/data-inventory.md` — every public ingest's row + the format definition referenced by private inventories.
-- [`docs/stack/private-marts-shapes.md`](../../../../docs/stack/private-marts-shapes.md) ✅ **already created** — canonical shapes for `private_marts.*` tables; per-NGO ingest authors map their source into these.
+- [`docs/stack/private-marts-shapes.md`](https://github.com/terchris/atlas/tree/main/docs/stack/private-marts-shapes.md) ✅ **already created** — canonical shapes for `private_marts.*` tables; per-NGO ingest authors map their source into these.
 - Extension to [`docs/ai-developer/project-atlas.md`](../../project-atlas.md) covering `ATLAS_MODE` and the public/private split.
 
 **New Next.js surface (PLAN-B):**
@@ -550,5 +550,5 @@ If any of the three middle PLANs gets stuck (contract versioning, OIDC integrati
 ## Companion investigations
 
 - [`INVESTIGATE-deployment-pipeline.md`](./INVESTIGATE-deployment-pipeline.md) — the CI/release flow for `atlas.helpers.no`. The public-export job is a new artefact type that pipeline would build and publish; PLAN-A of this investigation depends on that pipeline being further along.
-- [`INVESTIGATE-ngo-scraping-infrastructure.md`](./INVESTIGATE-ngo-scraping-infrastructure.md) — the public-side ingestion that populates the `marts.*` tables this investigation exports.
+- [`INVESTIGATE-ngo-scraping-infrastructure.md`](../completed/INVESTIGATE-ngo-scraping-infrastructure.md) — the public-side ingestion that populates the `marts.*` tables this investigation exports.
 - [`INVESTIGATE-data-freshness-surface.md`](./INVESTIGATE-data-freshness-surface.md) — the freshness contract (`updated_at`, `source_published_at`) is part of what every exported mart carries; private instances render it the same way the public instance does.

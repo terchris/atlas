@@ -69,16 +69,16 @@ are assigned, stop and report that no unassigned source work is available.
 
 Read these files in this order. They form the entire mental model you need.
 
-1. [`/CLAUDE.md`](../../../CLAUDE.md) — repo-wide agent instructions.
+1. [`/CLAUDE.md`](https://github.com/terchris/atlas/blob/main/CLAUDE.md) — repo-wide agent instructions.
 2. [`contributors/adding-a-source.md`](../contributors/adding-a-source.md) — the 11-step human workflow this runbook tracks.
 3. [`contributors/ingest-modules.md`](../contributors/ingest-modules.md) — the per-source folder contract (`index.ts`, `README.md`, `manifest.yml`, schema).
-4. [`atlas-data/ingest/src/sources/README.md`](../../../atlas-data/ingest/src/sources/README.md) — the implemented-sources catalogue + the manifest.yml schema.
-5. [`docs/stack/naming-conventions.md`](../../../docs/stack/naming-conventions.md) — canonical column vocabulary; rule #5 is enforced by the osmosis gate.
-6. [`atlas-data/ingest/src/sources/ssb-08764/`](../../../atlas-data/ingest/src/sources/ssb-08764/) — the canonical SSB-style template you copy from. Read all three files.
+4. [`atlas-data/ingest/src/sources/README.md`](https://github.com/terchris/atlas/tree/main/atlas-data/ingest/src/sources/README.md) — the implemented-sources catalogue + the manifest.yml schema.
+5. [`docs/stack/naming-conventions.md`](https://github.com/terchris/atlas/tree/main/docs/stack/naming-conventions.md) — canonical column vocabulary; rule #5 is enforced by the osmosis gate.
+6. [`atlas-data/ingest/src/sources/ssb-08764/`](https://github.com/terchris/atlas/tree/main/atlas-data/ingest/src/sources/ssb-08764/) — the canonical SSB-style template you copy from. Read all three files.
 
-For an FHI-shape source, also read one of [`fhi-livskvalitet/`](../../../atlas-data/ingest/src/sources/fhi-livskvalitet/) or [`fhi-mediebruk-some/`](../../../atlas-data/ingest/src/sources/fhi-mediebruk-some/) — FHI's PxWebAPI helper lives at [`lib/fhi.ts`](../../../atlas-data/ingest/src/lib/fhi.ts), not [`lib/pxweb.ts`](../../../atlas-data/ingest/src/lib/pxweb.ts).
+For an FHI-shape source, also read one of [`fhi-livskvalitet/`](https://github.com/terchris/atlas/tree/main/atlas-data/ingest/src/sources/fhi-livskvalitet/) or [`fhi-mediebruk-some/`](https://github.com/terchris/atlas/tree/main/atlas-data/ingest/src/sources/fhi-mediebruk-some/) — FHI's PxWebAPI helper lives at [`lib/fhi.ts`](https://github.com/terchris/atlas/tree/main/atlas-data/ingest/src/lib/fhi.ts), not [`lib/pxweb.ts`](https://github.com/terchris/atlas/tree/main/atlas-data/ingest/src/lib/pxweb.ts).
 
-For a candidate with no obvious template (a brand-new provider, an HTML scrape), **stop and ask** — flag `needs-human` (see Escalation below). Do not improvise scraper plumbing; the [`lib/scraping/`](../../../atlas-data/ingest/src/lib/scraping/) toolkit has rules and a separate workflow.
+For a candidate with no obvious template (a brand-new provider, an HTML scrape), **stop and ask** — flag `needs-human` (see Escalation below). Do not improvise scraper plumbing; the [`lib/scraping/`](https://github.com/terchris/atlas/tree/main/atlas-data/ingest/src/lib/scraping/) toolkit has rules and a separate workflow.
 
 ---
 
@@ -101,7 +101,7 @@ Steps mirror [`contributors/adding-a-source.md`](../contributors/adding-a-source
 
 ### Step 1 — Skip catalogue entry
 
-The catalogue entry in [`docs/research/samfunnspuls/data-sources.md`](../../../docs/research/samfunnspuls/data-sources.md) is *human-curated*. Do not edit it. The candidate's row in [`plans/backlog/INVESTIGATE-new-norwegian-public-sources.md`](./plans/backlog/INVESTIGATE-new-norwegian-public-sources.md) substitutes for this step in the agent path.
+The catalogue entry in [`docs/research/samfunnspuls/data-sources.md`](https://github.com/terchris/atlas/tree/main/docs/research/samfunnspuls/data-sources.md) is *human-curated*. Do not edit it. The candidate's row in [`plans/backlog/INVESTIGATE-new-norwegian-public-sources.md`](./plans/backlog/INVESTIGATE-new-norwegian-public-sources.md) substitutes for this step in the agent path.
 
 ### Step 2 — Investigate the upstream
 
@@ -135,7 +135,7 @@ Migration files are append-only across the repo. Never edit a previously-merged 
 
 Create `atlas-data/ingest/src/sources/<source-id>/` and write three files:
 
-- **`index.ts`** — copy [`ssb-08764/index.ts`](../../../atlas-data/ingest/src/sources/ssb-08764/index.ts) (or the FHI template) and adapt. Required shape:
+- **`index.ts`** — copy [`ssb-08764/index.ts`](https://github.com/terchris/atlas/tree/main/atlas-data/ingest/src/sources/ssb-08764/index.ts) (or the FHI template) and adapt. Required shape:
   - `import { recordIngestRun } from "../../lib/ingest_run.js";` and wrap your work inside `recordIngestRun(SOURCE_ID, async () => { … })`. Do **not** call `closeSql()` yourself.
   - declare the row type **inline** — never edit `lib/types.ts`.
   - `export const SOURCE_ID = "<source-id>";` matching the catalogue id exactly.
@@ -147,8 +147,8 @@ Create `atlas-data/ingest/src/sources/<source-id>/` and write three files:
 - **`manifest.yml`** — bootstrap it with the script (see step 4b), then hand-author the `dimensions:` block.
 
 Forbidden in `index.ts`:
-- inline `writeNdjson` — use [`lib/output.ts`](../../../atlas-data/ingest/src/lib/output.ts).
-- inline Postgres clients — use [`lib/postgres.ts`](../../../atlas-data/ingest/src/lib/postgres.ts).
+- inline `writeNdjson` — use [`lib/output.ts`](https://github.com/terchris/atlas/tree/main/atlas-data/ingest/src/lib/output.ts).
+- inline Postgres clients — use [`lib/postgres.ts`](https://github.com/terchris/atlas/tree/main/atlas-data/ingest/src/lib/postgres.ts).
 - hard-coded credentials.
 
 #### Step 4b — Bootstrap the manifest, then hand-author dimensions
@@ -160,16 +160,16 @@ npm run sources:fill-manifest-todos
 ```
 
 Then **read the generated `manifest.yml`** — these scripts are mechanical. They will:
-- set `eu_theme` from a regex on `tags.topic`. **Verify it.** Allowlist of 13 codes is in [`atlas-data/dbt/seeds/sources/eu_data_theme.csv`](../../../atlas-data/dbt/seeds/sources/eu_data_theme.csv).
+- set `eu_theme` from a regex on `tags.topic`. **Verify it.** Allowlist of 13 codes is in [`atlas-data/dbt/seeds/sources/eu_data_theme.csv`](https://github.com/terchris/atlas/tree/main/atlas-data/dbt/seeds/sources/eu_data_theme.csv).
 - set `attribution` from a `provider`-aware template. **Verify the institution name and table id are correct.**
-- leave the `dimensions:` block empty or under-specified. **You hand-author this.** See the [manifest.yml schema](../../../atlas-data/ingest/src/sources/README.md#manifestyml-schema) for required fields per dimension; `code` and `meaning` are required, `value_format` and `notes` may be empty strings but are usually informative.
+- leave the `dimensions:` block empty or under-specified. **You hand-author this.** See the [manifest.yml schema](https://github.com/terchris/atlas/tree/main/atlas-data/ingest/src/sources/README.md#manifestyml-schema) for required fields per dimension; `code` and `meaning` are required, `value_format` and `notes` may be empty strings but are usually informative.
 - skip `upstream_landing_page` if the candidate is FHI / Brreg / Red Cross. Hand-edit it in if you have a human-browsable landing URL — paste the *exact URL the user used to get there*, including filter query strings (do not strip them; they help humans reproduce the slice the source represents).
 
 `tags:` has four required namespaces (`provider`, `topic`, `geo`, `cadence`); each takes one value from the allowlist in the schema. The fill script's regex is first-match-wins — verify the topic is the most accurate one for *this* source, not the regex's first hit.
 
 ### Step 5 — npm script
 
-Add `"ingest:<source-id>": "tsx --env-file=.env src/sources/<source-id>/index.ts"` to [`atlas-data/ingest/package.json`](../../../atlas-data/ingest/package.json), alphabetically among the other `ingest:*` entries. Do not run `npm install`; the script entry is a one-line change.
+Add `"ingest:<source-id>": "tsx --env-file=.env src/sources/<source-id>/index.ts"` to [`atlas-data/ingest/package.json`](https://github.com/terchris/atlas/tree/main/atlas-data/ingest/package.json), alphabetically among the other `ingest:*` entries. Do not run `npm install`; the script entry is a one-line change.
 
 ### Step 6 — Regenerate the implemented-sources index
 
@@ -178,7 +178,7 @@ cd atlas-data/dbt
 uv run python scripts/build_sources_seed.py --readme ../ingest/src/sources/README.md
 ```
 
-This rewrites the auto-generated section of [`atlas-data/ingest/src/sources/README.md`](../../../atlas-data/ingest/src/sources/README.md) and updates the seed CSVs at [`atlas-data/dbt/seeds/sources/_sources_manifest.csv`](../../../atlas-data/dbt/seeds/sources/_sources_manifest.csv) and [`_sources_dimensions.csv`](../../../atlas-data/dbt/seeds/sources/_sources_dimensions.csv). If this script reports validation errors (missing fields, bad eu_theme, malformed `dimensions:`) — **fix the manifest, don't bypass the validator**.
+This rewrites the auto-generated section of [`atlas-data/ingest/src/sources/README.md`](https://github.com/terchris/atlas/tree/main/atlas-data/ingest/src/sources/README.md) and updates the seed CSVs at [`atlas-data/dbt/seeds/sources/_sources_manifest.csv`](https://github.com/terchris/atlas/tree/main/atlas-data/dbt/seeds/sources/_sources_manifest.csv) and [`_sources_dimensions.csv`](https://github.com/terchris/atlas/tree/main/atlas-data/dbt/seeds/sources/_sources_dimensions.csv). If this script reports validation errors (missing fields, bad eu_theme, malformed `dimensions:`) — **fix the manifest, don't bypass the validator**.
 
 ### Steps 7–9 — dbt source declaration + per-source mart + schema.yml
 
@@ -186,8 +186,8 @@ Follow [`contributors/adding-a-source.md`](../contributors/adding-a-source.md) S
 - The mart's first column is `source_id` as a hard-coded literal — `select '<source-id>'::text as source_id, …`.
 - Every column in `schema.yml` has a `description`. The osmosis gate enforces this — see Step 10's `./check-osmosis.sh`.
 - Add `relationships:` tests for `kommune_nr` → `ref('dim_kommune')`, `fylke_nr` → `ref('dim_fylke')`, `orgnr` → `ref('dim_ngo')` whenever those columns appear.
-- Use canonical column names per [`docs/stack/naming-conventions.md`](../../../docs/stack/naming-conventions.md). No upstream names leak into `marts.*` (no `Region`, `Tid`, `KOKkommuneregion0000`).
-- For sources where `dim_kommune` is joined by name (rare), add `is_active = true` to the join — see the [`is_active` filter memory](../../../docs/stack/naming-conventions.md#kommune-joining) and prior incidents. If you join by `kommune_nr`, the dim's PK already filters this; nothing extra needed.
+- Use canonical column names per [`docs/stack/naming-conventions.md`](https://github.com/terchris/atlas/tree/main/docs/stack/naming-conventions.md). No upstream names leak into `marts.*` (no `Region`, `Tid`, `KOKkommuneregion0000`).
+- For sources where `dim_kommune` is joined by name (rare), add `is_active = true` to the join — see the [`is_active` filter memory](https://github.com/terchris/atlas/tree/main/docs/stack/naming-conventions.md#kommune-joining) and prior incidents. If you join by `kommune_nr`, the dim's PK already filters this; nothing extra needed.
 
 Step 9b (regenerate `api_v1`) **only applies if your model lives under `models/marts/api/`**. New per-source ingest marts live under `models/indicators/`, not `marts/api/` — so you skip Step 9b for almost every source. If unsure, do not run `regenerate-api-v1.sh`.
 
@@ -267,9 +267,9 @@ Open the PR as a **draft**, add the `needs-human` label, comment on the PR with 
 
 - upstream API requires authentication, captcha, or returns HTML where JSON was expected;
 - you've burned >2 retries on a typecheck error you cannot resolve;
-- the candidate is a brand-new shape (no analogous template exists in [`atlas-data/ingest/src/sources/`](../../../atlas-data/ingest/src/sources/)) — do not invent scraper plumbing;
+- the candidate is a brand-new shape (no analogous template exists in [`atlas-data/ingest/src/sources/`](https://github.com/terchris/atlas/tree/main/atlas-data/ingest/src/sources/)) — do not invent scraper plumbing;
 - `check-osmosis.sh` reports an issue you've tried to fix twice and still fails;
-- the manifest.yml `eu_theme` derivation looks wrong and you can't find a defensible one in the [allowlist of 13 codes](../../../atlas-data/dbt/seeds/sources/eu_data_theme.csv);
+- the manifest.yml `eu_theme` derivation looks wrong and you can't find a defensible one in the [allowlist of 13 codes](https://github.com/terchris/atlas/tree/main/atlas-data/dbt/seeds/sources/eu_data_theme.csv);
 - any step 9c update would require you to invent an editorial decision (a new report, a new `dim_*`, a new methodology choice) — leave a note in the PR body explaining what you'd propose, and stop.
 
 A draft PR with `needs-human` and a clear `Stuck:` note is a successful run. Burning compute thrashing on an unsolvable problem is a failed run.
@@ -284,10 +284,10 @@ A draft PR with `needs-human` and a clear `Stuck:` note is a successful run. Bur
 4. Never edit a previously-merged migration file. Add a new one.
 5. Never let an upstream column name leak into a `marts.*` model.
 6. Never commit `.env`, `.env.local`, secrets, or anything in `.crawlee-cache/`.
-7. Never edit [`docs/research/samfunnspuls/data-sources.md`](../../../docs/research/samfunnspuls/data-sources.md) — that's human-curated.
+7. Never edit [`docs/research/samfunnspuls/data-sources.md`](https://github.com/terchris/atlas/tree/main/docs/research/samfunnspuls/data-sources.md) — that's human-curated.
 8. Never edit a previously-committed `manifest.yml` belonging to a different source. You only write the manifest for *your* candidate.
 9. Never bypass `check-osmosis.sh` or the seed-builder validator. They exist to keep the catalogue clean.
-10. Never invent a new `eu_theme` value. Pick one from the [13-code allowlist](../../../atlas-data/dbt/seeds/sources/eu_data_theme.csv).
+10. Never invent a new `eu_theme` value. Pick one from the [13-code allowlist](https://github.com/terchris/atlas/tree/main/atlas-data/dbt/seeds/sources/eu_data_theme.csv).
 11. If you genuinely cannot determine an editorial decision (which dimension is degenerate, what the right `meaning:` is, which report this fills), leave a `# TODO: human-review` comment in the YAML and flag in the PR body. Do not guess.
 
 ---
@@ -296,8 +296,8 @@ A draft PR with `needs-human` and a clear `Stuck:` note is a successful run. Bur
 
 - [`contributors/adding-a-source.md`](../contributors/adding-a-source.md) — canonical 11-step workflow (humans).
 - [`contributors/ingest-modules.md`](../contributors/ingest-modules.md) — per-source folder template.
-- [`atlas-data/ingest/src/sources/README.md`](../../../atlas-data/ingest/src/sources/README.md) — implemented-sources catalogue + manifest.yml schema.
-- [`docs/stack/naming-conventions.md`](../../../docs/stack/naming-conventions.md) — canonical vocabulary.
+- [`atlas-data/ingest/src/sources/README.md`](https://github.com/terchris/atlas/tree/main/atlas-data/ingest/src/sources/README.md) — implemented-sources catalogue + manifest.yml schema.
+- [`docs/stack/naming-conventions.md`](https://github.com/terchris/atlas/tree/main/docs/stack/naming-conventions.md) — canonical vocabulary.
 - [`plans/backlog/INVESTIGATE-cloud-agent-source-onboarding.md`](./plans/backlog/INVESTIGATE-cloud-agent-source-onboarding.md) — design rationale for this pipeline.
 - [`plans/backlog/INVESTIGATE-new-norwegian-public-sources.md`](./plans/backlog/INVESTIGATE-new-norwegian-public-sources.md) — the work queue (26 candidates).
 - [`plans/backlog/INVESTIGATE-reports-and-indicators-from-catalogue.md`](./plans/backlog/INVESTIGATE-reports-and-indicators-from-catalogue.md) — the report menu refreshed in step 9c.

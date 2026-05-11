@@ -44,7 +44,7 @@ Two real seeds, plus the documentation/ERD wiring. Estimated ~3–4 h.
 
 ### Tasks
 
-- [x] 1.1 [`ref_atlas_service_category.csv`](../../../../../atlas-data/dbt/seeds/ref_atlas_service_category.csv) — 22 rows in appendix order. Norwegian labels picked for natural Norwegian usage (`Norsktrening` rather than `Språktrening`; `Hjelpetelefon` rather than `Krisetelefon`). 5 descriptions have commas → CSV-quoted. ✓
+- [x] 1.1 [`ref_atlas_service_category.csv`](https://github.com/terchris/atlas/tree/main/atlas-data/dbt/seeds/ref_atlas_service_category.csv) — 22 rows in appendix order. Norwegian labels picked for natural Norwegian usage (`Norsktrening` rather than `Språktrening`; `Hjelpetelefon` rather than `Krisetelefon`). 5 descriptions have commas → CSV-quoted. ✓
 - [x] 1.2 schema.yml entry: not_null + unique on code; not_null on label_no, label_en, description; sort_order range 1..22. ✓
 - [x] 1.3 seeds/README.md row added (owner=Atlas, refresh=curated). ✓
 - [x] 1.4 `description: text` added to `+column_types` in dbt_project.yml. ✓
@@ -67,7 +67,7 @@ Per [Q40 resolution](INVESTIGATE-ngo-supply-data-model.md#open-questions): hand-
 
 ### Tasks
 
-- [x] 2.1 Created [`landscape.json`](../../../../../atlas-data/ingest/src/seed-sources/atlas-ngo-landscape/landscape.json) with 11 Tier A NGO entries — Røde Kors, Folkehjelp, Nasjonalforeningen, Sanitetskvinnene, Speiderforbundet, 4H Norge, Frelsesarmeen, Kirkens Bymisjon, Mental Helse, LHL, Diabetesforbundet. orgnrs taken from `ngo-landscape.md`. ICNPO codes left null per [P1.Q4]; brand_name set where distinct from legal name. ✓ Schema:
+- [x] 2.1 Created [`landscape.json`](https://github.com/terchris/atlas/tree/main/atlas-data/ingest/src/seed-sources/atlas-ngo-landscape/landscape.json) with 11 Tier A NGO entries — Røde Kors, Folkehjelp, Nasjonalforeningen, Sanitetskvinnene, Speiderforbundet, 4H Norge, Frelsesarmeen, Kirkens Bymisjon, Mental Helse, LHL, Diabetesforbundet. orgnrs taken from `ngo-landscape.md`. ICNPO codes left null per [P1.Q4]; brand_name set where distinct from legal name. ✓ Schema:
 
   ```json
   {
@@ -90,9 +90,9 @@ Per [Q40 resolution](INVESTIGATE-ngo-supply-data-model.md#open-questions): hand-
   }
   ```
 
-- [x] 2.2 Created [`index.ts`](../../../../../atlas-data/ingest/src/seed-sources/atlas-ngo-landscape/index.ts) — reads landscape.json, validates each entry against enum sets (tier, chapter_data_shape, primary_focus), checks for duplicate orgnr/slug, sorts by slug, calls `runSeedSourceGeneric`. ✓
+- [x] 2.2 Created [`index.ts`](https://github.com/terchris/atlas/tree/main/atlas-data/ingest/src/seed-sources/atlas-ngo-landscape/index.ts) — reads landscape.json, validates each entry against enum sets (tier, chapter_data_shape, primary_focus), checks for duplicate orgnr/slug, sorts by slug, calls `runSeedSourceGeneric`. ✓
 - [x] 2.3 Added `refresh:atlas-ngo-landscape` to package.json. ✓
-- [x] 2.4 Created [`README.md`](../../../../../atlas-data/ingest/src/seed-sources/atlas-ngo-landscape/README.md) explaining the JSON pipeline + workflow. ✓
+- [x] 2.4 Created [`README.md`](https://github.com/terchris/atlas/tree/main/atlas-data/ingest/src/seed-sources/atlas-ngo-landscape/README.md) explaining the JSON pipeline + workflow. ✓
 - [x] 2.5 `npm run refresh:atlas-ngo-landscape` generated `dim_ngo.csv` with 11 rows. ✓
 - [x] 2.6 schema.yml entry added with all the expected tests. **One bug caught**: `dbt_utils.expression_is_true` at column-level prepends the column name to the expression (so `length(orgnr) = 9` becomes `orgnr length(orgnr) = 9` — invalid SQL). Fixed by moving both `length(orgnr) = 9` and `slug = lower(slug)` to model-level `data_tests:` block. Now passes. ✓
 - [x] 2.7 Added column types to `+column_types` in dbt_project.yml. ✓
@@ -188,5 +188,5 @@ Edit:
 - [INVESTIGATE-ngo-supply-data-model.md](INVESTIGATE-ngo-supply-data-model.md) — the parent investigation; PLAN-A footprint at [Q25].
 - [PLAN-foundation-reference-tables.md](../completed/PLAN-foundation-reference-tables.md) — prerequisite PLAN, shipped on main; provides `dim_postnummer`, `crosswalk_kommune_name`, `ref_brreg_icnpo`, `ref_un_sdg`.
 - [INVESTIGATE-reference-tables-convention.md](../completed/INVESTIGATE-reference-tables-convention.md) — naming convention for ref/dim/crosswalk tables.
-- [`docs/research/ngo-landscape.md`](../../../../docs/research/ngo-landscape.md) — source data for `landscape.json`; carries orgnr per NGO.
-- [`atlas-data/ingest/src/lib/seed.ts`](../../../../../atlas-data/ingest/src/lib/seed.ts) — `runSeedSourceGeneric` runner (added in PLAN-foundation-reference-tables) that this plan reuses.
+- [`docs/research/ngo-landscape.md`](https://github.com/terchris/atlas/tree/main/docs/research/ngo-landscape.md) — source data for `landscape.json`; carries orgnr per NGO.
+- [`atlas-data/ingest/src/lib/seed.ts`](https://github.com/terchris/atlas/tree/main/atlas-data/ingest/src/lib/seed.ts) — `runSeedSourceGeneric` runner (added in PLAN-foundation-reference-tables) that this plan reuses.

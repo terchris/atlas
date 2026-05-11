@@ -48,7 +48,7 @@ Single-file change. Trivial code.
 
 ### Tasks
 
-- [ ] 1.1 Modify [`atlas-data/ingest/src/sources/bufdir-barnefattigdom/parse.ts`](../../../../atlas-data/ingest/src/sources/bufdir-barnefattigdom/parse.ts) `surrogateIndicatorApiId()` to:
+- [ ] 1.1 Modify [`atlas-data/ingest/src/sources/bufdir-barnefattigdom/parse.ts`](https://github.com/terchris/atlas/tree/main/atlas-data/ingest/src/sources/bufdir-barnefattigdom/parse.ts) `surrogateIndicatorApiId()` to:
   - Parse the leading `Indikator_(\d+[a-z]?)` from the filename stem.
   - On match: return `"bf_zip_ind_" + capturedNumber.toLowerCase()` (e.g. `bf_zip_ind_5`, `bf_zip_ind_9a`, `bf_zip_ind_22`).
   - On no match (defensive — Bufdir adds a non-numbered workbook in some future release): fall back to the existing `sha256(stem)` body and log a warn so the operator notices. Keeps ingest from throwing on a non-conforming filename.
@@ -74,7 +74,7 @@ The 29 tests in `__tests__/parse.test.ts` (PR #67) still apply structurally but 
 
 ### Tasks
 
-- [ ] 2.1 In [`__tests__/parse.test.ts`](../../../../atlas-data/ingest/src/sources/bufdir-barnefattigdom/__tests__/parse.test.ts):
+- [ ] 2.1 In [`__tests__/parse.test.ts`](https://github.com/terchris/atlas/tree/main/atlas-data/ingest/src/sources/bufdir-barnefattigdom/__tests__/parse.test.ts):
   - Replace `expect(id).toMatch(/^bf_zip_[0-9a-f]{24}$/)` → `expect(id).toMatch(/^bf_zip_ind_\d+[a-z]?$/)` for the canonical path.
   - Update the "deterministic" test — same filename → same `bf_zip_ind_<N>` id, no change in semantics.
   - Update the "changes when stem changes" test — `Indikator_5_old` and `Indikator_5b_new` produce **different** ids (`bf_zip_ind_5` vs `bf_zip_ind_5b`), reflecting Q1's "conservative — different by default" decision.
@@ -104,7 +104,7 @@ The alias table maps known-historical ids to canonical successors. Pre-populate 
 
 ### Tasks
 
-- [ ] 3.1 Create [`atlas-data/dbt/seeds/sources/bufdir_indicator_alias.csv`](../../../../atlas-data/dbt/seeds/sources/bufdir_indicator_alias.csv) with columns `source_id, historical_id, canonical_id, note`. Initial rows:
+- [ ] 3.1 Create [`atlas-data/dbt/seeds/sources/bufdir_indicator_alias.csv`](https://github.com/terchris/atlas/tree/main/atlas-data/dbt/seeds/sources/bufdir_indicator_alias.csv) with columns `source_id, historical_id, canonical_id, note`. Initial rows:
 
   ```csv
   source_id,historical_id,canonical_id,note
@@ -113,7 +113,7 @@ The alias table maps known-historical ids to canonical successors. Pre-populate 
   bufdir-barnefattigdom,bf_zip_ind_10,,"Indikator 10 retired by Bufdir; no direct successor in the bundle as of 2026-05-04. Consumers comparing pre/post-retirement should treat 10's series as terminating."
   ```
 
-- [ ] 3.2 Create [`atlas-data/dbt/models/marts/api/bufdir_indicator_alias.sql`](../../../../atlas-data/dbt/models/marts/api/bufdir_indicator_alias.sql):
+- [ ] 3.2 Create [`atlas-data/dbt/models/marts/api/bufdir_indicator_alias.sql`](https://github.com/terchris/atlas/tree/main/atlas-data/dbt/models/marts/api/bufdir_indicator_alias.sql):
 
   ```sql
   {{ config(materialized='table', schema='marts') }}
@@ -202,7 +202,7 @@ Make the alias mechanism discoverable + add to the bufdir refresh workflow so th
 
 ### Tasks
 
-- [ ] 5.1 Update [`atlas-data/ingest/src/sources/bufdir-barnefattigdom/README.md`](../../../../atlas-data/ingest/src/sources/bufdir-barnefattigdom/README.md):
+- [ ] 5.1 Update [`atlas-data/ingest/src/sources/bufdir-barnefattigdom/README.md`](https://github.com/terchris/atlas/tree/main/atlas-data/ingest/src/sources/bufdir-barnefattigdom/README.md):
   - Replace the line about `bf_zip_<24 hex>` ids with the new `bf_zip_ind_<N>` shape.
   - Replace the surrogate-id quirk in the "Known quirks / fragility" block (PR #68 added that line) with a paragraph pointing at the alias mechanism + the maintenance ritual.
   - Add a "Refresh checklist" subsection: when ingesting a new bundle release, diff the new filename set against `_sources_dimensions.csv` and flag any `Indikator_<N>` codes that disappeared or appeared. Update `bufdir_indicator_alias.csv` accordingly.
@@ -267,7 +267,7 @@ Make the alias mechanism discoverable + add to the bufdir refresh workflow so th
 - [PR #67](https://github.com/terchris/atlas/pull/67) — the parse.ts split this PLAN edits.
 - [PR #68](https://github.com/terchris/atlas/pull/68) — the README quirks line this PLAN replaces.
 - [PLAN-004-postgrest-api-v1-wrapper.md](../completed/PLAN-004-postgrest-api-v1-wrapper.md) — the api_v1 generator that auto-wraps `models/marts/api/bufdir_indicator_alias.sql`.
-- [PLAN-007-data-display-open-by-default.md § Phase 1](../active/PLAN-007-data-display-open-by-default.md#phase-1) — the PostgREST schema-list extension that makes `marts.bufdir_indicator_alias` queryable as `GET /bufdir_indicator_alias` even without the api_v1 wrapper.
+- [PLAN-007-data-display-open-by-default.md § Phase 1](../completed/PLAN-007-data-display-open-by-default.md#phase-1) — the PostgREST schema-list extension that makes `marts.bufdir_indicator_alias` queryable as `GET /bufdir_indicator_alias` even without the api_v1 wrapper.
 
 ---
 
