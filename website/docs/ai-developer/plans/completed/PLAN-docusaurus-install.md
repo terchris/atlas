@@ -4,7 +4,7 @@
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Active — Phase 3 code-side complete (Pages workflow + CNAME); user-side repo/DNS steps + post-push verification remain
+## Status: Completed (2026-05-12)
 
 **Goal**: Get Docusaurus building and serving Atlas's existing `website/docs/` content locally, then ship it to **GitHub Pages with custom domain `atlas.sovereignsky.no`** (mirrors UIS's `uis.sovereignsky.no` pattern).
 
@@ -126,16 +126,14 @@ Pivot from "Docker image on UIS" to "GitHub Pages with custom domain" — matche
   - Permissions: `contents: read, pages: write, id-token: write` (Pages deploy requires the OIDC token to authenticate).
   - Concurrency: `group: "pages", cancel-in-progress: false` — only one deploy at a time, queue the rest.
 - [x] 3.2 Create `website/static/CNAME` containing the single line `atlas.sovereignsky.no` — Docusaurus copies the contents of `static/` to the build root, so the deployed site has a `CNAME` file at the root that GitHub Pages reads to set the custom domain.
-- [ ] 3.3 Repo-settings step (user-side, not committable):
-  - GitHub → repo Settings → Pages → Source = "GitHub Actions" (instead of branch-based).
-  - GitHub will detect the CNAME after the first deploy and propose the custom domain. Confirm `atlas.sovereignsky.no`. Optionally tick "Enforce HTTPS" once the cert provisions (Let's Encrypt, automatic, a few minutes after DNS propagates).
-- [ ] 3.4 DNS step (user-side):
-  - Add a CNAME record `atlas.sovereignsky.no` → `terchris.github.io` (or whichever account hosts the repo) at your DNS provider for `sovereignsky.no`.
-  - Verify with `dig atlas.sovereignsky.no CNAME +short` — should return the github.io target.
-- [ ] 3.5 Verify after first deploy:
-  - `https://atlas.sovereignsky.no/` returns 200 and renders the Atlas Docusaurus site.
-  - Existing GitHub Pages page URL also works (e.g. `https://terchris.github.io/atlas/` 301-redirects to the custom domain).
-  - A content change pushed to `main` → workflow runs → site updates within ~2 minutes of the workflow finishing.
+- [x] 3.3 Repo-settings step:
+  - Repo flipped public via `gh api -X PATCH /repos/terchris/atlas -f visibility=public` (free-plan GitHub Pages requires public repo).
+  - Pages enabled via `gh api -X POST /repos/terchris/atlas/pages -f build_type=workflow`.
+  - Custom domain registered via `gh api -X PUT /repos/terchris/atlas/pages -f cname=atlas.sovereignsky.no` **after** first deploy.
+- [x] 3.4 DNS step: CNAME `atlas.sovereignsky.no` → `terchris.github.io` added at user's DNS provider. Verified `dig atlas.sovereignsky.no +short` returns the GitHub Pages IPs `185.199.108-111.153`.
+- [x] 3.5 Verified after first deploy:
+  - `https://terchris.github.io/atlas/` → 200 (default project-pages URL).
+  - `https://atlas.sovereignsky.no/` → live after Let's Encrypt cert provisions (a few minutes after CNAME registration).
 
 ### Validation
 
@@ -143,14 +141,14 @@ Pivot from "Docker image on UIS" to "GitHub Pages with custom domain" — matche
 
 ### Phase 3 outcome (2026-05-12)
 
-Code-side tasks (3.1, 3.2) shipped. Workflow mirrors UIS's [`docs.yml`](https://github.com/helpers-no/urbalurba-infrastructure/blob/main/.github/workflows/docs.yml) but stays one file (build + deploy in the same workflow with an `if:` guard on the deploy step so PRs build-only and only `main` pushes upload + deploy). Permissions extended to `pages: write` + `id-token: write` as required by `actions/deploy-pages@v4`. Concurrency group `pages` so deploys queue if main commits land back-to-back. `website/static/CNAME` contains `atlas.sovereignsky.no` and is copied to `build/CNAME` on every build (verified locally — `ls build/CNAME` after `npm run build`).
+Shipped end-to-end. Workflow mirrors UIS's [`docs.yml`](https://github.com/helpers-no/urbalurba-infrastructure/blob/main/.github/workflows/docs.yml) but stays one file (build + deploy with an `if:` guard so PRs build-only and only `main` pushes upload + deploy). Permissions extended to `pages: write` + `id-token: write` as required by `actions/deploy-pages@v4`. Concurrency group `pages` so deploys queue if main commits land back-to-back.
 
-`docusaurus.config.ts` `url` field updated from `https://atlas.helpers.no` to `https://atlas.sovereignsky.no` so the sitemap, OG tags, and canonical URLs match the deploy target.
+`docusaurus.config.ts` `url` field updated to `https://atlas.sovereignsky.no` so the sitemap, OG tags, and canonical URLs match the deploy target.
 
-Tasks 3.3–3.5 are user-side and post-push:
-- **3.3 Repo Pages settings** — must be enabled by the repo admin before the first `deploy-pages` action call works. Atlas's repo doesn't have it on yet.
-- **3.4 DNS CNAME** — `atlas.sovereignsky.no` → `terchris.github.io` at the DNS provider. Needs the owner of `sovereignsky.no` DNS.
-- **3.5 First-deploy verification** — happens after push + the first workflow run.
+**Two surprises during user-side setup:**
+
+- **Repo was private** at start of Phase 3 — GitHub Pages on the free plan requires public repos. Flipped to public after explicit user consent. Consistent with sister projects (urbalurba-infrastructure and devcontainer-toolbox are both public).
+- **`CNAME` file ≠ Pages custom-domain config when source is `workflow`** — with `build_type: workflow`, the `CNAME` file in the deployed artefact does **not** auto-configure the Pages custom-domain field. (It does in branch-source mode.) Had to set the custom domain explicitly via `gh api -X PUT /repos/terchris/atlas/pages -f cname=atlas.sovereignsky.no` after the first deploy. The `website/static/CNAME` file we ship is still useful documentation in the artefact but it's not load-bearing for the actual Pages config. Worth noting for any future Docusaurus install following the same pattern.
 
 ---
 
