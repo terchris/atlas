@@ -569,7 +569,7 @@ When a plan changes behaviour that's documented on a `website/docs/contributors/
 - A plan adds a new step to the source-add workflow → `contributors/adding-a-source.md` gets the new step in the same PR.
 - A plan modifies the `check-osmosis.sh` gate → `contributors/check-osmosis.md` reflects the new behaviour.
 
-This convention is rule #8 in [`docs/stack/naming-conventions.md`](../../../docs/stack/naming-conventions.md). Reviewer responsibility to flag PRs that ship behaviour changes without the matching docs update. No tooling enforces this in v1; if drift becomes a real problem, revisit and add a `check-docs.sh` similar to [`check-osmosis.sh`](../../../atlas-data/dbt/check-osmosis.sh).
+This convention is rule #8 in [`docs/stack/naming-conventions.md`](https://github.com/terchris/atlas/tree/main/docs/stack/naming-conventions.md). Reviewer responsibility to flag PRs that ship behaviour changes without the matching docs update. No tooling enforces this in v1; if drift becomes a real problem, revisit and add a `check-docs.sh` similar to [`check-osmosis.sh`](https://github.com/terchris/atlas/tree/main/atlas-data/dbt/check-osmosis.sh).
 
 When drafting a plan that changes documented behaviour, include the docs update in the **Files to Modify** list and as an explicit task line in the relevant phase. Don't list it under "What's next" — that's where the convention slips.
 

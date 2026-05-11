@@ -51,7 +51,7 @@ Trivial warm-up. ~10 minutes.
 
 ### Phase 2 — `dimensions/schema.yml` (12 columns) + `marts/schema.yml` (7 columns)
 
-Conformed dimensions and cross-source mart facts. Match the canonical vocabulary in [`docs/stack/naming-conventions.md`](../../../../docs/stack/naming-conventions.md) — most descriptions probably already exist there and just need to be propagated into schema.yml. The 7 in `marts/schema.yml` are likely on `fact_kommune_indicators` / `fact_chapter_activities` / `chapter_kommune_coverage` and feed downstream lineage, so prioritising them propagates descriptions widely. ~45 minutes.
+Conformed dimensions and cross-source mart facts. Match the canonical vocabulary in [`docs/stack/naming-conventions.md`](https://github.com/terchris/atlas/tree/main/docs/stack/naming-conventions.md) — most descriptions probably already exist there and just need to be propagated into schema.yml. The 7 in `marts/schema.yml` are likely on `fact_kommune_indicators` / `fact_chapter_activities` / `chapter_kommune_coverage` and feed downstream lineage, so prioritising them propagates descriptions widely. ~45 minutes.
 
 ### Phase 3 — `indicators/schema.yml` (48 columns)
 
@@ -59,7 +59,7 @@ Per-source `indicators__*` passthroughs. Many columns repeat across sources (`so
 
 ### Phase 4 — `private_marts/schema.yml` (34 columns)
 
-FRR models. Some columns are FRR-specific and need domain knowledge (consult [`atlas-private-data-repo/redcross/docs/felles-ressursregister-frr-openapi-spec.md`](../../../../../../atlas-private-data-repo/redcross/docs/felles-ressursregister-frr-openapi-spec.md) if available, otherwise the FRR upstream docs). ~2-3 hours.
+FRR models. Some columns are FRR-specific and need domain knowledge (consult [`atlas-private-data-repo/redcross/docs/felles-ressursregister-frr-openapi-spec.md`](https://github.com/terchris/atlas-private-data-repo/tree/main/redcross/docs/felles-ressursregister-frr-openapi-spec.md) if available, otherwise the FRR upstream docs). ~2-3 hours.
 
 ### Phase 5 — `supply/schema.yml` (77 columns)
 
@@ -76,7 +76,7 @@ After phases 1-5, `./check-osmosis.sh` should report TOTAL = 0 (or near-zero —
 - [ ] `./check-osmosis.sh` reports TOTAL = 0 (or documented exceptions)
 - [ ] `dbt-osmosis yaml document --dry-run --check` exits 0 on the whole project
 - [ ] check-osmosis.sh's strict mode tightened to cover all of `marts.*` (not just `marts/api/`)
-- [ ] Update [naming-conventions.md](../../../../docs/stack/naming-conventions.md) — note the convention is now enforced repo-wide
+- [ ] Update [naming-conventions.md](https://github.com/terchris/atlas/tree/main/docs/stack/naming-conventions.md) — note the convention is now enforced repo-wide
 
 ---
 
@@ -91,6 +91,6 @@ After phases 1-5, `./check-osmosis.sh` should report TOTAL = 0 (or near-zero —
 ## Cross-references
 
 - [PLAN-001-api-mart-views.md](PLAN-001-api-mart-views.md) — surfaced these gaps via dbt-osmosis baseline.
-- [`atlas-data/dbt/check-osmosis.sh`](../../../../../atlas-data/dbt/check-osmosis.sh) — the script that counts the gap.
-- [`docs/stack/naming-conventions.md`](../../../../docs/stack/naming-conventions.md) — the canonical vocabulary that most descriptions should reference.
+- [`atlas-data/dbt/check-osmosis.sh`](https://github.com/terchris/atlas/tree/main/atlas-data/dbt/check-osmosis.sh) — the script that counts the gap.
+- [`docs/stack/naming-conventions.md`](https://github.com/terchris/atlas/tree/main/docs/stack/naming-conventions.md) — the canonical vocabulary that most descriptions should reference.
 - [INVESTIGATE-public-api-surface.md](INVESTIGATE-public-api-surface.md) — the API plan PLAN-001 implements; rich descriptions matter because PostgREST projects them as OpenAPI.

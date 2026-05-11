@@ -10,7 +10,7 @@
 
 ### What's done
 
-- **Phase 1 — UIS schema exposure**: ✅ closed 2026-05-07. UIS shipped the `--schemas api_v1,marts,raw` flag (per-app explicit opt-in, not the original "global default" framing). UIS PR #140 merged as `f377fef`; `ghcr.io/helpers-no/uis-provision-host:latest` @sha256:`42cd40d5f66916a6f6071ab4d69fcf0080a2915b1cf93295bd3b169b8af42f31`. Atlas's `setup.md` updated via PR #76. Schema-list flag thread documented end-to-end in [`talk.md`](../talk/talk.md) (Messages 1-4 atlas + 1-3 uis). The reconfigure-already-deployed step is user-managed via the UIS tester CLI.
+- **Phase 1 — UIS schema exposure**: ✅ closed 2026-05-07. UIS shipped the `--schemas api_v1,marts,raw` flag (per-app explicit opt-in, not the original "global default" framing). UIS PR #140 merged as `f377fef`; `ghcr.io/helpers-no/uis-provision-host:latest` @sha256:`42cd40d5f66916a6f6071ab4d69fcf0080a2915b1cf93295bd3b169b8af42f31`. Atlas's `setup.md` updated via PR #76. Schema-list flag thread documented end-to-end in [`talk.md`](https://github.com/terchris/atlas/blob/main/website/docs/ai-developer/plans/talk/talk.md) (Messages 1-4 atlas + 1-3 uis). The reconfigure-already-deployed step is user-managed via the UIS tester CLI.
 
 - **Phase 2 — manifest registry**: ✅ shipped via PR #36 (catalogue 21 → 38 sources; manifest schema includes `eu_theme`, `attribution`, `dimensions:` block; `recordIngestRun()` lifecycle wrapper landed; `_sources_manifest.csv` + `_sources_dimensions.csv` seeds materialised at `marts._sources_manifest` / `_sources_dimensions`). Catalogue is now **41 sources** after subsequent FHI / SSB / Bufdir / Cursor BG additions.
 
@@ -22,11 +22,11 @@
 
 ### Goal (unchanged)
 
-Execute [INVESTIGATE-customer-frontend-data-display.md](INVESTIGATE-customer-frontend-data-display.md). After this PLAN, the customer frontend's `/data` page shows every queryable endpoint across `api_v1`, `marts`, and `raw` schemas (everything that isn't `private_marts`), each tagged with `provider`, `topic`, `geo`, `cadence`, `eu_theme`, and `layer`. A filter sidebar lets users slice the catalogue by any combination of tags. A first-class sources list (`/data/sources` + `api_v1.meta_sources`) carries provider, upstream URL, last-ingested timestamp, and downstream-model count for **every** Atlas ingest source — currently 41, growing as the cloud-agent pipeline drains the backlog.
+Execute [INVESTIGATE-customer-frontend-data-display.md](../backlog/INVESTIGATE-customer-frontend-data-display.md). After this PLAN, the customer frontend's `/data` page shows every queryable endpoint across `api_v1`, `marts`, and `raw` schemas (everything that isn't `private_marts`), each tagged with `provider`, `topic`, `geo`, `cadence`, `eu_theme`, and `layer`. A filter sidebar lets users slice the catalogue by any combination of tags. A first-class sources list (`/data/sources` + `api_v1.meta_sources`) carries provider, upstream URL, last-ingested timestamp, and downstream-model count for **every** Atlas ingest source — currently 41, growing as the cloud-agent pipeline drains the backlog.
 
 ### Investigation
 
-[INVESTIGATE-customer-frontend-data-display.md](INVESTIGATE-customer-frontend-data-display.md) — settled the open-by-default principle, the per-source `manifest.yml` shape ([Q2]), the dbt-model-as-substrate path ([Q3]), and the multi-namespace tag UX ([Q4]). Phase 2.10 + 2.11 extended the namespace set with `eu_theme:` (DCAT-AP alignment) and the editorial `dimensions:` block.
+[INVESTIGATE-customer-frontend-data-display.md](../backlog/INVESTIGATE-customer-frontend-data-display.md) — settled the open-by-default principle, the per-source `manifest.yml` shape ([Q2]), the dbt-model-as-substrate path ([Q3]), and the multi-namespace tag UX ([Q4]). Phase 2.10 + 2.11 extended the namespace set with `eu_theme:` (DCAT-AP alignment) and the editorial `dimensions:` block.
 
 ### Prerequisites
 
@@ -120,14 +120,14 @@ For the 21 existing sources (Phase 2.3): same flow in batch. SSB (14) + FHI (4) 
 
 ---
 
-## Phase 1: UIS-side schema exposure
+## Phase 1: UIS-side schema exposure {#phase-1}
 
 Cross-repo coordination with the UIS contributor. Atlas's `atlas-postgrest` instance starts serving `marts.*` and `raw.*` alongside `api_v1.*`. UIS-side change is a one-time configure-postgrest patch; after it lands, every new table in those schemas is queryable automatically (the existing `ALTER DEFAULT PRIVILEGES` clause already auto-grants SELECT on new tables).
 
 ### Tasks
 
 - [x] 1.1 Open a new round of cross-repo coordination via `talk.md`. Inaugural message from atlas to uis lays out the change asked for: extend `PGRST_DB_SCHEMAS` from `api_v1` to `api_v1,marts,raw`; add matching `GRANT USAGE ON SCHEMA marts, raw TO <app>_web_anon` and `GRANT SELECT ON ALL TABLES IN SCHEMA marts, raw TO <app>_web_anon` plus `ALTER DEFAULT PRIVILEGES IN SCHEMA marts, raw GRANT SELECT ON TABLES TO <app>_web_anon` to `configure-postgrest.sh`. `private_marts` stays excluded.
-- [x] 1.2 UIS contributor responded + shipped. Six-message thread in [`talk.md`](../talk/talk.md) settled the design (UIS pushed back on the global-default framing in their Message 1; atlas accepted in Message 3 — the per-app `--schemas` flag avoids the GRANT-failure trap for non-Atlas consumers and keeps dbt-isms out of the platform tool). UIS PR #140 merged as `f377fef` on 2026-05-07; State Matrix dispatch with 5 reconcile paths; `--schema` (singular) removed entirely; `PGRST_DB_SCHEMAS` lives on the per-app secret + read by deploy template via `secretKeyRef` so configure/deploy can't drift.
+- [x] 1.2 UIS contributor responded + shipped. Six-message thread in [`talk.md`](https://github.com/terchris/atlas/blob/main/website/docs/ai-developer/plans/talk/talk.md) settled the design (UIS pushed back on the global-default framing in their Message 1; atlas accepted in Message 3 — the per-app `--schemas` flag avoids the GRANT-failure trap for non-Atlas consumers and keeps dbt-isms out of the platform tool). UIS PR #140 merged as `f377fef` on 2026-05-07; State Matrix dispatch with 5 reconcile paths; `--schema` (singular) removed entirely; `PGRST_DB_SCHEMAS` lives on the per-app secret + read by deploy template via `secretKeyRef` so configure/deploy can't drift.
 - [x] 1.3 Atlas-side validation passed against the contributor's local-image deployment (`talk.md` Message 4) — six spot-checks across api_v1 / marts / raw plus the privacy-boundary check confirming `private_marts.frr_resources` returns 404 by default and 406 with `Accept-Profile: private_marts`. Atlas's `setup.md` updated via PR #76 (configure line gains `--schemas api_v1,marts,raw`). The user's `./uis pull` + reconfigure step is the final ack — runs through their UIS tester CLI; expected `"status": "already_configured"` no-op since the contributor's local image had identical semantics.
 
 **Outcome (Phase 1 — closed 2026-05-07):** schema-list extension landed end-to-end. Single-day round-trip from atlas Message 4 (validation) to UIS Message 3 (PR + GHCR rebuild). PostgREST now serves `marts.*` and `raw.*` via `Accept-Profile` in addition to the default `api_v1`; private schemas (`private_raw`, `private_marts`) stay excluded by design. GHCR `:latest` SHA: `42cd40d5f66916a6f6071ab4d69fcf0080a2915b1cf93295bd3b169b8af42f31`.
@@ -202,7 +202,7 @@ Promote the existing Markdown table at `atlas-data/ingest/src/sources/README.md`
   Landed as `atlas-data/migrations/028_raw_ingest_runs_upstream_updated.sql`.
 - [x] 2.8 **Update SSB + FHI ingest modules** (the easy wave) to populate `upstream_updated_at`. SSB's PxWebAPI metadata returns an `updated` field at the table level; FHI's json-stat2 has equivalent. The bootstrap script in 2.3 already extracts these — wire the same extraction into the runtime ingest path (one-place change in the run-record helper at `atlas-data/ingest/src/lib/ingest-runs.ts` or equivalent). Red Cross / Brreg can adopt the same convention later — leaving them null is fine; column is nullable.
 
-  **Outcome (2026-05-01):** Scope was bigger than the plan implied — the existing SSB/FHI ingest modules didn't write to `raw.ingest_runs` at all; the start/finish helpers were only used by the NGO scraping infrastructure. Built a new shared wrapper at [`atlas-data/ingest/src/lib/ingest_run.ts`](../../../../atlas-data/ingest/src/lib/ingest_run.ts) (`recordIngestRun(sourceId, work)`) that owns the start/finish + sql lifecycle, then wired all 21 source modules through it. Per-source delta is ~10 lines: `return recordIngestRun(SOURCE_ID, async () => { ... return { output, record: { rowsParsed, upstreamUpdatedAt: new Date(resp.updated) } }; })`. SSB (14) + FHI (4) populate `upstreamUpdatedAt` from `resp.updated`; KLASS (2) + redcross/frr (2) pass null or a derived timestamp where the upstream concept exists. Live test: `npm run ingest:ssb-08764` returned `upstream_updated_at: "2026-01-16T07:00:00.000Z"` on `run_id 2`.
+  **Outcome (2026-05-01):** Scope was bigger than the plan implied — the existing SSB/FHI ingest modules didn't write to `raw.ingest_runs` at all; the start/finish helpers were only used by the NGO scraping infrastructure. Built a new shared wrapper at [`atlas-data/ingest/src/lib/ingest_run.ts`](https://github.com/terchris/atlas/tree/main/atlas-data/ingest/src/lib/ingest_run.ts) (`recordIngestRun(sourceId, work)`) that owns the start/finish + sql lifecycle, then wired all 21 source modules through it. Per-source delta is ~10 lines: `return recordIngestRun(SOURCE_ID, async () => { ... return { output, record: { rowsParsed, upstreamUpdatedAt: new Date(resp.updated) } }; })`. SSB (14) + FHI (4) populate `upstreamUpdatedAt` from `resp.updated`; KLASS (2) + redcross/frr (2) pass null or a derived timestamp where the upstream concept exists. Live test: `npm run ingest:ssb-08764` returned `upstream_updated_at: "2026-01-16T07:00:00.000Z"` on `run_id 2`.
 - [x] 2.9 Update `atlas-data/ingest/src/sources/README.md`: either (a) auto-generate from the YAMLs via `build_sources_seed.py` adding a markdown-table emission flag (one-way duplication, single source of truth in the YAMLs), or (b) replace the table with a pointer at `api_v1.meta_sources`. **Recommendation: (a)** — contributors browsing the repo without the API still see a readable index, and the table can never go stale.
 
   Implemented option (a): `build_sources_seed.py` now accepts `--readme [PATH]` (defaults to `atlas-data/ingest/src/sources/README.md`). Replaces content between `<!-- BEGIN auto-generated source table -->` / `<!-- END auto-generated source table -->` markers with a 7-column table (Source, Provider, What it is, Topic, EU theme, Geo, Cadence). Idempotent — re-running on an unchanged manifest set is a no-op. The legacy `Notes` column is dropped; per-source READMEs already capture editorial commentary.
@@ -268,7 +268,7 @@ uv run --env-file ../ingest/.env dbt seed --select _sources_manifest          # 
 
 ---
 
-## Phase 3: `marts.meta_sources` + `marts.meta_endpoints` + `marts.meta_dimensions` dbt models
+## Phase 3: `marts.meta_sources` + `marts.meta_endpoints` + `marts.meta_dimensions` dbt models {#phase-3}
 
 The joins. After this phase, three new `mart_*` views exist (and via the PLAN-004 generator, three new `api_v1.meta_*` wrappers) that carry the full tagged catalogue: per-source metadata + freshness, per-endpoint inventory + tag inheritance, and per-dimension editorial semantics joined with computed cardinality.
 
@@ -360,16 +360,16 @@ Replace the existing flat catalogue with the tag-filter sidebar layout. Add a pe
 - [x] 4.1 Rewrite `atlas-frontend/src/app/data/page.tsx`:
   - ✅ Fetches `api_v1.meta_endpoints` directly via server component (`fetch()` with `next: { revalidate: 60 }`).
   - ✅ Reads `searchParams.tag` (string | string[]) for active filters; URL state `?tag=topic:income&tag=geo:kommune&q=oslo`.
-  - ✅ Filtering happens **in node**, not via PostgREST `?tags=cs.{...}` (the original plan said server-side via PostgREST). Pivot rationale: meta_endpoints is 119 rows; node-side filter trivially fast and supports the full faceted-search semantics (AND across namespaces, OR within) without composing complex PostgREST `or=()` clauses. Pure helpers extracted to [`src/lib/catalog-filter.ts`](../../../../atlas-frontend/src/lib/catalog-filter.ts) for testability.
+  - ✅ Filtering happens **in node**, not via PostgREST `?tags=cs.{...}` (the original plan said server-side via PostgREST). Pivot rationale: meta_endpoints is 119 rows; node-side filter trivially fast and supports the full faceted-search semantics (AND across namespaces, OR within) without composing complex PostgREST `or=()` clauses. Pure helpers extracted to [`src/lib/catalog-filter.ts`](https://github.com/terchris/atlas/tree/main/atlas-frontend/src/lib/catalog-filter.ts) for testability.
   - ✅ Two-column layout: sidebar (18rem fixed) with 6 namespace-grouped checkboxes + faceted-search counts (counts re-compute as filters apply); endpoint cards on the right.
   - ✅ Cards show layer-coloured badge (api_v1 emerald, marts sky, raw zinc), `table_name` in mono, layer-stripped tag pills (clickable to add), and right-aligned "View as table" + "View spec" links to `/data/{schema}/{table}` and `/data/{schema}/{table}/spec`.
   - ✅ Pure URL-driven, no client JS, no React state.
 
   **Bundled scope (extension to original plan, atlas Phase 4.1 PR):** the `/data/[endpoint]/` route was restructured to `/data/[schema]/[table]/` so the table + spec viewers know which schema to send `Accept-Profile` for. Without this, marts/raw cards on the new catalog would 404 on click. The route is hard-cut (no back-compat redirect from `/data/[endpoint]`); old URLs aren't externally linked yet. The viewers' `fetchSpec` / `fetchRows` / `fetchCount` calls all gain `{ acceptProfile: schema }`; the lib drops the header for `api_v1` so default-schema requests stay header-less (matches the talk40 gotcha note above).
 - [x] 4.2 Update `npm run api:types` so the new `meta_sources` and `meta_endpoints` endpoint types appear in `api-types.ts`. **Closed as no-op** — Phase 4.1's catalog rewrite reads `meta_endpoints` dynamically (the typed `api-types.ts` union is no longer load-bearing for catalog discovery), so the regen is a routine maintenance step the contributor runs whenever they want IDE autocompletion freshened. No explicit task.
-- [x] 4.3 Per-source detail page shipped at [`atlas-frontend/src/app/data/sources/[source_id]/page.tsx`](../../../../atlas-frontend/src/app/data/sources/%5Bsource_id%5D/page.tsx). Three parallel live PostgREST fetches (meta_sources filtered by source_id, meta_endpoints full list, marts.lineage filtered by source_id via `Accept-Profile: marts`); 404 when source_id missing. Renders: source-metadata card (provider / license / periodicity / EU theme / upstream id / attribution), freshness card (last_ingested_at / last_upstream_update_at / total_runs / latest_row_count), tags as click-throughs to `/data?tag=...`, upstream link, raw-ingest-table card, derived-endpoints list with `View as table` + `View spec` per row. PR #79's sources index now links source ids to this detail page; the prior interim direct-to-raw link is preserved in the action row as `Raw data →`.
+- [x] 4.3 Per-source detail page shipped at [`atlas-frontend/src/app/data/sources/[source_id]/page.tsx`](https://github.com/terchris/atlas/tree/main/atlas-frontend/src/app/data/sources/%5Bsource_id%5D/page.tsx). Three parallel live PostgREST fetches (meta_sources filtered by source_id, meta_endpoints full list, marts.lineage filtered by source_id via `Accept-Profile: marts`); 404 when source_id missing. Renders: source-metadata card (provider / license / periodicity / EU theme / upstream id / attribution), freshness card (last_ingested_at / last_upstream_update_at / total_runs / latest_row_count), tags as click-throughs to `/data?tag=...`, upstream link, raw-ingest-table card, derived-endpoints list with `View as table` + `View spec` per row. PR #79's sources index now links source ids to this detail page; the prior interim direct-to-raw link is preserved in the action row as `Raw data →`.
 - [x] 4.4 Homepage copy updated in PR #85: primary button reads "Browse all endpoints →" (was "Browse the data"), and a sibling "Sources →" button + caption distinguishes the two surfaces.
-- [x] 4.5 [`atlas-frontend/README.md`](../../../../atlas-frontend/README.md) refreshed: lists every route (homepage / `/data` / `/data/[schema]/[table]` / `/data/[schema]/[table]/spec` / `/data/sources` / `/data/sources/[source_id]`); documents `acceptProfile` on the lib helpers; adds a "Tag URLs" section with five bookmarkable example query strings; cross-links to PLAN-005 (initial split) and PLAN-007 (this PLAN's open-by-default rewrite).
+- [x] 4.5 [`atlas-frontend/README.md`](https://github.com/terchris/atlas/tree/main/atlas-frontend/README.md) refreshed: lists every route (homepage / `/data` / `/data/[schema]/[table]` / `/data/[schema]/[table]/spec` / `/data/sources` / `/data/sources/[source_id]`); documents `acceptProfile` on the lib helpers; adds a "Tag URLs" section with five bookmarkable example query strings; cross-links to PLAN-005 (initial split) and PLAN-007 (this PLAN's open-by-default rewrite).
 
 ### Validation
 
@@ -404,7 +404,7 @@ curl -sS -o /dev/null -w "%{http_code}\n" "http://localhost:3001/data/sources/no
 - [x] 5.1 [`setup.md`](../../../contributors/setup.md): new "Per-source `manifest.yml`" subsection after "Set up the ingest layer", documenting the 11 required top-level fields (incl. `eu_theme`, `attribution`), the four `tags:` namespaces with allowed values, and the `dimensions:` block with example. Plus the "Set up the customer frontend" section refreshed to list the actual routes shipped (`/data`, `/data/sources`, `/data/sources/[source_id]`, `/data/[schema]/[table]`) instead of the stale "lists every api_v1.* endpoint" copy.
 - [x] 5.2 [`ingest-modules.md`](../../../contributors/ingest-modules.md): the manifest workflow at step 4 expanded into 4 explicit sub-steps (bootstrap → fill → review-with-heuristic-warnings → commit). Names the topic-regex first-match-wins behaviour and the geo priority (kommune > fylke > bydel). Documents `MANUAL_OVERRIDES` for sources without an `## Upstream` README table. Closes with the "manifest is human-authored after commit; ingest runs don't modify it" rule.
 - [x] 5.3 [`developers/index.md`](../../../developers/index.md): new "Open by default" section explaining the three-schema posture (`api_v1` / `marts` / `raw`), how to reach non-default schemas via `Accept-Profile`, the catalog-as-queryable-endpoint pattern, and a tag-filter URL pattern table (7 examples) external developers can use to deep-link filtered views. The customer-app section's description updated to reflect the multi-schema dispatch + lib's `acceptProfile` option.
-- [x] 5.4 [`atlas-data/ingest/src/sources/README.md`](../../../../../atlas-data/ingest/src/sources/README.md): the auto-generated table from `build_sources_seed.py --readme` was already in place (BEGIN/END markers since Phase 2.9). Added a "Programmatic access" callout above the table pointing at `api_v1.meta_sources` as the canonical live view, with a `curl` example, so external developers see the API path alongside the offline Markdown table.
+- [x] 5.4 [`atlas-data/ingest/src/sources/README.md`](https://github.com/terchris/atlas/tree/main/atlas-data/ingest/src/sources/README.md): the auto-generated table from `build_sources_seed.py --readme` was already in place (BEGIN/END markers since Phase 2.9). Added a "Programmatic access" callout above the table pointing at `api_v1.meta_sources` as the canonical live view, with a `curl` example, so external developers see the API path alongside the offline Markdown table.
 
 ### Validation
 
@@ -479,7 +479,7 @@ All four doc files reflect the new shape; no stale references to "the 9 endpoint
 
 ## Out of scope
 
-- The auth story for `private_marts.*` — covered by [INVESTIGATE-private-atlas-deployments.md](INVESTIGATE-private-atlas-deployments.md).
+- The auth story for `private_marts.*` — covered by [INVESTIGATE-private-atlas-deployments.md](../backlog/INVESTIGATE-private-atlas-deployments.md).
 - Column-level descriptions on `raw.*` tables — they remain undocumented; external consumers see `meta_sources.upstream_url` for canonical docs.
 - Lineage visualisation (mermaid graphs) — `meta_endpoints` carries the data; rendering a graph is a v2 polish.
 - Tag governance / curation tooling — manual for v1 (a quarterly review by whoever's stewarding source ingests). Automate later if it gets messy.
@@ -523,13 +523,13 @@ Captured here so the PLAN serves as project documentation, not just an aspiratio
 
 ## Cross-references
 
-- [INVESTIGATE-customer-frontend-data-display.md](INVESTIGATE-customer-frontend-data-display.md) — the architectural commitments this PLAN executes.
+- [INVESTIGATE-customer-frontend-data-display.md](../backlog/INVESTIGATE-customer-frontend-data-display.md) — the architectural commitments this PLAN executes.
 - [PLAN-004-postgrest-api-v1-wrapper.md](../completed/PLAN-004-postgrest-api-v1-wrapper.md) — the auto-generator wraps `mart_meta_*` into `api_v1.meta_*`. This PLAN reuses that pipeline unchanged.
 - [PLAN-005-frontend-split-and-rebuild.md](../completed/PLAN-005-frontend-split-and-rebuild.md) — built the introspection-driven `/data` catalogue this PLAN extends. The existing `/data/[endpoint]` table viewer + `/data/[endpoint]/spec` viewer are unaffected.
 - [INVESTIGATE-frontend-data-access-architecture.md](../completed/INVESTIGATE-frontend-data-access-architecture.md) — established forkability + no-DB-role for the customer frontend; this PLAN preserves both.
-- [`atlas-data/ingest/src/sources/README.md`](../../../../../atlas-data/ingest/src/sources/README.md) — the legacy Markdown registry that becomes the structured `manifest.yml` set in Phase 2.
-- [`raw.ingest_runs`](../../../../../atlas-data/migrations/023_raw_ingest_runs.sql) — the run-history substrate `meta_sources` joins to.
-- [`talk.md`](../talk/talk.md) — empty placeholder; Phase 1 opens a new round here.
+- [`atlas-data/ingest/src/sources/README.md`](https://github.com/terchris/atlas/tree/main/atlas-data/ingest/src/sources/README.md) — the legacy Markdown registry that becomes the structured `manifest.yml` set in Phase 2.
+- [`raw.ingest_runs`](https://github.com/terchris/atlas/tree/main/atlas-data/migrations/023_raw_ingest_runs.sql) — the run-history substrate `meta_sources` joins to.
+- [`talk.md`](https://github.com/terchris/atlas/blob/main/website/docs/ai-developer/plans/talk/talk.md) — empty placeholder; Phase 1 opens a new round here.
 
 ---
 

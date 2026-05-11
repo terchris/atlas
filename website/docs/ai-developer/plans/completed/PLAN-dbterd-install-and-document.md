@@ -24,7 +24,7 @@ Decisions resolved during planning (2026-04-23):
 
 - **Format**: Mermaid (renders inline on GitHub; no external tool required).
 - **Location**: `docs/stack/erd.md` (next to `naming-conventions.md` and `data-strategy.md`).
-- **Pipeline**: manual regeneration via a script in [`atlas-data/dbt/README.md`](../../../../../atlas-data/dbt/README.md). No CI gate (Atlas has no dbt CI yet — defer until that lands).
+- **Pipeline**: manual regeneration via a script in [`atlas-data/dbt/README.md`](https://github.com/terchris/atlas/tree/main/atlas-data/dbt/README.md). No CI gate (Atlas has no dbt CI yet — defer until that lands).
 - **Add a `relationships` test for `fact_kommune_indicators.kommune_nr → dim_kommune`** (and similarly for `fylke_nr`) so the fact's edges show up in the ERD. Currently the join is in SQL but no test enforces it; without the test dbterd's `test_relationship` algo can't draw those edges.
 - **Labels (`*_label_no`, `*_label_en`) stay visible** on indicator entities. They're part of the marts contract — hiding them would make the ERD lie about what consumers see. Tall boxes are an acceptable cost.
 - **Seed support**: empirical — see Phase 2.
@@ -35,7 +35,7 @@ Decisions resolved during planning (2026-04-23):
 
 ### Tasks
 
-- [x] 1.1 Added `dbterd>=1.25,<2` to [`atlas-data/dbt/requirements.txt`](../../../../../atlas-data/dbt/requirements.txt). ✓
+- [x] 1.1 Added `dbterd>=1.25,<2` to [`atlas-data/dbt/requirements.txt`](https://github.com/terchris/atlas/tree/main/atlas-data/dbt/requirements.txt). ✓
 - [x] 1.2 Installed via `uv pip install -r requirements.txt`. `uv run dbterd --version` reports `1.25.0`. ✓
 - [x] 1.3 No-op: `marts/schema.yml` already declares `relationships` tests for both `fact_kommune_indicators.kommune_nr → dim_kommune` and `fylke_nr → dim_fylke`. The investigation's open question 2 was based on me not reading the file first. ✓
 - [x] 1.4 No-op: existing tests already cover this; PLAN-003's `dbt build` already validated them. ✓
@@ -54,7 +54,7 @@ Empirically determine whether `--resource-type seed` produces useful output, the
 
 - [x] 2.1 Smoke test with `--resource-type model --resource-type source`: 20 entities, 36 relationships. Indicator → dim and fact → dim edges all rendered correctly. ✓
 - [x] 2.2 Smoke test with `--resource-type seed` added: **works perfectly**. 25 entities (5 ref_* seeds added), 42 relationships (6 indicator → seed edges visible: ssb_06083→family_type, ssb_06944→household_type, ssb_09429→nivaa, fhi_trangbodd→utdann, fhi_vgs→utdann, fhi_vgs→innvkat). dbterd's underlying filter accepts `seed` even though the formal CLI docs only list `model`/`source`. ✓
-- [x] 2.3 Wrote [`atlas-data/dbt/.dbterd.yml`](../../../../../atlas-data/dbt/.dbterd.yml) with `model + source + seed` resource types, schema:marts selector, output to `docs/stack/erd.md`. ✓
+- [x] 2.3 Wrote [`atlas-data/dbt/.dbterd.yml`](https://github.com/terchris/atlas/tree/main/atlas-data/dbt/.dbterd.yml) with `model + source + seed` resource types, schema:marts selector, output to `docs/stack/erd.md`. ✓
 - [x] 2.4 Generated `docs/stack/erd.md`. ✓ Confirmed: 25 entities, 42 relationships.
 
 ---
@@ -63,21 +63,21 @@ Empirically determine whether `--resource-type seed` produces useful output, the
 
 ### Tasks
 
-- [x] 3.1 Added "Regenerating the marts ERD" section to [`atlas-data/dbt/README.md`](../../../../../atlas-data/dbt/README.md) explaining what the ERD is, when to regenerate, and how. ✓
-- [x] 3.2 Added cross-link to [`docs/stack/naming-conventions.md`](../../../../docs/stack/naming-conventions.md) at the end of the "How this file is enforced" section. ✓
-- [x] 3.3 dbterd writes raw `erDiagram` syntax (no Mermaid fence — GitHub wouldn't render it). Wrote a tiny wrapper [`atlas-data/dbt/regenerate-erd.sh`](../../../../../atlas-data/dbt/regenerate-erd.sh) (~25 lines bash) that runs `dbt docs generate` + `dbterd run`, then prepends a "DO NOT EDIT" header + Markdown intro and wraps the body in a ```` ```mermaid ```` fence. README points at this script as the canonical regeneration command. ✓
+- [x] 3.1 Added "Regenerating the marts ERD" section to [`atlas-data/dbt/README.md`](https://github.com/terchris/atlas/tree/main/atlas-data/dbt/README.md) explaining what the ERD is, when to regenerate, and how. ✓
+- [x] 3.2 Added cross-link to [`docs/stack/naming-conventions.md`](https://github.com/terchris/atlas/tree/main/docs/stack/naming-conventions.md) at the end of the "How this file is enforced" section. ✓
+- [x] 3.3 dbterd writes raw `erDiagram` syntax (no Mermaid fence — GitHub wouldn't render it). Wrote a tiny wrapper [`atlas-data/dbt/regenerate-erd.sh`](https://github.com/terchris/atlas/tree/main/atlas-data/dbt/regenerate-erd.sh) (~25 lines bash) that runs `dbt docs generate` + `dbterd run`, then prepends a "DO NOT EDIT" header + Markdown intro and wraps the body in a ```` ```mermaid ```` fence. README points at this script as the canonical regeneration command. ✓
 
 ---
 
 ## Acceptance Criteria
 
 - [ ] `dbterd --version` runs cleanly via `uv run` in the dbt venv.
-- [ ] [`atlas-data/dbt/.dbterd.yml`](../../../../../atlas-data/dbt/) exists with config that produces a working ERD via `uv run dbterd run` (no extra flags).
-- [ ] [`docs/stack/erd.md`](../../../../docs/stack/erd.md) is committed and renders on GitHub as a Mermaid diagram showing every marts entity and its relationships.
+- [ ] [`atlas-data/dbt/.dbterd.yml`](https://github.com/terchris/atlas/tree/main/atlas-data/dbt/) exists with config that produces a working ERD via `uv run dbterd run` (no extra flags).
+- [ ] [`docs/stack/erd.md`](https://github.com/terchris/atlas/tree/main/docs/stack/erd.md) is committed and renders on GitHub as a Mermaid diagram showing every marts entity and its relationships.
 - [ ] Indicator → seed edges (from PLAN-003) are visible OR the rationale for their absence is documented in `.dbterd.yml`.
 - [ ] Fact → dim_kommune + fact → dim_fylke edges are visible (because of the new tests in Phase 1).
-- [ ] [`atlas-data/dbt/README.md`](../../../../../atlas-data/dbt/README.md) documents the regeneration command.
-- [ ] [`docs/stack/naming-conventions.md`](../../../../docs/stack/naming-conventions.md) cross-links to `erd.md`.
+- [ ] [`atlas-data/dbt/README.md`](https://github.com/terchris/atlas/tree/main/atlas-data/dbt/README.md) documents the regeneration command.
+- [ ] [`docs/stack/naming-conventions.md`](https://github.com/terchris/atlas/tree/main/docs/stack/naming-conventions.md) cross-links to `erd.md`.
 - [ ] `dbt test` still passes with the new fact relationship tests (PASS grows by 2; WARN may grow by 1 if fylke side warns).
 
 ---

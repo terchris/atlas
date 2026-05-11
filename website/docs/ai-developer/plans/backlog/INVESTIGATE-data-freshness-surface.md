@@ -33,11 +33,11 @@
 
 ## Why this exists
 
-Atlas synthesizes ~24 public-sector sources (SSB, FHI, Brreg, Kartverket, Bufdir, IMDi, NAV, Lottstift, Innsamlingskontrollen, Red Cross, and eventually 9+ more NGOs). Each source refreshes on its own cadence — SSB indicators are monthly/quarterly/annual, FHI is annual, Red Cross is daily, scraped NGO sites are weekly. The kommune detail page at [`app/kommuner/[kommune_nr]/`](../../../../app/kommuner/) shows all of them together.
+Atlas synthesizes ~24 public-sector sources (SSB, FHI, Brreg, Kartverket, Bufdir, IMDi, NAV, Lottstift, Innsamlingskontrollen, Red Cross, and eventually 9+ more NGOs). Each source refreshes on its own cadence — SSB indicators are monthly/quarterly/annual, FHI is annual, Red Cross is daily, scraped NGO sites are weekly. The kommune detail page at [`app/kommuner/[kommune_nr]/`](https://github.com/terchris/atlas/tree/main/atlas-frontend/src/app/kommuner/) shows all of them together.
 
 A journalist writing about "homework help capacity in Bergen" needs to trust the numbers. A kommune case worker deciding whether to refer a family to a Red Cross chapter needs to know the chapter is actually still running that activity. A policy analyst comparing kommuner on youth mental-health indicators needs to know whether the indicator reflects 2024 or 2019 data.
 
-**Current state:** the plumbing exists — every raw table has a mandatory `loaded_at timestamptz` ([CONTRIBUTING.md:47](../../../../../atlas-data/CONTRIBUTING.md)), dbt source freshness is configured via `loaded_at_field`, and the convention is to rename `loaded_at → updated_at` at the mart layer for consumer exposure (CONTRIBUTING.md:143). But **no `.tsx` file in the frontend reads any of it**. Grep confirms: zero UI surface today.
+**Current state:** the plumbing exists — every raw table has a mandatory `loaded_at timestamptz` ([CONTRIBUTING.md:47](https://github.com/terchris/atlas/tree/main/atlas-data/CONTRIBUTING.md)), dbt source freshness is configured via `loaded_at_field`, and the convention is to rename `loaded_at → updated_at` at the mart layer for consumer exposure (CONTRIBUTING.md:143). But **no `.tsx` file in the frontend reads any of it**. Grep confirms: zero UI surface today.
 
 This investigation defines what to build on top of that plumbing.
 
@@ -73,7 +73,7 @@ Different personas want different surfaces. The cheap thing is the Q4 answer (si
 
 ### B.1 Raw layer — **[Q5]**
 
-Every raw table has `loaded_at timestamptz not null default now()` ([CONTRIBUTING.md:47](../../../../../atlas-data/CONTRIBUTING.md), mandatory per the checklist at line 220). Confirmed across all existing migrations (`002_raw_ssb_08764.sql` through `021_raw_fhi_vgs_gjennomforing.sql`).
+Every raw table has `loaded_at timestamptz not null default now()` ([CONTRIBUTING.md:47](https://github.com/terchris/atlas/tree/main/atlas-data/CONTRIBUTING.md), mandatory per the checklist at line 220). Confirmed across all existing migrations (`002_raw_ssb_08764.sql` through `021_raw_fhi_vgs_gjennomforing.sql`).
 
 Gap: `loaded_at` is only set at ingest time. It says nothing about when the *source* published the underlying data. For SSB tables, the ingest might run daily while the source only republishes annually — `loaded_at` is misleadingly recent in that case.
 
@@ -170,13 +170,13 @@ Leaning D.1c — meta marts introduce a coupling between dbt and the view layer 
 
 How does the Next.js frontend read freshness?
 
-**D.2a PostgREST** — already in the platform stack ([`INVESTIGATE-postgrest.md`](../../../../../../urbalurba-infrastructure/website/docs/ai-developer/plans/backlog/INVESTIGATE-postgrest.md) in UIS). The freshness columns come along with the row for free.
+**D.2a PostgREST** — already in the platform stack ([`INVESTIGATE-postgrest.md`](https://github.com/helpers-no/urbalurba-infrastructure/tree/main/website/docs/ai-developer/plans/backlog/INVESTIGATE-postgrest.md) in UIS). The freshness columns come along with the row for free.
 
 **D.2b Bespoke Next.js API route** — `/api/freshness/[view]` returns the aggregate. Extra plumbing, but lets us shape the response.
 
 **D.2c Server Components reading dbt directly** — Next.js RSC with direct Postgres access. Same as D.2a but without the REST hop.
 
-Leaning D.2a or D.2c depending on which the rest of Atlas uses; this is a "match whatever else does." Check [`docs/stack/suggested-stack.md`](../../../../docs/stack/suggested-stack.md) during the actual investigation.
+Leaning D.2a or D.2c depending on which the rest of Atlas uses; this is a "match whatever else does." Check [`docs/stack/suggested-stack.md`](https://github.com/terchris/atlas/tree/main/docs/stack/suggested-stack.md) during the actual investigation.
 
 ---
 
@@ -205,7 +205,7 @@ Use the existing i18n approach (check `app/` and `src/` during investigation for
 
 ### E.3 Coverage-gap view considerations
 
-The [`app/coverage-gap/`](../../../../app/coverage-gap/) view is specifically about *missing* supply — absent data. Freshness for an absent row is ambiguous: is the gap real, or is the NGO's scraper just broken? This view needs a different freshness signal: "when was this NGO's source last successfully refreshed, regardless of whether it produced data for this kommune?" That's the `raw.ingest_runs` last-success timestamp — which is the ops signal bleeding into the user surface.
+The [`app/coverage-gap/`](https://github.com/terchris/atlas/tree/main/atlas-frontend/src/app/coverage-gap/) view is specifically about *missing* supply — absent data. Freshness for an absent row is ambiguous: is the gap real, or is the NGO's scraper just broken? This view needs a different freshness signal: "when was this NGO's source last successfully refreshed, regardless of whether it produced data for this kommune?" That's the `raw.ingest_runs` last-success timestamp — which is the ops signal bleeding into the user surface.
 
 Decide during investigation whether coverage-gap gets special treatment or uses the same footer as everything else.
 
@@ -279,7 +279,7 @@ The implementation split is roughly:
 
 - [ ] Verify during real investigation: which existing marts already expose `updated_at`, which don't.
 - [ ] Inventory each active ingest adapter for how `source_published_at` would be derived.
-- [ ] Decide Q10/Q11/Q12 with the frontend approach (verify stack against [`docs/stack/suggested-stack.md`](../../../../docs/stack/suggested-stack.md)).
+- [ ] Decide Q10/Q11/Q12 with the frontend approach (verify stack against [`docs/stack/suggested-stack.md`](https://github.com/terchris/atlas/tree/main/docs/stack/suggested-stack.md)).
 - [ ] Draft PLAN-A once the contract is agreed.
 
 ---
@@ -298,8 +298,8 @@ The implementation split is roughly:
 - Wiring in `app/kommuner/[kommune_nr]/` and `app/coverage-gap/`.
 
 **Documentation:**
-- Extend [`docs/stack/naming-conventions.md`](../../../../docs/stack/naming-conventions.md) with `source_published_at` alongside `updated_at`.
-- Add a section to [`atlas-data/CONTRIBUTING.md`](../../../../../atlas-data/CONTRIBUTING.md) covering per-source rules for deriving `source_published_at`.
+- Extend [`docs/stack/naming-conventions.md`](https://github.com/terchris/atlas/tree/main/docs/stack/naming-conventions.md) with `source_published_at` alongside `updated_at`.
+- Add a section to [`atlas-data/CONTRIBUTING.md`](https://github.com/terchris/atlas/tree/main/atlas-data/CONTRIBUTING.md) covering per-source rules for deriving `source_published_at`.
 
 ---
 

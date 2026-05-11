@@ -54,7 +54,7 @@ The other 8 indicator models (`indicators__ssb_06913`, `_06947`, `_08764`, `_120
 
 ### Tasks
 
-- [x] 1.1 Created [`atlas-data/dbt/macros/parse_codes.sql`](../../../../../atlas-data/dbt/macros/parse_codes.sql) with `decode_sex`, `period_start_year`, `period_end_year`, `age_range_min(col, sep)`, `age_range_max(col, sep)`. Period macros normalise both `_` and `-` separators in one path. Age macros also handle the `067+` open-ended form (min=67, max=null). ✓
+- [x] 1.1 Created [`atlas-data/dbt/macros/parse_codes.sql`](https://github.com/terchris/atlas/tree/main/atlas-data/dbt/macros/parse_codes.sql) with `decode_sex`, `period_start_year`, `period_end_year`, `age_range_min(col, sep)`, `age_range_max(col, sep)`. Period macros normalise both `_` and `-` separators in one path. Age macros also handle the `067+` open-ended form (min=67, max=null). ✓
 - [x] 1.2 `dbt parse` runs clean. ✓
 
 ### Validation

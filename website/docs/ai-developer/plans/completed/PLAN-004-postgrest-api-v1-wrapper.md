@@ -37,7 +37,7 @@
 
 ### Coordination state
 
-UIS contributor merged the documentation in PR #129 (2026-04-28); Atlas reviewed and approved 2026-04-29 (see [`NOTE-from-atlas-postgrest-doc-approval.md`](../../../../../urbalurba-infrastructure/website/docs/ai-developer/plans/backlog/NOTE-from-atlas-postgrest-doc-approval.md) in the UIS repo). UIS PLAN-002 (PostgREST deployment) started right after; once it ships, Atlas runs `./uis configure postgrest --app atlas --schema api_v1 --url-prefix api-atlas` + `./uis deploy postgrest --app atlas` and the API is live.
+UIS contributor merged the documentation in PR #129 (2026-04-28); Atlas reviewed and approved 2026-04-29 (see [`NOTE-from-atlas-postgrest-doc-approval.md`](https://github.com/helpers-no/urbalurba-infrastructure/tree/main/website/docs/ai-developer/plans/backlog/NOTE-from-atlas-postgrest-doc-approval.md) in the UIS repo). UIS PLAN-002 (PostgREST deployment) started right after; once it ships, Atlas runs `./uis configure postgrest --app atlas --schema api_v1 --url-prefix api-atlas` + `./uis deploy postgrest --app atlas` and the API is live.
 
 ## Phase 1 outcomes (2026-04-28)
 
@@ -72,7 +72,7 @@ Read `atlas-data/ingest/scripts/migrate.ts`. Key comment (line 4–6): *"Files m
 
 Read `urbalurba-infrastructure/provision-host/uis/services/integration/service-postgrest.sh` (47 lines). Line 23: `SCRIPT_PLAYBOOK=""` — intentionally empty. Comment lines 8–14: *"This file currently contains METADATA ONLY — SCRIPT_PLAYBOOK is intentionally empty so the docs page renders, but `./uis deploy` does not yet do anything. The implementation plan (PLAN-002-postgrest-implementation.md, not yet written) will add the playbook, configure handler, and Jinja templates."*
 
-**Resolution**: guarded grants ([Q11/Q12](ii)) become **load-bearing, not optional**. Today's UIS Postgres has roles `postgres`, `my_app`, `backstage`, `delete_test` — no `atlas_authenticator`, no `atlas_web_anon`. Atlas's migration must apply against a database where those roles don't exist; the generator emits any GRANT statements inside `DO $$ BEGIN IF EXISTS (SELECT FROM pg_roles WHERE rolname='atlas_web_anon') THEN ... END IF; END $$;` so missing-role doesn't abort the migration. Once UIS implements configure later, the same migration re-runs and the grants activate. **Atlas should signal this finding to the UIS contributor** so they don't double-grant when implementing configure.
+**Resolution**: guarded grants ([Q11/Q12] option (ii)) become **load-bearing, not optional**. Today's UIS Postgres has roles `postgres`, `my_app`, `backstage`, `delete_test` — no `atlas_authenticator`, no `atlas_web_anon`. Atlas's migration must apply against a database where those roles don't exist; the generator emits any GRANT statements inside `DO $$ BEGIN IF EXISTS (SELECT FROM pg_roles WHERE rolname='atlas_web_anon') THEN ... END IF; END $$;` so missing-role doesn't abort the migration. Once UIS implements configure later, the same migration re-runs and the grants activate. **Atlas should signal this finding to the UIS contributor** so they don't double-grant when implementing configure.
 
 ### [Q10] FK-embed via comment hints → **does NOT work for Atlas (no underlying FKs)**
 
@@ -184,11 +184,11 @@ The 12 decisions below were resolved in the INVESTIGATE; see that file for reaso
     -e PGRST_DB_ANON_ROLE=atlas_web_anon \
     postgrest/postgrest
   ```
-  Create a test pair of wrapper views with `COMMENT ON COLUMN api_v1.X.col IS '@references api_v1.kommune'`. Hit `GET /` and verify the OpenAPI spec lists the embed. Hit `GET /X?select=*,kommune(*)` and verify the embed works. **If yes → generator emits `@source` view comments + `@references` column comments per [Q10](a). If PostgREST docs differ from observed behaviour → record actual syntax in PLAN outcome.**
+  Create a test pair of wrapper views with `COMMENT ON COLUMN api_v1.X.col IS '@references api_v1.kommune'`. Hit `GET /` and verify the OpenAPI spec lists the embed. Hit `GET /X?select=*,kommune(*)` and verify the embed works. **If yes → generator emits `@source` view comments + `@references` column comments per [Q10] option (a). If PostgREST docs differ from observed behaviour → record actual syntax in PLAN outcome.**
 
-- [ ] 1.3 **[Q11] — UIS GRANT semantics** (~30 min). Read [`urbalurba-infrastructure/scripts/configure-postgrest`](https://github.com/helpers-no/urbalurba-infrastructure) (or whatever the actual script path is — find via `grep -r "configure postgrest" urbalurba-infrastructure/`). Determine whether `ALTER DEFAULT PRIVILEGES IN SCHEMA api_v1 GRANT SELECT ON TABLES TO atlas_web_anon` is set at configure time. Record outcome. **If yes → Atlas's generator emits no GRANTs. If no → generator emits guarded grants in a DO-block ([Q11/Q12](ii)).**
+- [ ] 1.3 **[Q11] — UIS GRANT semantics** (~30 min). Read [`urbalurba-infrastructure/scripts/configure-postgrest`](https://github.com/helpers-no/urbalurba-infrastructure) (or whatever the actual script path is — find via `grep -r "configure postgrest" urbalurba-infrastructure/`). Determine whether `ALTER DEFAULT PRIVILEGES IN SCHEMA api_v1 GRANT SELECT ON TABLES TO atlas_web_anon` is set at configure time. Record outcome. **If yes → Atlas's generator emits no GRANTs. If no → generator emits guarded grants in a DO-block ([Q11/Q12] option (ii)).**
 
-- [ ] 1.4 **[Q18] — Migration-runner semantics** (~5 min). Modify the body of any benign existing migration (e.g. add a SQL comment to `migrations/001_*.sql`); re-run `npm run migrate`; check whether the body change re-applies. **If content-hash tracking → output single re-overwritten file at `migrations/NNN_api_v1_generated.sql`. If NNN-tracking → write generator output to `atlas-data/migrations/api_v1_generated.sql` (no NNN); apply via separate `psql -f` step in CI/deploy ([Q18](c)).**
+- [ ] 1.4 **[Q18] — Migration-runner semantics** (~5 min). Modify the body of any benign existing migration (e.g. add a SQL comment to `migrations/001_*.sql`); re-run `npm run migrate`; check whether the body change re-applies. **If content-hash tracking → output single re-overwritten file at `migrations/NNN_api_v1_generated.sql`. If NNN-tracking → write generator output to `atlas-data/migrations/api_v1_generated.sql` (no NNN); apply via separate `psql -f` step in CI/deploy ([Q18] option (c)).**
 
 - [ ] 1.5 **Record outcomes** in a "Phase 1 outcome (YYYY-MM-DD)" section at the top of this PLAN file. Each outcome determines a small generator behaviour for Phase 2.
 
@@ -325,9 +325,9 @@ Naming-conventions changes diff cleanly; no broken cross-references.
   - How it's generated (auto from `models/marts/api/`; never hand-edited).
   - Day-to-day commands (`regenerate-api-v1.sh`, `check-api-v1.sh`).
   - Two-phase deprecation workflow ([Q14] + [Q17]) — deprecate via `meta: { deprecated_until: ... }`, then remove the model and regenerate.
-  - The five validation gates (link to [check-osmosis.md](./check-osmosis.md) for the pattern).
+  - The five validation gates (link to [check-osmosis.md](../../../contributors/check-osmosis.md) for the pattern).
   - FK embed access pattern with curl examples (post-UIS-deploy).
-  - Cross-reference [INVESTIGATE](../ai-developer/plans/backlog/INVESTIGATE-postgrest-api-v1-wrapper.md) for design rationale.
+  - Cross-reference [INVESTIGATE](./INVESTIGATE-postgrest-api-v1-wrapper.md) for design rationale.
 
 - [ ] 6.2 **Update `adding-a-source.md`**:
   - Step 9 ("dbt schema.yml entry") gains a sub-step: "after the dbt model lands, run `./regenerate-api-v1.sh` and commit the regenerated artefacts."
@@ -434,10 +434,10 @@ Rollback steps documented in two places (the migration file + the contributor pa
 ## Cross-references
 
 - [INVESTIGATE-postgrest-api-v1-wrapper.md](INVESTIGATE-postgrest-api-v1-wrapper.md) — design rationale + decision audit trail
-- [`urbalurba-infrastructure/website/docs/services/integration/postgrest.md`](../../../../../../urbalurba-infrastructure/website/docs/services/integration/postgrest.md) — UIS PostgREST design doc; this PLAN's output is what UIS expects
+- [`urbalurba-infrastructure/website/docs/services/integration/postgrest.md`](https://github.com/helpers-no/urbalurba-infrastructure/tree/main/website/docs/services/integration/postgrest.md) — UIS PostgREST design doc; this PLAN's output is what UIS expects
 - [PLAN-001-api-mart-views.md](../completed/PLAN-001-api-mart-views.md) — built the 9 `marts.mart_*` views the wrappers project
 - [PLAN-002-fill-schema-yml-description-gaps.md](../completed/PLAN-002-fill-schema-yml-description-gaps.md) — closed the description backlog so OpenAPI projection is informative
 - [PLAN-003-contributor-docs-consolidation.md](../completed/PLAN-003-contributor-docs-consolidation.md) — established the contributor-docs pattern this PLAN extends with `api-v1.md`
-- [`atlas-data/dbt/regenerate-erd.sh`](../../../../../atlas-data/dbt/regenerate-erd.sh) — the generator pattern this PLAN mirrors
-- [`atlas-data/dbt/check-osmosis.sh`](../../../../../atlas-data/dbt/check-osmosis.sh) — the gate pattern `check-api-v1.sh` mirrors
+- [`atlas-data/dbt/regenerate-erd.sh`](https://github.com/terchris/atlas/tree/main/atlas-data/dbt/regenerate-erd.sh) — the generator pattern this PLAN mirrors
+- [`atlas-data/dbt/check-osmosis.sh`](https://github.com/terchris/atlas/tree/main/atlas-data/dbt/check-osmosis.sh) — the gate pattern `check-api-v1.sh` mirrors
 - [PostgREST embed-via-comment docs](https://docs.postgrest.org/en/v12/references/api/resource_embedding.html) — for [Q10]'s `@source` and `@references` syntax

@@ -6,7 +6,7 @@
 
 ## Status: Completed
 
-**Goal**: Lock in the new canonical vocabulary introduced by PLAN-001 + PLAN-002 — add `accepted_values` tests for the decoded enum columns, `accepted_range` tests for the parsed integer columns, `relationships` tests from indicator codes back to their `ref_*` seeds, and extend [`docs/stack/naming-conventions.md`](../../../../docs/stack/naming-conventions.md) with every new field.
+**Goal**: Lock in the new canonical vocabulary introduced by PLAN-001 + PLAN-002 — add `accepted_values` tests for the decoded enum columns, `accepted_range` tests for the parsed integer columns, `relationships` tests from indicator codes back to their `ref_*` seeds, and extend [`docs/stack/naming-conventions.md`](https://github.com/terchris/atlas/tree/main/docs/stack/naming-conventions.md) with every new field.
 
 **Last Updated**: 2026-04-22
 **Completed**: 2026-04-22
@@ -40,15 +40,15 @@ Walk the 9 indicator models with new columns and pin their values.
 
 ### Tasks
 
-- [ ] 1.1 [`indicators__ssb_06083`](../../../../../atlas-data/dbt/models/indicators/indicators__ssb_06083.sql) — `family_type` relationships to `ref_ssb_family_type.code`. `family_type_label_no` + `_label_en` `not_null`.
-- [ ] 1.2 [`indicators__ssb_06944`](../../../../../atlas-data/dbt/models/indicators/indicators__ssb_06944.sql) — `household_type` relationships to `ref_ssb_household_type`. Label columns `not_null`.
-- [ ] 1.3 [`indicators__ssb_07459`](../../../../../atlas-data/dbt/models/indicators/indicators__ssb_07459.sql) — `sex` accepted_values `['male','female','all']` (no seed for sex). `age_int` accepted_range 0–110 (nullable). `age_min` accepted_range 0–110.
-- [ ] 1.4 [`indicators__ssb_09429`](../../../../../atlas-data/dbt/models/indicators/indicators__ssb_09429.sql) — `education_level` relationships to `ref_ssb_nivaa`. `education_level_label_no/_en` `not_null`. Verify `sex` accepted_values is already present (added in PLAN-002 schema.yml? if not, add).
-- [ ] 1.5 [`indicators__ssb_12944`](../../../../../atlas-data/dbt/models/indicators/indicators__ssb_12944.sql) — `period_start_year`/`period_end_year` accepted_range 2000–2050 (nullable for `999A`-style rows). `age_group_min`/`age_group_max` accepted_range 0–120 (nullable).
-- [ ] 1.6 [`indicators__fhi_bor_alene`](../../../../../atlas-data/dbt/models/indicators/indicators__fhi_bor_alene.sql) — `period_*_year` and `age_group_min`/`age_group_max` accepted_range as above.
-- [ ] 1.7 [`indicators__fhi_mobbing`](../../../../../atlas-data/dbt/models/indicators/indicators__fhi_mobbing.sql) — `sex` accepted_values; `period_*_year` accepted_range.
-- [ ] 1.8 [`indicators__fhi_trangbodd`](../../../../../atlas-data/dbt/models/indicators/indicators__fhi_trangbodd.sql) — `parents_education` relationships to `ref_fhi_utdann`. `parents_education_label_no` `not_null`. `period_*_year` and `age_group_*` accepted_range.
-- [ ] 1.9 [`indicators__fhi_vgs_gjennomforing`](../../../../../atlas-data/dbt/models/indicators/indicators__fhi_vgs_gjennomforing.sql) — `sex` accepted_values; `parents_education` relationships + label `not_null`; `immigration_category` relationships to `ref_fhi_innvkat` + label `not_null`; `period_*_year` accepted_range.
+- [ ] 1.1 [`indicators__ssb_06083`](https://github.com/terchris/atlas/tree/main/atlas-data/dbt/models/indicators/indicators__ssb_06083.sql) — `family_type` relationships to `ref_ssb_family_type.code`. `family_type_label_no` + `_label_en` `not_null`.
+- [ ] 1.2 [`indicators__ssb_06944`](https://github.com/terchris/atlas/tree/main/atlas-data/dbt/models/indicators/indicators__ssb_06944.sql) — `household_type` relationships to `ref_ssb_household_type`. Label columns `not_null`.
+- [ ] 1.3 [`indicators__ssb_07459`](https://github.com/terchris/atlas/tree/main/atlas-data/dbt/models/indicators/indicators__ssb_07459.sql) — `sex` accepted_values `['male','female','all']` (no seed for sex). `age_int` accepted_range 0–110 (nullable). `age_min` accepted_range 0–110.
+- [ ] 1.4 [`indicators__ssb_09429`](https://github.com/terchris/atlas/tree/main/atlas-data/dbt/models/indicators/indicators__ssb_09429.sql) — `education_level` relationships to `ref_ssb_nivaa`. `education_level_label_no/_en` `not_null`. Verify `sex` accepted_values is already present (added in PLAN-002 schema.yml? if not, add).
+- [ ] 1.5 [`indicators__ssb_12944`](https://github.com/terchris/atlas/tree/main/atlas-data/dbt/models/indicators/indicators__ssb_12944.sql) — `period_start_year`/`period_end_year` accepted_range 2000–2050 (nullable for `999A`-style rows). `age_group_min`/`age_group_max` accepted_range 0–120 (nullable).
+- [ ] 1.6 [`indicators__fhi_bor_alene`](https://github.com/terchris/atlas/tree/main/atlas-data/dbt/models/indicators/indicators__fhi_bor_alene.sql) — `period_*_year` and `age_group_min`/`age_group_max` accepted_range as above.
+- [ ] 1.7 [`indicators__fhi_mobbing`](https://github.com/terchris/atlas/tree/main/atlas-data/dbt/models/indicators/indicators__fhi_mobbing.sql) — `sex` accepted_values; `period_*_year` accepted_range.
+- [ ] 1.8 [`indicators__fhi_trangbodd`](https://github.com/terchris/atlas/tree/main/atlas-data/dbt/models/indicators/indicators__fhi_trangbodd.sql) — `parents_education` relationships to `ref_fhi_utdann`. `parents_education_label_no` `not_null`. `period_*_year` and `age_group_*` accepted_range.
+- [ ] 1.9 [`indicators__fhi_vgs_gjennomforing`](https://github.com/terchris/atlas/tree/main/atlas-data/dbt/models/indicators/indicators__fhi_vgs_gjennomforing.sql) — `sex` accepted_values; `parents_education` relationships + label `not_null`; `immigration_category` relationships to `ref_fhi_innvkat` + label `not_null`; `period_*_year` accepted_range.
 
 ### Validation
 
@@ -67,7 +67,7 @@ Add a `schema.yml` entry per `ref_*` seed with the exact `accepted_values` and p
 
 ### Tasks
 
-- [ ] 2.1 Create [`atlas-data/dbt/seeds/schema.yml`](../../../../../atlas-data/dbt/seeds/) with one `seed:` entry per CSV. For each: `code` `not_null` + `unique`; `label_no` `not_null`; `label_en` no test (blank for FHI); `sort_order` `not_null` + `unique` + `accepted_range: 1..N` (where N is the row count of that seed). The seed CSVs themselves are the canonical code list — no `accepted_values` echo needed.
+- [ ] 2.1 Create [`atlas-data/dbt/seeds/schema.yml`](https://github.com/terchris/atlas/tree/main/atlas-data/dbt/seeds/) with one `seed:` entry per CSV. For each: `code` `not_null` + `unique`; `label_no` `not_null`; `label_en` no test (blank for FHI); `sort_order` `not_null` + `unique` + `accepted_range: 1..N` (where N is the row count of that seed). The seed CSVs themselves are the canonical code list — no `accepted_values` echo needed.
 
 ### Validation
 
@@ -88,7 +88,7 @@ Add every new canonical name to the vocabulary table; add raw FHI column names t
 
 ### Tasks
 
-- [ ] 3.1 In [`docs/stack/naming-conventions.md`](../../../../docs/stack/naming-conventions.md) update the `sex` row: `One of "male", "female", "all"`. Mention the `{{ decode_sex(col) }}` macro.
+- [ ] 3.1 In [`docs/stack/naming-conventions.md`](https://github.com/terchris/atlas/tree/main/docs/stack/naming-conventions.md) update the `sex` row: `One of "male", "female", "all"`. Mention the `{{ decode_sex(col) }}` macro.
 - [ ] 3.2 Add new vocabulary rows to the canonical table:
 
   | Concept | Canonical name | Type | Rules |
@@ -129,7 +129,7 @@ Add every new canonical name to the vocabulary table; add raw FHI column names t
 
 ### Validation
 
-User reviews [`docs/stack/naming-conventions.md`](../../../../docs/stack/naming-conventions.md). Vocabulary entries match what's actually in `marts.indicators__*` (cross-reference any column from `\d marts.indicators__ssb_06083` against the table).
+User reviews [`docs/stack/naming-conventions.md`](https://github.com/terchris/atlas/tree/main/docs/stack/naming-conventions.md). Vocabulary entries match what's actually in `marts.indicators__*` (cross-reference any column from `\d marts.indicators__ssb_06083` against the table).
 
 ---
 
@@ -158,7 +158,7 @@ User confirms the suite is green.
 - [ ] Every `_label_no`/`_label_en` column derived from a seed has a `not_null` test.
 - [ ] Every parsed integer column (`period_*_year`, `age_int`, `age_min`, `age_group_min/_max`) has an `accepted_range` test.
 - [ ] All five `ref_*` seeds have schema.yml entries with `not_null` + `unique` on `code`, and tests on `sort_order`.
-- [ ] [`docs/stack/naming-conventions.md`](../../../../docs/stack/naming-conventions.md) lists every new canonical field and every forbidden FHI raw name.
+- [ ] [`docs/stack/naming-conventions.md`](https://github.com/terchris/atlas/tree/main/docs/stack/naming-conventions.md) lists every new canonical field and every forbidden FHI raw name.
 - [ ] `dbt build` runs clean (PASS grows by ~25, ERROR=0, WARN=15 unchanged).
 
 ---

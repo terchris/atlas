@@ -20,7 +20,7 @@ The data-access posture in this plan was written before the **dogfood decision**
 
 - **H.1 Component model** — Server Components still default, but they `fetch()` from the API (`api.atlas.helpers.no`) instead of executing SQL via `db()`. The "no internal API routes" point still holds — there's an *external* API service (PostgREST) that Next.js calls via plain `fetch()`. No internal `/api/*` routes needed.
 - **H.4 Caching** — moves from "server fetch on every request" to leveraging HTTP cache headers from PostgREST (Cache-Control). Next.js's `fetch()` deduplicates and caches per-render; gateway-side caching arrives later via Gravitee/APIM in v1.5+.
-- **Data access reference** — [`atlas-contributor-frontend/src/lib/db.ts`](../../../../../atlas-contributor-frontend/src/lib/db.ts) (the native `postgres` client mentioned below). Note: the original `atlas-frontend/` was renamed to `atlas-contributor-frontend/` in PLAN-005 Phase 1; today's contributor frontend keeps direct Postgres access for diagnostic work, while a separately-built customer `atlas-frontend/` consumes PostgREST.
+- **Data access reference** — [`atlas-contributor-frontend/src/lib/db.ts`](https://github.com/terchris/atlas/tree/main/atlas-contributor-frontend/src/lib/db.ts) (the native `postgres` client mentioned below). Note: the original `atlas-frontend/` was renamed to `atlas-contributor-frontend/` in PLAN-005 Phase 1; today's contributor frontend keeps direct Postgres access for diagnostic work, while a separately-built customer `atlas-frontend/` consumes PostgREST.
 
 **What stays the same:**
 
@@ -54,7 +54,7 @@ The data-access lines in **Existing context** below and the SQL examples through
 - The Coverage-gap mart itself (its own future investigation; this file consumes it once it exists).
 - Authentication, accounts, "save my preferences" — Atlas is anonymous read-only in v1.
 - Mobile-app shell / PWA installability — separate concern.
-- The compare-NGOs deep-comparison page (covered by [`compare-ngos-spec.md`](../../../../docs/research/compare-ngos-spec.md) — supply-display feeds it but doesn't replicate it).
+- The compare-NGOs deep-comparison page (covered by [`compare-ngos-spec.md`](https://github.com/terchris/atlas/tree/main/docs/research/compare-ngos-spec.md) — supply-display feeds it but doesn't replicate it).
 - Funding-side display (Lottstift, Innsamlingskontrollen) — different fact tables, different views.
 - Indicator-side display — already shipped under `/data/...` and `/coverage-gap/barnefattigdom`.
 
@@ -62,9 +62,9 @@ The data-access lines in **Existing context** below and the SQL examples through
 
 ## Why this exists
 
-Atlas's mission per [`goal.md`](../../../../docs/research/goal.md) is **organisation-neutral**: it aggregates and compares NGO supply across the Norwegian sector. The default user (Kari) doesn't pick an NGO first — she picks a need ("visiting lonely elderly") and Atlas shows providers across all relevant NGOs in her area.
+Atlas's mission per [`goal.md`](https://github.com/terchris/atlas/tree/main/docs/research/goal.md) is **organisation-neutral**: it aggregates and compares NGO supply across the Norwegian sector. The default user (Kari) doesn't pick an NGO first — she picks a need ("visiting lonely elderly") and Atlas shows providers across all relevant NGOs in her area.
 
-The data side of this is well-advanced: Red Cross is ingested (391 chapters, 35 activities, 1941 fact rows), and PLANs for Folkehjelp, the scraping infrastructure, and the multi-NGO model extensions are queued. The frontend side has zero supply views today — five existing routes, all demand-side ([`/data/...`](app/data), [`/coverage-gap/barnefattigdom`](app/coverage-gap/barnefattigdom), [`/kommuner/[kommune_nr]`](app/kommuner)).
+The data side of this is well-advanced: Red Cross is ingested (391 chapters, 35 activities, 1941 fact rows), and PLANs for Folkehjelp, the scraping infrastructure, and the multi-NGO model extensions are queued. The frontend side has zero supply views today — five existing routes, all demand-side ([`/data/...`](https://github.com/terchris/atlas/tree/main/atlas-frontend/src/app/data), [`/coverage-gap/barnefattigdom`](https://github.com/terchris/atlas/tree/main/atlas-frontend/src/app/coverage-gap/barnefattigdom), [`/kommuner/[kommune_nr]`](https://github.com/terchris/atlas/tree/main/atlas-frontend/src/app/kommuner)).
 
 Without this investigation:
 
@@ -80,9 +80,9 @@ This investigation produces 1–3 PLANs covering the v1 supply views, with an ex
 
 **Frontend stack (verified 2026-04-24):**
 - Next.js App Router, Server Components by default. Repo root contains `app/`, `src/`.
-- Data access: [`src/lib/db.ts`](src/lib/db.ts) — native `postgres` v3 client, reads `DATABASE_URL`, role is SELECT-only on `marts.*`. Connection pool cached across hot-reloads. Inline SQL template literals in route files.
+- Data access: [`src/lib/db.ts`](https://github.com/terchris/atlas/blob/main/atlas-frontend/src/lib/db.ts) — native `postgres` v3 client, reads `DATABASE_URL`, role is SELECT-only on `marts.*`. Connection pool cached across hot-reloads. Inline SQL template literals in route files.
 - UI: no Tailwind, no shadcn/ui. Inline CSS-in-JS via `style=` props. `@digdir/designsystemet-react` ^1.13.2 imported in `package.json` but **currently unused** in any page.
-- Maps: `maplibre-gl` ^5.23.0, used by [`app/coverage-gap/barnefattigdom/Map.tsx`](app/coverage-gap/barnefattigdom/Map.tsx). Boundary GeoJSON served from `/public/boundaries/kommuner-2024.geojson`.
+- Maps: `maplibre-gl` ^5.23.0, used by [`app/coverage-gap/barnefattigdom/Map.tsx`](https://github.com/terchris/atlas/blob/main/atlas-frontend/src/app/coverage-gap/barnefattigdom/Map.tsx). Boundary GeoJSON served from `/public/boundaries/kommuner-2024.geojson`.
 - No charting library, no data grid (plain HTML `<table>`).
 
 **Supply tables ready to query (verified):**
@@ -93,7 +93,7 @@ This investigation produces 1–3 PLANs covering the v1 supply views, with an ex
 - `ref_atlas_service_category` — 22 rows with `code`, `label_no`, `label_en`, `description`, `sort_order`. Cross-NGO vocabulary.
 - `dim_kommune`, `dim_fylke`, `dim_postnummer` — already used by existing demand-side routes.
 
-**Personas we're serving** (from [`personas.md`](../../../../docs/research/personas.md)):
+**Personas we're serving** (from [`personas.md`](https://github.com/terchris/atlas/tree/main/docs/research/personas.md)):
 - **Primary public**: Kari (find a way to help), Jonas (donate meaningfully), Amira (need a service now), Lars (who responds in my area), Tone (compare orgs before committing), Ola (data-curious observer).
 - **Secondary internal**: Inger (chapter leader, sees her chapter from outside), Arne (district coordinator).
 
@@ -110,7 +110,7 @@ Mapping each persona to the supply-side question they ask, and the page type tha
 | **Kari** | "Who offers visiting-lonely-elderly near me?" | Activity-first finder: pick category → see chapters across NGOs in chosen kommune. **Cross-NGO**, Atlas-neutral vocabulary. |
 | **Amira** | "Where's the nearest språkkafé that's running this Tuesday?" | Same finder, but with a `language_practice` filter pre-applied; eventually with event-frequency signals from [`INVESTIGATE-ngo-events-and-minisites.md`](./INVESTIGATE-ngo-events-and-minisites.md). |
 | **Lars** | "Who responds to weather warnings in my parents' kommune?" | Per-kommune view + filter to `rescue_corps` + `first_aid_standby`. |
-| **Tone** | "What does each NGO actually do — comparison view." | Per-NGO landing pages (one per NGO) + the dedicated compare-NGOs page (out of scope here, see [`compare-ngos-spec.md`](../../../../docs/research/compare-ngos-spec.md)). |
+| **Tone** | "What does each NGO actually do — comparison view." | Per-NGO landing pages (one per NGO) + the dedicated compare-NGOs page (out of scope here, see [`compare-ngos-spec.md`](https://github.com/terchris/atlas/tree/main/docs/research/compare-ngos-spec.md)). |
 | **Jonas** | "Where does my donation go — what does this org actually fund?" | Per-NGO landing page + activities catalog + future funding overlay. |
 | **Ola** | "Cross-sector data: how many providers per kommune per service?" | Cross-NGO browse pages, raw counts, links to data download (future). |
 | **Inger** (chapter leader) | "How does my chapter look from outside? Who are my peers?" | Per-NGO chapter detail + parent/sibling navigation. |
@@ -140,7 +140,7 @@ Purpose: sanity-check that the data we imported looks right. Audience: us. Not l
 
 ### Layer 2 — Public org-neutral views (mature over multiple ingests)
 
-Purpose: Atlas's main public flow per [`goal.md`](../../../../docs/research/goal.md). Audience: Kari, Amira, Lars, Tone, Jonas, Ola.
+Purpose: Atlas's main public flow per [`goal.md`](https://github.com/terchris/atlas/tree/main/docs/research/goal.md). Audience: Kari, Amira, Lars, Tone, Jonas, Ola.
 
 - Activity-first finder ("I want to do X near Y → list providers across NGOs").
 - Per-kommune view extended with "tilbud i denne kommunen" (org-neutral list).
@@ -185,7 +185,7 @@ Rationale:
 
 ### C.2 Navigation surface — **[Q6]**
 
-The home page at [`app/page.tsx`](app/page.tsx) currently links to `/data` and `/coverage-gap/barnefattigdom`. Proposed v1 additions:
+The home page at [`app/page.tsx`](https://github.com/terchris/atlas/blob/main/atlas-frontend/src/app/page.tsx) currently links to `/data` and `/coverage-gap/barnefattigdom`. Proposed v1 additions:
 
 - "Tilbud per organisasjon" — links to a v1 NGO index `/ngo` (lists all 11 dim_ngo rows; clickable for the ingested ones, "ikke ingestet" badge for the others).
 - "Tilbud i din kommune" — same `/kommuner` index that exists today, but the kommune detail pages now also include supply.
@@ -254,7 +254,7 @@ The `chapter_kommune_coverage` link table (per [multi-ngo extensions](./INVESTIG
 
 ### E.3 Reuse existing map pattern
 
-The MapLibre setup in [`app/coverage-gap/barnefattigdom/Map.tsx`](app/coverage-gap/barnefattigdom/Map.tsx) is the template. v1.5 supply choropleths use the same `kommuner-2024.geojson`, the same MapLibre styling, swapping only the `feature.properties.kommune_nr` → value lookup.
+The MapLibre setup in [`app/coverage-gap/barnefattigdom/Map.tsx`](https://github.com/terchris/atlas/blob/main/atlas-frontend/src/app/coverage-gap/barnefattigdom/Map.tsx) is the template. v1.5 supply choropleths use the same `kommuner-2024.geojson`, the same MapLibre styling, swapping only the `feature.properties.kommune_nr` → value lookup.
 
 ---
 
@@ -321,7 +321,7 @@ shadcn components reach for `var(--color-primary)` etc., which resolves through 
 **Trade-offs noted**:
 
 - **Tailwind v4 required.** Atlas has no Tailwind today — adopt v4 fresh, no migration.
-- **Designsystemet's vocabulary is richer** than shadcn's (`accent`, `brand1/2/3`, `neutral`, `danger`, `info`, `warning`, `success`, `base`). Aliases above collapse it to shadcn's smaller set; surfaces that want richer semantics (Compare-NGOs focus-area colours per [`compare-ngos-spec.md`](../../../../docs/research/compare-ngos-spec.md)) use `--ds-*` directly via Tailwind arbitrary values like `bg-[--ds-color-success-base-default]`.
+- **Designsystemet's vocabulary is richer** than shadcn's (`accent`, `brand1/2/3`, `neutral`, `danger`, `info`, `warning`, `success`, `base`). Aliases above collapse it to shadcn's smaller set; surfaces that want richer semantics (Compare-NGOs focus-area colours per [`compare-ngos-spec.md`](https://github.com/terchris/atlas/tree/main/docs/research/compare-ngos-spec.md)) use `--ds-*` directly via Tailwind arbitrary values like `bg-[--ds-color-success-base-default]`.
 - **No component conflicts** — we use Designsystemet's *tokens*, not its *components*. shadcn is the only Button source.
 - **`@digdir/designsystemet-react` dropped** from `package.json` (already imported but unused). `@digdir/designsystemet-css` kept for the token CSS.
 - **shadcn neutral defaults remain** for variables Designsystemet doesn't cover (chart colours, sidebar variants).
@@ -346,7 +346,7 @@ Some kommuner have no chapters from any ingested NGO. On the kommune view, the s
 
 ### G.3 Ingest staleness
 
-`mart_ingest_health` (per [scraping infra E.3](./INVESTIGATE-ngo-scraping-infrastructure.md#e3-end-of-run-summary-rawingest_runs--q12)) tracks last-run-at per source. Display rule:
+`mart_ingest_health` (per [scraping infra E.3](../completed/INVESTIGATE-ngo-scraping-infrastructure.md#e3-end-of-run-summary-rawingest_runs--q12)) tracks last-run-at per source. Display rule:
 
 - `/admin/ingest-health` shows full table.
 - Per-NGO landing pages show a small footer "Sist oppdatert: <date>".
@@ -354,7 +354,7 @@ Some kommuner have no chapters from any ingested NGO. On the kommune view, the s
 
 ### G.4 Activity vocabulary drift
 
-When parsing surfaces a new activity label not in the per-source CASE mapping ([scraping infra E.1](./INVESTIGATE-ngo-scraping-infrastructure.md#e1-per-page-failure-warn-and-continue--q10)), the row is loaded but unmapped. Display:
+When parsing surfaces a new activity label not in the per-source CASE mapping ([scraping infra E.1](../completed/INVESTIGATE-ngo-scraping-infrastructure.md#e1-per-page-failure-warn-and-continue--q10)), the row is loaded but unmapped. Display:
 
 - `/admin/supply/<source>` lists "Unmapped labels: N" with the labels.
 - Cross-NGO views silently skip these rows (they don't have a `service_category_code`).
@@ -460,7 +460,7 @@ These are the recommendations baked into the sections above; recording them here
 9. ~~**[Q11]**~~ Atlas-neutral primary; NGO branding only on `/ngo/<slug>/...` pages. No NGO logos in cross-NGO contexts.
 10. ~~**[Q13]**~~ Adopt Tailwind v4 + shadcn/ui + Designsystemet tokens as Phase 1 of the v1 PLAN, not as a deferred migration. See F.3 for the integration recipe.
 17. ~~**[Q27]**~~ Pathway CTAs (Gi tid / Gi penger / etc.) — **skipped in v1**. `dim_ngo` only carries `website_url`; landing pages show a single "Besøk rodekors.no" link. Pathway data lives in `common-schema.md` as `Pathway` entity but isn't in `dim_ngo` yet — extending the schema is its own future investigation/PLAN.
-18. ~~**[Q28]**~~ Compare-with CTA on per-NGO pages — **deferred in v1**. The Compare-NGOs page doesn't exist yet (separate spec at [`compare-ngos-spec.md`](../../../../docs/research/compare-ngos-spec.md)). Add the CTA in v1.5+ when the destination exists.
+18. ~~**[Q28]**~~ Compare-with CTA on per-NGO pages — **deferred in v1**. The Compare-NGOs page doesn't exist yet (separate spec at [`compare-ngos-spec.md`](https://github.com/terchris/atlas/tree/main/docs/research/compare-ngos-spec.md)). Add the CTA in v1.5+ when the destination exists.
 19. ~~**[Q29]**~~ NGO logos — **plain text NGO name in v1**. No logos folder, no per-NGO image assets. Logos deferred to a brand-assets PLAN.
 20. ~~**[Q30]**~~ Stub page for non-ingested NGOs — **single template at `/ngo/[slug]`** showing `dim_ngo` fields (name, website_url, primary_focus, tier) plus "Tilbud-data er ikke importert ennå. Besøk {website_url}." No per-NGO variation.
 21. ~~**[Q31]**~~ Chapter table filter set — five URL params: `kommune_nr`, `fylke_nr`, `chapter_level` (national / regional / local), `service_category_code` (multi-select from the 22 categories), `is_active` toggle. Plus free-text search by chapter name as `?q=`.
@@ -544,10 +544,10 @@ Each PLAN ships with a manual smoke test checklist (visit each new page in a rea
 
 ## Companion investigations
 
-- [`INVESTIGATE-ngo-scraping-infrastructure.md`](./INVESTIGATE-ngo-scraping-infrastructure.md) — produces the data this consumes.
+- [`INVESTIGATE-ngo-scraping-infrastructure.md`](../completed/INVESTIGATE-ngo-scraping-infrastructure.md) — produces the data this consumes.
 - [`INVESTIGATE-multi-ngo-supply-model-extensions.md`](./INVESTIGATE-multi-ngo-supply-model-extensions.md) — produces `dim_chapter.source_url` (deep-link out of `/ngo/<slug>/chapters/<chapter_id>`) and `chapter_kommune_coverage` (consumed on the kommune view).
 - [`INVESTIGATE-folkehjelp-supply.md`](./INVESTIGATE-folkehjelp-supply.md) — second NGO; v1.5 build trigger.
-- [`compare-ngos-spec.md`](../../../../docs/research/compare-ngos-spec.md) — defines the deeper compare-NGOs page that sits alongside per-NGO landings.
+- [`compare-ngos-spec.md`](https://github.com/terchris/atlas/tree/main/docs/research/compare-ngos-spec.md) — defines the deeper compare-NGOs page that sits alongside per-NGO landings.
 
 ---
 
@@ -657,7 +657,7 @@ For each of the 19 distrikter: list child lokallag count, count of distinct komm
 
 ### Section 6 — Ingest run history
 
-`select * from raw.ingest_runs where source_slug = 'redcross-branches' order by run_id desc limit 10` — only when `raw.ingest_runs` table exists (after the [scraping infra PLAN](./INVESTIGATE-ngo-scraping-infrastructure.md) ships). Until then, this section displays "Awaiting infrastructure PLAN — `raw.ingest_runs` not yet created."
+`select * from raw.ingest_runs where source_slug = 'redcross-branches' order by run_id desc limit 10` — only when `raw.ingest_runs` table exists (after the [scraping infra PLAN](../completed/INVESTIGATE-ngo-scraping-infrastructure.md) ships). Until then, this section displays "Awaiting infrastructure PLAN — `raw.ingest_runs` not yet created."
 
 ### Page wrapper
 

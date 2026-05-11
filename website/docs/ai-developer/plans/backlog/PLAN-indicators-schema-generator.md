@@ -367,8 +367,8 @@ npm run dbt:rebuild
 - [PR #89 — bootstrap Phase 8 + persist_docs](https://github.com/terchris/atlas/pull/89) — the prerequisite that makes pg_description the actual sink for these descriptions.
 - [PLAN-007 Phase 2.11](../completed/PLAN-007-data-display-open-by-default.md) — introduced the `manifest.yml` `dimensions:` block; this PLAN consumes it.
 - [PLAN-004 — postgrest api_v1 wrapper](../completed/PLAN-004-postgrest-api-v1-wrapper.md) — the api_v1 wrapper generator; pattern this PLAN's generator mirrors (deterministic regeneration, CI gate).
-- [`atlas-data/dbt/check-osmosis.sh`](../../../../atlas-data/dbt/check-osmosis.sh) — the existing description-coverage gate; the new `check-indicators-schema.sh` sits alongside.
-- [`atlas-data/dbt/dbt_project.yml`](../../../../atlas-data/dbt/dbt_project.yml) — `+persist_docs` config (PR #89) that completes the chain.
+- [`atlas-data/dbt/check-osmosis.sh`](https://github.com/terchris/atlas/tree/main/atlas-data/dbt/check-osmosis.sh) — the existing description-coverage gate; the new `check-indicators-schema.sh` sits alongside.
+- [`atlas-data/dbt/dbt_project.yml`](https://github.com/terchris/atlas/tree/main/atlas-data/dbt/dbt_project.yml) — `+persist_docs` config (PR #89) that completes the chain.
 
 ---
 

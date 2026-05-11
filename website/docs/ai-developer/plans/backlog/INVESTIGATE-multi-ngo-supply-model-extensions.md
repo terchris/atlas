@@ -200,7 +200,7 @@ These decisions are inherited from the Folkehjelp investigation conversation (20
   - Update `supply__redcross_branches.sql` to propagate `source_url`.
   - New dbt model `marts.chapter_kommune_coverage` + schema.yml + tests.
   - New staging `supply__redcross_chapter_kommune_coverage.sql` (Red Cross retro coverage).
-  - Update [`naming-conventions.md`](../../../../docs/stack/naming-conventions.md) with `source_url`, `chapter_subtype`, `chapter_kommune_coverage`.
+  - Update [`naming-conventions.md`](https://github.com/terchris/atlas/tree/main/docs/stack/naming-conventions.md) with `source_url`, `chapter_subtype`, `chapter_kommune_coverage`.
   - `dbt run && dbt test`.
 
 This PLAN is a prerequisite for the Folkehjelp scrape PLAN, which expects `source_url` and `chapter_subtype` to exist on `dim_chapter` and writes its own coverage rows alongside chapter rows.
@@ -222,8 +222,8 @@ This PLAN is a prerequisite for the Folkehjelp scrape PLAN, which expects `sourc
 - `marts.supply__redcross_chapter_kommune_coverage` (Red Cross-specific staging)
 
 **Documentation:**
-- Extend [`docs/stack/naming-conventions.md`](../../../../docs/stack/naming-conventions.md): `source_url`, `chapter_subtype`, `chapter_kommune_coverage`.
-- Auto-regenerate [`docs/stack/erd.md`](../../../../docs/stack/erd.md).
+- Extend [`docs/stack/naming-conventions.md`](https://github.com/terchris/atlas/tree/main/docs/stack/naming-conventions.md): `source_url`, `chapter_subtype`, `chapter_kommune_coverage`.
+- Auto-regenerate [`docs/stack/erd.md`](https://github.com/terchris/atlas/tree/main/docs/stack/erd.md).
 
 ---
 

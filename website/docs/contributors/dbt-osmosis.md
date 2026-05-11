@@ -130,4 +130,4 @@ echo "exit=$?"   # should be 0
 - [`atlas-data/dbt/README.md`](https://github.com/terchris/atlas/blob/main/atlas-data/dbt/README.md) — dbt project layout and command cheatsheet (kept in-source for while-coding reference)
 - [PLAN-001](../ai-developer/plans/completed/PLAN-001-api-mart-views.md) — installed dbt-osmosis as part of the public API mart-view work
 - [PLAN-002](../ai-developer/plans/completed/PLAN-002-fill-schema-yml-description-gaps.md) — closed the 180-column description backlog and tightened the gate to the whole project
-- [PLAN-004](../ai-developer/plans/active/PLAN-004-postgrest-api-v1-wrapper.md) — built the `api_v1` wrapper layer that consumes these descriptions
+- [PLAN-004](../ai-developer/plans/completed/PLAN-004-postgrest-api-v1-wrapper.md) — built the `api_v1` wrapper layer that consumes these descriptions

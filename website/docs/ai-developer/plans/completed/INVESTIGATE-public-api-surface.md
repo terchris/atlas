@@ -6,7 +6,7 @@
 
 ## Status: Completed (2026-04-30)
 
-This parent investigation is functionally resolved. End-to-end Atlas → PostgREST → real-data curl verified live against UIS rancher-desktop on 2026-04-30 (see [`talk/talk.md`](../talk/talk.md) Messages 1–4). Implementation arc:
+This parent investigation is functionally resolved. End-to-end Atlas → PostgREST → real-data curl verified live against UIS rancher-desktop on 2026-04-30 (see [`talk/talk.md`](https://github.com/terchris/atlas/blob/main/website/docs/ai-developer/plans/talk/talk.md) Messages 1–4). Implementation arc:
 
 | Question raised here | Resolved by |
 |---|---|
@@ -26,7 +26,7 @@ What's still open (carried forward into separate plans, not blocking this invest
 
 **Origin**: A late-stage decision in the semantic-foundation thread changed the calculus for the public API. Atlas's Next.js frontend will be migrated to call the **same** API external consumers use — the "dogfood your own API" pattern. This shifts three things in the existing plans:
 
-1. **PLAN-C in [INVESTIGATE-semantic-foundation-before-expansion.md](INVESTIGATE-semantic-foundation-before-expansion.md)** is no longer deferred. The contract surface (`marts.*` shape that consumers depend on) becomes load-bearing the day Next.js migrates — not "when Tilskuddsmatcher lands."
+1. **PLAN-C in [INVESTIGATE-semantic-foundation-before-expansion.md](../backlog/INVESTIGATE-semantic-foundation-before-expansion.md)** is no longer deferred. The contract surface (`marts.*` shape that consumers depend on) becomes load-bearing the day Next.js migrates — not "when Tilskuddsmatcher lands."
 2. **[Q19]** in that plan ("API now or later?") is resolved → **now.**
 3. The MCP-first decision in PR #18 stays correct, **complementary** to the HTTP API:
    - **dbt MCP** is the *agent* interface — Claude / GPT / any MCP client doing exploratory semantic queries against `manifest.json` + Discovery + (read-only) Postgres MCP.
@@ -43,7 +43,7 @@ This investigation is the API-side counterpart to the semantic-foundation work.
 
 The Atlas project runs on infrastructure that *can* provide gateway/auth when needed — but that's a v1.5+ insertion, not a v1 dependency. Capturing it here so future readers know what's already available:
 
-| Concern | Local development (Rancher Desktop k8s, via [UIS](../../../../../urbalurba-infrastructure)) | Production (Azure) |
+| Concern | Local development (Rancher Desktop k8s, via [UIS](https://github.com/helpers-no/urbalurba-infrastructure)) | Production (Azure) |
 |---|---|---|
 | **Identity / SSO** *(later)* | [Authentik](https://goauthentik.io/) — already in UIS | [Okta](https://www.okta.com/) |
 | **API gateway** *(later)* | [Gravitee](https://www.gravitee.io/) — already in UIS | [Azure API Management (APIM)](https://azure.microsoft.com/products/api-management) |
@@ -63,7 +63,7 @@ The Atlas project runs on infrastructure that *can* provide gateway/auth when ne
 - Wire Authentik (local) / Okta (prod) as the OAuth provider for keyed/auth endpoints. Per-endpoint policies (public-anon vs OAuth-keyed) configured at the gateway.
 - Atlas's API service code does not change — only the deployment topology does.
 
-This deferred-but-known posture matches the [`docs/stack/suggested-stack.md`](../../../../docs/stack/suggested-stack.md) updated 2026-04-27.
+This deferred-but-known posture matches the [`docs/stack/suggested-stack.md`](https://github.com/terchris/atlas/tree/main/docs/stack/suggested-stack.md) updated 2026-04-27.
 
 ---
 
@@ -92,14 +92,14 @@ This deferred-but-known posture matches the [`docs/stack/suggested-stack.md`](..
 
 ### What consumes `marts.*` today
 
-- **Atlas's own Next.js frontend** — direct reads via [`atlas-frontend/src/lib/db.ts`](../../../../../atlas-frontend/src/lib/db.ts) using `postgres.js` and a read-only Postgres role. 15 routes, all server-rendered, all reading directly. See [`atlas-frontend/src/lib/indicators.ts`](../../../../../atlas-frontend/src/lib/indicators.ts) and [`atlas-frontend/src/lib/supply.ts`](../../../../../atlas-frontend/src/lib/supply.ts) for query patterns.
-- **No external consumer.** The "Dev" persona in [personas.md](../../../../docs/research/personas.md) is tertiary and currently speculative.
+- **Atlas's own Next.js frontend** — direct reads via [`atlas-frontend/src/lib/db.ts`](https://github.com/terchris/atlas/tree/main/atlas-frontend/src/lib/db.ts) using `postgres.js` and a read-only Postgres role. 15 routes, all server-rendered, all reading directly. See [`atlas-frontend/src/lib/indicators.ts`](https://github.com/terchris/atlas/tree/main/atlas-frontend/src/lib/indicators.ts) and [`atlas-frontend/src/lib/supply.ts`](https://github.com/terchris/atlas/tree/main/atlas-frontend/src/lib/supply.ts) for query patterns.
+- **No external consumer.** The "Dev" persona in [personas.md](https://github.com/terchris/atlas/tree/main/docs/research/personas.md) is tertiary and currently speculative.
 
 ### What API needs are emerging
 
-- **Tilskuddsmatcher / Lisa** ([goal.md:153](../../../../docs/research/goal.md#L153)) — if Lisa-first wins as the v1 wedge, she's the first external-shaped consumer. Her workflow involves filtering open grant calls against need indicators per kommune — exactly the cross-source pattern `fact_kommune_indicators` was built for.
+- **Tilskuddsmatcher / Lisa** ([goal.md:153](https://github.com/terchris/atlas/tree/main/docs/research/goal.md#L153)) — if Lisa-first wins as the v1 wedge, she's the first external-shaped consumer. Her workflow involves filtering open grant calls against need indicators per kommune — exactly the cross-source pattern `fact_kommune_indicators` was built for.
 - **Atlas's own next-generation features** — Storm mode (Lars persona) needs FRR resources + weather warnings overlaid. Coverage-gap explorer needs cross-source queries. Both fit the same query patterns external consumers would want.
-- **Public-good positioning** ([goal.md:88](../../../../docs/research/goal.md#L88)) — "valuable as a public good on its own — for journalists, researchers, policy planners". An API is how that promise becomes real.
+- **Public-good positioning** ([goal.md:88](https://github.com/terchris/atlas/tree/main/docs/research/goal.md#L88)) — "valuable as a public good on its own — for journalists, researchers, policy planners". An API is how that promise becomes real.
 
 ### What the dogfood pattern actually buys
 
@@ -166,7 +166,7 @@ Cube sits on top of dbt models. Speaks REST, GraphQL, and SQL. Metric definition
 **Cons:**
 - Another tool. Opinionated. Has its own modelling language (cube definitions) that overlaps with dbt.
 - Free tier is fine for development; production / enterprise features behind a paywall.
-- Forces an architectural commitment that constrains Atlas's choices later (especially around dbt's own evolving semantic-layer story per [INVESTIGATE-semantic-foundation-before-expansion.md](INVESTIGATE-semantic-foundation-before-expansion.md) Q24).
+- Forces an architectural commitment that constrains Atlas's choices later (especially around dbt's own evolving semantic-layer story per [INVESTIGATE-semantic-foundation-before-expansion.md](../backlog/INVESTIGATE-semantic-foundation-before-expansion.md) Q24).
 - Atlas's data isn't BI-shaped — it's reference data. Cube's metric-layer strengths are mostly wasted.
 
 **Cost estimate**: ~1-2 weeks to a working v1, plus ongoing per-cube maintenance.
@@ -266,7 +266,7 @@ Walked every route in `atlas-frontend/app/*` and every query in `atlas-frontend/
 
 ### `mart_*` views this audit produces
 
-Naming follows the [`docs/stack/naming-conventions.md`](../../../../docs/stack/naming-conventions.md) `mart_<feature>` pattern (feature-named, not entity-named):
+Naming follows the [`docs/stack/naming-conventions.md`](https://github.com/terchris/atlas/tree/main/docs/stack/naming-conventions.md) `mart_<feature>` pattern (feature-named, not entity-named):
 
 ```
 atlas-data/dbt/models/marts/api/  (new subfolder once 5+ exist; flat until then)
@@ -309,7 +309,7 @@ Tasks:
 1. Stand up PostgREST as a k8s pod with a single read-only Postgres role.
 2. Expose via Cloudflare Tunnel at `api.atlas.helpers.no` (or chosen domain).
 3. Verify the OpenAPI spec covers every mart view from D.1 plus the directly-exposed dim/ref tables.
-4. Verify dogfood path: pick one Atlas Next.js page (e.g. [`/coverage-gap/barnefattigdom`](../../../../../atlas-frontend/app/coverage-gap/barnefattigdom/page.tsx)) and hit the equivalent API call alongside. Don't migrate yet, just validate.
+4. Verify dogfood path: pick one Atlas Next.js page (e.g. [`/coverage-gap/barnefattigdom`](https://github.com/terchris/atlas/tree/main/atlas-frontend/app/coverage-gap/barnefattigdom/page.tsx)) and hit the equivalent API call alongside. Don't migrate yet, just validate.
 5. Document the v1.5+ insertion path for the gateway (Gravitee/APIM) so the next agent / iteration knows what to wire when the trigger fires.
 
 ### **[Q18]** PLAN-E — Next.js dogfood migration (weeks 3-5)
@@ -317,7 +317,7 @@ Tasks:
 Migrate Atlas frontend from `marts.*` direct reads to API calls. Per the audit: 18+ query patterns across 15 routes; mostly mechanical but route-by-route to keep PRs reviewable.
 
 Tasks:
-1. Replace `sql\`...\`` calls in [`atlas-frontend/src/lib/{indicators,supply,db}.ts`](../../../../../atlas-frontend/src/lib/) with `fetch()` calls to PostgREST.
+1. Replace `sql\`...\`` calls in [`atlas-frontend/src/lib/{indicators,supply,db}.ts`](https://github.com/terchris/atlas/tree/main/atlas-frontend/src/lib/) with `fetch()` calls to PostgREST.
 2. Add a feature flag (env var) to toggle direct-read vs API-read per route during transition.
 3. Migrate routes in order of complexity: 🟢 trivial first (`/ngo/[slug]`, ref/dim selects), 🔵 embedded next (`/ngo/redcross/chapters/[chapter_id]`), 🟡 view-backed last (`/data`, `/coverage-gap/barnefattigdom`, `/ngo/redcross`, `/ngo/redcross/distrikter`).
 4. Once all routes migrate, remove the direct-DB read role from atlas-frontend (it now needs only API access).
@@ -354,13 +354,13 @@ Per the parent INVESTIGATE plan, the freeze on NGO supply expansion is gated on 
 
 ## Cross-references
 
-- [`INVESTIGATE-semantic-foundation-before-expansion.md`](INVESTIGATE-semantic-foundation-before-expansion.md) — the parent plan; this resolves its [Q19] (API now/later) and changes the trigger for its PLAN-C (model contracts).
-- [`docs/ideas/semantic-data-platform-discussion.md`](../../../../docs/ideas/semantic-data-platform-discussion.md) — the conversation that landed on dbt-MCP-first; this plan extends that thinking to the HTTP API.
-- [`docs/research/goal.md`](../../../../docs/research/goal.md) — public-good positioning that motivates the API; Lisa-first decision (Open Decision #1) gates the urgency.
-- [`docs/research/personas.md`](../../../../docs/research/personas.md) — Dev / Ola / Lisa personas this serves.
-- [`atlas-frontend/src/lib/db.ts`](../../../../../atlas-frontend/src/lib/db.ts), [`atlas-frontend/src/lib/indicators.ts`](../../../../../atlas-frontend/src/lib/indicators.ts), [`atlas-frontend/src/lib/supply.ts`](../../../../../atlas-frontend/src/lib/supply.ts) — current direct-DB read patterns that inform what API endpoints are needed first.
-- [`INVESTIGATE-private-atlas-deployments.md`](INVESTIGATE-private-atlas-deployments.md) — UIS-side hosting story that this API will need.
-- [Urbalurba Infrastructure Stack (UIS)](../../../../../urbalurba-infrastructure) — sibling repo that provides the local development cluster (Authentik + Gravitee + Postgres on Rancher Desktop k8s).
+- [`INVESTIGATE-semantic-foundation-before-expansion.md`](../backlog/INVESTIGATE-semantic-foundation-before-expansion.md) — the parent plan; this resolves its [Q19] (API now/later) and changes the trigger for its PLAN-C (model contracts).
+- [`docs/ideas/semantic-data-platform-discussion.md`](https://github.com/terchris/atlas/tree/main/docs/ideas/semantic-data-platform-discussion.md) — the conversation that landed on dbt-MCP-first; this plan extends that thinking to the HTTP API.
+- [`docs/research/goal.md`](https://github.com/terchris/atlas/tree/main/docs/research/goal.md) — public-good positioning that motivates the API; Lisa-first decision (Open Decision #1) gates the urgency.
+- [`docs/research/personas.md`](https://github.com/terchris/atlas/tree/main/docs/research/personas.md) — Dev / Ola / Lisa personas this serves.
+- [`atlas-frontend/src/lib/db.ts`](https://github.com/terchris/atlas/tree/main/atlas-frontend/src/lib/db.ts), [`atlas-frontend/src/lib/indicators.ts`](https://github.com/terchris/atlas/tree/main/atlas-frontend/src/lib/indicators.ts), [`atlas-frontend/src/lib/supply.ts`](https://github.com/terchris/atlas/tree/main/atlas-frontend/src/lib/supply.ts) — current direct-DB read patterns that inform what API endpoints are needed first.
+- [`INVESTIGATE-private-atlas-deployments.md`](../backlog/INVESTIGATE-private-atlas-deployments.md) — UIS-side hosting story that this API will need.
+- [Urbalurba Infrastructure Stack (UIS)](https://github.com/helpers-no/urbalurba-infrastructure) — sibling repo that provides the local development cluster (Authentik + Gravitee + Postgres on Rancher Desktop k8s).
 - [Authentik](https://goauthentik.io/) — local-dev identity provider.
 - [Gravitee](https://www.gravitee.io/) — local-dev API gateway.
 - [Okta](https://www.okta.com/) — production identity provider.
@@ -390,4 +390,4 @@ Per the parent INVESTIGATE plan, the freeze on NGO supply expansion is gated on 
 
 ### Prerequisites
 
-- The parent INVESTIGATE plan ([INVESTIGATE-semantic-foundation-before-expansion.md](INVESTIGATE-semantic-foundation-before-expansion.md)) is in flight. PLAN-A (dbt MCP + schema.yml hygiene via dbt-osmosis) is the natural first step before this plan's PLAN-D — same `marts.*` description-coverage work feeds both surfaces.
+- The parent INVESTIGATE plan ([INVESTIGATE-semantic-foundation-before-expansion.md](../backlog/INVESTIGATE-semantic-foundation-before-expansion.md)) is in flight. PLAN-A (dbt MCP + schema.yml hygiene via dbt-osmosis) is the natural first step before this plan's PLAN-D — same `marts.*` description-coverage work feeds both surfaces.

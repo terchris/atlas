@@ -46,9 +46,9 @@ Both companion infrastructure PLANs are prerequisites for the Folkehjelp scrape 
 
 This investigation builds on three already-completed research notes — read these first:
 
-- [`norskfolkehjelp-activities.md`](../../../../docs/research/norskfolkehjelp-activities.md) — 6-bin activity catalogue, slug convention, Brreg-vs-web gap (108 web ↔ 121 Brreg), comparison to Red Cross. Sample of 46 chapter pages already parsed (42 with usable activity sections, 4 empty).
-- [`norskfolkehjelp-activity-indicator-matrix.md`](../../../../docs/research/norskfolkehjelp-activity-indicator-matrix.md) — already maps NF activities to demand-side indicators; reuse 100% from Red Cross.
-- [`ngo-landscape.md`](../../../../docs/research/ngo-landscape.md) — high-level org info: NORSK FOLKEHJELP, orgnr `871033552`, ~16 000 members, ~100 lokallag, NOK 1.8 bn income (2024).
+- [`norskfolkehjelp-activities.md`](https://github.com/terchris/atlas/tree/main/docs/research/norskfolkehjelp-activities.md) — 6-bin activity catalogue, slug convention, Brreg-vs-web gap (108 web ↔ 121 Brreg), comparison to Red Cross. Sample of 46 chapter pages already parsed (42 with usable activity sections, 4 empty).
+- [`norskfolkehjelp-activity-indicator-matrix.md`](https://github.com/terchris/atlas/tree/main/docs/research/norskfolkehjelp-activity-indicator-matrix.md) — already maps NF activities to demand-side indicators; reuse 100% from Red Cross.
+- [`ngo-landscape.md`](https://github.com/terchris/atlas/tree/main/docs/research/ngo-landscape.md) — high-level org info: NORSK FOLKEHJELP, orgnr `871033552`, ~16 000 members, ~100 lokallag, NOK 1.8 bn income (2024).
 
 Already in the live data (shipped by PLAN-001 + PLAN-002):
 
@@ -143,9 +143,9 @@ Both required. Brreg gives us the legal-entity backbone (121 lokallag, 88% in Fr
 
 **Superseded by PLAN-001-brreg-enheter (2026-04-24).** What this investigation originally proposed here — an NF-specific `brreg-folkehjelp-units` seed-source writing to an NF-specific `raw.brreg_folkehjelp_units` table — is *not* what shipped. During implementation the scope was pulled forward to cross-NGO from day one (see [Q4] below). For Folkehjelp, the concrete shape is:
 
-- Use the existing generic ingest at [`atlas-data/ingest/src/seed-sources/brreg-enheter/`](../../../../../atlas-data/ingest/src/seed-sources/brreg-enheter/README.md).
+- Use the existing generic ingest at [`atlas-data/ingest/src/seed-sources/brreg-enheter/`](https://github.com/terchris/atlas/tree/main/atlas-data/ingest/src/seed-sources/brreg-enheter/README.md).
 - Run `npm run refresh:brreg-enheter`.
-- It reads [`landscape.json`](../../../../../atlas-data/ingest/src/seed-sources/atlas-ngo-landscape/landscape.json), iterates every NGO with a `brreg_query` block, fetches each via the shared typed Brreg client ([`src/lib/brreg/`](../../../../../atlas-data/ingest/src/lib/brreg/README.md)), and upserts all matches into the shared `raw.brreg_enheter` table.
+- It reads [`landscape.json`](https://github.com/terchris/atlas/tree/main/atlas-data/ingest/src/seed-sources/atlas-ngo-landscape/landscape.json), iterates every NGO with a `brreg_query` block, fetches each via the shared typed Brreg client ([`src/lib/brreg/`](https://github.com/terchris/atlas/tree/main/atlas-data/ingest/src/lib/brreg/README.md)), and upserts all matches into the shared `raw.brreg_enheter` table.
 - Folkehjelp's `brreg_query` block (committed 2026-04-24) is `{ navn: "norsk folkehjelp", organisasjonsform: "FLI", nameStartsWith: "Norsk Folkehjelp" }`. Verified: 122 rows, 108 in Frivillighetsregisteret — matches this investigation's baseline.
 
 Adding a new NGO's Brreg data is a `landscape.json` edit, not a new script/migration. No NF-specific code path anywhere.
@@ -204,7 +204,7 @@ Match strategy (in order):
 2. Levenshtein distance ≤ 2 against unmatched candidates (handles minor typos; logs every fuzzy match for review).
 3. Manual override file (see B.5).
 
-Expected result: ~108 of 121 Brreg rows match a web slug. ~13 Brreg-only rows are dormant or recently registered (per [`norskfolkehjelp-activities.md`](../../../../docs/research/norskfolkehjelp-activities.md), one was registered 2024-11-07).
+Expected result: ~108 of 121 Brreg rows match a web slug. ~13 Brreg-only rows are dormant or recently registered (per [`norskfolkehjelp-activities.md`](https://github.com/terchris/atlas/tree/main/docs/research/norskfolkehjelp-activities.md), one was registered 2024-11-07).
 
 ### B.5 Manual override file — **[Q6]**
 
@@ -407,7 +407,7 @@ CREATE TABLE raw.folkehjelp_chapter_activities (
 
 **Superseded shape landed 2026-04-24 via [PLAN-001-brreg-enheter](../completed/PLAN-001-brreg-enheter.md).** What this investigation originally proposed — an NF-specific `raw.brreg_folkehjelp_units` table — shipped instead as a shared cross-NGO `raw.brreg_enheter` table. Same API source (Brreg Enhetsregister via `data.brreg.no`); same JSON-API-not-scrape classification (§C.5 scraper column conventions don't apply); but one table serves every NGO, discriminated by `navn` prefix (`navn ILIKE 'Norsk Folkehjelp%'` for NF's rows).
 
-Final shipped shape in [`atlas-data/migrations/025_raw_brreg_enheter.sql`](../../../../../atlas-data/migrations/025_raw_brreg_enheter.sql):
+Final shipped shape in [`atlas-data/migrations/025_raw_brreg_enheter.sql`](https://github.com/terchris/atlas/tree/main/atlas-data/migrations/025_raw_brreg_enheter.sql):
 
 ```sql
 CREATE TABLE raw.brreg_enheter (

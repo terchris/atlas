@@ -147,4 +147,4 @@ ZIP path:
 
 - Monitor page / download wording: https://www.bufdir.no/statistikk-og-analyse/monitor/barnefattigdom/  
 - Example ZIP (`2025_07_31…`): fetched 2026-05-05; structure verified manually with `unzip -l`, `openpyxl` preview.  
-- Existing ingest README: [`atlas-data/ingest/src/sources/bufdir-barnefattigdom/README.md`](../../../../../atlas-data/ingest/src/sources/bufdir-barnefattigdom/README.md)
+- Existing ingest README: [`atlas-data/ingest/src/sources/bufdir-barnefattigdom/README.md`](https://github.com/terchris/atlas/tree/main/atlas-data/ingest/src/sources/bufdir-barnefattigdom/README.md)

@@ -134,7 +134,7 @@ Every source folder ships a `manifest.yml` that drives the catalogue's `marts._s
 
 ---
 
-## Scraping sources — additional convention
+## Scraping sources — additional convention {#scraping-sources}
 
 NGO scraping sources (those that fetch and parse HTML) follow an **extended folder layout** on top of the baseline above. Design rationale and the full decision log live in [INVESTIGATE-ngo-scraping-infrastructure.md](../ai-developer/plans/completed/INVESTIGATE-ngo-scraping-infrastructure.md); this section is the practical checklist.
 

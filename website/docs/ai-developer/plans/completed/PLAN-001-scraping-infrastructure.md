@@ -44,7 +44,7 @@ Six phases, estimated **~10–12 h**. The investigation's 6–8h estimate pre-da
 - **Documentation**:
   - New `atlas-data/ingest/README.md` listing the three env vars (§F).
   - New `atlas-data/ingest/src/sources/README.md` documenting the per-source folder convention (§B.3).
-  - Extended [`docs/stack/naming-conventions.md`](../../../../docs/stack/naming-conventions.md) with `source_slug`, `record_hash`, `html_raw_hash`, `url`, `raw.ingest_runs`, `raw.sitemap_log`.
+  - Extended [`docs/stack/naming-conventions.md`](https://github.com/terchris/atlas/tree/main/docs/stack/naming-conventions.md) with `source_slug`, `record_hash`, `html_raw_hash`, `url`, `raw.ingest_runs`, `raw.sitemap_log`.
 
 **NOT built in PLAN-001:**
 
@@ -178,8 +178,8 @@ Empty result is expected (no scrapers have written to `raw.ingest_runs` yet). `d
 ### Tasks
 
 - [x] 6.1 Extended the existing `atlas-data/ingest/src/sources/README.md` with a new **"Scraping sources — additional convention"** section covering the extended folder layout (`discover.ts` / `parse.ts` / `overrides.json` / `types.ts` / `__tests__/fixtures/`), file responsibilities (Q25), the §C.5 mandatory raw-table columns, migration naming, env vars, and a 7-step new-scraper checklist. Also added the missing `redcross-branches` row to the implemented-sources table.
-- [x] 6.2 Extended [`docs/stack/naming-conventions.md`](../../../../docs/stack/naming-conventions.md) with a new **"Raw-schema scraper conventions"** section covering `source_slug`, `url`, `record_hash`, `html_raw_hash`, `is_active`, `lastmod`, and the two shared cross-source tables. Noted on the existing `source_id` canonical row that it's renamed from `raw.*.source_slug` at the dbt passthrough — which caught a small inconsistency in `mart_ingest_health` that was then fixed (the mart now exposes `source_id`, renamed at the view boundary).
-- [x] 6.3 Added a scraper-specific sub-block to the "Prerequisites reading" list in [`atlas-data/CONTRIBUTING.md`](../../../../../atlas-data/CONTRIBUTING.md) pointing at the investigation, the sources/README scraper section, and this PLAN's completed copy.
+- [x] 6.2 Extended [`docs/stack/naming-conventions.md`](https://github.com/terchris/atlas/tree/main/docs/stack/naming-conventions.md) with a new **"Raw-schema scraper conventions"** section covering `source_slug`, `url`, `record_hash`, `html_raw_hash`, `is_active`, `lastmod`, and the two shared cross-source tables. Noted on the existing `source_id` canonical row that it's renamed from `raw.*.source_slug` at the dbt passthrough — which caught a small inconsistency in `mart_ingest_health` that was then fixed (the mart now exposes `source_id`, renamed at the view boundary).
+- [x] 6.3 Added a scraper-specific sub-block to the "Prerequisites reading" list in [`atlas-data/CONTRIBUTING.md`](https://github.com/terchris/atlas/tree/main/atlas-data/CONTRIBUTING.md) pointing at the investigation, the sources/README scraper section, and this PLAN's completed copy.
 - [x] 6.4 All four gates green:
   - `npm run typecheck` — clean
   - `npm test` — 49 passing, 0 skipped, 0 failing (487ms)

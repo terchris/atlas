@@ -9,9 +9,9 @@
 **Goal**: Decide whether to adopt [`dbterd`](https://github.com/datnguye/dbterd) to generate an entity-relationship diagram of `marts.*` from dbt artifacts, where the rendered ERD should live in the repo, and how it should be regenerated (manual command, dbt post-hook, CI step).
 
 **Last Updated**: 2026-04-23
-**Completed**: 2026-04-23 — adopted dbterd; Mermaid ERD lives at [`docs/stack/erd.md`](../../../../docs/stack/erd.md), regenerated via [`atlas-data/dbt/regenerate-erd.sh`](../../../../../atlas-data/dbt/regenerate-erd.sh). See [PLAN-dbterd-install-and-document.md](../completed/PLAN-dbterd-install-and-document.md) for the implementation details.
+**Completed**: 2026-04-23 — adopted dbterd; Mermaid ERD lives at [`docs/stack/erd.md`](https://github.com/terchris/atlas/tree/main/docs/stack/erd.md), regenerated via [`atlas-data/dbt/regenerate-erd.sh`](https://github.com/terchris/atlas/tree/main/atlas-data/dbt/regenerate-erd.sh). See [PLAN-dbterd-install-and-document.md](../completed/PLAN-dbterd-install-and-document.md) for the implementation details.
 
-**Origin**: While reviewing the lineage graph in `dbt docs serve` after PLAN-003, the user observed that lineage shows transformation flow but not entity relationships with cardinality. dbt docs ships no ERD view. The `relationships:` tests added in PLAN-003 ([`atlas-data/dbt/models/indicators/schema.yml`](../../../../../atlas-data/dbt/models/indicators/schema.yml)) and [`atlas-data/dbt/seeds/schema.yml`](../../../../../atlas-data/dbt/seeds/schema.yml) make Atlas's marts schema unusually well-suited to auto-ERD: dbterd's default algorithm reads exactly those tests.
+**Origin**: While reviewing the lineage graph in `dbt docs serve` after PLAN-003, the user observed that lineage shows transformation flow but not entity relationships with cardinality. dbt docs ships no ERD view. The `relationships:` tests added in PLAN-003 ([`atlas-data/dbt/models/indicators/schema.yml`](https://github.com/terchris/atlas/tree/main/atlas-data/dbt/models/indicators/schema.yml)) and [`atlas-data/dbt/seeds/schema.yml`](https://github.com/terchris/atlas/tree/main/atlas-data/dbt/seeds/schema.yml) make Atlas's marts schema unusually well-suited to auto-ERD: dbterd's default algorithm reads exactly those tests.
 
 ---
 
@@ -144,7 +144,7 @@ For the implementation plan that follows this investigation:
 2. **Create `atlas-data/dbt/.dbterd.yml`** with the canonical config: `target: mermaid`, `select: schema:marts`, `resource_type: [model, source]` (extend with `seed` after empirical verification — see step 4), `output: ../../../docs/stack`, `output_file_name: erd.md`.
 3. **Run once, commit `docs/stack/erd.md`**. Spot-check that the indicator → seed → dim edges all appear and that cardinalities make sense.
 4. **Empirically test `--resource-type seed`**. If seeds render with their inbound relationships, add `seed` to the config. If they render badly (orphan nodes, missing edges), document the gap and either work around it (write the relationships in a way dbterd understands) or skip seeds with a comment in the config explaining why.
-5. **Document the workflow in [`atlas-data/dbt/README.md`](../../../../../atlas-data/dbt/README.md)**: one paragraph + the regeneration command. Cross-link from [`docs/stack/naming-conventions.md`](../../../../docs/stack/naming-conventions.md) so contributors looking at the vocabulary see "the ERD shows current state".
+5. **Document the workflow in [`atlas-data/dbt/README.md`](https://github.com/terchris/atlas/tree/main/atlas-data/dbt/README.md)**: one paragraph + the regeneration command. Cross-link from [`docs/stack/naming-conventions.md`](https://github.com/terchris/atlas/tree/main/docs/stack/naming-conventions.md) so contributors looking at the vocabulary see "the ERD shows current state".
 6. **Defer the CI gate (option B) until Atlas has CI for dbt**. Track it as a future plan; not blocking.
 
 Skip dbt post-hook (option C). Skip DBML-only (option D). The Mermaid-in-repo flow is the lightest weight thing that gives the most consumer value (GitHub renders it for everyone with no setup).
@@ -193,8 +193,8 @@ Edit:
 
 ## Cross-references
 
-- [`atlas-data/dbt/models/indicators/schema.yml`](../../../../../atlas-data/dbt/models/indicators/schema.yml) — the relationship metadata dbterd's default algorithm reads.
-- [`atlas-data/dbt/seeds/schema.yml`](../../../../../atlas-data/dbt/seeds/schema.yml) — seed-side metadata; relevant if `--resource-type seed` works.
-- [`docs/stack/naming-conventions.md`](../../../../docs/stack/naming-conventions.md) — the canonical vocabulary the ERD should reflect.
+- [`atlas-data/dbt/models/indicators/schema.yml`](https://github.com/terchris/atlas/tree/main/atlas-data/dbt/models/indicators/schema.yml) — the relationship metadata dbterd's default algorithm reads.
+- [`atlas-data/dbt/seeds/schema.yml`](https://github.com/terchris/atlas/tree/main/atlas-data/dbt/seeds/schema.yml) — seed-side metadata; relevant if `--resource-type seed` works.
+- [`docs/stack/naming-conventions.md`](https://github.com/terchris/atlas/tree/main/docs/stack/naming-conventions.md) — the canonical vocabulary the ERD should reflect.
 - [`completed/INVESTIGATE-code-label-mapping.md`](../completed/INVESTIGATE-code-label-mapping.md) — the work that produced the rich `schema.yml` this investigation builds on.
 - dbterd repo: <https://github.com/datnguye/dbterd>

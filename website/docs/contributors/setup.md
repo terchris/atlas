@@ -13,7 +13,7 @@ You need:
 - **Node.js ≥ 20** (uses built-in `fetch` and `import.meta.url`). Check with `node --version`.
 - **npm** (Atlas's `package.json` uses npm; pnpm also works).
 - **uv** — the Python env manager dbt uses. Install with `brew install uv` (macOS) or see [uv's install docs](https://github.com/astral-sh/uv).
-- **Postgres** reachable from your machine. Atlas runs against Postgres in the [Urbalurba Infrastructure Stack (UIS)](https://github.com/helpers-no/urbalurba-infrastructure) for local dev — UIS spins up a Postgres pod inside Rancher Desktop k8s. See [Bootstrap atlas_db on UIS Postgres](#bootstrap-atlas_db-on-uis-postgres) below for the one-shot setup. If you don't have UIS, any local Postgres ≥ 14 works for ingest + dbt; you'll skip the frontend until you point at a real Atlas database.
+- **Postgres** reachable from your machine. Atlas runs against Postgres in the [Urbalurba Infrastructure Stack (UIS)](https://github.com/helpers-no/urbalurba-infrastructure) for local dev — UIS spins up a Postgres pod inside Rancher Desktop k8s. See [Bootstrap atlas_db on UIS Postgres](#connecting-to-postgres-in-uis) below for the one-shot setup. If you don't have UIS, any local Postgres ≥ 14 works for ingest + dbt; you'll skip the frontend until you point at a real Atlas database.
 - **`git`** with a configured user.
 
 ---
@@ -36,7 +36,7 @@ The two-frontend split (one PostgREST-only public app, one direct-Postgres inter
 
 ---
 
-## Bootstrap `atlas_db` on UIS Postgres
+## Bootstrap `atlas_db` on UIS Postgres {#connecting-to-postgres-in-uis}
 
 Postgres runs as a pod inside the local k3s cluster (Rancher Desktop). UIS's per-app configure does the bootstrap (database + role + grants) and exposes the port to your host machine in one command:
 
@@ -212,7 +212,7 @@ Required variables:
 | `PGHOST`, `PGPORT`, `PGUSER`, `PGPASSWORD`, `PGDATABASE` | Same as DATABASE_URL but separately for dbt | Same JSON output: `host` → `localhost`, `port` → `35432`, `username` → `PGUSER`, `password` → `PGPASSWORD`, `database` → `PGDATABASE`. |
 | `ATLAS_SCRAPE_CONTACT_EMAIL` | Your contact email; embedded in scrapers' User-Agent | Use the address you want site operators to reach you at if a scrape causes problems. **Required for scraping sources** (hard-fails if unset); not needed for SSB/FHI/Brreg API ingests. |
 
-Concrete example based on the JSON output from [Bootstrap atlas_db on UIS Postgres](#bootstrap-atlas_db-on-uis-postgres):
+Concrete example based on the JSON output from [Bootstrap atlas_db on UIS Postgres](#connecting-to-postgres-in-uis):
 
 ```bash
 DATABASE_URL=postgresql://atlas:<password>@localhost:35432/atlas_db
@@ -240,7 +240,7 @@ For more on each ingest module's shape, see [ingest-modules.md](./ingest-modules
 
 ### Per-source `manifest.yml`
 
-Every source folder under `atlas-data/ingest/src/sources/<id>/` carries a `manifest.yml` alongside the `index.ts` ingest module. It's the **single source of truth** for the source's catalogue metadata — provider, license, periodicity, EU theme, attribution, tags, and a hand-authored `dimensions:` block describing each upstream dimension. Per the contract in [PLAN-007 Phase 2.11](../ai-developer/plans/active/PLAN-007-data-display-open-by-default.md), all *structured* metadata lives here; the per-source `README.md` is prose-only (what the script does, quirks, references).
+Every source folder under `atlas-data/ingest/src/sources/<id>/` carries a `manifest.yml` alongside the `index.ts` ingest module. It's the **single source of truth** for the source's catalogue metadata — provider, license, periodicity, EU theme, attribution, tags, and a hand-authored `dimensions:` block describing each upstream dimension. Per the contract in [PLAN-007 Phase 2.11](../ai-developer/plans/completed/PLAN-007-data-display-open-by-default.md), all *structured* metadata lives here; the per-source `README.md` is prose-only (what the script does, quirks, references).
 
 Required top-level fields:
 
@@ -277,7 +277,7 @@ dimensions:
     notes: "~1036 codes when pulling full range"
 ```
 
-Authoring a manifest for a new source is described in [ingest-modules.md § Adding a new ingest source](./ingest-modules.md#adding-a-new-ingest-source) — three steps: bootstrap (auto), fill (auto), edit dimensions (by hand).
+Authoring a manifest for a new source is described in [adding-a-source.md](./adding-a-source.md) — three steps: bootstrap (auto), fill (auto), edit dimensions (by hand).
 
 **After commit, the manifest is human-authored** — `npm run ingest:<source>` does not modify it. Field changes happen via PR like any other code change.
 
@@ -410,7 +410,7 @@ For the testing workflow before opening a PR, see [testing.md](./testing.md).
 
 - **`uv: command not found`** — install with `brew install uv` (macOS) or [uv's docs](https://github.com/astral-sh/uv). Don't use `pip install dbt-core` directly; the env will diverge from CI.
 - **dbt errors with `permission denied for schema raw`** — your Postgres role doesn't have `CREATE` on `raw`. UIS sets this up automatically; a fresh Postgres needs `GRANT CREATE ON SCHEMA raw TO <your-role>;`.
-- **`dbt debug` says "connection refused" on `localhost:35432`** — the UIS port expose dropped (auto-expose ends with the UIS container session). Re-attach with `./uis expose postgresql`. See [Bootstrap atlas_db on UIS Postgres](#bootstrap-atlas_db-on-uis-postgres).
+- **`dbt debug` says "connection refused" on `localhost:35432`** — the UIS port expose dropped (auto-expose ends with the UIS container session). Re-attach with `./uis expose postgresql`. See [Bootstrap atlas_db on UIS Postgres](#connecting-to-postgres-in-uis).
 - **`ATLAS_SCRAPE_CONTACT_EMAIL` unset** — only matters if you're running a scraping source (`ingest:redcross-branches` etc.). For SSB/FHI ingests, you can leave it blank.
 - **TypeScript errors after pulling main** — `npm install` again. Atlas pins types tightly and stale `node_modules/` causes type drift.
 - **`dbt-osmosis` says "would write changes" after a fresh run** — run it twice; osmosis is two-pass on a populated project. See [dbt-osmosis.md § two-pass convergence](./dbt-osmosis.md#two-pass-convergence).

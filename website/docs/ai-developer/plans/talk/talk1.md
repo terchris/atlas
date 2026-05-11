@@ -20,7 +20,7 @@ Hi folkehjelp — welcome back. A few PRs landed since you last worked. The shor
 3. **[`docs/ai-developer/plans/completed/INVESTIGATE-ngo-scraping-infrastructure.md`](../completed/INVESTIGATE-ngo-scraping-infrastructure.md)** + [`PLAN-001-scraping-infrastructure.md`](../completed/PLAN-001-scraping-infrastructure.md) — the toolkit you'll use (Crawlee, KV cache, sitemap_log, ingest_runs, per-source folder convention)
 4. **[`INVESTIGATE-folkehjelp-supply.md`](../backlog/INVESTIGATE-folkehjelp-supply.md)** — your investigation; still in backlog
 5. **[`PLAN-001-multi-ngo-supply-model-extensions.md`](../backlog/PLAN-001-multi-ngo-supply-model-extensions.md)** — your prerequisite PLAN; needs a small revision (see below)
-6. **[`docs/stack/private-data-layout.md`](../../../../docs/stack/private-data-layout.md) + [`private-marts-shapes.md`](../../../../docs/stack/private-marts-shapes.md)** — what redcross is doing on the private side, useful context but you don't need to act on it
+6. **[`docs/stack/private-data-layout.md`](https://github.com/terchris/atlas/tree/main/docs/stack/private-data-layout.md) + [`private-marts-shapes.md`](https://github.com/terchris/atlas/tree/main/docs/stack/private-marts-shapes.md)** — what redcross is doing on the private side, useful context but you don't need to act on it
 
 ---
 

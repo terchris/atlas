@@ -25,11 +25,11 @@ Phase 5 deliverables shipped beyond the original PLAN scope:
 **Last Updated**: 2026-04-30 — moved active/ → completed/
 
 **Prerequisites**:
-- PostgREST live with `api_v1.*` wrapper layer (PLAN-004 + UIS PLAN-002, verified 2026-04-30 — see [`talk2.md`](../talk/talk2.md), Messages 1–4).
+- PostgREST live with `api_v1.*` wrapper layer (PLAN-004 + UIS PLAN-002, verified 2026-04-30 — see [`talk2.md`](https://github.com/terchris/atlas/blob/main/website/docs/ai-developer/plans/talk/talk2.md), Messages 1–4).
 - `api-atlas.localhost` reachable from host machine.
 
 **Blocks**:
-- The actual `atlas.helpers.no` production deploy depends on Phase 6 of this PLAN finishing **and** [INVESTIGATE-deployment-pipeline.md](INVESTIGATE-deployment-pipeline.md) shipping a deployment story.
+- The actual `atlas.helpers.no` production deploy depends on Phase 6 of this PLAN finishing **and** [INVESTIGATE-deployment-pipeline.md](../backlog/INVESTIGATE-deployment-pipeline.md) shipping a deployment story.
 
 ---
 
@@ -218,13 +218,13 @@ Update contributor docs to reflect the split.
   - Reference each app's own README for fork/extend.
 - [x] 6.2 Update [`website/docs/contributors/index.md`](../../../contributors/index.md) "Where things live" table to list both apps.
 - [x] 6.3 Update [`website/docs/contributors/data-journey.md`](../../../contributors/data-journey.md) Stage 8 — clarify that the customer app dogfoods the API and that the contributor app keeps direct-DB access for verification work.
-- [x] 6.4 Update [`CLAUDE.md`](../../../../../CLAUDE.md) "Key Folders" section.
-- [x] 6.5 Update [`atlas-data/CONTRIBUTING.md`](../../../../../atlas-data/CONTRIBUTING.md) if it references the frontend path.
+- [x] 6.4 Update [`CLAUDE.md`](https://github.com/terchris/atlas/blob/main/CLAUDE.md) "Key Folders" section.
+- [x] 6.5 Update [`atlas-data/CONTRIBUTING.md`](https://github.com/terchris/atlas/tree/main/atlas-data/CONTRIBUTING.md) if it references the frontend path.
 - [x] 6.6 Scaffold a stub for the **external developer docs surface** at `website/docs/developers/index.md`. Single page with:
   - One paragraph framing the audience (people consuming `api-atlas.helpers.no` to build their own apps — frontend, CLI, agent, mobile, scripts).
   - A pointer to the customer app's README at `atlas-frontend/` as the canonical fork-me reference.
   - A pointer to the live Swagger 2.0 spec at `api-atlas.helpers.no/` for the schema.
-  - A "content TBD" note pointing at [INVESTIGATE-developer-docs-surface.md](INVESTIGATE-developer-docs-surface.md) for the planned full developer docs (getting started, API reference rendering, versioning policy, examples).
+  - A "content TBD" note pointing at [INVESTIGATE-developer-docs-surface.md](../backlog/INVESTIGATE-developer-docs-surface.md) for the planned full developer docs (getting started, API reference rendering, versioning policy, examples).
   - **No content beyond the stub** — full developer docs are a separate effort, deliberately out of scope for PLAN-005.
 
 ### Validation
@@ -289,7 +289,7 @@ grep -rn "atlas-frontend\|atlas-contributor-frontend" website/ CLAUDE.md atlas-d
 ## Out of Scope
 
 - The contributor app's specific feature set (FK integrity dashboards beyond what's already there, dbt test result surfacing, etc.) — separate design conversation, see "Out of scope" in the INVESTIGATE.
-- Production deploy of `atlas.helpers.no` — covered by [INVESTIGATE-deployment-pipeline.md](INVESTIGATE-deployment-pipeline.md).
+- Production deploy of `atlas.helpers.no` — covered by [INVESTIGATE-deployment-pipeline.md](../backlog/INVESTIGATE-deployment-pipeline.md).
 - Production deploy of `developer-atlas.helpers.no` (Docusaurus) — same.
 - Auth / JWT for the contributor app's optional staging URL — separate plan.
 - Migrating the customer app to call PostgREST through an API gateway (Gravitee/APIM) — v1.5+ insertion, not a v1 concern.
@@ -301,8 +301,8 @@ grep -rn "atlas-frontend\|atlas-contributor-frontend" website/ CLAUDE.md atlas-d
 - [INVESTIGATE-frontend-data-access-architecture.md](INVESTIGATE-frontend-data-access-architecture.md) — the architectural commitments this PLAN executes.
 - [INVESTIGATE-public-api-surface.md](../completed/INVESTIGATE-public-api-surface.md) — the parent investigation; this PLAN is the realisation of its [Q18] (PLAN-E).
 - [PLAN-004-postgrest-api-v1-wrapper.md](../completed/PLAN-004-postgrest-api-v1-wrapper.md) — the api_v1 wrapper layer + auto-generator + 5 gates that this PLAN consumes.
-- [`talk2.md`](../talk/talk2.md) — cross-repo coordination thread that captured the PostgREST integration verification.
-- [`atlas-frontend/`](../../../../../atlas-frontend/) — the codebase that gets renamed in Phase 1.
+- [`talk2.md`](https://github.com/terchris/atlas/blob/main/website/docs/ai-developer/plans/talk/talk2.md) — cross-repo coordination thread that captured the PostgREST integration verification.
+- [`atlas-frontend/`](https://github.com/terchris/atlas/tree/main/atlas-frontend/) — the codebase that gets renamed in Phase 1.
 - [`website/docs/contributors/setup.md`](../../../contributors/setup.md) — gets updated in Phase 6.
 
 ---

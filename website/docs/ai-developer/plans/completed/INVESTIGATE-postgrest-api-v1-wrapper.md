@@ -44,7 +44,7 @@ Phase 1 of PLAN-004 still runs the experiments behind Q3 / Q10 / Q11 / Q18 — t
 
 **Last Updated**: 2026-04-28
 
-**Origin**: A UIS contributor published [`urbalurba-infrastructure/website/docs/services/integration/postgrest.md`](../../../../../../urbalurba-infrastructure/website/docs/services/integration/postgrest.md) describing how UIS deploys PostgREST per consuming app. Their docs assume each app provides an `api_v1` schema of curated views (e.g. `api_v1.kommune`, `api_v1.ngo`); UIS then runs `./uis configure postgrest --app atlas --schema api_v1` to wire up roles + Kubernetes objects.
+**Origin**: A UIS contributor published [`urbalurba-infrastructure/website/docs/services/integration/postgrest.md`](https://github.com/helpers-no/urbalurba-infrastructure/tree/main/website/docs/services/integration/postgrest.md) describing how UIS deploys PostgREST per consuming app. Their docs assume each app provides an `api_v1` schema of curated views (e.g. `api_v1.kommune`, `api_v1.ngo`); UIS then runs `./uis configure postgrest --app atlas --schema api_v1` to wire up roles + Kubernetes objects.
 
 Atlas's PLAN-001 built 9 `marts.mart_<feature>` views as tables. Comparing the two: PLAN-001 quietly conflated two layers that UIS's design correctly separates — the **dbt deliverable** (`marts.*`, also read by Atlas's frontend today) and the **public API contract** (which UIS expects in `api_v1`). Atlas needs to clarify the boundary regardless of UIS's expectations; UIS just made the gap visible.
 
@@ -125,13 +125,13 @@ The `marts.mart_*` tables stay as Postgres `TABLE`s (PLAN-001 [Q3] — fast read
 
 - **[Q7] Versioning policy — when does `api_v2` happen?** Don't need to answer in this INVESTIGATE; flag for future thought. Triggering events: a `mart_*` column rename / type change / removal that breaks an external consumer; a structural shift (e.g. splitting one view into two). The `api_v1` naming gives Atlas the affordance; the policy comes when there's a real second version to plan.
 
-- **[Q8] Naming-conventions update.** Atlas's [`docs/stack/naming-conventions.md`](../../../../../docs/stack/naming-conventions.md) currently treats `marts.mart_<feature>` as "the public OpenAPI surface PostgREST projects" (per PLAN-001). With `api_v1` landing, that text needs splitting:
+- **[Q8] Naming-conventions update.** Atlas's [`docs/stack/naming-conventions.md`](https://github.com/terchris/atlas/tree/main/docs/stack/naming-conventions.md) currently treats `marts.mart_<feature>` as "the public OpenAPI surface PostgREST projects" (per PLAN-001). With `api_v1` landing, that text needs splitting:
   - `marts.mart_<feature>` = "internal API-shaped views" (consumed by Atlas's frontend dogfood; not the external contract)
   - `api_v1.<feature>` = "external public contract" (the OpenAPI surface PostgREST projects; versioned)
 
   New MUST rule (mirror of rule #8): **"every PR that adds, removes, or changes a `marts.mart_*` view in `models/marts/api/` MUST re-run `regenerate-api-v1.sh` and commit the updated migration."** The drift gate ([Q16] #1) enforces this — a stale generated file fails CI. **Captured here; PLAN-004 makes the edit.**
 
-- **[Q9] Contributor docs update.** Today [`adding-a-source.md`](../../../../contributors/adding-a-source.md), [`dbt-osmosis.md`](../../../../contributors/dbt-osmosis.md) and [`check-osmosis.md`](../../../../contributors/check-osmosis.md) reference PostgREST's OpenAPI tie-in but assume `marts.*` IS the projected surface. Once `api_v1` lands, these need a small update — most importantly, the "add a new mart" workflow gets one more step: **after the dbt model is in `models/marts/api/`, run `./regenerate-api-v1.sh` and commit the regenerated migration**. The generator emits the `NOTIFY pgrst, 'reload schema'` at the end of the file, so contributors don't run it manually. **Captured; PLAN-004 does the edit.** [Q14] below covers the *removal* / deprecation flow that's also missing.
+- **[Q9] Contributor docs update.** Today [`adding-a-source.md`](../../../contributors/adding-a-source.md), [`dbt-osmosis.md`](../../../contributors/dbt-osmosis.md) and [`check-osmosis.md`](../../../contributors/check-osmosis.md) reference PostgREST's OpenAPI tie-in but assume `marts.*` IS the projected surface. Once `api_v1` lands, these need a small update — most importantly, the "add a new mart" workflow gets one more step: **after the dbt model is in `models/marts/api/`, run `./regenerate-api-v1.sh` and commit the regenerated migration**. The generator emits the `NOTIFY pgrst, 'reload schema'` at the end of the file, so contributors don't run it manually. **Captured; PLAN-004 does the edit.** [Q14] below covers the *removal* / deprecation flow that's also missing.
 
 - **[Q10] Foreign-key embed via wrapper views — the biggest design impact.** UIS's worked example shows `?select=*,kommune(*)` (embedded resource). PostgREST infers embeddable relationships from `pg_constraint` (foreign-key constraints on tables). **Views don't carry FK metadata.** A wrapper view `api_v1.kommune_local_chapters` exposes `kommune_nr` as a column but PostgREST won't suggest `kommune` as an embeddable relation — even though the underlying `marts.dim_kommune` has the FK. Three workarounds (per PostgREST docs):
   - **(a) Add `api_v1` wrappers for `dim_*` tables that participate in FK relationships referenced by api/ models.** The set is **derived, not hand-picked**: the generator ([Q15]) walks each api/ model's `relationships:` declarations in schema.yml and emits a wrapper for every `dim_*` referenced (transitively — a wrapped `dim_*` may itself reference another `dim_*`, which also gets wrapped). At v1 scale that's roughly `api_v1.kommune`, `api_v1.fylke`, `api_v1.ngo`, `api_v1.activity`, `api_v1.chapter`. The generator uses `COMMENT ON VIEW ... IS '@source <underlying-table>'` to teach PostgREST the embed lineage.
@@ -152,7 +152,7 @@ The `marts.mart_*` tables stay as Postgres `TABLE`s (PLAN-001 [Q3] — fast read
   - **(i) Strict ordering**: UIS configure MUST run before any Atlas migration that grants. Documented as a hard requirement; fresh dev environments without UIS can't apply the migration. Most operationally fragile.
   - **(ii) Guarded grants**: Generator emits grants inside a `DO $$ BEGIN IF EXISTS (SELECT FROM pg_roles WHERE rolname='atlas_web_anon') THEN … END IF; END $$;` block. Migration applies cleanly with or without the role; UIS configure (or a re-run of the migration after configure) activates the grants. Most ergonomic.
   - **(iii) Atlas owns no grants**: [Q11] resolves to (a) — UIS's configure script handles all grants via `ALTER DEFAULT PRIVILEGES`. Atlas's generator never emits GRANT statements. Cleanest separation of concerns; depends on [Q11] resolving to (a).
-  - **Recommendation lean: (iii) if [Q11](a), (ii) if [Q11](b).** Avoid (i) — it makes Atlas's migrations non-portable.
+  - **Recommendation lean: (iii) if [Q11] option (a), (ii) if [Q11] option (b).** Avoid (i) — it makes Atlas's migrations non-portable.
 
 - **[Q12] Order of operations between Atlas migration and UIS deploy.** UIS's `./uis deploy postgrest --app atlas` happens against an existing database. Three orderings to consider:
   - **First-time deploy**: Atlas migration runs → `api_v1` schema exists with views → UIS deploys → PostgREST starts up with populated schema cache. ✓ clean path.
@@ -179,7 +179,7 @@ The `marts.mart_*` tables stay as Postgres `TABLE`s (PLAN-001 [Q3] — fast read
   - **Resolution: (b). PLAN-004 builds the generator as a phase.** Investment is ~1 day; ongoing per-dataset cost goes to ~zero. The "MUST add wrapper in same PR" rule from [Q8] is replaced by "MUST re-run the generator in same PR" — same idea, mechanical.
 
   Implementation notes:
-  - Lives next to [`atlas-data/dbt/regenerate-erd.sh`](../../../../../atlas-data/dbt/regenerate-erd.sh) (similar pattern: read manifest, emit artefact). Likely Python (the manifest is JSON; Python is already used by dbt).
+  - Lives next to [`atlas-data/dbt/regenerate-erd.sh`](https://github.com/terchris/atlas/tree/main/atlas-data/dbt/regenerate-erd.sh) (similar pattern: read manifest, emit artefact). Likely Python (the manifest is JSON; Python is already used by dbt).
   - Output path: `atlas-data/migrations/NNN_api_v1_generated.sql`. NNN is whatever number was free at first land; subsequent re-generations overwrite this same file. The body uses `CREATE OR REPLACE VIEW` for additions/changes and `DROP VIEW IF EXISTS … CASCADE` for removals (per [Q17]).
   - Generator handles the [Q10] dim_* wrappers automatically: it walks each api/ model's `relationships:` declarations and emits wrappers for every referenced dim_*.
   - Generator emits **`CREATE SCHEMA IF NOT EXISTS api_v1`** at the top — even if UIS's `./uis configure postgrest` also creates the schema, `IF NOT EXISTS` makes the migration safe to apply against either ordering ([Q12]).
@@ -188,7 +188,7 @@ The `marts.mart_*` tables stay as Postgres `TABLE`s (PLAN-001 [Q3] — fast read
 
 - **[Q16] Validation strategy for the generated layer.** Auto-generation is only safe if there's a CI gate that catches drift, omissions, and silent failures. Five validations, each tied to a clear failure mode:
 
-  1. **Drift gate (essential).** A check script runs the generator and diffs every artefact (`*_api_v1_generated.sql` AND `api_v1_state.json`) against the checked-in versions. Non-zero diff = CI fail. Mirrors [`check-osmosis.sh`](../../../../../atlas-data/dbt/check-osmosis.sh)'s `--dry-run --check` shape. Fail message points the contributor at "run `regenerate-api-v1.sh` and commit the result." Catches: contributor edited the dbt model but forgot to regenerate; contributor hand-edited the generated file or the state JSON.
+  1. **Drift gate (essential).** A check script runs the generator and diffs every artefact (`*_api_v1_generated.sql` AND `api_v1_state.json`) against the checked-in versions. Non-zero diff = CI fail. Mirrors [`check-osmosis.sh`](https://github.com/terchris/atlas/tree/main/atlas-data/dbt/check-osmosis.sh)'s `--dry-run --check` shape. Fail message points the contributor at "run `regenerate-api-v1.sh` and commit the result." Catches: contributor edited the dbt model but forgot to regenerate; contributor hand-edited the generated file or the state JSON.
   2. **Coverage (essential).** Pure SQL ↔ dbt-model symmetry: every model under `models/marts/api/` (plus its transitively-referenced dim_* per [Q10]) produces a wrapper in the generated SQL; conversely, every `api_v1.*` view in the generated SQL maps to an existing dbt model or referenced dim_*. Detects renames, deletions, and orphan wrappers. (The state-JSON-vs-reality check is part of drift, not coverage.)
   3. **Description coverage** — split into two checks because the timing differs:
      - **3a. Static (essential, gate-blocking).** Read the generated SQL. If [Q3] resolves "comments don't propagate to views", every column must have a `COMMENT ON COLUMN api_v1.X.col IS '...'` line. If [Q3] resolves "comments propagate", static check verifies the underlying `marts.mart_*` columns are documented (already covered by `check-osmosis.sh` strict gate). Fast; runs without Postgres.
@@ -268,19 +268,19 @@ The `marts.mart_*` tables stay as Postgres `TABLE`s (PLAN-001 [Q3] — fast read
 - **(Future) PLAN-D.2 / coordination with UIS — end-to-end verification.** Once PLAN-004 is merged, signal to the UIS contributor that `api_v1` exists and they can run `./uis configure postgrest --app atlas --schema api_v1 --url-prefix api-atlas` + `./uis deploy postgrest --app atlas`. No code change on Atlas's side at that point. End-to-end checks:
   - `curl http://api-atlas.localhost/` returns Swagger 2.0 spec (PostgREST 12.x; verify with `jq '.swagger == "2.0"'`) containing all 9 (or ~14 with dim_* wrappers) endpoints with descriptions.
   - `curl 'http://api-atlas.localhost/indicator_summary?source_id=eq.ssb-08764'` returns rows.
-  - If [Q10](a) chosen: `curl 'http://api-atlas.localhost/kommune_local_chapters?select=*,kommune(*)&kommune_nr=eq.0301'` embeds the kommune row.
+  - If [Q10] option (a) chosen: `curl 'http://api-atlas.localhost/kommune_local_chapters?select=*,kommune(*)&kommune_nr=eq.0301'` embeds the kommune row.
 
 ---
 
 ## Cross-references
 
-- [`urbalurba-infrastructure/website/docs/services/integration/postgrest.md`](../../../../../../urbalurba-infrastructure/website/docs/services/integration/postgrest.md) — the UIS contributor's PostgREST design doc (the trigger for this INVESTIGATE)
+- [`urbalurba-infrastructure/website/docs/services/integration/postgrest.md`](https://github.com/helpers-no/urbalurba-infrastructure/tree/main/website/docs/services/integration/postgrest.md) — the UIS contributor's PostgREST design doc (the trigger for this INVESTIGATE)
 - [INVESTIGATE-public-api-surface.md](INVESTIGATE-public-api-surface.md) — the parent investigation; this INVESTIGATE resolves a question that one left implicit
 - [PLAN-001-api-mart-views.md](../completed/PLAN-001-api-mart-views.md) — built the 9 `marts.mart_*` views the wrappers will project
 - [PLAN-002-fill-schema-yml-description-gaps.md](../completed/PLAN-002-fill-schema-yml-description-gaps.md) — closed the description backlog so OpenAPI projection is informative
-- [`docs/stack/naming-conventions.md`](../../../../../docs/stack/naming-conventions.md) — needs the rule + wording update once PLAN-004 lands
+- [`docs/stack/naming-conventions.md`](https://github.com/terchris/atlas/tree/main/docs/stack/naming-conventions.md) — needs the rule + wording update once PLAN-004 lands
 - [adding-a-source.md](../../../contributors/adding-a-source.md), [dbt-osmosis.md](../../../contributors/dbt-osmosis.md), [check-osmosis.md](../../../contributors/check-osmosis.md) — contributor pages that gain a small `api_v1` step
-- [`atlas-data/dbt/regenerate-erd.sh`](../../../../../atlas-data/dbt/regenerate-erd.sh) — the existing pattern this generator mirrors (read `target/manifest.json` → emit artefact → check in)
-- [`atlas-data/dbt/check-osmosis.sh`](../../../../../atlas-data/dbt/check-osmosis.sh) — the gate-style validation pattern PLAN-004's `check-api-v1.sh` follows
+- [`atlas-data/dbt/regenerate-erd.sh`](https://github.com/terchris/atlas/tree/main/atlas-data/dbt/regenerate-erd.sh) — the existing pattern this generator mirrors (read `target/manifest.json` → emit artefact → check in)
+- [`atlas-data/dbt/check-osmosis.sh`](https://github.com/terchris/atlas/tree/main/atlas-data/dbt/check-osmosis.sh) — the gate-style validation pattern PLAN-004's `check-api-v1.sh` follows
 - [PostgREST embed-via-comment docs](https://docs.postgrest.org/en/v12/references/api/resource_embedding.html) — relevant for [Q10] (`@source` and `@references` comment hints)
 - Future PLAN-F (not yet drafted) — render the OpenAPI spec as a Swagger-UI / Redoc human-readable docs page at `api-atlas.helpers.no/docs`

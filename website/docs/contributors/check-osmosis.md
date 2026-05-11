@@ -116,4 +116,4 @@ See [dbt-osmosis.md § why Atlas relies on it](./dbt-osmosis.md#why-atlas-relies
 - [`atlas-data/dbt/check-osmosis.sh`](https://github.com/terchris/atlas/blob/main/atlas-data/dbt/check-osmosis.sh) — the script itself
 - [`atlas-data/dbt/README.md`](https://github.com/terchris/atlas/blob/main/atlas-data/dbt/README.md) — dbt project layout and command cheatsheet
 - [PLAN-002](../ai-developer/plans/completed/PLAN-002-fill-schema-yml-description-gaps.md) — closed the 180-column backlog and tightened the gate to repo-wide
-- [PLAN-004](../ai-developer/plans/active/PLAN-004-postgrest-api-v1-wrapper.md) — built `check-api-v1.sh` and the `api_v1` wrapper layer it gates
+- [PLAN-004](../ai-developer/plans/completed/PLAN-004-postgrest-api-v1-wrapper.md) — built `check-api-v1.sh` and the `api_v1` wrapper layer it gates

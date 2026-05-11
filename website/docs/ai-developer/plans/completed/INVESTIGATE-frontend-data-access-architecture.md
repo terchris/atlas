@@ -88,7 +88,7 @@ This wholesale rename is cleaner than splitting route-by-route because the exist
 
 - The actual migration (folder rename + new app scaffold + first customer routes) — that's the follow-on PLAN.
 - The contributor app's specific feature set beyond "verify data was ingested" — separate design conversation once the structural decision is made. Includes whether the contributor app surfaces `dbt test` output / `target/run_results.json` / dbt-osmosis docs alongside live SQL diagnostics.
-- Production deploy mechanics (covered by [INVESTIGATE-deployment-pipeline.md](INVESTIGATE-deployment-pipeline.md)).
+- Production deploy mechanics (covered by [INVESTIGATE-deployment-pipeline.md](../backlog/INVESTIGATE-deployment-pipeline.md)).
 - Auth on the contributor app's staging URL (separate concern).
 
 ---
@@ -131,8 +131,8 @@ The follow-on PLAN-005-frontend-split-and-rebuild covers the move, with phases:
 - [INVESTIGATE-public-api-surface.md](../completed/INVESTIGATE-public-api-surface.md) — parent; this addresses [Q18] (PLAN-E shape).
 - [INVESTIGATE-postgrest-api-v1-wrapper.md](../completed/INVESTIGATE-postgrest-api-v1-wrapper.md) — sibling; the API contract that the customer app consumes.
 - [PLAN-004-postgrest-api-v1-wrapper.md](../completed/PLAN-004-postgrest-api-v1-wrapper.md) — implemented `api_v1.*` + auto-generator + 5 gates.
-- [INVESTIGATE-deployment-pipeline.md](INVESTIGATE-deployment-pipeline.md) — production deploy mechanics; the customer-app-no-DB-role recommendation here interacts with that.
-- [`atlas-frontend/`](../../../../../atlas-frontend/) — current codebase that gets split.
+- [INVESTIGATE-deployment-pipeline.md](../backlog/INVESTIGATE-deployment-pipeline.md) — production deploy mechanics; the customer-app-no-DB-role recommendation here interacts with that.
+- [`atlas-frontend/`](https://github.com/terchris/atlas/tree/main/atlas-frontend/) — current codebase that gets split.
 
 ---
 
