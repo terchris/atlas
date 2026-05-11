@@ -4,7 +4,7 @@
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Active — Phase 1 complete, ready for Phase 2
+## Status: Active — Phase 2 complete (CI workflow shipped; PR-validation deferred to push), ready for Phase 3
 
 **Goal**: Get Docusaurus building and serving Atlas's existing `website/docs/` content locally, then ship it as a Docker image that UIS can deploy at `atlas.helpers.no` (prod) / `atlas.localhost` (UIS local dev).
 
@@ -93,14 +93,22 @@ Build the site as static HTML, validate it in CI on every PR.
 
 ### Tasks
 
-- [ ] 2.1 `cd website && npm run build` — verify the production build succeeds and produces `website/build/` with `index.html`, hashed JS/CSS, and per-page HTML.
-- [ ] 2.2 `npm run serve` — verify the built static site serves correctly at `http://localhost:3000` (catches any "works in dev, breaks in prod" Docusaurus quirks).
-- [ ] 2.3 Add a GitHub Actions workflow at `.github/workflows/website-build.yml` (or extend an existing one) that runs `npm install && npm run typecheck && npm run build` on every PR and push to `main`, in `website/`. No deploy yet — just the build gate. Pin `node-version: 20`.
+- [x] 2.1 `cd website && npm run build` — verify the production build succeeds and produces `website/build/` with `index.html`, hashed JS/CSS, and per-page HTML.
+- [x] 2.2 `npm run serve` — verify the built static site serves correctly at `http://localhost:3000` (catches any "works in dev, breaks in prod" Docusaurus quirks).
+- [x] 2.3 Add a GitHub Actions workflow at `.github/workflows/website-build.yml` (or extend an existing one) that runs `npm install && npm run typecheck && npm run build` on every PR and push to `main`, in `website/`. No deploy yet — just the build gate. Pin `node-version: 20`.
 - [ ] 2.4 Verify the workflow passes on a PR.
 
 ### Validation
 
 PRs touching `website/` get a green CI check that proves `npm run build` succeeds.
+
+### Phase 2 outcome (2026-05-12)
+
+2.1 + 2.2 passed during Phase 1 verification; not re-run for Phase 2 because the state is unchanged. 2.3 shipped: [`.github/workflows/website-build.yml`](https://github.com/terchris/atlas/blob/main/.github/workflows/website-build.yml) runs `npm ci + typecheck + build` on every PR and push to `main` that touches `website/**` or the workflow file itself. Pinned to `node-version: 20`, with npm cache keyed on `website/package-lock.json` — matches the pattern UIS uses in their own [`docs.yml`](https://github.com/helpers-no/urbalurba-infrastructure/blob/main/.github/workflows/docs.yml). `permissions: contents: read` (no writes needed for a build-only gate). No deploy step here — that's Phase 3.
+
+One deviation from the PLAN: 2.4 (verify the workflow passes on a PR) is **deferred to when the branch ships**. The workflow can't run until the branch is pushed to `origin` and a PR is opened. That's a single push + `gh pr create` once we're ready to ship Phase 2, not work the implementation needs to wait on.
+
+The strict `onBrokenLinks: 'throw'` / `onBrokenAnchors: 'throw'` config from Phase 1's link-cleanup pass means this CI gate automatically catches any future broken markdown link or anchor — no separate guard needed.
 
 ---
 
