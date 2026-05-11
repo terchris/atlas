@@ -68,6 +68,8 @@ The complete set of things that go from commit to running. **Two deployed**, two
 
 **Ingress**: standard UIS Traefik for UIS-owned components (PostgREST, Dagster UI). The Docusaurus site is on GitHub Pages and does not go through UIS ingress at all.
 
+**API URL versioning** (decision 2026-05-12): Atlas's public API uses **URL-prefix versioning** — every endpoint lives under `/v1/<endpoint>` (matches Stripe, OpenAI, the modern-API convention). The `v1` prefix decouples URL versioning from PostgREST's schema-based routing: the `api_v1` Postgres schema is mapped from the URL prefix by a UIS-side Traefik path-rewrite (strip `/v1/`, forward to PostgREST, `api_v1` is already PostgREST's default schema). When v2 ships later (breaking changes), a parallel `/v2/` Traefik rule routes to `Accept-Profile: api_v2` and both versions run in parallel. **Atlas is pre-release** — every consumer (Scalar curls, atlas-frontend URLs, future external developers) sees only the versioned URLs. Coordinated with UIS in [talk.md Message 5](https://github.com/terchris/atlas/blob/main/website/docs/ai-developer/plans/talk/talk.md).
+
 ---
 
 ## What's missing — the CI + release questions

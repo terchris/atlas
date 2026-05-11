@@ -486,15 +486,47 @@ While you're in the PostgREST values, a second knob worth flipping. PostgREST se
 curl 'http://0.0.0.0:3000/activity_catalog?...'
 ```
 
-…which is obviously wrong from a user's perspective. Setting [`OPENAPI_SERVER_PROXY_URI`](https://postgrest.org/en/stable/references/configuration.html#openapi-server-proxy-uri) (or the equivalent UIS Helm-values entry) tells PostgREST to emit a different `host` / `schemes` / `basePath` in the OpenAPI doc. Once Atlas's PostgREST is publicly reachable, set this to `https://api-atlas.helpers.no/` and every auto-generated curl example is correct out of the box.
+…which is obviously wrong from a user's perspective. Setting [`OPENAPI_SERVER_PROXY_URI`](https://postgrest.org/en/stable/references/configuration.html#openapi-server-proxy-uri) (or the equivalent UIS Helm-values entry) tells PostgREST to emit a different `host` / `schemes` / `basePath` in the OpenAPI doc. Once Atlas's PostgREST is publicly reachable, set this to `https://api-atlas.helpers.no/v1` (note the path prefix — see next item) and every auto-generated curl example is correct out of the box.
+
+### Third ask: URL-prefix versioning via Traefik path-rewrite
+
+Atlas has settled on URL-prefix versioning for the public API — every endpoint lives under `/v1/...` (matches Stripe / OpenAI / the modern-API convention). Today every URL is unversioned:
+
+```
+http://api-atlas.localhost/ngo_index      ← what works now
+http://api-atlas.localhost/v1/ngo_index   ← what Atlas wants
+```
+
+Mapping a `/v1/` URL prefix to PostgREST's existing schema-based routing is a one-rule Traefik middleware:
+
+```yaml
+# Strip the /v1/ prefix on Atlas's PostgREST ingress, forward to PostgREST root.
+# PostgREST's `api_v1` is already the default schema (PGRST_DB_SCHEMAS=api_v1,marts,raw),
+# so no Accept-Profile header injection is needed — the existing default handles it.
+match: PathPrefix(`/v1/`)
+middlewares:
+  - stripPrefix: { prefixes: ['/v1'] }
+```
+
+Some sketch — exact UIS-conventional shape is yours to call. Goal: external `/v1/ngo_index` → PostgREST internal `/ngo_index` with `Accept-Profile: api_v1` defaulted.
+
+When v2 ships later (breaking schema changes), a parallel rule for `/v2/` + matching `Accept-Profile: api_v2` carries v1 and v2 in parallel. Standard pattern.
 
 ### Atlas-side workaround until this ships
 
-We've snapshotted the OpenAPI spec into the Docusaurus build (`website/static/openapi.json`, refreshable via `npm run api:snapshot` in `website/`) and Scalar loads it same-origin. The snapshot script ([`website/scripts/snapshot-openapi.mjs`](https://github.com/terchris/atlas/blob/main/website/scripts/snapshot-openapi.mjs)) also rewrites the spec's `host` / `schemes` / `basePath` so the curl examples reflect a reachable URL rather than PostgREST's internal `0.0.0.0:3000`. Default rewrite target right now is `http://api-atlas.localhost/` (the only reachable one until UIS publishes PostgREST); env vars `PGRST_PUBLISH_HOST` / `PGRST_PUBLISH_SCHEME` flip it. When PostgREST is publicly reachable, we flip defaults to `https://api-atlas.helpers.no/`. Both the script and the snapshot are removable once UIS lands the CORS fix + sets `OPENAPI_SERVER_PROXY_URI`.
+We've snapshotted the OpenAPI spec into the Docusaurus build (`website/static/openapi.json`, refreshable via `npm run api:snapshot` in `website/`) and Scalar loads it same-origin. The snapshot script ([`website/scripts/snapshot-openapi.mjs`](https://github.com/terchris/atlas/blob/main/website/scripts/snapshot-openapi.mjs)) also rewrites the spec's `host` / `schemes` / `basePath` so the curl examples reflect a reachable URL rather than PostgREST's internal `0.0.0.0:3000`, and adds the `/v1` prefix. Defaults right now:
 
-That makes the **browse** experience work — developers see the endpoints, schemas, parameters, with correct curl examples. But **Try it out** still fails because those requests are still cross-origin browser fetches blocked by the same CORS issue. The snapshot also drifts whenever `api_v1` shape changes (currently 14 paths, 13 definitions) until someone re-runs the snapshot script.
+- host = `api-atlas.localhost`
+- scheme = `http`
+- basePath = `/v1`
 
-Once the CORS fix lands, we can switch Scalar to load live from `api-atlas.helpers.no` and remove the snapshot scaffolding — small Atlas-side PR.
+So Scalar shows users `curl 'http://api-atlas.localhost/v1/ngo_index?...'`. **This URL 404s until you land the Traefik rewrite** — the snapshot documents the intended public shape, not what's reachable today. We're shipping the aspirational URL because Atlas hasn't released anything yet; users will only ever see `/v1/...`. Atlas-frontend's URL construction will flip to `${base}/v1/${endpoint}` in lockstep with your rewrite going live (we're holding that small PR back until you confirm).
+
+All three pieces (snapshot script, snapshot file, host-rewrite logic) are removable once UIS lands CORS + `OPENAPI_SERVER_PROXY_URI=https://api-atlas.helpers.no/v1` + the Traefik `/v1/` rewrite.
+
+The **browse** experience works today — developers see the endpoints, schemas, parameters with correct (future) curl URLs. **Try it out** still fails because those requests are still cross-origin browser fetches blocked by the CORS issue (and the underlying `/v1/` URL doesn't route yet). The snapshot drifts whenever `api_v1` shape changes (currently 14 paths, 13 definitions) until someone re-runs the snapshot script.
+
+Once everything lands, we switch Scalar to load live from `api-atlas.helpers.no` and remove the snapshot scaffolding — small Atlas-side PR.
 
 ### State
 
