@@ -478,9 +478,21 @@ Specifically the origins Atlas needs allowed:
 - `http://localhost:3000` — local Docusaurus dev server
 - `https://atlas.helpers.no` — future, when the helpers.no migration lands (optional for now)
 
+### Bonus ask: PostgREST `OPENAPI_SERVER_PROXY_URI`
+
+While you're in the PostgREST values, a second knob worth flipping. PostgREST self-reports its host as the internal bind address (`0.0.0.0:3000`), so Scalar's auto-generated curl examples look like:
+
+```bash
+curl 'http://0.0.0.0:3000/activity_catalog?...'
+```
+
+…which is obviously wrong from a user's perspective. Setting [`OPENAPI_SERVER_PROXY_URI`](https://postgrest.org/en/stable/references/configuration.html#openapi-server-proxy-uri) (or the equivalent UIS Helm-values entry) tells PostgREST to emit a different `host` / `schemes` / `basePath` in the OpenAPI doc. Once Atlas's PostgREST is publicly reachable, set this to `https://api-atlas.helpers.no/` and every auto-generated curl example is correct out of the box.
+
 ### Atlas-side workaround until this ships
 
-We've snapshotted the OpenAPI spec into the Docusaurus build (`website/static/openapi.json`, refreshable via `npm run api:snapshot`) and Scalar loads it same-origin. That makes the **browse** experience work — developers see the endpoints, schemas, parameters. But **Try it out** still fails because those requests are still cross-origin browser fetches blocked by the same CORS issue. The snapshot also drifts whenever `api_v1` shape changes (currently 14 paths, 13 definitions) until someone re-runs the snapshot script.
+We've snapshotted the OpenAPI spec into the Docusaurus build (`website/static/openapi.json`, refreshable via `npm run api:snapshot` in `website/`) and Scalar loads it same-origin. The snapshot script ([`website/scripts/snapshot-openapi.mjs`](https://github.com/terchris/atlas/blob/main/website/scripts/snapshot-openapi.mjs)) also rewrites the spec's `host` / `schemes` / `basePath` so the curl examples reflect a reachable URL rather than PostgREST's internal `0.0.0.0:3000`. Default rewrite target right now is `http://api-atlas.localhost/` (the only reachable one until UIS publishes PostgREST); env vars `PGRST_PUBLISH_HOST` / `PGRST_PUBLISH_SCHEME` flip it. When PostgREST is publicly reachable, we flip defaults to `https://api-atlas.helpers.no/`. Both the script and the snapshot are removable once UIS lands the CORS fix + sets `OPENAPI_SERVER_PROXY_URI`.
+
+That makes the **browse** experience work — developers see the endpoints, schemas, parameters, with correct curl examples. But **Try it out** still fails because those requests are still cross-origin browser fetches blocked by the same CORS issue. The snapshot also drifts whenever `api_v1` shape changes (currently 14 paths, 13 definitions) until someone re-runs the snapshot script.
 
 Once the CORS fix lands, we can switch Scalar to load live from `api-atlas.helpers.no` and remove the snapshot scaffolding — small Atlas-side PR.
 
