@@ -9,7 +9,7 @@ const config: Config = {
   title: 'Atlas',
   tagline: 'Open semantic layer over Norwegian public data',
 
-  url: 'https://atlas.helpers.no',
+  url: 'https://atlas.sovereignsky.no',
   baseUrl: '/',
 
   organizationName: GITHUB_ORG,

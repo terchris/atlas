@@ -4,9 +4,9 @@
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Active — Phase 2 complete (CI workflow shipped; PR-validation deferred to push), ready for Phase 3
+## Status: Active — Phase 3 code-side complete (Pages workflow + CNAME); user-side repo/DNS steps + post-push verification remain
 
-**Goal**: Get Docusaurus building and serving Atlas's existing `website/docs/` content locally, then ship it as a Docker image that UIS can deploy at `atlas.helpers.no` (prod) / `atlas.localhost` (UIS local dev).
+**Goal**: Get Docusaurus building and serving Atlas's existing `website/docs/` content locally, then ship it to **GitHub Pages with custom domain `atlas.sovereignsky.no`** (mirrors UIS's `uis.sovereignsky.no` pattern).
 
 **Last Updated**: 2026-05-11
 
@@ -20,7 +20,7 @@
 
 ## Problem Summary
 
-`website/docs/` has real content (ai-developer guides, contributors guides, the public docs scaffold) but no renderer. Browsing is GitHub-only. Per the deployment-pipeline INVESTIGATE, the v1 public Atlas surface is **a single Docusaurus site at `atlas.helpers.no`** that will later host Scalar at `/api` and dbt-docs at `/lineage/`. This PLAN gets the bare skeleton up — landing page, navigation, search — so the follow-on PLANs have something to mount their pages into.
+`website/docs/` has real content (ai-developer guides, contributors guides, the public docs scaffold) but no renderer. Browsing is GitHub-only. Per the deployment-pipeline INVESTIGATE, the v1 public Atlas surface is **a single Docusaurus site at `atlas.sovereignsky.no`** that will later host Scalar at `/api` and dbt-docs at `/lineage/`. This PLAN gets the bare skeleton up — landing page, navigation, search — so the follow-on PLANs have something to mount their pages into.
 
 ---
 
@@ -112,51 +112,45 @@ The strict `onBrokenLinks: 'throw'` / `onBrokenAnchors: 'throw'` config from Pha
 
 ---
 
-## Phase 3: Container image
+## Phase 3: Deploy to GitHub Pages
 
-Wrap the built site in a tiny nginx image. Push to GHCR.
+Pivot from "Docker image on UIS" to "GitHub Pages with custom domain" — matches the sister-project pattern ([`urbalurba-infrastructure`](https://github.com/helpers-no/urbalurba-infrastructure) ships its docs at `uis.sovereignsky.no` via the same path). Static-site docs don't need UIS's Kubernetes/Traefik/observability; the dynamic services (PostgREST, Dagster, atlas-data) stay on UIS.
 
-### Tasks
-
-- [ ] 3.1 Create `website/Dockerfile`:
-  - Multi-stage. Stage 1: `node:20-alpine`, copy `website/`, run `npm ci && npm run build`.
-  - Stage 2: `nginx:1.27-alpine`, copy the `build/` output from stage 1 to `/usr/share/nginx/html/`. Default nginx config is fine — it serves `index.html` from that path automatically. No SPA-style rewrites needed (Docusaurus emits one HTML file per route).
-- [ ] 3.2 Create `website/.dockerignore` to exclude `node_modules/`, `build/`, `.docusaurus/`, `.git`.
-- [ ] 3.3 Build locally: `docker build -t atlas-website:dev ./website`. Run: `docker run --rm -p 8080:80 atlas-website:dev`. Verify `http://localhost:8080` shows the site identically to `npm run serve`.
-- [ ] 3.4 Add a CI job to `.github/workflows/website-build.yml` that, **on push to `main` only** (not PR), builds the image and pushes to GHCR as `ghcr.io/helpers-no/atlas-website:sha-<short-commit>` plus `ghcr.io/helpers-no/atlas-website:latest`. Use `docker/build-push-action@v5` with BuildKit cache (`cache-from: type=gha`, `cache-to: type=gha,mode=max`).
-- [ ] 3.5 Verify a `main` push produces an image in the GHCR registry and that `docker pull ghcr.io/helpers-no/atlas-website:sha-<sha>` works.
-
-### Validation
-
-`docker run --rm -p 8080:80 ghcr.io/helpers-no/atlas-website:sha-<sha>` renders the site identically to local dev. The image is ~30–60 MB; nginx-alpine + static site.
-
----
-
-## Phase 4: UIS deploy coordination
-
-Hand UIS what they need to deploy `atlas-website` at `atlas.helpers.no` (prod) / `atlas.localhost` (UIS local dev). **All UIS-side changes are made by the UIS contributor in their repo, not by us.** Atlas's job is to package the information UIS needs.
+**Hostname**: `atlas.sovereignsky.no` for v1, mirroring `uis.sovereignsky.no`. The original `atlas.helpers.no` target via UIS Traefik is deferred — possibly a future migration once helpers.no DNS is in our control, possibly never if `sovereignsky.no` stays the docs home.
 
 ### Tasks
 
-- [ ] 4.1 Create `website/deploy/uis-service-spec.md` documenting what UIS needs to wire up:
-  - **Image**: `ghcr.io/helpers-no/atlas-website:<tag>` (semver or commit SHA per the Atlas CI). Initial tag: whatever the first main push produces.
-  - **Service shape**: stateless K8s Deployment, 1 replica, nginx serving on port 80.
-  - **Hostname rule**: `atlas.*` host rule via UIS Traefik IngressRoute, covering `atlas.helpers.no` (prod) and `atlas.localhost` (UIS local dev).
-  - **TLS**: whatever UIS's default cert pattern is — no Atlas-specific cert work needed.
-  - **Resource requests/limits**: requests `cpu: 50m, memory: 64Mi`; limits `cpu: 200m, memory: 128Mi` (nginx + ~50 MB of static files; minimal).
-  - **Health check**: HTTP `GET /` returns 200. No `/healthz` endpoint needed.
-  - **Secrets/env vars**: none.
-  - **Namespace**: same default as other UIS web services (TBC with UIS contributor).
-  - **No PVC required** — site files are baked into the image. (UIS's own docs site uses a PVC pattern with a Bitnami nginx chart; for Atlas the image-baked approach is simpler and keeps Atlas owning content updates via image tag bumps.)
-- [ ] 4.2 Open a coordination thread with the UIS contributor — share `uis-service-spec.md` and the image URL. Ask them to follow their "[Adding a Service](https://github.com/helpers-no/urbalurba-infrastructure/tree/main/website/docs/contributors/guides/adding-a-service.md)" guide to add the manifest + IngressRoute + service definition on the UIS side. Atlas does **not** commit anything in the UIS repo; UIS contributor reviews and merges.
-- [ ] 4.3 After UIS ships the deploy, verify:
-  - `https://atlas.helpers.no/` renders the Atlas Docusaurus site.
-  - `http://atlas.localhost/` (UIS local dev) renders the same site.
-  - The image-tag bump flow works: push a content change → new image tag in GHCR → UIS contributor (or automation, if wired) bumps the tag in their manifest → new pod rolls → change visible at `atlas.helpers.no` within a few minutes.
+- [x] 3.1 Add the GitHub Pages deploy job to `.github/workflows/website-build.yml`:
+  - Trigger: same as the build job (PR + push to `main` + `workflow_dispatch`), but the **deploy** step runs **only on `push` to `main`** (use an `if:` guard).
+  - Pattern: mirror UIS's [`docs.yml`](https://github.com/helpers-no/urbalurba-infrastructure/blob/main/.github/workflows/docs.yml) — `actions/upload-pages-artifact@v3` after the build, then a `deploy` job that runs `actions/deploy-pages@v4`.
+  - Permissions: `contents: read, pages: write, id-token: write` (Pages deploy requires the OIDC token to authenticate).
+  - Concurrency: `group: "pages", cancel-in-progress: false` — only one deploy at a time, queue the rest.
+- [x] 3.2 Create `website/static/CNAME` containing the single line `atlas.sovereignsky.no` — Docusaurus copies the contents of `static/` to the build root, so the deployed site has a `CNAME` file at the root that GitHub Pages reads to set the custom domain.
+- [ ] 3.3 Repo-settings step (user-side, not committable):
+  - GitHub → repo Settings → Pages → Source = "GitHub Actions" (instead of branch-based).
+  - GitHub will detect the CNAME after the first deploy and propose the custom domain. Confirm `atlas.sovereignsky.no`. Optionally tick "Enforce HTTPS" once the cert provisions (Let's Encrypt, automatic, a few minutes after DNS propagates).
+- [ ] 3.4 DNS step (user-side):
+  - Add a CNAME record `atlas.sovereignsky.no` → `terchris.github.io` (or whichever account hosts the repo) at your DNS provider for `sovereignsky.no`.
+  - Verify with `dig atlas.sovereignsky.no CNAME +short` — should return the github.io target.
+- [ ] 3.5 Verify after first deploy:
+  - `https://atlas.sovereignsky.no/` returns 200 and renders the Atlas Docusaurus site.
+  - Existing GitHub Pages page URL also works (e.g. `https://terchris.github.io/atlas/` 301-redirects to the custom domain).
+  - A content change pushed to `main` → workflow runs → site updates within ~2 minutes of the workflow finishing.
 
 ### Validation
 
-`https://atlas.helpers.no` is live and serves the Atlas Docusaurus site identically to the local Docker image. `http://atlas.localhost/` works in UIS local dev. A content change in `website/docs/` → merged to `main` → built and pushed to GHCR → tag bumped in UIS manifest → visible at `atlas.helpers.no` end-to-end.
+`https://atlas.sovereignsky.no/` is live and serves the Atlas Docusaurus site. A content change in `website/docs/` → merged to `main` → workflow builds + deploys → visible at `atlas.sovereignsky.no` end-to-end.
+
+### Phase 3 outcome (2026-05-12)
+
+Code-side tasks (3.1, 3.2) shipped. Workflow mirrors UIS's [`docs.yml`](https://github.com/helpers-no/urbalurba-infrastructure/blob/main/.github/workflows/docs.yml) but stays one file (build + deploy in the same workflow with an `if:` guard on the deploy step so PRs build-only and only `main` pushes upload + deploy). Permissions extended to `pages: write` + `id-token: write` as required by `actions/deploy-pages@v4`. Concurrency group `pages` so deploys queue if main commits land back-to-back. `website/static/CNAME` contains `atlas.sovereignsky.no` and is copied to `build/CNAME` on every build (verified locally — `ls build/CNAME` after `npm run build`).
+
+`docusaurus.config.ts` `url` field updated from `https://atlas.helpers.no` to `https://atlas.sovereignsky.no` so the sitemap, OG tags, and canonical URLs match the deploy target.
+
+Tasks 3.3–3.5 are user-side and post-push:
+- **3.3 Repo Pages settings** — must be enabled by the repo admin before the first `deploy-pages` action call works. Atlas's repo doesn't have it on yet.
+- **3.4 DNS CNAME** — `atlas.sovereignsky.no` → `terchris.github.io` at the DNS provider. Needs the owner of `sovereignsky.no` DNS.
+- **3.5 First-deploy verification** — happens after push + the first workflow run.
 
 ---
 
@@ -165,22 +159,19 @@ Hand UIS what they need to deploy `atlas-website` at `atlas.helpers.no` (prod) /
 - [ ] `cd website && npm run start` shows the Atlas Docusaurus site locally with existing `docs/` content navigable.
 - [ ] `npm run build` produces a working static site in `website/build/`.
 - [ ] CI runs `npm run typecheck` + `npm run build` on every PR.
-- [ ] CI on main builds + pushes `ghcr.io/helpers-no/atlas-website` images with unique tags.
-- [ ] `docker run ghcr.io/helpers-no/atlas-website:<tag>` renders the site locally.
-- [ ] `https://atlas.helpers.no` is live and serves the Docusaurus site.
-- [ ] `http://atlas.localhost/` works in UIS local dev.
+- [ ] CI on main builds + deploys the site to GitHub Pages.
+- [ ] `https://atlas.sovereignsky.no/` is live and serves the Docusaurus site.
 
 ---
 
 ## Implementation Notes
 
-- **Convention reference**: the existing [`atlas/website/README.md`](https://github.com/terchris/atlas/blob/main/README.md) is the source of truth for "what conventions are inherited from sister Helpers sites" (Docusaurus 3.9.2, TS config, search plugin choice, etc.). Follow it; don't re-litigate.
-- **UIS pattern divergence**: UIS deploys their own docusaurus via the Bitnami nginx Helm chart with content on a PVC populated by the build process. Atlas takes a different (simpler) path: bake the built static files into the image. Reasons:
-    - Cleaner image-as-deploy-unit story (matches the polyglot `atlas-data` pattern from the INVESTIGATE).
-    - No PVC to provision per environment; no init-container dance.
-    - Single Helm-values bump (`image.tag`) rolls a new content version cleanly.
-  This means Atlas's UIS deploy spec is simpler than UIS's own docs deploy spec; that's intentional.
-- **No `developer-atlas.helpers.no`**: per the INVESTIGATE rewrite (2026-05-11), Scalar and dbt-docs ship as **pages inside this Docusaurus site** (`/api` and `/lineage/`), not separate hostnames. This PLAN does **not** wire up those pages; that's two follow-on PLANs. But the deploy shape established here (single image, single hostname) is the substrate they mount into.
+- **Convention reference**: the existing [`atlas/website/README.md`](https://github.com/terchris/atlas/blob/main/website/README.md) is the source of truth for "what conventions are inherited from sister Helpers sites" (Docusaurus 3.9.2, TS config, search plugin choice, etc.). Follow it; don't re-litigate.
+- **Pivot from UIS-served to GitHub Pages (2026-05-12)**: earlier drafts of this PLAN assumed a Docker image + UIS Traefik IngressRoute. Switched to GitHub Pages with custom domain `atlas.sovereignsky.no` after recognising the sister-project pattern (UIS itself ships `uis.sovereignsky.no` this way). Trade-offs:
+    - Pro: zero infra cost; no Dockerfile to maintain; no UIS-side coordination needed; automatic HTTPS via Let's Encrypt; matches what sister projects already do.
+    - Con: docs are no longer "sovereign-stack-served." Acceptable because static docs don't need K8s/observability — the dynamic services that *do* (PostgREST, Dagster, atlas-data) remain on UIS.
+    - The original UIS-served path is deferred, not deleted — could revisit if/when there's a reason to move docs onto helpers.no via UIS.
+- **No `developer-atlas.helpers.no`**: per the INVESTIGATE rewrite (2026-05-11), Scalar and dbt-docs ship as **pages inside this Docusaurus site** (`/api` and `/lineage/`), not separate hostnames. This PLAN does **not** wire up those pages; that's two follow-on PLANs. The Pages-served shape established here (single static site, single hostname) is the substrate they mount into.
 - **Don't add blog/Services nav items**: the UIS template has them; Atlas doesn't need them. Keep the navbar lean.
 - **Mermaid is on but optional**: existing Atlas markdown doesn't use Mermaid yet. Enabling it now means future plans can drop diagrams in without config changes.
 - **Search index size**: with current `docs/` content (~50 markdown files), `@easyops-cn/docusaurus-search-local`'s index builds in seconds and adds a few hundred KB to the bundle. Fine. Revisit if the docs corpus grows 10×.
@@ -197,16 +188,14 @@ Hand UIS what they need to deploy `atlas-website` at `atlas.helpers.no` (prod) /
 - `website/tsconfig.json`
 - `website/.gitignore`
 - `website/.dockerignore`
-- `website/Dockerfile`
 - `website/src/css/custom.css`
-- `website/static/img/favicon.ico` (placeholder)
+- `website/static/CNAME` — single line `atlas.sovereignsky.no` for GitHub Pages custom domain.
 - `website/docs/index.md` (if missing)
-- `website/deploy/uis-service-spec.md`
-- `.github/workflows/website-build.yml`
+- `.github/workflows/website-build.yml` — build gate + Pages deploy job.
 
 **Modify:**
 - `website/README.md` — short addendum: "Run locally: `npm install && npm run start` in this folder." Drop the "Docusaurus is not yet installed" preamble once Phase 1 ships.
-- Top-level `README.md` (Atlas root) — add a link to `https://atlas.helpers.no` once Phase 4 ships.
+- Top-level `README.md` (Atlas root) — add a link to `https://atlas.sovereignsky.no` once Phase 3 ships.
 
 **Do not touch:**
-- Anything under `urbalurba-infrastructure/`. Coordination only — UIS contributor edits their own repo.
+- Anything under `urbalurba-infrastructure/`. The Docusaurus deploy no longer involves UIS at all.
