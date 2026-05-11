@@ -118,6 +118,20 @@ Both Next.js apps still get CI **typecheck/build** gates (cheap, prevents regres
     Recommend (a) for v1 — decouples docs publishing from Dagster runtime. Revisit when `dagster-dbt` is wired if (b) becomes more attractive.
 20. **dbt-docs freshness** — should the bundle update on every `atlas-data` main commit (tight coupling, every schema change rebuilds docs) or on a daily/weekly schedule (looser, possibly stale)? Probably every main commit; the build is fast.
 21. **PostgREST CORS / spec exposure** — for the Scalar page at `atlas.sovereignsky.no/api` to call PostgREST on `api-atlas.helpers.no` from the browser, PostgREST needs CORS configured to allow the `atlas.sovereignsky.no` origin (and `http://localhost:3000` for local Docusaurus dev). Coordinate with UIS — likely a one-line config change in their Helm values.
+
+    **Concrete finding from 2026-05-12** (during Scalar PLAN implementation): the current UIS PostgREST instance (PostgREST 14.10 reached at `http://api-atlas.localhost/`) sends `Access-Control-Allow-Origin: *` **only on the OPTIONS preflight response**, not on the actual GET response. Reproducible with:
+
+    ```bash
+    curl -i -H "Origin: http://localhost:3000" http://api-atlas.localhost/        # no ACAO header
+    curl -i -X OPTIONS -H "Origin: http://localhost:3000" \
+      -H "Access-Control-Request-Method: GET" http://api-atlas.localhost/        # ACAO: *
+    ```
+
+    Browsers require `Access-Control-Allow-Origin` on the *actual* response, not just the preflight, so client-side fetches from Scalar (and any future Atlas client-side consumer) fail. atlas-frontend doesn't hit this because its fetches happen in Next.js RSCs — server-side, no CORS involved.
+
+    **What UIS needs to change**: configure PostgREST to send `Access-Control-Allow-Origin` (and the related `Access-Control-Allow-Methods`, `Access-Control-Allow-Headers`, `Access-Control-Expose-Headers`) on all responses, not just OPTIONS. In PostgREST 14, this is the `cors-allow-origin` config knob (or the equivalent UIS Helm values entry). Until this lands, Atlas's Scalar page at `/api` loads the OpenAPI spec from a same-origin snapshot in `website/static/openapi.json` — "Try it out" requests still fail.
+
+    Atlas-side workaround: `npm run api:snapshot` (in `website/`) refreshes the committed snapshot from the local PostgREST. Removable once UIS ships the CORS fix.
 22. **Scalar pinning strategy** — pin a specific `@scalar/api-reference` version (reproducible, requires manual bumps) or `@latest` (always fresh, can break silently)? Default to pinned with a quarterly bump. Pinning lives in Docusaurus's `package.json` (if using the React component) or in the `<script>` `src=` attribute (if using the CDN bundle).
 23. **`@dagster-io/dagster-pipes` pinning** — UIS Dagster doc notes the npm package is at `0.1.0` with slower cadence than the Python SDK. **Pin the version explicitly in `ingest/package.json`**; bump deliberately when needed.
 24. **`definitions.py` import discipline** — per UIS Dagster doc, the module must stay cheap to import (no DB connections, no eager I/O at module scope) because every run pod cold-starts by importing it. Worth codifying as a CI lint or code-review rule in Atlas's Dagster PLANs.

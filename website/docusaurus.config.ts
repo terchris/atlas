@@ -64,6 +64,25 @@ const config: Config = {
         docsRouteBasePath: '/',
       },
     ],
+    [
+      '@scalar/docusaurus',
+      {
+        label: 'API',
+        route: '/api',
+        showNavLink: true,
+        configuration: {
+          // Same-origin snapshot of the PostgREST OpenAPI spec. Refresh with
+          // `npm run api:snapshot` (in website/) when the api_v1 surface changes.
+          //
+          // We can't fetch live from api-atlas.helpers.no in the browser
+          // because PostgREST 14 sends Access-Control-Allow-Origin only on
+          // OPTIONS preflight, not on GET responses — see INVESTIGATE-
+          // deployment-pipeline.md Q21. Until UIS fixes that, "Try it out"
+          // requests won't work either, regardless of how we load the spec.
+          url: '/openapi.json',
+        },
+      },
+    ],
   ],
 
   themeConfig: {
