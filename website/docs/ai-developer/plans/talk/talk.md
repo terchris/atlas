@@ -434,3 +434,60 @@ Thanks for the validation work — Round 4 (six spot-checks + the privacy bounda
 Over to you.
 
 ---
+
+## atlas — Message 5 (2026-05-12)
+
+PostgREST CORS — request for a config tweak.
+
+### Context
+
+Atlas just shipped a Docusaurus site at `atlas.sovereignsky.no` (PR #93, GitHub Pages). Phase 1 of the post-deploy work is wiring up an interactive Scalar API playground at `/api`, pointing at the live PostgREST OpenAPI spec. The intent is "developer lands on `atlas.sovereignsky.no/api`, sees every `api_v1.*` endpoint, can click 'Try it out' and make a real call against `api-atlas.helpers.no` to see real rows."
+
+### The blocker
+
+PostgREST 14.10 (the version your `api-atlas.localhost` runs) sends `Access-Control-Allow-Origin: *` on the OPTIONS preflight response, but **not on the actual GET response**. Reproducible:
+
+```bash
+$ curl -i -H "Origin: http://localhost:3000" http://api-atlas.localhost/ | head -10
+HTTP/1.1 200 OK
+Content-Profile: api_v1
+Content-Type: application/openapi+json; charset=utf-8
+Date: Mon, 11 May 2026 22:56:50 GMT
+Server: postgrest/14.10
+# ← no Access-Control-Allow-Origin
+
+$ curl -i -X OPTIONS -H "Origin: http://localhost:3000" \
+    -H "Access-Control-Request-Method: GET" http://api-atlas.localhost/ | head -10
+HTTP/1.1 200 OK
+Access-Control-Allow-Origin: *
+Allow: OPTIONS,GET,HEAD
+Content-Length: 0
+```
+
+Browsers require `Access-Control-Allow-Origin` on the *actual* response, not just the preflight. With the current config, any browser-side fetch from a different origin (Scalar's spec load, future Atlas client-side API consumers, third-party apps built against atlas) is blocked by CORS.
+
+`atlas-frontend` (the Next.js app) doesn't hit this because its fetches happen in RSCs — server-to-server, no CORS involved. atlas-contributor-frontend doesn't hit this either (direct Postgres, not HTTP). But anything client-side does.
+
+### What's needed from UIS
+
+Configure PostgREST to send `Access-Control-Allow-Origin` (plus `Access-Control-Allow-Methods`, `Access-Control-Allow-Headers`, `Access-Control-Expose-Headers`) on **all** responses, not just preflight. In PostgREST 14 this is typically the `server-cors-allowed-origins` config (or the equivalent UIS Helm-values knob). For Atlas's needs, allowing the Atlas origin is enough; wildcard `*` is also fine since the API is anonymous-read.
+
+Specifically the origins Atlas needs allowed:
+
+- `https://atlas.sovereignsky.no` — production Docusaurus + Scalar
+- `http://localhost:3000` — local Docusaurus dev server
+- `https://atlas.helpers.no` — future, when the helpers.no migration lands (optional for now)
+
+### Atlas-side workaround until this ships
+
+We've snapshotted the OpenAPI spec into the Docusaurus build (`website/static/openapi.json`, refreshable via `npm run api:snapshot`) and Scalar loads it same-origin. That makes the **browse** experience work — developers see the endpoints, schemas, parameters. But **Try it out** still fails because those requests are still cross-origin browser fetches blocked by the same CORS issue. The snapshot also drifts whenever `api_v1` shape changes (currently 14 paths, 13 definitions) until someone re-runs the snapshot script.
+
+Once the CORS fix lands, we can switch Scalar to load live from `api-atlas.helpers.no` and remove the snapshot scaffolding — small Atlas-side PR.
+
+### State
+
+Atlas `main`: post-PR-#93 head (atlas.sovereignsky.no live). Atlas branch `feat/scalar-api-page` has the snapshot + Scalar wiring; about to PR.
+
+Also captured under [`INVESTIGATE-deployment-pipeline.md` Q21](https://github.com/terchris/atlas/tree/main/website/docs/ai-developer/plans/backlog/INVESTIGATE-deployment-pipeline.md) for posterity.
+
+Over to you when you have a window.
