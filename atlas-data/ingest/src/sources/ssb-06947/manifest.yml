@@ -3,7 +3,7 @@
 # After commit, this file is human-authored — ingest runs do NOT modify it.
 
 source_id: ssb-06947
-upstream_id: 06947
+upstream_id: "06947"
 upstream_url: https://www.ssb.no/statbank/table/06947
 upstream_landing_page: https://www.ssb.no/statbank/table/06947
 upstream_title: "06947: Personer i husholdninger med lavinntekt (EU- og OECD-skala). Antall og prosent (K) (B) 2005-2024"
@@ -34,3 +34,8 @@ dimensions:
     meaning: Year
     value_format: 4-digit year as text
     notes: 2005–2024
+
+lifecycle: stable
+time_coverage:
+  start: 2005
+  end: 2024

@@ -3,7 +3,7 @@
 # After commit, this file is human-authored — ingest runs do NOT modify it.
 
 source_id: ssb-07459
-upstream_id: 07459
+upstream_id: "07459"
 upstream_url: https://www.ssb.no/statbank/table/07459
 upstream_landing_page: https://www.ssb.no/statbank/table/07459
 upstream_title: "07459: Alders- og kjønnsfordeling i kommuner, fylker og hele landets befolkning (K) 1986-2025"
@@ -42,3 +42,8 @@ dimensions:
     meaning: Year
     value_format: 4-digit year as text
     notes: 1986–2026 (41 years; default response is latest year only). Largest pull in the catalogue at ~210 k cells when wildcarded.
+
+lifecycle: stable
+time_coverage:
+  start: 1986
+  end: 2026

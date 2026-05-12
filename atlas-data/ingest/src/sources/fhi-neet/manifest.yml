@@ -46,3 +46,8 @@ dimensions:
     meaning: Which number
     value_format: 4 codes upstream; Atlas filters to 1
     notes: "RATE (percent — Atlas keeps only this), TELLER, MEIS, SMR are derivable downstream"
+
+lifecycle: stable
+time_coverage:
+  start: 2008
+  end: 2024

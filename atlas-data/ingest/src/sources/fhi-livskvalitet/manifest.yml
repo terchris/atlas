@@ -50,3 +50,8 @@ dimensions:
     meaning: Which number
     value_format: 2 codes
     notes: "SMR (standardised ratio vs national), MEIS (FHI mean / smoothed indicator). No TELLER / RATE — Ungdata is sample-based, not an enumeration."
+
+lifecycle: stable
+time_coverage:
+  start: 2021
+  end: 2025

@@ -5,7 +5,6 @@
 source_id: fhi-hasj
 upstream_id: "363"
 upstream_url: https://statistikk-data.fhi.no/api/open/v1/nokkel/table/363
-upstream_landing_page: https://statistikk.fhi.no/nokkel/<TODO-hasj-slug>?GEO=0,03&AAR=2020_2020,2021_2021,2022_2022,2023_2023,2024_2024,2025_2025&KJONN=0&ALDER=1_6&ANTALL_GANGER=engangellerflere&SOES=0&MEASURE_TYPE=SMR
 upstream_title: "Hasjbruk_Ungdata_KH"
 description: "FHI Folkehelsestatistikk table 363 — share of Ungdata respondents reporting cannabis use one or more times in the past year. Risk-direction youth-substance-use indicator on the Ungdata cohort base; pairs with fhi-alkohol."
 publisher: Folkehelseinstituttet
@@ -50,3 +49,8 @@ dimensions:
     meaning: Which number
     value_format: 2 codes
     notes: "SMR (standardised ratio vs national), MEIS (FHI mean / smoothed indicator). No TELLER / RATE — Ungdata is sample-based. Suppression heavier than fhi-alkohol because cannabis prevalence at this cohort is lower."
+
+lifecycle: stable
+time_coverage:
+  start: 2012
+  end: 2025

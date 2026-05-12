@@ -42,3 +42,8 @@ dimensions:
     meaning: Which number
     value_format: 2 codes
     notes: "TELLER (absolute change in resident count vs prior year), RATE (percent growth). Verify exact FHI semantics before labelling as a headline indicator."
+
+lifecycle: stable
+time_coverage:
+  start: 2002
+  end: 2024

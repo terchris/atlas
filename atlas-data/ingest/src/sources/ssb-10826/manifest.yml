@@ -3,7 +3,7 @@
 # After commit, this file is human-authored — ingest runs do NOT modify it.
 
 source_id: ssb-10826
-upstream_id: 10826
+upstream_id: "10826"
 upstream_url: https://www.ssb.no/statbank/table/10826
 upstream_landing_page: https://www.ssb.no/statbank/table/10826
 upstream_title: "10826: Alders- og kjønnsfordeling for befolkningen i bydeler (B) 2001-2026"
@@ -42,3 +42,8 @@ dimensions:
     meaning: Year
     value_format: 4-digit year as text
     notes: 2001–2026 (26 years; default response is latest year only).
+
+lifecycle: stable
+time_coverage:
+  start: 2001
+  end: 2026

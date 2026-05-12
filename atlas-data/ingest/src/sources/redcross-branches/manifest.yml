@@ -61,3 +61,8 @@ dimensions:
     meaning: Per-branch activities
     value_format: list of {global_activity_name, local_activity_name}
     notes: ~50 global activity types in the Red Cross catalogue; each branch lists its active subset
+
+lifecycle: stable
+time_coverage:
+  start: null
+  end: null

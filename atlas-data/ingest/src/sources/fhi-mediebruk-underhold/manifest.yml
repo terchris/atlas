@@ -5,7 +5,6 @@
 source_id: fhi-mediebruk-underhold
 upstream_id: "667"
 upstream_url: https://statistikk-data.fhi.no/api/open/v1/nokkel/table/667
-upstream_landing_page: ""  # TODO paste from statistikk.fhi.no — slug for table 667 (underhold/streaming)
 upstream_title: "Mediebruk_underhold_ungdata"
 description: "FHI Folkehelsestatistikk table 667 — share of Ungdata respondents reporting more than 3 hours per day on streaming / entertainment media (TV streaming, music, podcasts, etc.). Companion to fhi-mediebruk-spill and fhi-mediebruk-some on the Ungdata cohort."
 publisher: Folkehelseinstituttet
@@ -50,3 +49,8 @@ dimensions:
     meaning: Which number
     value_format: 2 codes
     notes: "SMR (standardised ratio vs national), MEIS (FHI mean / smoothed indicator). No TELLER / RATE — Ungdata is sample-based."
+
+lifecycle: stable
+time_coverage:
+  start: 2018
+  end: 2025

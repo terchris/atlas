@@ -41,3 +41,8 @@ dimensions:
     meaning: FRR record payload
     value_format: jsonb
     notes: Verbatim JSON from FRR — schema is FRR-managed, mirrored without flattening
+
+lifecycle: stable
+time_coverage:
+  start: null
+  end: null

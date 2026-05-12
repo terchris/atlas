@@ -3,7 +3,7 @@
 # After commit, this file is human-authored — ingest runs do NOT modify it.
 
 source_id: fhi-bor-alene
-upstream_id: 187
+upstream_id: "187"
 upstream_url: https://statistikk-data.fhi.no/api/open/v1/nokkel/table/187
 upstream_landing_page: https://statistikk.fhi.no/nokkel/E1gPZ5le1oMsIccxUCPlzvSxxb-8u3gtb7h1tg_zGwg?GEO=0&AAR=2020_2020,2021_2021,2022_2022,2023_2023,2024_2024,2025_2025&ALDER=30_44,45_120,75_120&MEASURE_TYPE=TELLER
 upstream_title: "Personer som bor alene"
@@ -38,3 +38,8 @@ dimensions:
     meaning: Which number
     value_format: 3 codes
     notes: RATE (percent), SMR (standardised ratio vs national), TELLER (absolute count)
+
+lifecycle: stable
+time_coverage:
+  start: 2023
+  end: 2025

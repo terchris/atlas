@@ -46,3 +46,8 @@ dimensions:
     meaning: Which number
     value_format: 4 codes upstream; Atlas filters to 1
     notes: "RATE (per-1000 contact rate — only value Atlas ingests). TELLER / SMR / MEIS available upstream."
+
+lifecycle: stable
+time_coverage:
+  start: 2017
+  end: 2024
