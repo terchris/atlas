@@ -24,7 +24,7 @@ publishers:
   - id: fhi
     display_name: Folkehelseinstituttet
     homepage: https://www.fhi.no/
-    logo: /img/publishers/fhi.svg
+    logo: /img/publishers/fhi.png
     feedback_url: https://www.fhi.no/skjema/kontakt-folkehelseinstituttet/
     notes: |
       Norwegian Institute of Public Health. Publishes the Folkehelseprofiler
@@ -35,7 +35,7 @@ publishers:
   - id: bufdir
     display_name: Barne-, ungdoms- og familiedirektoratet
     homepage: https://www.bufdir.no/
-    logo: /img/publishers/bufdir.svg
+    logo: /img/publishers/bufdir.png
     feedback_url: https://www.bufdir.no/kontakt/
     notes: |
       Directorate for Children, Youth and Family Affairs. Publishes the

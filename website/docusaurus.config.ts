@@ -8,6 +8,7 @@ const GITHUB_REPO = process.env.GITHUB_REPO || 'atlas';
 const config: Config = {
   title: 'Atlas',
   tagline: "An open atlas of Norway's civil-society sector — humanitarian needs and the NGOs that respond.",
+  favicon: 'img/favicon.svg',
 
   url: 'https://atlas.sovereignsky.no',
   baseUrl: '/',

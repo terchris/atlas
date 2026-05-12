@@ -1,9 +1,19 @@
-<!-- PLACEHOLDER LOGO — replace with the official Norges Røde Kors wordmark before launch. -->
-<!-- Source the real asset from https://www.rodekors.no/ visual identity / press kit. -->
-<!-- NOTE: the Red Cross emblem (red cross on white) is protected under the Geneva Conventions. -->
-<!-- Use ONLY the wordmark / association logo, NOT the emblem, when sourcing the real asset. -->
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 80" role="img" aria-label="Norges Røde Kors — placeholder logo">
-  <rect width="200" height="80" fill="#c8102e" rx="6"/>
-  <text x="100" y="42" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="22" font-weight="700" fill="#ffffff">Norges Røde Kors</text>
-  <text x="100" y="62" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="10" fill="#f4cdd3">Norwegian Red Cross</text>
+<!-- PLACEHOLDER LOGO — designed to feel deliberate but is NOT the official Norges Røde Kors mark. -->
+<!-- Replace with the official Norges Røde Kors wordmark from https://www.rodekors.no/. -->
+<!-- IMPORTANT: the Red Cross emblem (red cross on white) is protected under the Geneva -->
+<!-- Conventions and may only be used by the organisation. This placeholder uses the -->
+<!-- wordmark only with a neutral geometric accent (three connected dots) — NO emblem. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 96" role="img" aria-label="Norges Røde Kors">
+  <rect width="240" height="96" fill="#c8102e" rx="8"/>
+  <g transform="translate(26, 32)" fill="#f4cdd3">
+    <circle cx="0"  cy="14" r="5"/>
+    <circle cx="20" cy="0"  r="5"/>
+    <circle cx="20" cy="28" r="5"/>
+    <line x1="0" y1="14" x2="20" y2="0" stroke="#f4cdd3" stroke-width="1.5"/>
+    <line x1="0" y1="14" x2="20" y2="28" stroke="#f4cdd3" stroke-width="1.5"/>
+  </g>
+  <g font-family="Helvetica Neue, Helvetica, Arial, sans-serif" fill="#ffffff">
+    <text x="76" y="44" font-size="22" font-weight="800" letter-spacing="0.5">Norges Røde Kors</text>
+    <text x="76" y="66" font-size="11" font-weight="500" fill="#f4cdd3" letter-spacing="0.5">Norwegian Red Cross</text>
+  </g>
 </svg>
