@@ -6,7 +6,7 @@
  *
  * What it checks:
  *   1. Every src/sources/<id>/manifest.yml conforms to manifest.schema.json.
- *   2. Every manifest's `tags.topic` resolves to an id in source-categories.yaml.
+ *   2. Every manifest's `tags.topic` resolves to an id in topics.yaml.
  *   3. Every manifest's `publisher` matches a `display_name` in publishers.yaml.
  *
  * Exit codes:
@@ -14,7 +14,7 @@
  *   1 — one or more manifests failed schema or cross-file check.
  *   2 — internal error (schema file missing, parse error in schema, etc.).
  *
- * Companion files (publishers.yaml, source-categories.yaml) are optional in
+ * Companion files (publishers.yaml, topics.yaml) are optional in
  * isolation: when missing, the cross-file checks are skipped with a warning
  * but the schema check still runs. This lets Phase 1 of PLAN-001 land
  * (schema validator) before Phase 3 ships the companion files.
@@ -31,7 +31,7 @@ import { load as parseYaml } from "js-yaml";
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const SCHEMA_PATH = join(SCRIPT_DIR, "manifest.schema.json");
 const PUBLISHERS_PATH = join(SCRIPT_DIR, "publishers.yaml");
-const CATEGORIES_PATH = join(SCRIPT_DIR, "source-categories.yaml");
+const CATEGORIES_PATH = join(SCRIPT_DIR, "topics.yaml");
 
 // ── Types (loose — we trust the schema) ─────────────────────────────────
 
@@ -109,7 +109,7 @@ function loadCategories(): Set<string> | null {
   const text = readFileSync(CATEGORIES_PATH, "utf-8");
   const data = parseYaml(text) as CategoriesFile;
   if (!data || !Array.isArray(data.categories)) {
-    throw new Error("source-categories.yaml: missing top-level `categories:` array");
+    throw new Error("topics.yaml: missing top-level `categories:` array");
   }
   return new Set(data.categories.map((c) => c.id));
 }
@@ -167,11 +167,11 @@ function main(): void {
   try {
     categories = loadCategories();
   } catch (err) {
-    console.error(`  ✗ source-categories.yaml: ${(err as Error).message}`);
+    console.error(`  ✗ topics.yaml: ${(err as Error).message}`);
     crossFailures++;
   }
   if (categories === null) {
-    console.warn(`  ⚠ source-categories.yaml not found — skipping topic resolution`);
+    console.warn(`  ⚠ topics.yaml not found — skipping topic resolution`);
   } else {
     const unresolved: Array<{ path: string; topic: string }> = [];
     for (const { path, data } of parsedManifests) {
@@ -181,7 +181,7 @@ function main(): void {
       }
     }
     if (unresolved.length > 0) {
-      console.error(`  ✗ ${unresolved.length} manifest(s) have tags.topic not in source-categories.yaml:`);
+      console.error(`  ✗ ${unresolved.length} manifest(s) have tags.topic not in topics.yaml:`);
       for (const u of unresolved) {
         console.error(`      ${u.path}: topic '${u.topic}'`);
       }

@@ -28,7 +28,7 @@ Catches:
 
 Two further checks, separate from the per-manifest schema:
 
-- Every manifest's `tags.topic` must resolve to a category `id` in [`source-categories.yaml`](https://github.com/terchris/atlas/blob/main/atlas-data/ingest/src/sources/source-categories.yaml).
+- Every manifest's `tags.topic` must resolve to a topic `id` in [`topics.yaml`](https://github.com/terchris/atlas/blob/main/atlas-data/ingest/src/sources/topics.yaml).
 - Every manifest's `publisher` field must match a `display_name` in [`publishers.yaml`](https://github.com/terchris/atlas/blob/main/atlas-data/ingest/src/sources/publishers.yaml).
 
 These keep manifests consistent with the curated editorial files the catalog renders from.
@@ -76,14 +76,14 @@ The error lines name the file and the JSONPath of the failing property. Most fai
 
 ```
 → cross-file checks
-  ✗ 1 manifest(s) have tags.topic not in source-categories.yaml:
+  ✗ 1 manifest(s) have tags.topic not in topics.yaml:
       ssb-new-source/manifest.yml: topic 'demographics-and-housing'
 ```
 
 The fix is one of:
 
 1. **The topic was a typo** — correct it in the manifest.
-2. **The category genuinely doesn't exist yet** — add an entry to [`source-categories.yaml`](https://github.com/terchris/atlas/blob/main/atlas-data/ingest/src/sources/source-categories.yaml) with `id`, `name`, `description`, `emoji`, `order`. New categories are editorial choices — discuss in the PR.
+2. **The category genuinely doesn't exist yet** — add an entry to [`topics.yaml`](https://github.com/terchris/atlas/blob/main/atlas-data/ingest/src/sources/topics.yaml) with `id`, `name`, `description`, `emoji`, `order`. New categories are editorial choices — discuss in the PR.
 
 Same pattern for publisher failures — either fix the typo in the manifest, or add an entry to [`publishers.yaml`](https://github.com/terchris/atlas/blob/main/atlas-data/ingest/src/sources/publishers.yaml).
 
@@ -95,7 +95,7 @@ Same pattern for publisher failures — either fix the typo in the manifest, or 
 
 1. After `npm run sources:bootstrap-manifest -- <id>`, fill in the v2 fields the bootstrap leaves empty (`lifecycle`, `time_coverage`, `keywords`). See [adding-a-source.md § Step 4b](./adding-a-source.md#step-4b--source-manifest).
 2. If the source is from a new publisher, add an entry to `publishers.yaml` + a placeholder logo SVG.
-3. If the source is in a new editorial category, add an entry to `source-categories.yaml`.
+3. If the source is in a new editorial category, add an entry to `topics.yaml`.
 4. Re-run `./check-manifests.sh`.
 
 ### Case B — you renamed a field or changed a value
@@ -126,7 +126,7 @@ Add this to your workspace `.vscode/settings.json` to get hover docs + autocompl
 
 ## Why a manifest gate matters
 
-The per-source `manifest.yml` is the *editorial contract* between Atlas's ingest team and every downstream consumer: `mart_meta_sources`, the dbt docs at [`/lineage/`](https://atlas.sovereignsky.no/lineage/), the public sources catalogue under `/sources/`, and any future DCAT-AP-NO emitter for harvesting by `data.norge.no`.
+The per-source `manifest.yml` is the *editorial contract* between Atlas's ingest team and every downstream consumer: `mart_meta_sources`, the dbt docs at [`/lineage/`](https://atlas.sovereignsky.no/lineage/), the public datasets catalogue under `/datasets/`, and any future DCAT-AP-NO emitter for harvesting by `data.norge.no`.
 
 Until this gate landed, manifest shape was conventional but unenforced — silent corruption was possible. The first run of this validator exposed 20 manifests whose `upstream_id` had silently lost a leading zero (`07459` → integer `7459`) and 6 manifests with empty / TODO `upstream_landing_page` values. Both bugs had been in production for months without anyone noticing.
 

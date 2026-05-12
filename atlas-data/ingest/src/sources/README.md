@@ -96,7 +96,7 @@ Operational raw tables that no source folder claims (`raw.ingest_runs`, `raw.sit
 |---|---|
 | [`manifest.schema.json`](./manifest.schema.json) | JSON Schema 2020-12 enforcing manifest shape. Wire to VS Code's YAML extension for hover docs + autocomplete. |
 | [`publishers.yaml`](./publishers.yaml) | Per-publisher metadata: `id`, `display_name`, `homepage`, `logo`, default `feedback_url`, editorial notes. Every manifest's `publisher:` field must match a `display_name` here. |
-| [`source-categories.yaml`](./source-categories.yaml) | Curated category metadata: `id`, `name`, `description`, `emoji`, sort `order`. Every manifest's `tags.topic` must match an `id` here. |
+| [`topics.yaml`](./topics.yaml) | Curated topic metadata: `id`, `name`, `description`, `emoji`, sort `order`. Every manifest's `tags.topic` must match an `id` here. |
 | [`check-manifests.sh`](./check-manifests.sh) | CI gate — runs the validator on every PR. Mirrors the [`check-osmosis.sh`](https://github.com/terchris/atlas/blob/main/atlas-data/dbt/check-osmosis.sh) pattern. Canonical guide: [`contributors/check-manifests.md`](../../../../website/docs/contributors/check-manifests.md). |
 | [`validate-manifests.ts`](./validate-manifests.ts) | The validator. Run via `npm run sources:check-manifests` (or the shell wrapper). |
 

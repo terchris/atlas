@@ -1,24 +1,39 @@
-name: Check source manifests
+name: Check sources (manifests + catalog)
 
-# Validates atlas-data/ingest/src/sources/*/manifest.yml against
-# manifest.schema.json and the publishers.yaml / source-categories.yaml
-# companion files. Runs check-manifests.sh on every PR / push that touches
-# the manifest schema, the manifests themselves, or the companion files.
+# Two related gates:
+#   1. check-manifests — manifest.yml shape + cross-file checks
+#      (publishers.yaml, topics.yaml).
+#   2. check-catalog   — regenerate sources-registry.json + the per-source /
+#      per-category / per-publisher MDX from manifests, diff against
+#      committed output. Fails if a contributor edited a manifest but
+#      forgot to run `npm run sources:generate` in website/.
 #
-# Mirrors the check-osmosis.sh gate over in atlas-data/dbt/.
-# See website/docs/contributors/check-manifests.md for the contributor guide.
+# Both gates trigger on the same path set: any manifest, schema, companion
+# file, the catalog generator, or the committed catalog output.
+#
+# See website/docs/contributors/check-manifests.md and
+# website/docs/contributors/sources-catalog.md for the contributor guides.
 
 on:
   pull_request:
     paths:
+      # Manifest-side files
       - 'atlas-data/ingest/src/sources/**/manifest.yml'
       - 'atlas-data/ingest/src/sources/manifest.schema.json'
       - 'atlas-data/ingest/src/sources/publishers.yaml'
-      - 'atlas-data/ingest/src/sources/source-categories.yaml'
+      - 'atlas-data/ingest/src/sources/topics.yaml'
       - 'atlas-data/ingest/src/sources/validate-manifests.ts'
       - 'atlas-data/ingest/src/sources/check-manifests.sh'
       - 'atlas-data/ingest/package.json'
       - 'atlas-data/ingest/package-lock.json'
+      # Catalog-side files
+      - 'website/scripts/generate-sources-registry.mjs'
+      - 'website/src/data/sources-registry.json'
+      - 'website/docs/datasets/**'
+      - 'website/docs/topics/**'
+      - 'website/docs/publishers/**'
+      - 'website/package.json'
+      - 'website/package-lock.json'
       - '.github/workflows/check-manifests.yml'
   push:
     branches:
@@ -27,18 +42,25 @@ on:
       - 'atlas-data/ingest/src/sources/**/manifest.yml'
       - 'atlas-data/ingest/src/sources/manifest.schema.json'
       - 'atlas-data/ingest/src/sources/publishers.yaml'
-      - 'atlas-data/ingest/src/sources/source-categories.yaml'
+      - 'atlas-data/ingest/src/sources/topics.yaml'
       - 'atlas-data/ingest/src/sources/validate-manifests.ts'
       - 'atlas-data/ingest/src/sources/check-manifests.sh'
       - 'atlas-data/ingest/package.json'
       - 'atlas-data/ingest/package-lock.json'
+      - 'website/scripts/generate-sources-registry.mjs'
+      - 'website/src/data/sources-registry.json'
+      - 'website/docs/datasets/**'
+      - 'website/docs/topics/**'
+      - 'website/docs/publishers/**'
+      - 'website/package.json'
+      - 'website/package-lock.json'
   workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  check:
+  check-manifests:
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -59,3 +81,34 @@ jobs:
 
       - name: Validate manifests
         run: ./src/sources/check-manifests.sh
+
+  check-catalog:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: website
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: website/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Regenerate catalog
+        run: npm run sources:generate
+
+      - name: Check for catalog drift
+        run: |
+          if ! git diff --exit-code src/data/sources-registry.json docs/datasets/ docs/topics/ docs/publishers/; then
+            echo ""
+            echo "::error::Catalog is out of date with manifests."
+            echo "::error::Fix: cd website && npm run sources:generate && git add src/data/sources-registry.json docs/datasets/ docs/topics/ docs/publishers/"
+            exit 1
+          fi

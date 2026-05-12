@@ -118,9 +118,21 @@ Then hand-author the **v2 catalogue fields** the bootstrap leaves empty (the con
 
 **New publisher?** Add an entry to [`atlas-data/ingest/src/sources/publishers.yaml`](https://github.com/terchris/atlas/blob/main/atlas-data/ingest/src/sources/publishers.yaml) with `id`, `display_name` (must match the manifest's `publisher:` field exactly), `homepage`, `logo`, `feedback_url`, `notes`. Add a placeholder SVG to `website/static/img/publishers/<id>.svg`.
 
-**New topic?** Add an entry to [`atlas-data/ingest/src/sources/source-categories.yaml`](https://github.com/terchris/atlas/blob/main/atlas-data/ingest/src/sources/source-categories.yaml) with `id`, `name`, `description`, `emoji`, `order`. Discuss in the PR — categories are editorial and we keep the list short.
+**New topic?** Add an entry to [`atlas-data/ingest/src/sources/topics.yaml`](https://github.com/terchris/atlas/blob/main/atlas-data/ingest/src/sources/topics.yaml) with `id`, `name`, `description`, `emoji`, `order`. Discuss in the PR — topics are editorial and we keep the list short.
 
 **Done when**: `./src/sources/check-manifests.sh` exits 0 — schema-valid, every `tags.topic` resolves to a category, every `publisher` resolves to a publishers entry.
+
+**Then regenerate the catalogue.** After the manifest passes the gate, regenerate the public sources catalogue and commit the generator output alongside the manifest:
+
+```bash
+cd ../../website
+npm run sources:generate
+git add src/data/sources-registry.json docs/datasets/ docs/topics/ docs/publishers/
+```
+
+The generator emits the per-dataset MDX at `docs/datasets/<source-id>.mdx`, refreshes any per-topic / per-publisher index pages that include the new dataset, and updates `src/data/sources-registry.json`. CI's `check-catalog` job re-runs the generator and fails the PR if the committed output drifts from what the manifests produce — so this step is mandatory before pushing.
+
+See [datasets-catalog.md](./datasets-catalog.md) for the catalogue architecture.
 
 ### Step 5 — npm script
 
@@ -283,7 +295,7 @@ Before opening a PR, verify every box. A reviewer (human or LLM) should reject a
 - [ ] `lifecycle` set (`beta` by default for new sources)
 - [ ] `time_coverage.{start,end}` populated, or both `null` when the cadence is genuinely irregular
 - [ ] `keywords[]` populated with 3–6 search terms (recommended)
-- [ ] `tags.topic` resolves against [`source-categories.yaml`](https://github.com/terchris/atlas/blob/main/atlas-data/ingest/src/sources/source-categories.yaml); new category added if needed
+- [ ] `tags.topic` resolves against [`topics.yaml`](https://github.com/terchris/atlas/blob/main/atlas-data/ingest/src/sources/topics.yaml); new topic added if needed
 - [ ] `publisher` matches a `display_name` in [`publishers.yaml`](https://github.com/terchris/atlas/blob/main/atlas-data/ingest/src/sources/publishers.yaml); new publisher entry + logo added if needed
 - [ ] `./src/sources/check-manifests.sh` passes (CI runs this on every PR)
 
@@ -333,6 +345,7 @@ Before opening a PR, verify every box. A reviewer (human or LLM) should reject a
 - [dbt-osmosis.md](./dbt-osmosis.md) — schema.yml description propagation
 - [check-osmosis.md](./check-osmosis.md) — the description gate
 - [check-manifests.md](./check-manifests.md) — the manifest schema gate
+- [datasets-catalog.md](./datasets-catalog.md) — how the public catalogue at /datasets is built
 - [setup.md](./setup.md) — dev environment
 - [`docs/stack/naming-conventions.md`](https://github.com/terchris/atlas/blob/main/docs/stack/naming-conventions.md) — canonical vocabulary
 - [`atlas-data/ingest/src/sources/README.md`](https://github.com/terchris/atlas/blob/main/atlas-data/ingest/src/sources/README.md) — implemented-sources reference (per-source examples + planned-sources catalogue)

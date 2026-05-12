@@ -11,6 +11,9 @@
     "serve": "docusaurus serve",
     "api:snapshot": "node scripts/snapshot-openapi.mjs",
     "lineage:snapshot": "node scripts/snapshot-lineage.mjs",
+    "sources:generate": "node scripts/generate-sources-registry.mjs",
+    "sources:snapshot-freshness": "node scripts/snapshot-meta-sources.mjs",
+    "prebuild": "node scripts/generate-sources-registry.mjs",
     "write-translations": "docusaurus write-translations",
     "write-heading-ids": "docusaurus write-heading-ids",
     "typecheck": "tsc"
@@ -32,6 +35,8 @@
     "@docusaurus/module-type-aliases": "3.10.1",
     "@docusaurus/tsconfig": "3.10.1",
     "@docusaurus/types": "3.10.1",
+    "@types/js-yaml": "^4.0.9",
+    "js-yaml": "^4.1.0",
     "typescript": "~5.6.2"
   },
   "engines": {

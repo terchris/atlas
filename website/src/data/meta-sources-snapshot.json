@@ -1,0 +1,293 @@
+{
+  "generated_at": "2026-05-12T14:13:41.985Z",
+  "source_url": "http://api-atlas.localhost",
+  "rows": [
+    {
+      "source_id": "bufdir-barnefattigdom",
+      "last_ingested_at": "2026-05-06T14:32:41.546258+00:00",
+      "latest_row_count": 395420,
+      "total_runs": 5,
+      "downstream_model_count": 1
+    },
+    {
+      "source_id": "fhi-alkohol",
+      "last_ingested_at": "2026-05-06T14:32:48.195641+00:00",
+      "latest_row_count": 34356,
+      "total_runs": 1,
+      "downstream_model_count": 0
+    },
+    {
+      "source_id": "fhi-befolkning",
+      "last_ingested_at": "2026-05-06T14:32:55.767721+00:00",
+      "latest_row_count": 42945,
+      "total_runs": 1,
+      "downstream_model_count": 0
+    },
+    {
+      "source_id": "fhi-befolkningsvekst",
+      "last_ingested_at": "2026-05-06T14:32:59.879202+00:00",
+      "latest_row_count": 18814,
+      "total_runs": 1,
+      "downstream_model_count": 0
+    },
+    {
+      "source_id": "fhi-bor-alene",
+      "last_ingested_at": "2026-05-06T14:33:03.172822+00:00",
+      "latest_row_count": 12270,
+      "total_runs": 1,
+      "downstream_model_count": 6
+    },
+    {
+      "source_id": "fhi-depresjon",
+      "last_ingested_at": "2026-05-06T14:33:10.082182+00:00",
+      "latest_row_count": 39264,
+      "total_runs": 1,
+      "downstream_model_count": 0
+    },
+    {
+      "source_id": "fhi-fortrolig-venn",
+      "last_ingested_at": "2026-05-06T14:33:16.249355+00:00",
+      "latest_row_count": 34356,
+      "total_runs": 1,
+      "downstream_model_count": 0
+    },
+    {
+      "source_id": "fhi-hasj",
+      "last_ingested_at": "2026-05-06T14:33:22.449257+00:00",
+      "latest_row_count": 34356,
+      "total_runs": 1,
+      "downstream_model_count": 0
+    },
+    {
+      "source_id": "fhi-innvandrere",
+      "last_ingested_at": "2026-05-06T14:33:28.486555+00:00",
+      "latest_row_count": 32720,
+      "total_runs": 1,
+      "downstream_model_count": 0
+    },
+    {
+      "source_id": "fhi-innvkat",
+      "last_ingested_at": "2026-05-06T14:33:34.934655+00:00",
+      "latest_row_count": 36810,
+      "total_runs": 1,
+      "downstream_model_count": 0
+    },
+    {
+      "source_id": "fhi-kpr-1aar",
+      "last_ingested_at": "2026-05-06T14:33:42.075604+00:00",
+      "latest_row_count": 41030,
+      "total_runs": 1,
+      "downstream_model_count": 0
+    },
+    {
+      "source_id": "fhi-livskvalitet",
+      "last_ingested_at": "2026-05-06T14:33:45.304313+00:00",
+      "latest_row_count": 12270,
+      "total_runs": 1,
+      "downstream_model_count": 0
+    },
+    {
+      "source_id": "fhi-mediebruk-some",
+      "last_ingested_at": "2026-05-06T14:33:50.605245+00:00",
+      "latest_row_count": 26994,
+      "total_runs": 1,
+      "downstream_model_count": 0
+    },
+    {
+      "source_id": "fhi-mediebruk-spill",
+      "last_ingested_at": "2026-05-06T14:33:56.429573+00:00",
+      "latest_row_count": 31902,
+      "total_runs": 1,
+      "downstream_model_count": 0
+    },
+    {
+      "source_id": "fhi-mediebruk-underhold",
+      "last_ingested_at": "2026-05-06T14:34:00.69944+00:00",
+      "latest_row_count": 19632,
+      "total_runs": 1,
+      "downstream_model_count": 0
+    },
+    {
+      "source_id": "fhi-mobbing",
+      "last_ingested_at": "2026-05-06T14:34:02.66051+00:00",
+      "latest_row_count": 2454,
+      "total_runs": 1,
+      "downstream_model_count": 6
+    },
+    {
+      "source_id": "fhi-neet",
+      "last_ingested_at": "2026-05-06T14:34:08.18166+00:00",
+      "latest_row_count": 28630,
+      "total_runs": 1,
+      "downstream_model_count": 0
+    },
+    {
+      "source_id": "fhi-prognose",
+      "last_ingested_at": "2026-05-06T14:34:15.011801+00:00",
+      "latest_row_count": 38037,
+      "total_runs": 1,
+      "downstream_model_count": 0
+    },
+    {
+      "source_id": "fhi-selvmord",
+      "last_ingested_at": "2026-05-06T14:34:23.158923+00:00",
+      "latest_row_count": 47853,
+      "total_runs": 1,
+      "downstream_model_count": 0
+    },
+    {
+      "source_id": "fhi-smertestillende",
+      "last_ingested_at": "2026-05-06T14:34:28.670355+00:00",
+      "latest_row_count": 29448,
+      "total_runs": 1,
+      "downstream_model_count": 0
+    },
+    {
+      "source_id": "fhi-trangbodd",
+      "last_ingested_at": "2026-05-06T14:34:35.527769+00:00",
+      "latest_row_count": 36810,
+      "total_runs": 1,
+      "downstream_model_count": 6
+    },
+    {
+      "source_id": "fhi-vgs-gjennomforing",
+      "last_ingested_at": "2026-05-06T14:34:40.186417+00:00",
+      "latest_row_count": 24540,
+      "total_runs": 1,
+      "downstream_model_count": 6
+    },
+    {
+      "source_id": "frr",
+      "last_ingested_at": null,
+      "latest_row_count": null,
+      "total_runs": 0,
+      "downstream_model_count": 0
+    },
+    {
+      "source_id": "redcross-branches",
+      "last_ingested_at": "2026-05-06T14:34:41.944657+00:00",
+      "latest_row_count": 2534,
+      "total_runs": 1,
+      "downstream_model_count": 12
+    },
+    {
+      "source_id": "ssb-06083",
+      "last_ingested_at": "2026-05-06T14:34:46.433353+00:00",
+      "latest_row_count": 9459,
+      "total_runs": 1,
+      "downstream_model_count": 6
+    },
+    {
+      "source_id": "ssb-06913",
+      "last_ingested_at": "2026-05-06T14:36:28.021461+00:00",
+      "latest_row_count": 783104,
+      "total_runs": 1,
+      "downstream_model_count": 6
+    },
+    {
+      "source_id": "ssb-06944",
+      "last_ingested_at": "2026-05-06T14:36:38.983328+00:00",
+      "latest_row_count": 49245,
+      "total_runs": 1,
+      "downstream_model_count": 6
+    },
+    {
+      "source_id": "ssb-06947",
+      "last_ingested_at": "2026-05-06T14:36:42.401886+00:00",
+      "latest_row_count": 5180,
+      "total_runs": 1,
+      "downstream_model_count": 6
+    },
+    {
+      "source_id": "ssb-07459",
+      "last_ingested_at": "2026-05-06T14:37:12.883351+00:00",
+      "latest_row_count": 210728,
+      "total_runs": 1,
+      "downstream_model_count": 1
+    },
+    {
+      "source_id": "ssb-08764",
+      "last_ingested_at": "2026-05-06T14:37:15.919281+00:00",
+      "latest_row_count": 1790,
+      "total_runs": 2,
+      "downstream_model_count": 6
+    },
+    {
+      "source_id": "ssb-09429",
+      "last_ingested_at": "2026-05-06T14:37:24.510564+00:00",
+      "latest_row_count": 41118,
+      "total_runs": 1,
+      "downstream_model_count": 6
+    },
+    {
+      "source_id": "ssb-10826",
+      "last_ingested_at": "2026-05-06T14:37:29.972695+00:00",
+      "latest_row_count": 20988,
+      "total_runs": 1,
+      "downstream_model_count": 1
+    },
+    {
+      "source_id": "ssb-12063",
+      "last_ingested_at": "2026-05-06T14:37:32.983794+00:00",
+      "latest_row_count": 13365,
+      "total_runs": 1,
+      "downstream_model_count": 6
+    },
+    {
+      "source_id": "ssb-12131",
+      "last_ingested_at": "2026-05-06T14:37:36.0915+00:00",
+      "latest_row_count": 6237,
+      "total_runs": 1,
+      "downstream_model_count": 6
+    },
+    {
+      "source_id": "ssb-12132",
+      "last_ingested_at": "2026-05-06T14:37:38.832987+00:00",
+      "latest_row_count": 13365,
+      "total_runs": 1,
+      "downstream_model_count": 6
+    },
+    {
+      "source_id": "ssb-12292",
+      "last_ingested_at": "2026-05-06T14:37:46.888228+00:00",
+      "latest_row_count": 43659,
+      "total_runs": 1,
+      "downstream_model_count": 6
+    },
+    {
+      "source_id": "ssb-12944",
+      "last_ingested_at": "2026-05-06T14:37:50.062071+00:00",
+      "latest_row_count": 4296,
+      "total_runs": 1,
+      "downstream_model_count": 1
+    },
+    {
+      "source_id": "ssb-13995",
+      "last_ingested_at": "2026-05-06T14:37:56.304883+00:00",
+      "latest_row_count": 30294,
+      "total_runs": 1,
+      "downstream_model_count": 6
+    },
+    {
+      "source_id": "ssb-crime-tables",
+      "last_ingested_at": "2026-05-06T14:38:39.502083+00:00",
+      "latest_row_count": 679092,
+      "total_runs": 1,
+      "downstream_model_count": 9
+    },
+    {
+      "source_id": "ssb-klass-fylker",
+      "last_ingested_at": "2026-05-06T14:38:41.126444+00:00",
+      "latest_row_count": 41,
+      "total_runs": 2,
+      "downstream_model_count": 6
+    },
+    {
+      "source_id": "ssb-klass-kommuner",
+      "last_ingested_at": "2026-05-06T14:38:50.042227+00:00",
+      "latest_row_count": 1327,
+      "total_runs": 2,
+      "downstream_model_count": 8
+    }
+  ]
+}
