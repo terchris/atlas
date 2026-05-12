@@ -18,11 +18,14 @@ import RelatedSources from '@site/src/components/sources/RelatedSources';
 import SourceUsedInViews from '@site/src/components/sources/SourceUsedInViews';
 import DatasetJoinedWith from '@site/src/components/sources/DatasetJoinedWith';
 import SampleQueryUrl from '@site/src/components/sources/SampleQueryUrl';
+import DatasetSamplePreview from '@site/src/components/sources/DatasetSamplePreview';
 import SchemaOrgDataset from '@site/src/components/sources/SchemaOrgDataset';
 
 export const source = sourceById("ssb-crime-tables");
 
 <SourceHero source={source} />
+
+<DatasetSamplePreview kind="source" sourceId={"ssb-crime-tables"} />
 
 ## Provenance {#provenance}
 

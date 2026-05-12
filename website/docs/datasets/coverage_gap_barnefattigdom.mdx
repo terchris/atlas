@@ -14,10 +14,13 @@ import ViewHero from '@site/src/components/sources/ViewHero';
 import ViewColumns from '@site/src/components/sources/ViewColumns';
 import DatasetBuiltFrom from '@site/src/components/sources/DatasetBuiltFrom';
 import SampleQueryUrl from '@site/src/components/sources/SampleQueryUrl';
+import DatasetSamplePreview from '@site/src/components/sources/DatasetSamplePreview';
 
 export const view = viewById("coverage_gap_barnefattigdom");
 
 <ViewHero view={view} />
+
+<DatasetSamplePreview kind="view" apiV1Name={"coverage_gap_barnefattigdom"} />
 
 ## Built from {#built-from}
 

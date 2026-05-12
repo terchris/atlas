@@ -1,0 +1,56 @@
+---
+title: For grant officers
+description: Datasets for tilskuddsansvarlig at NGO district and national offices — child poverty, public health, NGO supply, and where the policy gaps are.
+slug: /datasets/for/grant-officers
+sidebar_label: Grant officers
+---
+
+import Link from '@docusaurus/Link';
+
+# For grant officers
+
+<div className="alert alert--primary" role="alert" style={{marginBottom: '2rem'}}>
+  <strong>Lisa, tilskuddsansvarlig</strong> — late 30s, NGO district or national office (Red Cross, Norsk Folkehjelp, Nasjonalforeningen, Kirkens Bymisjon, or similar). Your week is split between scanning open calls from directorates and foundations, evaluating fit against your organisation's activity profile, and writing applications that survive a fact-check.
+</div>
+
+This page is the front door for the use cases that show up most often in our conversations with grant officers. Every dataset linked below is in Atlas today, ready to query via [PostgREST](/api) or the catalog page.
+
+## Your three repeating tasks
+
+### 1. Write a stronger application — back the need claim with real numbers
+
+Most grant calls ask for *evidence* that the kommune you're applying for has the problem your programme solves. The curated collection below packages the standard evidence base for one specific topic — child poverty — so you can copy a single PostgREST query and have a defensible numbers block in your draft within minutes.
+
+→ **[Grant-application essentials — child poverty](/datasets/collections/grant-application-essentials)** *(curated collection, 5 datasets, with join recipe)*
+
+For applications on other topics, the [topic landing pages](/topics/health) are the fastest route in. Health, demographics, and income-and-poverty each carry the indicators that grant reviewers expect to see cited.
+
+### 2. Scope the size of the gap — coverage gap explorer
+
+Funders care about underserved areas. Atlas combines Bufdir's child-poverty kommunemonitor with SSB's coverage to surface the kommuner where Bufdir didn't publish *and* the SSB ground-truth shows above-average prevalence. The result is one Atlas view you can pull as a CSV and drop into a map for the application's appendix.
+
+→ **[Child-poverty coverage gap (kommune)](/datasets/coverage_gap_barnefattigdom)** *(Atlas view)*
+
+### 3. Benchmark a kommune against its neighbours
+
+When the application asks "why this kommune, not the neighbouring one?", you need a one-shot table of the same indicators across nearby kommuner. The Atlas indicator-summary view returns the latest value per indicator per kommune — filter by 2-digit fylke prefix to get the whole fylke at once.
+
+→ **[Indicator coverage summary](/datasets/indicator_summary)** *(Atlas view, kommune × indicator)*
+
+## Single best starting query
+
+Pulls the latest values for every Atlas indicator in one kommune (`3024` = Bærum) — the shape most grant applications need first:
+
+```bash
+curl -sS 'https://api-atlas.sovereignsky.no/indicator_summary?kommune_code=eq.3024&select=kommune_name,indicator_id,indicator_label,latest_value,latest_year'
+```
+
+To compare a kommune against its neighbours, swap `eq.3024` for `like.30*` (the 2-digit fylke prefix).
+
+## What Atlas does *not* cover yet
+
+Lisa's full workflow needs *open-call discovery* — a Tilskuddsmatcher across directorates and foundations — and Atlas is the **need-data** side of that. The call-side is on the Atlas roadmap but not in the catalog today. For now: pair Atlas need data with your own call-scanning workflow.
+
+## Feedback
+
+Found a dataset that should be on this page, or a gap that's blocking your work? [Open an issue](https://github.com/terchris/atlas/issues/new?title=Grant-officer+landing+feedback) — this page is shaped by what grant officers tell us is missing.
