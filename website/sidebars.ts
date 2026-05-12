@@ -44,6 +44,7 @@ const sidebars: SidebarsConfig = {
       label: 'Sources',
       link: { type: 'doc', id: 'sources/index' },
       items: [
+        'sources/browse',
         {
           type: 'category',
           label: 'By category',
