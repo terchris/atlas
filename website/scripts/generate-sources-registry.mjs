@@ -39,6 +39,8 @@ const REGISTRY_OUT = resolve(WEBSITE_DIR, 'src', 'data', 'sources-registry.json'
 const DOCS_DATASETS_DIR = resolve(WEBSITE_DIR, 'docs', 'datasets');
 const DOCS_TOPICS_DIR = resolve(WEBSITE_DIR, 'docs', 'topics');
 const DOCS_PUBLISHERS_DIR = resolve(WEBSITE_DIR, 'docs', 'publishers');
+const DOCS_COLLECTIONS_DIR = resolve(WEBSITE_DIR, 'docs', 'datasets', 'collections');
+const COLLECTIONS_FILE = resolve(WEBSITE_DIR, 'data', 'collections.yaml');
 const PUBLISHERS_FILE = resolve(SOURCES_DIR, 'publishers.yaml');
 const TOPICS_FILE = resolve(SOURCES_DIR, 'topics.yaml');
 const SCHEMA_FILE = resolve(SOURCES_DIR, 'manifest.schema.json');
@@ -321,6 +323,79 @@ ${publisher.notes ?? ''}
 
 <SourcePublisherList publisherId={${JSON.stringify(publisher.id)}} />
 `;
+}
+
+function renderCollectionMdx(collection) {
+  // The join_recipe is markdown (code blocks, bold, links) and is inlined
+  // directly into the MDX so MDX renders it natively — no component needed.
+  // Components handle the structured hero + dataset list above it.
+  return `---
+title: ${yamlScalar(collection.title)}
+description: ${yamlScalar(buildMetaDescription(collection.intro))}
+slug: /datasets/collections/${collection.id}
+sidebar_label: ${yamlScalar(collection.title)}
+---
+
+${GENERATED_HEADER_COMMENT}
+
+import CollectionHero from '@site/src/components/sources/CollectionHero';
+import CollectionDatasetList from '@site/src/components/sources/CollectionDatasetList';
+
+export const collection = ${JSON.stringify(collection)};
+
+<CollectionHero collection={collection} />
+
+## Datasets in this collection {#datasets}
+
+<CollectionDatasetList collection={collection} />
+
+## How to use these together {#join-recipe}
+
+${collection.join_recipe}
+`;
+}
+
+// ── Collections ─────────────────────────────────────────────────────────
+
+/**
+ * Load editorial collections from website/data/collections.yaml and resolve
+ * each dataset reference against the sources/views catalog. Fails loudly
+ * when a referenced dataset is missing — the catalog needs to know every
+ * link will resolve before the build proceeds. Returns [] when the file
+ * doesn't exist (collections are optional).
+ */
+function loadCollections(sources, views) {
+  if (!existsSync(COLLECTIONS_FILE)) return [];
+  const doc = loadYaml(COLLECTIONS_FILE);
+  const list = doc?.collections;
+  if (!Array.isArray(list)) return [];
+
+  const sourceById = new Map(sources.map((s) => [s.source_id, s]));
+  const viewById = new Map(views.map((v) => [v.view_id, v]));
+
+  return list.map((entry) => {
+    if (typeof entry.id !== 'string') {
+      throw new Error('collections.yaml entry missing `id`');
+    }
+    const datasets = (entry.datasets ?? []).map((d) => {
+      const resolved = sourceById.get(d.id) ?? viewById.get(d.id);
+      if (!resolved) {
+        throw new Error(
+          `collections.yaml entry "${entry.id}" references unknown dataset "${d.id}"`
+        );
+      }
+      return { why: (d.why ?? '').trim(), dataset: resolved };
+    });
+    return {
+      id: entry.id,
+      title: entry.title ?? entry.id,
+      persona: entry.persona ?? '',
+      persona_task: (entry.persona_task ?? '').trim(),
+      intro: (entry.intro ?? '').trim(),
+      datasets,
+      join_recipe: (entry.join_recipe ?? '').trim(),
+    };
+  });
 }
 
 // ── dbt lineage + mart descriptions ─────────────────────────────────────
@@ -731,6 +806,8 @@ function main() {
     .map((c) => ({ ...c, source_count: sources.filter((s) => s.category.id === c.id).length }))
     .sort((a, b) => (a.order ?? 999) - (b.order ?? 999) || a.id.localeCompare(b.id));
 
+  const collections = loadCollections(sources, views);
+
   const registry = {
     generated_at: new Date().toISOString().slice(0, 10), // date-stable; not per-second
     manifest_schema_id: schemaId,
@@ -741,6 +818,7 @@ function main() {
     publishers: publishersOut,
     sources,
     views,
+    collections,
   };
 
   mkdirSync(dirname(REGISTRY_OUT), { recursive: true });
@@ -758,6 +836,7 @@ function main() {
   mkdirSync(DOCS_DATASETS_DIR, { recursive: true });
   mkdirSync(DOCS_TOPICS_DIR, { recursive: true });
   mkdirSync(DOCS_PUBLISHERS_DIR, { recursive: true });
+  mkdirSync(DOCS_COLLECTIONS_DIR, { recursive: true });
 
   function scrubGeneratedMdx(dir) {
     for (const entry of readdirSync(dir, { withFileTypes: true })) {
@@ -773,6 +852,7 @@ function main() {
   scrubGeneratedMdx(DOCS_DATASETS_DIR);
   scrubGeneratedMdx(DOCS_TOPICS_DIR);
   scrubGeneratedMdx(DOCS_PUBLISHERS_DIR);
+  scrubGeneratedMdx(DOCS_COLLECTIONS_DIR);
 
   for (const source of sources) {
     writeFileSync(
@@ -802,13 +882,20 @@ function main() {
       'utf-8',
     );
   }
+  for (const collection of collections) {
+    writeFileSync(
+      resolve(DOCS_COLLECTIONS_DIR, `${collection.id}.mdx`),
+      renderCollectionMdx(collection),
+      'utf-8',
+    );
+  }
 
   console.log(
     `→ generated ${REGISTRY_OUT.replace(WEBSITE_DIR + '/', '')}: ` +
-    `${sources.length} sources, ${categoriesOut.length} categories, ${publishersOut.length} publishers`
+    `${sources.length} sources, ${categoriesOut.length} categories, ${publishersOut.length} publishers, ${collections.length} collections`
   );
   console.log(
-    `→ generated MDX: ${sources.length} per-source-dataset + ${views.length} per-view-dataset + ${categoriesOut.length} per-topic + ${publishersOut.length} per-publisher`
+    `→ generated MDX: ${sources.length} per-source-dataset + ${views.length} per-view-dataset + ${categoriesOut.length} per-topic + ${publishersOut.length} per-publisher + ${collections.length} per-collection`
   );
 }
 

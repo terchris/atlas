@@ -47,6 +47,14 @@ const sidebars: SidebarsConfig = {
       items: [
         {
           type: 'category',
+          label: 'Collections',
+          collapsed: true,
+          items: [
+            'datasets/collections/grant-application-essentials',
+          ],
+        },
+        {
+          type: 'category',
           label: 'By topic',
           collapsed: true,
           items: [

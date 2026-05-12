@@ -1,0 +1,82 @@
+# collections.yaml — editorial dataset bundles for named use cases.
+#
+# Resolved at build time by website/scripts/generate-sources-registry.mjs:
+# each entry becomes a /datasets/collections/<id> page in the catalog, plus
+# a card on the homepage. Dataset references must match an existing
+# source_id (raw upstream datasets) or view_id (api_v1 Atlas views) — the
+# generator fails loudly when a referenced dataset is missing.
+#
+# Editorial discipline: keep each collection focused on one persona's
+# named task. The "why" annotation on each dataset is the part Lisa /
+# Jonas / Arne can scan in 30 seconds; the join_recipe is what they copy
+# into their first SQL.
+
+collections:
+  - id: grant-application-essentials
+    title: Grant-application essentials — child poverty
+    persona: Lisa, tilskuddsansvarlig
+    persona_task: |
+      Writing a child-poverty grant application that names a kommune,
+      backs the claim with real numbers, and survives a fact-check by
+      a directorate's reviewer.
+    intro: |
+      A focused starter set for grant applications about child poverty
+      at kommune resolution. Ordered from headline → ground truth →
+      temporal depth → lived-experience proxy → Atlas synthesis. Together
+      these five datasets answer the four questions every directorate
+      reviewer asks: how many, how persistent, how that compares to the
+      neighbours, and what the policy gap looks like.
+
+      Every dataset here is at kommune (4-digit kommune_code, post-2020
+      reform) resolution. They share a join key — `kommune_code` — so a
+      single query stitches the whole evidence base together.
+
+    datasets:
+      - id: bufdir-barnefattigdom
+        why: |
+          The headline indicator most directorates already cite. Bufdir's
+          Barnefattigdom kommunemonitor is the standard reference for
+          "how many children live in low-income households in this kommune".
+      - id: ssb-08764
+        why: |
+          The SSB ground truth. Bufdir's monitor is derived from this table.
+          Cite SSB when a reviewer wants the canonical source; cite Bufdir
+          when you want the editorial framing.
+      - id: ssb-12944
+        why: |
+          Persistent low-income (3-year average, EU-60 scale). The difference
+          between *transient* and *persistent* poverty is the difference
+          between a household between jobs and a household stuck. Reviewers
+          read persistence as a stronger evidence base.
+      - id: fhi-trangbodd
+        why: |
+          A lived-experience proxy: children in overcrowded housing. Closely
+          correlates with low income but adds the "what does poverty feel
+          like" dimension that grant narratives need. Pairs well with the
+          income tables above.
+      - id: coverage_gap_barnefattigdom
+        why: |
+          The Atlas synthesis view. Combines Bufdir's monitor with SSB's
+          coverage to surface the kommuner where Bufdir didn't publish
+          and where, if your application is about underserved data,
+          you have a story to tell.
+
+    join_recipe: |
+      All five datasets join on `kommune_code` — the 4-digit post-2020
+      kommune identifier. A minimal query that pulls a single kommune's
+      evidence base looks like this (PostgREST):
+
+      ```bash
+      curl -sS 'https://api-atlas.sovereignsky.no/indicator_summary?kommune_code=eq.3024&select=kommune_name,indicator_id,latest_value,latest_year'
+      ```
+
+      To compare a kommune against its neighbours in the same fylke, swap
+      `eq.3024` for `like.30*` (the 2-digit fylke prefix). The four upstream
+      tables are also queryable directly via PostgREST — use those when you
+      need the raw structure (publisher dimensions, units, etc.) rather
+      than the indicator framing.
+
+      **Watch out**: name-based kommune joins multiply rows ~5× because
+      pre-2020 kommune codes still appear in some upstream history. Always
+      join on `kommune_code` and filter `is_active = true` when joining
+      against `dim_kommune`.

@@ -7,6 +7,7 @@ import Layout from '@theme/Layout';
 import SourceCategoryGrid from '../components/sources/SourceCategoryGrid';
 import PublisherStrip from '../components/sources/PublisherStrip';
 import RecentlyRefreshedStrip from '../components/sources/RecentlyRefreshedStrip';
+import CollectionsStrip from '../components/sources/CollectionsStrip';
 
 import styles from './index.module.css';
 
@@ -89,6 +90,11 @@ export default function Home() {
     >
       <Hero />
       <main>
+        <div className={clsx('container', styles.section)}>
+          <h2 className={styles.sectionTitle}>Curated collections</h2>
+          <CollectionsStrip />
+        </div>
+
         <div className={clsx('container', styles.section)}>
           <h2 className={styles.sectionTitle}>Recently refreshed</h2>
           <RecentlyRefreshedStrip />

@@ -4,12 +4,12 @@
 > - [WORKFLOW.md](../../WORKFLOW.md) — The implementation process
 > - [PLANS.md](../../PLANS.md) — Plan structure and best practices
 
-## Status: Active — Phase 1 + Phase 2 in flight
+## Status: Active — Phase 3 in flight (Phases 1+2 shipped)
 
 **Draft date**: 2026-05-12
 **Activated**: 2026-05-12
 
-**Scope confirmed**: User picked **Phase 1 + Phase 2** as the first PR (recommended ordering). Phases 3–5 remain in plan but unscheduled.
+**Scope confirmed**: Phase 1+2 shipped in PR #106 (2026-05-12). Phase 3 (curated collection) opened on `feature/datasets-catalog-collections`. Phases 4 + 5 remain in plan but unscheduled.
 
 **Branch**: `feature/datasets-catalog-merchandising`
 
@@ -70,7 +70,17 @@ A 4-card strip on the homepage (between hero and topic grid) showing the most re
 
 ---
 
-### Phase 3 — One demo curated collection
+### Phase 3 — One demo curated collection — DONE
+
+**Outcome (2026-05-12)**: Shipped `/datasets/collections/grant-application-essentials` — Lisa's grant-application starter set, 5 datasets ordered headline → ground truth → temporal depth → lived-experience proxy → Atlas synthesis. Resolved **[Q2]** as a single flat `website/data/collections.yaml` — fine until we have 5+ collections, at which point we revisit.
+
+- New file `website/data/collections.yaml` (single flat file at v1).
+- Generator extended (`loadCollections`, `renderCollectionMdx`) — fails loudly on unresolved dataset IDs.
+- Components: `CollectionHero`, `CollectionDatasetList` (numbered, ordered, with publisher logo + "why this one" annotation per entry). Join recipe is markdown inlined directly in the generated MDX so MDX renders it natively (no Component overhead for bash code blocks).
+- Homepage gets a "Curated collections" section above "Recently refreshed" with `CollectionsStrip` — one card per shipped collection plus a "More coming soon" placeholder.
+- Sidebar entry under **Datasets → Collections**.
+
+**Verification**: visit `/datasets/collections/grant-application-essentials` — hero shows "For Lisa, tilskuddsansvarlig", the persona task, ordered list of 5 datasets with "why this one" copy, then the join recipe with a working PostgREST `curl` snippet. Homepage shows the new section above "Recently refreshed".
 
 A single editorial collection at `/datasets/collections/grant-application-essentials` modelled on Lisa's persona (grant-officer writing a child-poverty grant application). Editorial intro → ordered dataset list → "How to use these together" join recipe.
 
