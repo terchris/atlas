@@ -4,12 +4,18 @@
 > - [WORKFLOW.md](../../WORKFLOW.md) — The implementation process
 > - [PLANS.md](../../PLANS.md) — Plan structure and best practices
 
-## Status: Active — Phase 3 in flight (Phases 1+2 shipped)
+## Status: Completed
 
 **Draft date**: 2026-05-12
 **Activated**: 2026-05-12
+**Completed**: 2026-05-12
 
-**Scope confirmed**: Phase 1+2 shipped in PR #106 (2026-05-12). Phase 3 (curated collection) opened on `feature/datasets-catalog-collections`. Phases 4 + 5 remain in plan but unscheduled.
+**Outcome**: All five phases shipped on 2026-05-12 across three PRs.
+- PR #106 — Phase 1 (social-proof badges) + Phase 2 ("recently refreshed" homepage strip).
+- PR #107 — Phase 3 (curated collection: grant-application essentials for Lisa).
+- PR #108 — Phase 4 (persona landing `/datasets/for/grant-officers`) + Phase 5 (sample-row preview on every queryable dataset hero).
+
+Open questions Q1–Q4 from the original plan are all answered in the per-phase outcome notes below.
 
 **Branch**: `feature/datasets-catalog-merchandising`
 
@@ -95,7 +101,14 @@ A single editorial collection at `/datasets/collections/grant-application-essent
 
 ---
 
-### Phase 4 — One demo use-case persona page
+### Phase 4 — One demo use-case persona page — DONE
+
+**Outcome (2026-05-12)**: Hand-authored `/datasets/for/grant-officers` modelled on Lisa's persona from [personas.md](../../../about/personas.md). Names three repeating tasks (write a stronger application, scope the gap, benchmark against neighbours), points at the Phase 3 collection plus two Atlas views, and includes a "single best starting query" curl snippet. The page also calls out what Atlas does *not* cover (open-call discovery — Tilskuddsmatcher is roadmap, not catalog).
+
+- Hand-authored MDX at `website/docs/datasets/for/grant-officers.mdx`. No generator changes — single instance.
+- `PersonaPagesStrip` component renders the homepage "For your role" section. Persona list is hardcoded (one entry today); when we have 5+ pages we revisit (mirrors the collections Q2 decision).
+- Sidebar entry under **Datasets → For your role**.
+- Homepage section sits above "Curated collections" — persona is the broadest funnel, collection narrower, recently-refreshed narrowest.
 
 A single persona landing at `/datasets/for/grant-officers` — sister to Phase 3 but persona-shaped, not theme-shaped. Names Lisa's task ("write a grant application about child poverty in our kommune") and lists the datasets that serve that task with one-line "why this one" annotations.
 
@@ -109,7 +122,16 @@ A single persona landing at `/datasets/for/grant-officers` — sister to Phase 3
 
 ---
 
-### Phase 5 — Visual richness (sample-row preview)
+### Phase 5 — Visual richness (sample-row preview) — DONE
+
+**Outcome (2026-05-12)**: Shipped `DatasetSamplePreview` rendering the first 5 rows of every queryable dataset directly below its hero. Sources read from the `raw.*` schema (Accept-Profile: raw); views read from the default `api_v1.*` schema. Resolved **[Q3]**: snapshot is committed JSON (same pattern as `meta-sources-snapshot.json`), refreshed manually via `npm run sources:snapshot-samples`. Build never hits PostgREST.
+
+- New script `website/scripts/snapshot-sample-rows.mjs` and npm hook `sources:snapshot-samples`. Walks manifests + dbt mart schemas; logs warnings for unreachable datasets (e.g. private `frr` source, internal `mart_ingest_health`) but keeps the rest of the snapshot.
+- New snapshot: `website/src/data/sample-rows-snapshot.json` — 44/45 sources, 13/14 views from the local PostgREST.
+- Compact monospace table with horizontal scroll for wide row shapes; nested JSON values are truncated to 80 chars inline.
+- Component returns null when the snapshot lacks an entry for the dataset — the page simply skips the section.
+
+Sparkline + Norway thumbnail map remain deferred to a follow-up PLAN.
 
 Add a 5-row sample table to every dataset hero, pulled from the PostgREST endpoint at build time (cached as `sample-rows-snapshot.json` next to the meta-sources snapshot).
 

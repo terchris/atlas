@@ -8,6 +8,7 @@ import SourceCategoryGrid from '../components/sources/SourceCategoryGrid';
 import PublisherStrip from '../components/sources/PublisherStrip';
 import RecentlyRefreshedStrip from '../components/sources/RecentlyRefreshedStrip';
 import CollectionsStrip from '../components/sources/CollectionsStrip';
+import PersonaPagesStrip from '../components/sources/PersonaPagesStrip';
 
 import styles from './index.module.css';
 
@@ -90,6 +91,11 @@ export default function Home() {
     >
       <Hero />
       <main>
+        <div className={clsx('container', styles.section)}>
+          <h2 className={styles.sectionTitle}>For your role</h2>
+          <PersonaPagesStrip />
+        </div>
+
         <div className={clsx('container', styles.section)}>
           <h2 className={styles.sectionTitle}>Curated collections</h2>
           <CollectionsStrip />

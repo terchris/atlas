@@ -188,11 +188,14 @@ import RelatedSources from '@site/src/components/sources/RelatedSources';
 import SourceUsedInViews from '@site/src/components/sources/SourceUsedInViews';
 import DatasetJoinedWith from '@site/src/components/sources/DatasetJoinedWith';
 import SampleQueryUrl from '@site/src/components/sources/SampleQueryUrl';
+import DatasetSamplePreview from '@site/src/components/sources/DatasetSamplePreview';
 import SchemaOrgDataset from '@site/src/components/sources/SchemaOrgDataset';
 
 export const source = sourceById(${JSON.stringify(sid)});
 
 <SourceHero source={source} />
+
+<DatasetSamplePreview kind="source" sourceId={${JSON.stringify(sid)}} />
 
 ## Provenance {#provenance}
 
@@ -252,10 +255,13 @@ import ViewHero from '@site/src/components/sources/ViewHero';
 import ViewColumns from '@site/src/components/sources/ViewColumns';
 import DatasetBuiltFrom from '@site/src/components/sources/DatasetBuiltFrom';
 import SampleQueryUrl from '@site/src/components/sources/SampleQueryUrl';
+import DatasetSamplePreview from '@site/src/components/sources/DatasetSamplePreview';
 
 export const view = viewById(${JSON.stringify(view.api_v1_name)});
 
 <ViewHero view={view} />
+
+<DatasetSamplePreview kind="view" apiV1Name={${JSON.stringify(view.api_v1_name)}} />
 
 ## Built from {#built-from}
 

@@ -47,6 +47,14 @@ const sidebars: SidebarsConfig = {
       items: [
         {
           type: 'category',
+          label: 'For your role',
+          collapsed: true,
+          items: [
+            'datasets/for/grant-officers',
+          ],
+        },
+        {
+          type: 'category',
           label: 'Collections',
           collapsed: true,
           items: [

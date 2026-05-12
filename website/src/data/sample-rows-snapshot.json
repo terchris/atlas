@@ -1,0 +1,3204 @@
+{
+  "generated_at": "2026-05-12T18:38:24.699Z",
+  "source_url": "http://api-atlas.localhost",
+  "row_limit": 5,
+  "sources": {
+    "bufdir-barnefattigdom": {
+      "raw_table": "bufdir_barnefattigdom",
+      "rows": [
+        {
+          "indicator_api_id": "bf_zip_ind_18",
+          "indicator_slug": "barn_i_hush_med_vedv_lavinnt_som_leier_bolig_kun_pers",
+          "indicator_group_slug": "barnefattigdom_zip",
+          "indicator_name": "Tab. 18: Barn 0-5 år i husholdning med vedvarende lavinntekt som leier bolig. Kun personer",
+          "indicator_title": "Tab. 18: Barn 0-5 år i husholdning med vedvarende lavinntekt som leier bolig. Kun personer",
+          "link_text": null,
+          "region_code": "5540",
+          "category_unit": "barn",
+          "category_format": "prosent",
+          "year": 2021,
+          "value": 38.5,
+          "values_json": {
+            "2017": null,
+            "2018": 66.7,
+            "2019": null,
+            "2020": 36.4,
+            "2021": 38.5,
+            "2022": null,
+            "2023": null,
+            "2024": null
+          },
+          "loaded_at": "2026-05-06T14:32:09.77+00:00"
+        },
+        {
+          "indicator_api_id": "bf_zip_ind_18",
+          "indicator_slug": "barn_i_hush_med_vedv_lavinnt_som_leier_bolig_kun_pers",
+          "indicator_group_slug": "barnefattigdom_zip",
+          "indicator_name": "Tab. 18: Barn 0-5 år i husholdning med vedvarende lavinntekt som leier bolig. Kun personer",
+          "indicator_title": "Tab. 18: Barn 0-5 år i husholdning med vedvarende lavinntekt som leier bolig. Kun personer",
+          "link_text": null,
+          "region_code": "5540",
+          "category_unit": "barn",
+          "category_format": "prosent",
+          "year": 2022,
+          "value": null,
+          "values_json": {
+            "2017": null,
+            "2018": 66.7,
+            "2019": null,
+            "2020": 36.4,
+            "2021": 38.5,
+            "2022": null,
+            "2023": null,
+            "2024": null
+          },
+          "loaded_at": "2026-05-06T14:32:09.77+00:00"
+        },
+        {
+          "indicator_api_id": "bf_zip_ind_18",
+          "indicator_slug": "barn_i_hush_med_vedv_lavinnt_som_leier_bolig_kun_pers",
+          "indicator_group_slug": "barnefattigdom_zip",
+          "indicator_name": "Tab. 18: Barn 0-5 år i husholdning med vedvarende lavinntekt som leier bolig. Kun personer",
+          "indicator_title": "Tab. 18: Barn 0-5 år i husholdning med vedvarende lavinntekt som leier bolig. Kun personer",
+          "link_text": null,
+          "region_code": "5540",
+          "category_unit": "barn",
+          "category_format": "prosent",
+          "year": 2023,
+          "value": null,
+          "values_json": {
+            "2017": null,
+            "2018": 66.7,
+            "2019": null,
+            "2020": 36.4,
+            "2021": 38.5,
+            "2022": null,
+            "2023": null,
+            "2024": null
+          },
+          "loaded_at": "2026-05-06T14:32:09.77+00:00"
+        },
+        {
+          "indicator_api_id": "bf_zip_ind_18",
+          "indicator_slug": "barn_i_hush_med_vedv_lavinnt_som_leier_bolig_kun_pers",
+          "indicator_group_slug": "barnefattigdom_zip",
+          "indicator_name": "Tab. 18: Barn 0-5 år i husholdning med vedvarende lavinntekt som leier bolig. Kun personer",
+          "indicator_title": "Tab. 18: Barn 0-5 år i husholdning med vedvarende lavinntekt som leier bolig. Kun personer",
+          "link_text": null,
+          "region_code": "5540",
+          "category_unit": "barn",
+          "category_format": "prosent",
+          "year": 2024,
+          "value": null,
+          "values_json": {
+            "2017": null,
+            "2018": 66.7,
+            "2019": null,
+            "2020": 36.4,
+            "2021": 38.5,
+            "2022": null,
+            "2023": null,
+            "2024": null
+          },
+          "loaded_at": "2026-05-06T14:32:09.77+00:00"
+        },
+        {
+          "indicator_api_id": "bf_zip_ind_18",
+          "indicator_slug": "barn_i_hush_med_vedv_lavinnt_som_leier_bolig_kun_pers",
+          "indicator_group_slug": "barnefattigdom_zip",
+          "indicator_name": "Tab. 18: Barn 0-5 år i husholdning med vedvarende lavinntekt som leier bolig. Kun personer",
+          "indicator_title": "Tab. 18: Barn 0-5 år i husholdning med vedvarende lavinntekt som leier bolig. Kun personer",
+          "link_text": null,
+          "region_code": "5542",
+          "category_unit": "barn",
+          "category_format": "antall",
+          "year": 2017,
+          "value": 10,
+          "values_json": {
+            "2017": 10,
+            "2018": 8,
+            "2019": 11,
+            "2020": 11,
+            "2021": 8,
+            "2022": 11,
+            "2023": 5,
+            "2024": 7
+          },
+          "loaded_at": "2026-05-06T14:32:09.77+00:00"
+        }
+      ]
+    },
+    "fhi-alkohol": {
+      "raw_table": "fhi_alkohol",
+      "rows": [
+        {
+          "geo_code": "030103",
+          "aar_code": "2025_2025",
+          "kjonn_code": "1",
+          "alder_code": "1_6",
+          "antall_ganger_code": "engangellerflere",
+          "soes_code": "0",
+          "measure_type": "SMR",
+          "value": null,
+          "status": "..",
+          "loaded_at": "2026-05-12T07:24:09.806+00:00"
+        },
+        {
+          "geo_code": "030103",
+          "aar_code": "2025_2025",
+          "kjonn_code": "1",
+          "alder_code": "1_6",
+          "antall_ganger_code": "engangellerflere",
+          "soes_code": "0",
+          "measure_type": "MEIS",
+          "value": null,
+          "status": "..",
+          "loaded_at": "2026-05-12T07:24:09.806+00:00"
+        },
+        {
+          "geo_code": "030103",
+          "aar_code": "2025_2025",
+          "kjonn_code": "2",
+          "alder_code": "1_6",
+          "antall_ganger_code": "engangellerflere",
+          "soes_code": "0",
+          "measure_type": "SMR",
+          "value": null,
+          "status": "..",
+          "loaded_at": "2026-05-12T07:24:09.806+00:00"
+        },
+        {
+          "geo_code": "030103",
+          "aar_code": "2025_2025",
+          "kjonn_code": "2",
+          "alder_code": "1_6",
+          "antall_ganger_code": "engangellerflere",
+          "soes_code": "0",
+          "measure_type": "MEIS",
+          "value": null,
+          "status": "..",
+          "loaded_at": "2026-05-12T07:24:09.806+00:00"
+        },
+        {
+          "geo_code": "030104",
+          "aar_code": "2012_2012",
+          "kjonn_code": "0",
+          "alder_code": "1_6",
+          "antall_ganger_code": "engangellerflere",
+          "soes_code": "0",
+          "measure_type": "SMR",
+          "value": 133.442538100725,
+          "status": null,
+          "loaded_at": "2026-05-12T07:24:09.806+00:00"
+        }
+      ]
+    },
+    "fhi-befolkning": {
+      "raw_table": "fhi_befolkning",
+      "rows": [
+        {
+          "geo_code": "0",
+          "aar_code": "2025_2025",
+          "kjonn_code": "0",
+          "alder_code": "0_120",
+          "measure_type": "TELLER",
+          "value": 5594340,
+          "status": null,
+          "loaded_at": "2026-05-06T14:32:50.363+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2025_2025",
+          "kjonn_code": "0",
+          "alder_code": "0_24",
+          "measure_type": "TELLER",
+          "value": 1577159,
+          "status": null,
+          "loaded_at": "2026-05-06T14:32:50.363+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2025_2025",
+          "kjonn_code": "0",
+          "alder_code": "0_14",
+          "measure_type": "TELLER",
+          "value": 902570,
+          "status": null,
+          "loaded_at": "2026-05-06T14:32:50.363+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2025_2025",
+          "kjonn_code": "0",
+          "alder_code": "0_4",
+          "measure_type": "TELLER",
+          "value": 275034,
+          "status": null,
+          "loaded_at": "2026-05-06T14:32:50.363+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2025_2025",
+          "kjonn_code": "0",
+          "alder_code": "0_0",
+          "measure_type": "TELLER",
+          "value": 54168,
+          "status": null,
+          "loaded_at": "2026-05-06T14:32:50.363+00:00"
+        }
+      ]
+    },
+    "fhi-befolkningsvekst": {
+      "raw_table": "fhi_befolkningsvekst",
+      "rows": [
+        {
+          "geo_code": "0",
+          "aar_code": "2002_2002",
+          "kjonn_code": "0",
+          "alder_code": "0_120",
+          "measure_type": "TELLER",
+          "value": 28186,
+          "status": null,
+          "loaded_at": "2026-05-06T14:32:57.515+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2002_2002",
+          "kjonn_code": "0",
+          "alder_code": "0_120",
+          "measure_type": "RATE",
+          "value": 0.623023625207944,
+          "status": null,
+          "loaded_at": "2026-05-06T14:32:57.515+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2003_2003",
+          "kjonn_code": "0",
+          "alder_code": "0_120",
+          "measure_type": "TELLER",
+          "value": 25205,
+          "status": null,
+          "loaded_at": "2026-05-06T14:32:57.515+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2003_2003",
+          "kjonn_code": "0",
+          "alder_code": "0_120",
+          "measure_type": "RATE",
+          "value": 0.553682001787247,
+          "status": null,
+          "loaded_at": "2026-05-06T14:32:57.515+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2004_2004",
+          "kjonn_code": "0",
+          "alder_code": "0_120",
+          "measure_type": "TELLER",
+          "value": 28906,
+          "status": null,
+          "loaded_at": "2026-05-06T14:32:57.515+00:00"
+        }
+      ]
+    },
+    "fhi-bor-alene": {
+      "raw_table": "fhi_bor_alene",
+      "rows": [
+        {
+          "geo_code": "0",
+          "aar_code": "2025_2025",
+          "alder_code": "16_120",
+          "measure_type": "RATE",
+          "value": 25.0999206725023,
+          "status": null,
+          "loaded_at": "2026-05-06T14:33:01.602+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2025_2025",
+          "alder_code": "16_120",
+          "measure_type": "SMR",
+          "value": 100,
+          "status": null,
+          "loaded_at": "2026-05-06T14:33:01.602+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2025_2025",
+          "alder_code": "16_120",
+          "measure_type": "TELLER",
+          "value": 1153943,
+          "status": null,
+          "loaded_at": "2026-05-06T14:33:01.602+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2025_2025",
+          "alder_code": "16_29",
+          "measure_type": "RATE",
+          "value": 23.474488682454,
+          "status": null,
+          "loaded_at": "2026-05-06T14:33:01.602+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2025_2025",
+          "alder_code": "16_29",
+          "measure_type": "SMR",
+          "value": 100,
+          "status": null,
+          "loaded_at": "2026-05-06T14:33:01.602+00:00"
+        }
+      ]
+    },
+    "fhi-depresjon": {
+      "raw_table": "fhi_depresjon",
+      "rows": [
+        {
+          "geo_code": "0",
+          "aar_code": "2022_2022",
+          "kjonn_code": "0",
+          "alder_code": "1_6",
+          "depresjon_code": "Ja",
+          "soes_code": "0",
+          "measure_type": "SMR",
+          "value": 100,
+          "status": null,
+          "loaded_at": "2026-05-06T14:33:05.172+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2022_2022",
+          "kjonn_code": "0",
+          "alder_code": "1_6",
+          "depresjon_code": "Ja",
+          "soes_code": "0",
+          "measure_type": "MEIS",
+          "value": 15.5094229011845,
+          "status": null,
+          "loaded_at": "2026-05-06T14:33:05.172+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2022_2022",
+          "kjonn_code": "0",
+          "alder_code": "1_6",
+          "depresjon_code": "Ja",
+          "soes_code": "1",
+          "measure_type": "SMR",
+          "value": 100,
+          "status": null,
+          "loaded_at": "2026-05-06T14:33:05.172+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2022_2022",
+          "kjonn_code": "0",
+          "alder_code": "1_6",
+          "depresjon_code": "Ja",
+          "soes_code": "1",
+          "measure_type": "MEIS",
+          "value": 17.0526649746193,
+          "status": null,
+          "loaded_at": "2026-05-06T14:33:05.172+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2022_2022",
+          "kjonn_code": "0",
+          "alder_code": "1_6",
+          "depresjon_code": "Ja",
+          "soes_code": "2",
+          "measure_type": "SMR",
+          "value": 100,
+          "status": null,
+          "loaded_at": "2026-05-06T14:33:05.172+00:00"
+        }
+      ]
+    },
+    "fhi-fortrolig-venn": {
+      "raw_table": "fhi_fortrolig_venn",
+      "rows": [
+        {
+          "geo_code": "0",
+          "aar_code": "2012_2012",
+          "kjonn_code": "0",
+          "alder_code": "1_6",
+          "harvenn_code": "Jatrorellerheltsikker",
+          "soes_code": "0",
+          "measure_type": "SMR",
+          "value": 100,
+          "status": null,
+          "loaded_at": "2026-05-06T14:33:11.993+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2012_2012",
+          "kjonn_code": "0",
+          "alder_code": "1_6",
+          "harvenn_code": "Jatrorellerheltsikker",
+          "soes_code": "0",
+          "measure_type": "MEIS",
+          "value": 90.0830581406985,
+          "status": null,
+          "loaded_at": "2026-05-06T14:33:11.993+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2012_2012",
+          "kjonn_code": "1",
+          "alder_code": "1_6",
+          "harvenn_code": "Jatrorellerheltsikker",
+          "soes_code": "0",
+          "measure_type": "SMR",
+          "value": 100,
+          "status": null,
+          "loaded_at": "2026-05-06T14:33:11.993+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2012_2012",
+          "kjonn_code": "1",
+          "alder_code": "1_6",
+          "harvenn_code": "Jatrorellerheltsikker",
+          "soes_code": "0",
+          "measure_type": "MEIS",
+          "value": 89.5582978207744,
+          "status": null,
+          "loaded_at": "2026-05-06T14:33:11.993+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2012_2012",
+          "kjonn_code": "2",
+          "alder_code": "1_6",
+          "harvenn_code": "Jatrorellerheltsikker",
+          "soes_code": "0",
+          "measure_type": "SMR",
+          "value": 100,
+          "status": null,
+          "loaded_at": "2026-05-06T14:33:11.993+00:00"
+        }
+      ]
+    },
+    "fhi-hasj": {
+      "raw_table": "fhi_hasj",
+      "rows": [
+        {
+          "geo_code": "0",
+          "aar_code": "2012_2012",
+          "kjonn_code": "0",
+          "alder_code": "1_6",
+          "antall_ganger_code": "engangellerflere",
+          "soes_code": "0",
+          "measure_type": "SMR",
+          "value": 100,
+          "status": null,
+          "loaded_at": "2026-05-06T14:33:18.138+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2012_2012",
+          "kjonn_code": "0",
+          "alder_code": "1_6",
+          "antall_ganger_code": "engangellerflere",
+          "soes_code": "0",
+          "measure_type": "MEIS",
+          "value": 2.76014021031547,
+          "status": null,
+          "loaded_at": "2026-05-06T14:33:18.138+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2012_2012",
+          "kjonn_code": "1",
+          "alder_code": "1_6",
+          "antall_ganger_code": "engangellerflere",
+          "soes_code": "0",
+          "measure_type": "SMR",
+          "value": 100,
+          "status": null,
+          "loaded_at": "2026-05-06T14:33:18.138+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2012_2012",
+          "kjonn_code": "1",
+          "alder_code": "1_6",
+          "antall_ganger_code": "engangellerflere",
+          "soes_code": "0",
+          "measure_type": "MEIS",
+          "value": 3.61971745589038,
+          "status": null,
+          "loaded_at": "2026-05-06T14:33:18.138+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2012_2012",
+          "kjonn_code": "2",
+          "alder_code": "1_6",
+          "antall_ganger_code": "engangellerflere",
+          "soes_code": "0",
+          "measure_type": "SMR",
+          "value": 100,
+          "status": null,
+          "loaded_at": "2026-05-06T14:33:18.138+00:00"
+        }
+      ]
+    },
+    "fhi-innvandrere": {
+      "raw_table": "fhi_innvandrere",
+      "rows": [
+        {
+          "geo_code": "0",
+          "aar_code": "2025_2025",
+          "alder_code": "0_120",
+          "landbak_code": "100",
+          "measure_type": "TELLER",
+          "value": 1195350,
+          "status": null,
+          "loaded_at": "2026-05-06T14:33:24.357+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2025_2025",
+          "alder_code": "0_120",
+          "landbak_code": "1",
+          "measure_type": "TELLER",
+          "value": 605568,
+          "status": null,
+          "loaded_at": "2026-05-06T14:33:24.357+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2025_2025",
+          "alder_code": "0_120",
+          "landbak_code": "2",
+          "measure_type": "TELLER",
+          "value": 158007,
+          "status": null,
+          "loaded_at": "2026-05-06T14:33:24.357+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2025_2025",
+          "alder_code": "0_120",
+          "landbak_code": "3",
+          "measure_type": "TELLER",
+          "value": 381467,
+          "status": null,
+          "loaded_at": "2026-05-06T14:33:24.357+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2025_2025",
+          "alder_code": "0_120",
+          "landbak_code": "456",
+          "measure_type": "TELLER",
+          "value": 50305,
+          "status": null,
+          "loaded_at": "2026-05-06T14:33:24.357+00:00"
+        }
+      ]
+    },
+    "fhi-innvkat": {
+      "raw_table": "fhi_innvkat",
+      "rows": [
+        {
+          "geo_code": "0",
+          "aar_code": "2025_2025",
+          "alder_code": "0_120",
+          "innvkat_code": "23",
+          "landbak_code": "0",
+          "measure_type": "TELLER",
+          "value": 1195350,
+          "status": null,
+          "loaded_at": "2026-05-06T14:33:30.393+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2025_2025",
+          "alder_code": "0_120",
+          "innvkat_code": "23",
+          "landbak_code": "0",
+          "measure_type": "RATE",
+          "value": 21.3671317796201,
+          "status": null,
+          "loaded_at": "2026-05-06T14:33:30.393+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2025_2025",
+          "alder_code": "0_120",
+          "innvkat_code": "23",
+          "landbak_code": "0",
+          "measure_type": "SMR",
+          "value": 100,
+          "status": null,
+          "loaded_at": "2026-05-06T14:33:30.393+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2025_2025",
+          "alder_code": "0_120",
+          "innvkat_code": "2",
+          "landbak_code": "0",
+          "measure_type": "TELLER",
+          "value": 965113,
+          "status": null,
+          "loaded_at": "2026-05-06T14:33:30.393+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2025_2025",
+          "alder_code": "0_120",
+          "innvkat_code": "2",
+          "landbak_code": "0",
+          "measure_type": "RATE",
+          "value": 17.2515971499766,
+          "status": null,
+          "loaded_at": "2026-05-06T14:33:30.393+00:00"
+        }
+      ]
+    },
+    "fhi-kpr-1aar": {
+      "raw_table": "fhi_kpr_1aar",
+      "rows": [
+        {
+          "geo_code": "0",
+          "aar_code": "2024_2024",
+          "kjonn_code": "0",
+          "alder_code": "0_74",
+          "kodegruppe_code": "K70_K99",
+          "measure_type": "RATE",
+          "value": 101.42090959945,
+          "status": null,
+          "loaded_at": "2026-05-06T14:33:37.056+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2024_2024",
+          "kjonn_code": "0",
+          "alder_code": "0_74",
+          "kodegruppe_code": "P01_P29ogP70_P99",
+          "measure_type": "RATE",
+          "value": 190.06094560336,
+          "status": null,
+          "loaded_at": "2026-05-06T14:33:37.056+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2024_2024",
+          "kjonn_code": "0",
+          "alder_code": "0_74",
+          "kodegruppe_code": "P01_P29",
+          "measure_type": "RATE",
+          "value": 140.576349535588,
+          "status": null,
+          "loaded_at": "2026-05-06T14:33:37.056+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2024_2024",
+          "kjonn_code": "0",
+          "alder_code": "0_74",
+          "kodegruppe_code": "P01_P04ogP25ogP28_P29",
+          "measure_type": "RATE",
+          "value": 89.9889951768179,
+          "status": null,
+          "loaded_at": "2026-05-06T14:33:37.056+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2024_2024",
+          "kjonn_code": "0",
+          "alder_code": "0_74",
+          "kodegruppe_code": "P70_P99",
+          "measure_type": "RATE",
+          "value": 86.2350254597243,
+          "status": null,
+          "loaded_at": "2026-05-06T14:33:37.056+00:00"
+        }
+      ]
+    },
+    "fhi-livskvalitet": {
+      "raw_table": "fhi_livskvalitet",
+      "rows": [
+        {
+          "geo_code": "0",
+          "aar_code": "2021_2021",
+          "kjonn_code": "0",
+          "alder_code": "1_6",
+          "livskvalitet_code": "8_10",
+          "soes_code": "0",
+          "measure_type": "SMR",
+          "value": 100,
+          "status": null,
+          "loaded_at": "2026-05-06T14:33:43.716+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2021_2021",
+          "kjonn_code": "0",
+          "alder_code": "1_6",
+          "livskvalitet_code": "8_10",
+          "soes_code": "0",
+          "measure_type": "MEIS",
+          "value": 49.4529341441863,
+          "status": null,
+          "loaded_at": "2026-05-06T14:33:43.716+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2021_2021",
+          "kjonn_code": "1",
+          "alder_code": "1_6",
+          "livskvalitet_code": "8_10",
+          "soes_code": "0",
+          "measure_type": "SMR",
+          "value": 100,
+          "status": null,
+          "loaded_at": "2026-05-06T14:33:43.716+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2021_2021",
+          "kjonn_code": "1",
+          "alder_code": "1_6",
+          "livskvalitet_code": "8_10",
+          "soes_code": "0",
+          "measure_type": "MEIS",
+          "value": 59.8345706285802,
+          "status": null,
+          "loaded_at": "2026-05-06T14:33:43.716+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2021_2021",
+          "kjonn_code": "2",
+          "alder_code": "1_6",
+          "livskvalitet_code": "8_10",
+          "soes_code": "0",
+          "measure_type": "SMR",
+          "value": 100,
+          "status": null,
+          "loaded_at": "2026-05-06T14:33:43.716+00:00"
+        }
+      ]
+    },
+    "fhi-mediebruk-some": {
+      "raw_table": "fhi_mediebruk_some",
+      "rows": [
+        {
+          "geo_code": "0",
+          "aar_code": "2014_2014",
+          "kjonn_code": "0",
+          "alder_code": "1_6",
+          "mediebruk_code": "Merenn3timer",
+          "soes_code": "0",
+          "measure_type": "SMR",
+          "value": 100,
+          "status": null,
+          "loaded_at": "2026-05-06T14:33:47.197+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2014_2014",
+          "kjonn_code": "0",
+          "alder_code": "1_6",
+          "mediebruk_code": "Merenn3timer",
+          "soes_code": "0",
+          "measure_type": "MEIS",
+          "value": 21.3185814743657,
+          "status": null,
+          "loaded_at": "2026-05-06T14:33:47.197+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2014_2014",
+          "kjonn_code": "1",
+          "alder_code": "1_6",
+          "mediebruk_code": "Merenn3timer",
+          "soes_code": "0",
+          "measure_type": "SMR",
+          "value": 100,
+          "status": null,
+          "loaded_at": "2026-05-06T14:33:47.197+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2014_2014",
+          "kjonn_code": "1",
+          "alder_code": "1_6",
+          "mediebruk_code": "Merenn3timer",
+          "soes_code": "0",
+          "measure_type": "MEIS",
+          "value": 13.0240751614797,
+          "status": null,
+          "loaded_at": "2026-05-06T14:33:47.197+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2014_2014",
+          "kjonn_code": "2",
+          "alder_code": "1_6",
+          "mediebruk_code": "Merenn3timer",
+          "soes_code": "0",
+          "measure_type": "SMR",
+          "value": 100,
+          "status": null,
+          "loaded_at": "2026-05-06T14:33:47.197+00:00"
+        }
+      ]
+    },
+    "fhi-mediebruk-spill": {
+      "raw_table": "fhi_mediebruk_spill",
+      "rows": [
+        {
+          "geo_code": "0",
+          "aar_code": "2012_2012",
+          "kjonn_code": "0",
+          "alder_code": "1_6",
+          "mediebruk_code": "Merenn3timer",
+          "soes_code": "0",
+          "measure_type": "SMR",
+          "value": 100,
+          "status": null,
+          "loaded_at": "2026-05-06T14:33:52.457+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2012_2012",
+          "kjonn_code": "0",
+          "alder_code": "1_6",
+          "mediebruk_code": "Merenn3timer",
+          "soes_code": "0",
+          "measure_type": "MEIS",
+          "value": 14.5062860894923,
+          "status": null,
+          "loaded_at": "2026-05-06T14:33:52.457+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2012_2012",
+          "kjonn_code": "1",
+          "alder_code": "1_6",
+          "mediebruk_code": "Merenn3timer",
+          "soes_code": "0",
+          "measure_type": "SMR",
+          "value": 100,
+          "status": null,
+          "loaded_at": "2026-05-06T14:33:52.457+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2012_2012",
+          "kjonn_code": "1",
+          "alder_code": "1_6",
+          "mediebruk_code": "Merenn3timer",
+          "soes_code": "0",
+          "measure_type": "MEIS",
+          "value": 25.8537778140028,
+          "status": null,
+          "loaded_at": "2026-05-06T14:33:52.457+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2012_2012",
+          "kjonn_code": "2",
+          "alder_code": "1_6",
+          "mediebruk_code": "Merenn3timer",
+          "soes_code": "0",
+          "measure_type": "SMR",
+          "value": 100,
+          "status": null,
+          "loaded_at": "2026-05-06T14:33:52.457+00:00"
+        }
+      ]
+    },
+    "fhi-mediebruk-underhold": {
+      "raw_table": "fhi_mediebruk_underhold",
+      "rows": [
+        {
+          "geo_code": "0",
+          "aar_code": "2017_2017",
+          "kjonn_code": "0",
+          "alder_code": "1_6",
+          "mediebruk_code": "Merenn3timer",
+          "soes_code": "0",
+          "measure_type": "SMR",
+          "value": 100,
+          "status": null,
+          "loaded_at": "2026-05-06T14:33:58.188+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2017_2017",
+          "kjonn_code": "0",
+          "alder_code": "1_6",
+          "mediebruk_code": "Merenn3timer",
+          "soes_code": "0",
+          "measure_type": "MEIS",
+          "value": 19.1479585563314,
+          "status": null,
+          "loaded_at": "2026-05-06T14:33:58.188+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2017_2017",
+          "kjonn_code": "1",
+          "alder_code": "1_6",
+          "mediebruk_code": "Merenn3timer",
+          "soes_code": "0",
+          "measure_type": "SMR",
+          "value": 100,
+          "status": null,
+          "loaded_at": "2026-05-06T14:33:58.188+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2017_2017",
+          "kjonn_code": "1",
+          "alder_code": "1_6",
+          "mediebruk_code": "Merenn3timer",
+          "soes_code": "0",
+          "measure_type": "MEIS",
+          "value": 19.9427723328297,
+          "status": null,
+          "loaded_at": "2026-05-06T14:33:58.188+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2017_2017",
+          "kjonn_code": "2",
+          "alder_code": "1_6",
+          "mediebruk_code": "Merenn3timer",
+          "soes_code": "0",
+          "measure_type": "SMR",
+          "value": 100,
+          "status": null,
+          "loaded_at": "2026-05-06T14:33:58.188+00:00"
+        }
+      ]
+    },
+    "fhi-mobbing": {
+      "raw_table": "fhi_mobbing",
+      "rows": [
+        {
+          "geo_code": "0",
+          "aar_code": "2022_2024",
+          "kjonn_code": "0",
+          "trinn_code": "7",
+          "spm_id_code": "479",
+          "measure_type": "SMR",
+          "value": 100,
+          "status": null,
+          "loaded_at": "2026-05-06T14:34:02.398+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2022_2024",
+          "kjonn_code": "0",
+          "trinn_code": "7",
+          "spm_id_code": "479",
+          "measure_type": "MEIS",
+          "value": 9.63030104653266,
+          "status": null,
+          "loaded_at": "2026-05-06T14:34:02.398+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2022_2024",
+          "kjonn_code": "0",
+          "trinn_code": "7",
+          "spm_id_code": "479",
+          "measure_type": "RATE",
+          "value": 9.62540152329276,
+          "status": null,
+          "loaded_at": "2026-05-06T14:34:02.398+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2022_2024",
+          "kjonn_code": "0",
+          "trinn_code": "10",
+          "spm_id_code": "479",
+          "measure_type": "SMR",
+          "value": 100,
+          "status": null,
+          "loaded_at": "2026-05-06T14:34:02.398+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2022_2024",
+          "kjonn_code": "0",
+          "trinn_code": "10",
+          "spm_id_code": "479",
+          "measure_type": "MEIS",
+          "value": 6.56332892421314,
+          "status": null,
+          "loaded_at": "2026-05-06T14:34:02.398+00:00"
+        }
+      ]
+    },
+    "fhi-neet": {
+      "raw_table": "fhi_neet",
+      "rows": [
+        {
+          "geo_code": "0",
+          "aar_code": "2024_2024",
+          "kjonn_code": "0",
+          "alder_code": "15_66",
+          "utdann_code": "0",
+          "measure_type": "RATE",
+          "value": 17.2506320491771,
+          "status": null,
+          "loaded_at": "2026-05-06T14:34:04.616+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2024_2024",
+          "kjonn_code": "0",
+          "alder_code": "15_66",
+          "utdann_code": "1",
+          "measure_type": "RATE",
+          "value": 37.9884293993181,
+          "status": null,
+          "loaded_at": "2026-05-06T14:34:04.616+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2024_2024",
+          "kjonn_code": "0",
+          "alder_code": "15_66",
+          "utdann_code": "2",
+          "measure_type": "RATE",
+          "value": 16.6779887930053,
+          "status": null,
+          "loaded_at": "2026-05-06T14:34:04.616+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2024_2024",
+          "kjonn_code": "0",
+          "alder_code": "15_66",
+          "utdann_code": "3",
+          "measure_type": "RATE",
+          "value": 9.75148370236715,
+          "status": null,
+          "loaded_at": "2026-05-06T14:34:04.616+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2024_2024",
+          "kjonn_code": "0",
+          "alder_code": "15_66",
+          "utdann_code": "4",
+          "measure_type": "RATE",
+          "value": 47.54545796785,
+          "status": null,
+          "loaded_at": "2026-05-06T14:34:04.616+00:00"
+        }
+      ]
+    },
+    "fhi-prognose": {
+      "raw_table": "fhi_prognose",
+      "rows": [
+        {
+          "geo_code": "0",
+          "aar_code": "2024_2024",
+          "kjonn_code": "0",
+          "alder_code": "0_120",
+          "prognoseaar_code": "2030",
+          "measure_type": "TELLER",
+          "value": 5744565,
+          "status": null,
+          "loaded_at": "2026-05-06T14:34:10.319+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2024_2024",
+          "kjonn_code": "0",
+          "alder_code": "0_120",
+          "prognoseaar_code": "2040",
+          "measure_type": "TELLER",
+          "value": 5976950,
+          "status": null,
+          "loaded_at": "2026-05-06T14:34:10.319+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2024_2024",
+          "kjonn_code": "0",
+          "alder_code": "0_120",
+          "prognoseaar_code": "2050",
+          "measure_type": "TELLER",
+          "value": 6114899,
+          "status": null,
+          "loaded_at": "2026-05-06T14:34:10.319+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2024_2024",
+          "kjonn_code": "0",
+          "alder_code": "0_24",
+          "prognoseaar_code": "2030",
+          "measure_type": "TELLER",
+          "value": 1556913,
+          "status": null,
+          "loaded_at": "2026-05-06T14:34:10.319+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2024_2024",
+          "kjonn_code": "0",
+          "alder_code": "0_24",
+          "prognoseaar_code": "2040",
+          "measure_type": "TELLER",
+          "value": 1522281,
+          "status": null,
+          "loaded_at": "2026-05-06T14:34:10.319+00:00"
+        }
+      ]
+    },
+    "fhi-selvmord": {
+      "raw_table": "fhi_selvmord",
+      "rows": [
+        {
+          "geo_code": "0",
+          "aar_code": "2018_2022",
+          "kjonn_code": "0",
+          "alder_code": "0_120",
+          "aarsak_code": "SELVMORD",
+          "measure_type": "MEIS",
+          "value": 12.1681486189798,
+          "status": null,
+          "loaded_at": "2026-05-06T14:34:17.148+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2018_2022",
+          "kjonn_code": "0",
+          "alder_code": "0_74",
+          "aarsak_code": "SELVMORD",
+          "measure_type": "MEIS",
+          "value": 12.0991421175355,
+          "status": null,
+          "loaded_at": "2026-05-06T14:34:17.148+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2018_2022",
+          "kjonn_code": "0",
+          "alder_code": "0_44",
+          "aarsak_code": "SELVMORD",
+          "measure_type": "MEIS",
+          "value": 9.90532445126633,
+          "status": null,
+          "loaded_at": "2026-05-06T14:34:17.148+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2018_2022",
+          "kjonn_code": "0",
+          "alder_code": "0_24",
+          "aarsak_code": "SELVMORD",
+          "measure_type": "MEIS",
+          "value": 5.05600934472333,
+          "status": null,
+          "loaded_at": "2026-05-06T14:34:17.148+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2018_2022",
+          "kjonn_code": "0",
+          "alder_code": "0_14",
+          "aarsak_code": "SELVMORD",
+          "measure_type": "MEIS",
+          "value": 0.46385372052983,
+          "status": null,
+          "loaded_at": "2026-05-06T14:34:17.148+00:00"
+        }
+      ]
+    },
+    "fhi-smertestillende": {
+      "raw_table": "fhi_smertestillende",
+      "rows": [
+        {
+          "geo_code": "0",
+          "aar_code": "2014_2014",
+          "kjonn_code": "0",
+          "alder_code": "1_6",
+          "status_code": "Minst_ukentlig",
+          "soes_code": "0",
+          "measure_type": "SMR",
+          "value": 100,
+          "status": null,
+          "loaded_at": "2026-05-06T14:34:25.041+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2014_2014",
+          "kjonn_code": "0",
+          "alder_code": "1_6",
+          "status_code": "Minst_ukentlig",
+          "soes_code": "0",
+          "measure_type": "MEIS",
+          "value": 17.2544763971785,
+          "status": null,
+          "loaded_at": "2026-05-06T14:34:25.041+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2014_2014",
+          "kjonn_code": "1",
+          "alder_code": "1_6",
+          "status_code": "Minst_ukentlig",
+          "soes_code": "0",
+          "measure_type": "SMR",
+          "value": 100,
+          "status": null,
+          "loaded_at": "2026-05-06T14:34:25.041+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2014_2014",
+          "kjonn_code": "1",
+          "alder_code": "1_6",
+          "status_code": "Minst_ukentlig",
+          "soes_code": "0",
+          "measure_type": "MEIS",
+          "value": 11.9784482758621,
+          "status": null,
+          "loaded_at": "2026-05-06T14:34:25.041+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2014_2014",
+          "kjonn_code": "2",
+          "alder_code": "1_6",
+          "status_code": "Minst_ukentlig",
+          "soes_code": "0",
+          "measure_type": "SMR",
+          "value": 100,
+          "status": null,
+          "loaded_at": "2026-05-06T14:34:25.041+00:00"
+        }
+      ]
+    },
+    "fhi-trangbodd": {
+      "raw_table": "fhi_trangbodd",
+      "rows": [
+        {
+          "geo_code": "0",
+          "aar_code": "2024_2024",
+          "alder_code": "0_120",
+          "utdann_code": "0",
+          "bodd_code": "trangt",
+          "measure_type": "RATE",
+          "value": 9.66853619544995,
+          "status": null,
+          "loaded_at": "2026-05-06T14:34:30.884+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2024_2024",
+          "alder_code": "0_120",
+          "utdann_code": "0",
+          "bodd_code": "uoppgitt",
+          "measure_type": "RATE",
+          "value": 1.35556574591045,
+          "status": null,
+          "loaded_at": "2026-05-06T14:34:30.884+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2024_2024",
+          "alder_code": "0_120",
+          "utdann_code": "1",
+          "bodd_code": "trangt",
+          "measure_type": "RATE",
+          "value": 13.0956297494254,
+          "status": null,
+          "loaded_at": "2026-05-06T14:34:30.884+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2024_2024",
+          "alder_code": "0_120",
+          "utdann_code": "1",
+          "bodd_code": "uoppgitt",
+          "measure_type": "RATE",
+          "value": 1.95927686949736,
+          "status": null,
+          "loaded_at": "2026-05-06T14:34:30.884+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2024_2024",
+          "alder_code": "0_120",
+          "utdann_code": "2",
+          "bodd_code": "trangt",
+          "measure_type": "RATE",
+          "value": 7.88800371714518,
+          "status": null,
+          "loaded_at": "2026-05-06T14:34:30.884+00:00"
+        }
+      ]
+    },
+    "fhi-vgs-gjennomforing": {
+      "raw_table": "fhi_vgs_gjennomforing",
+      "rows": [
+        {
+          "geo_code": "0",
+          "aar_code": "2022_2024",
+          "kjonn_code": "0",
+          "utdann_code": "0",
+          "innvkat_code": "0",
+          "measure_type": "RATE",
+          "value": 81.7479480988194,
+          "status": null,
+          "loaded_at": "2026-05-06T14:34:37.293+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2022_2024",
+          "kjonn_code": "0",
+          "utdann_code": "0",
+          "innvkat_code": "0",
+          "measure_type": "SMR",
+          "value": 100,
+          "status": null,
+          "loaded_at": "2026-05-06T14:34:37.293+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2022_2024",
+          "kjonn_code": "0",
+          "utdann_code": "0",
+          "innvkat_code": "0",
+          "measure_type": "MEIS",
+          "value": 81.7479480988193,
+          "status": null,
+          "loaded_at": "2026-05-06T14:34:37.293+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2022_2024",
+          "kjonn_code": "0",
+          "utdann_code": "0",
+          "innvkat_code": "0",
+          "measure_type": "TELLER",
+          "value": 53153.3333333333,
+          "status": null,
+          "loaded_at": "2026-05-06T14:34:37.293+00:00"
+        },
+        {
+          "geo_code": "0",
+          "aar_code": "2022_2024",
+          "kjonn_code": "0",
+          "utdann_code": "1",
+          "innvkat_code": "0",
+          "measure_type": "RATE",
+          "value": 62.9131045042746,
+          "status": null,
+          "loaded_at": "2026-05-06T14:34:37.293+00:00"
+        }
+      ]
+    },
+    "redcross-branches": {
+      "raw_table": "redcross_branch_activities",
+      "rows": [
+        {
+          "branch_id": "L098",
+          "global_activity_name": "Besøksvenn med hund",
+          "local_activity_name": "Besøksvenn med hund Modum Røde Kors",
+          "loaded_at": "2026-05-06T14:34:41.625+00:00"
+        },
+        {
+          "branch_id": "L098",
+          "global_activity_name": "Besøkstjeneste",
+          "local_activity_name": "Besøkstjeneste Modum Røde Kors",
+          "loaded_at": "2026-05-06T14:34:41.625+00:00"
+        },
+        {
+          "branch_id": "L098",
+          "global_activity_name": "Hjelpekorps",
+          "local_activity_name": "Hjelpekorps Modum Røde Kors",
+          "loaded_at": "2026-05-06T14:34:41.625+00:00"
+        },
+        {
+          "branch_id": "L098",
+          "global_activity_name": "Arrangement og reise",
+          "local_activity_name": "Barnehjelp Modum Røde Kors",
+          "loaded_at": "2026-05-06T14:34:41.625+00:00"
+        },
+        {
+          "branch_id": "L098",
+          "global_activity_name": "Barnas Røde Kors",
+          "local_activity_name": "Barnas Røde Kors Modum Røde Kors",
+          "loaded_at": "2026-05-06T14:34:41.625+00:00"
+        }
+      ]
+    },
+    "ssb-06083": {
+      "raw_table": "ssb_06083",
+      "rows": [
+        {
+          "region_code": "3021",
+          "family_type": "006",
+          "year": 2025,
+          "contents_code": "Familier",
+          "contents_label": "Familier",
+          "value": 0,
+          "status": null,
+          "loaded_at": "2026-05-12T07:24:27.655+00:00"
+        },
+        {
+          "region_code": "3021",
+          "family_type": "007",
+          "year": 2025,
+          "contents_code": "Familier",
+          "contents_label": "Familier",
+          "value": 0,
+          "status": null,
+          "loaded_at": "2026-05-12T07:24:27.655+00:00"
+        },
+        {
+          "region_code": "3021",
+          "family_type": "008",
+          "year": 2025,
+          "contents_code": "Familier",
+          "contents_label": "Familier",
+          "value": 0,
+          "status": null,
+          "loaded_at": "2026-05-12T07:24:27.655+00:00"
+        },
+        {
+          "region_code": "3021",
+          "family_type": "009",
+          "year": 2025,
+          "contents_code": "Familier",
+          "contents_label": "Familier",
+          "value": 0,
+          "status": null,
+          "loaded_at": "2026-05-12T07:24:27.655+00:00"
+        },
+        {
+          "region_code": "3022",
+          "family_type": "001",
+          "year": 2025,
+          "contents_code": "Familier",
+          "contents_label": "Familier",
+          "value": 0,
+          "status": null,
+          "loaded_at": "2026-05-12T07:24:27.655+00:00"
+        }
+      ]
+    },
+    "ssb-06913": {
+      "raw_table": "ssb_06913",
+      "rows": [
+        {
+          "region_code": "0",
+          "year": 1951,
+          "contents_code": "Folkemengde",
+          "contents_label": "Befolkning 1. januar",
+          "value": 3280296,
+          "status": null,
+          "loaded_at": "2026-05-06T14:34:52.51+00:00"
+        },
+        {
+          "region_code": "0",
+          "year": 1952,
+          "contents_code": "Folkemengde",
+          "contents_label": "Befolkning 1. januar",
+          "value": 3310821,
+          "status": null,
+          "loaded_at": "2026-05-06T14:34:52.51+00:00"
+        },
+        {
+          "region_code": "0",
+          "year": 1953,
+          "contents_code": "Folkemengde",
+          "contents_label": "Befolkning 1. januar",
+          "value": 3342754,
+          "status": null,
+          "loaded_at": "2026-05-06T14:34:52.51+00:00"
+        },
+        {
+          "region_code": "0",
+          "year": 1954,
+          "contents_code": "Folkemengde",
+          "contents_label": "Befolkning 1. januar",
+          "value": 3375870,
+          "status": null,
+          "loaded_at": "2026-05-06T14:34:52.51+00:00"
+        },
+        {
+          "region_code": "0",
+          "year": 1955,
+          "contents_code": "Folkemengde",
+          "contents_label": "Befolkning 1. januar",
+          "value": 3408161,
+          "status": null,
+          "loaded_at": "2026-05-06T14:34:52.51+00:00"
+        }
+      ]
+    },
+    "ssb-06944": {
+      "raw_table": "ssb_06944",
+      "rows": [
+        {
+          "region_code": "0",
+          "household_type": "0000",
+          "year": 2024,
+          "contents_code": "SamletInntekt",
+          "contents_label": "Samlet inntekt, median (kr)",
+          "value": 856300,
+          "status": null,
+          "loaded_at": "2026-05-06T14:36:32.898+00:00"
+        },
+        {
+          "region_code": "0",
+          "household_type": "0000",
+          "year": 2024,
+          "contents_code": "InntSkatt",
+          "contents_label": "Inntekt etter skatt, median (kr)",
+          "value": 676100,
+          "status": null,
+          "loaded_at": "2026-05-06T14:36:32.898+00:00"
+        },
+        {
+          "region_code": "0",
+          "household_type": "0000",
+          "year": 2024,
+          "contents_code": "AntallHushold",
+          "contents_label": "Antall husholdninger",
+          "value": 2616826,
+          "status": null,
+          "loaded_at": "2026-05-06T14:36:32.898+00:00"
+        },
+        {
+          "region_code": "0",
+          "household_type": "0001",
+          "year": 2024,
+          "contents_code": "SamletInntekt",
+          "contents_label": "Samlet inntekt, median (kr)",
+          "value": 500800,
+          "status": null,
+          "loaded_at": "2026-05-06T14:36:32.898+00:00"
+        },
+        {
+          "region_code": "0",
+          "household_type": "0001",
+          "year": 2024,
+          "contents_code": "InntSkatt",
+          "contents_label": "Inntekt etter skatt, median (kr)",
+          "value": 397500,
+          "status": null,
+          "loaded_at": "2026-05-06T14:36:32.898+00:00"
+        }
+      ]
+    },
+    "ssb-06947": {
+      "raw_table": "ssb_06947",
+      "rows": [
+        {
+          "region_code": "0",
+          "year": 2024,
+          "contents_code": "Personer",
+          "contents_label": "Personer",
+          "value": 5450288,
+          "status": null,
+          "loaded_at": "2026-05-06T14:36:41.732+00:00"
+        },
+        {
+          "region_code": "0",
+          "year": 2024,
+          "contents_code": "EUskala50",
+          "contents_label": "EU-skala 50 prosent",
+          "value": 5.4,
+          "status": null,
+          "loaded_at": "2026-05-06T14:36:41.732+00:00"
+        },
+        {
+          "region_code": "0",
+          "year": 2024,
+          "contents_code": "EUskala60",
+          "contents_label": "EU-skala 60 prosent",
+          "value": 11.1,
+          "status": null,
+          "loaded_at": "2026-05-06T14:36:41.732+00:00"
+        },
+        {
+          "region_code": "0",
+          "year": 2024,
+          "contents_code": "OECDskala50",
+          "contents_label": "OECD-skala 50 prosent",
+          "value": 5.4,
+          "status": null,
+          "loaded_at": "2026-05-06T14:36:41.732+00:00"
+        },
+        {
+          "region_code": "0",
+          "year": 2024,
+          "contents_code": "OECDskala60",
+          "contents_label": "OECD-skala 60 prosent",
+          "value": 9.6,
+          "status": null,
+          "loaded_at": "2026-05-06T14:36:41.732+00:00"
+        }
+      ]
+    },
+    "ssb-07459": {
+      "raw_table": "ssb_07459",
+      "rows": [
+        {
+          "region_code": "0",
+          "sex": "2",
+          "age": "000",
+          "year": 2026,
+          "contents_code": "Personer1",
+          "contents_label": "Personer",
+          "value": 27107,
+          "status": null,
+          "loaded_at": "2026-05-06T14:36:46.477+00:00"
+        },
+        {
+          "region_code": "0",
+          "sex": "2",
+          "age": "001",
+          "year": 2026,
+          "contents_code": "Personer1",
+          "contents_label": "Personer",
+          "value": 26420,
+          "status": null,
+          "loaded_at": "2026-05-06T14:36:46.477+00:00"
+        },
+        {
+          "region_code": "0",
+          "sex": "2",
+          "age": "002",
+          "year": 2026,
+          "contents_code": "Personer1",
+          "contents_label": "Personer",
+          "value": 26100,
+          "status": null,
+          "loaded_at": "2026-05-06T14:36:46.477+00:00"
+        },
+        {
+          "region_code": "0",
+          "sex": "2",
+          "age": "003",
+          "year": 2026,
+          "contents_code": "Personer1",
+          "contents_label": "Personer",
+          "value": 26140,
+          "status": null,
+          "loaded_at": "2026-05-06T14:36:46.477+00:00"
+        },
+        {
+          "region_code": "0",
+          "sex": "2",
+          "age": "004",
+          "year": 2026,
+          "contents_code": "Personer1",
+          "contents_label": "Personer",
+          "value": 28658,
+          "status": null,
+          "loaded_at": "2026-05-06T14:36:46.477+00:00"
+        }
+      ]
+    },
+    "ssb-08764": {
+      "raw_table": "ssb_08764",
+      "rows": [
+        {
+          "region_code": "3120",
+          "year": 2024,
+          "contents_code": "OECDskala60",
+          "contents_label": "OECD-skala 60 prosent",
+          "value": 17.6,
+          "status": null,
+          "loaded_at": "2026-05-12T07:23:48.652+00:00"
+        },
+        {
+          "region_code": "3122",
+          "year": 2024,
+          "contents_code": "Personer",
+          "contents_label": "Personer under 18 år",
+          "value": 631,
+          "status": null,
+          "loaded_at": "2026-05-12T07:23:48.652+00:00"
+        },
+        {
+          "region_code": "3122",
+          "year": 2024,
+          "contents_code": "EUskala50",
+          "contents_label": "EU-skala 50 prosent",
+          "value": 6.2,
+          "status": null,
+          "loaded_at": "2026-05-12T07:23:48.652+00:00"
+        },
+        {
+          "region_code": "3122",
+          "year": 2024,
+          "contents_code": "EUskala60",
+          "contents_label": "EU-skala 60 prosent",
+          "value": 17.9,
+          "status": null,
+          "loaded_at": "2026-05-12T07:23:48.652+00:00"
+        },
+        {
+          "region_code": "3122",
+          "year": 2024,
+          "contents_code": "OECDskala50",
+          "contents_label": "OECD-skala 50 prosent",
+          "value": 10.1,
+          "status": null,
+          "loaded_at": "2026-05-12T07:23:48.652+00:00"
+        }
+      ]
+    },
+    "ssb-09429": {
+      "raw_table": "ssb_09429",
+      "rows": [
+        {
+          "region_code": "0",
+          "education_level": "00",
+          "sex": "0",
+          "year": 2024,
+          "contents_code": "Personer",
+          "contents_label": "Personer 16 år og over",
+          "value": 4627189,
+          "status": null,
+          "loaded_at": "2026-05-06T14:37:19.355+00:00"
+        },
+        {
+          "region_code": "0",
+          "education_level": "00",
+          "sex": "0",
+          "year": 2024,
+          "contents_code": "PersonerProsent",
+          "contents_label": "Personer 16 år og over (prosent)",
+          "value": 100,
+          "status": null,
+          "loaded_at": "2026-05-06T14:37:19.355+00:00"
+        },
+        {
+          "region_code": "0",
+          "education_level": "00",
+          "sex": "2",
+          "year": 2024,
+          "contents_code": "Personer",
+          "contents_label": "Personer 16 år og over",
+          "value": 2305096,
+          "status": null,
+          "loaded_at": "2026-05-06T14:37:19.355+00:00"
+        },
+        {
+          "region_code": "0",
+          "education_level": "00",
+          "sex": "2",
+          "year": 2024,
+          "contents_code": "PersonerProsent",
+          "contents_label": "Personer 16 år og over (prosent)",
+          "value": 100,
+          "status": null,
+          "loaded_at": "2026-05-06T14:37:19.355+00:00"
+        },
+        {
+          "region_code": "0",
+          "education_level": "00",
+          "sex": "1",
+          "year": 2024,
+          "contents_code": "Personer",
+          "contents_label": "Personer 16 år og over",
+          "value": 2322093,
+          "status": null,
+          "loaded_at": "2026-05-06T14:37:19.355+00:00"
+        }
+      ]
+    },
+    "ssb-10826": {
+      "raw_table": "ssb_10826",
+      "rows": [
+        {
+          "region_code": "030100aa",
+          "region_label": "Oslo i alt",
+          "sex": "2",
+          "age": "000",
+          "year": 2026,
+          "contents_code": "Personer",
+          "contents_label": "Personer",
+          "value": 4355,
+          "status": null,
+          "loaded_at": "2026-05-06T14:37:27.396+00:00"
+        },
+        {
+          "region_code": "030100aa",
+          "region_label": "Oslo i alt",
+          "sex": "2",
+          "age": "001",
+          "year": 2026,
+          "contents_code": "Personer",
+          "contents_label": "Personer",
+          "value": 4094,
+          "status": null,
+          "loaded_at": "2026-05-06T14:37:27.396+00:00"
+        },
+        {
+          "region_code": "030100aa",
+          "region_label": "Oslo i alt",
+          "sex": "2",
+          "age": "002",
+          "year": 2026,
+          "contents_code": "Personer",
+          "contents_label": "Personer",
+          "value": 3638,
+          "status": null,
+          "loaded_at": "2026-05-06T14:37:27.396+00:00"
+        },
+        {
+          "region_code": "030100aa",
+          "region_label": "Oslo i alt",
+          "sex": "2",
+          "age": "003",
+          "year": 2026,
+          "contents_code": "Personer",
+          "contents_label": "Personer",
+          "value": 3348,
+          "status": null,
+          "loaded_at": "2026-05-06T14:37:27.396+00:00"
+        },
+        {
+          "region_code": "030100aa",
+          "region_label": "Oslo i alt",
+          "sex": "2",
+          "age": "004",
+          "year": 2026,
+          "contents_code": "Personer",
+          "contents_label": "Personer",
+          "value": 3711,
+          "status": null,
+          "loaded_at": "2026-05-06T14:37:27.396+00:00"
+        }
+      ]
+    },
+    "ssb-12063": {
+      "raw_table": "ssb_12063",
+      "rows": [
+        {
+          "region_code": "3101",
+          "year": 2025,
+          "contents_code": "KOSfritidkomm0000",
+          "contents_label": "Kommunale fritidssenter (antall)",
+          "value": 2,
+          "status": null,
+          "loaded_at": "2026-05-06T14:37:32.53+00:00"
+        },
+        {
+          "region_code": "3101",
+          "year": 2025,
+          "contents_code": "KOSfritidtimeruk0000",
+          "contents_label": "Timer åpen per uke i gjennomsnitt, kommunale fritidssenter (timer)",
+          "value": 30.5,
+          "status": null,
+          "loaded_at": "2026-05-06T14:37:32.53+00:00"
+        },
+        {
+          "region_code": "3101",
+          "year": 2025,
+          "contents_code": "KOStestfritidtim0000",
+          "contents_label": "Timer åpen årlig, kommunale fritidssenter  (timer)",
+          "value": 2806,
+          "status": null,
+          "loaded_at": "2026-05-06T14:37:32.53+00:00"
+        },
+        {
+          "region_code": "3101",
+          "year": 2025,
+          "contents_code": "KOSfritiddaguke0000",
+          "contents_label": "Dager åpen per uke i gjennomsnitt, kommunale fritidssenter (dager)",
+          "value": 5,
+          "status": null,
+          "loaded_at": "2026-05-06T14:37:32.53+00:00"
+        },
+        {
+          "region_code": "3101",
+          "year": 2025,
+          "contents_code": "KOSfritidukeaar0000",
+          "contents_label": "Uker åpen årlig i gjennomsnitt, kommunale fritidssenter (uker)",
+          "value": 46,
+          "status": null,
+          "loaded_at": "2026-05-06T14:37:32.53+00:00"
+        }
+      ]
+    },
+    "ssb-12131": {
+      "raw_table": "ssb_12131",
+      "rows": [
+        {
+          "region_code": "3101",
+          "year": 2025,
+          "contents_code": "KOSsatsenslig0000",
+          "contents_label": "Stønadssats per måned for enslig (kr)",
+          "value": 8100,
+          "status": null,
+          "loaded_at": "2026-05-06T14:37:35.288+00:00"
+        },
+        {
+          "region_code": "3101",
+          "year": 2025,
+          "contents_code": "KOSsatsektepar0000",
+          "contents_label": "Stønadssats per måned for samboere/ ektepar (kr)",
+          "value": 13500,
+          "status": null,
+          "loaded_at": "2026-05-06T14:37:35.288+00:00"
+        },
+        {
+          "region_code": "3101",
+          "year": 2025,
+          "contents_code": "KOSsatsbofelless0000",
+          "contents_label": "Tillegg for person i bofellesskap (kr)",
+          "value": 6800,
+          "status": null,
+          "loaded_at": "2026-05-06T14:37:35.288+00:00"
+        },
+        {
+          "region_code": "3101",
+          "year": 2025,
+          "contents_code": "KOSsatsbarn050000",
+          "contents_label": "Tillegg for ett barn 0-5 år (kr)",
+          "value": 3950,
+          "status": null,
+          "loaded_at": "2026-05-06T14:37:35.288+00:00"
+        },
+        {
+          "region_code": "3101",
+          "year": 2025,
+          "contents_code": "KOSsatsbarn6100000",
+          "contents_label": "Tillegg for ett barn 6-10 år (kr)",
+          "value": 4050,
+          "status": null,
+          "loaded_at": "2026-05-06T14:37:35.288+00:00"
+        }
+      ]
+    },
+    "ssb-12132": {
+      "raw_table": "ssb_12132",
+      "rows": [
+        {
+          "region_code": "3101",
+          "year": 2025,
+          "contents_code": "KOSutgiftmat0000",
+          "contents_label": "Mat/ drikke inkludert i kommunal stønadssatsen for enslig mottaker uten barn?  (ja=1, nei=0)",
+          "value": 1,
+          "status": null,
+          "loaded_at": "2026-05-06T14:37:38.39+00:00"
+        },
+        {
+          "region_code": "3101",
+          "year": 2025,
+          "contents_code": "KOSutgiftsko0000",
+          "contents_label": "Klær/ sko inkludert i kommunal stønadssats for enslig mottaker uten barn (ja=1, nei=0)",
+          "value": 1,
+          "status": null,
+          "loaded_at": "2026-05-06T14:37:38.39+00:00"
+        },
+        {
+          "region_code": "3101",
+          "year": 2025,
+          "contents_code": "KOSutgifthushold0000",
+          "contents_label": "Husholdningsartikler/ hygiene inkludert i stønadssatsen for enslig mottaker uten barn (ja=1, nei=0)",
+          "value": 1,
+          "status": null,
+          "loaded_at": "2026-05-06T14:37:38.39+00:00"
+        },
+        {
+          "region_code": "3101",
+          "year": 2025,
+          "contents_code": "KOSutgifttlf0000",
+          "contents_label": "TV-lisens, avis, telefon inkludert i stønadssatsen for enslig mottaker uten barn (ja=1, nei=0)",
+          "value": 1,
+          "status": null,
+          "loaded_at": "2026-05-06T14:37:38.39+00:00"
+        },
+        {
+          "region_code": "3101",
+          "year": 2025,
+          "contents_code": "KOSutgiftfritid0000",
+          "contents_label": "Fritidsaktiviteter inkludert i stønadssatsen for enslig mottaker uten barn (ja=1, nei=0)",
+          "value": 1,
+          "status": null,
+          "loaded_at": "2026-05-06T14:37:38.39+00:00"
+        }
+      ]
+    },
+    "ssb-12292": {
+      "raw_table": "ssb_12292",
+      "rows": [
+        {
+          "region_code": "3101",
+          "year": 2025,
+          "contents_code": "KOSaarsverkvg0000",
+          "contents_label": "Brukerrettede årsverk med videregående helsefaglig utdanning i omsorgstjenesten (antall)",
+          "value": 427,
+          "status": null,
+          "loaded_at": "2026-05-06T14:37:41.524+00:00"
+        },
+        {
+          "region_code": "3101",
+          "year": 2025,
+          "contents_code": "KOSaarsverkuniho0000",
+          "contents_label": "Brukerrettede årsverk med høyere helsefaglig utdanning i omsorgstjenesten (antall)",
+          "value": 254,
+          "status": null,
+          "loaded_at": "2026-05-06T14:37:41.524+00:00"
+        },
+        {
+          "region_code": "3101",
+          "year": 2025,
+          "contents_code": "KOSomsorgbrukere0000",
+          "contents_label": "Brukere av utvalgte omsorgstjenester (antall)",
+          "value": 1299,
+          "status": null,
+          "loaded_at": "2026-05-06T14:37:41.524+00:00"
+        },
+        {
+          "region_code": "3101",
+          "year": 2025,
+          "contents_code": "KOSinst80aarover0000",
+          "contents_label": "Institusjon - beboere 80 år og over (antall)",
+          "value": 150,
+          "status": null,
+          "loaded_at": "2026-05-06T14:37:41.524+00:00"
+        },
+        {
+          "region_code": "3101",
+          "year": 2025,
+          "contents_code": "KOSkorttid0000",
+          "contents_label": "Institusjon - beboere på tidsbegrenset opphold (antall)",
+          "value": 62,
+          "status": null,
+          "loaded_at": "2026-05-06T14:37:41.524+00:00"
+        }
+      ]
+    },
+    "ssb-12944": {
+      "raw_table": "ssb_12944",
+      "rows": [
+        {
+          "region_code": "3101",
+          "age_group": "999A",
+          "period": "2022-2024",
+          "contents_code": "PersonerSeksti",
+          "contents_label": "Antall personer i gruppa, EU-skala 60 prosent",
+          "value": 3649,
+          "status": null,
+          "loaded_at": "2026-05-06T14:37:49.64+00:00"
+        },
+        {
+          "region_code": "3101",
+          "age_group": "00-17",
+          "period": "2022-2024",
+          "contents_code": "PersonerSeksti",
+          "contents_label": "Antall personer i gruppa, EU-skala 60 prosent",
+          "value": 718,
+          "status": null,
+          "loaded_at": "2026-05-06T14:37:49.64+00:00"
+        },
+        {
+          "region_code": "3101",
+          "age_group": "18-34",
+          "period": "2022-2024",
+          "contents_code": "PersonerSeksti",
+          "contents_label": "Antall personer i gruppa, EU-skala 60 prosent",
+          "value": 891,
+          "status": null,
+          "loaded_at": "2026-05-06T14:37:49.64+00:00"
+        },
+        {
+          "region_code": "3101",
+          "age_group": "35-49",
+          "period": "2022-2024",
+          "contents_code": "PersonerSeksti",
+          "contents_label": "Antall personer i gruppa, EU-skala 60 prosent",
+          "value": 668,
+          "status": null,
+          "loaded_at": "2026-05-06T14:37:49.64+00:00"
+        },
+        {
+          "region_code": "3101",
+          "age_group": "50-66",
+          "period": "2022-2024",
+          "contents_code": "PersonerSeksti",
+          "contents_label": "Antall personer i gruppa, EU-skala 60 prosent",
+          "value": 689,
+          "status": null,
+          "loaded_at": "2026-05-06T14:37:49.64+00:00"
+        }
+      ]
+    },
+    "ssb-13995": {
+      "raw_table": "ssb_13995",
+      "rows": [
+        {
+          "region_code": "3101",
+          "year": 2025,
+          "contents_code": "KOSFolkemengdeia0000",
+          "contents_label": "Folkemengde i alt (antall)",
+          "value": 32082,
+          "status": null,
+          "loaded_at": "2026-05-06T14:37:52.535+00:00"
+        },
+        {
+          "region_code": "3101",
+          "year": 2025,
+          "contents_code": "KOSsosantkliente0000",
+          "contents_label": "Sosialhjelpstilfeller (antall)",
+          "value": 1465,
+          "status": null,
+          "loaded_at": "2026-05-06T14:37:52.535+00:00"
+        },
+        {
+          "region_code": "3101",
+          "year": 2025,
+          "contents_code": "KOSandelsosmotta0000",
+          "contents_label": "Andel av sosialhjelpstilfeller (prosent) (prosent)",
+          "value": 4.6,
+          "status": null,
+          "loaded_at": "2026-05-06T14:37:52.535+00:00"
+        },
+        {
+          "region_code": "3101",
+          "year": 2025,
+          "contents_code": "KOSantfamBU180000",
+          "contents_label": "Sosialhjelpstilfeller som forsørger barn under 18 år (antall)",
+          "value": 369,
+          "status": null,
+          "loaded_at": "2026-05-06T14:37:52.535+00:00"
+        },
+        {
+          "region_code": "3101",
+          "year": 2025,
+          "contents_code": "KOSantbu180000",
+          "contents_label": "Antall barn under 18 i familier som mottok sosialhjelp (antall)",
+          "value": 714,
+          "status": null,
+          "loaded_at": "2026-05-06T14:37:52.535+00:00"
+        }
+      ]
+    },
+    "ssb-crime-tables": {
+      "raw_table": "ssb_09406",
+      "rows": [
+        {
+          "lovbrudd_krim_code": "1AAAAA-9ZZZZZ",
+          "lovbrudd_krim_label": "Alle lovbruddstyper",
+          "contents_code": "LovbruddEtterforsket",
+          "contents_label": "Lovbrudd etterforsket",
+          "year": 1996,
+          "value": null,
+          "status": ".",
+          "loaded_at": "2026-05-06T14:38:07.149+00:00"
+        },
+        {
+          "lovbrudd_krim_code": "1AAAAA-9ZZZZZ",
+          "lovbrudd_krim_label": "Alle lovbruddstyper",
+          "contents_code": "LovbruddEtterforsket",
+          "contents_label": "Lovbrudd etterforsket",
+          "year": 1997,
+          "value": null,
+          "status": ".",
+          "loaded_at": "2026-05-06T14:38:07.149+00:00"
+        },
+        {
+          "lovbrudd_krim_code": "1AAAAA-9ZZZZZ",
+          "lovbrudd_krim_label": "Alle lovbruddstyper",
+          "contents_code": "LovbruddEtterforsket",
+          "contents_label": "Lovbrudd etterforsket",
+          "year": 1998,
+          "value": null,
+          "status": ".",
+          "loaded_at": "2026-05-06T14:38:07.149+00:00"
+        },
+        {
+          "lovbrudd_krim_code": "1AAAAA-9ZZZZZ",
+          "lovbrudd_krim_label": "Alle lovbruddstyper",
+          "contents_code": "LovbruddEtterforsket",
+          "contents_label": "Lovbrudd etterforsket",
+          "year": 1999,
+          "value": null,
+          "status": ".",
+          "loaded_at": "2026-05-06T14:38:07.149+00:00"
+        },
+        {
+          "lovbrudd_krim_code": "1AAAAA-9ZZZZZ",
+          "lovbrudd_krim_label": "Alle lovbruddstyper",
+          "contents_code": "LovbruddEtterforsket",
+          "contents_label": "Lovbrudd etterforsket",
+          "year": 2000,
+          "value": null,
+          "status": ".",
+          "loaded_at": "2026-05-06T14:38:07.149+00:00"
+        }
+      ]
+    },
+    "ssb-klass-fylker": {
+      "raw_table": "ssb_klass_fylker",
+      "rows": [
+        {
+          "code": "01",
+          "name": "Østfold",
+          "parent_code": null,
+          "level": "1",
+          "short_name": null,
+          "valid_from": null,
+          "valid_to": null,
+          "valid_from_in_range": "1960-01-01",
+          "valid_to_in_range": "2020-01-01",
+          "notes": null,
+          "loaded_at": "2026-05-06T14:38:41.234+00:00"
+        },
+        {
+          "code": "02",
+          "name": "Akershus",
+          "parent_code": null,
+          "level": "1",
+          "short_name": null,
+          "valid_from": null,
+          "valid_to": null,
+          "valid_from_in_range": "1960-01-01",
+          "valid_to_in_range": "2020-01-01",
+          "notes": null,
+          "loaded_at": "2026-05-06T14:38:41.234+00:00"
+        },
+        {
+          "code": "03",
+          "name": "Oslo",
+          "parent_code": null,
+          "level": "1",
+          "short_name": null,
+          "valid_from": null,
+          "valid_to": null,
+          "valid_from_in_range": "1960-01-01",
+          "valid_to_in_range": "2026-01-01",
+          "notes": null,
+          "loaded_at": "2026-05-06T14:38:41.234+00:00"
+        },
+        {
+          "code": "03",
+          "name": "Oslo - Oslove",
+          "parent_code": null,
+          "level": "1",
+          "short_name": null,
+          "valid_from": null,
+          "valid_to": null,
+          "valid_from_in_range": "2026-01-01",
+          "valid_to_in_range": "2100-01-01",
+          "notes": null,
+          "loaded_at": "2026-05-06T14:38:41.234+00:00"
+        },
+        {
+          "code": "04",
+          "name": "Hedmark",
+          "parent_code": null,
+          "level": "1",
+          "short_name": null,
+          "valid_from": null,
+          "valid_to": null,
+          "valid_from_in_range": "1960-01-01",
+          "valid_to_in_range": "2020-01-01",
+          "notes": null,
+          "loaded_at": "2026-05-06T14:38:41.234+00:00"
+        }
+      ]
+    },
+    "ssb-klass-kommuner": {
+      "raw_table": "ssb_klass_kommuner",
+      "rows": [
+        {
+          "code": "1442",
+          "name": "Davik",
+          "parent_code": null,
+          "level": "1",
+          "short_name": null,
+          "valid_from": null,
+          "valid_to": null,
+          "valid_from_in_range": "1960-01-01",
+          "valid_to_in_range": "1965-01-01",
+          "notes": "I 1965 ble 1438 Bremanger (untatt eiendommene Husefest og Breivik som hadde blitt overført til 1401 Flora 1.1.1964) og 1442 Davik (området sør for Nordfjorden, med- regnet øyområdene unntatt Husevågøy, Grindøy,  Gangsøy og Risøy) slått sammen til 1438 Bre",
+          "loaded_at": "2026-05-06T14:38:49.955+00:00"
+        },
+        {
+          "code": "1443",
+          "name": "Eid",
+          "parent_code": null,
+          "level": "1",
+          "short_name": null,
+          "valid_from": null,
+          "valid_to": null,
+          "valid_from_in_range": "2002-01-01",
+          "valid_to_in_range": "2003-01-01",
+          "notes": null,
+          "loaded_at": "2026-05-06T14:38:49.955+00:00"
+        },
+        {
+          "code": "1420",
+          "name": "Sogndal",
+          "parent_code": null,
+          "level": "1",
+          "short_name": null,
+          "valid_from": null,
+          "valid_to": null,
+          "valid_from_in_range": "2002-01-01",
+          "valid_to_in_range": "2003-01-01",
+          "notes": null,
+          "loaded_at": "2026-05-06T14:38:49.955+00:00"
+        },
+        {
+          "code": "1420",
+          "name": "Sogndal",
+          "parent_code": null,
+          "level": "1",
+          "short_name": null,
+          "valid_from": null,
+          "valid_to": null,
+          "valid_from_in_range": "2005-01-01",
+          "valid_to_in_range": "2011-01-01",
+          "notes": null,
+          "loaded_at": "2026-05-06T14:38:49.955+00:00"
+        },
+        {
+          "code": "1420",
+          "name": "Sogndal",
+          "parent_code": null,
+          "level": "1",
+          "short_name": null,
+          "valid_from": null,
+          "valid_to": null,
+          "valid_from_in_range": "2012-01-01",
+          "valid_to_in_range": "2015-01-01",
+          "notes": null,
+          "loaded_at": "2026-05-06T14:38:49.955+00:00"
+        }
+      ]
+    }
+  },
+  "views": {
+    "indicator_summary": {
+      "mart_name": "mart_indicator_summary",
+      "rows": [
+        {
+          "source_id": "fhi-bor-alene",
+          "contents_code": "RATE",
+          "contents_label": "Andel (prosent)",
+          "latest_year": 2025,
+          "kommuner_with_value": 357,
+          "kommuner_with_null": 0,
+          "min_value": 14.7781128823783,
+          "max_value": 35.7101449275362,
+          "upstream_updated": "2026-05-06T14:33:01.602+00:00"
+        },
+        {
+          "source_id": "fhi-bor-alene",
+          "contents_code": "SMR",
+          "contents_label": "Standardisert rate (100 = nasjonalt snitt)",
+          "latest_year": 2025,
+          "kommuner_with_value": 357,
+          "kommuner_with_null": 0,
+          "min_value": 58.8771298331957,
+          "max_value": 142.271943379717,
+          "upstream_updated": "2026-05-06T14:33:01.602+00:00"
+        },
+        {
+          "source_id": "fhi-bor-alene",
+          "contents_code": "TELLER",
+          "contents_label": "Antall personer",
+          "latest_year": 2025,
+          "kommuner_with_value": 357,
+          "kommuner_with_null": 0,
+          "min_value": 47,
+          "max_value": 202221,
+          "upstream_updated": "2026-05-06T14:33:01.602+00:00"
+        },
+        {
+          "source_id": "fhi-mobbing",
+          "contents_code": "RATE_grade10",
+          "contents_label": "Andel (prosent) (10. trinn)",
+          "latest_year": 2022,
+          "kommuner_with_value": 167,
+          "kommuner_with_null": 190,
+          "min_value": 3.36473755047106,
+          "max_value": 18.3098591549296,
+          "upstream_updated": "2026-05-06T14:34:02.398+00:00"
+        },
+        {
+          "source_id": "fhi-mobbing",
+          "contents_code": "RATE_grade7",
+          "contents_label": "Andel (prosent) (7. trinn)",
+          "latest_year": 2022,
+          "kommuner_with_value": 208,
+          "kommuner_with_null": 149,
+          "min_value": 2.72479564032698,
+          "max_value": 36.3636363636364,
+          "upstream_updated": "2026-05-06T14:34:02.398+00:00"
+        }
+      ]
+    },
+    "indicator_latest_values": {
+      "mart_name": "mart_indicator_latest_values",
+      "rows": [
+        {
+          "source_id": "fhi-bor-alene",
+          "contents_code": "RATE",
+          "kommune_nr": "0301",
+          "kommune_name": "Oslo",
+          "fylke_name": "Oslo",
+          "value": 33.5128676379196,
+          "status": null,
+          "year": 2025
+        },
+        {
+          "source_id": "fhi-bor-alene",
+          "contents_code": "RATE",
+          "kommune_nr": "1101",
+          "kommune_name": "Eigersund",
+          "fylke_name": "Rogaland",
+          "value": 21.2904261295241,
+          "status": null,
+          "year": 2025
+        },
+        {
+          "source_id": "fhi-bor-alene",
+          "contents_code": "RATE",
+          "kommune_nr": "1103",
+          "kommune_name": "Stavanger",
+          "fylke_name": "Rogaland",
+          "value": 24.9676309104319,
+          "status": null,
+          "year": 2025
+        },
+        {
+          "source_id": "fhi-bor-alene",
+          "contents_code": "RATE",
+          "kommune_nr": "1106",
+          "kommune_name": "Haugesund",
+          "fylke_name": "Rogaland",
+          "value": 28.4239677744209,
+          "status": null,
+          "year": 2025
+        },
+        {
+          "source_id": "fhi-bor-alene",
+          "contents_code": "RATE",
+          "kommune_nr": "1108",
+          "kommune_name": "Sandnes",
+          "fylke_name": "Rogaland",
+          "value": 20.6749226931178,
+          "status": null,
+          "year": 2025
+        }
+      ]
+    },
+    "indicator_missing_kommuner": {
+      "mart_name": "mart_indicator_missing_kommuner",
+      "rows": [
+        {
+          "source_id": "ssb-crime-tables",
+          "contents_code": "5532__18__AnmeldteLovbrudd__2007-2008",
+          "kommune_nr": "1857",
+          "kommune_name": "Værøy"
+        },
+        {
+          "source_id": "ssb-crime-tables",
+          "contents_code": "5532__18__AnmeldteLovbrudd__2007-2008",
+          "kommune_nr": "1859",
+          "kommune_name": "Flakstad"
+        },
+        {
+          "source_id": "ssb-crime-tables",
+          "contents_code": "5532__18__AnmeldteLovbrudd__2007-2008",
+          "kommune_nr": "1860",
+          "kommune_name": "Vestvågøy"
+        },
+        {
+          "source_id": "ssb-crime-tables",
+          "contents_code": "5532__18__AnmeldteLovbrudd__2007-2008",
+          "kommune_nr": "1865",
+          "kommune_name": "Vågan"
+        },
+        {
+          "source_id": "ssb-crime-tables",
+          "contents_code": "5532__18__AnmeldteLovbrudd__2007-2008",
+          "kommune_nr": "1866",
+          "kommune_name": "Hadsel"
+        }
+      ]
+    },
+    "coverage_gap_barnefattigdom": {
+      "mart_name": "mart_coverage_gap_barnefattigdom",
+      "rows": [
+        {
+          "kommune_nr": "0301",
+          "kommune_name": "Oslo",
+          "fylke_name": "Oslo",
+          "year": 2024,
+          "value_pct": 13,
+          "personer": 130343
+        },
+        {
+          "kommune_nr": "1101",
+          "kommune_name": "Eigersund",
+          "fylke_name": "Rogaland",
+          "year": 2024,
+          "value_pct": 8.6,
+          "personer": 3270
+        },
+        {
+          "kommune_nr": "1103",
+          "kommune_name": "Stavanger",
+          "fylke_name": "Rogaland",
+          "year": 2024,
+          "value_pct": 9.9,
+          "personer": 31018
+        },
+        {
+          "kommune_nr": "1106",
+          "kommune_name": "Haugesund",
+          "fylke_name": "Rogaland",
+          "year": 2024,
+          "value_pct": 11.8,
+          "personer": 7358
+        },
+        {
+          "kommune_nr": "1108",
+          "kommune_name": "Sandnes",
+          "fylke_name": "Rogaland",
+          "year": 2024,
+          "value_pct": 9,
+          "personer": 19802
+        }
+      ]
+    },
+    "ngo_index": {
+      "mart_name": "mart_ngo_index",
+      "rows": [
+        {
+          "orgnr": "943838240",
+          "slug": "fire-h",
+          "name": "4H Norge",
+          "brand_name": null,
+          "website_url": "https://www.4h.no",
+          "tier": "A",
+          "chapter_data_shape": "cms_bins",
+          "has_chapters": true,
+          "primary_focus": "youth",
+          "icnpo_code_1": null,
+          "icnpo_code_2": null,
+          "icnpo_code_3": null,
+          "chapter_count": 0,
+          "has_supply": false
+        },
+        {
+          "orgnr": "970169113",
+          "slug": "diabetesforbundet",
+          "name": "Diabetesforbundet",
+          "brand_name": null,
+          "website_url": "https://www.diabetes.no",
+          "tier": "A",
+          "chapter_data_shape": "cms_bins",
+          "has_chapters": true,
+          "primary_focus": "patient_support",
+          "icnpo_code_1": null,
+          "icnpo_code_2": null,
+          "icnpo_code_3": null,
+          "chapter_count": 0,
+          "has_supply": false
+        },
+        {
+          "orgnr": "938498318",
+          "slug": "frelsesarmeen",
+          "name": "Frelsesarmeen",
+          "brand_name": null,
+          "website_url": "https://www.frelsesarmeen.no",
+          "tier": "A",
+          "chapter_data_shape": "cms_bins",
+          "has_chapters": true,
+          "primary_focus": "social",
+          "icnpo_code_1": null,
+          "icnpo_code_2": null,
+          "icnpo_code_3": null,
+          "chapter_count": 0,
+          "has_supply": false
+        },
+        {
+          "orgnr": "940190738",
+          "slug": "lhl",
+          "name": "Landsforeningen for hjerte- og lungesyke",
+          "brand_name": "LHL",
+          "website_url": "https://www.lhl.no",
+          "tier": "A",
+          "chapter_data_shape": "cms_bins",
+          "has_chapters": true,
+          "primary_focus": "patient_support",
+          "icnpo_code_1": null,
+          "icnpo_code_2": null,
+          "icnpo_code_3": null,
+          "chapter_count": 0,
+          "has_supply": false
+        },
+        {
+          "orgnr": "971322926",
+          "slug": "mental-helse",
+          "name": "Mental Helse",
+          "brand_name": null,
+          "website_url": "https://mentalhelse.no",
+          "tier": "A",
+          "chapter_data_shape": "cms_bins",
+          "has_chapters": true,
+          "primary_focus": "patient_support",
+          "icnpo_code_1": null,
+          "icnpo_code_2": null,
+          "icnpo_code_3": null,
+          "chapter_count": 0,
+          "has_supply": false
+        }
+      ]
+    },
+    "ngo_overview": {
+      "mart_name": "mart_ngo_overview",
+      "rows": [
+        {
+          "orgnr": "864139442",
+          "chapter_count": 391,
+          "national_count": 1,
+          "regional_count": 18,
+          "local_count": 372,
+          "activity_count": 35,
+          "kommune_count": 265
+        },
+        {
+          "orgnr": "871033552",
+          "chapter_count": 0,
+          "national_count": 0,
+          "regional_count": 0,
+          "local_count": 0,
+          "activity_count": 0,
+          "kommune_count": 0
+        },
+        {
+          "orgnr": "938429863",
+          "chapter_count": 0,
+          "national_count": 0,
+          "regional_count": 0,
+          "local_count": 0,
+          "activity_count": 0,
+          "kommune_count": 0
+        },
+        {
+          "orgnr": "938498318",
+          "chapter_count": 0,
+          "national_count": 0,
+          "regional_count": 0,
+          "local_count": 0,
+          "activity_count": 0,
+          "kommune_count": 0
+        },
+        {
+          "orgnr": "940190738",
+          "chapter_count": 0,
+          "national_count": 0,
+          "regional_count": 0,
+          "local_count": 0,
+          "activity_count": 0,
+          "kommune_count": 0
+        }
+      ]
+    },
+    "activity_catalog": {
+      "mart_name": "mart_activity_catalog",
+      "rows": [
+        {
+          "activity_id": "redcross-aktiviteter-pa-asylmottak",
+          "ngo_orgnr": "864139442",
+          "canonical_name": "Aktiviteter på asylmottak",
+          "service_category_code": "migrant_mentoring",
+          "service_category_label_no": "Flyktningguide",
+          "is_active": true,
+          "chapter_count": 35
+        },
+        {
+          "activity_id": "redcross-aktiviteter-pa-utlendingsinternat",
+          "ngo_orgnr": "864139442",
+          "canonical_name": "Aktiviteter på utlendingsinternat",
+          "service_category_code": "migrant_mentoring",
+          "service_category_label_no": "Flyktningguide",
+          "is_active": true,
+          "chapter_count": 1
+        },
+        {
+          "activity_id": "redcross-akuttovernatting-for-bostedslose-tilreisende",
+          "ngo_orgnr": "864139442",
+          "canonical_name": "Akuttovernatting for bostedsløse tilreisende",
+          "service_category_code": "housing_outreach",
+          "service_category_label_no": "Boligoppsøking",
+          "is_active": true,
+          "chapter_count": 3
+        },
+        {
+          "activity_id": "redcross-barnas-rode-kors",
+          "ngo_orgnr": "864139442",
+          "canonical_name": "Barnas Røde Kors",
+          "service_category_code": "youth_activity_groups",
+          "service_category_label_no": "Ungdomsgruppe",
+          "is_active": true,
+          "chapter_count": 107
+        },
+        {
+          "activity_id": "redcross-beredskap",
+          "ngo_orgnr": "864139442",
+          "canonical_name": "Beredskap",
+          "service_category_code": "first_aid_standby",
+          "service_category_label_no": "Beredskapsvakt",
+          "is_active": true,
+          "chapter_count": 171
+        }
+      ]
+    },
+    "distrikt_summary": {
+      "mart_name": "mart_distrikt_summary",
+      "rows": [
+        {
+          "chapter_id": "redcross-D018",
+          "name": "Agder Røde Kors",
+          "kommune_nr": "4204",
+          "kommune_name": "Kristiansand",
+          "ngo_orgnr": "864139442",
+          "child_count": 17,
+          "kommune_coverage_count": 12
+        },
+        {
+          "chapter_id": "redcross-D002",
+          "name": "Akershus Røde Kors",
+          "kommune_nr": "3205",
+          "kommune_name": "Lillestrøm",
+          "ngo_orgnr": "864139442",
+          "child_count": 19,
+          "kommune_coverage_count": 16
+        },
+        {
+          "chapter_id": "redcross-D006",
+          "name": "Buskerud Røde Kors",
+          "kommune_nr": "3301",
+          "kommune_name": "Drammen",
+          "ngo_orgnr": "864139442",
+          "child_count": 19,
+          "kommune_coverage_count": 15
+        },
+        {
+          "chapter_id": "redcross-D017",
+          "name": "Finnmark Røde Kors",
+          "kommune_nr": "5607",
+          "kommune_name": "Vadsø",
+          "ngo_orgnr": "864139442",
+          "child_count": 17,
+          "kommune_coverage_count": 13
+        },
+        {
+          "chapter_id": "redcross-D004",
+          "name": "Hedmark Røde Kors",
+          "kommune_nr": "3403",
+          "kommune_name": "Hamar",
+          "ngo_orgnr": "864139442",
+          "child_count": 21,
+          "kommune_coverage_count": 16
+        }
+      ]
+    },
+    "kommune_local_chapters": {
+      "mart_name": "mart_kommune_local_chapters",
+      "rows": [
+        {
+          "kommune_nr": "1101",
+          "chapter_id": "redcross-L136",
+          "name": "Egersund og Dalane Røde Kors",
+          "ngo_orgnr": "864139442",
+          "ngo_name": "Norges Røde Kors",
+          "ngo_brand_name": "Røde Kors",
+          "service_category_code": "rescue_corps",
+          "service_category_label_no": "Hjelpekorps",
+          "sort_order": 1
+        },
+        {
+          "kommune_nr": "1101",
+          "chapter_id": "redcross-L136",
+          "name": "Egersund og Dalane Røde Kors",
+          "ngo_orgnr": "864139442",
+          "ngo_name": "Norges Røde Kors",
+          "ngo_brand_name": "Røde Kors",
+          "service_category_code": "first_aid_standby",
+          "service_category_label_no": "Beredskapsvakt",
+          "sort_order": 2
+        },
+        {
+          "kommune_nr": "1101",
+          "chapter_id": "redcross-L136",
+          "name": "Egersund og Dalane Røde Kors",
+          "ngo_orgnr": "864139442",
+          "ngo_name": "Norges Røde Kors",
+          "ngo_brand_name": "Røde Kors",
+          "service_category_code": "first_aid_training",
+          "service_category_label_no": "Førstehjelpskurs",
+          "sort_order": 3
+        },
+        {
+          "kommune_nr": "1101",
+          "chapter_id": "redcross-L136",
+          "name": "Egersund og Dalane Røde Kors",
+          "ngo_orgnr": "864139442",
+          "ngo_name": "Norges Røde Kors",
+          "ngo_brand_name": "Røde Kors",
+          "service_category_code": "elderly_visiting",
+          "service_category_label_no": "Besøkstjeneste",
+          "sort_order": 4
+        },
+        {
+          "kommune_nr": "1101",
+          "chapter_id": "redcross-L136",
+          "name": "Egersund og Dalane Røde Kors",
+          "ngo_orgnr": "864139442",
+          "ngo_name": "Norges Røde Kors",
+          "ngo_brand_name": "Røde Kors",
+          "service_category_code": "language_practice",
+          "service_category_label_no": "Norsktrening",
+          "sort_order": 5
+        }
+      ]
+    },
+    "bufdir_indicator_alias": {
+      "mart_name": "mart_bufdir_indicator_alias",
+      "rows": [
+        {
+          "source_id": "bufdir-barnefattigdom",
+          "historical_id": "bf_zip_ind_10",
+          "canonical_id": null,
+          "note": "Indikator 10 retired by Bufdir; no direct successor in the bundle as of 2026-05-04. Consumers comparing pre/post-retirement should treat 10's series as terminating; canonical_id is null by design."
+        },
+        {
+          "source_id": "bufdir-barnefattigdom",
+          "historical_id": "bf_zip_ind_9",
+          "canonical_id": "bf_zip_ind_9a",
+          "note": "Indikator 9 was split into 9a (innvandrerbakgrunn Afrika etc.) and 9b (EU etc.) — 9a is the closer successor in the Afrika-etc subcategory. See INVESTIGATE-bufdir-indicator-surrogate-id-stability.md for the editorial decision."
+        },
+        {
+          "source_id": "bufdir-barnefattigdom",
+          "historical_id": "bf_zip_ind_9",
+          "canonical_id": "bf_zip_ind_9b",
+          "note": "Same split as the row above — 9b is the closer successor in the EU-etc subcategory."
+        }
+      ]
+    },
+    "meta_sources": {
+      "mart_name": "mart_meta_sources",
+      "rows": [
+        {
+          "source_id": "bufdir-barnefattigdom",
+          "upstream_id": "barnefattigdom-monitor",
+          "upstream_url": "https://www.bufdir.no/statistikk-og-analyse/monitor/barnefattigdom/",
+          "upstream_landing_page": "https://www.bufdir.no/statistikk-og-analyse/monitor/barnefattigdom/",
+          "upstream_title": "Barnefattigdom kommunemonitor",
+          "description": "Barne-, ungdoms- og familiedirektoratet (Bufdir) publishes the Barnefattigdom kommunemonitor on bufdir.no and ships a single bulk ZIP of `Indikator_*.xlsx` workbooks (\"last ned hele datasettet\"). Atlas downloads that ZIP (URL discovered from the monitor page), parses sheet `Data` in each workbook, and loads kommune- and sub-kommune-level time series into `raw.bufdir_barnefattigdom` so analysts can compare Bufdir's poverty lens with register-based sources such as SSB low-income statistics.",
+          "publisher": "Barne-, ungdoms- og familiedirektoratet",
+          "license": "NLOD",
+          "license_url": "https://data.norge.no/nlod/no/2.0",
+          "periodicity": "P1Y",
+          "eu_theme": "SOCI",
+          "attribution": "Kilde: Barne-, ungdoms- og familiedirektoratet, Barnefattigdom kommunemonitor",
+          "tags": [
+            "provider:bufdir",
+            "topic:income",
+            "geo:kommune",
+            "cadence:annual",
+            "eu_theme:SOCI"
+          ],
+          "last_ingested_at": "2026-05-06T14:32:41.546258+00:00",
+          "last_upstream_update_at": "2025-07-31T12:50:25+00:00",
+          "latest_row_count": 395420,
+          "total_runs": 5,
+          "downstream_model_count": 1
+        },
+        {
+          "source_id": "fhi-alkohol",
+          "upstream_id": "332",
+          "upstream_url": "https://statistikk-data.fhi.no/api/open/v1/nokkel/table/332",
+          "upstream_landing_page": "https://statistikk.fhi.no/nokkel/129pesZRVuNuNrXngx3ao4bF8odgrZClPRFCbZEJnxs?GEO=0,03&AAR=2020_2020,2021_2021,2022_2022,2023_2023,2024_2024,2025_2025&KJONN=0&ALDER=1_6&ANTALL_GANGER=engangellerflere&SOES=0&MEASURE_TYPE=SMR",
+          "upstream_title": "Alkohol_Ungdata_KH",
+          "description": "FHI Folkehelsestatistikk table 332 — share of Ungdata respondents reporting alcohol use one or more times in the past year. Risk-direction youth-substance-use indicator on the Ungdata cohort base.",
+          "publisher": "Folkehelseinstituttet",
+          "license": "NLOD",
+          "license_url": "https://data.norge.no/nlod/no/2.0",
+          "periodicity": "P1Y",
+          "eu_theme": "HEAL",
+          "attribution": "Kilde: Folkehelseinstituttet, Folkehelsestatistikk tabell 332 (Ungdata)",
+          "tags": [
+            "provider:fhi",
+            "topic:health",
+            "geo:kommune",
+            "cadence:annual",
+            "eu_theme:HEAL"
+          ],
+          "last_ingested_at": "2026-05-06T14:32:48.195641+00:00",
+          "last_upstream_update_at": "2026-01-20T21:37:20.273+00:00",
+          "latest_row_count": 34356,
+          "total_runs": 1,
+          "downstream_model_count": 0
+        },
+        {
+          "source_id": "fhi-befolkning",
+          "upstream_id": "338",
+          "upstream_url": "https://statistikk-data.fhi.no/api/open/v1/nokkel/table/338",
+          "upstream_landing_page": "https://statistikk.fhi.no/nokkel/iIALHYpjwwxCYECV9iAnanUAYXxFBhFZdQW1M7T5EeA?GEO=0&AAR=2020_2020,2021_2021,2022_2022,2023_2023,2024_2024,2025_2025&KJONN=0&ALDER=0_120,0_17,80_120&MEASURE_TYPE=TELLER",
+          "upstream_title": "Befolkningssammensetning_antall_andel",
+          "description": "FHI Folkehelsestatistikk table 338 — Befolkningssammensetning. Population counts by region × sex × age band, used as the demographic denominator across other indicators (per-capita rates, age structure).",
+          "publisher": "Folkehelseinstituttet",
+          "license": "NLOD",
+          "license_url": "https://data.norge.no/nlod/no/2.0",
+          "periodicity": "P1Y",
+          "eu_theme": "SOCI",
+          "attribution": "Kilde: Folkehelseinstituttet, Folkehelsestatistikk tabell 338",
+          "tags": [
+            "provider:fhi",
+            "topic:demographics",
+            "geo:kommune",
+            "cadence:annual",
+            "eu_theme:SOCI"
+          ],
+          "last_ingested_at": "2026-05-06T14:32:55.767721+00:00",
+          "last_upstream_update_at": "2025-10-21T08:50:38.184+00:00",
+          "latest_row_count": 42945,
+          "total_runs": 1,
+          "downstream_model_count": 0
+        },
+        {
+          "source_id": "fhi-befolkningsvekst",
+          "upstream_id": "185",
+          "upstream_url": "https://statistikk-data.fhi.no/api/open/v1/nokkel/table/185",
+          "upstream_landing_page": "https://statistikk.fhi.no/nokkel/_SvW9Ag1SYWnNEu0EHxrI_00QJUulcZKUvTgpPNqiyw?GEO=0,03,31,32,33,34,39,40,42,11,46,15,50,18,55,56&AAR=2019_2019,2020_2020,2021_2021,2022_2022,2023_2023,2024_2024&KJONN=0&ALDER=0_120&MEASURE_TYPE=TELLER",
+          "upstream_title": "Befolkningsvekst",
+          "description": "FHI Folkehelsestatistikk table 185 — year-over-year population growth per region (counts and percent rates). Pairs with fhi-befolkning (observed) and fhi-prognose (projected) for full historical-and-forecast trajectories.",
+          "publisher": "Folkehelseinstituttet",
+          "license": "NLOD",
+          "license_url": "https://data.norge.no/nlod/no/2.0",
+          "periodicity": "P1Y",
+          "eu_theme": "SOCI",
+          "attribution": "Kilde: Folkehelseinstituttet, Folkehelsestatistikk tabell 185",
+          "tags": [
+            "provider:fhi",
+            "topic:demographics",
+            "geo:kommune",
+            "cadence:annual",
+            "eu_theme:SOCI"
+          ],
+          "last_ingested_at": "2026-05-06T14:32:59.879202+00:00",
+          "last_upstream_update_at": "2025-10-21T08:56:39.806+00:00",
+          "latest_row_count": 18814,
+          "total_runs": 1,
+          "downstream_model_count": 0
+        },
+        {
+          "source_id": "fhi-bor-alene",
+          "upstream_id": "187",
+          "upstream_url": "https://statistikk-data.fhi.no/api/open/v1/nokkel/table/187",
+          "upstream_landing_page": "https://statistikk.fhi.no/nokkel/E1gPZ5le1oMsIccxUCPlzvSxxb-8u3gtb7h1tg_zGwg?GEO=0&AAR=2020_2020,2021_2021,2022_2022,2023_2023,2024_2024,2025_2025&ALDER=30_44,45_120,75_120&MEASURE_TYPE=TELLER",
+          "upstream_title": "Personer som bor alene",
+          "description": "FHI Folkehelsestatistikk table 187 — \"Personer som bor alene\". Share of adults (16+) living alone, per region, annual.",
+          "publisher": "Folkehelseinstituttet",
+          "license": "NLOD",
+          "license_url": "https://data.norge.no/nlod/no/2.0",
+          "periodicity": "P1Y",
+          "eu_theme": "SOCI",
+          "attribution": "Kilde: Folkehelseinstituttet, Folkehelsestatistikk — tabell 187",
+          "tags": [
+            "provider:fhi",
+            "topic:demographics",
+            "geo:kommune",
+            "cadence:annual",
+            "eu_theme:SOCI"
+          ],
+          "last_ingested_at": "2026-05-06T14:33:03.172822+00:00",
+          "last_upstream_update_at": "2025-11-18T09:20:23.692+00:00",
+          "latest_row_count": 12270,
+          "total_runs": 1,
+          "downstream_model_count": 6
+        }
+      ]
+    },
+    "meta_endpoints": {
+      "mart_name": "mart_meta_endpoints",
+      "rows": [
+        {
+          "endpoint": "api_v1.activity_catalog",
+          "schema_name": "api_v1",
+          "table_name": "activity_catalog",
+          "tags": [
+            "layer:api_v1",
+            "cadence:irregular",
+            "eu_theme:SOCI",
+            "geo:kommune",
+            "provider:redcross",
+            "topic:ngo-supply"
+          ],
+          "is_public_api": true,
+          "table_type": "VIEW"
+        },
+        {
+          "endpoint": "api_v1.coverage_gap_barnefattigdom",
+          "schema_name": "api_v1",
+          "table_name": "coverage_gap_barnefattigdom",
+          "tags": [
+            "layer:api_v1",
+            "cadence:annual",
+            "cadence:irregular",
+            "eu_theme:EDUC",
+            "eu_theme:GOVE",
+            "eu_theme:HEAL",
+            "eu_theme:JUST",
+            "eu_theme:SOCI",
+            "geo:fylke",
+            "geo:kommune",
+            "provider:fhi",
+            "provider:ssb",
+            "topic:demographics",
+            "topic:education",
+            "topic:health",
+            "topic:income",
+            "topic:ngo-supply",
+            "topic:reference",
+            "topic:social"
+          ],
+          "is_public_api": true,
+          "table_type": "VIEW"
+        },
+        {
+          "endpoint": "api_v1.distrikt_summary",
+          "schema_name": "api_v1",
+          "table_name": "distrikt_summary",
+          "tags": [
+            "layer:api_v1",
+            "cadence:irregular",
+            "eu_theme:GOVE",
+            "eu_theme:SOCI",
+            "geo:kommune",
+            "provider:redcross",
+            "provider:ssb",
+            "topic:ngo-supply",
+            "topic:reference"
+          ],
+          "is_public_api": true,
+          "table_type": "VIEW"
+        },
+        {
+          "endpoint": "api_v1.indicator_latest_values",
+          "schema_name": "api_v1",
+          "table_name": "indicator_latest_values",
+          "tags": [
+            "layer:api_v1",
+            "cadence:annual",
+            "cadence:irregular",
+            "eu_theme:EDUC",
+            "eu_theme:GOVE",
+            "eu_theme:HEAL",
+            "eu_theme:JUST",
+            "eu_theme:SOCI",
+            "geo:fylke",
+            "geo:kommune",
+            "provider:fhi",
+            "provider:ssb",
+            "topic:demographics",
+            "topic:education",
+            "topic:health",
+            "topic:income",
+            "topic:ngo-supply",
+            "topic:reference",
+            "topic:social"
+          ],
+          "is_public_api": true,
+          "table_type": "VIEW"
+        },
+        {
+          "endpoint": "api_v1.indicator_missing_kommuner",
+          "schema_name": "api_v1",
+          "table_name": "indicator_missing_kommuner",
+          "tags": [
+            "layer:api_v1",
+            "cadence:annual",
+            "cadence:irregular",
+            "eu_theme:EDUC",
+            "eu_theme:GOVE",
+            "eu_theme:HEAL",
+            "eu_theme:JUST",
+            "eu_theme:SOCI",
+            "geo:fylke",
+            "geo:kommune",
+            "provider:fhi",
+            "provider:ssb",
+            "topic:demographics",
+            "topic:education",
+            "topic:health",
+            "topic:income",
+            "topic:ngo-supply",
+            "topic:reference",
+            "topic:social"
+          ],
+          "is_public_api": true,
+          "table_type": "VIEW"
+        }
+      ]
+    },
+    "meta_dimensions": {
+      "mart_name": "mart_meta_dimensions",
+      "rows": [
+        {
+          "source_id": "bufdir-barnefattigdom",
+          "code": "category_format",
+          "meaning": "Workbook column Tallformat (second category axis), normalised lowercase",
+          "value_format": "antall or prosent",
+          "notes": "Paired with category_unit — four tuples per workbook × geography when all rows exist upstream."
+        },
+        {
+          "source_id": "bufdir-barnefattigdom",
+          "code": "category_unit",
+          "meaning": "Workbook column Enhet (first category axis), normalised lowercase",
+          "value_format": "barn or husholdning",
+          "notes": "Mirrors the paired rows in each Data sheet for child vs household units."
+        },
+        {
+          "source_id": "bufdir-barnefattigdom",
+          "code": "indicator_api_id",
+          "meaning": "Stable surrogate indicator key for ZIP workbook rows (not Strapi)",
+          "value_format": "bf_zip_<24 lowercase hex>",
+          "notes": "Derived as SHA-256 fingerprint of the `Indikator_*.xlsx` filename stem; breaks if Bufdir renames workbook files inside the ZIP."
+        },
+        {
+          "source_id": "bufdir-barnefattigdom",
+          "code": "region_code",
+          "meaning": "Geographic code from workbook column Region",
+          "value_format": "0 (land), 2-digit fylke, 4-digit kommune, or longer codes for bydel/delbydel",
+          "notes": "Rows follow whatever geography levels each indicator publishes."
+        },
+        {
+          "source_id": "bufdir-barnefattigdom",
+          "code": "values_json",
+          "meaning": "Parsed year→value map for the geography and Enhet/Tallformat tuple",
+          "value_format": "JSON object with string year keys; suppressed cells as null",
+          "notes": "Matches prior raw semantics (full spine per slice); mart reads scalar `value` for the keyed year row."
+        }
+      ]
+    }
+  }
+}
