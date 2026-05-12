@@ -90,6 +90,38 @@ Two files: `index.ts` and `README.md`. The full template is in [ingest-modules.m
 
 **Done when**: `npm run typecheck` passes and `npm run ingest:<source-id>` writes rows to `raw.<source_id>`.
 
+### Step 4b — Source manifest
+
+**File**: `atlas-data/ingest/src/sources/<source-id>/manifest.yml`.
+
+The manifest is the per-source catalogue record consumed by `mart_meta_sources`, the dbt docs at [`/lineage/`](https://atlas.sovereignsky.no/lineage/), and the public sources catalogue. Schema lives at [`atlas-data/ingest/src/sources/manifest.schema.json`](https://github.com/terchris/atlas/blob/main/atlas-data/ingest/src/sources/manifest.schema.json) and is enforced by [check-manifests.sh](./check-manifests.md).
+
+Bootstrap the file from upstream metadata where possible:
+
+```bash
+cd atlas-data/ingest
+npm run sources:bootstrap-manifest -- <source-id>      # creates manifest.yml with TODO placeholders
+npm run sources:fill-manifest-todos                    # auto-fills v1 fields from README content
+```
+
+Then hand-author the **v2 catalogue fields** the bootstrap leaves empty (the contributor knows the source, the script doesn't):
+
+| Field | Status | What to fill |
+|---|---|---|
+| `lifecycle` | required | `beta` until first review; promote to `stable` after a maintainer signs off. `deprecated` / `broken` also valid. |
+| `time_coverage` | required | `{start, end}` 4-digit years drawn from upstream's time dimension. Use `null` for `start` and `end` only when the cadence is genuinely irregular (organisational data, reference geographies). |
+| `keywords` | optional but recommended | 3–6 short keywords (e.g. `[bullying, school, youth, ungdata, kommune]`) drawn from description, title, dimension notes. Searchable on the catalogue. |
+| `methodology_notes` | optional | Markdown. Caveats, rolling-average windows, sampling methodology, anything Ola or Lisa would need to cite this source correctly. |
+| `suggested_joins` | optional | Other `source_id`s that pair naturally — e.g. `ssb-07459` ↔ `ssb-10826`. The catalogue's "Frequently joined with" surface auto-infers shared join keys; this field supplements where inference is wrong. |
+| `sample_query` | optional | One PostgREST URL returning real rows; the catalogue generates a primary-key-templated default when omitted. |
+| `feedback_url` | optional | Per-source override of [`publishers.yaml`](https://github.com/terchris/atlas/blob/main/atlas-data/ingest/src/sources/publishers.yaml)'s default "report a data issue" target. Almost never needed. |
+
+**New publisher?** Add an entry to [`atlas-data/ingest/src/sources/publishers.yaml`](https://github.com/terchris/atlas/blob/main/atlas-data/ingest/src/sources/publishers.yaml) with `id`, `display_name` (must match the manifest's `publisher:` field exactly), `homepage`, `logo`, `feedback_url`, `notes`. Add a placeholder SVG to `website/static/img/publishers/<id>.svg`.
+
+**New topic?** Add an entry to [`atlas-data/ingest/src/sources/source-categories.yaml`](https://github.com/terchris/atlas/blob/main/atlas-data/ingest/src/sources/source-categories.yaml) with `id`, `name`, `description`, `emoji`, `order`. Discuss in the PR — categories are editorial and we keep the list short.
+
+**Done when**: `./src/sources/check-manifests.sh` exits 0 — schema-valid, every `tags.topic` resolves to a category, every `publisher` resolves to a publishers entry.
+
 ### Step 5 — npm script
 
 **File**: `atlas-data/ingest/package.json`.
@@ -167,6 +199,7 @@ Run, in order, **all** of:
 ```bash
 cd atlas-data/ingest
 npm run typecheck                                                     # must pass
+./src/sources/check-manifests.sh                                      # must pass — manifest schema + cross-file
 npm run migrate                                                       # must succeed (idempotent)
 npm run ingest:<source-id>                                            # must succeed
 cd ../dbt
@@ -245,6 +278,15 @@ Before opening a PR, verify every box. A reviewer (human or LLM) should reject a
 - [ ] README has all 9 required sections
 - [ ] `npm run typecheck` passes with zero errors
 
+### Manifest
+- [ ] `manifest.yml` present in the source folder
+- [ ] `lifecycle` set (`beta` by default for new sources)
+- [ ] `time_coverage.{start,end}` populated, or both `null` when the cadence is genuinely irregular
+- [ ] `keywords[]` populated with 3–6 search terms (recommended)
+- [ ] `tags.topic` resolves against [`source-categories.yaml`](https://github.com/terchris/atlas/blob/main/atlas-data/ingest/src/sources/source-categories.yaml); new category added if needed
+- [ ] `publisher` matches a `display_name` in [`publishers.yaml`](https://github.com/terchris/atlas/blob/main/atlas-data/ingest/src/sources/publishers.yaml); new publisher entry + logo added if needed
+- [ ] `./src/sources/check-manifests.sh` passes (CI runs this on every PR)
+
 ### dbt
 - [ ] Source declared in `sources.yml` with `freshness` block
 - [ ] Per-source model materialized as `table` in `marts` schema
@@ -290,6 +332,7 @@ Before opening a PR, verify every box. A reviewer (human or LLM) should reject a
 - [ingest-modules.md](./ingest-modules.md) — ingest-side template (`index.ts` shape, README structure, scraping convention)
 - [dbt-osmosis.md](./dbt-osmosis.md) — schema.yml description propagation
 - [check-osmosis.md](./check-osmosis.md) — the description gate
+- [check-manifests.md](./check-manifests.md) — the manifest schema gate
 - [setup.md](./setup.md) — dev environment
 - [`docs/stack/naming-conventions.md`](https://github.com/terchris/atlas/blob/main/docs/stack/naming-conventions.md) — canonical vocabulary
 - [`atlas-data/ingest/src/sources/README.md`](https://github.com/terchris/atlas/blob/main/atlas-data/ingest/src/sources/README.md) — implemented-sources reference (per-source examples + planned-sources catalogue)

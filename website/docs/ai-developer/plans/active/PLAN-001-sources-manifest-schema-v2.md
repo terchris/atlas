@@ -190,37 +190,39 @@ User confirms phase is complete.
 
 ---
 
-## Phase 5: Tooling and contributor docs
+## Phase 5: Tooling and contributor docs — DONE
+
+**Outcome (2026-05-12)**: Bootstrap emits the new v2 fields for new sources (`lifecycle: beta`, `time_coverage: {null, null}`, `keywords: []`). The filler script round-trips the v2 trailing block so re-running it on a populated manifest never strips edits, and emits a soft warning when `lifecycle: stable + cadence: annual/…` ships with `null` time_coverage (4 such warnings currently — all editorial honest-null cases). CI gate wired via a new dedicated workflow (`check-manifests.yml`) — no overlap with existing workflows. Contributor docs updated end-to-end.
 
 ### Tasks
 
-- [ ] 5.1 Update [`atlas-data/ingest/scripts/bootstrap-manifest.ts`](https://github.com/terchris/atlas/blob/main/atlas-data/ingest/scripts/bootstrap-manifest.ts) to emit the new fields with sensible defaults for *new* sources:
+- [x] 5.1 Update [`atlas-data/ingest/scripts/bootstrap-manifest.ts`](https://github.com/terchris/atlas/blob/main/atlas-data/ingest/scripts/bootstrap-manifest.ts) to emit the new fields with sensible defaults for *new* sources:
   - `lifecycle: beta` (new sources start beta; promoted to stable after first review).
   - `time_coverage: {start: null, end: null}` (filled in by the contributor).
   - `keywords: []`, `suggested_joins: []`, `methodology_notes: ""`, `sample_query: ""`, `feedback_url: ""` — all empty.
   - Order new fields *after* `dimensions:` to match the existing aesthetic of the file.
 
-- [ ] 5.2 Update [`atlas-data/ingest/scripts/fill-manifest-todos.ts`](https://github.com/terchris/atlas/blob/main/atlas-data/ingest/scripts/fill-manifest-todos.ts) to handle the new fields:
+- [x] 5.2 Update [`atlas-data/ingest/scripts/fill-manifest-todos.ts`](https://github.com/terchris/atlas/blob/main/atlas-data/ingest/scripts/fill-manifest-todos.ts) to handle the new fields:
   - Warn (not fail) if `lifecycle: stable` but `time_coverage.start` is null.
   - No automatic fill for `keywords`, `suggested_joins`, `methodology_notes` — these are intentionally editorial.
 
-- [ ] 5.3 Wire `check-manifests.sh` into CI. The closest existing precedent is [`check-osmosis.sh`](https://github.com/terchris/atlas/blob/main/atlas-data/dbt/check-osmosis.sh) — but `check-osmosis.sh` is invoked from a workflow that needs to be located. Three options:
+- [x] 5.3 Wired `check-manifests.sh` into CI via a new dedicated [`.github/workflows/check-manifests.yml`](https://github.com/terchris/atlas/blob/main/.github/workflows/check-manifests.yml). Considered extending `atlas-data-image.yml` (option a in the plan), but that workflow is a Docker image build with no Node runtime — a dedicated, manifest-only workflow keeps triggers precise and the gate fast. Triggers on changes to manifests, schema, validator, wrapper, or companion files. The closest existing precedent is [`check-osmosis.sh`](https://github.com/terchris/atlas/blob/main/atlas-data/dbt/check-osmosis.sh) — but `check-osmosis.sh` is invoked from a workflow that needs to be located. Three options:
   - **(a)** Extend `.github/workflows/atlas-data-image.yml` to run `check-manifests.sh` on PRs touching `atlas-data/ingest/src/sources/**`.
   - **(b)** Extend `.github/workflows/website-build.yml` similarly (since the catalog consumes manifests).
   - **(c)** Add a dedicated `.github/workflows/check-manifests.yml` keyed only to manifest changes.
 
   Lean: **(a)** — keeps the gate next to the data that owns the manifests, matches the `check-osmosis.sh` precedent. Confirm during implementation by reading the existing workflow file.
 
-- [ ] 5.4 Update [`website/docs/contributors/adding-a-source.md`](https://github.com/terchris/atlas/blob/main/website/docs/contributors/adding-a-source.md) — the canonical contributor guide. Document:
+- [x] 5.4 Updated [`website/docs/contributors/adding-a-source.md`](https://github.com/terchris/atlas/blob/main/website/docs/contributors/adding-a-source.md) — the canonical contributor guide. Document:
   - The new fields (with `[required]` / `[optional]` markers).
   - Pointer to `manifest.schema.json` (VS Code hover docs).
   - Pointer to `publishers.yaml` (when to add a new publisher).
   - Pointer to `source-categories.yaml` (when to propose a new category).
   - The CI gate — what fails and how to fix locally.
 
-- [ ] 5.5 Update [`atlas-data/ingest/src/sources/README.md`](https://github.com/terchris/atlas/blob/main/atlas-data/ingest/src/sources/README.md) — the in-repo sources README also has a `manifest.yml schema` table that lists every field. Add rows for the new fields. Brief — full reference stays in `adding-a-source.md`.
+- [x] 5.5 Updated [`atlas-data/ingest/src/sources/README.md`](https://github.com/terchris/atlas/blob/main/atlas-data/ingest/src/sources/README.md) — the in-repo sources README also has a `manifest.yml schema` table that lists every field. Add rows for the new fields. Brief — full reference stays in `adding-a-source.md`.
 
-- [ ] 5.6 Create [`website/docs/contributors/check-manifests.md`](https://github.com/terchris/atlas/blob/main/website/docs/contributors) — sister to [`check-osmosis.md`](https://github.com/terchris/atlas/blob/main/website/docs/contributors/check-osmosis.md). Documents the gate's purpose, how to run locally, common failures and fixes.
+- [x] 5.6 Created [`website/docs/contributors/check-manifests.md`](https://github.com/terchris/atlas/blob/main/website/docs/contributors) — sister to [`check-osmosis.md`](https://github.com/terchris/atlas/blob/main/website/docs/contributors/check-osmosis.md). Documents the gate's purpose, how to run locally, common failures and fixes.
 
 ### Validation
 

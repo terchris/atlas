@@ -31,6 +31,8 @@ Every source folder ships a `manifest.yml` that drives the catalogue's `marts._s
 | `periodicity` | ISO 8601 — `P1Y` annual, `P3M` quarterly, `P1M` monthly, `P1D` daily, or `irregular`. |
 | `eu_theme` | EU Publications Office Data Theme code (one of: `AGRI`, `ECON`, `EDUC`, `ENER`, `ENVI`, `GOVE`, `HEAL`, `INTR`, `JUST`, `REGI`, `SOCI`, `TECH`, `TRAN`). Coarser than `tags.topic`; aligns Atlas with Felles datakatalog + DCAT-AP. Auto-derived from `topic` by `fill-manifest-todos.ts`. |
 | `attribution` | Citation string for academic / legal compliance (e.g. `Kilde: Statistisk sentralbyrå, tabell 08764`). Surfaced via `mart_meta_sources` so external developers can attribute Atlas data correctly. |
+| `lifecycle` | Product status. One of `stable` / `beta` / `deprecated` / `broken`. New sources start at `beta`; promoted to `stable` after first maintainer review. The catalogue renders this as a coloured badge ("In stock" / "Pre-order" / etc.). |
+| `time_coverage` | Object `{start, end}` with 4-digit years drawn from the upstream's time dimension. Use `null` for either when the cadence is genuinely irregular (organisational data, reference geographies). The catalogue uses this for the "Covers YYYY–YYYY" hero badge and the freshness facet. |
 
 **Required `tags:` namespaces** (exactly one value per namespace):
 
@@ -78,12 +80,33 @@ raw_tables:
 
 Operational raw tables that no source folder claims (`raw.ingest_runs`, `raw.sitemap_log`) are simply absent from any manifest's `raw_tables:` and don't appear in lineage edges.
 
-**Authoring workflow** (see [`contributors/ingest-modules.md`](../../../../website/docs/contributors/ingest-modules.md) for the full walkthrough):
+**Optional v2 catalogue fields** — supplement the required fields with editorial detail the catalogue surfaces:
 
-1. `npm run sources:bootstrap-manifest -- <source_id>` — fetches upstream metadata + writes a skeleton.
-2. `npm run sources:fill-manifest-todos` — auto-fills description + tags from this source's README.
-3. Review the generated YAML; spot-check `tags.topic` (regex first-match-wins).
-4. Commit alongside the source code.
+| Field | Description |
+|---|---|
+| `keywords[]` | 3–6 short keywords for facet / cross-listing on the catalogue. Drawn from description, title, and dimension notes. e.g. `[bullying, school, youth, ungdata, kommune]`. |
+| `methodology_notes` | Markdown. Methodology context that doesn't fit in `description` — rolling-average windows, definition caveats, sampling notes. Used by the catalogue's per-source page above the data. |
+| `suggested_joins[]` | Other `source_id`s that pair naturally — e.g. `ssb-07459` ↔ `ssb-10826` for kommune/bydel age-sex denominators. Supplements auto-inferred joins from shared dimension codes. |
+| `sample_query` | One PostgREST URL returning real rows; the catalogue's "Get this data" buy-box uses it. Falls back to a primary-key-templated default at build time. |
+| `feedback_url` | Per-source override of [`publishers.yaml`](./publishers.yaml)'s default "report a data issue" target. Almost never needed. |
+
+**Companion files** — these live alongside the per-source manifests and are validated together:
+
+| File | Purpose |
+|---|---|
+| [`manifest.schema.json`](./manifest.schema.json) | JSON Schema 2020-12 enforcing manifest shape. Wire to VS Code's YAML extension for hover docs + autocomplete. |
+| [`publishers.yaml`](./publishers.yaml) | Per-publisher metadata: `id`, `display_name`, `homepage`, `logo`, default `feedback_url`, editorial notes. Every manifest's `publisher:` field must match a `display_name` here. |
+| [`source-categories.yaml`](./source-categories.yaml) | Curated category metadata: `id`, `name`, `description`, `emoji`, sort `order`. Every manifest's `tags.topic` must match an `id` here. |
+| [`check-manifests.sh`](./check-manifests.sh) | CI gate — runs the validator on every PR. Mirrors the [`check-osmosis.sh`](https://github.com/terchris/atlas/blob/main/atlas-data/dbt/check-osmosis.sh) pattern. Canonical guide: [`contributors/check-manifests.md`](../../../../website/docs/contributors/check-manifests.md). |
+| [`validate-manifests.ts`](./validate-manifests.ts) | The validator. Run via `npm run sources:check-manifests` (or the shell wrapper). |
+
+**Authoring workflow** (see [`contributors/adding-a-source.md`](../../../../website/docs/contributors/adding-a-source.md) for the full walkthrough):
+
+1. `npm run sources:bootstrap-manifest -- <source_id>` — fetches upstream metadata + writes a skeleton with v2 fields placeholders.
+2. `npm run sources:fill-manifest-todos` — auto-fills v1 fields (description, tags, …) from this source's README. v2 fields (keywords, methodology_notes, suggested_joins) are intentionally editorial and not auto-filled.
+3. Hand-author the v2 fields: at minimum `lifecycle` (`beta` for new sources), `time_coverage`, and `keywords`.
+4. Run `./check-manifests.sh` — must exit 0 before commit.
+5. Commit alongside the source code.
 
 After commit, future field changes happen via PR like any other code change. The seed CSV at `atlas-data/dbt/seeds/sources/_sources_manifest.csv` (and the `Implemented sources` table below) regenerate from these YAMLs via `uv run python atlas-data/dbt/scripts/build_sources_seed.py --readme`.
 

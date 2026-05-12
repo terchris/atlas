@@ -247,6 +247,15 @@ function renderManifest(m: ManifestStub): string {
   lines.push(``);
   lines.push(`dimensions: []  # TODO list each upstream dimension: code, meaning, value_format, notes`);
   lines.push(``);
+  // v2 catalogue fields — see manifest.schema.json + PLAN-001.
+  // New sources start at `lifecycle: beta`; promoted to `stable` after first review.
+  // `time_coverage` and `keywords` are intentionally editorial — left empty by bootstrap.
+  lines.push(`lifecycle: beta  # promote to "stable" after first review; "deprecated" / "broken" also valid`);
+  lines.push(`time_coverage:`);
+  lines.push(`  start: null  # TODO 4-digit start year, or null for irregular cadences`);
+  lines.push(`  end: null    # TODO 4-digit end year, or null for irregular cadences`);
+  lines.push(`keywords: []   # TODO 3-6 search keywords drawn from description / title / dimension notes`);
+  lines.push(``);
   return lines.join("\n");
 }
 
@@ -326,7 +335,9 @@ async function main(): Promise<void> {
       break;
     case "frr":
       stub = extractFallback(sourceId);
-      stub.publisher = "Norges Røde Kors (private FRR register)";
+      // Publisher is the org, not the dataset — the "private FRR register"
+      // qualifier belongs in the manifest's attribution field instead.
+      stub.publisher = "Norges Røde Kors";
       stub.license = "internal";
       stub.license_url = "internal";
       break;
