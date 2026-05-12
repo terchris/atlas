@@ -4,7 +4,7 @@
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Active — Phases 1–3 code-side complete, awaiting first GHCR push on merge
+## Status: Completed (2026-05-12) — image at ghcr.io/terchris/atlas-data
 
 **Goal**: Build Atlas's Dagster code-location artefact — a single polyglot Docker image (Python + Node + dbt + dagster + dagster-pipes + the ingest TS + the dbt project) that, when registered as a Dagster code location, lets Dagster orchestrate every Atlas ingest as a Python `@asset`. End state of this PLAN: image built, pushed to `ghcr.io/helpers-no/atlas-data:vX.Y.Z`, **one source** (`ssb-08764`) Pipes-enabled and verified end-to-end against `dagster dev` locally.
 
@@ -129,7 +129,7 @@ Wrap everything into the polyglot image and ship it to GHCR. Once UIS PLAN-001 i
   - Triggers: `pull_request` + `push` to `main`, path-filtered to `atlas-data/**` + the workflow file.
   - PR: build the image (cache via `docker/build-push-action@v5` + `cache-from/cache-to: type=gha`). No push.
   - Main push: build + push to `ghcr.io/helpers-no/atlas-data:sha-<short-commit>` + `:vYYYYMMDD-<sha-short>` (date-prefixed for human readability; **never `:latest`** per UIS doc — Helm needs unique tags to roll). Permissions: `contents: read, packages: write`.
-- [ ] 3.5 Verify a push to `main` produces an image in GHCR. `docker pull ghcr.io/helpers-no/atlas-data:<tag>` works from a fresh shell.
+- [x] 3.5 Verify a push to `main` produces an image in GHCR. `docker pull ghcr.io/helpers-no/atlas-data:<tag>` works from a fresh shell.
 
 ### Validation
 
@@ -139,12 +139,12 @@ Wrap everything into the polyglot image and ship it to GHCR. Once UIS PLAN-001 i
 
 ## Acceptance Criteria
 
-- [ ] `atlas-data/dagster/` exists as a working Python package; `uv run dagster dev` boots cleanly.
-- [ ] `definitions.py` imports cheaply (no DB connections, no eager I/O at module scope).
-- [ ] One source (`ssb-08764`) materialises end-to-end via Dagster: TypeScript subprocess → Postgres write → asset materialisation event.
-- [ ] Local `npm run ingest:ssb-08764` still works exactly as before (Pipes no-ops when env vars absent).
-- [ ] `atlas-data/deploy/Dockerfile` builds a polyglot image that boots `dagster api grpc`.
-- [ ] GHA workflow publishes the image to GHCR on main commits with unique tags.
+- [x] `atlas-data/dagster/` exists as a working Python package; `uv run dagster dev` boots cleanly.
+- [x] `definitions.py` imports cheaply (no DB connections, no eager I/O at module scope).
+- [x] One source (`ssb-08764`) materialises end-to-end via Dagster: TypeScript subprocess → Postgres write → asset materialisation event.
+- [x] Local `npm run ingest:ssb-08764` still works exactly as before (Pipes no-ops when env vars absent).
+- [x] `atlas-data/deploy/Dockerfile` builds a polyglot image that boots `dagster api grpc`.
+- [x] GHA workflow publishes the image to GHCR on main commits with unique tags.
 
 ---
 
