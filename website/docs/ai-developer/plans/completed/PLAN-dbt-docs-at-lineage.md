@@ -4,7 +4,7 @@
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Active — Phase 1 in progress
+## Status: Completed (2026-05-12)
 
 **Goal**: Add a third surface to Atlas's Docusaurus site at `/lineage/` that renders the dbt project's full model lineage / DAG / column docs / schema descriptions. Single file, no CORS, no UIS coordination, no live DB at render time.
 
@@ -44,8 +44,8 @@ Mirror the [Scalar pattern from PR #94](https://github.com/terchris/atlas/pull/9
   - `npm run build` succeeds (no broken links — onBrokenLinks: 'throw' is active).
   - `npm run serve` then `curl http://localhost:3000/lineage/` returns 200 with the dbt-docs single-file UI.
   - Open the page in a browser: the dbt-docs three-pane layout renders, sidebar lists all 855 nodes, lineage graph works, column descriptions visible.
-- [ ] 1.6 Push, PR, merge — same flow as #93–#96.
-- [ ] 1.7 Verify live at `https://atlas.sovereignsky.no/lineage/`.
+- [x] 1.6 Push, PR, merge — same flow as #93–#96.
+- [x] 1.7 Verify live at `https://atlas.sovereignsky.no/lineage/`.
 
 ### Validation
 
@@ -55,11 +55,11 @@ Mirror the [Scalar pattern from PR #94](https://github.com/terchris/atlas/pull/9
 
 ## Acceptance Criteria
 
-- [ ] `npm run lineage:snapshot` (in `website/`) regenerates `static/lineage/index.html` from the local dbt project. Fails loudly if Postgres isn't reachable.
-- [ ] `website/static/lineage/index.html` is committed (a ~4 MB single-file snapshot).
-- [ ] Navbar shows a "Lineage" entry that opens `/lineage/`.
-- [ ] `https://atlas.sovereignsky.no/lineage/` is live and renders the full dbt-docs UI.
-- [ ] CI build passes (existing workflow gates).
+- [x] `npm run lineage:snapshot` (in `website/`) regenerates `static/lineage/index.html` from the local dbt project. Fails loudly if Postgres isn't reachable.
+- [x] `website/static/lineage/index.html` is committed (a ~4 MB single-file snapshot).
+- [x] Navbar shows a "Lineage" entry that opens `/lineage/`.
+- [x] `https://atlas.sovereignsky.no/lineage/` is live and renders the full dbt-docs UI.
+- [x] CI build passes (existing workflow gates).
 
 ---
 
