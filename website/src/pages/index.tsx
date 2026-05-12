@@ -4,8 +4,8 @@ import Link from '@docusaurus/Link';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import Layout from '@theme/Layout';
 
-import SourceCategoryGrid from '@site/src/components/sources/SourceCategoryGrid';
-import PublisherStrip from '@site/src/components/sources/PublisherStrip';
+import SourceCategoryGrid from '../components/sources/SourceCategoryGrid';
+import PublisherStrip from '../components/sources/PublisherStrip';
 
 import styles from './index.module.css';
 
