@@ -28,7 +28,7 @@
 
 ## Problem
 
-The current v1 manifest schema (PLAN-007) is sufficient for ingest and `mart_meta_sources` but missing the fields the catalog UI promised by [INVESTIGATE-sources-catalog-at-scale.md](INVESTIGATE-sources-catalog-at-scale.md) needs:
+The current v1 manifest schema (PLAN-007) is sufficient for ingest and `mart_meta_sources` but missing the fields the catalog UI promised by [INVESTIGATE-sources-catalog-at-scale.md](../backlog/INVESTIGATE-sources-catalog-at-scale.md) needs:
 
 | Gap | Why catalog needs it | Decision in INVESTIGATE |
 |---|---|---|
@@ -277,7 +277,7 @@ User confirms phase is complete.
 
 - **Why `ajv` over alternatives** — `ajv` is the industry-standard JS JSON Schema validator, supports draft 2020-12, has good error messages, and is a single small dev dependency. Alternatives considered: `zod` (TypeScript-native but requires hand-coded schemas, not JSON Schema interop) and `joi` (no JSON Schema 2020-12 support).
 
-- **Schema as a contract for future consumers** — once `manifest.schema.json` ships, PLAN-002's generator, a future DCAT-AP-NO emitter (per [INVESTIGATE-felles-datakatalog-classification.md](INVESTIGATE-felles-datakatalog-classification.md)), and `mart_meta_sources` all read the same shape. Changing the schema later is a breaking change for all consumers — over-spec now beats under-spec.
+- **Schema as a contract for future consumers** — once `manifest.schema.json` ships, PLAN-002's generator, a future DCAT-AP-NO emitter (per [INVESTIGATE-felles-datakatalog-classification.md](../backlog/INVESTIGATE-felles-datakatalog-classification.md)), and `mart_meta_sources` all read the same shape. Changing the schema later is a breaking change for all consumers — over-spec now beats under-spec.
 
 - **Schema location** — `atlas-data/ingest/src/sources/manifest.schema.json` (alongside the manifests it validates). VS Code's YAML extension picks up the schema via a `# yaml-language-server: $schema=...` directive that `bootstrap-manifest.ts` can emit at the top of each file in Phase 5; existing manifests pick it up via a workspace setting in `.vscode/settings.json` (out of scope for this PLAN — document in `adding-a-source.md` as an optional contributor convenience).
 

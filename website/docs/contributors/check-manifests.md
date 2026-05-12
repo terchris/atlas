@@ -143,4 +143,4 @@ See [INVESTIGATE-sources-catalog-at-scale.md](../ai-developer/plans/backlog/INVE
 - [`atlas-data/ingest/src/sources/check-manifests.sh`](https://github.com/terchris/atlas/blob/main/atlas-data/ingest/src/sources/check-manifests.sh) — the script itself
 - [`atlas-data/ingest/src/sources/validate-manifests.ts`](https://github.com/terchris/atlas/blob/main/atlas-data/ingest/src/sources/validate-manifests.ts) — the validator implementation
 - [`atlas-data/ingest/src/sources/manifest.schema.json`](https://github.com/terchris/atlas/blob/main/atlas-data/ingest/src/sources/manifest.schema.json) — the schema being validated against
-- [PLAN-001-sources-manifest-schema-v2.md](../ai-developer/plans/active/PLAN-001-sources-manifest-schema-v2.md) — the plan that shipped this gate
+- [PLAN-001-sources-manifest-schema-v2.md](../ai-developer/plans/completed/PLAN-001-sources-manifest-schema-v2.md) — the plan that shipped this gate
