@@ -28,7 +28,7 @@
 
 ## Problem
 
-The current v1 manifest schema (PLAN-007) is sufficient for ingest and `mart_meta_sources` but missing the fields the catalog UI promised by [INVESTIGATE-sources-catalog-at-scale.md](INVESTIGATE-sources-catalog-at-scale.md) needs:
+The current v1 manifest schema (PLAN-007) is sufficient for ingest and `mart_meta_sources` but missing the fields the catalog UI promised by [INVESTIGATE-sources-catalog-at-scale.md](../backlog/INVESTIGATE-sources-catalog-at-scale.md) needs:
 
 | Gap | Why catalog needs it | Decision in INVESTIGATE |
 |---|---|---|
