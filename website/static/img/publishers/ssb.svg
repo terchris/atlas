@@ -1,0 +1,7 @@
+<!-- PLACEHOLDER LOGO — replace with the official SSB wordmark before launch. -->
+<!-- Source the real asset from https://www.ssb.no/ visual identity / press kit. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 80" role="img" aria-label="Statistisk sentralbyrå (SSB) — placeholder logo">
+  <rect width="200" height="80" fill="#1e4d8c" rx="6"/>
+  <text x="100" y="42" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="32" font-weight="700" fill="#ffffff">SSB</text>
+  <text x="100" y="62" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="10" fill="#cfdcef">Statistisk sentralbyrå</text>
+</svg>

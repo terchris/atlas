@@ -1,0 +1,70 @@
+# source-categories.yaml — curated category metadata for the Atlas sources catalogue.
+#
+# Each entry's `id` MUST match a `tags.topic` value used in some manifest —
+# the validator cross-checks this. New categories are added editorially
+# (not derived from tags); aim to keep the list short and meaningful.
+#
+# `order` controls the front-page category grid sort. Lower = appears first.
+
+categories:
+  - id: health
+    name: Health
+    description: |
+      Population and individual health indicators — mental health, substance
+      use, mortality, life quality, healthcare contact. Most sources are FHI
+      Folkehelsestatistikk tables with 3-year rolling averages.
+    emoji: 🏥
+    order: 10
+
+  - id: demographics
+    name: Demographics
+    description: |
+      Population structure by age, sex, kommune, and bydel. Core denominators
+      for any rate-based analysis. Includes SSB resident counts and FHI
+      population projections.
+    emoji: 👥
+    order: 20
+
+  - id: income
+    name: Income & poverty
+    description: |
+      Household income, low-income statistics, persistent low income, and
+      children in low-income households. SSB EU-SILC-derived series plus
+      Bufdir's child-poverty kommunemonitor.
+    emoji: 💰
+    order: 30
+
+  - id: education
+    name: Education & youth
+    description: |
+      Educational outcomes — upper-secondary completion, NEET status,
+      educational attainment by region. Includes bullying and youth wellbeing
+      indicators that intersect with school context.
+    emoji: 🎓
+    order: 40
+
+  - id: social
+    name: Social & housing
+    description: |
+      Social assistance use, household composition, overcrowded housing,
+      and integration indicators. The bridge between need and the services
+      that respond to it.
+    emoji: 🏘️
+    order: 50
+
+  - id: ngo-supply
+    name: NGO supply
+    description: |
+      Norwegian NGO supply data — chapters, activities, and operational
+      footprint across the civil-society sector. Pairs with the population
+      and need indicators to surface coverage gaps.
+    emoji: 🤝
+    order: 60
+
+  - id: reference
+    name: Reference geographies
+    description: |
+      Canonical geographic dimensions used as join keys across every
+      indicator: kommune and fylke classifications from SSB Klass.
+    emoji: 🗺️
+    order: 70

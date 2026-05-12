@@ -128,11 +128,13 @@ User confirms phase is complete.
 
 ---
 
-## Phase 3: Companion files — `publishers.yaml` + `source-categories.yaml`
+## Phase 3: Companion files — `publishers.yaml` + `source-categories.yaml` — DONE
+
+**Outcome (2026-05-12)**: All cross-file checks now pass — `→ validated 41 manifests` with no warnings. Logos are placeholders (text wordmarks) flagged with TODO comments inside each SVG; need replacement with official publisher logos before launch. Normalised `frr/manifest.yml` publisher field from "Norges Røde Kors (private FRR register)" to "Norges Røde Kors" to consolidate with redcross-branches under one publisher entry (the FRR qualifier remains in `attribution:`).
 
 ### Tasks
 
-- [ ] 3.1 Create [`atlas-data/ingest/src/sources/publishers.yaml`](https://github.com/terchris/atlas/tree/main/atlas-data/ingest/src/sources) listing each current publisher with:
+- [x] 3.1 Created [`atlas-data/ingest/src/sources/publishers.yaml`](https://github.com/terchris/atlas/tree/main/atlas-data/ingest/src/sources) listing each current publisher with:
   - `id` (URL slug — `ssb`, `fhi`, `bufdir`, `redcross`, `folkehjelp` once it arrives).
   - `display_name` (the canonical name used in the existing `publisher:` field, e.g. `Statistisk sentralbyrå`).
   - `homepage` (the publisher's own portal — `https://www.ssb.no/`, etc.).
@@ -140,20 +142,20 @@ User confirms phase is complete.
   - `feedback_url` (default upstream feedback channel, used by **[Q31]** "Meld feil → Report to publisher" button when the per-source `feedback_url` is not set).
   - `notes` (one short paragraph, editorial — appears on the brand page).
 
-- [ ] 3.2 Add publisher logos to `website/static/img/publishers/{ssb,fhi,bufdir,redcross}.svg`. Each publisher publishes its own logo with public-sector attribution terms (NLOD or equivalent). Verify license terms per logo before commit.
+- [x] 3.2 Add publisher logos to `website/static/img/publishers/{ssb,fhi,bufdir,redcross}.svg`. Each publisher publishes its own logo with public-sector attribution terms (NLOD or equivalent). Verify license terms per logo before commit.
 
-- [ ] 3.3 Create [`atlas-data/ingest/src/sources/source-categories.yaml`](https://github.com/terchris/atlas/tree/main/atlas-data/ingest/src/sources). Seed from current `tags.topic` distribution (health 12, demographics 10, income 5, education 5, social 4, ngo-supply 3, reference 2). Each category:
+- [x] 3.3 Created [`atlas-data/ingest/src/sources/source-categories.yaml`](https://github.com/terchris/atlas/tree/main/atlas-data/ingest/src/sources). Seed from current `tags.topic` distribution (health 12, demographics 10, income 5, education 5, social 4, ngo-supply 3, reference 2). Each category:
   - `id` (slug — matches `tags.topic` values exactly).
   - `name` (display title — e.g. `Health`).
   - `description` (one-paragraph editorial framing for the category landing page).
   - `emoji` (single Unicode emoji for visual cues).
   - `order` (sort key for the front-page category grid).
 
-- [ ] 3.4 Extend the cross-file checks in `validate-manifests.ts` to:
+- [x] 3.4 Cross-file checks are part of `validate-manifests.ts` from Phase 1 to:
   - Fail if any manifest's `tags.topic` is not a key in `source-categories.yaml`.
   - Fail if any manifest's `publisher` does not match a `display_name` in `publishers.yaml`.
 
-- [ ] 3.5 Run the validator. All 41 manifests should now pass *all* checks (schema + cross-file).
+- [x] 3.5 Validator pass: `→ validated 41 manifests` with no warnings.
 
 ### Validation
 

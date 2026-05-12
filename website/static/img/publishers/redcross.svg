@@ -1,0 +1,9 @@
+<!-- PLACEHOLDER LOGO — replace with the official Norges Røde Kors wordmark before launch. -->
+<!-- Source the real asset from https://www.rodekors.no/ visual identity / press kit. -->
+<!-- NOTE: the Red Cross emblem (red cross on white) is protected under the Geneva Conventions. -->
+<!-- Use ONLY the wordmark / association logo, NOT the emblem, when sourcing the real asset. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 80" role="img" aria-label="Norges Røde Kors — placeholder logo">
+  <rect width="200" height="80" fill="#c8102e" rx="6"/>
+  <text x="100" y="42" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="22" font-weight="700" fill="#ffffff">Norges Røde Kors</text>
+  <text x="100" y="62" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="10" fill="#f4cdd3">Norwegian Red Cross</text>
+</svg>
