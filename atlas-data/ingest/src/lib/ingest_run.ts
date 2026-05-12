@@ -4,9 +4,11 @@
  * Each source's `run()` wraps its work in `recordIngestRun()`, which:
  *   - opens a Postgres connection
  *   - inserts a raw.ingest_runs row (start)
+ *   - opens a Dagster Pipes context (no-op outside Dagster)
  *   - executes the source's work
+ *   - emits an asset-materialisation event to Dagster (no-op outside Dagster)
  *   - updates the row with rows_*, upstream_updated_at, exit_code (finish)
- *   - closes the Postgres connection
+ *   - closes the Pipes context + Postgres connection
  *
  * If `DATABASE_URL` is not set, the work runs untracked (no run row written) —
  * lets contributors do quick local NDJSON-only sanity checks without standing
@@ -18,9 +20,17 @@
  * singleton connection for their own writes; the wrapper closes it once at
  * the end.
  *
- * See PLAN-007 phase 2.8.
+ * Dagster Pipes integration is centralised here so adding a new source costs
+ * no Dagster-aware code in the source itself. The TS source calls
+ * `recordIngestRun(...)` as it always has; when Dagster has launched the
+ * process, the wrapper streams a materialisation event back to Dagster's
+ * event log with rows_parsed / rows_scraped / upstream_updated_at metadata.
+ * Outside Dagster (e.g. `npm run ingest:*` locally), Pipes is a no-op.
+ *
+ * See PLAN-007 phase 2.8 and PLAN-dagster-codelocation-image / its follow-up.
  */
 
+import * as dagsterPipes from "@dagster-io/dagster-pipes";
 import { startRun, finishRun, type FinishRunArgs } from "./scraping/index.js";
 import { closeSql, getSql } from "./postgres.js";
 import { logger } from "./logger.js";
@@ -44,51 +54,93 @@ export async function recordIngestRun<T>(
   sourceId: string,
   work: () => Promise<IngestRunResult<T>>,
 ): Promise<T> {
-  if (!process.env["DATABASE_URL"]) {
-    logger.info("ingest_run.untracked", {
-      source_id: sourceId,
-      reason: "DATABASE_URL not set — running without raw.ingest_runs tracking",
-    });
-    const { output } = await work();
-    return output;
-  }
-
-  const sql = getSql();
-  const handle = await startRun(sql, sourceId);
-  logger.info("ingest_run.started", {
-    source_id: sourceId,
-    run_id: handle.runId,
-    started_at: handle.startedAt.toISOString(),
-  });
-
+  // Open Pipes regardless of DATABASE_URL — it's a no-op outside Dagster
+  // anyway, and we want Pipes context (materialisation + logs) for any
+  // Dagster-launched run, including dry-runs without a DB write target.
+  const pipes = dagsterPipes.openDagsterPipes();
   try {
-    const { output, record } = await work();
-    await finishRun(sql, handle.runId, { ...record, exitCode: 0 });
-    logger.info("ingest_run.finished", {
+    if (!process.env["DATABASE_URL"]) {
+      logger.info("ingest_run.untracked", {
+        source_id: sourceId,
+        reason: "DATABASE_URL not set — running without raw.ingest_runs tracking",
+      });
+      const { output, record } = await work();
+      reportPipesMaterialization(pipes, sourceId, record, null);
+      return output;
+    }
+
+    const sql = getSql();
+    const handle = await startRun(sql, sourceId);
+    logger.info("ingest_run.started", {
       source_id: sourceId,
       run_id: handle.runId,
-      rows_parsed: record.rowsParsed ?? null,
-      upstream_updated_at: record.upstreamUpdatedAt?.toISOString() ?? null,
+      started_at: handle.startedAt.toISOString(),
     });
-    return output;
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
+
     try {
-      await finishRun(sql, handle.runId, {
-        exitCode: 1,
-        notes: message.slice(0, 500),
-      });
-    } catch (finishErr) {
-      // The original error is what callers care about — log the secondary
-      // failure but don't suppress the primary throw.
-      logger.error("ingest_run.finish_after_error_failed", {
+      const { output, record } = await work();
+      await finishRun(sql, handle.runId, { ...record, exitCode: 0 });
+      logger.info("ingest_run.finished", {
         source_id: sourceId,
         run_id: handle.runId,
-        error: finishErr instanceof Error ? finishErr.message : String(finishErr),
+        rows_parsed: record.rowsParsed ?? null,
+        upstream_updated_at: record.upstreamUpdatedAt?.toISOString() ?? null,
       });
+      reportPipesMaterialization(pipes, sourceId, record, handle.runId);
+      return output;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      try {
+        await finishRun(sql, handle.runId, {
+          exitCode: 1,
+          notes: message.slice(0, 500),
+        });
+      } catch (finishErr) {
+        // The original error is what callers care about — log the secondary
+        // failure but don't suppress the primary throw.
+        logger.error("ingest_run.finish_after_error_failed", {
+          source_id: sourceId,
+          run_id: handle.runId,
+          error: finishErr instanceof Error ? finishErr.message : String(finishErr),
+        });
+      }
+      throw err;
+    } finally {
+      await closeSql();
     }
-    throw err;
   } finally {
-    await closeSql();
+    pipes[Symbol.dispose]?.();
+  }
+}
+
+/**
+ * Emit an asset-materialisation event back to Dagster. No-op when run outside
+ * Dagster (the Pipes context is a no-op implementation in that case). The
+ * asset key is inferred from the `@asset` in scope on the Dagster side, so we
+ * don't pass `assetKey` here — each Python @asset wrapper knows its own key.
+ */
+function reportPipesMaterialization(
+  pipes: ReturnType<typeof dagsterPipes.openDagsterPipes>,
+  sourceId: string,
+  record: Omit<FinishRunArgs, "exitCode">,
+  runId: number | null,
+): void {
+  try {
+    pipes.reportAssetMaterialization({
+      source_id: sourceId,
+      ingest_run_id: runId,
+      rows_scraped: record.rowsScraped ?? null,
+      rows_parsed: record.rowsParsed ?? null,
+      rows_skipped: record.rowsSkipped ?? null,
+      warnings_count: record.warningsCount ?? null,
+      errors_count: record.errorsCount ?? null,
+      upstream_updated_at: record.upstreamUpdatedAt?.toISOString() ?? null,
+    });
+  } catch (err) {
+    // Pipes reporting failures must not break the ingest — log and continue.
+    logger.warn("dagster_pipes.report_failed", {
+      source_id: sourceId,
+      error: err instanceof Error ? err.message : String(err),
+    });
   }
 }
