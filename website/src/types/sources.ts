@@ -164,6 +164,28 @@ export interface Category {
   source_count: number;
 }
 
+/**
+ * Curated editorial collection — one persona, one task, ordered list of
+ * datasets with a "why this one" annotation per entry. Defined in
+ * website/data/collections.yaml and resolved at generator time. The
+ * `dataset` field is a fully-resolved Source or View, so consumers can
+ * render publisher logos, lifecycle, etc. without a second lookup.
+ */
+export interface CollectionDatasetEntry {
+  why: string;
+  dataset: Source | View;
+}
+
+export interface Collection {
+  id: string;
+  title: string;
+  persona: string;
+  persona_task: string;
+  intro: string;
+  datasets: CollectionDatasetEntry[];
+  join_recipe: string;
+}
+
 export interface Registry {
   generated_at: string;
   manifest_schema_id: string | null;
@@ -174,4 +196,5 @@ export interface Registry {
   publishers: Publisher[];
   sources: Source[];
   views: View[];
+  collections: Collection[];
 }

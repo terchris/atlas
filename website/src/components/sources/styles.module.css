@@ -277,6 +277,226 @@
   margin: 1rem 0 2rem 0;
 }
 
+/* ── Collection page (curated editorial bundle) ──────────────────────── */
+
+.collectionHero {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.5rem 1.5rem;
+  border: 1px solid var(--ifm-color-emphasis-200);
+  border-left: 4px solid var(--ifm-color-primary);
+  border-radius: 12px;
+  background: var(--ifm-background-surface-color);
+  margin-bottom: 2rem;
+}
+
+.collectionHeroBadge {
+  align-self: flex-start;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ifm-color-primary-darker);
+  background: color-mix(in oklab, var(--ifm-color-primary) 14%, transparent);
+  padding: 0.25em 0.75em;
+  border-radius: 999px;
+}
+
+.collectionHeroTitle {
+  margin: 0;
+  font-size: 1.75rem;
+  line-height: 1.25;
+}
+
+.collectionHeroTask {
+  border-left: 3px solid var(--ifm-color-emphasis-300);
+  padding-left: 0.75rem;
+  font-size: 0.95rem;
+  color: var(--ifm-color-emphasis-800);
+}
+
+.collectionHeroTaskLabel {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ifm-color-emphasis-600);
+  margin-bottom: 0.25rem;
+}
+
+.collectionDatasetList {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 2rem 0;
+  counter-reset: collection;
+}
+
+.collectionDatasetItem {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--ifm-color-emphasis-200);
+}
+
+.collectionDatasetItem:last-child {
+  border-bottom: none;
+}
+
+.collectionDatasetNumber {
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: var(--ifm-color-primary);
+  color: var(--ifm-color-primary-contrast-foreground);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.collectionDatasetBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.collectionDatasetHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.4rem;
+}
+
+.collectionDatasetLogo {
+  width: 48px;
+  height: 24px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.collectionDatasetTitleBlock {
+  flex: 1;
+  min-width: 0;
+}
+
+.collectionDatasetTitle {
+  font-weight: 600;
+  font-size: 1rem;
+  color: inherit;
+  text-decoration: none;
+  line-height: 1.3;
+  display: block;
+}
+
+.collectionDatasetTitle:hover {
+  color: var(--ifm-color-primary);
+  text-decoration: none;
+}
+
+.collectionDatasetSubtitle {
+  font-size: 0.8rem;
+  color: var(--ifm-color-emphasis-600);
+  margin-top: 0.15rem;
+}
+
+.collectionDatasetWhy {
+  font-size: 0.9rem;
+  color: var(--ifm-color-emphasis-800);
+  line-height: 1.55;
+  margin-left: 0;
+}
+
+/* ── Collections strip (homepage card) ───────────────────────────────── */
+
+.collectionsStrip {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  margin: 1.25rem 0 2.5rem 0;
+}
+
+@media (min-width: 640px) {
+  .collectionsStrip {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.collectionCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1.25rem;
+  border: 1px solid var(--ifm-color-emphasis-200);
+  border-left: 4px solid var(--ifm-color-primary);
+  border-radius: 12px;
+  background: var(--ifm-background-surface-color);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s, transform 0.15s;
+}
+
+.collectionCard:hover {
+  border-color: var(--ifm-color-primary);
+  text-decoration: none;
+  color: inherit;
+  transform: translateY(-2px);
+}
+
+.collectionCardPersona {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ifm-color-primary-darker);
+  font-weight: 600;
+}
+
+.collectionCardTitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.collectionCardDescription {
+  font-size: 0.85rem;
+  color: var(--ifm-color-emphasis-700);
+  line-height: 1.5;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.collectionCardMeta {
+  font-size: 0.75rem;
+  color: var(--ifm-color-emphasis-600);
+  font-weight: 500;
+  margin-top: auto;
+}
+
+.collectionCardPlaceholder {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1.25rem;
+  border: 1px dashed var(--ifm-color-emphasis-300);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--ifm-color-emphasis-600);
+  font-size: 0.85rem;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.collectionCardPlaceholderTitle {
+  font-weight: 600;
+  color: var(--ifm-color-emphasis-700);
+  margin: 0;
+}
+
 /* ── Recently refreshed strip (homepage) ─────────────────────────────── */
 
 .recentlyRefreshedStrip {

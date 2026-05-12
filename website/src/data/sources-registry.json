@@ -7393,5 +7393,760 @@
       "sample_query": "https://api-atlas.sovereignsky.no/ngo_overview?limit=5",
       "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_ngo_overview"
     }
+  ],
+  "collections": [
+    {
+      "id": "grant-application-essentials",
+      "title": "Grant-application essentials — child poverty",
+      "persona": "Lisa, tilskuddsansvarlig",
+      "persona_task": "Writing a child-poverty grant application that names a kommune,\nbacks the claim with real numbers, and survives a fact-check by\na directorate's reviewer.",
+      "intro": "A focused starter set for grant applications about child poverty\nat kommune resolution. Ordered from headline → ground truth →\ntemporal depth → lived-experience proxy → Atlas synthesis. Together\nthese five datasets answer the four questions every directorate\nreviewer asks: how many, how persistent, how that compares to the\nneighbours, and what the policy gap looks like.\n\nEvery dataset here is at kommune (4-digit kommune_code, post-2020\nreform) resolution. They share a join key — `kommune_code` — so a\nsingle query stitches the whole evidence base together.",
+      "datasets": [
+        {
+          "why": "The headline indicator most directorates already cite. Bufdir's\nBarnefattigdom kommunemonitor is the standard reference for\n\"how many children live in low-income households in this kommune\".",
+          "dataset": {
+            "kind": "source",
+            "source_id": "bufdir-barnefattigdom",
+            "upstream_id": "barnefattigdom-monitor",
+            "upstream_url": "https://www.bufdir.no/statistikk-og-analyse/monitor/barnefattigdom/",
+            "upstream_landing_page": "https://www.bufdir.no/statistikk-og-analyse/monitor/barnefattigdom/",
+            "upstream_title": "Barnefattigdom kommunemonitor",
+            "description": "Barne-, ungdoms- og familiedirektoratet (Bufdir) publishes the Barnefattigdom kommunemonitor on\nbufdir.no and ships a single bulk ZIP of `Indikator_*.xlsx` workbooks (\"last ned hele datasettet\").\nAtlas downloads that ZIP (URL discovered from the monitor page), parses sheet `Data` in each\nworkbook, and loads kommune- and sub-kommune-level time series into `raw.bufdir_barnefattigdom`\nso analysts can compare Bufdir's poverty lens with register-based sources such as SSB low-income\nstatistics.\n",
+            "atlas_summary": null,
+            "publisher": {
+              "id": "bufdir",
+              "display_name": "Barne-, ungdoms- og familiedirektoratet",
+              "homepage": "https://www.bufdir.no/",
+              "logo": "/img/publishers/bufdir.png"
+            },
+            "category": {
+              "id": "income",
+              "name": "Income & poverty",
+              "emoji": "💰"
+            },
+            "license": "NLOD",
+            "license_url": "https://data.norge.no/nlod/no/2.0",
+            "periodicity": "P1Y",
+            "eu_theme": "SOCI",
+            "attribution": "Kilde: Barne-, ungdoms- og familiedirektoratet, Barnefattigdom kommunemonitor",
+            "tags": {
+              "provider": "bufdir",
+              "topic": "income",
+              "geo": "kommune",
+              "cadence": "annual"
+            },
+            "keywords": [
+              "child-poverty",
+              "low-income",
+              "kommune",
+              "bydel",
+              "families"
+            ],
+            "lifecycle": "stable",
+            "time_coverage": {
+              "start": null,
+              "end": null
+            },
+            "methodology_notes": "Children under 18 living in households below 60% of the national median equivalised income (EU-scale). Spines differ per indicator — some series start in 2013, others in 2015 or later. Bufdir's poverty lens complements SSB's register-based measures by adding bydel-level breakdowns for the largest kommuner.\n",
+            "suggested_joins": [
+              "ssb-08764"
+            ],
+            "related_by_topic": [
+              "ssb-06944",
+              "ssb-06947",
+              "ssb-08764",
+              "ssb-12944"
+            ],
+            "dimensions": [
+              {
+                "code": "indicator_api_id",
+                "meaning": "Stable surrogate indicator key for ZIP workbook rows (not Strapi)",
+                "value_format": "bf_zip_<24 lowercase hex>",
+                "notes": "Derived as SHA-256 fingerprint of the `Indikator_*.xlsx` filename stem; breaks if Bufdir renames workbook files inside the ZIP."
+              },
+              {
+                "code": "region_code",
+                "meaning": "Geographic code from workbook column Region",
+                "value_format": "0 (land), 2-digit fylke, 4-digit kommune, or longer codes for bydel/delbydel",
+                "notes": "Rows follow whatever geography levels each indicator publishes."
+              },
+              {
+                "code": "category_unit",
+                "meaning": "Workbook column Enhet (first category axis), normalised lowercase",
+                "value_format": "barn or husholdning",
+                "notes": "Mirrors the paired rows in each Data sheet for child vs household units."
+              },
+              {
+                "code": "category_format",
+                "meaning": "Workbook column Tallformat (second category axis), normalised lowercase",
+                "value_format": "antall or prosent",
+                "notes": "Paired with category_unit — four tuples per workbook × geography when all rows exist upstream."
+              },
+              {
+                "code": "year",
+                "meaning": "Calendar year column from workbook header row",
+                "value_format": "4-digit integer",
+                "notes": "Spines differ by indicator — see values_json for the full year map before filtering NAs."
+              },
+              {
+                "code": "values_json",
+                "meaning": "Parsed year→value map for the geography and Enhet/Tallformat tuple",
+                "value_format": "JSON object with string year keys; suppressed cells as null",
+                "notes": "Matches prior raw semantics (full spine per slice); mart reads scalar `value` for the keyed year row."
+              }
+            ],
+            "raw_tables": null,
+            "sample_query": "https://api-atlas.sovereignsky.no/bufdir_barnefattigdom?limit=5",
+            "citation": {
+              "text": "Barne-, ungdoms- og familiedirektoratet. (n.d.). Barnefattigdom kommunemonitor. Retrieved from https://www.bufdir.no/statistikk-og-analyse/monitor/barnefattigdom/. Available in Atlas at https://atlas.sovereignsky.no/datasets/bufdir-barnefattigdom.",
+              "bibtex": "@misc{atlas_bufdir_barnefattigdom,\n  author = {Barne-, ungdoms- og familiedirektoratet},\n  title  = {Barnefattigdom kommunemonitor},\n  year   = {n.d.},\n  url    = {https://www.bufdir.no/statistikk-og-analyse/monitor/barnefattigdom/},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/bufdir-barnefattigdom}\n}"
+            },
+            "feedback_url": "https://www.bufdir.no/kontakt/",
+            "consuming_marts": [],
+            "consuming_models": [
+              {
+                "name": "indicators__bufdir_barnefattigdom",
+                "kind": "indicators"
+              }
+            ],
+            "joined_with": [],
+            "last_ingested_at": "2026-05-06T14:32:41.546258+00:00",
+            "latest_row_count": 395420,
+            "total_runs": 5,
+            "downstream_model_count": 1
+          }
+        },
+        {
+          "why": "The SSB ground truth. Bufdir's monitor is derived from this table.\nCite SSB when a reviewer wants the canonical source; cite Bufdir\nwhen you want the editorial framing.",
+          "dataset": {
+            "kind": "source",
+            "source_id": "ssb-08764",
+            "upstream_id": "08764",
+            "upstream_url": "https://www.ssb.no/statbank/table/08764",
+            "upstream_landing_page": "https://www.ssb.no/statbank/table/08764",
+            "upstream_title": "08764: Personer under 18 år i husholdninger med lavinntekt (EU- og OECD-skala). Antall og prosent (K) (B) 2005-2024",
+            "description": "Ingestion module for SSB statistikkbanktabell 08764 — Personer under 18 år i husholdninger med lavinntekt (EU- og OECD-skala).",
+            "atlas_summary": null,
+            "publisher": {
+              "id": "ssb",
+              "display_name": "Statistisk sentralbyrå",
+              "homepage": "https://www.ssb.no/",
+              "logo": "/img/publishers/ssb.svg"
+            },
+            "category": {
+              "id": "income",
+              "name": "Income & poverty",
+              "emoji": "💰"
+            },
+            "license": "NLOD",
+            "license_url": "https://data.norge.no/nlod/no/2.0",
+            "periodicity": "P1Y",
+            "eu_theme": "SOCI",
+            "attribution": "Kilde: Statistisk sentralbyrå, tabell 08764",
+            "tags": {
+              "provider": "ssb",
+              "topic": "income",
+              "geo": "kommune",
+              "cadence": "annual"
+            },
+            "keywords": [
+              "child-poverty",
+              "low-income",
+              "children",
+              "income",
+              "kommune"
+            ],
+            "lifecycle": "stable",
+            "time_coverage": {
+              "start": 2005,
+              "end": 2024
+            },
+            "methodology_notes": "SSB measures children under 18 in households where equivalised disposable income falls below 60% of the national median (EU-scale). The OECD-modified equivalence scale assigns 1.0 to the first adult, 0.5 to each additional adult, and 0.3 to each child under 14. Single-year snapshot; persistence is measured separately in ssb-12944.\n",
+            "suggested_joins": [
+              "ssb-06944",
+              "ssb-06947",
+              "ssb-12944",
+              "bufdir-barnefattigdom"
+            ],
+            "related_by_topic": [
+              "bufdir-barnefattigdom",
+              "ssb-06944",
+              "ssb-06947",
+              "ssb-12944"
+            ],
+            "dimensions": [
+              {
+                "code": "Region",
+                "meaning": "Region (national / fylke / kommune / bydel / historical)",
+                "value_format": "Numeric code: 0 national, 2-digit fylke, 4-digit kommune, 6-digit bydel",
+                "notes": "~1036 codes when pulling full range"
+              },
+              {
+                "code": "ContentsCode",
+                "meaning": "Statistic measure",
+                "value_format": "5 codes",
+                "notes": "Personer (count under 18), EUskala50/EUskala60 (% under 18 below 50%/60% of median, EU scale), OECDskala50/OECDskala60 (same, OECD scale). Samfunnspuls uses EUskala60."
+              },
+              {
+                "code": "Tid",
+                "meaning": "Year",
+                "value_format": "4-digit year as text",
+                "notes": "2005–2024 (20 years); default v2-beta response is latest year only"
+              }
+            ],
+            "raw_tables": null,
+            "sample_query": "https://api-atlas.sovereignsky.no/ssb_08764?limit=5",
+            "citation": {
+              "text": "Statistisk sentralbyrå. (2024). 08764: Personer under 18 år i husholdninger med lavinntekt (EU- og OECD-skala). Antall og prosent (K) (B) 2005-2024. Retrieved from https://www.ssb.no/statbank/table/08764. Available in Atlas at https://atlas.sovereignsky.no/datasets/ssb-08764.",
+              "bibtex": "@misc{atlas_ssb_08764,\n  author = {Statistisk sentralbyrå},\n  title  = {08764: Personer under 18 år i husholdninger med lavinntekt (EU- og OECD-skala). Antall og prosent (K) (B) 2005-2024},\n  year   = {2024},\n  url    = {https://www.ssb.no/statbank/table/08764},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/ssb-08764}\n}"
+            },
+            "feedback_url": "https://www.ssb.no/omssb/kontakt-oss",
+            "consuming_marts": [
+              {
+                "mart_name": "mart_coverage_gap_barnefattigdom",
+                "api_v1_name": "coverage_gap_barnefattigdom",
+                "title": "Child-poverty coverage gap (kommune)",
+                "description_short": "One row per active kommune for the latest year of SSB 08764 child poverty data, combining the EUskala60 share (% of children in low-income households) with the Personer count (number of children).",
+                "description_full": "One row per active kommune for the latest year of SSB 08764 child\npoverty data, combining the EUskala60 share (% of children in\nlow-income households) with the Personer count (number of\nchildren). Backs the barnefattigdom map page (atlas-frontend\n/coverage-gap/barnefattigdom).\n\nFirst member of the mart_coverage_gap_<topic> family. Future\ncoverage-gap maps follow the same shape: latest year per kommune,\none row per kommune, value(s) pivoted out of contents_code into\nnamed columns. PostgREST projects this view as a single endpoint;\nconsumers don't filter, they read the whole map dataset in one\nrequest.\n\nInactive kommuner are excluded so the map renders today's\nkommune set. NULL values are kept in place — Map.tsx renders\nthem as \"no data\".",
+                "sample_query": "https://api-atlas.sovereignsky.no/coverage_gap_barnefattigdom?limit=5"
+              },
+              {
+                "mart_name": "mart_indicator_latest_values",
+                "api_v1_name": "indicator_latest_values",
+                "title": "Latest indicator values per kommune",
+                "description_short": "One row per (source_id, contents_code, kommune_nr) at each indicator's latest_year, restricted to active kommuner.",
+                "description_full": "One row per (source_id, contents_code, kommune_nr) at each\nindicator's latest_year, restricted to active kommuner. Backs the\ndata explorer's per-indicator detail page (atlas-frontend\n/data/[source_id]/[contents_code]) and is the equivalent of the\nloadIndicatorValues() inline query.\n\nPostgREST consumers filter via\n?source_id=eq.X&contents_code=eq.Y. The full table is the\ncross-product of every indicator with every active kommune that\nhas a row at latest_year, so the unfiltered row count is large\n(~360 active kommuner × ~70 indicators in v1).\n\nInactive kommuner (kommune_is_active = false) are excluded so the\noutput reflects today's kommune set, not historical codes that\nupstream still emits.",
+                "sample_query": "https://api-atlas.sovereignsky.no/indicator_latest_values?limit=5"
+              },
+              {
+                "mart_name": "mart_indicator_missing_kommuner",
+                "api_v1_name": "indicator_missing_kommuner",
+                "title": "Indicator coverage gaps per kommune",
+                "description_short": "One row per (source_id, contents_code, kommune_nr) for every active kommune that has *no* non-NULL value at the indicator's latest_year.",
+                "description_full": "One row per (source_id, contents_code, kommune_nr) for every\nactive kommune that has *no* non-NULL value at the indicator's\nlatest_year. The \"coverage gap\" sidebar on the data explorer\ndetail page; equivalent to the listMissingKommuner() inline query.\n\nPostgREST consumers filter via\n?source_id=eq.X&contents_code=eq.Y. Membership semantics: a\nkommune is considered \"missing\" if it either has no row at\nlatest_year, or has a row with value IS NULL. Status markers (':',\n'X') do not count as a value.\n\nThe full table is the cross-product of every indicator with every\nactive kommune that lacks data. Most cells are present, so the\nunfiltered row count is the per-indicator gap-list aggregated\nacross all indicators.",
+                "sample_query": "https://api-atlas.sovereignsky.no/indicator_missing_kommuner?limit=5"
+              },
+              {
+                "mart_name": "mart_indicator_summary",
+                "api_v1_name": "indicator_summary",
+                "title": "Indicator coverage summary",
+                "description_short": "One row per (source_id, contents_code) summarising the latest-year coverage and value range for every indicator in fact_kommune_indicators.",
+                "description_full": "One row per (source_id, contents_code) summarising the latest-year\ncoverage and value range for every indicator in\nfact_kommune_indicators. This is the backing dataset for the data\nexplorer index page (atlas-frontend /data) and is the equivalent of\nthe listIndicators() inline query that PostgREST projects as\n/mart_indicator_summary on the public API.\n\nQuery shape: latest-year-per-indicator + group-by + value/null counts\nfiltered to active kommuner only. Inactive kommuner (historical\ncodes retained by upstream) are excluded from the counts so consumers\nsee \"how many of today's kommuner have data?\" not \"how many rows\nexist?\".\n\nRefreshed nightly together with fact_kommune_indicators. The\nupstream_updated column carries the most recent raw load timestamp\nacross the rows that contributed to this summary, so freshness can\nbe inspected per indicator without joining to raw.* sources.",
+                "sample_query": "https://api-atlas.sovereignsky.no/indicator_summary?limit=5"
+              }
+            ],
+            "consuming_models": [
+              {
+                "name": "fact_kommune_indicators",
+                "kind": "fact"
+              },
+              {
+                "name": "indicators__ssb_08764",
+                "kind": "indicators"
+              },
+              {
+                "name": "mart_coverage_gap_barnefattigdom",
+                "kind": "mart"
+              },
+              {
+                "name": "mart_indicator_latest_values",
+                "kind": "mart"
+              },
+              {
+                "name": "mart_indicator_missing_kommuner",
+                "kind": "mart"
+              },
+              {
+                "name": "mart_indicator_summary",
+                "kind": "mart"
+              }
+            ],
+            "joined_with": [
+              {
+                "source_id": "fhi-bor-alene",
+                "shared_models": [
+                  "fact_kommune_indicators",
+                  "mart_coverage_gap_barnefattigdom",
+                  "mart_indicator_latest_values",
+                  "mart_indicator_missing_kommuner",
+                  "mart_indicator_summary"
+                ]
+              },
+              {
+                "source_id": "fhi-mobbing",
+                "shared_models": [
+                  "fact_kommune_indicators",
+                  "mart_coverage_gap_barnefattigdom",
+                  "mart_indicator_latest_values",
+                  "mart_indicator_missing_kommuner",
+                  "mart_indicator_summary"
+                ]
+              },
+              {
+                "source_id": "fhi-trangbodd",
+                "shared_models": [
+                  "fact_kommune_indicators",
+                  "mart_coverage_gap_barnefattigdom",
+                  "mart_indicator_latest_values",
+                  "mart_indicator_missing_kommuner",
+                  "mart_indicator_summary"
+                ]
+              },
+              {
+                "source_id": "fhi-vgs-gjennomforing",
+                "shared_models": [
+                  "fact_kommune_indicators",
+                  "mart_coverage_gap_barnefattigdom",
+                  "mart_indicator_latest_values",
+                  "mart_indicator_missing_kommuner",
+                  "mart_indicator_summary"
+                ]
+              },
+              {
+                "source_id": "ssb-06083",
+                "shared_models": [
+                  "fact_kommune_indicators",
+                  "mart_coverage_gap_barnefattigdom",
+                  "mart_indicator_latest_values",
+                  "mart_indicator_missing_kommuner",
+                  "mart_indicator_summary"
+                ]
+              },
+              {
+                "source_id": "ssb-06913",
+                "shared_models": [
+                  "fact_kommune_indicators",
+                  "mart_coverage_gap_barnefattigdom",
+                  "mart_indicator_latest_values",
+                  "mart_indicator_missing_kommuner",
+                  "mart_indicator_summary"
+                ]
+              },
+              {
+                "source_id": "ssb-06944",
+                "shared_models": [
+                  "fact_kommune_indicators",
+                  "mart_coverage_gap_barnefattigdom",
+                  "mart_indicator_latest_values",
+                  "mart_indicator_missing_kommuner",
+                  "mart_indicator_summary"
+                ]
+              },
+              {
+                "source_id": "ssb-06947",
+                "shared_models": [
+                  "fact_kommune_indicators",
+                  "mart_coverage_gap_barnefattigdom",
+                  "mart_indicator_latest_values",
+                  "mart_indicator_missing_kommuner",
+                  "mart_indicator_summary"
+                ]
+              }
+            ],
+            "last_ingested_at": "2026-05-06T14:37:15.919281+00:00",
+            "latest_row_count": 1790,
+            "total_runs": 2,
+            "downstream_model_count": 6
+          }
+        },
+        {
+          "why": "Persistent low-income (3-year average, EU-60 scale). The difference\nbetween *transient* and *persistent* poverty is the difference\nbetween a household between jobs and a household stuck. Reviewers\nread persistence as a stronger evidence base.",
+          "dataset": {
+            "kind": "source",
+            "source_id": "ssb-12944",
+            "upstream_id": "12944",
+            "upstream_url": "https://www.ssb.no/statbank/table/12944",
+            "upstream_landing_page": "https://www.ssb.no/statbank/table/12944",
+            "upstream_title": "12944: Personer i husholdninger med vedvarende lavinntekt (EU-skala 60 prosent), etter alder. Treårsperiode (K) (B) (2011-2013)-(2022-2024)",
+            "description": "Ingestion module for SSB statistikkbanktabell 12944 — Personer i husholdninger med vedvarende lavinntekt (EU-60), 3-årsperiode.",
+            "atlas_summary": null,
+            "publisher": {
+              "id": "ssb",
+              "display_name": "Statistisk sentralbyrå",
+              "homepage": "https://www.ssb.no/",
+              "logo": "/img/publishers/ssb.svg"
+            },
+            "category": {
+              "id": "income",
+              "name": "Income & poverty",
+              "emoji": "💰"
+            },
+            "license": "NLOD",
+            "license_url": "https://data.norge.no/nlod/no/2.0",
+            "periodicity": "P1Y",
+            "eu_theme": "SOCI",
+            "attribution": "Kilde: Statistisk sentralbyrå, tabell 12944",
+            "tags": {
+              "provider": "ssb",
+              "topic": "income",
+              "geo": "kommune",
+              "cadence": "annual"
+            },
+            "keywords": [
+              "persistent-low-income",
+              "poverty",
+              "income",
+              "kommune"
+            ],
+            "lifecycle": "stable",
+            "time_coverage": {
+              "start": 2011,
+              "end": 2024
+            },
+            "methodology_notes": null,
+            "suggested_joins": [
+              "ssb-06944",
+              "ssb-06947",
+              "ssb-08764"
+            ],
+            "related_by_topic": [
+              "bufdir-barnefattigdom",
+              "ssb-06944",
+              "ssb-06947",
+              "ssb-08764"
+            ],
+            "dimensions": [
+              {
+                "code": "Region",
+                "meaning": "Region (kommune / fylke / nasjon / bydel / grunnkrets / historical)",
+                "value_format": "Numeric code: 0 national, 2-digit fylke, 4-digit kommune, 6-digit bydel",
+                "notes": "1036 codes"
+              },
+              {
+                "code": "Alder",
+                "meaning": "Age band",
+                "value_format": "6 codes",
+                "notes": "999A (all ages), 00-17, 18-34, 35-49, 50-66, 067+"
+              },
+              {
+                "code": "ContentsCode",
+                "meaning": "Statistic measure",
+                "value_format": "2 codes",
+                "notes": "PersonerSeksti (count) and EUskalaSeksti (% below 60% of median, EU scale, 3-year persistent)"
+              },
+              {
+                "code": "Tid",
+                "meaning": "3-year rolling period",
+                "value_format": "\"YYYY-YYYY\" period label",
+                "notes": "12 periods — 2011-2013 through 2022-2024"
+              }
+            ],
+            "raw_tables": null,
+            "sample_query": "https://api-atlas.sovereignsky.no/ssb_12944?limit=5",
+            "citation": {
+              "text": "Statistisk sentralbyrå. (2024). 12944: Personer i husholdninger med vedvarende lavinntekt (EU-skala 60 prosent), etter alder. Treårsperiode (K) (B) (2011-2013)-(2022-2024). Retrieved from https://www.ssb.no/statbank/table/12944. Available in Atlas at https://atlas.sovereignsky.no/datasets/ssb-12944.",
+              "bibtex": "@misc{atlas_ssb_12944,\n  author = {Statistisk sentralbyrå},\n  title  = {12944: Personer i husholdninger med vedvarende lavinntekt (EU-skala 60 prosent), etter alder. Treårsperiode (K) (B) (2011-2013)-(2022-2024)},\n  year   = {2024},\n  url    = {https://www.ssb.no/statbank/table/12944},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/ssb-12944}\n}"
+            },
+            "feedback_url": "https://www.ssb.no/omssb/kontakt-oss",
+            "consuming_marts": [],
+            "consuming_models": [
+              {
+                "name": "indicators__ssb_12944",
+                "kind": "indicators"
+              }
+            ],
+            "joined_with": [],
+            "last_ingested_at": "2026-05-06T14:37:50.062071+00:00",
+            "latest_row_count": 4296,
+            "total_runs": 1,
+            "downstream_model_count": 1
+          }
+        },
+        {
+          "why": "A lived-experience proxy: children in overcrowded housing. Closely\ncorrelates with low income but adds the \"what does poverty feel\nlike\" dimension that grant narratives need. Pairs well with the\nincome tables above.",
+          "dataset": {
+            "kind": "source",
+            "source_id": "fhi-trangbodd",
+            "upstream_id": "794",
+            "upstream_url": "https://statistikk-data.fhi.no/api/open/v1/nokkel/table/794",
+            "upstream_landing_page": null,
+            "upstream_title": "Trangbodd_UTDANN",
+            "description": "FHI Folkehelsestatistikk table 794 — Trangbodd_UTDANN. Share of population living in overcrowded housing by region × age × education × housing-status × measure.",
+            "atlas_summary": null,
+            "publisher": {
+              "id": "fhi",
+              "display_name": "Folkehelseinstituttet",
+              "homepage": "https://www.fhi.no/",
+              "logo": "/img/publishers/fhi.png"
+            },
+            "category": {
+              "id": "education",
+              "name": "Education & youth",
+              "emoji": "🎓"
+            },
+            "license": "NLOD",
+            "license_url": "https://data.norge.no/nlod/no/2.0",
+            "periodicity": "P1Y",
+            "eu_theme": "EDUC",
+            "attribution": "Kilde: Folkehelseinstituttet, Folkehelsestatistikk tabell 794 (Trangbodd)",
+            "tags": {
+              "provider": "fhi",
+              "topic": "education",
+              "geo": "kommune",
+              "cadence": "annual"
+            },
+            "keywords": [
+              "overcrowded-housing",
+              "housing",
+              "integration",
+              "kommune"
+            ],
+            "lifecycle": "stable",
+            "time_coverage": {
+              "start": 2015,
+              "end": 2024
+            },
+            "methodology_notes": null,
+            "suggested_joins": [],
+            "related_by_topic": [
+              "fhi-mobbing",
+              "fhi-neet",
+              "fhi-vgs-gjennomforing",
+              "ssb-09429"
+            ],
+            "dimensions": [
+              {
+                "code": "GEO",
+                "meaning": "Region (mixed kommune / fylke / bydel / nasjon)",
+                "value_format": "1- to 6-character numeric code",
+                "notes": "~409 codes"
+              },
+              {
+                "code": "AAR",
+                "meaning": "Year",
+                "value_format": "\"YYYY_YYYY\" range string (single-year)",
+                "notes": "10 years, 2015_2015 through 2024_2024"
+              },
+              {
+                "code": "ALDER",
+                "meaning": "Age band",
+                "value_format": "text band code",
+                "notes": "9 age bands"
+              },
+              {
+                "code": "UTDANN",
+                "meaning": "Education level",
+                "value_format": "5 codes",
+                "notes": "\"0\" (all education levels) + \"1\"–\"4\" (specific levels). Atlas filters to \"0\" at ingest to stay under the 50k-row cap."
+              },
+              {
+                "code": "BODD",
+                "meaning": "Housing crowding status",
+                "value_format": "2 codes",
+                "notes": "trangt (overcrowded), uoppgitt (unknown)"
+              },
+              {
+                "code": "MEASURE_TYPE",
+                "meaning": "Which number",
+                "value_format": "3 codes",
+                "notes": "RATE (percent — Atlas keeps only this), SMR (standardised ratio), TELLER (count)"
+              }
+            ],
+            "raw_tables": null,
+            "sample_query": "https://api-atlas.sovereignsky.no/fhi_trangbodd?limit=5",
+            "citation": {
+              "text": "Folkehelseinstituttet. (2024). Trangbodd_UTDANN. Retrieved from https://statistikk-data.fhi.no/api/open/v1/nokkel/table/794. Available in Atlas at https://atlas.sovereignsky.no/datasets/fhi-trangbodd.",
+              "bibtex": "@misc{atlas_fhi_trangbodd,\n  author = {Folkehelseinstituttet},\n  title  = {Trangbodd_UTDANN},\n  year   = {2024},\n  url    = {https://statistikk-data.fhi.no/api/open/v1/nokkel/table/794},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/fhi-trangbodd}\n}"
+            },
+            "feedback_url": "https://www.fhi.no/skjema/kontakt-folkehelseinstituttet/",
+            "consuming_marts": [
+              {
+                "mart_name": "mart_coverage_gap_barnefattigdom",
+                "api_v1_name": "coverage_gap_barnefattigdom",
+                "title": "Child-poverty coverage gap (kommune)",
+                "description_short": "One row per active kommune for the latest year of SSB 08764 child poverty data, combining the EUskala60 share (% of children in low-income households) with the Personer count (number of children).",
+                "description_full": "One row per active kommune for the latest year of SSB 08764 child\npoverty data, combining the EUskala60 share (% of children in\nlow-income households) with the Personer count (number of\nchildren). Backs the barnefattigdom map page (atlas-frontend\n/coverage-gap/barnefattigdom).\n\nFirst member of the mart_coverage_gap_<topic> family. Future\ncoverage-gap maps follow the same shape: latest year per kommune,\none row per kommune, value(s) pivoted out of contents_code into\nnamed columns. PostgREST projects this view as a single endpoint;\nconsumers don't filter, they read the whole map dataset in one\nrequest.\n\nInactive kommuner are excluded so the map renders today's\nkommune set. NULL values are kept in place — Map.tsx renders\nthem as \"no data\".",
+                "sample_query": "https://api-atlas.sovereignsky.no/coverage_gap_barnefattigdom?limit=5"
+              },
+              {
+                "mart_name": "mart_indicator_latest_values",
+                "api_v1_name": "indicator_latest_values",
+                "title": "Latest indicator values per kommune",
+                "description_short": "One row per (source_id, contents_code, kommune_nr) at each indicator's latest_year, restricted to active kommuner.",
+                "description_full": "One row per (source_id, contents_code, kommune_nr) at each\nindicator's latest_year, restricted to active kommuner. Backs the\ndata explorer's per-indicator detail page (atlas-frontend\n/data/[source_id]/[contents_code]) and is the equivalent of the\nloadIndicatorValues() inline query.\n\nPostgREST consumers filter via\n?source_id=eq.X&contents_code=eq.Y. The full table is the\ncross-product of every indicator with every active kommune that\nhas a row at latest_year, so the unfiltered row count is large\n(~360 active kommuner × ~70 indicators in v1).\n\nInactive kommuner (kommune_is_active = false) are excluded so the\noutput reflects today's kommune set, not historical codes that\nupstream still emits.",
+                "sample_query": "https://api-atlas.sovereignsky.no/indicator_latest_values?limit=5"
+              },
+              {
+                "mart_name": "mart_indicator_missing_kommuner",
+                "api_v1_name": "indicator_missing_kommuner",
+                "title": "Indicator coverage gaps per kommune",
+                "description_short": "One row per (source_id, contents_code, kommune_nr) for every active kommune that has *no* non-NULL value at the indicator's latest_year.",
+                "description_full": "One row per (source_id, contents_code, kommune_nr) for every\nactive kommune that has *no* non-NULL value at the indicator's\nlatest_year. The \"coverage gap\" sidebar on the data explorer\ndetail page; equivalent to the listMissingKommuner() inline query.\n\nPostgREST consumers filter via\n?source_id=eq.X&contents_code=eq.Y. Membership semantics: a\nkommune is considered \"missing\" if it either has no row at\nlatest_year, or has a row with value IS NULL. Status markers (':',\n'X') do not count as a value.\n\nThe full table is the cross-product of every indicator with every\nactive kommune that lacks data. Most cells are present, so the\nunfiltered row count is the per-indicator gap-list aggregated\nacross all indicators.",
+                "sample_query": "https://api-atlas.sovereignsky.no/indicator_missing_kommuner?limit=5"
+              },
+              {
+                "mart_name": "mart_indicator_summary",
+                "api_v1_name": "indicator_summary",
+                "title": "Indicator coverage summary",
+                "description_short": "One row per (source_id, contents_code) summarising the latest-year coverage and value range for every indicator in fact_kommune_indicators.",
+                "description_full": "One row per (source_id, contents_code) summarising the latest-year\ncoverage and value range for every indicator in\nfact_kommune_indicators. This is the backing dataset for the data\nexplorer index page (atlas-frontend /data) and is the equivalent of\nthe listIndicators() inline query that PostgREST projects as\n/mart_indicator_summary on the public API.\n\nQuery shape: latest-year-per-indicator + group-by + value/null counts\nfiltered to active kommuner only. Inactive kommuner (historical\ncodes retained by upstream) are excluded from the counts so consumers\nsee \"how many of today's kommuner have data?\" not \"how many rows\nexist?\".\n\nRefreshed nightly together with fact_kommune_indicators. The\nupstream_updated column carries the most recent raw load timestamp\nacross the rows that contributed to this summary, so freshness can\nbe inspected per indicator without joining to raw.* sources.",
+                "sample_query": "https://api-atlas.sovereignsky.no/indicator_summary?limit=5"
+              }
+            ],
+            "consuming_models": [
+              {
+                "name": "fact_kommune_indicators",
+                "kind": "fact"
+              },
+              {
+                "name": "indicators__fhi_trangbodd",
+                "kind": "indicators"
+              },
+              {
+                "name": "mart_coverage_gap_barnefattigdom",
+                "kind": "mart"
+              },
+              {
+                "name": "mart_indicator_latest_values",
+                "kind": "mart"
+              },
+              {
+                "name": "mart_indicator_missing_kommuner",
+                "kind": "mart"
+              },
+              {
+                "name": "mart_indicator_summary",
+                "kind": "mart"
+              }
+            ],
+            "joined_with": [
+              {
+                "source_id": "fhi-bor-alene",
+                "shared_models": [
+                  "fact_kommune_indicators",
+                  "mart_coverage_gap_barnefattigdom",
+                  "mart_indicator_latest_values",
+                  "mart_indicator_missing_kommuner",
+                  "mart_indicator_summary"
+                ]
+              },
+              {
+                "source_id": "fhi-mobbing",
+                "shared_models": [
+                  "fact_kommune_indicators",
+                  "mart_coverage_gap_barnefattigdom",
+                  "mart_indicator_latest_values",
+                  "mart_indicator_missing_kommuner",
+                  "mart_indicator_summary"
+                ]
+              },
+              {
+                "source_id": "fhi-vgs-gjennomforing",
+                "shared_models": [
+                  "fact_kommune_indicators",
+                  "mart_coverage_gap_barnefattigdom",
+                  "mart_indicator_latest_values",
+                  "mart_indicator_missing_kommuner",
+                  "mart_indicator_summary"
+                ]
+              },
+              {
+                "source_id": "ssb-06083",
+                "shared_models": [
+                  "fact_kommune_indicators",
+                  "mart_coverage_gap_barnefattigdom",
+                  "mart_indicator_latest_values",
+                  "mart_indicator_missing_kommuner",
+                  "mart_indicator_summary"
+                ]
+              },
+              {
+                "source_id": "ssb-06913",
+                "shared_models": [
+                  "fact_kommune_indicators",
+                  "mart_coverage_gap_barnefattigdom",
+                  "mart_indicator_latest_values",
+                  "mart_indicator_missing_kommuner",
+                  "mart_indicator_summary"
+                ]
+              },
+              {
+                "source_id": "ssb-06944",
+                "shared_models": [
+                  "fact_kommune_indicators",
+                  "mart_coverage_gap_barnefattigdom",
+                  "mart_indicator_latest_values",
+                  "mart_indicator_missing_kommuner",
+                  "mart_indicator_summary"
+                ]
+              },
+              {
+                "source_id": "ssb-06947",
+                "shared_models": [
+                  "fact_kommune_indicators",
+                  "mart_coverage_gap_barnefattigdom",
+                  "mart_indicator_latest_values",
+                  "mart_indicator_missing_kommuner",
+                  "mart_indicator_summary"
+                ]
+              },
+              {
+                "source_id": "ssb-08764",
+                "shared_models": [
+                  "fact_kommune_indicators",
+                  "mart_coverage_gap_barnefattigdom",
+                  "mart_indicator_latest_values",
+                  "mart_indicator_missing_kommuner",
+                  "mart_indicator_summary"
+                ]
+              }
+            ],
+            "last_ingested_at": "2026-05-06T14:34:35.527769+00:00",
+            "latest_row_count": 36810,
+            "total_runs": 1,
+            "downstream_model_count": 6
+          }
+        },
+        {
+          "why": "The Atlas synthesis view. Combines Bufdir's monitor with SSB's\ncoverage to surface the kommuner where Bufdir didn't publish\nand where, if your application is about underserved data,\nyou have a story to tell.",
+          "dataset": {
+            "kind": "view",
+            "view_id": "coverage_gap_barnefattigdom",
+            "mart_name": "mart_coverage_gap_barnefattigdom",
+            "api_v1_name": "coverage_gap_barnefattigdom",
+            "title": "Child-poverty coverage gap (kommune)",
+            "description_short": "One row per active kommune for the latest year of SSB 08764 child poverty data, combining the EUskala60 share (% of children in low-income households) with the Personer count (number of children).",
+            "description_full": "One row per active kommune for the latest year of SSB 08764 child\npoverty data, combining the EUskala60 share (% of children in\nlow-income households) with the Personer count (number of\nchildren). Backs the barnefattigdom map page (atlas-frontend\n/coverage-gap/barnefattigdom).\n\nFirst member of the mart_coverage_gap_<topic> family. Future\ncoverage-gap maps follow the same shape: latest year per kommune,\none row per kommune, value(s) pivoted out of contents_code into\nnamed columns. PostgREST projects this view as a single endpoint;\nconsumers don't filter, they read the whole map dataset in one\nrequest.\n\nInactive kommuner are excluded so the map renders today's\nkommune set. NULL values are kept in place — Map.tsx renders\nthem as \"no data\".",
+            "columns": [
+              {
+                "name": "kommune_nr",
+                "description": "4-digit zero-padded kommune code. FK to dim_kommune; only active kommuner are included. Unique within this view."
+              },
+              {
+                "name": "kommune_name",
+                "description": "Joined from fact_kommune_indicators (originally from dim_kommune)."
+              },
+              {
+                "name": "fylke_name",
+                "description": "Joined from fact_kommune_indicators (originally from dim_fylke). NULL for kommuner whose fylke_nr isn't in dim_fylke (rare — Svalbard 21xx)."
+              },
+              {
+                "name": "year",
+                "description": "The latest year for ssb-08764/EUskala60. Same value across all rows; carried on each row so the consumer reads it without a separate query."
+              },
+              {
+                "name": "value_pct",
+                "description": "EU-skala 60 % share — the percent of children under 18 in low-income households (defined as < 60 % of national median equivalised income). NULL when upstream suppressed the cell."
+              },
+              {
+                "name": "personer",
+                "description": "Number of children under 18 in low-income households at the same year. NULL when upstream suppressed the cell."
+              }
+            ],
+            "built_from": [
+              {
+                "parent_kind": "model",
+                "model_name": "fact_kommune_indicators",
+                "title": null,
+                "description_short": "First cross-source mart."
+              }
+            ],
+            "sample_query": "https://api-atlas.sovereignsky.no/coverage_gap_barnefattigdom?limit=5",
+            "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_coverage_gap_barnefattigdom"
+          }
+        }
+      ],
+      "join_recipe": "All five datasets join on `kommune_code` — the 4-digit post-2020\nkommune identifier. A minimal query that pulls a single kommune's\nevidence base looks like this (PostgREST):\n\n```bash\ncurl -sS 'https://api-atlas.sovereignsky.no/indicator_summary?kommune_code=eq.3024&select=kommune_name,indicator_id,latest_value,latest_year'\n```\n\nTo compare a kommune against its neighbours in the same fylke, swap\n`eq.3024` for `like.30*` (the 2-digit fylke prefix). The four upstream\ntables are also queryable directly via PostgREST — use those when you\nneed the raw structure (publisher dimensions, units, etc.) rather\nthan the indicator framing.\n\n**Watch out**: name-based kommune joins multiply rows ~5× because\npre-2020 kommune codes still appear in some upstream history. Always\njoin on `kommune_code` and filter `is_active = true` when joining\nagainst `dim_kommune`."
+    }
   ]
 }
