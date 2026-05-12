@@ -5,6 +5,7 @@ import type { Source } from '../../types/sources';
 import { usePostgrestBaseUrl, rewriteToBase } from '../../utils/postgrest';
 import LifecycleBadge from './LifecycleBadge';
 import FreshnessBadge from './FreshnessBadge';
+import SocialProofBadge from './SocialProofBadge';
 import styles from './styles.module.css';
 
 interface Props {
@@ -47,6 +48,7 @@ export default function SourceHero({ source }: Props) {
         <div className={styles.heroBadges}>
           <LifecycleBadge lifecycle={source.lifecycle} />
           <span className={`${styles.badge} ${styles.licenseBadge}`}>{source.license}</span>
+          <SocialProofBadge kind="source" source={source} />
           <FreshnessBadge source={source} />
         </div>
         <h1 className={styles.heroTitle}>{source.upstream_title}</h1>
