@@ -142,52 +142,52 @@ User confirms phase is complete.
 
 ---
 
-## Phase 2: React components
+## Phase 2: React components — DONE
 
-All components live under `website/src/components/sources/`. The directory is new — Atlas has no `src/components/` yet.
+**Outcome (2026-05-12)**: 14 components shipped (slight rename of one — `SourceCategoryList` and `SourcePublisherList` covered Phase 3's category/publisher pages naturally), plus `src/types/sources.ts` and `src/utils/sources.ts`. Shared `styles.module.css` rather than per-component dirs. Typecheck passes; full build passes (components compile + import cleanly; Phase 3 will exercise their rendering). Dropped explicit `JSX.Element` return-type annotations after TS objected — React 18 + TS 5 prefers inference here.
 
 ### Tasks
 
-- [ ] 2.1 `<SourceHero source={source}>` — the buy-box. Renders:
+- [x] 2.1 `<SourceHero source={source}>` — the buy-box. Renders:
   - Title + publisher logo + license badge.
   - `<LifecycleBadge lifecycle={source.lifecycle}>` — colour-coded ("Stable" green / "Beta" yellow / "Deprecated" grey / "Broken" red).
   - `<FreshnessBadge>` — "Last refreshed YYYY-MM-DD" (placeholder ISO date pulled from `time_coverage.end` for v2-foundation; PLAN-003 wires real `mart_ingest_health` data).
   - **Primary action** — "Get this data" button that expands an inline panel with the source's `sample_query` URL + a `curl` snippet + a Python `requests` snippet. Copy-to-clipboard buttons.
   - **Secondary actions** — "Cite this source" (anchor `#citation`), "View upstream" (links to `upstream_landing_page` or `upstream_url`), "Report a data issue" (links to `feedback_url` and to the Atlas GitHub issue tracker with a templated body).
 
-- [ ] 2.2 `<SourceProvenance source={source}>` — provenance block:
+- [x] 2.2 `<SourceProvenance source={source}>` — provenance block:
   - Upstream URL + landing page.
   - Attribution string verbatim.
   - License + license URL.
   - `methodology_notes` Markdown (or honest "no methodology notes yet — see upstream documentation" placeholder).
 
-- [ ] 2.3 `<SourceDimensions source={source}>` — table rendering of `dimensions[]`:
+- [x] 2.3 `<SourceDimensions source={source}>` — table rendering of `dimensions[]`:
   - Columns: Code, Meaning, Value format, Notes.
 
-- [ ] 2.4 `<SourceCitation source={source}>` — citation block:
+- [x] 2.4 `<SourceCitation source={source}>` — citation block:
   - One-line text citation (publisher, table number, accessed-via, today's date).
   - BibTeX block in a copy-clickable `<pre>`.
   - Permalink: `https://atlas.sovereignsky.no/sources/<id>`.
 
-- [ ] 2.5 `<RelatedSources source={source} registry={registry}>` — horizontal card row:
+- [x] 2.5 `<RelatedSources source={source} registry={registry}>` — horizontal card row:
   - Combine `suggested_joins[]` (manifest-authored) + `related_by_topic` + `related_by_join_keys`, dedupe, cap at 6.
   - Each card: title, publisher logo, category emoji, lifecycle badge.
 
-- [ ] 2.6 `<SourceCard source={source}>` — used by browse / category / publisher pages:
+- [x] 2.6 `<SourceCard source={source}>` — used by browse / category / publisher pages:
   - Title, publisher logo, category badge, lifecycle badge, 2-line description, link to `/sources/<id>`.
 
-- [ ] 2.7 `<SourceCategoryGrid registry={registry}>` — front-page category grid.
+- [x] 2.7 `<SourceCategoryGrid registry={registry}>` — front-page category grid.
   - One large card per category (using `source-categories.yaml` data + count of sources in it).
 
-- [ ] 2.8 `<PublisherStrip registry={registry}>` — horizontal strip of publisher brand cards (logo + count).
+- [x] 2.8 `<PublisherStrip registry={registry}>` — horizontal strip of publisher brand cards (logo + count).
 
-- [ ] 2.9 `<SourcesBrowse registry={registry}>` — faceted list:
+- [x] 2.9 `<SourcesBrowse registry={registry}>` — faceted list:
   - Free-text search input.
   - Facet sidebar: provider, geo, eu_theme, cadence, lifecycle (multi-select).
   - Grid of `<SourceCard>` filtered by current selection.
   - URL query params reflect current facet state (deep-linkable).
 
-- [ ] 2.10 `<SchemaOrgDataset source={source}>` — emits `<script type="application/ld+json">` with the Schema.org `Dataset` JSON-LD payload. Maps manifest fields to Schema.org properties (`name`, `description`, `creator`, `license`, `temporalCoverage`, `keywords`, `distribution`, `isAccessibleForFree: true`).
+- [x] 2.10 `<SchemaOrgDataset source={source}>` — emits `<script type="application/ld+json">` with the Schema.org `Dataset` JSON-LD payload. Maps manifest fields to Schema.org properties (`name`, `description`, `creator`, `license`, `temporalCoverage`, `keywords`, `distribution`, `isAccessibleForFree: true`).
 
 ### Validation
 
