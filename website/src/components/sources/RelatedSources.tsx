@@ -44,7 +44,7 @@ export default function RelatedSources({ source }: Props) {
   return (
     <div className={styles.relatedStrip}>
       {entries.map(({ source: s, kind }) => (
-        <Link key={s.source_id} to={`/sources/${s.source_id}`} className={styles.relatedCard}>
+        <Link key={s.source_id} to={`/datasets/${s.source_id}`} className={styles.relatedCard}>
           <span className={styles.relatedKind}>{kind}</span>
           <span className={styles.relatedTitle}>{s.upstream_title}</span>
           <span className={styles.cardCategory}>

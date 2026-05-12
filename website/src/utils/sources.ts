@@ -5,7 +5,7 @@
  */
 
 import registryData from '../data/sources-registry.json';
-import type { Registry, Source, Publisher, Category } from '../types/sources';
+import type { Registry, Source, Publisher, Category, View } from '../types/sources';
 
 const registry = registryData as Registry;
 
@@ -43,4 +43,30 @@ export function publisherById(id: string): Publisher | undefined {
 
 export function categoryById(id: string): Category | undefined {
   return registry.categories.find((c) => c.id === id);
+}
+
+export function getAllViews(): View[] {
+  return registry.views;
+}
+
+export function viewById(id: string): View | undefined {
+  return registry.views.find((v) => v.view_id === id);
+}
+
+/**
+ * Find every view (Atlas-built dataset) reachable from this source. Walks
+ * transitively through the dbt model graph: a view "uses" a source if the
+ * source appears anywhere in the view's lineage, not only as a direct ref.
+ *
+ * Implementation reads the transitive lineage projected onto each source
+ * (via `consuming_marts` on the source side, which was computed from
+ * `lineage.csv` transitively in the generator). This stays correct even
+ * after `built_from` was switched to direct refs only — sources keep their
+ * full reach map.
+ */
+export function viewsUsingSource(sourceId: string): View[] {
+  const source = registry.sources.find((s) => s.source_id === sourceId);
+  if (!source) return [];
+  const consumingViewIds = new Set(source.consuming_marts.map((m) => m.api_v1_name));
+  return registry.views.filter((v) => consumingViewIds.has(v.api_v1_name));
 }

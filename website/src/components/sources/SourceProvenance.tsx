@@ -15,8 +15,14 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
   );
 }
 
+function formatRowCount(n: number | null): string | null {
+  if (n == null) return null;
+  return n.toLocaleString('en-US');
+}
+
 export default function SourceProvenance({ source }: Props) {
   const landingPage = source.upstream_landing_page || source.upstream_url;
+  const rowCount = formatRowCount(source.latest_row_count);
   return (
     <div className={styles.provenance}>
       <Row label="Publisher">{source.publisher.display_name}</Row>
@@ -45,6 +51,21 @@ export default function SourceProvenance({ source }: Props) {
         <code>{source.eu_theme}</code>
       </Row>
       <Row label="Attribution">{source.attribution}</Row>
+      {source.last_ingested_at && (
+        <Row label="Last ingested">
+          <code>{source.last_ingested_at}</code>
+          {rowCount && (
+            <>
+              {' '}· {rowCount} rows
+            </>
+          )}
+          {source.total_runs != null && source.total_runs > 0 && (
+            <>
+              {' '}· {source.total_runs} {source.total_runs === 1 ? 'run' : 'runs'}
+            </>
+          )}
+        </Row>
+      )}
       {source.methodology_notes ? (
         <Row label="Methodology">
           <div style={{ whiteSpace: 'pre-wrap' }}>{source.methodology_notes}</div>

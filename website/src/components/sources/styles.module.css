@@ -256,11 +256,26 @@
 
 /* ── Category grid (front page) ───────────────────────────────────────── */
 
+/* Breakpoint-based column count: keeps cards a consistent width across
+   screen sizes (vs auto-fill, which packs cramped extra columns on wide
+   screens). Mirrors the dev-templates / tmp.sovereignsky.no pattern. */
 .categoryGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 1rem;
-  margin: 1rem 0 2rem 0;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+  margin: 1.25rem 0 2.5rem 0;
+}
+
+@media (min-width: 640px) {
+  .categoryGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 996px) {
+  .categoryGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 
 .categoryCard {
@@ -308,59 +323,79 @@
   font-weight: 500;
 }
 
-/* ── Publisher strip ──────────────────────────────────────────────────── */
+/* ── Publisher grid (bigger cards with descriptions) ──────────────────── */
 
-.publisherStrip {
+/* Same 1/2/3-column breakpoint pattern as .categoryGrid so the two
+   homepage grids align visually at every viewport width. */
+.publisherGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 0.75rem;
-  margin: 1rem 0 2rem 0;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+  margin: 1.25rem 0 2.5rem 0;
+}
+
+@media (min-width: 640px) {
+  .publisherGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 996px) {
+  .publisherGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 
 .publisherCard {
   display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem 1rem;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1.25rem;
   border: 1px solid var(--ifm-color-emphasis-200);
-  border-radius: 10px;
+  border-radius: 12px;
   background: var(--ifm-background-surface-color);
   text-decoration: none;
   color: inherit;
-  transition: border-color 0.15s;
+  transition: border-color 0.15s, transform 0.15s;
 }
 
 .publisherCard:hover {
   border-color: var(--ifm-color-primary);
   text-decoration: none;
   color: inherit;
+  transform: translateY(-2px);
 }
 
-.publisherLogo {
-  width: 80px;
-  height: 40px;
+.publisherCardLogo {
+  width: 120px;
+  height: 48px;
   object-fit: contain;
-  flex-shrink: 0;
+  align-self: flex-start;
 }
 
-.publisherMeta {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.publisherName {
-  font-size: 0.9rem;
+.publisherCardName {
+  font-size: 1.1rem;
   font-weight: 600;
+  margin: 0;
   line-height: 1.3;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
-.publisherCount {
+.publisherCardDescription {
+  font-size: 0.85rem;
+  color: var(--ifm-color-emphasis-700);
+  line-height: 1.5;
+  margin: 0;
+  flex: 1;
+  /* Render full notes; line-clamp would cut mid-sentence. The notes are
+     editorially scoped short in publishers.yaml; long-form lives on the
+     publisher brand page. */
+  white-space: pre-line;
+}
+
+.publisherCardCount {
   font-size: 0.75rem;
   color: var(--ifm-color-emphasis-600);
+  font-weight: 500;
 }
 
 /* ── Provenance / dimensions ──────────────────────────────────────────── */
@@ -475,6 +510,181 @@
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+.builtFromFootnote {
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--ifm-color-emphasis-600);
+}
+
+/* ── In Atlas (consuming marts) ───────────────────────────────────────── */
+
+.martStrip {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  margin: 1rem 0 2rem 0;
+}
+
+@media (min-width: 996px) {
+  .martStrip {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.martCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--ifm-color-emphasis-200);
+  border-left: 3px solid var(--ifm-color-primary);
+  border-radius: 8px;
+  background: var(--ifm-background-surface-color);
+}
+
+.martHeader {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.martName {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.martDescription {
+  font-size: 0.875rem;
+  color: var(--ifm-color-emphasis-700);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.martQuery {
+  margin-top: 0.25rem;
+}
+
+.martQuery pre {
+  margin: 0.25rem 0;
+}
+
+.martQueryLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ifm-color-emphasis-600);
+}
+
+.martActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 0.25rem;
+  font-size: 0.85rem;
+}
+
+.martActionLink {
+  font-weight: 500;
+}
+
+/* ── Joined with (co-occurring datasets) ──────────────────────────────── */
+
+.joinedStrip {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+  margin: 1rem 0 2rem 0;
+}
+
+@media (min-width: 640px) {
+  .joinedStrip {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 996px) {
+  .joinedStrip {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.joinedCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--ifm-color-emphasis-200);
+  border-radius: 8px;
+  background: var(--ifm-background-surface-color);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s;
+}
+
+.joinedCard:hover {
+  border-color: var(--ifm-color-primary);
+  text-decoration: none;
+  color: inherit;
+}
+
+.joinedHeader {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ifm-color-emphasis-600);
+}
+
+.joinedCategory {
+  font-weight: 500;
+}
+
+.joinedTitle {
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.joinedSubtitle {
+  font-size: 0.8rem;
+  color: var(--ifm-color-emphasis-700);
+}
+
+.joinedSourceId {
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.8em;
+}
+
+.joinedShared {
+  font-size: 0.75rem;
+  color: var(--ifm-color-emphasis-700);
+  line-height: 1.5;
+  margin-top: 0.15rem;
+}
+
+.joinedSharedLabel {
+  font-weight: 500;
+}
+
+.joinedSharedModel {
+  display: inline-block;
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.85em;
+  background: var(--ifm-color-emphasis-100);
+  padding: 0.05em 0.4em;
+  border-radius: 3px;
+  margin-right: 0.25em;
+}
+
+.joinedSharedMore {
+  font-style: italic;
+  color: var(--ifm-color-emphasis-600);
 }
 
 /* ── Browse page ──────────────────────────────────────────────────────── */

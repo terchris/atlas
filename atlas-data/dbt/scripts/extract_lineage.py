@@ -188,6 +188,70 @@ def write_csv(edges: Iterable[tuple[str, str]], path: Path) -> None:
             writer.writerow([model, src])
 
 
+def extract_direct_refs(
+    manifest: dict, raw_table_map: dict[str, str]
+) -> list[tuple[str, str, str]]:
+    """Return [(model_name, parent_name, parent_kind), ...] sorted, deduped.
+
+    Captures each model's DIRECT dbt-graph parents (one hop) — distinct from
+    extract_lineage() which walks transitively to root raw sources.
+
+    parent_kind values:
+      * 'source' — parent is a raw source. parent_name is the canonical
+        Atlas source_id (hyphenated), matching the join key in
+        `_sources_manifest.source_id`.
+      * 'model'  — parent is another dbt model. parent_name is the model
+        name (e.g. `fact_kommune_indicators`, `dim_kommune`).
+
+    Use case: the public sources catalogue at atlas.sovereignsky.no/datasets
+    renders an Atlas view's "Built from" section from these direct refs.
+    Showing the full transitive closure (lineage.csv) over-reports for
+    narrow views like mart_coverage_gap_barnefattigdom — direct refs are
+    semantically what the view actually reads from.
+    """
+    nodes = manifest.get("nodes", {})
+    sources = manifest.get("sources", {})
+
+    rows: set[tuple[str, str, str]] = set()
+    for node_id, node in nodes.items():
+        if not _model_qualifies(node):
+            continue
+        model_name = node.get("name", "")
+        if not model_name:
+            continue
+        for parent_id in node.get("depends_on", {}).get("nodes", []):
+            if parent_id.startswith("source."):
+                src = sources.get(parent_id)
+                if not src:
+                    continue
+                if src.get("source_name") != "raw":
+                    continue
+                table_name = src.get("name") or ""
+                source_id = _table_name_to_source_id(table_name, raw_table_map)
+                if source_id is None:
+                    continue
+                rows.add((model_name, source_id, "source"))
+            elif parent_id.startswith("model."):
+                parent_node = nodes.get(parent_id)
+                if not parent_node:
+                    continue
+                parent_name = parent_node.get("name", "")
+                if not parent_name:
+                    continue
+                rows.add((model_name, parent_name, "model"))
+            # ignore other node kinds (seeds, snapshots, tests, etc.)
+    return sorted(rows)
+
+
+def write_direct_csv(rows: Iterable[tuple[str, str, str]], path: Path) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(["model_name", "parent_name", "parent_kind"])
+        for model, parent, kind in rows:
+            writer.writerow([model, parent, kind])
+
+
 def main() -> int:
     here = Path(__file__).resolve().parent
     project_root = here.parent
@@ -211,6 +275,11 @@ def main() -> int:
         help="Path to the output seed CSV (default: <project>/seeds/sources/lineage.csv)",
     )
     p.add_argument(
+        "--out-direct-csv",
+        default=str(project_root / "seeds" / "sources" / "lineage_direct.csv"),
+        help="Path to the direct-refs seed CSV (default: <project>/seeds/sources/lineage_direct.csv)",
+    )
+    p.add_argument(
         "--check",
         action="store_true",
         help="Exit 1 if the existing CSV differs from what we would emit (CI mode)",
@@ -219,6 +288,7 @@ def main() -> int:
 
     manifest_path = Path(args.manifest)
     out_path = Path(args.out_csv)
+    out_direct_path = Path(args.out_direct_csv)
     sources_root_path = Path(args.sources_root)
 
     if not manifest_path.exists():
@@ -238,33 +308,53 @@ def main() -> int:
 
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     edges = extract_lineage(manifest, raw_table_map)
+    direct_rows = extract_direct_refs(manifest, raw_table_map)
 
     if args.check:
-        # Build the would-be CSV in memory and compare. csv.writer emits CRLF
+        # Build both would-be CSVs in memory and compare. csv.writer emits CRLF
         # line endings; read_text normalises CRLF to LF on read. Strip both to
         # LF before comparing so the gate doesn't false-positive on platform
         # line-ending differences.
         from io import StringIO
 
-        sio = StringIO()
-        w = csv.writer(sio)
-        w.writerow(["model_name", "source_id"])
-        for m, s in edges:
-            w.writerow([m, s])
-        new_text = sio.getvalue().replace("\r\n", "\n").rstrip("\n")
-        existing_raw = out_path.read_text(encoding="utf-8") if out_path.exists() else ""
-        existing = existing_raw.replace("\r\n", "\n").rstrip("\n")
-        if new_text == existing:
-            print(f"ok: {out_path} is up to date ({len(edges)} edges)")
-            return 0
-        print(
-            f"DRIFT: {out_path} would change. Re-run without --check to update.",
-            file=sys.stderr,
+        def _render_csv(rows: list, header: list[str]) -> str:
+            sio = StringIO()
+            w = csv.writer(sio)
+            w.writerow(header)
+            for row in rows:
+                w.writerow(list(row))
+            return sio.getvalue().replace("\r\n", "\n").rstrip("\n")
+
+        new_lineage = _render_csv(edges, ["model_name", "source_id"])
+        existing_lineage = (
+            out_path.read_text(encoding="utf-8").replace("\r\n", "\n").rstrip("\n")
+            if out_path.exists() else ""
         )
-        return 1
+        new_direct = _render_csv(direct_rows, ["model_name", "parent_name", "parent_kind"])
+        existing_direct = (
+            out_direct_path.read_text(encoding="utf-8").replace("\r\n", "\n").rstrip("\n")
+            if out_direct_path.exists() else ""
+        )
+
+        drift = False
+        if new_lineage != existing_lineage:
+            print(f"DRIFT: {out_path} would change.", file=sys.stderr)
+            drift = True
+        if new_direct != existing_direct:
+            print(f"DRIFT: {out_direct_path} would change.", file=sys.stderr)
+            drift = True
+
+        if drift:
+            print("Re-run without --check to update.", file=sys.stderr)
+            return 1
+        print(f"ok: {out_path} up to date ({len(edges)} edges)")
+        print(f"ok: {out_direct_path} up to date ({len(direct_rows)} rows)")
+        return 0
 
     write_csv(edges, out_path)
     print(f"wrote {out_path} ({len(edges)} edges)")
+    write_direct_csv(direct_rows, out_direct_path)
+    print(f"wrote {out_direct_path} ({len(direct_rows)} rows)")
     return 0
 
 

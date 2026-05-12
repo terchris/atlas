@@ -1,4 +1,5 @@
 import React from 'react';
+import CodeBlock from '@theme/CodeBlock';
 import type { Source } from '../../types/sources';
 import styles from './styles.module.css';
 
@@ -7,20 +8,17 @@ interface Props {
 }
 
 export default function SourceCitation({ source }: Props) {
+  const permalink = `https://atlas.sovereignsky.no/datasets/${source.source_id}`;
   return (
     <div className={styles.citation}>
       <div className={styles.citationLabel}>Recommended citation</div>
-      <div className={styles.citationText}>{source.citation.text}</div>
+      <CodeBlock language="text">{source.citation.text}</CodeBlock>
 
       <div className={styles.citationLabel}>BibTeX</div>
-      <pre><code>{source.citation.bibtex}</code></pre>
+      <CodeBlock language="bibtex">{source.citation.bibtex}</CodeBlock>
 
       <div className={styles.citationLabel}>Permalink</div>
-      <p>
-        <a href={`https://atlas.sovereignsky.no/sources/${source.source_id}`}>
-          https://atlas.sovereignsky.no/sources/{source.source_id}
-        </a>
-      </p>
+      <CodeBlock language="text">{permalink}</CodeBlock>
     </div>
   );
 }

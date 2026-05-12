@@ -7,7 +7,7 @@ const GITHUB_REPO = process.env.GITHUB_REPO || 'atlas';
 
 const config: Config = {
   title: 'Atlas',
-  tagline: 'Open semantic layer over Norwegian public data',
+  tagline: "An open atlas of Norway's civil-society sector — humanitarian needs and the NGOs that respond.",
 
   url: 'https://atlas.sovereignsky.no',
   baseUrl: '/',
@@ -88,12 +88,28 @@ const config: Config = {
   themeConfig: {
     navbar: {
       title: 'Atlas',
+      logo: {
+        alt: 'Atlas logo',
+        src: 'img/logo.svg',
+      },
       items: [
         {
-          to: '/sources',
-          label: 'Sources',
+          to: '/datasets',
+          label: 'Datasets',
           position: 'left',
-          activeBasePath: '/sources',
+          activeBasePath: '/datasets',
+        },
+        {
+          to: '/topics',
+          label: 'Topics',
+          position: 'left',
+          activeBasePath: '/topics',
+        },
+        {
+          to: '/publishers',
+          label: 'Publishers',
+          position: 'left',
+          activeBasePath: '/publishers',
         },
         {
           type: 'docSidebar',

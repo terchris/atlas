@@ -36,10 +36,28 @@ import yaml from 'js-yaml';
 const WEBSITE_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const SOURCES_DIR = resolve(WEBSITE_DIR, '..', 'atlas-data', 'ingest', 'src', 'sources');
 const REGISTRY_OUT = resolve(WEBSITE_DIR, 'src', 'data', 'sources-registry.json');
-const DOCS_SOURCES_DIR = resolve(WEBSITE_DIR, 'docs', 'sources');
+const DOCS_DATASETS_DIR = resolve(WEBSITE_DIR, 'docs', 'datasets');
+const DOCS_TOPICS_DIR = resolve(WEBSITE_DIR, 'docs', 'topics');
+const DOCS_PUBLISHERS_DIR = resolve(WEBSITE_DIR, 'docs', 'publishers');
 const PUBLISHERS_FILE = resolve(SOURCES_DIR, 'publishers.yaml');
-const CATEGORIES_FILE = resolve(SOURCES_DIR, 'source-categories.yaml');
+const TOPICS_FILE = resolve(SOURCES_DIR, 'topics.yaml');
 const SCHEMA_FILE = resolve(SOURCES_DIR, 'manifest.schema.json');
+const DBT_DIR = resolve(WEBSITE_DIR, '..', 'atlas-data', 'dbt');
+const LINEAGE_CSV = resolve(DBT_DIR, 'seeds', 'sources', 'lineage.csv');
+const LINEAGE_DIRECT_CSV = resolve(DBT_DIR, 'seeds', 'sources', 'lineage_direct.csv');
+const MART_SCHEMA_FILES = [
+  resolve(DBT_DIR, 'models', 'marts', 'api', 'schema.yml'),
+  resolve(DBT_DIR, 'models', 'marts', 'schema.yml'),
+];
+// All dbt schema.yml files — used to resolve descriptions for non-mart
+// parents (fact_, dim_, indicators__, ref_, crosswalk_) on view pages.
+const ALL_SCHEMA_FILES = [
+  resolve(DBT_DIR, 'models', 'marts', 'api', 'schema.yml'),
+  resolve(DBT_DIR, 'models', 'marts', 'schema.yml'),
+  resolve(DBT_DIR, 'models', 'dimensions', 'schema.yml'),
+  resolve(DBT_DIR, 'models', 'indicators', 'schema.yml'),
+];
+const META_SOURCES_SNAPSHOT = resolve(WEBSITE_DIR, 'src', 'data', 'meta-sources-snapshot.json');
 
 const ATLAS_BASE_URL = 'https://atlas.sovereignsky.no';
 const POSTGREST_BASE_URL = 'https://api-atlas.sovereignsky.no';
@@ -91,7 +109,7 @@ function buildDefaultSampleQuery(manifest) {
 function buildCitation(manifest) {
   const url = manifest.upstream_landing_page || manifest.upstream_url;
   const year = manifest.time_coverage?.end ?? 'n.d.';
-  const atlasPermalink = `${ATLAS_BASE_URL}/sources/${manifest.source_id}`;
+  const atlasPermalink = `${ATLAS_BASE_URL}/datasets/${manifest.source_id}`;
   const text =
     `${manifest.publisher}. (${year}). ${manifest.upstream_title}. ` +
     `Retrieved from ${url}. Available in Atlas at ${atlasPermalink}.`;
@@ -153,7 +171,7 @@ function renderSourceMdx(source) {
   return `---
 title: ${yamlScalar(source.upstream_title)}
 description: ${yamlScalar(description)}
-slug: /sources/${sid}
+slug: /datasets/${sid}
 sidebar_label: ${yamlScalar(sid)}
 ---
 
@@ -165,6 +183,9 @@ import SourceProvenance from '@site/src/components/sources/SourceProvenance';
 import SourceDimensions from '@site/src/components/sources/SourceDimensions';
 import SourceCitation from '@site/src/components/sources/SourceCitation';
 import RelatedSources from '@site/src/components/sources/RelatedSources';
+import SourceUsedInViews from '@site/src/components/sources/SourceUsedInViews';
+import DatasetJoinedWith from '@site/src/components/sources/DatasetJoinedWith';
+import SampleQueryUrl from '@site/src/components/sources/SampleQueryUrl';
 import SchemaOrgDataset from '@site/src/components/sources/SchemaOrgDataset';
 
 export const source = sourceById(${JSON.stringify(sid)});
@@ -175,17 +196,27 @@ export const source = sourceById(${JSON.stringify(sid)});
 
 <SourceProvenance source={source} />
 
+## Used in Atlas views {#in-atlas}
+
+These Atlas views (api_v1.* PostgREST endpoints) include this dataset in their input. Click through for the sample query, column list, and lineage.
+
+<SourceUsedInViews source={source} />
+
+## Joined with {#joined-with}
+
+Datasets that co-occur with this one inside Atlas's dbt models — the datasets you'd typically combine with this one in a real query.
+
+<DatasetJoinedWith source={source} />
+
 ## Dimensions {#dimensions}
 
 <SourceDimensions source={source} />
 
 ## Sample query {#sample-query}
 
-Live PostgREST query that returns the first 5 rows of \`raw.${(source.raw_tables ?? [sid.replace(/-/g, '_')])[0]}\`:
+Live PostgREST query that returns the first 5 rows of \`raw.${(source.raw_tables ?? [sid.replace(/-/g, '_')])[0]}\`. URL adapts to the current host — local dev shows \`api-atlas.localhost\`; the deployed site shows \`api-atlas.sovereignsky.no\`.
 
-\`\`\`
-${sampleQuery}
-\`\`\`
+<SampleQueryUrl url={source.sample_query} />
 
 ## Citation {#citation}
 
@@ -197,9 +228,52 @@ ${sampleQuery}
 
 ## About this source
 
-${source.description}
+<div style={{whiteSpace: 'pre-wrap'}}>{${JSON.stringify(source.description)}}</div>
 ${atlasSummary}
 <SchemaOrgDataset source={source} />
+`;
+}
+
+function renderViewMdx(view) {
+  const description = buildMetaDescription(view.description_short || view.description_full || '');
+  return `---
+title: ${yamlScalar(view.title)}
+description: ${yamlScalar(description)}
+slug: /datasets/${view.api_v1_name}
+sidebar_label: ${yamlScalar(view.api_v1_name)}
+---
+
+${GENERATED_HEADER_COMMENT}
+
+import { viewById } from '@site/src/utils/sources';
+import ViewHero from '@site/src/components/sources/ViewHero';
+import ViewColumns from '@site/src/components/sources/ViewColumns';
+import DatasetBuiltFrom from '@site/src/components/sources/DatasetBuiltFrom';
+import SampleQueryUrl from '@site/src/components/sources/SampleQueryUrl';
+
+export const view = viewById(${JSON.stringify(view.api_v1_name)});
+
+<ViewHero view={view} />
+
+## Built from {#built-from}
+
+This Atlas view joins data from the following upstream sources. Click through for provenance, methodology, and citation.
+
+<DatasetBuiltFrom view={view} />
+
+## Columns {#columns}
+
+<ViewColumns view={view} />
+
+## Sample query {#sample-query}
+
+Live PostgREST query that returns the first 5 rows. URL adapts to the current host — local dev shows \`api-atlas.localhost\`; the deployed site shows \`api-atlas.sovereignsky.no\`.
+
+<SampleQueryUrl url={view.sample_query} />
+
+## About this view
+
+<div style={{whiteSpace: 'pre-wrap'}}>{${JSON.stringify(view.description_full)}}</div>
 `;
 }
 
@@ -207,7 +281,7 @@ function renderCategoryMdx(category) {
   return `---
 title: ${yamlScalar(`${category.emoji} ${category.name}`)}
 description: ${yamlScalar(buildMetaDescription(category.description))}
-slug: /sources/category/${category.id}
+slug: /topics/${category.id}
 sidebar_label: ${yamlScalar(category.name)}
 ---
 
@@ -227,7 +301,7 @@ function renderPublisherMdx(publisher) {
   return `---
 title: ${yamlScalar(publisher.display_name)}
 description: ${yamlScalar(buildMetaDescription(publisher.notes))}
-slug: /sources/by/${publisher.id}
+slug: /publishers/${publisher.id}
 sidebar_label: ${yamlScalar(publisher.display_name)}
 ---
 
@@ -249,6 +323,206 @@ ${publisher.notes ?? ''}
 `;
 }
 
+// ── dbt lineage + mart descriptions ─────────────────────────────────────
+
+/**
+ * Parse the dbt-extracted lineage seed.
+ * Shape: `model_name,source_id` — one edge per row, plus a header.
+ * Returns { edgesBySource: Map<source_id, model_name[]>, edgesByModel: Map<model_name, source_id[]> }.
+ */
+function loadLineage() {
+  if (!existsSync(LINEAGE_CSV)) {
+    return { edgesBySource: new Map(), edgesByModel: new Map() };
+  }
+  const text = readFileSync(LINEAGE_CSV, 'utf-8');
+  const lines = text.split(/\r?\n/).filter((l) => l.length > 0);
+  const edgesBySource = new Map();
+  const edgesByModel = new Map();
+  for (let i = 1; i < lines.length; i++) {
+    const [model, source] = lines[i].split(',');
+    if (!model || !source) continue;
+    if (!edgesBySource.has(source)) edgesBySource.set(source, []);
+    edgesBySource.get(source).push(model);
+    if (!edgesByModel.has(model)) edgesByModel.set(model, []);
+    edgesByModel.get(model).push(source);
+  }
+  return { edgesBySource, edgesByModel };
+}
+
+/**
+ * Read every mart schema.yml file and extract per-mart details for the
+ * model entries: editorial title (from meta.title), description (short
+ * preview + full), and columns. Returns
+ * `Map<mart_name, { title, short, full, columns[] }>`.
+ */
+function loadMartDetails() {
+  const out = new Map();
+  for (const path of MART_SCHEMA_FILES) {
+    if (!existsSync(path)) continue;
+    const doc = loadYaml(path);
+    const models = doc?.models;
+    if (!Array.isArray(models)) continue;
+    for (const m of models) {
+      if (typeof m.name !== 'string') continue;
+      if (typeof m.description !== 'string') continue;
+      const full = m.description.trim();
+      const flat = full.replace(/\s+/g, ' ');
+      const firstStop = flat.search(/\.\s/);
+      const short = firstStop > 20 && firstStop < 200
+        ? flat.slice(0, firstStop + 1)
+        : flat.length > 200 ? flat.slice(0, 197).trimEnd() + '…' : flat;
+      const title = m.meta?.title ?? null;
+      const columns = Array.isArray(m.columns)
+        ? m.columns
+            .filter((c) => typeof c?.name === 'string')
+            .map((c) => ({
+              name: c.name,
+              description: typeof c.description === 'string'
+                ? c.description.trim().replace(/\s+/g, ' ')
+                : '',
+            }))
+        : [];
+      out.set(m.name, { title, short, full, columns });
+    }
+  }
+  return out;
+}
+
+/**
+ * For a source_id, compute the Atlas-derived layer it feeds into.
+ * - consuming_marts: each `mart_<feature>` model that consumes this source,
+ *   resolved with its api_v1 name (mart_ prefix stripped), sample query URL,
+ *   and short description from dbt's schema.yml.
+ * - consuming_models: every model name that consumes this source, broken
+ *   down by kind (mart / indicators / dim / fact / ref / other) — used for
+ *   the lineage drill-down link.
+ * - joined_with: other source_ids that co-occur in the same models. Sorted
+ *   by shared-model count desc; capped at 8.
+ */
+function computeAtlasIntegration(sourceId, { edgesBySource, edgesByModel }, martDetails) {
+  const models = edgesBySource.get(sourceId) ?? [];
+
+  const consuming_marts = [];
+  const consuming_models = [];
+  for (const model of [...new Set(models)].sort()) {
+    const kind = classifyModel(model);
+    consuming_models.push({ name: model, kind });
+    if (kind === 'mart') {
+      const apiV1Name = model.replace(/^mart_/, '');
+      const desc = martDetails.get(model);
+      consuming_marts.push({
+        mart_name: model,
+        api_v1_name: apiV1Name,
+        title: desc?.title ?? null,
+        description_short: desc?.short ?? null,
+        description_full: desc?.full ?? null,
+        sample_query: `${POSTGREST_BASE_URL}/${apiV1Name}?limit=5`,
+      });
+    }
+  }
+
+  // Co-occurrence: for each model this source feeds, list the other sources
+  // that also feed it. Aggregate by source_id; sort by overlap count desc.
+  const counts = new Map();
+  for (const model of new Set(models)) {
+    const others = edgesByModel.get(model) ?? [];
+    for (const other of others) {
+      if (other === sourceId) continue;
+      if (!counts.has(other)) counts.set(other, []);
+      counts.get(other).push(model);
+    }
+  }
+  const joined_with = [...counts.entries()]
+    .map(([source_id, shared]) => ({ source_id, shared_models: [...new Set(shared)].sort() }))
+    .sort((a, b) => b.shared_models.length - a.shared_models.length || a.source_id.localeCompare(b.source_id))
+    .slice(0, 8);
+
+  return { consuming_marts, consuming_models, joined_with };
+}
+
+/**
+ * Parse lineage_direct.csv → Map<model_name, Array<{parent_name, parent_kind}>>.
+ * Each entry is the model's direct dbt-graph parents — what the model
+ * directly ref()s in its SQL. parent_kind is 'source' (a raw.* upstream)
+ * or 'model' (another dbt model like fact_/dim_/indicators__).
+ */
+function loadDirectRefs() {
+  if (!existsSync(LINEAGE_DIRECT_CSV)) return new Map();
+  const text = readFileSync(LINEAGE_DIRECT_CSV, 'utf-8');
+  const lines = text.split(/\r?\n/).filter((l) => l.length > 0);
+  const out = new Map();
+  for (let i = 1; i < lines.length; i++) {
+    const [model, parent, kind] = lines[i].split(',');
+    if (!model || !parent || !kind) continue;
+    if (!out.has(model)) out.set(model, []);
+    out.get(model).push({ parent_name: parent, parent_kind: kind });
+  }
+  return out;
+}
+
+/**
+ * Load every dbt schema.yml file and build a map of
+ * `model_name → { title, description_short, description_full }`. Used to
+ * render direct-ref parents on view pages — e.g. for a view that reads
+ * from `fact_kommune_indicators`, surface what that fact table represents.
+ *
+ * Returns descriptions for marts (with optional meta.title), facts, dims,
+ * indicators, etc. Marts already have richer detail via loadMartDetails;
+ * this map is intentionally lighter, just enough for inline labelling on
+ * the "Built from" section.
+ */
+function loadDbtModelLabels() {
+  const out = new Map();
+  for (const path of ALL_SCHEMA_FILES) {
+    if (!existsSync(path)) continue;
+    const doc = loadYaml(path);
+    const models = doc?.models;
+    if (!Array.isArray(models)) continue;
+    for (const m of models) {
+      if (typeof m.name !== 'string') continue;
+      const description = typeof m.description === 'string'
+        ? m.description.trim().replace(/\s+/g, ' ')
+        : null;
+      const short = description
+        ? (() => {
+            const dot = description.search(/\.\s/);
+            if (dot > 20 && dot < 180) return description.slice(0, dot + 1);
+            return description.length > 180 ? description.slice(0, 177).trimEnd() + '…' : description;
+          })()
+        : null;
+      out.set(m.name, {
+        title: m.meta?.title ?? null,
+        description_short: short,
+      });
+    }
+  }
+  return out;
+}
+
+/**
+ * Load meta_sources snapshot (refreshed via `npm run sources:snapshot-freshness`).
+ * Returns Map<source_id, { last_ingested_at, latest_row_count, total_runs, downstream_model_count }>
+ * or an empty map when the snapshot file is absent — graceful fallback so the
+ * catalog still builds without the snapshot.
+ */
+function loadMetaSourcesSnapshot() {
+  if (!existsSync(META_SOURCES_SNAPSHOT)) return { snapshot: new Map(), generated_at: null };
+  const doc = loadJson(META_SOURCES_SNAPSHOT);
+  const rows = Array.isArray(doc?.rows) ? doc.rows : [];
+  const snapshot = new Map(rows.map((r) => [r.source_id, r]));
+  return { snapshot, generated_at: doc?.generated_at ?? null };
+}
+
+function classifyModel(name) {
+  if (name.startsWith('mart_')) return 'mart';
+  if (name.startsWith('indicators__')) return 'indicators';
+  if (name.startsWith('dim_')) return 'dim';
+  if (name.startsWith('fact_')) return 'fact';
+  if (name.startsWith('ref_')) return 'ref';
+  if (name.startsWith('crosswalk_')) return 'crosswalk';
+  return 'other';
+}
+
 // ── Load companion files ────────────────────────────────────────────────
 
 function loadPublishers() {
@@ -260,9 +534,9 @@ function loadPublishers() {
 }
 
 function loadCategories() {
-  const doc = loadYaml(CATEGORIES_FILE);
+  const doc = loadYaml(TOPICS_FILE);
   if (!doc || !Array.isArray(doc.categories)) {
-    throw new Error(`${CATEGORIES_FILE}: missing top-level 'categories:' array`);
+    throw new Error(`${TOPICS_FILE}: missing top-level 'categories:' array`);
   }
   return doc.categories;
 }
@@ -293,6 +567,11 @@ function main() {
   const publishers = loadPublishers();
   const categories = loadCategories();
   const schemaId = loadSchemaId();
+  const lineage = loadLineage();
+  const directRefs = loadDirectRefs();
+  const dbtLabels = loadDbtModelLabels();
+  const martDetails = loadMartDetails();
+  const { snapshot: metaSnapshot, generated_at: metaSnapshotAt } = loadMetaSourcesSnapshot();
   const publishersByName = new Map(publishers.map((p) => [p.display_name, p]));
   const categoriesById = new Map(categories.map((c) => [c.id, c]));
 
@@ -321,7 +600,11 @@ function main() {
       ? m.feedback_url
       : publisher.feedback_url;
 
+    const atlasIntegration = computeAtlasIntegration(sourceId, lineage, martDetails);
+    const liveMeta = metaSnapshot.get(sourceId) ?? null;
+
     return {
+      kind: 'source',
       source_id: m.source_id,
       upstream_id: m.upstream_id,
       upstream_url: m.upstream_url,
@@ -357,8 +640,86 @@ function main() {
       sample_query: sampleQuery,
       citation: buildCitation(m),
       feedback_url: feedbackUrl,
+      consuming_marts: atlasIntegration.consuming_marts,
+      consuming_models: atlasIntegration.consuming_models,
+      joined_with: atlasIntegration.joined_with,
+      last_ingested_at: liveMeta?.last_ingested_at ?? null,
+      latest_row_count: liveMeta?.latest_row_count ?? null,
+      total_runs: liveMeta?.total_runs ?? null,
+      downstream_model_count: liveMeta?.downstream_model_count ?? null,
     };
   });
+
+  // ── Views — marts surfaced as datasets ─────────────────────────────────
+  // For each mart_<name> that appears in the lineage CSV (i.e. consumes
+  // at least one raw source), emit a view entry. URL slug = api_v1 name
+  // (mart_ prefix stripped). Title comes from meta.title in dbt's
+  // schema.yml; description from the same file.
+
+  const viewsFromLineage = [...lineage.edgesByModel.keys()]
+    .filter((m) => m.startsWith('mart_'))
+    .sort();
+
+  /**
+   * Resolve a direct-refs row to a rich entry for the "Built from" UI.
+   * - parent_kind 'source' → resolve to the upstream source dataset, link
+   *   to /datasets/<source_id>.
+   * - parent_kind 'model'  → look up the model in dbtLabels (description
+   *   from schema.yml). Atlas internal facts/dims aren't catalog entries,
+   *   so no link — just inline label + description.
+   */
+  function resolveDirectParent({ parent_name, parent_kind }) {
+    if (parent_kind === 'source') {
+      const s = sources.find((x) => x.source_id === parent_name);
+      if (!s) return null;
+      return {
+        parent_kind: 'source',
+        source_id: s.source_id,
+        upstream_title: s.upstream_title,
+        publisher: { id: s.publisher.id, display_name: s.publisher.display_name, logo: s.publisher.logo },
+        category: { id: s.category.id, name: s.category.name, emoji: s.category.emoji },
+      };
+    }
+    const label = dbtLabels.get(parent_name);
+    return {
+      parent_kind: 'model',
+      model_name: parent_name,
+      title: label?.title ?? null,
+      description_short: label?.description_short ?? null,
+    };
+  }
+
+  const views = viewsFromLineage
+    .map((martName) => {
+      const detail = martDetails.get(martName);
+      if (!detail) return null; // mart not in schema.yml — skip
+      const apiV1Name = martName.replace(/^mart_/, '');
+
+      // Built-from now uses DIRECT refs (one hop), not the transitive
+      // closure. For narrow views like mart_coverage_gap_barnefattigdom
+      // that filter a wide fact table, this gives an honest answer:
+      // "reads from fact_kommune_indicators" instead of "reads from
+      // 18 upstream sources you don't actually touch".
+      const direct = directRefs.get(martName) ?? [];
+      const builtFromParents = direct
+        .map(resolveDirectParent)
+        .filter(Boolean);
+
+      return {
+        kind: 'view',
+        view_id: apiV1Name,
+        mart_name: martName,
+        api_v1_name: apiV1Name,
+        title: detail.title ?? `api_v1.${apiV1Name}`,
+        description_short: detail.short,
+        description_full: detail.full,
+        columns: detail.columns,
+        built_from: builtFromParents,
+        sample_query: `${POSTGREST_BASE_URL}/${apiV1Name}?limit=5`,
+        lineage_url: `pathname:///lineage/#!/model/model.atlas.${martName}`,
+      };
+    })
+    .filter(Boolean);
 
   // Sort publishers by id for deterministic output.
   const publishersOut = publishers
@@ -375,60 +736,68 @@ function main() {
     manifest_schema_id: schemaId,
     atlas_base_url: ATLAS_BASE_URL,
     postgrest_base_url: POSTGREST_BASE_URL,
+    meta_sources_snapshot_at: metaSnapshotAt,
     categories: categoriesOut,
     publishers: publishersOut,
     sources,
+    views,
   };
 
   mkdirSync(dirname(REGISTRY_OUT), { recursive: true });
   writeFileSync(REGISTRY_OUT, JSON.stringify(registry, null, 2) + '\n', 'utf-8');
 
   // ── MDX emission ──────────────────────────────────────────────────────
-  // One MDX per source, per category, per publisher. URLs:
-  //   /sources/<id>                — per-source product detail page
-  //   /sources/category/<id>       — per-category index
-  //   /sources/by/<id>             — per-publisher brand page
+  // One MDX per dataset, per topic, per publisher. URLs:
+  //   /datasets/<id>     — per-dataset product detail page
+  //   /topics/<id>       — per-topic index
+  //   /publishers/<id>   — per-publisher brand page
+  //
+  // Per-dir cleanup scrubs generated files so renames don't leave orphans.
+  // The hand-authored index.mdx in each dir is preserved.
 
-  mkdirSync(DOCS_SOURCES_DIR, { recursive: true });
-  mkdirSync(resolve(DOCS_SOURCES_DIR, 'category'), { recursive: true });
-  mkdirSync(resolve(DOCS_SOURCES_DIR, 'by'), { recursive: true });
+  mkdirSync(DOCS_DATASETS_DIR, { recursive: true });
+  mkdirSync(DOCS_TOPICS_DIR, { recursive: true });
+  mkdirSync(DOCS_PUBLISHERS_DIR, { recursive: true });
 
-  // Clean stale generated files so deletions / renames don't leave orphans.
-  for (const entry of readdirSync(DOCS_SOURCES_DIR, { withFileTypes: true })) {
-    if (entry.isFile() && entry.name.endsWith('.mdx') && entry.name !== 'index.mdx') {
-      const path = resolve(DOCS_SOURCES_DIR, entry.name);
-      const head = readFileSync(path, 'utf-8').slice(0, 80);
+  function scrubGeneratedMdx(dir) {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      if (!entry.isFile() || !entry.name.endsWith('.mdx')) continue;
+      if (entry.name === 'index.mdx') continue;
+      const path = resolve(dir, entry.name);
+      const head = readFileSync(path, 'utf-8').slice(0, 200);
       if (head.includes('Generated by website/scripts/generate-sources-registry.mjs')) {
         unlinkSync(path);
       }
     }
   }
-  for (const sub of ['category', 'by']) {
-    const dir = resolve(DOCS_SOURCES_DIR, sub);
-    for (const entry of readdirSync(dir, { withFileTypes: true })) {
-      if (entry.isFile() && entry.name.endsWith('.mdx')) {
-        unlinkSync(resolve(dir, entry.name));
-      }
-    }
-  }
+  scrubGeneratedMdx(DOCS_DATASETS_DIR);
+  scrubGeneratedMdx(DOCS_TOPICS_DIR);
+  scrubGeneratedMdx(DOCS_PUBLISHERS_DIR);
 
   for (const source of sources) {
     writeFileSync(
-      resolve(DOCS_SOURCES_DIR, `${source.source_id}.mdx`),
+      resolve(DOCS_DATASETS_DIR, `${source.source_id}.mdx`),
       renderSourceMdx(source),
+      'utf-8',
+    );
+  }
+  for (const view of views) {
+    writeFileSync(
+      resolve(DOCS_DATASETS_DIR, `${view.api_v1_name}.mdx`),
+      renderViewMdx(view),
       'utf-8',
     );
   }
   for (const category of categoriesOut) {
     writeFileSync(
-      resolve(DOCS_SOURCES_DIR, 'category', `${category.id}.mdx`),
+      resolve(DOCS_TOPICS_DIR, `${category.id}.mdx`),
       renderCategoryMdx(category),
       'utf-8',
     );
   }
   for (const publisher of publishersOut) {
     writeFileSync(
-      resolve(DOCS_SOURCES_DIR, 'by', `${publisher.id}.mdx`),
+      resolve(DOCS_PUBLISHERS_DIR, `${publisher.id}.mdx`),
       renderPublisherMdx(publisher),
       'utf-8',
     );
@@ -439,7 +808,7 @@ function main() {
     `${sources.length} sources, ${categoriesOut.length} categories, ${publishersOut.length} publishers`
   );
   console.log(
-    `→ generated MDX: ${sources.length} per-source + ${categoriesOut.length} per-category + ${publishersOut.length} per-publisher`
+    `→ generated MDX: ${sources.length} per-source-dataset + ${views.length} per-view-dataset + ${categoriesOut.length} per-topic + ${publishersOut.length} per-publisher`
   );
 }
 

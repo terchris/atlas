@@ -7,22 +7,21 @@ import styles from './styles.module.css';
 export default function PublisherStrip() {
   const publishers = getAllPublishers();
   return (
-    <div className={styles.publisherStrip}>
+    <div className={styles.publisherGrid}>
       {publishers.map((p) => {
         const logo = useBaseUrl(p.logo);
         return (
-          <Link key={p.id} to={`/sources/by/${p.id}`} className={styles.publisherCard}>
+          <Link key={p.id} to={`/publishers/${p.id}`} className={styles.publisherCard}>
             <img
               src={logo}
               alt={`${p.display_name} logo`}
-              className={styles.publisherLogo}
+              className={styles.publisherCardLogo}
               loading="lazy"
             />
-            <div className={styles.publisherMeta}>
-              <span className={styles.publisherName}>{p.display_name}</span>
-              <span className={styles.publisherCount}>
-                {p.source_count} {p.source_count === 1 ? 'source' : 'sources'}
-              </span>
+            <h3 className={styles.publisherCardName}>{p.display_name}</h3>
+            <p className={styles.publisherCardDescription}>{p.notes}</p>
+            <div className={styles.publisherCardCount}>
+              {p.source_count} {p.source_count === 1 ? 'dataset' : 'datasets'}
             </div>
           </Link>
         );

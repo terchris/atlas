@@ -43,7 +43,70 @@ export interface Citation {
   bibtex: string;
 }
 
+export interface ConsumingMart {
+  mart_name: string;
+  api_v1_name: string;
+  description_short: string | null;
+  description_full: string | null;
+  sample_query: string;
+}
+
+export type ConsumingModelKind =
+  | 'mart' | 'indicators' | 'dim' | 'fact' | 'ref' | 'crosswalk' | 'other';
+
+export interface ConsumingModel {
+  name: string;
+  kind: ConsumingModelKind;
+}
+
+export interface JoinedWith {
+  source_id: string;
+  shared_models: string[];
+}
+
+export interface ViewColumn {
+  name: string;
+  description: string;
+}
+
+export interface ViewBuiltFromSourceParent {
+  parent_kind: 'source';
+  source_id: string;
+  upstream_title: string;
+  publisher: { id: string; display_name: string; logo: string };
+  category: { id: string; name: string; emoji: string };
+}
+
+export interface ViewBuiltFromModelParent {
+  parent_kind: 'model';
+  model_name: string;
+  title: string | null;
+  description_short: string | null;
+}
+
+export type ViewBuiltFromEntry = ViewBuiltFromSourceParent | ViewBuiltFromModelParent;
+
+/**
+ * View dataset — an api_v1.* PostgREST endpoint built by dbt, exposed in
+ * the catalog at /datasets/<view_id>. The Atlas-built sibling of an upstream
+ * Source dataset; same URL namespace, different kind.
+ */
+export interface View {
+  kind: 'view';
+  view_id: string;            // = api_v1_name, used as URL slug
+  mart_name: string;          // e.g. mart_coverage_gap_barnefattigdom
+  api_v1_name: string;        // mart_ prefix stripped
+  title: string;              // human title from meta.title
+  description_short: string;
+  description_full: string;
+  columns: ViewColumn[];
+  built_from: ViewBuiltFromEntry[];
+  sample_query: string;
+  lineage_url: string;
+}
+
 export interface Source {
+  kind: 'source';
   source_id: string;
   upstream_id: string;
   upstream_url: string;
@@ -70,6 +133,16 @@ export interface Source {
   sample_query: string;
   citation: Citation;
   feedback_url: string;
+  consuming_marts: ConsumingMart[];
+  consuming_models: ConsumingModel[];
+  joined_with: JoinedWith[];
+  // Live freshness, sourced from api_v1.meta_sources via the snapshot script.
+  // Null when no snapshot is available (graceful fallback for fresh repos /
+  // first builds before the snapshot is captured).
+  last_ingested_at: string | null;
+  latest_row_count: number | null;
+  total_runs: number | null;
+  downstream_model_count: number | null;
 }
 
 export interface Publisher {
@@ -96,7 +169,9 @@ export interface Registry {
   manifest_schema_id: string | null;
   atlas_base_url: string;
   postgrest_base_url: string;
+  meta_sources_snapshot_at: string | null;
   categories: Category[];
   publishers: Publisher[];
   sources: Source[];
+  views: View[];
 }

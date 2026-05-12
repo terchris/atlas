@@ -8,7 +8,7 @@ export default function SourceCategoryGrid() {
   return (
     <div className={styles.categoryGrid}>
       {categories.map((cat) => (
-        <Link key={cat.id} to={`/sources/category/${cat.id}`} className={styles.categoryCard}>
+        <Link key={cat.id} to={`/topics/${cat.id}`} className={styles.categoryCard}>
           <div className={styles.categoryEmoji}>{cat.emoji}</div>
           <h3 className={styles.categoryName}>{cat.name}</h3>
           <p className={styles.categoryDescription}>{cat.description}</p>

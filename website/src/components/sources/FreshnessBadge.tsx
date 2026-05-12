@@ -6,17 +6,24 @@ interface Props {
   source: Source;
 }
 
+function formatIsoDay(ts: string | null): string | null {
+  if (!ts) return null;
+  // Render the YYYY-MM-DD portion; full timestamp lives in the provenance row.
+  return ts.slice(0, 10);
+}
+
 /**
- * Renders the time coverage as a freshness signal. For sources with a known
- * end year, shows "Covers YYYY–YYYY · cadence". For irregular cadences with
- * null start/end, shows "Updated irregularly".
+ * Renders the freshness signal: time coverage from manifest +
+ * last-ingested date from the meta_sources snapshot (when available).
  *
- * PLAN-003 will replace the static time_coverage.end with live
- * mart_ingest_health data (last_ingested_at + next-expected calculation).
- * Until then this is the most honest signal we have without polling Postgres.
+ * Time coverage = what years the upstream data covers.
+ * Last ingested = when Atlas last pulled it. Different signals; both shown.
+ *
+ * The snapshot is refreshed manually via `npm run sources:snapshot-freshness`.
+ * If absent, only time-coverage shows.
  */
 export default function FreshnessBadge({ source }: Props) {
-  const { time_coverage: tc, tags } = source;
+  const { time_coverage: tc, tags, last_ingested_at } = source;
   const cadenceText = tags.cadence === 'irregular' ? 'irregular' : tags.cadence;
 
   let coverage: string;
@@ -28,10 +35,15 @@ export default function FreshnessBadge({ source }: Props) {
     coverage = 'No fixed time range';
   }
 
+  const lastIngestDay = formatIsoDay(last_ingested_at);
+
   return (
     <span className={styles.freshness}>
       <span className={styles.freshnessLabel}>{coverage}</span>
       <span>· {cadenceText}</span>
+      {lastIngestDay && (
+        <span> · last ingested {lastIngestDay}</span>
+      )}
     </span>
   );
 }

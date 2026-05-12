@@ -12,7 +12,7 @@ interface Props {
 export default function SourceCard({ source }: Props) {
   const logoUrl = useBaseUrl(source.publisher.logo);
   return (
-    <Link to={`/sources/${source.source_id}`} className={styles.card}>
+    <Link to={`/datasets/${source.source_id}`} className={styles.card}>
       <div className={styles.cardHeader}>
         <img
           src={logoUrl}

@@ -11,7 +11,7 @@ interface Props {
  * win for SEO + discoverability outside Atlas (per **[Q19]**).
  */
 export default function SchemaOrgDataset({ source }: Props) {
-  const url = `https://atlas.sovereignsky.no/sources/${source.source_id}`;
+  const url = `https://atlas.sovereignsky.no/datasets/${source.source_id}`;
 
   const temporalCoverage = source.time_coverage.start && source.time_coverage.end
     ? `${source.time_coverage.start}/${source.time_coverage.end}`

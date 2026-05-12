@@ -1,6 +1,8 @@
 version: 2
 models:
   - name: mart_indicator_summary
+    meta:
+      title: "Indicator coverage summary"
     description: |
       One row per (source_id, contents_code) summarising the latest-year
       coverage and value range for every indicator in
@@ -83,6 +85,8 @@ models:
           combination_of_columns: [source_id, contents_code]
 
   - name: mart_indicator_latest_values
+    meta:
+      title: "Latest indicator values per kommune"
     description: |
       One row per (source_id, contents_code, kommune_nr) at each
       indicator's latest_year, restricted to active kommuner. Backs the
@@ -155,6 +159,8 @@ models:
           combination_of_columns: [source_id, contents_code, kommune_nr]
 
   - name: mart_indicator_missing_kommuner
+    meta:
+      title: "Indicator coverage gaps per kommune"
     description: |
       One row per (source_id, contents_code, kommune_nr) for every
       active kommune that has *no* non-NULL value at the indicator's
@@ -200,6 +206,8 @@ models:
           combination_of_columns: [source_id, contents_code, kommune_nr]
 
   - name: mart_coverage_gap_barnefattigdom
+    meta:
+      title: "Child-poverty coverage gap (kommune)"
     description: |
       One row per active kommune for the latest year of SSB 08764 child
       poverty data, combining the EUskala60 share (% of children in
@@ -257,6 +265,8 @@ models:
           Number of children under 18 in low-income households at the
           same year. NULL when upstream suppressed the cell.
   - name: mart_ngo_index
+    meta:
+      title: "NGO registry"
     description: |
       One row per NGO in dim_ngo with chapter_count and has_supply
       decorations. Backs the NGO landing page (atlas-frontend /ngo) and
@@ -336,6 +346,8 @@ models:
           - not_null
 
   - name: mart_ngo_overview
+    meta:
+      title: "NGO overview"
     description: |
       One row per NGO in dim_ngo with the six count metrics shown on
       the per-NGO landing page (atlas-frontend /ngo/[slug]).
@@ -387,6 +399,8 @@ models:
           - not_null
 
   - name: mart_activity_catalog
+    meta:
+      title: "Activity catalogue (cross-NGO)"
     description: |
       One row per (NGO, activity) joining dim_activity to the
       service-category seed for the human-readable label, plus a count
@@ -447,6 +461,8 @@ models:
           - not_null
 
   - name: mart_distrikt_summary
+    meta:
+      title: "Distrikt summary"
     description: |
       One row per regional chapter (Red Cross "distrikt" level, and the
       equivalent regional tier for any other NGO with a hierarchy).
@@ -509,6 +525,8 @@ models:
           - not_null
 
   - name: mart_kommune_local_chapters
+    meta:
+      title: "Local NGO chapters per kommune"
     description: |
       Active local chapters in each kommune, decorated with the NGO
       name/brand and the service-category labels offered. Backs the

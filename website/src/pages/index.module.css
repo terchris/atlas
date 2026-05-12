@@ -1,0 +1,141 @@
+/* ── Hero banner ──────────────────────────────────────────────────────── */
+
+.heroBanner {
+  padding: 4rem 0 5rem;
+  background: linear-gradient(135deg, #0c2a4a 0%, #0c6e50 100%);
+  color: #ffffff;
+  position: relative;
+  overflow: hidden;
+}
+
+@media screen and (max-width: 996px) {
+  .heroBanner {
+    padding: 2.5rem 0 3rem;
+  }
+}
+
+.heroContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4rem;
+}
+
+@media screen and (max-width: 996px) {
+  .heroContainer {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+}
+
+.heroIllustration {
+  flex: 0 0 auto;
+  width: 360px;
+}
+
+@media screen and (max-width: 996px) {
+  .heroIllustration {
+    width: 220px;
+  }
+}
+
+.heroMark {
+  width: 100%;
+  height: auto;
+}
+
+.heroContent {
+  flex: 1;
+  max-width: 560px;
+  text-align: left;
+}
+
+@media screen and (max-width: 996px) {
+  .heroContent {
+    text-align: center;
+  }
+}
+
+.heroTitle {
+  color: #ffffff !important;
+  font-size: 4rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.02em;
+}
+
+@media screen and (max-width: 996px) {
+  .heroTitle {
+    font-size: 3rem;
+  }
+}
+
+.heroSubtitle {
+  color: #cfe3e8;
+  font-size: 1.25rem;
+  font-weight: 400;
+  line-height: 1.5;
+  margin-bottom: 2rem;
+}
+
+.heroLead {
+  display: inline-block;
+  margin-top: 0.5rem;
+  font-size: 1.05rem;
+  color: #9ad6c2;
+}
+
+.buttons {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+@media screen and (max-width: 996px) {
+  .buttons {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+}
+
+.heroButton {
+  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+}
+
+.heroButtonOutline {
+  background: transparent !important;
+  border: 1px solid #ffffff !important;
+  color: #ffffff !important;
+}
+
+.heroButtonOutline:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-color: #9ad6c2 !important;
+  color: #9ad6c2 !important;
+}
+
+/* ── Sections below hero ──────────────────────────────────────────────── */
+
+.section {
+  padding: 2.5rem 0 1rem;
+}
+
+.sectionTitle {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.ctaSection {
+  padding: 2rem 0 4rem;
+  border-top: 1px solid var(--ifm-color-emphasis-200);
+  margin-top: 1.5rem;
+}
+
+.ctaCopy {
+  margin: 0.5rem 0;
+  font-size: 1rem;
+  color: var(--ifm-color-emphasis-800);
+}

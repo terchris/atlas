@@ -12,6 +12,7 @@
     "api:snapshot": "node scripts/snapshot-openapi.mjs",
     "lineage:snapshot": "node scripts/snapshot-lineage.mjs",
     "sources:generate": "node scripts/generate-sources-registry.mjs",
+    "sources:snapshot-freshness": "node scripts/snapshot-meta-sources.mjs",
     "prebuild": "node scripts/generate-sources-registry.mjs",
     "write-translations": "docusaurus write-translations",
     "write-heading-ids": "docusaurus write-heading-ids",
