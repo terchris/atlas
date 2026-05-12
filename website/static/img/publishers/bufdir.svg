@@ -1,7 +1,0 @@
-<!-- PLACEHOLDER LOGO — replace with the official Bufdir wordmark before launch. -->
-<!-- Source the real asset from https://www.bufdir.no/ visual identity / press kit. -->
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 80" role="img" aria-label="Barne-, ungdoms- og familiedirektoratet (Bufdir) — placeholder logo">
-  <rect width="200" height="80" fill="#7a3f9b" rx="6"/>
-  <text x="100" y="42" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="28" font-weight="700" fill="#ffffff">Bufdir</text>
-  <text x="100" y="62" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="9" fill="#e0d2eb">Barne-, ungdoms- og familie-dir.</text>
-</svg>

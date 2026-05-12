@@ -67,7 +67,7 @@
       "id": "bufdir",
       "display_name": "Barne-, ungdoms- og familiedirektoratet",
       "homepage": "https://www.bufdir.no/",
-      "logo": "/img/publishers/bufdir.svg",
+      "logo": "/img/publishers/bufdir.png",
       "feedback_url": "https://www.bufdir.no/kontakt/",
       "notes": "Directorate for Children, Youth and Family Affairs. Publishes the\nBarnefattigdom kommunemonitor and related family / child-welfare\nindicators at kommune and bydel resolution. Data released under NLOD.\n",
       "source_count": 1
@@ -76,7 +76,7 @@
       "id": "fhi",
       "display_name": "Folkehelseinstituttet",
       "homepage": "https://www.fhi.no/",
-      "logo": "/img/publishers/fhi.svg",
+      "logo": "/img/publishers/fhi.png",
       "feedback_url": "https://www.fhi.no/skjema/kontakt-folkehelseinstituttet/",
       "notes": "Norwegian Institute of Public Health. Publishes the Folkehelseprofiler\nand the underlying Folkehelsestatistikk via statistikk.fhi.no.\nMost tables use 3-year rolling averages and standardised ratios (SMR)\nto compare kommune-level health outcomes.\n",
       "source_count": 21
@@ -114,7 +114,7 @@
         "id": "bufdir",
         "display_name": "Barne-, ungdoms- og familiedirektoratet",
         "homepage": "https://www.bufdir.no/",
-        "logo": "/img/publishers/bufdir.svg"
+        "logo": "/img/publishers/bufdir.png"
       },
       "category": {
         "id": "income",
@@ -225,7 +225,7 @@
         "id": "fhi",
         "display_name": "Folkehelseinstituttet",
         "homepage": "https://www.fhi.no/",
-        "logo": "/img/publishers/fhi.svg"
+        "logo": "/img/publishers/fhi.png"
       },
       "category": {
         "id": "health",
@@ -337,7 +337,7 @@
         "id": "fhi",
         "display_name": "Folkehelseinstituttet",
         "homepage": "https://www.fhi.no/",
-        "logo": "/img/publishers/fhi.svg"
+        "logo": "/img/publishers/fhi.png"
       },
       "category": {
         "id": "demographics",
@@ -437,7 +437,7 @@
         "id": "fhi",
         "display_name": "Folkehelseinstituttet",
         "homepage": "https://www.fhi.no/",
-        "logo": "/img/publishers/fhi.svg"
+        "logo": "/img/publishers/fhi.png"
       },
       "category": {
         "id": "demographics",
@@ -535,7 +535,7 @@
         "id": "fhi",
         "display_name": "Folkehelseinstituttet",
         "homepage": "https://www.fhi.no/",
-        "logo": "/img/publishers/fhi.svg"
+        "logo": "/img/publishers/fhi.png"
       },
       "category": {
         "id": "demographics",
@@ -770,7 +770,7 @@
         "id": "fhi",
         "display_name": "Folkehelseinstituttet",
         "homepage": "https://www.fhi.no/",
-        "logo": "/img/publishers/fhi.svg"
+        "logo": "/img/publishers/fhi.png"
       },
       "category": {
         "id": "health",
@@ -882,7 +882,7 @@
         "id": "fhi",
         "display_name": "Folkehelseinstituttet",
         "homepage": "https://www.fhi.no/",
-        "logo": "/img/publishers/fhi.svg"
+        "logo": "/img/publishers/fhi.png"
       },
       "category": {
         "id": "health",
@@ -994,7 +994,7 @@
         "id": "fhi",
         "display_name": "Folkehelseinstituttet",
         "homepage": "https://www.fhi.no/",
-        "logo": "/img/publishers/fhi.svg"
+        "logo": "/img/publishers/fhi.png"
       },
       "category": {
         "id": "health",
@@ -1106,7 +1106,7 @@
         "id": "fhi",
         "display_name": "Folkehelseinstituttet",
         "homepage": "https://www.fhi.no/",
-        "logo": "/img/publishers/fhi.svg"
+        "logo": "/img/publishers/fhi.png"
       },
       "category": {
         "id": "demographics",
@@ -1206,7 +1206,7 @@
         "id": "fhi",
         "display_name": "Folkehelseinstituttet",
         "homepage": "https://www.fhi.no/",
-        "logo": "/img/publishers/fhi.svg"
+        "logo": "/img/publishers/fhi.png"
       },
       "category": {
         "id": "demographics",
@@ -1311,7 +1311,7 @@
         "id": "fhi",
         "display_name": "Folkehelseinstituttet",
         "homepage": "https://www.fhi.no/",
-        "logo": "/img/publishers/fhi.svg"
+        "logo": "/img/publishers/fhi.png"
       },
       "category": {
         "id": "health",
@@ -1416,7 +1416,7 @@
         "id": "fhi",
         "display_name": "Folkehelseinstituttet",
         "homepage": "https://www.fhi.no/",
-        "logo": "/img/publishers/fhi.svg"
+        "logo": "/img/publishers/fhi.png"
       },
       "category": {
         "id": "health",
@@ -1528,7 +1528,7 @@
         "id": "fhi",
         "display_name": "Folkehelseinstituttet",
         "homepage": "https://www.fhi.no/",
-        "logo": "/img/publishers/fhi.svg"
+        "logo": "/img/publishers/fhi.png"
       },
       "category": {
         "id": "health",
@@ -1640,7 +1640,7 @@
         "id": "fhi",
         "display_name": "Folkehelseinstituttet",
         "homepage": "https://www.fhi.no/",
-        "logo": "/img/publishers/fhi.svg"
+        "logo": "/img/publishers/fhi.png"
       },
       "category": {
         "id": "health",
@@ -1752,7 +1752,7 @@
         "id": "fhi",
         "display_name": "Folkehelseinstituttet",
         "homepage": "https://www.fhi.no/",
-        "logo": "/img/publishers/fhi.svg"
+        "logo": "/img/publishers/fhi.png"
       },
       "category": {
         "id": "health",
@@ -1864,7 +1864,7 @@
         "id": "fhi",
         "display_name": "Folkehelseinstituttet",
         "homepage": "https://www.fhi.no/",
-        "logo": "/img/publishers/fhi.svg"
+        "logo": "/img/publishers/fhi.png"
       },
       "category": {
         "id": "education",
@@ -2110,7 +2110,7 @@
         "id": "fhi",
         "display_name": "Folkehelseinstituttet",
         "homepage": "https://www.fhi.no/",
-        "logo": "/img/publishers/fhi.svg"
+        "logo": "/img/publishers/fhi.png"
       },
       "category": {
         "id": "education",
@@ -2216,7 +2216,7 @@
         "id": "fhi",
         "display_name": "Folkehelseinstituttet",
         "homepage": "https://www.fhi.no/",
-        "logo": "/img/publishers/fhi.svg"
+        "logo": "/img/publishers/fhi.png"
       },
       "category": {
         "id": "demographics",
@@ -2321,7 +2321,7 @@
         "id": "fhi",
         "display_name": "Folkehelseinstituttet",
         "homepage": "https://www.fhi.no/",
-        "logo": "/img/publishers/fhi.svg"
+        "logo": "/img/publishers/fhi.png"
       },
       "category": {
         "id": "health",
@@ -2426,7 +2426,7 @@
         "id": "fhi",
         "display_name": "Folkehelseinstituttet",
         "homepage": "https://www.fhi.no/",
-        "logo": "/img/publishers/fhi.svg"
+        "logo": "/img/publishers/fhi.png"
       },
       "category": {
         "id": "health",
@@ -2537,7 +2537,7 @@
         "id": "fhi",
         "display_name": "Folkehelseinstituttet",
         "homepage": "https://www.fhi.no/",
-        "logo": "/img/publishers/fhi.svg"
+        "logo": "/img/publishers/fhi.png"
       },
       "category": {
         "id": "education",
@@ -2779,7 +2779,7 @@
         "id": "fhi",
         "display_name": "Folkehelseinstituttet",
         "homepage": "https://www.fhi.no/",
-        "logo": "/img/publishers/fhi.svg"
+        "logo": "/img/publishers/fhi.png"
       },
       "category": {
         "id": "education",
