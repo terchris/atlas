@@ -1,0 +1,15 @@
+# Python bytecode + caches
+__pycache__/
+*.py[cod]
+*$py.class
+
+# uv-managed virtual environment (committed lockfile is fine)
+.venv/
+
+# Dagster runtime artefacts created by `dagster dev`
+.tmp_dagster_home_*/
+
+# Common Python dev caches
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
