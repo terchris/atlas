@@ -96,6 +96,16 @@ const config: Config = {
           label: 'Docs',
         },
         {
+          // `pathname://` escape hatch: Docusaurus's `trailingSlash: false`
+          // would otherwise rewrite /lineage/ → /lineage (no slash), which
+          // misses the static dbt-docs HTML at static/lineage/index.html
+          // and shows the Docusaurus 404. The pathname:// protocol tells
+          // Docusaurus not to normalize, not to client-side route.
+          href: 'pathname:///lineage/',
+          label: 'Lineage',
+          position: 'left',
+        },
+        {
           href: `https://github.com/${GITHUB_ORG}/${GITHUB_REPO}`,
           label: 'GitHub',
           position: 'right',
