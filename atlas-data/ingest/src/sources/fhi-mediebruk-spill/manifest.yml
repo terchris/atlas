@@ -50,3 +50,14 @@ dimensions:
     meaning: Which number
     value_format: 2 codes
     notes: "SMR (standardised ratio vs national), MEIS (FHI mean / smoothed indicator). No TELLER / RATE — Ungdata is sample-based."
+
+lifecycle: stable
+time_coverage:
+  start: 2013
+  end: 2025
+keywords:
+  - gaming
+  - media-use
+  - youth
+  - ungdata
+  - kommune

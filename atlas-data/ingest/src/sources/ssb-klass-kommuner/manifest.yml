@@ -3,7 +3,7 @@
 # After commit, this file is human-authored — ingest runs do NOT modify it.
 
 source_id: ssb-klass-kommuner
-upstream_id: 131
+upstream_id: "131"
 upstream_url: https://www.ssb.no/klass/klassifikasjoner/131
 upstream_landing_page: https://www.ssb.no/klass/klassifikasjoner/131
 upstream_title: "Standard for kommuneinndeling"
@@ -46,3 +46,15 @@ dimensions:
     meaning: Free-text notes
     value_format: text or null
     notes: Boundary changes, Sámi name variants, etc.
+
+lifecycle: stable
+time_coverage:
+  start: null
+  end: null
+keywords:
+  - kommune
+  - geography
+  - reference
+  - klass
+suggested_joins:
+  - ssb-klass-fylker

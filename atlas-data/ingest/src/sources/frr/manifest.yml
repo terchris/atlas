@@ -8,7 +8,7 @@ upstream_url: https://www.rodekors.no/
 upstream_landing_page: https://www.rodekors.no/
 upstream_title: "Frivillig Resource Register (FRR) — Norges Røde Kors internal volunteer register"
 description: "Norges Røde Kors's internal Frivillig Resource Register (FRR) — operational data on volunteer resources, status, and positions. Private; never exposed via the public API."
-publisher: Norges Røde Kors (private FRR register)
+publisher: Norges Røde Kors
 license: internal
 license_url: internal
 periodicity: irregular
@@ -41,3 +41,13 @@ dimensions:
     meaning: FRR record payload
     value_format: jsonb
     notes: Verbatim JSON from FRR — schema is FRR-managed, mirrored without flattening
+
+lifecycle: stable
+time_coverage:
+  start: null
+  end: null
+keywords:
+  - volunteer-register
+  - ngo-supply
+  - redcross
+  - internal

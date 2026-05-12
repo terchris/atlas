@@ -3,9 +3,8 @@
 # After commit, this file is human-authored — ingest runs do NOT modify it.
 
 source_id: fhi-trangbodd
-upstream_id: 794
+upstream_id: "794"
 upstream_url: https://statistikk-data.fhi.no/api/open/v1/nokkel/table/794
-upstream_landing_page: ""  # TODO paste from statistikk.fhi.no — slug for table 794
 upstream_title: "Trangbodd_UTDANN"
 description: "FHI Folkehelsestatistikk table 794 — Trangbodd_UTDANN. Share of population living in overcrowded housing by region × age × education × housing-status × measure."
 publisher: Folkehelseinstituttet
@@ -46,3 +45,13 @@ dimensions:
     meaning: Which number
     value_format: 3 codes
     notes: RATE (percent — Atlas keeps only this), SMR (standardised ratio), TELLER (count)
+
+lifecycle: stable
+time_coverage:
+  start: 2015
+  end: 2024
+keywords:
+  - overcrowded-housing
+  - housing
+  - integration
+  - kommune

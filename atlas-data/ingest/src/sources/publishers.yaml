@@ -1,0 +1,54 @@
+# publishers.yaml — per-publisher metadata for the Atlas sources catalogue.
+#
+# Each entry is keyed by `id` (URL slug used in /sources/by/<id>). The
+# `display_name` MUST exactly match the `publisher:` field in every manifest
+# from that publisher — the validator cross-checks this.
+#
+# `logo` paths resolve to website/static/<path> at build time.
+# `feedback_url` is the default "Meld feil → Report to publisher" target;
+# individual manifests can override via the per-source `feedback_url` field.
+
+publishers:
+  - id: ssb
+    display_name: Statistisk sentralbyrå
+    homepage: https://www.ssb.no/
+    logo: /img/publishers/ssb.svg
+    feedback_url: https://www.ssb.no/omssb/kontakt-oss
+    notes: |
+      Norway's national statistics office. Maintains the StatBank
+      (statistikkbanken) — the canonical source of demographic, economic,
+      and social indicators at kommune, fylke, and national resolution.
+      Data released under NLOD; tables identified by numeric IDs preserved
+      with leading zeros (e.g. table 07459).
+
+  - id: fhi
+    display_name: Folkehelseinstituttet
+    homepage: https://www.fhi.no/
+    logo: /img/publishers/fhi.svg
+    feedback_url: https://www.fhi.no/skjema/kontakt-folkehelseinstituttet/
+    notes: |
+      Norwegian Institute of Public Health. Publishes the Folkehelseprofiler
+      and the underlying Folkehelsestatistikk via statistikk.fhi.no.
+      Most tables use 3-year rolling averages and standardised ratios (SMR)
+      to compare kommune-level health outcomes.
+
+  - id: bufdir
+    display_name: Barne-, ungdoms- og familiedirektoratet
+    homepage: https://www.bufdir.no/
+    logo: /img/publishers/bufdir.svg
+    feedback_url: https://www.bufdir.no/kontakt/
+    notes: |
+      Directorate for Children, Youth and Family Affairs. Publishes the
+      Barnefattigdom kommunemonitor and related family / child-welfare
+      indicators at kommune and bydel resolution. Data released under NLOD.
+
+  - id: redcross
+    display_name: Norges Røde Kors
+    homepage: https://www.rodekors.no/
+    logo: /img/publishers/redcross.svg
+    feedback_url: https://www.rodekors.no/kontakt-oss/
+    notes: |
+      Norwegian Red Cross. Source of NGO-supply data via the public
+      Organizations API (branches and per-branch activities). The Frivillig
+      Resource Register (FRR) is also from Red Cross but is private operational
+      data, never exposed via the public API.

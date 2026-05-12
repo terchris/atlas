@@ -51,3 +51,18 @@ dimensions:
     meaning: Parsed year→value map for the geography and Enhet/Tallformat tuple
     value_format: JSON object with string year keys; suppressed cells as null
     notes: Matches prior raw semantics (full spine per slice); mart reads scalar `value` for the keyed year row.
+
+lifecycle: stable
+time_coverage:
+  start: null
+  end: null
+keywords:
+  - child-poverty
+  - low-income
+  - kommune
+  - bydel
+  - families
+methodology_notes: |
+  Children under 18 living in households below 60% of the national median equivalised income (EU-scale). Spines differ per indicator — some series start in 2013, others in 2015 or later. Bufdir's poverty lens complements SSB's register-based measures by adding bydel-level breakdowns for the largest kommuner.
+suggested_joins:
+  - ssb-08764

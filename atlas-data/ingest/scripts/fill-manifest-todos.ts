@@ -459,6 +459,45 @@ function cleanTitle(s: string): string {
     .trim();
 }
 
+/**
+ * Capture the v2 catalogue trailing block (lifecycle / time_coverage /
+ * keywords / methodology_notes / suggested_joins / sample_query /
+ * feedback_url / publisher_logo) so re-rendering preserves it verbatim.
+ *
+ * This script only auto-fills v1 fields; v2 fields are intentionally
+ * editorial. Round-tripping them as raw text avoids accidental data loss
+ * if a contributor populates v2 fields then later re-runs the filler.
+ */
+function extractV2TrailingBlock(yaml: string): string {
+  const lines = yaml.split("\n");
+  for (let i = 0; i < lines.length; i++) {
+    if (/^lifecycle:\s/.test(lines[i]!)) {
+      return lines.slice(i).join("\n").replace(/\n+$/, "") + "\n";
+    }
+  }
+  return "";
+}
+
+/**
+ * Inspect the v2 trailing block for lifecycle/time_coverage inconsistencies.
+ *
+ * A `stable` source with `null` start/end is normal for irregular / reference
+ * data (Red Cross branches, SSB Klass geographies, etc.) — only warn when the
+ * cadence indicates regular periodicity (annual / quarterly / monthly).
+ */
+function checkV2Consistency(v2Block: string, cadence: string): string[] {
+  if (!v2Block) return [];
+  const warnings: string[] = [];
+  const isStable = /^lifecycle:\s*stable\b/m.test(v2Block);
+  const startNull = /^\s+start:\s*null\b/m.test(v2Block);
+  const endNull = /^\s+end:\s*null\b/m.test(v2Block);
+  const isPeriodicCadence = ["annual", "quarterly", "monthly", "daily"].includes(cadence);
+  if (isStable && isPeriodicCadence && (startNull || endNull)) {
+    warnings.push("lifecycle:stable + cadence:" + cadence + " but time_coverage has null start/end");
+  }
+  return warnings;
+}
+
 function fillOne(sourceDir: string): { sourceId: string; changed: boolean; warnings: string[] } {
   const manifestPath = join(sourceDir, "manifest.yml");
   if (!existsSync(manifestPath)) return { sourceId: "?", changed: false, warnings: ["no manifest.yml"] };
@@ -466,8 +505,9 @@ function fillOne(sourceDir: string): { sourceId: string; changed: boolean; warni
   const m = parseExistingManifest(before);
   if (!m) return { sourceId: "?", changed: false, warnings: ["parse failed"] };
 
+  const v2Block = extractV2TrailingBlock(before);
   const readme = readReadme(sourceDir);
-  const warnings: string[] = [];
+  const warnings: string[] = [...checkV2Consistency(v2Block, m.tags.cadence)];
   let touched = false;
 
   const overrides = MANUAL_OVERRIDES[m.source_id] ?? {};
@@ -616,7 +656,13 @@ function fillOne(sourceDir: string): { sourceId: string; changed: boolean; warni
   }
 
   if (!touched) return { sourceId: m.source_id, changed: false, warnings };
-  writeFileSync(manifestPath, renderManifest(m), "utf8");
+  // Re-attach the v2 catalogue trailing block verbatim — renderManifest only
+  // knows the v1 fields (lifecycle / time_coverage / keywords / methodology_notes /
+  // suggested_joins live outside its schema). Without this, re-running the
+  // filler on a manifest with populated v2 fields would silently strip them.
+  const rendered = renderManifest(m).replace(/\n+$/, "") + "\n";
+  const out = v2Block ? `${rendered}\n${v2Block}` : `${rendered}`;
+  writeFileSync(manifestPath, out, "utf8");
   return { sourceId: m.source_id, changed: true, warnings };
 }
 

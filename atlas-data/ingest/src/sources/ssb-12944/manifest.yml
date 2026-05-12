@@ -3,7 +3,7 @@
 # After commit, this file is human-authored — ingest runs do NOT modify it.
 
 source_id: ssb-12944
-upstream_id: 12944
+upstream_id: "12944"
 upstream_url: https://www.ssb.no/statbank/table/12944
 upstream_landing_page: https://www.ssb.no/statbank/table/12944
 upstream_title: "12944: Personer i husholdninger med vedvarende lavinntekt (EU-skala 60 prosent), etter alder. Treårsperiode (K) (B) (2011-2013)-(2022-2024)"
@@ -38,3 +38,17 @@ dimensions:
     meaning: 3-year rolling period
     value_format: '"YYYY-YYYY" period label'
     notes: 12 periods — 2011-2013 through 2022-2024
+
+lifecycle: stable
+time_coverage:
+  start: 2011
+  end: 2024
+keywords:
+  - persistent-low-income
+  - poverty
+  - income
+  - kommune
+suggested_joins:
+  - ssb-06944
+  - ssb-06947
+  - ssb-08764

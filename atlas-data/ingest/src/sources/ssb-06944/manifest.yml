@@ -3,7 +3,7 @@
 # After commit, this file is human-authored — ingest runs do NOT modify it.
 
 source_id: ssb-06944
-upstream_id: 06944
+upstream_id: "06944"
 upstream_url: https://www.ssb.no/statbank/table/06944
 upstream_landing_page: https://www.ssb.no/statbank/table/06944
 upstream_title: "06944: Inntekt for husholdninger, etter husholdningstype. Antall og median. Delområder (K) (B) 2005-2024"
@@ -38,3 +38,17 @@ dimensions:
     meaning: Year
     value_format: 4-digit year as text
     notes: 2005–2024 (20 years; default response is latest year only)
+
+lifecycle: stable
+time_coverage:
+  start: 2005
+  end: 2024
+keywords:
+  - household-income
+  - income
+  - median
+  - kommune
+suggested_joins:
+  - ssb-06947
+  - ssb-08764
+  - ssb-12944

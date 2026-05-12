@@ -3,7 +3,7 @@
 # After commit, this file is human-authored — ingest runs do NOT modify it.
 
 source_id: ssb-08764
-upstream_id: 08764
+upstream_id: "08764"
 upstream_url: https://www.ssb.no/statbank/table/08764
 upstream_landing_page: https://www.ssb.no/statbank/table/08764
 upstream_title: "08764: Personer under 18 år i husholdninger med lavinntekt (EU- og OECD-skala). Antall og prosent (K) (B) 2005-2024"
@@ -34,3 +34,21 @@ dimensions:
     meaning: Year
     value_format: 4-digit year as text
     notes: 2005–2024 (20 years); default v2-beta response is latest year only
+
+lifecycle: stable
+time_coverage:
+  start: 2005
+  end: 2024
+keywords:
+  - child-poverty
+  - low-income
+  - children
+  - income
+  - kommune
+methodology_notes: |
+  SSB measures children under 18 in households where equivalised disposable income falls below 60% of the national median (EU-scale). The OECD-modified equivalence scale assigns 1.0 to the first adult, 0.5 to each additional adult, and 0.3 to each child under 14. Single-year snapshot; persistence is measured separately in ssb-12944.
+suggested_joins:
+  - ssb-06944
+  - ssb-06947
+  - ssb-12944
+  - bufdir-barnefattigdom

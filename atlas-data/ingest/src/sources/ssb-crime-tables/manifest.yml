@@ -55,3 +55,13 @@ dimensions:
     meaning: Final police investigative outcome bucket
     value_format: SSB categorical code set
     notes: Present only on 09405 alongside national offence totals.
+
+lifecycle: stable
+time_coverage:
+  start: null
+  end: null
+keywords:
+  - crime
+  - police
+  - reported-crime
+  - kommune

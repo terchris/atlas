@@ -3,9 +3,8 @@
 # After commit, this file is human-authored — ingest runs do NOT modify it.
 
 source_id: fhi-mobbing
-upstream_id: 377
+upstream_id: "377"
 upstream_url: https://statistikk-data.fhi.no/api/open/v1/nokkel/table/377
-upstream_landing_page: ""  # TODO paste from statistikk.fhi.no — slug for table 377
 upstream_title: "Mobbing, 7. og 10. klasse, 3-årige tall"
 description: "FHI Folkehelsestatistikk table 377 — Mobbing, 7. og 10. klasse, 3-årige tall. Share of pupils reporting bullying in 7th and 10th grade, 3-year rolling averages per region."
 publisher: Folkehelseinstituttet
@@ -46,3 +45,19 @@ dimensions:
     meaning: Which number
     value_format: 3 codes
     notes: SMR (standardised ratio), MEIS (?), RATE (percent)
+
+lifecycle: stable
+time_coverage:
+  start: 2016
+  end: 2024
+keywords:
+  - bullying
+  - school
+  - youth
+  - ungdata
+  - kommune
+methodology_notes: |
+  Folkehelseprofil indicator. Reports the share of 7th- and 10th-grade students who report being bullied at school, based on the Elevundersøkelsen survey administered by Udir. Published as 3-year rolling averages (e.g. 2022–2024) to stabilise small-kommune estimates. Response rates and self-report bias should be considered when comparing across kommuner.
+suggested_joins:
+  - fhi-vgs-gjennomforing
+  - fhi-neet

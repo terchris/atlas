@@ -46,3 +46,13 @@ dimensions:
     meaning: Which number
     value_format: 4 codes upstream; Atlas filters to 1
     notes: "MEIS only (FHI's smoothed indicator that pools across geography to stabilise small-area estimates). Raw RATE / TELLER / SMR available upstream for analyses where pooling is inappropriate."
+
+lifecycle: stable
+time_coverage:
+  start: 1990
+  end: 2024
+keywords:
+  - suicide
+  - mental-health
+  - rolling-average
+  - kommune

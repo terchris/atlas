@@ -5,7 +5,6 @@
 source_id: fhi-mediebruk-some
 upstream_id: "602"
 upstream_url: https://statistikk-data.fhi.no/api/open/v1/nokkel/table/602
-upstream_landing_page: ""  # TODO paste from statistikk.fhi.no — slug for table 602 (SOME)
 upstream_title: "Mediebruk_SOME_Ungdata_KH"
 description: "FHI Folkehelsestatistikk table 602 — share of Ungdata respondents reporting more than 3 hours per day on social media. The most analytically interesting of FHI's three screen-time tables: social-media use has the strongest mental-health-outcome correlation in the youth-research literature."
 publisher: Folkehelseinstituttet
@@ -50,3 +49,14 @@ dimensions:
     meaning: Which number
     value_format: 2 codes
     notes: "SMR (standardised ratio vs national), MEIS (FHI mean / smoothed indicator). No TELLER / RATE — Ungdata is sample-based."
+
+lifecycle: stable
+time_coverage:
+  start: 2015
+  end: 2025
+keywords:
+  - social-media
+  - media-use
+  - youth
+  - ungdata
+  - kommune

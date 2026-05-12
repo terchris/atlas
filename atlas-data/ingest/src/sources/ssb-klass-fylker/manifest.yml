@@ -3,7 +3,7 @@
 # After commit, this file is human-authored — ingest runs do NOT modify it.
 
 source_id: ssb-klass-fylker
-upstream_id: 104
+upstream_id: "104"
 upstream_url: https://www.ssb.no/klass/klassifikasjoner/104
 upstream_landing_page: https://www.ssb.no/klass/klassifikasjoner/104
 upstream_title: "Standard for fylkesinndeling"
@@ -42,3 +42,15 @@ dimensions:
     meaning: Validity span
     value_format: ISO date or null
     notes: Codes carry their own valid_from/valid_to plus the validFromInRequestedRange computed at fetch time
+
+lifecycle: stable
+time_coverage:
+  start: null
+  end: null
+keywords:
+  - fylke
+  - geography
+  - reference
+  - klass
+suggested_joins:
+  - ssb-klass-kommuner

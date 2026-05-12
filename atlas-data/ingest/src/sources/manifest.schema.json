@@ -1,0 +1,185 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://atlas.sovereignsky.no/schemas/manifest.schema.json",
+  "title": "Atlas source manifest",
+  "description": "Per-source catalogue metadata. Hand-authored after bootstrap; ingest runs do not modify. Validated by check-manifests.sh in CI.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "source_id",
+    "upstream_id",
+    "upstream_url",
+    "upstream_title",
+    "description",
+    "publisher",
+    "license",
+    "license_url",
+    "periodicity",
+    "eu_theme",
+    "attribution",
+    "tags",
+    "dimensions",
+    "lifecycle",
+    "time_coverage"
+  ],
+  "properties": {
+    "source_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*[a-z0-9]$",
+      "description": "Folder name and primary key. Lowercase slug."
+    },
+    "upstream_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The upstream's own identifier (SSB table number, FHI dataset slug, etc.)."
+    },
+    "upstream_url": {
+      "type": "string",
+      "format": "uri",
+      "description": "Link to the data — typically the API endpoint Atlas's ingest module fetches."
+    },
+    "upstream_landing_page": {
+      "type": "string",
+      "format": "uri",
+      "description": "Optional human-browsable page describing the dataset (DCAT-AP dcat:landingPage). Falls back to upstream_url when absent."
+    },
+    "upstream_title": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The source's authoritative title at the upstream (usually Norwegian)."
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "description": "One paragraph for the customer-facing catalogue."
+    },
+    "publisher": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Institution that publishes the data. Must resolve against publishers.yaml display_name."
+    },
+    "license": {
+      "type": "string",
+      "minLength": 1,
+      "description": "License token. NLOD for Norwegian public-sector sources by default."
+    },
+    "license_url": {
+      "type": "string",
+      "minLength": 1,
+      "description": "URL to license terms, or 'internal' for private sources."
+    },
+    "periodicity": {
+      "type": "string",
+      "pattern": "^(P[0-9]+[YMWD]|irregular)$",
+      "description": "ISO 8601 duration (P1Y, P3M, P1W) or 'irregular'."
+    },
+    "eu_theme": {
+      "type": "string",
+      "enum": ["AGRI", "ECON", "EDUC", "ENER", "ENVI", "GOVE", "HEAL", "INTR", "JUST", "REGI", "SOCI", "TECH", "TRAN"],
+      "description": "EU Data Theme code (DCAT-AP). 13 buckets defined by the EU Publications Office."
+    },
+    "attribution": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Attribution string displayed alongside data from this source."
+    },
+    "tags": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["provider", "topic", "geo", "cadence"],
+      "properties": {
+        "provider": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]*[a-z0-9]$",
+          "description": "Provider slug (ssb, fhi, bufdir, redcross, …). Cross-referenced via publishers.yaml."
+        },
+        "topic": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]*[a-z0-9]$",
+          "description": "Primary topic slug for navigation. Must resolve against source-categories.yaml."
+        },
+        "geo": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]*[a-z0-9]$",
+          "description": "Geographic resolution slug (kommune, fylke, bydel, national)."
+        },
+        "cadence": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]*[a-z0-9]$",
+          "description": "Refresh cadence slug (annual, monthly, irregular)."
+        }
+      }
+    },
+    "dimensions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["code", "meaning", "value_format", "notes"],
+        "properties": {
+          "code": { "type": "string", "minLength": 1 },
+          "meaning": { "type": "string", "minLength": 1 },
+          "value_format": { "type": "string" },
+          "notes": { "type": "string" }
+        }
+      },
+      "description": "Hand-authored editorial semantics for each dimension column."
+    },
+    "raw_tables": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^[a-z0-9_]+$" },
+      "description": "Optional explicit list of raw.* tables this source owns. Default is underscore-translated source_id."
+    },
+    "lifecycle": {
+      "type": "string",
+      "enum": ["stable", "beta", "deprecated", "broken"],
+      "description": "Product status. stable = in production; beta = newly added or under review; deprecated = scheduled for removal; broken = ingest failing, do not consume."
+    },
+    "time_coverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["start", "end"],
+      "properties": {
+        "start": {
+          "type": ["integer", "null"],
+          "minimum": 1800,
+          "maximum": 2100,
+          "description": "4-digit start year of available data. null for irregular cadences."
+        },
+        "end": {
+          "type": ["integer", "null"],
+          "minimum": 1800,
+          "maximum": 2100,
+          "description": "4-digit end year (inclusive). null for irregular cadences."
+        }
+      }
+    },
+    "keywords": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true,
+      "description": "Free-form multi-label keywords for facet / cross-listing. 3–6 recommended."
+    },
+    "suggested_joins": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*[a-z0-9]$" },
+      "uniqueItems": true,
+      "description": "Other source_ids that pair naturally with this source. Editorial; supplements auto-inferred joins from shared dimension codes."
+    },
+    "sample_query": {
+      "type": "string",
+      "format": "uri",
+      "description": "Optional PostgREST URL returning real rows. Falls back to a primary-key-templated default at build time."
+    },
+    "methodology_notes": {
+      "type": "string",
+      "description": "Markdown. Methodology context that doesn't fit in `description` — rolling averages, definition caveats, sampling notes, etc."
+    },
+    "feedback_url": {
+      "type": "string",
+      "format": "uri",
+      "description": "Optional override of publishers.yaml feedback_url for this specific dataset."
+    }
+  }
+}

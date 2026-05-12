@@ -46,3 +46,13 @@ dimensions:
     meaning: Which number
     value_format: 3 codes upstream; Atlas filters to 1
     notes: "TELLER (count) only — RATE / SMR are derivable downstream from these counts."
+
+lifecycle: stable
+time_coverage:
+  start: null
+  end: null
+keywords:
+  - population-projection
+  - demographics
+  - forecast
+  - kommune

@@ -3,7 +3,7 @@
 # After commit, this file is human-authored — ingest runs do NOT modify it.
 
 source_id: ssb-09429
-upstream_id: 09429
+upstream_id: "09429"
 upstream_url: https://www.ssb.no/statbank/table/09429
 upstream_landing_page: https://www.ssb.no/statbank/table/09429
 upstream_title: "09429: Utdanningsnivå, etter kommune og kjønn (K) 1970-2024"
@@ -42,3 +42,13 @@ dimensions:
     meaning: Year
     value_format: 4-digit year as text
     notes: 1970–2024 (55 years)
+
+lifecycle: stable
+time_coverage:
+  start: 1970
+  end: 2024
+keywords:
+  - education
+  - education-level
+  - demographics
+  - kommune
