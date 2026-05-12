@@ -4,7 +4,9 @@
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Active
+## Status: Completed
+
+**Completed**: 2026-05-12
 
 **Branch**: `feature/sources-catalog-foundation`
 
@@ -368,19 +370,21 @@ User confirms phase is complete.
 
 ---
 
-## Phase 5: CI drift gate + contributor docs
+## Phase 5: CI drift gate + contributor docs — DONE
+
+**Outcome (2026-05-12)**: Extended `.github/workflows/check-manifests.yml` from one job to two — `check-manifests` keeps the manifest-shape gate; `check-catalog` regenerates the catalog and `git diff --exit-code`s against committed output. Updated `adding-a-source.md` Step 4b with the regenerate-and-commit step. Added new `sources-catalog.md` contributor doc. Local build clean across all changes.
 
 ### Tasks
 
-- [ ] 5.1 Extend `.github/workflows/check-manifests.yml` (or add a sibling step):
+- [x] 5.1 Extend `.github/workflows/check-manifests.yml` (or add a sibling step):
   - After `check-manifests.sh` passes, run `cd website && npm ci && npm run generate:sources`.
   - `git diff --exit-code src/data/sources-registry.json website/docs/sources/` — fail if anything drifts.
 
-- [ ] 5.2 Update `website/docs/contributors/adding-a-source.md` Step 4b: note that after committing a manifest, the next push must also regenerate the catalog. Document `npm run generate:sources` workflow.
+- [x] 5.2 Update `website/docs/contributors/adding-a-source.md` Step 4b: note that after committing a manifest, the next push must also regenerate the catalog. Document `npm run generate:sources` workflow.
 
-- [ ] 5.3 Add `website/docs/contributors/sources-catalog.md` — a short contributor doc on the catalog architecture: where to find the generator, what's generated vs hand-authored, how to add a new category, how to add a new publisher.
+- [x] 5.3 Add `website/docs/contributors/sources-catalog.md` — a short contributor doc on the catalog architecture: where to find the generator, what's generated vs hand-authored, how to add a new category, how to add a new publisher.
 
-- [ ] 5.4 Move PLAN-002 from `plans/active/` → `plans/completed/` once Phase 4 ships and the live site renders the catalog cleanly.
+- [x] 5.4 Move PLAN-002 from `plans/active/` → `plans/completed/` once Phase 4 ships and the live site renders the catalog cleanly.
 
 ### Validation
 

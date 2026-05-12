@@ -122,6 +122,18 @@ Then hand-author the **v2 catalogue fields** the bootstrap leaves empty (the con
 
 **Done when**: `./src/sources/check-manifests.sh` exits 0 — schema-valid, every `tags.topic` resolves to a category, every `publisher` resolves to a publishers entry.
 
+**Then regenerate the catalogue.** After the manifest passes the gate, regenerate the public sources catalogue and commit the generator output alongside the manifest:
+
+```bash
+cd ../../website
+npm run sources:generate
+git add src/data/sources-registry.json docs/sources/
+```
+
+The generator emits the per-source MDX at `docs/sources/<source-id>.mdx`, refreshes any per-category / per-publisher index pages that include the new source, and updates `src/data/sources-registry.json`. CI's `check-catalog` job re-runs the generator and fails the PR if the committed output drifts from what the manifests produce — so this step is mandatory before pushing.
+
+See [sources-catalog.md](./sources-catalog.md) for the catalog architecture.
+
 ### Step 5 — npm script
 
 **File**: `atlas-data/ingest/package.json`.
