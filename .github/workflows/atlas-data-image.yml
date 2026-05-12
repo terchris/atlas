@@ -1,0 +1,81 @@
+name: atlas-data image build and publish
+
+# Builds the polyglot Dagster code-location image from atlas-data/.
+# - PRs: build only (verify Dockerfile + deps still resolve).
+# - Push to main: build + push to GHCR with date-prefixed SHA tags. Never `:latest`
+#   because Helm needs unique tags to roll a code-location pod (per UIS
+#   Dagster INVESTIGATE).
+#
+# Triggers only on atlas-data/** changes + this workflow file. The website
+# workflow has its own separate trigger; image rebuilds don't fire on docs
+# edits.
+
+on:
+  pull_request:
+    paths:
+      - 'atlas-data/**'
+      - '.github/workflows/atlas-data-image.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'atlas-data/**'
+      - '.github/workflows/atlas-data-image.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write   # needed to push to GHCR on main
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository_owner }}/atlas-data
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compute image tags
+        id: tags
+        run: |
+          # Date-prefixed SHA gives human-readable + unique tags. Per UIS Dagster
+          # doc: never use `:latest` — Helm's image-field-change rollout
+          # detection needs unique values.
+          DATE=$(date -u +'%Y%m%d')
+          SHORT_SHA=${GITHUB_SHA::7}
+          echo "tags=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:v${DATE}-${SHORT_SHA},${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:sha-${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+
+      - name: Build (PR — no push)
+        if: github.event_name == 'pull_request'
+        uses: docker/build-push-action@v5
+        with:
+          context: atlas-data
+          file: atlas-data/deploy/Dockerfile
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push (main)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/build-push-action@v5
+        with:
+          context: atlas-data
+          file: atlas-data/deploy/Dockerfile
+          push: true
+          tags: ${{ steps.tags.outputs.tags }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

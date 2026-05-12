@@ -1,0 +1,29 @@
+# Node deps are re-installed inside the image; never copy host node_modules.
+ingest/node_modules
+
+# dbt artifacts are regenerated; don't bake stale ones into the image.
+dbt/target
+dbt/dbt_packages
+dbt/logs
+
+# Ingest output is local-only; never goes into the image.
+ingest/output
+
+# uv/Python venvs (Dagster's local .venv).
+dagster/.venv
+dagster/.tmp_dagster_home_*
+
+# Test fixtures & artefacts not needed by the runtime image.
+**/__pycache__
+**/.pytest_cache
+**/.ruff_cache
+**/*.egg-info
+
+# Editor / OS noise.
+.DS_Store
+**/.vscode
+**/.idea
+
+# Secrets — never bake .env into a public image.
+**/.env
+**/.env.*

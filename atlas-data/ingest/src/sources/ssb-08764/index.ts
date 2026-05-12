@@ -1,9 +1,17 @@
 /**
  * SSB table 08764 — Personer under 18 år i husholdninger med lavinntekt
  * (EU- og OECD-skala). See ./README.md for full source notes.
+ *
+ * Dagster Pipes-enabled. When invoked by Dagster (via PipesSubprocessClient
+ * in atlas_data.assets.raw_ssb), Pipes env vars are present and the run
+ * publishes a materialisation event back to Dagster's event log on success.
+ * When invoked directly via `npm run ingest:ssb-08764`, openDagsterPipes()
+ * detects the absence of env vars and returns a no-op context — local dev
+ * is unchanged.
  */
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import * as dagsterPipes from "@dagster-io/dagster-pipes";
 import { fetchPxTableData, parseJsonStat2 } from "../../lib/pxweb.js";
 import { logger } from "../../lib/logger.js";
 import { writeNdjson } from "../../lib/output.js";
@@ -57,6 +65,21 @@ export type Ssb08764Summary = {
 };
 
 export async function run(): Promise<Ssb08764Summary> {
+  // Pipes context is a no-op outside Dagster (env vars absent). When Dagster
+  // launches this as a subprocess, the context streams materialisation events
+  // back to Dagster's event log. Disposed in `finally` so the pipe always
+  // closes cleanly.
+  const pipes = dagsterPipes.openDagsterPipes();
+  try {
+    return await runInner(pipes);
+  } finally {
+    pipes[Symbol.dispose]?.();
+  }
+}
+
+async function runInner(
+  pipes: ReturnType<typeof dagsterPipes.openDagsterPipes>,
+): Promise<Ssb08764Summary> {
   return recordIngestRun(SOURCE_ID, async () => {
     logger.info("source.start", { source_id: SOURCE_ID, table_id: TABLE_ID });
     const started = Date.now();
@@ -127,6 +150,20 @@ export async function run(): Promise<Ssb08764Summary> {
       contents_codes: [...contentsCodes],
     };
     logger.info("source.done", summary);
+
+    // Report to Dagster (no-op when run outside Dagster). The asset key is
+    // inferred from the @asset in scope on the Dagster side, so we don't pass
+    // assetKey here.
+    pipes.reportAssetMaterialization({
+      row_count: summary.row_count,
+      rows_written: summary.rows_written,
+      duration_ms: summary.duration_ms,
+      upstream_updated: summary.upstream_updated,
+      earliest_year: summary.earliest_year,
+      latest_year: summary.latest_year,
+      region_count: summary.region_count,
+      contents_codes: summary.contents_codes.join(","),
+    });
 
     return {
       output: {
