@@ -370,6 +370,18 @@ User confirms phase is complete.
 
 ---
 
+## Phase 6: Homepage + navbar wiring — DONE
+
+**Outcome (2026-05-12)**: Added after the Phase 5 commit during local-preview review — the catalog existed but had no front door from `/`. Replaced `docs/index.md` with `index.mdx` that renders the slogan + `<SourceCategoryGrid />` + `<PublisherStrip />` at the top, with the docs intro pushed below. Added "Sources" to the navbar as the leftmost item so it surfaces from every page. Modelled on the dev-templates pattern (`tmp.sovereignsky.no`) per the web-shop framing in the INVESTIGATE.
+
+### Tasks
+
+- [x] 6.1 Replaced `docs/index.md` with `docs/index.mdx`. Hero (title + tagline) + "Browse by topic" (SourceCategoryGrid) + "Browse by publisher" (PublisherStrip) + link to /sources/browse + secondary documentation links + conventions. Sidebar still works because the route is unchanged.
+- [x] 6.2 Added "Sources" to the navbar (leftmost left-position item) pointing to `/sources` with `activeBasePath: '/sources'` so it stays highlighted across the whole catalog subtree.
+- [x] 6.3 Build verified locally.
+
+---
+
 ## Phase 5: CI drift gate + contributor docs — DONE
 
 **Outcome (2026-05-12)**: Extended `.github/workflows/check-manifests.yml` from one job to two — `check-manifests` keeps the manifest-shape gate; `check-catalog` regenerates the catalog and `git diff --exit-code`s against committed output. Updated `adding-a-source.md` Step 4b with the regenerate-and-commit step. Added new `sources-catalog.md` contributor doc. Local build clean across all changes.

@@ -90,6 +90,12 @@ const config: Config = {
       title: 'Atlas',
       items: [
         {
+          to: '/sources',
+          label: 'Sources',
+          position: 'left',
+          activeBasePath: '/sources',
+        },
+        {
           type: 'docSidebar',
           sidebarId: 'docsSidebar',
           position: 'left',
