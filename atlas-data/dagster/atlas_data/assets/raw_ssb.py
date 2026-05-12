@@ -1,71 +1,51 @@
 """
-Dagster `@asset` wrappers for SSB ingest sources.
+@asset wrappers for SSB-based ingest sources (PxWeb, KLASS, crime tables).
 
-Each asset invokes the existing TypeScript ingest as a subprocess via Dagster
-Pipes. The TS side calls `openDagsterPipes()` + `reportAssetMaterialization`
-(no-ops when env vars are absent, so `npm run ingest:*` still works locally).
-
-Pattern is the same for every source — copy the `raw_ssb_08764` body and
-change the script name. Future PLAN rolls out the remaining ~40 sources.
+See _factory.make_raw_ingest_asset for the underlying pattern. Each source's
+TypeScript module (`atlas-data/ingest/src/sources/<source_id>/index.ts`)
+already calls `recordIngestRun()` which centralises the Pipes integration —
+this module just exposes one @asset per source for Dagster to schedule and
+materialise.
 """
 
-from __future__ import annotations
+from atlas_data.assets._factory import make_raw_ingest_assets
 
-import os
-from pathlib import Path
+# SSB PxWeb sources — annual or near-annual cadence. New ones added by:
+# 1. Add to atlas-data/ingest/src/sources/ssb-<id>/index.ts + manifest.yml.
+# 2. Add the source-id to this list.
+# 3. UIS Helm `helm upgrade` to roll the code-location pod (in production).
+SSB_SOURCES = [
+    "ssb-06083",
+    "ssb-06913",
+    "ssb-06944",
+    "ssb-06947",
+    "ssb-07459",
+    "ssb-08764",
+    "ssb-09429",
+    "ssb-10826",
+    "ssb-12063",
+    "ssb-12131",
+    "ssb-12132",
+    "ssb-12292",
+    "ssb-12944",
+    "ssb-13995",
+]
 
-from dagster import (
-    MaterializeResult,
-    PipesSubprocessClient,
-    asset,
+# KLASS reference tables — code-list ingest from SSB's KLASS endpoints.
+SSB_KLASS_SOURCES = [
+    "ssb-klass-fylker",
+    "ssb-klass-kommuner",
+]
+
+# SSB crime tables — single ingest script that writes multiple raw.* tables
+# (raw.ssb_08484, raw.ssb_08487, raw.ssb_09405). One @asset represents the
+# ingest run; splitting into per-table @assets is future work.
+SSB_CRIME_SOURCES = [
+    "ssb-crime-tables",
+]
+
+assets = (
+    make_raw_ingest_assets(SSB_SOURCES, group_name="raw_ssb")
+    + make_raw_ingest_assets(SSB_KLASS_SOURCES, group_name="raw_ssb_klass")
+    + make_raw_ingest_assets(SSB_CRIME_SOURCES, group_name="raw_ssb_crime")
 )
-
-
-# Resolve the in-repo ingest directory once at import time. This *is* an
-# import-time file system op, but it's just resolving a path, no I/O — keeps
-# us within the cheap-to-import discipline.
-#
-# Resolution: assets/raw_ssb.py → assets/ → atlas_data/ → dagster/ → atlas-data/
-# then into ingest/. In the polyglot Docker image, this same relative
-# resolution lands at /app/ingest. Same code, both environments.
-_HERE = Path(__file__).resolve()
-_INGEST_DIR = (_HERE.parent.parent.parent.parent / "ingest").resolve()
-
-
-def pipes_subprocess_client() -> PipesSubprocessClient:
-    """Single shared resource for all subprocess-Pipes assets in this module."""
-    return PipesSubprocessClient()
-
-
-@asset(
-    key=["raw", "ssb_08764"],
-    group_name="raw_ssb",
-    description=(
-        "Personer under 18 år i husholdninger med lavinntekt (EU- og OECD-skala). "
-        "Source: SSB table 08764. Ingested by atlas-data/ingest/src/sources/ssb-08764."
-    ),
-)
-def raw_ssb_08764(
-    context,
-    pipes_subprocess_client: PipesSubprocessClient,
-) -> MaterializeResult:
-    """
-    Materialises `raw.ssb_08764` by shelling out to `npm run ingest:ssb-08764`.
-
-    The TypeScript ingest calls `reportAssetMaterialization()` via Pipes; the
-    subprocess client reads the structured event and returns it as the result.
-    """
-    database_url = os.environ.get("ATLAS_DATABASE_URL") or os.environ.get("DATABASE_URL")
-    if not database_url:
-        raise RuntimeError(
-            "ATLAS_DATABASE_URL (or DATABASE_URL) must be set for the ingest "
-            "subprocess to reach Postgres. For local dev, source "
-            "atlas-data/ingest/.env or pass --env-file."
-        )
-
-    return pipes_subprocess_client.run(
-        command=["npm", "run", "ingest:ssb-08764"],
-        context=context,
-        cwd=str(_INGEST_DIR),
-        env={"DATABASE_URL": database_url},
-    ).get_materialize_result()

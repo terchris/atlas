@@ -22,17 +22,22 @@ Cross-references:
 - urbalurba-infrastructure/.../INVESTIGATE-dagster.md (the authoritative source
   on how Dagster runs in UIS, what the two-pod model means, and why this
   discipline matters)
-- website/docs/ai-developer/plans/active/PLAN-dagster-codelocation-image.md
-  (the Atlas-side implementation plan; mirrors UIS PLAN-002)
+- website/docs/ai-developer/plans/completed/PLAN-dagster-codelocation-image.md
+  (the original Atlas-side implementation; this file extends it to all sources)
 """
 
 from dagster import Definitions
 
-from atlas_data.assets import raw_ssb
+from atlas_data.assets import raw_fhi, raw_other, raw_ssb
+from atlas_data.assets._factory import pipes_subprocess_client
 
 defs = Definitions(
-    assets=[raw_ssb.raw_ssb_08764],
+    assets=[
+        *raw_ssb.assets,
+        *raw_fhi.assets,
+        *raw_other.assets,
+    ],
     resources={
-        "pipes_subprocess_client": raw_ssb.pipes_subprocess_client(),
+        "pipes_subprocess_client": pipes_subprocess_client(),
     },
 )
