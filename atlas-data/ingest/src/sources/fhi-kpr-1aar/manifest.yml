@@ -51,3 +51,8 @@ lifecycle: stable
 time_coverage:
   start: 2017
   end: 2024
+keywords:
+  - healthcare-contact
+  - primary-care
+  - kpr
+  - kommune

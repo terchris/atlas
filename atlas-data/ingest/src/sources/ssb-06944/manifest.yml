@@ -43,3 +43,12 @@ lifecycle: stable
 time_coverage:
   start: 2005
   end: 2024
+keywords:
+  - household-income
+  - income
+  - median
+  - kommune
+suggested_joins:
+  - ssb-06947
+  - ssb-08764
+  - ssb-12944

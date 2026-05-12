@@ -47,3 +47,14 @@ lifecycle: stable
 time_coverage:
   start: 1986
   end: 2026
+keywords:
+  - demographics
+  - age
+  - sex
+  - population
+  - denominator
+  - kommune
+methodology_notes: |
+  Resident population at year-end. Counts individuals registered as resident in a kommune in Folkeregisteret. Differs from 'present population' (which varies seasonally) and from the registered population at the start of the year. Largest table in the catalogue when wildcarded across all dimensions — Atlas filters to latest year by default.
+suggested_joins:
+  - ssb-10826

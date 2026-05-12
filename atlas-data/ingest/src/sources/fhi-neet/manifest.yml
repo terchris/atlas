@@ -51,3 +51,11 @@ lifecycle: stable
 time_coverage:
   start: 2008
   end: 2024
+keywords:
+  - neet
+  - youth-unemployment
+  - education
+  - kommune
+suggested_joins:
+  - fhi-mobbing
+  - fhi-vgs-gjennomforing

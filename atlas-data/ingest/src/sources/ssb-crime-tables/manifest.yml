@@ -60,3 +60,8 @@ lifecycle: stable
 time_coverage:
   start: null
   end: null
+keywords:
+  - crime
+  - police
+  - reported-crime
+  - kommune

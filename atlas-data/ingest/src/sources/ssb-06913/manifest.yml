@@ -39,3 +39,9 @@ lifecycle: stable
 time_coverage:
   start: 1951
   end: 2026
+keywords:
+  - population-change
+  - births
+  - deaths
+  - migration
+  - kommune

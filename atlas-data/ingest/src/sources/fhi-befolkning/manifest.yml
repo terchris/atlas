@@ -47,3 +47,9 @@ lifecycle: stable
 time_coverage:
   start: 1990
   end: 2025
+keywords:
+  - population
+  - demographics
+  - age
+  - sex
+  - kommune

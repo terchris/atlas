@@ -50,3 +50,14 @@ lifecycle: stable
 time_coverage:
   start: null
   end: null
+keywords:
+  - education
+  - school-completion
+  - youth
+  - vgs
+  - kommune
+methodology_notes: |
+  5-year completion window for upper-secondary education. Counts students who complete within 5 years of starting (3 years of normal study + 2 years of grace). Cohort-based; the AAR dimension refers to the start year of the cohort. Deferred cohorts are tracked separately. NEET status (see fhi-neet) provides the complementary out-of-school view.
+suggested_joins:
+  - fhi-mobbing
+  - fhi-neet

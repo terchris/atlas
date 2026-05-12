@@ -39,3 +39,12 @@ lifecycle: stable
 time_coverage:
   start: 2005
   end: 2024
+keywords:
+  - low-income
+  - income
+  - eu-scale
+  - kommune
+suggested_joins:
+  - ssb-06944
+  - ssb-08764
+  - ssb-12944

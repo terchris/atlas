@@ -43,3 +43,12 @@ lifecycle: stable
 time_coverage:
   start: 2011
   end: 2024
+keywords:
+  - persistent-low-income
+  - poverty
+  - income
+  - kommune
+suggested_joins:
+  - ssb-06944
+  - ssb-06947
+  - ssb-08764

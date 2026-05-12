@@ -43,3 +43,11 @@ lifecycle: stable
 time_coverage:
   start: 2023
   end: 2025
+keywords:
+  - living-alone
+  - household
+  - loneliness
+  - single-person-household
+  - kommune
+suggested_joins:
+  - ssb-06083

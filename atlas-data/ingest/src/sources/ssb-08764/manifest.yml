@@ -39,3 +39,16 @@ lifecycle: stable
 time_coverage:
   start: 2005
   end: 2024
+keywords:
+  - child-poverty
+  - low-income
+  - children
+  - income
+  - kommune
+methodology_notes: |
+  SSB measures children under 18 in households where equivalised disposable income falls below 60% of the national median (EU-scale). The OECD-modified equivalence scale assigns 1.0 to the first adult, 0.5 to each additional adult, and 0.3 to each child under 14. Single-year snapshot; persistence is measured separately in ssb-12944.
+suggested_joins:
+  - ssb-06944
+  - ssb-06947
+  - ssb-12944
+  - bufdir-barnefattigdom

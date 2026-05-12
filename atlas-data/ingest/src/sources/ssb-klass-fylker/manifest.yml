@@ -47,3 +47,10 @@ lifecycle: stable
 time_coverage:
   start: null
   end: null
+keywords:
+  - fylke
+  - geography
+  - reference
+  - klass
+suggested_joins:
+  - ssb-klass-kommuner

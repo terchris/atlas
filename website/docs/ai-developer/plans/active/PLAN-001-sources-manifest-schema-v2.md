@@ -168,36 +168,19 @@ User confirms phase is complete.
 
 ---
 
-## Phase 4: Optional fields — sweep for high-value populations
+## Phase 4: Optional fields — sweep for high-value populations — DONE
 
-This phase is editorial. The schema doesn't require these fields; populating them now means the catalog ships with real content from day one rather than placeholders. Done before PLAN-002 starts so the catalog renders meaningful data.
+**Outcome (2026-05-12)**: All 41 manifests now carry curated `keywords[]`; the top-5 also carry `methodology_notes`; 14 carry `suggested_joins[]`. Sweep done via `/tmp/apply-phase4.mjs` for traceability. Validator still passes 41/41.
 
 ### Tasks
 
-- [ ] 4.1 Add `keywords[]` (3–6 per source) drawn from `description`, `upstream_title`, and `dimensions[]` notes. ~2 minutes per source × 41 ≈ 90 minutes. Examples:
-  - `ssb-07459` → `[demographics, kommune, age, sex, population, denominator]`
-  - `fhi-mobbing` → `[youth, school, bullying, mental-health, ungdata]`
-  - `bufdir-barnefattigdom` → `[child-poverty, low-income, kommune, bydel, families]`
+- [x] 4.1 Added `keywords[]` (3–6 per source) to all 41 manifests. Drawn from titles, descriptions, and dimension notes; biased toward terms a researcher would actually search for (e.g. `ungdata` appears on 10 FHI youth surveys; `kommune` on all kommune-resolution sources).
 
-- [ ] 4.2 Add `methodology_notes` for the top-5 sources most likely to be cited (Ola / Jonas / Lisa persona path):
-  - `ssb-08764` (low-income persistent — EU-SILC equivalised income explanation)
-  - `fhi-mobbing` (Ungdata 3-year rolling averages, response-rate caveat)
-  - `bufdir-barnefattigdom` (under-18 in households < 60% median income)
-  - `fhi-vgs-gjennomforing` (5-year completion window, deferred-track caveat)
-  - `ssb-07459` (resident count vs registered population)
-  - Remaining 36 sources: leave `methodology_notes` empty. The catalog renders an honest placeholder per **[Q30]**.
+- [x] 4.2 Added `methodology_notes` for 5 sources: `ssb-08764`, `fhi-mobbing`, `bufdir-barnefattigdom`, `fhi-vgs-gjennomforing`, `ssb-07459`. Remaining 36 left empty (catalog will render an honest placeholder per **[Q30]**).
 
-- [ ] 4.3 Add `suggested_joins[]` where natural pairings exist:
-  - `ssb-07459` ↔ `ssb-10826` (kommune / bydel age-sex denominators).
-  - `fhi-mobbing` ↔ `fhi-vgs-gjennomforing` ↔ `fhi-neet` (youth education indicators).
-  - `ssb-06083` ↔ `fhi-bor-alene` (household composition / single-adult vulnerability).
-  - `ssb-06944` ↔ `ssb-06947` ↔ `ssb-08764` ↔ `ssb-12944` (income / low-income / children-in-low-income / persistent).
-  - `ssb-klass-kommuner` ↔ `ssb-klass-fylker` (geography dimensions).
-  - Coverage doesn't need to be complete — autosuggest fills the rest at PLAN-002 build time.
+- [x] 4.3 Added `suggested_joins[]` for 14 sources covering the natural-pair groups: kommune↔bydel age-sex (`ssb-07459`/`10826`), youth education (`fhi-mobbing`/`vgs-gjennomforing`/`neet`), household composition (`ssb-06083`/`fhi-bor-alene`), income chain (`ssb-06944`/`06947`/`08764`/`12944`/`bufdir-barnefattigdom`), geography reference (`ssb-klass-kommuner`/`fylker`).
 
-- [ ] 4.4 Leave `sample_query` and `feedback_url` empty for all 41 manifests. Defaults are derived at catalog build time:
-  - `sample_query`: PLAN-002 generates a primary-key-templated PostgREST URL.
-  - `feedback_url`: falls back to `publishers.yaml[publisher].feedback_url`.
+- [x] 4.4 `sample_query` and `feedback_url` left empty on all 41. Defaults derived at catalog build time (PLAN-002) and from `publishers.yaml` respectively.
 
 ### Validation
 

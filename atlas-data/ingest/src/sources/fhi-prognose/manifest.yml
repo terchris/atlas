@@ -51,3 +51,8 @@ lifecycle: stable
 time_coverage:
   start: null
   end: null
+keywords:
+  - population-projection
+  - demographics
+  - forecast
+  - kommune

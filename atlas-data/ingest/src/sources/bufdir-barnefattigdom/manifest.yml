@@ -56,3 +56,13 @@ lifecycle: stable
 time_coverage:
   start: null
   end: null
+keywords:
+  - child-poverty
+  - low-income
+  - kommune
+  - bydel
+  - families
+methodology_notes: |
+  Children under 18 living in households below 60% of the national median equivalised income (EU-scale). Spines differ per indicator — some series start in 2013, others in 2015 or later. Bufdir's poverty lens complements SSB's register-based measures by adding bydel-level breakdowns for the largest kommuner.
+suggested_joins:
+  - ssb-08764

@@ -43,3 +43,11 @@ lifecycle: stable
 time_coverage:
   start: 2005
   end: 2025
+keywords:
+  - family-type
+  - household
+  - demographics
+  - single-parent
+  - kommune
+suggested_joins:
+  - fhi-bor-alene

@@ -50,3 +50,14 @@ lifecycle: stable
 time_coverage:
   start: 2016
   end: 2024
+keywords:
+  - bullying
+  - school
+  - youth
+  - ungdata
+  - kommune
+methodology_notes: |
+  Folkehelseprofil indicator. Reports the share of 7th- and 10th-grade students who report being bullied at school, based on the Elevundersøkelsen survey administered by Udir. Published as 3-year rolling averages (e.g. 2022–2024) to stabilise small-kommune estimates. Response rates and self-report bias should be considered when comparing across kommuner.
+suggested_joins:
+  - fhi-vgs-gjennomforing
+  - fhi-neet

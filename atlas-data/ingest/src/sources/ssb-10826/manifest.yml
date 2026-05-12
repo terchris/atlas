@@ -47,3 +47,11 @@ lifecycle: stable
 time_coverage:
   start: 2001
   end: 2026
+keywords:
+  - demographics
+  - age
+  - sex
+  - bydel
+  - population
+suggested_joins:
+  - ssb-07459
