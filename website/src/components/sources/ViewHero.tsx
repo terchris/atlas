@@ -3,6 +3,7 @@ import Link from '@docusaurus/Link';
 import CodeBlock from '@theme/CodeBlock';
 import type { View } from '../../types/sources';
 import { usePostgrestBaseUrl, rewriteToBase } from '../../utils/postgrest';
+import SocialProofBadge from './SocialProofBadge';
 import styles from './styles.module.css';
 
 interface Props {
@@ -42,6 +43,7 @@ export default function ViewHero({ view }: Props) {
       <div className={styles.heroBody}>
         <div className={styles.heroBadges}>
           <span className={`${styles.badge} ${styles.badgeStable}`}>Atlas view</span>
+          <SocialProofBadge kind="view" view={view} />
         </div>
         <h1 className={styles.heroTitle}>{view.title}</h1>
         <span className={styles.heroPublisher}>

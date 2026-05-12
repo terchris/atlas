@@ -3,6 +3,7 @@ import Link from '@docusaurus/Link';
 import useBaseUrl from '@docusaurus/useBaseUrl';
 import type { Source } from '../../types/sources';
 import LifecycleBadge from './LifecycleBadge';
+import SocialProofBadge from './SocialProofBadge';
 import styles from './styles.module.css';
 
 interface Props {
@@ -28,7 +29,10 @@ export default function SourceCard({ source }: Props) {
       <p className={styles.cardDescription}>{source.description}</p>
       <div className={styles.cardFooter}>
         <span className={styles.cardSourceId}>{source.source_id}</span>
-        <LifecycleBadge lifecycle={source.lifecycle} />
+        <div className={styles.cardFooterBadges}>
+          <SocialProofBadge kind="source" source={source} compact />
+          <LifecycleBadge lifecycle={source.lifecycle} />
+        </div>
       </div>
     </Link>
   );

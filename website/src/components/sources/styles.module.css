@@ -40,6 +40,21 @@
   color: var(--ifm-color-emphasis-800);
 }
 
+.badgeSocialProof {
+  background: color-mix(in oklab, var(--ifm-color-primary) 14%, transparent);
+  color: var(--ifm-color-primary-darker);
+}
+
+.badgeSocialProofLink {
+  text-decoration: none;
+}
+
+.badgeSocialProofLink:hover {
+  background: color-mix(in oklab, var(--ifm-color-primary) 26%, transparent);
+  color: var(--ifm-color-primary-darker);
+  text-decoration: none;
+}
+
 .freshness {
   display: inline-flex;
   align-items: baseline;
@@ -247,11 +262,97 @@
   font-family: var(--ifm-font-family-monospace);
 }
 
+.cardFooterBadges {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .cardGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 1rem;
   margin: 1rem 0 2rem 0;
+}
+
+/* ── Recently refreshed strip (homepage) ─────────────────────────────── */
+
+.recentlyRefreshedStrip {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  margin: 1.25rem 0 2.5rem 0;
+}
+
+@media (min-width: 640px) {
+  .recentlyRefreshedStrip {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 996px) {
+  .recentlyRefreshedStrip {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.recentlyRefreshedCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+  border: 1px solid var(--ifm-color-emphasis-200);
+  border-radius: 10px;
+  background: var(--ifm-background-surface-color);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s, transform 0.15s;
+}
+
+.recentlyRefreshedCard:hover {
+  border-color: var(--ifm-color-primary);
+  text-decoration: none;
+  color: inherit;
+  transform: translateY(-2px);
+}
+
+.recentlyRefreshedHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.recentlyRefreshedTimestamp {
+  font-size: 0.75rem;
+  color: var(--ifm-color-emphasis-600);
+}
+
+.recentlyRefreshedTitle {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin: 0;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.recentlyRefreshedFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--ifm-color-emphasis-600);
+  margin-top: auto;
+}
+
+.recentlyRefreshedPublisher {
+  font-weight: 500;
 }
 
 /* ── Category grid (front page) ───────────────────────────────────────── */
