@@ -37,7 +37,7 @@
     "@docusaurus/tsconfig": "3.10.1",
     "@docusaurus/types": "3.10.1",
     "@types/js-yaml": "^4.0.9",
-    "js-yaml": "^4.1.0",
+    "js-yaml": "^4.3.0",
     "typescript": "~5.6.2"
   },
   "engines": {
