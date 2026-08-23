@@ -4,7 +4,7 @@
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Active
+## Status: Active — phases 1–3 shipped; awaiting tester verdict on phase 4
 
 **Goal**: Complete Atlas's side of the Dagster integration — the last un-orchestrated ingest source, the dbt half of the asset graph, schedules — and declare it for independent verification by the fleet tester.
 
@@ -181,14 +181,51 @@ Per `~/home/ai-developer/platform-conformance.md` C11, Atlas does **not** self-c
 
 ### Tasks
 
-- [ ] 4.1 Push a `main`-merge so CI builds a fresh `ghcr.io/terchris/atlas-data` tag containing all of the above; record the exact tag.
-- [ ] 4.2 Write `ai-developer/for-ops-atlas-testable.md` in `~/home`: scope, exact deploy steps (`./uis deploy dagster` + the code-location registration with the recorded tag), the `ATLAS_DATABASE_URL` secret requirement, and explicit PASS criteria.
-- [ ] 4.3 PASS criteria to state: code location loads and shows 41 raw assets + the dbt assets; no `private`-tagged assets present; a nominated raw asset materialises end-to-end into `marts.*` and `api_v1.*`; `raw/frr` materialises 0 rows without failing; schedules visible to the daemon.
+- [x] 4.1 Push a `main`-merge so CI builds a fresh `ghcr.io/terchris/atlas-data` tag containing all of the above; record the exact tag.
+- [x] 4.2 Write `ai-developer/for-ops-atlas-testable.md` in `~/home`: scope, exact deploy steps (`./uis deploy dagster` + the code-location registration with the recorded tag), the `ATLAS_DATABASE_URL` secret requirement, and explicit PASS criteria.
+- [x] 4.3 PASS criteria to state: code location loads and shows 41 raw assets + the dbt assets; no `private`-tagged assets present; a nominated raw asset materialises end-to-end into `marts.*` and `api_v1.*`; `raw/frr` materialises 0 rows without failing; schedules visible to the daemon.
 - [ ] 4.4 Fix whatever the tester reports, on Atlas's side, and re-declare. Do not argue with a FAIL — re-declare after fixing.
 
 ### Validation
 
 A PASS report routed back through ops.
+
+### Outcome (2026-08-23) — declared, awaiting the tester
+
+Phases 1–3 merged as **PR #151** (squash `0564f20`). CI published
+**`ghcr.io/terchris/atlas-data:v20260823-0564f20`**
+(`sha256:ac903ccf690e3be8b5f186b4d4c1de0f20f964243b45b15d664c914af1a37e2c`),
+and the declaration is at `~/home/ai-developer/for-ops-atlas-testable.md`.
+
+**The image build passed on its first CI run** — the one check that mattered, since
+the Dockerfile changes (`dbt deps`, `dbt parse`, copying `api_v1_generated.sql`)
+could not be verified locally for want of a Docker daemon.
+
+Two CI failures on the way, both docs-side and both mine: a relative link in this
+plan that escaped the docs tree (Docusaurus rejects it — the repo's convention for
+cross-tree refs is a GitHub URL), and `check-catalog` drift because the generator
+restamps `generated_at`, so any PR touching `atlas-data/ingest/src/sources/**`
+trips it. Fixed, and the docs build is now run locally before pushing rather than
+discovered in CI.
+
+**PASS criteria are tiered**, because of one thing the platform docs don't answer:
+the documented `code_locations` schema is `{name, image, tag, module, why}` with no
+env or secret field, so **how `ATLAS_DATABASE_URL` reaches the code-location and
+run pods is unresolved** — either a mechanism not yet written down or a real gap in
+the service. Tier 1 (7 criteria) needs no database at all, since `definitions.py`
+opens no connections at import, so it is worth running either way; tier 2 (5
+criteria) covers materialisations. Three criteria are deliberately sharp:
+
+- **No `private_marts/*` asset may appear** — its presence is a FAIL, meaning the tag exclusion didn't survive into the image.
+- **All 4 schedules must be STOPPED** — a RUNNING schedule is a FAIL; go-live is Terje's decision, not a deploy side effect.
+- **`raw/frr` must SUCCEED WITH ZERO ROWS** — a *failed* frr is a FAIL, a successful empty one is the expected result. That inversion is the whole point of phase 1.
+
+The declaration also lists four known-not-broken items so they aren't filed as
+defects, and flags that the platform's 4-slot concurrency cap has never been
+exercised — `annual_sources_refresh` fans out to 37 assets at once.
+
+**Task 4.4 (fix findings, re-declare) stays open** — this plan is not complete until
+a PASS comes back. Atlas does not self-certify.
 
 ---
 
