@@ -30,7 +30,7 @@ Atlas's side is most of the way there — 40 of 41 ingest sources are Pipes-enab
 
 ### The `frr` contract is already decided — don't re-litigate it
 
-[`models/private_marts/sources.yml`](../../../../atlas-data/dbt/models/private_marts/sources.yml) states it plainly:
+[`models/private_marts/sources.yml`](https://github.com/terchris/atlas/blob/main/atlas-data/dbt/models/private_marts/sources.yml) states it plainly:
 
 > On public deployments the table exists but is empty (no NGO data present); `private_marts.frr_*` models materialize as empty tables (option a).
 
