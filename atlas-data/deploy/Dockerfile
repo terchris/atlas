@@ -86,6 +86,30 @@ RUN cd /app/dbt \
        dbt parse \
     && test -f target/manifest.json
 
+# --- Where the non-Python payloads live --------------------------------------
+# This package is pip-installed into site-packages, but the dbt project and the
+# ingest are at /app. Nothing about the installed location implies where they
+# are, so say it explicitly. Deriving these by walking up from __file__ is what
+# crash-looped the code-location pod in test round 1 (it resolved
+# /usr/local/lib/python3.11/dbt). See atlas_data/paths.py.
+ENV ATLAS_DBT_PROJECT_DIR=/app/dbt
+ENV ATLAS_INGEST_DIR=/app/ingest
+
+# --- Build-time smoke test ---------------------------------------------------
+# Import the code location exactly as the pod does, and from `/` rather than
+# /app so the run cannot accidentally depend on the working directory — the
+# precise condition that hid the path bug from every local check.
+#
+# This is the gate that turns "CrashLoopBackOff discovered by the cluster
+# tester" into "the CI build goes red". Round 1 failed in-cluster on an error
+# that a single import would have caught.
+RUN cd / && python -c "\
+from atlas_data.definitions import defs; \
+import atlas_data; \
+n = len(defs.resolve_asset_graph().get_all_asset_keys()); \
+print(f'smoke: imported {atlas_data.__file__} -> {n} assets'); \
+assert n > 100, f'expected >100 assets, got {n}'"
+
 # --- Dagster gRPC server -----------------------------------------------------
 # Port 4000 matches the UIS Dagster doc's expected user-deployments port.
 # `--host 0.0.0.0` so Dagster's webserver/daemon (in a different pod) can reach.

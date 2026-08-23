@@ -4,7 +4,7 @@
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Active — phases 1–3 shipped; awaiting tester verdict on phase 4
+## Status: Active — round 1 FAILED (packaging defect, fixed); re-declared for round 2
 
 **Goal**: Complete Atlas's side of the Dagster integration — the last un-orchestrated ingest source, the dbt half of the asset graph, schedules — and declare it for independent verification by the fleet tester.
 
@@ -226,6 +226,54 @@ exercised — `annual_sources_refresh` fans out to 37 assets at once.
 
 **Task 4.4 (fix findings, re-declare) stays open** — this plan is not complete until
 a PASS comes back. Atlas does not self-certify.
+
+### Round 1 verdict: FAIL — and it was the defect I predicted
+
+`~/home/ai-developer/for-ops-test-atlas.md`. Tier 1 criteria 1 and 7 failed; tier 2
+blocked. The code-location pod CrashLoopBackOffed 11 times on
+`FileNotFoundError: dbt manifest not found at /usr/local/lib/python3.11/dbt/target/manifest.json`.
+
+**Root cause — where the code is installed tells you nothing about where the data
+lives.** The image ships `atlas_data` twice: as source at `/app/dagster/atlas_data/`
+and pip-installed into site-packages. Python imports the site-packages copy, while
+the dbt project and the ingest are at `/app/dbt` and `/app/ingest`. Both
+`dbt.py` and `_factory.py` derived those by walking a fixed four parents up from
+`__file__` — correct for the source tree, and landing in
+`/usr/local/lib/python3.11` for the installed copy. Every local check passed
+because every local check ran from the source tree.
+
+**The tester found one instance; the same bug was in two places.** `_INGEST_DIR`
+in `_factory.py` had it too and would have failed *every* ingest materialisation
+in tier 2 — round 2 would have failed on criterion 8 for the same reason. Fixed
+both.
+
+**Fix**: `atlas_data/paths.py` resolves each payload by (1) `ATLAS_DBT_PROJECT_DIR`
+/ `ATLAS_INGEST_DIR`, set explicitly by the Dockerfile; (2) walking up for a
+sentinel file (`dbt_project.yml`, `package.json`) so a source checkout works at any
+depth with no configuration; (3) raising an error that names the env var and lists
+what was searched. No positional parent counting anywhere.
+
+**The more important fix — CI now reproduces this class of failure.** The
+Dockerfile runs a build-time smoke test that imports `atlas_data.definitions` from
+`/` (not `/app`, so nothing can lean on the working directory) and asserts the
+asset count. Round 1 shipped an image whose *only* real defect a single import
+would have caught. That import now runs in CI, and the build goes red instead of
+the cluster.
+
+**Reproduced before fixing, per the phase 1 habit**: a non-editable install into a
+throwaway venv, imported with `cwd=/`, fails exactly as the pod did; with the two
+env vars set it imports from site-packages and resolves 112 assets. The source
+checkout still resolves with no env vars at all.
+
+**Also from the report, resolving my open question**: `env_secrets:` *is* supported
+by the `code_locations` schema (documented at `/docs/services/analytics/dagster`)
+and reaches both pod types. Not a service gap — my declaration was wrong to imply
+one. The re-declaration includes `env_secrets: [atlas-database-url]`.
+
+**Free intelligence from round 1**: the tester verified criteria 2–6 by static
+introspection with a `PYTHONPATH` workaround — 112 assets, `raw/frr` present, **zero
+`private_marts`**, 4 STOPPED schedules, 645 checks. The graph is exactly as declared,
+so round 2 should not surprise on shape.
 
 ---
 

@@ -32,6 +32,7 @@ import os
 import sys
 from pathlib import Path
 
+from atlas_data.paths import dbt_project_dir
 from dagster import AssetExecutionContext, AssetKey, asset
 from dagster_dbt import (
     DagsterDbtTranslator,
@@ -40,14 +41,12 @@ from dagster_dbt import (
     dbt_assets,
 )
 
-# Path resolution only — no I/O at module scope beyond the manifest load that
-# dagster-dbt requires. Mirrors _factory.py's up-4 walk so one code path serves
-# both the local checkout and /app inside the polyglot image.
-#   local: <repo>/atlas-data/dagster/atlas_data/assets/dbt.py → up 4 → atlas-data
-#   image: /app/dagster/atlas_data/assets/dbt.py              → up 4 → /app
-_HERE = Path(__file__).resolve()
-_ATLAS_DATA_DIR = _HERE.parent.parent.parent.parent
-DBT_PROJECT_DIR = (_ATLAS_DATA_DIR / "dbt").resolve()
+# Resolved via atlas_data.paths, NOT by counting parents up from __file__.
+# The image pip-installs this package into site-packages while the dbt project
+# lives at /app/dbt; the old positional walk resolved to
+# /usr/local/lib/python3.11/dbt and crash-looped the code-location pod. See
+# paths.py.
+DBT_PROJECT_DIR = dbt_project_dir()
 DBT_MANIFEST_PATH = DBT_PROJECT_DIR / "target" / "manifest.json"
 
 # dbt sources whose producing ingest asset has a different key than the
