@@ -135,14 +135,43 @@ New modules: `atlas_data/assets/dbt.py` (dbt half) and `atlas_data/assets/api_v1
 
 ### Tasks
 
-- [ ] 3.1 Declare `@schedule`s per source family, cadence matched to each upstream's real `periodicity` from its `manifest.yml` — not one blanket nightly. SSB/FHI tables that publish annually don't need a daily fetch, and hammering them daily is bad citizenship toward the public sources Atlas depends on.
-- [ ] 3.2 A downstream schedule (or asset sensor) for the dbt + api_v1 assets so a raw refresh propagates without a human.
-- [ ] 3.3 **No in-code concurrency limits** — the cap of 4 lives in the UIS chart values (see Problem Summary). Add a comment saying so, so a future contributor doesn't "helpfully" add one.
-- [ ] 3.4 Verify schedules appear in `dagster dev` with correct next-tick times, without turning them on.
+- [x] 3.1 Declare `@schedule`s per source family, cadence matched to each upstream's real `periodicity` from its `manifest.yml` — not one blanket nightly. SSB/FHI tables that publish annually don't need a daily fetch, and hammering them daily is bad citizenship toward the public sources Atlas depends on.
+- [x] 3.2 A downstream schedule (or asset sensor) for the dbt + api_v1 assets so a raw refresh propagates without a human.
+- [x] 3.3 **No in-code concurrency limits** — the cap of 4 lives in the UIS chart values (see Problem Summary). Add a comment saying so, so a future contributor doesn't "helpfully" add one.
+- [x] 3.4 Verify schedules appear in `dagster dev` with correct next-tick times, without turning them on.
 
 ### Validation
 
 Schedules are visible and correctly parameterised locally. Nothing is self-certified as working in a cluster — that is Phase 4's job.
+
+### Outcome (2026-08-23) — complete
+
+`atlas_data/schedules.py`. Cadence taken from the manifests, which declare **37 × P1Y and 4 × irregular** across the 41 sources:
+
+| Schedule | Cron (Europe/Oslo) | Scope | Why |
+|---|---|---|---|
+| `annual_sources_weekly` | `0 2 * * 0` | 37 annual sources | Weekly, not annual: publication dates drift by weeks and nobody wants to find a release eleven months late. ~37 requests/week is nothing to SSB/FHI, and the ingests upsert so a poll that finds nothing is a no-op. Nightly would be ~15,000 pointless requests a year at public-sector APIs Atlas needs to stay welcome at. |
+| `klass_monthly` | `0 1 1 * *` | 2 SSB Klass sources | Classifications change at year boundaries. Kept off the weekly wave because they feed `dim_kommune`, which most marts join to — a bad Klass refresh has a wide blast radius and should be attributable. |
+| `redcross_branches_weekly` | `30 3 * * 0` | 1 scraper | Heaviest asset (~512MiB headless browser) and it scrapes someone else's site. Offset from the annual wave so it isn't competing for the 4 run-pod slots with 37 API fetches. |
+| `transform_daily` | `0 5 * * *` | dbt + `api_v1` | Daily despite weekly sources: this run is also the in-pipeline data-quality gate (644 dbt tests as asset checks) and the step that republishes `api_v1` and reloads PostgREST's schema cache. A daily green run is the signal the public API still serves what it should. |
+
+**`frr` is deliberately unscheduled** — it would materialise zero rows on a timer forever in the cluster. Verified absent from every job.
+
+**No in-code concurrency limits**, per the maintainer's push-back; the cap of 4 is chart-side. `schedules.py` says so at the top so nobody "helpfully" adds one.
+
+All four ship **STOPPED** (Dagster's default) — verified. Turning them on is Terje's go-live decision, not a side effect of deploying the code location.
+
+**Verified by execution**: `transform_and_publish` run end-to-end — `dbt build` 821 PASS / 1 WARN / **0 ERROR**, api_v1 re-applied 13 views, `rowcount_matches_marts` check passed, `RUN_SUCCESS`. Job scopes confirmed: 37 + 2 + 1 raw assets, 65 transform assets.
+
+### Two more defects found — one mine, one the repo's
+
+1. **Mine: `api_v1` was depending on 13 phantom assets.** I built its dep keys as `AssetKey([node["name"]])`, but dbt models inherit a key prefix from their configured schema — the real key is `marts/mart_activity_catalog`. The graph reported 125 assets and looked wired; `api_v1` was downstream of *nothing*. Now derived through the shared `dbt_translator()`, and the count drops to the honest **112**. Caught only by inspecting the job's asset keys rather than trusting the earlier green run — a green run proved nothing here, because phantom deps have no producer and so never fail.
+
+2. **The repo's: `dbt build` cannot contain `api_v1_rowcount_matches_marts`.** `dbt run` rebuilds `marts.mart_*` by swapping in a new table and dropping the old one `CASCADE` — which destroys the dependent `api_v1.*` views. That is normal and is exactly why the api_v1 asset re-applies them downstream. But that test hardcodes `api_v1.<view>` instead of using `ref()`, so dbt infers no dependencies and schedules it early (position 20 of 823) — against views the same invocation is busy destroying. In a one-shot `dbt build` it is a coin flip on ordering; **on a schedule it would fail every single night**.
+
+   Fixed by excluding it from the orchestrated build and re-homing its intent as a Dagster **asset check on `api_v1`**, which runs after the views are re-applied — the only point where the comparison means anything. The check also enumerates `api_v1` from the catalog instead of the dbt version's hand-maintained `union all` per view, whose own header admits the drift risk ("when adding a new mart_<name> view ... add a corresponding union all line below"). A missing `marts.mart_<view>` is reported as a finding rather than skipped.
+
+   **Follow-up**: `tests/api_v1_rowcount_matches_marts.sql` is now redundant and misordered. Left in place (standalone `dbt build` after `apply-api-v1.sh` still passes) rather than deleted mid-phase — retiring it belongs in its own PR.
 
 ---
 

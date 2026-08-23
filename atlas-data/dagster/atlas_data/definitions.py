@@ -33,6 +33,7 @@ from dagster import Definitions
 from atlas_data.assets import api_v1, raw_fhi, raw_other, raw_ssb
 from atlas_data.assets._factory import pipes_subprocess_client
 from atlas_data.assets.dbt import atlas_dbt_models, dbt_cli_resource
+from atlas_data.schedules import jobs, schedules
 
 defs = Definitions(
     assets=[
@@ -45,6 +46,11 @@ defs = Definitions(
         # api_v1.* — the public PostgREST surface. Terminal asset.
         api_v1.api_v1_surface,
     ],
+    asset_checks=[api_v1.api_v1_rowcount_matches_marts],
+    jobs=jobs,
+    # Cadence comes from each source's declared periodicity — see schedules.py.
+    # They ship stopped; turning them on is a go-live decision.
+    schedules=schedules,
     resources={
         "pipes_subprocess_client": pipes_subprocess_client(),
         "dbt": dbt_cli_resource(),

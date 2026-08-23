@@ -128,14 +128,42 @@ def _require_manifest() -> Path:
     return DBT_MANIFEST_PATH
 
 
+def dbt_translator() -> AtlasDbtTranslator:
+    """
+    The single translator instance shared by @dbt_assets and anything that needs
+    to derive a dbt asset key (see assets/api_v1.py). Deriving keys any other
+    way drifts the moment a model's schema config changes.
+    """
+    return AtlasDbtTranslator(settings=_TRANSLATOR_SETTINGS)
+
+
+# `dbt run` rebuilds marts.mart_* by swapping in a new table and dropping the
+# old one CASCADE — which takes the api_v1.* views that depend on it with it.
+# That is normal, and it is exactly why the api_v1 asset re-applies the wrappers
+# downstream of dbt.
+#
+# But tests/api_v1_rowcount_matches_marts.sql hardcodes `api_v1.<view>` instead
+# of using ref(), so dbt infers no dependencies for it and schedules it early —
+# against views the same invocation is in the middle of destroying. Inside a
+# one-shot `dbt build` it is a coin flip; on a schedule it fails every time.
+#
+# So it is excluded here and its intent is enforced instead as a Dagster asset
+# check on api_v1, which runs after the views are re-applied — the only point at
+# which the comparison is meaningful. See assets/api_v1.py.
+_MISORDERED_TESTS = ["api_v1_rowcount_matches_marts"]
+
+
 @dbt_assets(
     manifest=_require_manifest(),
-    dagster_dbt_translator=AtlasDbtTranslator(settings=_TRANSLATOR_SETTINGS),
+    dagster_dbt_translator=dbt_translator(),
     exclude=DBT_EXCLUDE,
 )
 def atlas_dbt_models(context: AssetExecutionContext, dbt: DbtCliResource):
     """Every dbt model in the Atlas project, as Dagster assets."""
-    yield from dbt.cli(["build"], context=context).stream()
+    args = ["build"]
+    for test in _MISORDERED_TESTS:
+        args += ["--exclude", test]
+    yield from dbt.cli(args, context=context).stream()
 
 
 def dbt_cli_resource() -> DbtCliResource:

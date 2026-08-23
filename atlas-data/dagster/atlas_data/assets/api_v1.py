@@ -24,31 +24,51 @@ import json
 import os
 from pathlib import Path
 
-from dagster import AssetExecutionContext, AssetKey, MaterializeResult, asset
+from dagster import (
+    AssetCheckResult,
+    AssetCheckSeverity,
+    AssetExecutionContext,
+    AssetKey,
+    MaterializeResult,
+    asset,
+    asset_check,
+)
 
-from atlas_data.assets.dbt import DBT_MANIFEST_PATH, DBT_PROJECT_DIR
+from atlas_data.assets.dbt import (
+    DBT_MANIFEST_PATH,
+    DBT_PROJECT_DIR,
+    dbt_translator,
+)
 
 API_V1_SQL_PATH = DBT_PROJECT_DIR / "api_v1_generated.sql"
 
 
-def _api_model_asset_keys() -> list[AssetKey]:
+def _api_model_asset_keys() -> "list[AssetKey]":
     """
     The marts this surface wraps, read from the baked dbt manifest.
 
     Derived rather than hardcoded: the api surface has already grown from 9
     wrappers to 13, and a hand-maintained list here would be one more thing to
     forget when the 14th lands.
+
+    ⚠️ Keys come from the dbt translator, NOT from `AssetKey([node["name"]])`.
+    dbt models inherit a key prefix from their configured schema, so the real
+    key is `marts/mart_activity_catalog`, not `mart_activity_catalog`. Building
+    them by hand silently produced 13 phantom upstream assets that nothing
+    materialised — api_v1 looked wired and was not actually downstream of
+    anything. Ask the translator; it is the same one @dbt_assets uses.
     """
     if not DBT_MANIFEST_PATH.exists():
         return []
     manifest = json.loads(DBT_MANIFEST_PATH.read_text())
-    keys: list[AssetKey] = []
+    translator = dbt_translator()
+    keys = []
     for node in manifest.get("nodes", {}).values():
         if node.get("resource_type") != "model":
             continue
         path = node.get("original_file_path", "").replace("\\", "/")
         if path.startswith("models/marts/api/"):
-            keys.append(AssetKey([node["name"]]))
+            keys.append(translator.get_asset_key(node))
     return sorted(keys, key=lambda k: k.to_user_string())
 
 
@@ -96,4 +116,80 @@ def api_v1_surface(context: AssetExecutionContext) -> MaterializeResult:
             "views": view_count,
             "sql_file": str(API_V1_SQL_PATH),
         }
+    )
+
+
+@asset_check(
+    asset=api_v1_surface,
+    name="rowcount_matches_marts",
+    description=(
+        "Every api_v1.<view> returns the same row count as its underlying "
+        "marts.mart_<view>. Catches generator bugs — a wrong source relation, a "
+        "stray WHERE, a projection that drops rows — and permission-related "
+        "silent filtering."
+    ),
+)
+def api_v1_rowcount_matches_marts():
+    """
+    The Dagster-side home of dbt's tests/api_v1_rowcount_matches_marts.sql.
+
+    Two reasons it lives here rather than in dbt:
+
+    1. **Ordering.** The dbt test hardcodes `api_v1.<view>` rather than using
+       ref(), so dbt infers no dependencies and runs it early — while the same
+       `dbt build` is dropping and recreating the marts tables those views
+       depend on. As an asset check on api_v1 it runs after the views have been
+       re-applied, which is the only moment the comparison means anything.
+    2. **Drift.** The dbt version is a hand-maintained `union all` per view and
+       its own header admits it: "when adding a new mart_<name> view ... add a
+       corresponding union all line below". This version enumerates api_v1 from
+       the catalog, so a new wrapper is covered the moment it exists.
+    """
+    import psycopg2
+
+    database_url = os.environ.get("ATLAS_DATABASE_URL") or os.environ.get(
+        "DATABASE_URL"
+    )
+    if not database_url:
+        raise RuntimeError(
+            "ATLAS_DATABASE_URL (or DATABASE_URL) must be set to check the "
+            "api_v1 surface."
+        )
+
+    mismatches = []
+    checked = 0
+    with psycopg2.connect(database_url) as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "select table_name from information_schema.views "
+                "where table_schema = 'api_v1' order by table_name"
+            )
+            views = [r[0] for r in cur.fetchall()]
+            for view in views:
+                # The generator's naming rule: api_v1.<name> wraps
+                # marts.mart_<name>. A view whose mart is missing is itself a
+                # finding, not something to skip past.
+                cur.execute(
+                    "select to_regclass(%s) is not null", (f"marts.mart_{view}",)
+                )
+                if not cur.fetchone()[0]:
+                    mismatches.append(f"{view}: marts.mart_{view} does not exist")
+                    continue
+                cur.execute(f'select count(*) from api_v1."{view}"')
+                api_count = cur.fetchone()[0]
+                cur.execute(f'select count(*) from marts."mart_{view}"')
+                mart_count = cur.fetchone()[0]
+                checked += 1
+                if api_count != mart_count:
+                    mismatches.append(
+                        f"{view}: api_v1={api_count} vs marts={mart_count}"
+                    )
+
+    return AssetCheckResult(
+        passed=not mismatches,
+        severity=AssetCheckSeverity.ERROR,
+        metadata={
+            "views_checked": checked,
+            "mismatches": ", ".join(mismatches) if mismatches else "none",
+        },
     )
