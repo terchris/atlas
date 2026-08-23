@@ -30,13 +30,15 @@ Cross-references:
 
 from dagster import Definitions
 
-from atlas_data.assets import api_v1, raw_fhi, raw_other, raw_ssb
+from atlas_data.assets import api_v1, migrations, raw_fhi, raw_other, raw_ssb
 from atlas_data.assets._factory import pipes_subprocess_client
 from atlas_data.assets.dbt import atlas_dbt_models, dbt_cli_resource
 from atlas_data.schedules import jobs, schedules
 
 defs = Definitions(
     assets=[
+        # raw.* schema DDL — the root of the graph.
+        migrations.raw_migrations,
         # raw.* — one asset per ingest source, via Dagster Pipes.
         *raw_ssb.assets,
         *raw_fhi.assets,

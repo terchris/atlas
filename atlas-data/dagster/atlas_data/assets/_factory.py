@@ -25,8 +25,10 @@ import os
 from pathlib import Path
 from typing import Iterable
 
+from atlas_data.assets.migrations import MIGRATIONS_ASSET_KEY
 from atlas_data.paths import ingest_dir
 from dagster import (
+    AssetKey,
     AssetsDefinition,
     MaterializeResult,
     PipesSubprocessClient,
@@ -63,6 +65,11 @@ def make_raw_ingest_asset(
         key_prefix=["raw"],
         group_name=group_name,
         description=description or auto_description,
+        # The raw.* tables this writes into are created by the migrations asset.
+        # Declared as lineage so the graph shows why an ingest into a fresh
+        # database fails; it does not make a single-asset materialisation run
+        # migrations behind your back.
+        deps=[AssetKey(MIGRATIONS_ASSET_KEY)],
     )
     def _ingest_asset(
         context,

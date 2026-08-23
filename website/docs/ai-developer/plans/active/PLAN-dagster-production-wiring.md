@@ -4,7 +4,7 @@
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Active — round 1 FAILED (packaging defect, fixed); re-declared for round 2
+## Status: Active — rounds 1 and 2 FAILED (all defects fixed); re-declared for round 3
 
 **Goal**: Complete Atlas's side of the Dagster integration — the last un-orchestrated ingest source, the dbt half of the asset graph, schedules — and declare it for independent verification by the fleet tester.
 
@@ -291,3 +291,92 @@ so round 2 should not surprise on shape.
 - Deploying or operating Dagster (UIS owns the service).
 - Editing UIS Helm values — that is the cross-repo handshake, co-ordinated at registration time.
 - Turning schedules on in production (needs the PASS first, and Terje's call on go-live).
+
+
+---
+
+## Round 2 verdict: Tier 1 ALL PASS in-cluster; Tier 2 blocked by two new defects
+
+`~/home/ai-developer/for-ops-test-atlas.md` (round 2). The round-1 path fix is
+confirmed at the root — the tester checked **both** halves from inside the running
+pod (`_INGEST_DIR=/app/ingest`, `DBT_PROJECT_DIR=/app/dbt`, manifest present) and
+noted that fixing only `dbt.py` would have failed criterion 8 anyway. All seven
+Tier 1 criteria pass in-cluster, queried through the webserver's GraphQL rather
+than by static introspection: 112 assets, `raw/frr` present, **zero
+`private_marts`**, 4 schedules STOPPED per the daemon's own state, pod `1/1` with
+**0 restarts**.
+
+Tier 2 was blocked by two defects, neither of them reachable in round 1.
+
+### Blocker 1 — `dagster-postgres` missing from the image
+
+The run pod died in ~5 seconds having executed **zero** steps:
+
+```
+CheckError: Couldn't import module dagster_postgres.run_storage when attempting
+to load the configurable class dagster_postgres.run_storage.PostgresRunStorage
+```
+
+Run pods run **Atlas's** image, and the platform's Dagster instance uses Postgres
+storage, so the pod must hydrate `PostgresRunStorage` before any step runs. Fixed
+by adding `dagster-postgres~=0.29` to the deploy extra — resolves to **0.29.19**,
+the same version the platform image carries.
+
+The tester was explicit that this is *shared*: `dagster-postgres` appears nowhere
+in the service contract's "requirements on your image", which lists four things
+Atlas already satisfied. The immediate fix is Atlas's; the contract gap is filed
+with assist.
+
+### Blocker 2 — every npm script needed a `.env` the image does not ship
+
+Entirely Atlas's, and it would have failed criterion 8 even with blocker 1 fixed:
+
+```
+$ npm run ingest:ssb-klass-kommuner
+node: .env: not found
+```
+
+All 45 scripts used `tsx --env-file=.env`, and Node treats a missing `--env-file`
+as fatal. Pipes passes `DATABASE_URL` through the environment — the right
+mechanism — so the `.env` wrapper is a local-dev convenience that does not survive
+containerisation. Switched to **`--env-file-if-exists=.env`**, which keeps local dev
+identical and no-ops in the container. Verified both ways locally: with `.env`
+present (unchanged) and absent with `DATABASE_URL` in the environment (works).
+
+### The gap the tester asked about: nothing ran the migrations
+
+The first in-cluster ingest died on `relation "raw.ingest_runs" does not exist`,
+and the tester asked, fairly, **who runs `migrate` and when**. The honest answer
+was "a human, at some point" — the graph started at the ingests and assumed the
+tables existed.
+
+Now `raw/_migrations` is an asset, upstream of all 41 ingest assets and included in
+every ingest job's selection. That puts the dependency in the graph rather than in
+a runbook step, and makes "can this pipeline build a database from nothing?" a
+question the graph can answer. It is lineage, not automatic execution — a
+single-asset materialisation will not silently migrate behind you — and the runner
+is idempotent, so a scheduled run costs a no-op. **113 assets** now.
+
+**Verified against a genuinely empty database**: `klass_refresh` executed
+end-to-end on a fresh `atlas_fresh` DB — migrations applied, then 1327 + 41 rows
+ingested, `RUN_SUCCESS`.
+
+### All three failure modes now fail in CI instead of in the cluster
+
+The round-1 lesson repeated, so the build catches what local checks structurally
+cannot. The Dockerfile now asserts, at build time:
+
+1. `atlas_data.definitions` imports from `/` with >100 assets — the round-1 bug.
+2. `from dagster_postgres.run_storage import PostgresRunStorage` — exactly what the run pod does. Blocker 1.
+3. `node --env-file-if-exists` is accepted **and** no script still uses the fatal `--env-file=` form. Blocker 2.
+
+Three rounds, three classes of defect that only appeared when the image ran; all
+three are now build-time gates.
+
+### Free intelligence: the ingest payloads are already proven in-cluster
+
+The tester ran criteria 8 and 9's payloads directly, bypassing the blockers:
+`ssb-klass-kommuner` wrote **1327 rows** (matching local), and `frr` logged
+`frr.private_data_root_absent`, `rows: 0`, success — the exact inverted criterion
+from phase 1, confirmed in a real cluster. The orchestration wrapper was broken;
+the ingest code was not.

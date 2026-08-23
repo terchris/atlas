@@ -110,6 +110,24 @@ n = len(defs.resolve_asset_graph().get_all_asset_keys()); \
 print(f'smoke: imported {atlas_data.__file__} -> {n} assets'); \
 assert n > 100, f'expected >100 assets, got {n}'"
 
+# Run pods run THIS image and must hydrate the platform's run storage before
+# executing any step. dagster_postgres is not part of the documented image
+# contract, so nothing else would catch its absence — in round 2 the run pod
+# died in 5s having executed zero steps. Import it exactly as the run pod does.
+RUN cd / && python -c "\
+from dagster_postgres.run_storage import PostgresRunStorage; \
+import dagster_postgres; \
+print(f'smoke: dagster_postgres {dagster_postgres.__version__} run storage importable')"
+
+# Every npm script is invoked by a Pipes subprocess in a container with no .env
+# file. `--env-file` is fatal on a missing file; `--env-file-if-exists` is not.
+# Assert BOTH that this Node build knows the flag and that no script still uses
+# the fatal form — round 2 died on `node: .env: not found`.
+RUN cd /app/ingest \
+    && node --env-file-if-exists=.env -e "process.exit(0)" \
+    && ! grep -q -- "--env-file=" package.json \
+    && echo "smoke: npm scripts safe without a .env file"
+
 # --- Dagster gRPC server -----------------------------------------------------
 # Port 4000 matches the UIS Dagster doc's expected user-deployments port.
 # `--host 0.0.0.0` so Dagster's webserver/daemon (in a different pod) can reach.
