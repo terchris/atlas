@@ -52,14 +52,33 @@ Bring `frr` to parity with the other 40, and make it safe to run where the priva
 
 ### Tasks
 
-- [ ] 1.1 Add `"ingest:frr": "tsx --env-file=.env src/sources/frr/index.ts"` to `atlas-data/ingest/package.json`, in alphabetical position (between `fhi-vgs-gjennomforing` and `redcross-branches`).
-- [ ] 1.2 Guard `discoverNgoFolders()` in `atlas-data/ingest/src/sources/frr/index.ts`: a missing `PRIVATE_DATA_ROOT` returns `[]` rather than throwing `ENOENT`. Log it at `info` with the resolved path so an operator can tell "no private data mounted" from "private data mounted but empty" — those look identical in the row count otherwise.
-- [ ] 1.3 Add `"frr"` to `OTHER_SOURCES` in `atlas-data/dagster/atlas_data/assets/raw_other.py`, with a module-docstring note that it materialises **0 rows on public deployments by design** (cite the `sources.yml` contract) so a future reader doesn't file the empty asset as a bug.
-- [ ] 1.4 Verify locally, both paths: `npm run ingest:frr` with the private repo present (rows > 0) and with `PRIVATE_DATA_ROOT` temporarily renamed (exits 0, 0 rows).
+- [x] 1.1 Add `"ingest:frr": "tsx --env-file=.env src/sources/frr/index.ts"` to `atlas-data/ingest/package.json`, in alphabetical position (between `fhi-vgs-gjennomforing` and `redcross-branches`).
+- [x] 1.2 Guard `discoverNgoFolders()` in `atlas-data/ingest/src/sources/frr/index.ts`: a missing `PRIVATE_DATA_ROOT` returns `[]` rather than throwing `ENOENT`. Log it at `info` with the resolved path so an operator can tell "no private data mounted" from "private data mounted but empty" — those look identical in the row count otherwise.
+- [x] 1.3 Add `"frr"` to `OTHER_SOURCES` in `atlas-data/dagster/atlas_data/assets/raw_other.py`, with a module-docstring note that it materialises **0 rows on public deployments by design** (cite the `sources.yml` contract) so a future reader doesn't file the empty asset as a bug.
+- [x] 1.4 Verify locally, both paths: `npm run ingest:frr` with the private repo present (rows > 0) and with `PRIVATE_DATA_ROOT` temporarily renamed (exits 0, 0 rows).
 
 ### Validation
 
 `dagster dev` shows 41 raw assets. `raw/frr` materialises successfully in both states. No regression in the other 40.
+
+### Outcome (2026-08-23) — complete
+
+Verified against a real Postgres (throwaway instance, all 49 migrations applied), not by inspection:
+
+| Check | Result |
+|---|---|
+| Pre-fix behaviour, private root absent | **Reproduced the defect**: `frr.fatal … ENOENT: no such file or directory, scandir '…/atlas-private-data-repo'` |
+| Post-fix, private root present | 5 rows upserted to `private_raw.frr_resources`, exit 0 |
+| Post-fix, private root absent (the cluster case) | `frr.private_data_root_absent` logged, 0 rows, **exit 0** |
+| Dagster asset graph | 41 raw assets, `raw/frr` present, `definitions.py` import 0.34s (well inside the <2s discipline) |
+| `npm test` | 99 passed / 9 files, including 6 new `discover.test.ts` cases |
+| `npm run typecheck` | No new errors (see known issue below) |
+
+`discoverNgoFolders` was **extracted to `src/sources/frr/discover.ts`** because `index.ts` invokes `run()` at module scope, so nothing in it can be imported by a test. The extraction is what lets the ENOENT guard be covered by CI (C11 tier 1) rather than trusted. Non-ENOENT errors (e.g. `EACCES`) still throw — reading a permissions failure as "no NGO data" would silently empty `private_raw.frr_resources`, which is the dangerous failure mode.
+
+**Known issue, pre-existing, not introduced here**: `npm run typecheck` reports two errors in `src/sources/validate-manifests.ts` (ajv / ajv-formats ESM-CJS call signatures). Confirmed present on a clean tree with the changes stashed. Left alone as out of scope — worth its own fix so the gate is trustworthy again.
+
+**Environment note**: the Python side was not installed on tecMacDev at all (no `uv`, no venv). Installed `uv` and created `atlas-data/dagster/.venv` per `contributors/setup.md`. Also note `npm test` requires Node ≥22 — vitest 4's rolldown needs `styleText` from `node:util`, which Node 20.11 (the machine default) lacks, so it fails at startup there.
 
 ---
 

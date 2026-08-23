@@ -43,6 +43,7 @@
     "ingest:fhi-smertestillende": "tsx --env-file=.env src/sources/fhi-smertestillende/index.ts",
     "ingest:fhi-trangbodd": "tsx --env-file=.env src/sources/fhi-trangbodd/index.ts",
     "ingest:fhi-vgs-gjennomforing": "tsx --env-file=.env src/sources/fhi-vgs-gjennomforing/index.ts",
+    "ingest:frr": "tsx --env-file=.env src/sources/frr/index.ts",
     "ingest:redcross-branches": "tsx --env-file=.env src/sources/redcross-branches/index.ts",
     "ingest:ssb-06083": "tsx --env-file=.env src/sources/ssb-06083/index.ts",
     "ingest:ssb-06913": "tsx --env-file=.env src/sources/ssb-06913/index.ts",
