@@ -88,16 +88,46 @@ Load dbt models as Dagster assets so `raw → marts → api_v1` is one lineage g
 
 ### Tasks
 
-- [ ] 2.1 Add a `DbtProject` pointing at `atlas-data/dbt/`, resolving its path the same way `_factory.py` resolves the ingest dir (up-4 from `__file__`), so one code path serves both the local layout and `/app` in the image.
-- [ ] 2.2 Bake `dbt parse` into `atlas-data/deploy/Dockerfile` so `target/manifest.json` ships in the image. Run pods must never parse dbt at runtime — `dagster-dbt`'s manifest load is the one expensive import the architecture accepts, and only because it's precomputed.
-- [ ] 2.3 Declare `@dbt_assets` over the manifest. Map dbt sources to the existing `raw/*` asset keys so the ingest assets become real upstream dependencies rather than a disconnected second graph.
-- [ ] 2.4 **Exclude the `private` tag from the deployed selection.** `private_marts.frr_*` models are tagged `private`; they materialise as empty tables per the contract, but they should not appear as schedulable assets in a shared cluster UI. Keep them available locally.
-- [ ] 2.5 Add an `api_v1` asset downstream of the marts assets that applies `atlas-data/dbt/api_v1_generated.sql` (the `apply-api-v1.sh` step: wrapper views, column COMMENTs, the `<app>_web_anon` grant, and `NOTIFY pgrst, 'reload schema'`). This is what makes a refresh visible to PostgREST without a human.
-- [ ] 2.6 Verify the full chain in `dagster dev`: materialise a raw asset → its downstream dbt models → the api_v1 asset, and confirm the row count changes land in the API.
+- [x] 2.1 Add a `DbtProject` pointing at `atlas-data/dbt/`, resolving its path the same way `_factory.py` resolves the ingest dir (up-4 from `__file__`), so one code path serves both the local layout and `/app` in the image.
+- [x] 2.2 Bake `dbt parse` into `atlas-data/deploy/Dockerfile` so `target/manifest.json` ships in the image. Run pods must never parse dbt at runtime — `dagster-dbt`'s manifest load is the one expensive import the architecture accepts, and only because it's precomputed.
+- [x] 2.3 Declare `@dbt_assets` over the manifest. Map dbt sources to the existing `raw/*` asset keys so the ingest assets become real upstream dependencies rather than a disconnected second graph.
+- [x] 2.4 **Exclude the `private` tag from the deployed selection.** `private_marts.frr_*` models are tagged `private`; they materialise as empty tables per the contract, but they should not appear as schedulable assets in a shared cluster UI. Keep them available locally.
+- [x] 2.5 Add an `api_v1` asset downstream of the marts assets that applies `atlas-data/dbt/api_v1_generated.sql` (the `apply-api-v1.sh` step: wrapper views, column COMMENTs, the `<app>_web_anon` grant, and `NOTIFY pgrst, 'reload schema'`). This is what makes a refresh visible to PostgREST without a human.
+- [x] 2.6 Verify the full chain in `dagster dev`: materialise a raw asset → its downstream dbt models → the api_v1 asset, and confirm the row count changes land in the API.
 
 ### Validation
 
 The asset graph shows `raw.* → marts.* → api_v1.*` end to end. `dbt build` still passes standalone (the Dagster wiring must not become the only way to run dbt).
+
+### Outcome (2026-08-23) — complete
+
+New modules: `atlas_data/assets/dbt.py` (dbt half) and `atlas_data/assets/api_v1.py` (terminal asset), both wired into `definitions.py`.
+
+**Graph, measured:** 125 assets by default — 41 Pipes ingest assets, 6 unproduced dbt sources, 77 dbt models, and `api_v1`. Plus **644 dbt tests as Dagster asset checks**. Lineage verified edge by edge: `raw/ssb_08764 → marts/indicators__ssb_08764`, and `api_v1` depends on exactly the 13 `models/marts/api/` marts (derived from the manifest, not hardcoded — the surface has already grown 9 → 13).
+
+**Ran, not just inspected:** `raw/ssb_klass_kommuner+` materialised through Dagster (Pipes subprocess → 1327 rows → downstream dbt model, `RUN_SUCCESS`); `api_v1` materialised through Dagster, creating **13 views with 104 column comments** in Postgres. `dbt build` 855 PASS / 1 WARN (pre-existing seed relationship warning), `check-osmosis.sh` exit 0, 99 ingest tests pass.
+
+**Private exclusion works both ways:** default 125 assets with zero `private_marts` keys; `ATLAS_DAGSTER_INCLUDE_PRIVATE=1` gives 133 and restores `raw/frr → private_marts/supply__frr_*`. Excluded by **tag**, not path, so a newly tagged model is covered without editing this file.
+
+**Import cost:** 1.0–1.2s steady (first import ~2s while bytecode compiles), inside the <2s discipline.
+
+### Four defects found and fixed on the way
+
+1. **`api_v1_generated.sql` was never copied into the image.** The Dockerfile copies models/seeds/macros/scripts but not the generated SQL, so the api_v1 asset would have failed at runtime in the cluster. Added to the COPY.
+2. **`dbt parse` in the image needed `dbt deps` first.** `.dockerignore` excludes `dbt/dbt_packages/`, so `dbt_utils` isn't present at build time and the parse — hence the whole image build — would have failed. Added.
+3. **The `[deploy]` extra didn't constrain `dbt-core`.** `dagster-dbt` asks only for `dbt-core<1.12,>=1.7`, so installing this package standalone resolves **dbt 1.11** while the dbt project pins **1.8**. The image is saved only by `requirements.txt` happening to install first — local dev is not. Reproduced by walking into it. Pinned `dbt-core>=1.8,<1.9` in the extra, and corrected `dagster-dbt`/`dagster-k8s` from `~=0.27` to `~=0.29`, which is what actually pairs with dagster 1.13.
+4. **`from __future__ import annotations` breaks Dagster's context validation** — it stringifies the annotation and `AssetExecutionContext` stops being recognised. Removed from the new modules. `_factory.py` still has it and still works (no context annotation), so it was left alone.
+
+### Design notes
+
+- **`raw.redcross_branch_activities` is deliberately not mapped** to `raw/redcross_branches`. Dagster requires one dbt resource per asset key and rejects the collapse outright. Modelling it truthfully means making that ingest a `multi_asset` **and** changing the TypeScript Pipes contract in `lib/ingest_run.ts` to report per-table rather than per-run materialisations. Filed as a follow-up rather than bodged; the activities table shows as an unproduced source meanwhile.
+- **`api_v1` uses psycopg2, not `apply-api-v1.sh`.** That script runs psql via `docker run`, and there is no Docker daemon in a Dagster run pod.
+- **The image change is unverified locally** — there is no Docker daemon on tecMacDev. The `atlas-data-image.yml` workflow builds on every PR, so CI is the first real check; the imac tester is the second.
+
+### Noted, not fixed (out of scope)
+
+- Four dbt sources (`raw.ssb_08484`, `08487`, `09405`, `09406`) have indicator models but **no ingest module** — the tables are created by migrations and never populated. Worth a look: either they have a producer nobody wrote down, or four indicators are silently empty.
+- 17 `fhi_*` ingest sources have no dbt model at all; they land in `raw.*` and stop. Real, but a modelling backlog item, not a wiring bug.
 
 ---
 

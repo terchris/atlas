@@ -72,7 +72,7 @@ The bigger finding. `CLAUDE.md` names typecheck and tests as PR gates, but audit
 ### Tasks
 
 - [ ] 2.1 Add an `atlas-data/ingest` job — extend `check-manifests.yml` or add `ingest-ci.yml`, path-filtered to `atlas-data/ingest/**` — running `npm ci`, `npm run typecheck`, and `npm test`.
-- [ ] 2.2 Pin that job to **Node 22** (see Problem Summary §3).
+- [ ] 2.2 Pin that job to **Node 22** initially (see Problem Summary §3), then see phase 3 — the platform target is the latest LTS.
 - [ ] 2.3 Raise the `engines.node` floor in `atlas-data/ingest/package.json` to `>=22` and note it in [`contributors/setup.md`](../../../contributors/setup.md), so a contributor on Node 20 gets a clear message instead of a rolldown `SyntaxError`.
 - [ ] 2.4 Deliberately break a test locally and confirm the new job fails — an unverified gate is the thing this PLAN exists to fix.
 
@@ -82,11 +82,32 @@ A PR that breaks a test or a type goes red. A clean PR goes green.
 
 ---
 
+---
+
+## Phase 3: Move to the platform Node target (conformance C12)
+
+**Platform decision, 2026-08-23**: Terje set a new conformance rule **C12 — Node = latest LTS**, currently **Node 24 (Krypton)**. Atlas's `>=22` finding (Problem Summary §3) is what prompted it. The fleet machines' default moves to 24 once the active projects validate, so Atlas validating is a prerequisite, not a follow-on.
+
+⚠️ Not to be done mid-phase of another plan — ops was explicit that runtimes don't change under active work.
+
+### Tasks
+
+- [ ] 3.1 Validate Atlas on Node 24: `npm ci`, `npm run typecheck`, `npm test`, and a representative `npm run ingest:<source>` against a real database. Vitest 4 / rolldown and the native bindings are the likely friction points, plus anything in the Crawlee stack used by `redcross-branches`.
+- [ ] 3.2 Bump `engines.node` and the CI job to 24; update [`contributors/setup.md`](../../../contributors/setup.md).
+- [ ] 3.3 Check the polyglot Dagster image — `atlas-data/deploy/Dockerfile` builds its Node stage on `node:20-slim`. Under C12 that becomes the LTS too, which means a rebuild and a new code-location image tag.
+- [ ] 3.4 Report the result to ops so the machine default can move.
+
+### Validation
+
+Full gate suite green on Node 24, and the image builds and boots its gRPC server on the same runtime.
+
+---
+
 ## Acceptance Criteria
 
 - [ ] `npm run typecheck` passes on `main`.
 - [ ] CI runs typecheck + the 99 unit tests on every PR touching `atlas-data/ingest/**`.
-- [ ] The CI job runs on Node 22, and the version floor is declared in `package.json` and documented.
+- [ ] The CI job runs on a declared Node version, the floor is declared in `package.json` and documented, and phase 3 has moved both to the C12 target (latest LTS).
 - [ ] The gate is demonstrated failing on a deliberate break, not assumed to work.
 
 ## Out of Scope
