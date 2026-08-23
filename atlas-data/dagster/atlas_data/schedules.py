@@ -26,7 +26,7 @@ from dagster import (
     define_asset_job,
 )
 
-from atlas_data.assets import api_v1, raw_fhi, raw_other, raw_ssb
+from atlas_data.assets import api_v1, migrations, raw_fhi, raw_other, raw_ssb
 from atlas_data.assets.dbt import atlas_dbt_models
 
 # All ingest sources are Norwegian public-sector data and the operators are in
@@ -52,9 +52,17 @@ _KLASS_SOURCE_IDS = list(raw_ssb.SSB_KLASS_SOURCES)
 
 
 def _asset_selection(source_ids: list[str]) -> AssetSelection:
-    """AssetSelection over raw/<source_id> keys, matching the factory's naming."""
+    """
+    AssetSelection over raw/<source_id> keys, matching the factory's naming.
+
+    Always includes the migrations asset. A scheduled refresh must be able to
+    build its own database from nothing — the round-2 test hit exactly this,
+    ingesting into a fresh cluster where raw.ingest_runs did not exist yet.
+    Migrations are idempotent, so including them costs a no-op on every run.
+    """
     return AssetSelection.assets(
-        *[["raw", sid.replace("-", "_")] for sid in source_ids]
+        migrations.raw_migrations,
+        *[["raw", sid.replace("-", "_")] for sid in source_ids],
     )
 
 

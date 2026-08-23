@@ -21,6 +21,14 @@ deploy = [
     # with the 0.29.x line. Keep all three moving together.
     "dagster-dbt~=0.29",
     "dagster-k8s~=0.29",
+    # Required by the RUN PODS, not by this code: the platform's Dagster
+    # instance uses Postgres storage, so a run pod — which runs THIS image —
+    # must import dagster_postgres.run_storage.PostgresRunStorage before it can
+    # execute a single step. Without it the pod dies in ~5s having run nothing.
+    # Not listed in the UIS service contract's "requirements on your image";
+    # found by the imac tester in round 2, and the contract gap is filed
+    # separately with assist.
+    "dagster-postgres~=0.29",
     # dbt-core MUST be pinned to the same range as dbt/requirements.txt.
     # dagster-dbt itself only asks for dbt-core<1.12,>=1.7, so without this an
     # install of just this package resolves dbt 1.11 while the dbt project is
