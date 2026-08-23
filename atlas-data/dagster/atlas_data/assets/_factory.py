@@ -25,6 +25,7 @@ import os
 from pathlib import Path
 from typing import Iterable
 
+from atlas_data.paths import ingest_dir
 from dagster import (
     AssetsDefinition,
     MaterializeResult,
@@ -32,16 +33,11 @@ from dagster import (
     asset,
 )
 
-# Resolve the ingest directory once at import time. Path resolution only —
-# no file system reads — so this stays within the cheap-import discipline.
-#
-# Locally: <repo>/atlas-data/dagster/atlas_data/assets/_factory.py
-#          → up 4 → <repo>/atlas-data → /ingest
-# In the polyglot image: /app/dagster/atlas_data/assets/_factory.py
-#                        → up 4 → /app → /ingest
-# Same code, both layouts.
-_HERE = Path(__file__).resolve()
-_INGEST_DIR = (_HERE.parent.parent.parent.parent / "ingest").resolve()
+# Resolved via atlas_data.paths, NOT by counting parents up from __file__.
+# The image pip-installs this package into site-packages while the ingest lives
+# at /app/ingest, so a positional walk lands in the wrong tree entirely — see
+# paths.py for the full story and the CrashLoopBackOff it caused.
+_INGEST_DIR = ingest_dir()
 
 
 def make_raw_ingest_asset(
