@@ -9,12 +9,22 @@ See _factory.make_raw_ingest_asset. Currently:
   state, ~512MiB working set). Per-asset resource override via
   `dagster-k8s/config` tag is future work, after the first materialisation
   in production reveals what's actually needed.
+- frr: Felles Ressursregister, read from the gitignored
+  atlas-private-data-repo/. That directory is deliberately NOT in the
+  polyglot image, so **on a public deployment this asset materialises zero
+  rows and that is correct, not a bug** — see
+  dbt/models/private_marts/sources.yml for the contract ("on public
+  deployments the table exists but is empty"). No private NGO data reaches
+  the shared cluster. The ingest guards the missing directory and logs
+  `frr.private_data_root_absent` so an empty run is distinguishable from a
+  mounted-but-empty one.
 """
 
 from atlas_data.assets._factory import make_raw_ingest_assets
 
 OTHER_SOURCES = [
     "bufdir-barnefattigdom",
+    "frr",
     "redcross-branches",
 ]
 

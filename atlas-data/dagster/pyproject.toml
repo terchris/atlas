@@ -17,8 +17,16 @@ dependencies = [
 # `uv pip install -e .` for local dev stays light. dagster-dbt + dagster-k8s
 # come into play in follow-up PLANs.
 deploy = [
-    "dagster-dbt~=0.27",
-    "dagster-k8s~=0.27",
+    # dagster-dbt / dagster-k8s track the dagster version: dagster 1.13.x pairs
+    # with the 0.29.x line. Keep all three moving together.
+    "dagster-dbt~=0.29",
+    "dagster-k8s~=0.29",
+    # dbt-core MUST be pinned to the same range as dbt/requirements.txt.
+    # dagster-dbt itself only asks for dbt-core<1.12,>=1.7, so without this an
+    # install of just this package resolves dbt 1.11 while the dbt project is
+    # pinned to 1.8 — the image is saved only by requirements.txt happening to
+    # install first. Local dev then runs a different dbt than production.
+    "dbt-core>=1.8,<1.9",
     "dbt-postgres>=1.8,<1.9",
 ]
 dev = [

@@ -17,11 +17,12 @@
  *   tsx --env-file=atlas-data/ingest/.env \
  *     atlas-data/ingest/src/sources/frr/index.ts
  */
-import { readdir, readFile, stat } from "node:fs/promises";
+import { readdir, readFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { closeSql, getSql, upsert } from "../../lib/postgres.js";
 import { recordIngestRun } from "../../lib/ingest_run.js";
+import { discoverNgoFolders } from "./discover.js";
 import { logger } from "../../lib/logger.js";
 
 const SOURCE_ID = "frr";
@@ -61,23 +62,6 @@ async function loadSlugToOrgnr(): Promise<Map<string, string>> {
   }
   map.set("sample-ngo", SAMPLE_NGO_ORGNR);
   return map;
-}
-
-async function discoverNgoFolders(): Promise<string[]> {
-  const entries = await readdir(PRIVATE_DATA_ROOT, { withFileTypes: true });
-  const slugs: string[] = [];
-  for (const entry of entries) {
-    if (!entry.isDirectory()) continue;
-    if (entry.name.startsWith(".")) continue;
-    const frrDir = join(PRIVATE_DATA_ROOT, entry.name, "frr");
-    try {
-      const s = await stat(frrDir);
-      if (s.isDirectory()) slugs.push(entry.name);
-    } catch {
-      // No frr/ subdirectory — NGO has no FRR data, skip.
-    }
-  }
-  return slugs.sort();
 }
 
 async function loadJsonFiles(dir: string): Promise<FrrResource[]> {
@@ -138,7 +122,13 @@ export async function run(): Promise<void> {
     logger.info(`${SOURCE_ID}.start`, { root: PRIVATE_DATA_ROOT });
 
     const slugToOrgnr = await loadSlugToOrgnr();
-    const ngoSlugs = await discoverNgoFolders();
+    const ngoSlugs = await discoverNgoFolders(PRIVATE_DATA_ROOT, () =>
+      // Distinguishes "no private data mounted" (the public-deployment
+      // case) from "mounted but empty" — identical in the row count.
+      logger.info(`${SOURCE_ID}.private_data_root_absent`, {
+        root: PRIVATE_DATA_ROOT,
+      }),
+    );
     logger.info(`${SOURCE_ID}.discovered`, { ngo_count: ngoSlugs.length, ngos: ngoSlugs });
 
     let total = 0;

@@ -15,8 +15,10 @@ Rules:
   credentials from secret managers eagerly, no parsing big JSON files).
 - No environment-variable lookups that fail loudly. Use os.getenv(..., default)
   not os.environ[...].
-- dagster-dbt's manifest parsing is the one expensive thing we accept later —
-  Dagster needs it to expose dbt models as assets at all. It's not present yet.
+- dagster-dbt's manifest parsing is the one expensive thing we accept — Dagster
+  needs it to expose dbt models as assets at all. It is precomputed: `dbt parse`
+  runs at image build time and the manifest ships inside the image, so a run pod
+  loads it rather than generating it. See assets/dbt.py.
 
 Cross-references:
 - urbalurba-infrastructure/.../INVESTIGATE-dagster.md (the authoritative source
@@ -28,16 +30,29 @@ Cross-references:
 
 from dagster import Definitions
 
-from atlas_data.assets import raw_fhi, raw_other, raw_ssb
+from atlas_data.assets import api_v1, raw_fhi, raw_other, raw_ssb
 from atlas_data.assets._factory import pipes_subprocess_client
+from atlas_data.assets.dbt import atlas_dbt_models, dbt_cli_resource
+from atlas_data.schedules import jobs, schedules
 
 defs = Definitions(
     assets=[
+        # raw.* — one asset per ingest source, via Dagster Pipes.
         *raw_ssb.assets,
         *raw_fhi.assets,
         *raw_other.assets,
+        # marts.* — the dbt project, with the ingest assets as real upstreams.
+        atlas_dbt_models,
+        # api_v1.* — the public PostgREST surface. Terminal asset.
+        api_v1.api_v1_surface,
     ],
+    asset_checks=[api_v1.api_v1_rowcount_matches_marts],
+    jobs=jobs,
+    # Cadence comes from each source's declared periodicity — see schedules.py.
+    # They ship stopped; turning them on is a go-live decision.
+    schedules=schedules,
     resources={
         "pipes_subprocess_client": pipes_subprocess_client(),
+        "dbt": dbt_cli_resource(),
     },
 )

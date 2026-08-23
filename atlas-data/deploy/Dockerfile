@@ -52,6 +52,8 @@ COPY ingest/src ./ingest/src
 COPY ingest/scripts ./ingest/scripts
 COPY ingest/tsconfig.json ./ingest/
 COPY dbt/dbt_project.yml dbt/packages.yml dbt/profiles.yml ./dbt/
+# The generated public-API surface, applied by the api_v1 asset at runtime.
+COPY dbt/api_v1_generated.sql ./dbt/
 COPY dbt/models ./dbt/models
 COPY dbt/seeds ./dbt/seeds
 COPY dbt/macros ./dbt/macros
@@ -63,6 +65,26 @@ COPY migrations ./migrations
 # the .pth-file dance. Reinstalls when pyproject.toml OR atlas_data/ changes,
 # which is a fine trade-off (this layer is fast: just resolves wheel deps).
 RUN uv pip install --system --no-cache ./dagster[deploy]
+
+# --- Bake the dbt manifest ---------------------------------------------------
+# dagster-dbt needs target/manifest.json to expose dbt models as assets at all.
+# Parsing it here, once at build time, is what keeps the run pods cheap: a pod
+# that parsed dbt on every materialisation would pay that cost forever, which
+# is exactly what definitions.py's cheap-import discipline forbids.
+#
+# `dbt parse` only reads the project — no database connection — but profiles.yml
+# interpolates libpq env vars, so they must be *set* to something for templating
+# to resolve. These build-time placeholders are never used to connect and never
+# reach the running image; the real connection comes from ATLAS_DATABASE_URL at
+# runtime.
+ENV DBT_PROFILES_DIR=/app/dbt
+# `dbt deps` first: dbt_packages/ is excluded from the build context by
+# .dockerignore, so dbt_utils is not in the image until we fetch it here.
+RUN cd /app/dbt \
+    && dbt deps \
+    && PGHOST=build PGPORT=5432 PGUSER=build PGPASSWORD=build PGDATABASE=build \
+       dbt parse \
+    && test -f target/manifest.json
 
 # --- Dagster gRPC server -----------------------------------------------------
 # Port 4000 matches the UIS Dagster doc's expected user-deployments port.
