@@ -7,7 +7,7 @@
 ## Status: Backlog — RE-SCOPED 2026-08-24 after Terje's architectural review
 
 ⚠️ **Read this first.** The tactical unblock has been separated out and shipped as
-[PLAN-transform-checks-split](../active/PLAN-transform-checks-split.md) (711 → 65
+[PLAN-transform-checks-split](../completed/PLAN-transform-checks-split.md) (711 → 65
 events). Everything this investigation proposed *beyond* that — layer-based job
 splitting, the `get_group_name` translator, the CI plan-size budget — is
 **parked**, not rejected, pending the question below.

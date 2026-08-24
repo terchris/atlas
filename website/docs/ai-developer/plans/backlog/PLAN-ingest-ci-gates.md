@@ -10,7 +10,7 @@
 
 **Last Updated**: 2026-08-23
 
-**Priority**: High — this is a conformance **C11 tier-1** gap (`~/home/ai-developer/platform-conformance.md`: "per-commit CI in the project repo (unit/dbt/image)"). Filed at ops's request after it surfaced during [PLAN-dagster-production-wiring](../active/PLAN-dagster-production-wiring.md) phase 1.
+**Priority**: High — this is a conformance **C11 tier-1** gap (`~/home/ai-developer/platform-conformance.md`: "per-commit CI in the project repo (unit/dbt/image)"). Filed at ops's request after it surfaced during [PLAN-dagster-production-wiring](../completed/PLAN-dagster-production-wiring.md) phase 1.
 
 ---
 
