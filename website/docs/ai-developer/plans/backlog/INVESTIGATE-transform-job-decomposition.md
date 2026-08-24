@@ -91,6 +91,44 @@ Two conclusions the suggestion doesn't reach:
 
 Neither point is a reason to abandon the suggestion; Split 1's build side is the single highest-value change available (711 → 65). But it is a reason not to stop there and call it fixed.
 
+## How much runway the timeout bump actually buys — measured, 2026-08-24
+
+The platform raised `start_timeout_seconds` 300 → 900, and the tester measured the
+monolith against it rather than declaring victory:
+
+```
+launch 22:05:06 → run pod created 22:14:30   = 564s to construct and persist the plan
+SUCCESS, 65 materializations
+```
+
+**564s of 900s consumed. ~336s spare — roughly 60% growth before it returns.** That
+turns a vague worry into arithmetic:
+
+| | |
+|---|---|
+| Plan budget at 900s | ~1135 events |
+| Cost per source | ~15.8 events (711 − 65 build events, over 41 sources) |
+| Sources before the limit returns | **~68** |
+| Sources today | 41 |
+
+**The bump buys about 27 more sources.** Atlas's own sector map lists 35+ NGOs
+before counting public-data sources, so that is a runway measured in months of
+onboarding, not a fix. ops said as much — margin, not cure — and this is the number
+behind it.
+
+Against the same measurement, after the checks split:
+
+| Job | events | projected plan time |
+|---|---:|---:|
+| `transform_and_publish` | 65 | **~52s** |
+| `transform_checks` | 644 | ~511s |
+
+So the split moves the **write path** — the one that must run for the API to be
+fresh — from 564s to about 52s, comfortably clear of any plausible limit. It leaves
+the **checks path** at ~511s, still 57% of the budget. That is the precise shape of
+the remaining problem, and it is worth being clear that it is now a *checks*
+problem rather than a *pipeline* problem.
+
 ## The structural problem: a fixed partition count cannot bound a growing plan
 
 Atlas has ~19 dbt tests per source and the layer count is **five and stable** — which is exactly what makes layers attractive for membership, and exactly what makes them useless as a size bound. Layer *count* never grows; layer *size* grows with every source. `indicators` is already 344 events at 41 sources. At 80 sources it is the monolith again, and we will be having this conversation with a different job name.
