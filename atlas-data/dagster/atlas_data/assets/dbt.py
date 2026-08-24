@@ -153,6 +153,36 @@ def dbt_translator() -> AtlasDbtTranslator:
 _MISORDERED_TESTS = ["api_v1_rowcount_matches_marts"]
 
 
+def _dbt_command_for(context: AssetExecutionContext) -> list:
+    """
+    Pick the dbt verb from what Dagster actually selected.
+
+    Excluding checks from a job's *selection* is not enough on its own: a
+    hardcoded `dbt build` would still run all 784 tests inside the step and
+    report them as untyped observations — the behaviour we left behind in round
+    2. The split has to happen in the dbt command as well as the selection.
+
+    - assets only  → `build --exclude-resource-type test`
+    - checks only  → `test`
+    - both         → `build` (materialising everything locally, one invocation)
+
+    ⚠️ The assets-only case is `build --exclude-resource-type test`, NOT `run`.
+    `dbt run` builds models and skips **seeds**, and Atlas has 16 seed assets
+    (ref_*, dim_postnummer, the sources manifest) that models join against. On a
+    fresh database — exactly the state the integration tester starts from — `run`
+    would leave those tables missing and the models that reference them would
+    fail. `build` minus tests keeps seeds and snapshots while dropping the 644
+    test events that made the plan unstartable.
+    """
+    has_assets = bool(context.selected_asset_keys)
+    has_checks = bool(context.selected_asset_check_keys)
+    if has_checks and not has_assets:
+        return ["test"]
+    if has_assets and not has_checks:
+        return ["build", "--exclude-resource-type", "test"]
+    return ["build"]
+
+
 @dbt_assets(
     manifest=_require_manifest(),
     dagster_dbt_translator=dbt_translator(),
@@ -179,9 +209,12 @@ def atlas_dbt_models(context: AssetExecutionContext, dbt: DbtCliResource):
         )
     os.environ.update(libpq_env_from_url(database_url))
 
-    args = ["build"]
-    for test in _MISORDERED_TESTS:
-        args += ["--exclude", test]
+    args = list(_dbt_command_for(context))
+    context.log.info(f"dbt args for this selection: {' '.join(args)}")
+    if "--exclude-resource-type" not in args:
+        # Only meaningful when tests are actually being run.
+        for test in _MISORDERED_TESTS:
+            args += ["--exclude", test]
     yield from dbt.cli(args, context=context).stream()
 
 

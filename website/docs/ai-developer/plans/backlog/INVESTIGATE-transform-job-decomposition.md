@@ -4,7 +4,36 @@
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Backlog — investigation complete, awaiting review before PLANs are cut
+## Status: Backlog — RE-SCOPED 2026-08-24 after Terje's architectural review
+
+⚠️ **Read this first.** The tactical unblock has been separated out and shipped as
+[PLAN-transform-checks-split](../active/PLAN-transform-checks-split.md) (711 → 65
+events). Everything this investigation proposed *beyond* that — layer-based job
+splitting, the `get_group_name` translator, the CI plan-size budget — is
+**parked**, not rejected, pending the question below.
+
+**The question that came out of review** (Terje, 2026-08-24): *are we using Dagster
+so that it follows best practice?* The audit says no. Atlas uses `ScheduleDefinition`
+and `define_asset_job` — the oldest, most Airflow-shaped part of the API — and **none**
+of `AutomationCondition`, `FreshnessPolicy`, partitions, sensors\*, or
+`AutoMaterializePolicy`, all of which ship in the 1.13 we run.
+
+That reframes this whole document. **The 711-event plan is not a Dagster problem
+Atlas must engineer around; it is a consequence of using Dagster as a cron runner.**
+Asset-centric Dagster does not have large jobs to start — the daemon materialises
+what is stale, in small units. And Terje's zero-edit requirement is precisely what
+declarative automation delivers structurally: there are no job membership lists to
+edit because there are no jobs.
+
+So the machinery below risks being sophisticated workarounds for a shape idiomatic
+Dagster would not produce. **Decision (Terje): land the tactical unblock, park the
+machinery, then pilot the idiomatic shape on one slice and compare before
+committing.** The pilot is its own plan.
+
+\* sensors are now used, for the transform chaining — added by the tactical plan.
+
+The analysis below stands on its measurements and is retained as the record of what
+a job-splitting approach would cost.
 
 **Goal**: Make Atlas's transform pipeline start reliably regardless of how many sources exist, and make adding a source require **zero** edits to any existing job or schedule.
 
