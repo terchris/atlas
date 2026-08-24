@@ -4,7 +4,7 @@
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Active — phases 1–2 shipped; criteria 10–12 already PASSED upstream
+## Status: Completed (2026-08-24) — verified by imac, round 6 PASS
 
 **Goal**: Clear `RunFailureReason.START_TIMEOUT` with the smallest change that works, so integration criteria 10–12 can be verified — without building machinery that a later architectural decision would delete.
 
@@ -166,3 +166,20 @@ Two honest consequences:
 - Everything in the "parked" list above.
 - The declarative-automation / freshness pilot — its own plan after this lands.
 - The 41-source live ingest run — **approval still open with Terje; do not run it.**
+
+
+---
+
+## Closed 2026-08-24 — verified
+
+Round 6 PASS. The three-job shape holds in-cluster and the concurrency bound survives.
+
+Worth recording that this plan's *purpose* changed mid-flight: it was written to
+unblock criteria 10–12, and the platform's timeout bump closed those first. What it
+delivered instead is headroom — the write path went from 564s of plan construction to
+about 52s. Against the tester's measurement (~15.8 plan events per source, ~1135-event
+budget at 900s) that is the difference between a limit that returns at ~68 sources and
+one that does not realistically return at all for the build path.
+
+`transform_checks` remains ~644 events. Bounding that durably is still open, in
+[INVESTIGATE-transform-job-decomposition](../backlog/INVESTIGATE-transform-job-decomposition.md).

@@ -4,7 +4,7 @@
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Active — pilot ran, Terje approved adoption, migration implemented
+## Status: Completed (2026-08-24) — verified by imac, round 6 PASS
 
 **Goal**: Answer with evidence whether Atlas should move from hand-written jobs and cron schedules to Dagster's asset-centric automation — by running it on one slice, beside the existing jobs, not instead of them.
 
@@ -184,3 +184,23 @@ load-bearing for every source. Worth knowing.
 **Everything ships STOPPED.** The migration changes what *would* run, not what does.
 Nothing starts itself on deploy, and enabling the automation sensor is a deliberate act
 that should follow cluster verification, not precede it.
+
+
+---
+
+## Closed 2026-08-24 — verified
+
+Round 6 PASS: nothing ships RUNNING, and the concurrency bound survives the migration
+**including on the job-less automation path** — which was the specific thing I asked
+imac to check, because automation-launched runs belong to no job and the
+`Definitions`-level executor fix had never been exercised.
+
+The pilot earned its keep by finding, on two assets, that `AutomationCondition.on_cron`
+strands every asset whose upstream is not itself automated — silently, with no error.
+Finding that on 41 assets in production would have looked like Atlas quietly ceasing
+to refresh.
+
+Still not verified by anyone: **steady-state repeat behaviour** over multiple cycles.
+It could not be simulated offline and round 6 was a deploy-time verification, not a
+week-long one. The first real evidence will be the automation sensor running in
+anger — and everything ships STOPPED until someone decides to enable it.
