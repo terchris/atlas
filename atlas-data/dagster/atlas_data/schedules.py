@@ -36,9 +36,13 @@ import os
 
 from dagster import (
     AssetSelection,
+    DagsterRunStatus,
+    RunRequest,
+    RunStatusSensorContext,
     ScheduleDefinition,
     define_asset_job,
     multiprocess_executor,
+    run_status_sensor,
 )
 
 from atlas_data.assets import api_v1, migrations, raw_fhi, raw_other, raw_ssb
@@ -146,14 +150,32 @@ redcross_branches_job = define_asset_job(
     ),
 )
 
+# ── The transform split ──────────────────────────────────────────────────────
+#
+# transform_and_publish used to carry the dbt build, all 644 dbt checks and the
+# api_v1 publish in one run: a 711-event plan, 90.5% of it checks. Dagster
+# constructs that plan over gRPC BEFORE the run pod exists, and it did not finish
+# inside start_timeout_seconds — the run died having created no pod, which is how
+# integration criteria 10-12 stayed blocked for a round.
+#
+# Excluding the checks takes the build's plan from 711 to ~65. The checks then run
+# as their own job, and MUST run after the publish: `dbt run` rebuilds
+# marts.mart_* by swapping in new tables and dropping the old ones CASCADE, which
+# destroys the dependent api_v1.* views. rowcount_matches_marts compares the two,
+# so before the publish re-creates them it is comparing against nothing.
+#
+# Both selections are pattern-based — "the dbt assets", "their checks" — never
+# enumerated lists, so a new source's models join automatically.
+_TRANSFORM_ASSETS = AssetSelection.assets(atlas_dbt_models) | AssetSelection.assets(
+    api_v1.api_v1_surface
+)
+
 transform_job = define_asset_job(
     name="transform_and_publish",
-    selection=(
-        AssetSelection.assets(atlas_dbt_models)
-        | AssetSelection.assets(api_v1.api_v1_surface)
-    ),
+    selection=_TRANSFORM_ASSETS.without_checks(),
     description=(
-        "dbt models + the api_v1 public surface. Daily, even though the raw "
+        "dbt models + the api_v1 public surface, WITHOUT their checks — see the "
+        "note above. Daily, even though the raw "
         "sources refresh weekly: this run is also Atlas's in-pipeline "
         "data-quality gate (644 dbt tests as asset checks) and the step that "
         "republishes api_v1 and reloads PostgREST's schema cache. A daily green "
@@ -161,6 +183,77 @@ transform_job = define_asset_job(
         "waiting a week to find out is too long."
     ),
 )
+
+# The checks are split in two, and the reason is semantic rather than tactical.
+#
+# The api_v1 check is a PUBLISH GATE: "does the public API surface match the
+# marts it wraps?" It answers a question about the thing external consumers see,
+# it belongs immediately after the publish, and it is one event.
+#
+# The 644 dbt tests are DATA QUALITY: "is the data itself sound?" Different
+# question, different audience, and — being 644 events — a materially different
+# risk of hitting the same start-timeout that caused this split. Keeping them
+# apart means a publish-gate failure is never hidden behind, or blocked by, the
+# bulk test suite.
+_API_V1_CHECKS = AssetSelection.checks_for_assets(api_v1.api_v1_surface)
+
+api_v1_checks_job = define_asset_job(
+    name="api_v1_checks",
+    selection=_API_V1_CHECKS,
+    description=(
+        "The api_v1 publish gate — does the published surface match the marts it "
+        "wraps. Runs immediately after the publish, on its own, because it is the "
+        "check that says whether the public API is serving what it should."
+    ),
+)
+
+transform_checks_job = define_asset_job(
+    name="transform_checks",
+    selection=AssetSelection.all_asset_checks() - _API_V1_CHECKS,
+    description=(
+        "The dbt data-quality suite — every dbt test as a Dagster asset check. "
+        "Split out of transform_and_publish because the checks were 90.5% of a "
+        "711-event plan the run pod could not start. ⚠️ This job is still ~644 "
+        "events and carries the same startability risk; bounding it durably is "
+        "the subject of INVESTIGATE-transform-job-decomposition. Triggered by the "
+        "build succeeding rather than by a clock, since a fixed offset would "
+        "encode a guess about how long the build takes."
+    ),
+)
+
+
+@run_status_sensor(
+    run_status=DagsterRunStatus.SUCCESS,
+    monitored_jobs=[transform_job],
+    request_job=api_v1_checks_job,
+    name="run_api_v1_checks_after_transform",
+    description=(
+        "Runs the publish gate once the build and api_v1 publish have succeeded. "
+        "The ordering is load-bearing, not cosmetic: `dbt run` drops the api_v1 "
+        "views by CASCADE when it swaps the marts tables, so they only exist "
+        "again after the publish. Run the check before that and it compares "
+        "against views that are not there."
+    ),
+)
+def run_api_v1_checks_after_transform(context: RunStatusSensorContext):
+    return RunRequest(run_key=None)
+
+
+@run_status_sensor(
+    run_status=DagsterRunStatus.SUCCESS,
+    monitored_jobs=[api_v1_checks_job],
+    request_job=transform_checks_job,
+    name="run_dbt_checks_after_api_v1",
+    description=(
+        "Runs the dbt data-quality suite after the publish gate has passed. "
+        "Chained rather than parallel so the cheap, high-signal check reports "
+        "first — if the public surface is wrong, that should not be waiting "
+        "behind 644 dbt tests."
+    ),
+)
+def run_dbt_checks_after_api_v1(context: RunStatusSensorContext):
+    return RunRequest(run_key=None)
+
 
 # ── Schedules ────────────────────────────────────────────────────────────────
 #
@@ -207,4 +300,8 @@ jobs = [
     klass_job,
     redcross_branches_job,
     transform_job,
+    api_v1_checks_job,
+    transform_checks_job,
 ]
+
+sensors = [run_api_v1_checks_after_transform, run_dbt_checks_after_api_v1]
