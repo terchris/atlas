@@ -4,7 +4,7 @@
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Active — rounds 1 and 2 FAILED (all defects fixed); re-declared for round 3
+## Status: Active — round 3: Tier 1 + criteria 8/9 PASS, 10–12 fixed; HELD pending tester queue
 
 **Goal**: Complete Atlas's side of the Dagster integration — the last un-orchestrated ingest source, the dbt half of the asset graph, schedules — and declare it for independent verification by the fleet tester.
 
@@ -380,3 +380,83 @@ The tester ran criteria 8 and 9's payloads directly, bypassing the blockers:
 `frr.private_data_root_absent`, `rows: 0`, success — the exact inverted criterion
 from phase 1, confirmed in a real cluster. The orchestration wrapper was broken;
 the ingest code was not.
+
+
+---
+
+## Round 3 verdict: Tier 1 all PASS, criteria 8 and 9 PASS, 10–12 FAIL
+
+`~/home/ai-developer/for-ops-test-atlas.md` (round 3). **The first Atlas
+materialisations ever to run in a Kubernetes run pod.** Both round-2 blockers
+confirmed fixed; `./uis verify dagster` now exits 0 with "All can hydrate run
+storage (D5)". The migrations asset built **47 raw tables from a database with 0
+tables**, inside a run pod. `raw/ssb_klass_kommuner` wrote 1327 rows through a real
+Pipes subprocess; `raw/frr` succeeded empty with `frr.private_data_root_absent`.
+
+### The FAIL: dbt could not parse — `PGHOST` not set
+
+```
+dbt.exceptions.EnvVarMissingError: Parsing Error
+  Env var required but not provided: 'PGHOST'
+```
+
+`profiles.yml` reads five libpq vars, and its own comment says where they come
+from: `ingest/.env`. In a container nothing sets them — `env_secrets` supplies
+only `ATLAS_DATABASE_URL`. **Same shape as the round-2 `.env` blocker**: the ingest
+half was taught not to depend on `.env`, and the dbt half still depended on what
+`.env` used to provide. Criteria 10, 11 and 12 all fell to this one cause.
+
+**Fix**: `atlas_data/db.py` decomposes `ATLAS_DATABASE_URL` into the five libpq
+vars, and the dbt asset sets them before invoking dbt. The alternative — asking the
+platform for five more secrets — would make Atlas a special case and leave two
+sources of truth for one connection. The tenant contract stays *one secret, one
+variable*. Percent-encoded credentials are decoded, and every var is set even when
+empty, because `env_var()` with no default raises on an *unset* variable.
+
+**Verified under the exact failing condition**: only `ATLAS_DATABASE_URL` set, all
+five `PG*` unset — `transform_and_publish` now runs green end-to-end (dbt 821 PASS
+/ 0 ERROR, api_v1 13 views, rowcount check passed, `RUN_SUCCESS`).
+
+### The shortfall the tester declined to fail us on — worth more than the FAIL
+
+Criterion 8 passed, but the materialisation carried **no metadata at all**, so row
+counts reached Postgres and never the Dagster UI. Root cause, reproduced locally:
+
+```
+dagster_pipes.report_failed  error: "Cannot use 'in' operator to search for 'type' in null"
+```
+
+The JS Pipes SDK's `normalizeMetadata` does `'type' in value`, which **throws on
+null**. Atlas passed `null` for every field a source didn't populate, so the whole
+`reportAssetMaterialization` call threw — and `recordIngestRun` catches Pipes
+failures by design, since telemetry must never break an ingest. One null value cost
+the entire payload, silently, for three rounds.
+
+**Fix**: `buildMaterializationMetadata` omits absent values instead of nulling
+them, extracted as a pure function with 5 unit tests so the swallowed path is
+covered by something. Verified: a real materialisation now carries
+`rows_parsed = 1327`, `rows_scraped`, `ingest_run_id`, `source_id`, and zero
+`report_failed` warnings. Zero is preserved — it is a real row count.
+
+### Criterion 13: my premise was wrong, and the fix is a real bound
+
+The tester declined to run it and was right to. I asserted the platform's cap of 4
+would throttle a 38-asset job. It does not: `max_concurrent_runs: 4` bounds
+concurrent **runs**, and `annual_sources_refresh` is *one* run → one pod → 38 steps
+as subprocesses bounded by the multiprocess executor's `max_concurrent`, which
+defaults to the pod's CPU count. **Nothing bounded simultaneous writers against the
+shared Postgres**, and phase 3's "no in-code concurrency limits, deliberately" was
+reasoning from the wrong mechanism.
+
+The maintainer's principle still holds — the platform must retune without an Atlas
+rebuild — so the ingest jobs now use a bounded multiprocess executor whose limit
+comes from **`ATLAS_MAX_CONCURRENT_INGESTS`** (default 4). Ops can change it on the
+code location; no new image. A malformed value falls back to the default rather
+than taking the code location down at import.
+
+### Filed, not fixed
+
+TypeScript structured logs don't reach Dagster's event log — only the Pipes
+open/close lines do. Real debuggability gap (the tester read run-pod stdout to see
+them), but forwarding the logger through Pipes is its own change, not a rider on a
+connection fix.

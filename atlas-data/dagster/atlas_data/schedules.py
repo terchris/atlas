@@ -7,23 +7,38 @@ Atlas's 41 sources that is: 37 × P1Y (annual) and 4 × irregular. Fetching an
 annual SSB or FHI table every night would be ~15,000 pointless requests a year
 against public-sector APIs Atlas depends on staying welcome at.
 
-⚠️ NO in-code concurrency limits here, deliberately.
+## Concurrency — corrected after test round 3
 
-The run-pod concurrency cap is **4**, and it lives in the UIS Helm chart values,
-not in this file. Per the UIS maintainer's verdict on Atlas's requirement doc:
-capacity policy for a shared Postgres — which PostgREST, Atlas and Dagster's own
-metadata all sit on — should not live inside one tenant, because then the
-platform cannot change it without an Atlas rebuild. If you are about to add a
-`max_concurrent_runs` or a job-level limit here, that is the reason not to.
+This file used to say "no in-code concurrency limits, deliberately", on the
+grounds that the platform's cap of 4 was the bound and capacity policy should not
+live in a tenant. **The first half of that was wrong.** The imac tester measured
+what actually happens:
+
+- `max_concurrent_runs: 4` bounds concurrent **runs**, i.e. run pods.
+- `annual_sources_refresh` is **one run** → one pod → 38 steps as *subprocesses
+  inside it*, bounded by the multiprocess executor's `max_concurrent`, which
+  defaults to the pod's CPU count.
+
+So the platform cap never engages for a fan-out job, and nothing bounded the
+number of simultaneous writers against the shared Postgres. The protection Atlas
+was relying on was not the one that applies.
+
+The maintainer's principle still holds — the platform must be able to retune
+without an Atlas rebuild — so the bound is set here but read from
+**`ATLAS_MAX_CONCURRENT_INGESTS`** (default 4, matching the platform's run cap in
+spirit). Ops can change it on the code location without a new image.
 
 Schedules ship **stopped** (Dagster's default). Turning them on in production is
 a go-live decision for Terje, not a side effect of deploying the code location.
 """
 
+import os
+
 from dagster import (
     AssetSelection,
     ScheduleDefinition,
     define_asset_job,
+    multiprocess_executor,
 )
 
 from atlas_data.assets import api_v1, migrations, raw_fhi, raw_other, raw_ssb
@@ -33,6 +48,28 @@ from atlas_data.assets.dbt import atlas_dbt_models
 # Norway; schedule times are stated in the timezone people will reason about
 # them in, so "02:00" means 02:00 locally in both halves of the year.
 TIMEZONE = "Europe/Oslo"
+
+
+def _ingest_executor():
+    """
+    Bounds simultaneous ingest steps inside a single run.
+
+    Without this, a 38-asset job opens as many concurrent Postgres writers as the
+    run pod has CPUs — and every Atlas ingest writes to the *shared* instance that
+    also carries PostgREST and Dagster's own run metadata. It also means 38
+    simultaneous fetches against public-sector APIs, which is not how Atlas wants
+    to treat SSB and FHI.
+
+    Read from the environment so the platform can retune it without an Atlas
+    rebuild — os.getenv with a default, never os.environ[...].
+    """
+    raw = os.getenv("ATLAS_MAX_CONCURRENT_INGESTS", "4")
+    try:
+        max_concurrent = max(1, int(raw))
+    except ValueError:
+        # A malformed value must not take the code location down at import.
+        max_concurrent = 4
+    return multiprocess_executor.configured({"max_concurrent": max_concurrent})
 
 # ── Source groupings ─────────────────────────────────────────────────────────
 #
@@ -71,6 +108,7 @@ def _asset_selection(source_ids: list[str]) -> AssetSelection:
 annual_sources_job = define_asset_job(
     name="annual_sources_refresh",
     selection=_asset_selection(_ANNUAL_SOURCE_IDS),
+    executor_def=_ingest_executor(),
     description=(
         "The 37 sources whose manifest declares periodicity P1Y. Polled weekly "
         "rather than annually: publication dates drift by weeks and nobody wants "
@@ -84,6 +122,7 @@ annual_sources_job = define_asset_job(
 klass_job = define_asset_job(
     name="klass_refresh",
     selection=_asset_selection(_KLASS_SOURCE_IDS),
+    executor_def=_ingest_executor(),
     description=(
         "SSB Klass classifications (kommuner, fylker). Declared irregular; in "
         "practice they change at year boundaries when kommuner merge or split. "
@@ -97,6 +136,7 @@ klass_job = define_asset_job(
 redcross_branches_job = define_asset_job(
     name="redcross_branches_refresh",
     selection=_asset_selection(["redcross-branches"]),
+    executor_def=_ingest_executor(),
     description=(
         "Crawlee headless-browser scrape of Red Cross chapter pages. Weekly, on "
         "its own schedule and offset from the annual wave: it is the heaviest "

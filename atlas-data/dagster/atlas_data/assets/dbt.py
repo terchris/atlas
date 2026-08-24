@@ -32,6 +32,7 @@ import os
 import sys
 from pathlib import Path
 
+from atlas_data.db import libpq_env_from_url
 from atlas_data.paths import dbt_project_dir
 from dagster import AssetExecutionContext, AssetKey, asset
 from dagster_dbt import (
@@ -159,6 +160,25 @@ _MISORDERED_TESTS = ["api_v1_rowcount_matches_marts"]
 )
 def atlas_dbt_models(context: AssetExecutionContext, dbt: DbtCliResource):
     """Every dbt model in the Atlas project, as Dagster assets."""
+    # dbt's profiles.yml reads five libpq env vars, which locally come from
+    # ingest/.env. In a run pod nothing sets them and dbt fails at PARSE time
+    # with "Env var required but not provided: 'PGHOST'" — test round 3,
+    # criteria 10-12. The platform supplies one secret, ATLAS_DATABASE_URL, so
+    # derive the five from it here rather than asking for five more secrets.
+    #
+    # os.environ rather than a per-call env argument: DbtCliResource has no env
+    # parameter, and the dbt subprocess inherits this process's environment.
+    # Safe here — a run pod executes one step per process.
+    database_url = os.environ.get("ATLAS_DATABASE_URL") or os.environ.get(
+        "DATABASE_URL"
+    )
+    if not database_url:
+        raise RuntimeError(
+            "ATLAS_DATABASE_URL (or DATABASE_URL) must be set for dbt to reach "
+            "Postgres. For local dev, source atlas-data/ingest/.env."
+        )
+    os.environ.update(libpq_env_from_url(database_url))
+
     args = ["build"]
     for test in _MISORDERED_TESTS:
         args += ["--exclude", test]
