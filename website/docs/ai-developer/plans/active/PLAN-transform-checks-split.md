@@ -4,7 +4,7 @@
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Active
+## Status: Active — phases 1–2 shipped; criteria 10–12 already PASSED upstream
 
 **Goal**: Clear `RunFailureReason.START_TIMEOUT` with the smallest change that works, so integration criteria 10–12 can be verified — without building machinery that a later architectural decision would delete.
 
@@ -128,6 +128,28 @@ plan's job.
 ### Validation
 
 A PASS on 10–12 from imac.
+
+### Outcome (2026-08-24) — criteria 10–12 passed before this shipped
+
+The platform's `start_timeout_seconds` 300 → 900 landed first, and imac re-ran the
+**old** monolith under it: started, completed, dbt 820 PASS / 1 known WARN / 0 ERROR,
+13 api_v1 views, `rowcount_matches_marts` success. Criteria 10–12 are closed, and the
+tester's own summary is the fair one: *"your code was never the blocker; the plan just
+could not be built in time to prove it."*
+
+Which means **this plan's value is no longer unblocking — it is headroom**, and the
+tester measured exactly how much: 564s of the 900s budget consumed at 41 sources,
+leaving ~60% growth, or **about 27 more sources** before the limit returns. This split
+takes the write path to ~52s of that budget and leaves the checks path at ~511s.
+
+Two honest consequences:
+1. Phase 3's re-declaration is **not urgent** — nothing is blocked on it. But the
+   shape imac verified (one monolithic job) is no longer the shape Atlas ships, so
+   leaving it unverified means the verified artefact and the real one have diverged.
+   Declared as low priority.
+2. The remaining risk is now specifically the **644-event checks job**, not the
+   pipeline. That is the architectural question, and it is the one the pilot should
+   answer.
 
 ---
 
