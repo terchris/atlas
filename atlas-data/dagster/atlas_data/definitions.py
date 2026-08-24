@@ -33,6 +33,7 @@ from dagster import Definitions
 from atlas_data.assets import api_v1, migrations, raw_fhi, raw_other, raw_ssb
 from atlas_data.assets._factory import pipes_subprocess_client
 from atlas_data.assets.dbt import atlas_dbt_models, dbt_cli_resource
+from atlas_data.automation import automation_sensors
 from atlas_data.schedules import jobs, schedules, sensors
 
 defs = Definitions(
@@ -54,7 +55,7 @@ defs = Definitions(
     # They ship stopped; turning them on is a go-live decision.
     schedules=schedules,
     # Chains the checks after the transform build — see schedules.py.
-    sensors=sensors,
+    sensors=[*sensors, *automation_sensors],
     resources={
         "pipes_subprocess_client": pipes_subprocess_client(),
         "dbt": dbt_cli_resource(),

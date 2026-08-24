@@ -29,6 +29,8 @@ from atlas_data.assets.migrations import MIGRATIONS_ASSET_KEY
 from atlas_data.paths import ingest_dir
 from dagster import (
     AssetKey,
+    AutomationCondition,
+    FreshnessPolicy,
     AssetsDefinition,
     MaterializeResult,
     PipesSubprocessClient,
@@ -47,6 +49,8 @@ def make_raw_ingest_asset(
     *,
     group_name: str,
     description: str | None = None,
+    automation_condition: "AutomationCondition | None" = None,
+    freshness_policy: "FreshnessPolicy | None" = None,
 ) -> AssetsDefinition:
     """
     Build a Dagster @asset that materialises `raw.<source_id>` by shelling
@@ -65,6 +69,15 @@ def make_raw_ingest_asset(
         key_prefix=["raw"],
         group_name=group_name,
         description=description or auto_description,
+        # Pilot (2026-08-24): when set, the asset declares its own cadence and
+        # the daemon decides when to run it — no job, no schedule, nothing to
+        # edit when a source is added. None keeps the existing cron behaviour.
+        # See assets/raw_ssb.py and PLAN-declarative-automation-pilot.
+        automation_condition=automation_condition,
+        # Declares what "fresh" MEANS for this source, so staleness is a
+        # monitored property rather than something a human notices. Needs no
+        # sensor — the daemon evaluates policies directly.
+        freshness_policy=freshness_policy,
         # The raw.* tables this writes into are created by the migrations asset.
         # Declared as lineage so the graph shows why an ingest into a fresh
         # database fails; it does not make a single-asset materialisation run
@@ -98,9 +111,19 @@ def make_raw_ingest_assets(
     source_ids: Iterable[str],
     *,
     group_name: str,
+    automation_condition: "AutomationCondition | None" = None,
+    freshness_policy: "FreshnessPolicy | None" = None,
 ) -> list[AssetsDefinition]:
     """Bulk-version of make_raw_ingest_asset for a list of source ids."""
-    return [make_raw_ingest_asset(sid, group_name=group_name) for sid in source_ids]
+    return [
+        make_raw_ingest_asset(
+            sid,
+            group_name=group_name,
+            automation_condition=automation_condition,
+            freshness_policy=freshness_policy,
+        )
+        for sid in source_ids
+    ]
 
 
 def pipes_subprocess_client() -> PipesSubprocessClient:
