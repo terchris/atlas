@@ -876,6 +876,13 @@ models:
               field: kommune_nr
               config:
                 severity: warn
+      - name: region_code
+        description: >-
+          Raw SSB region identifier for the row — kommune, fylke, police
+          district or country. Kept as its own column because 08487 mixes those
+          levels and the last two fit neither kommune_nr nor fylke_nr. Part of
+          the model's natural key.
+        data_tests: [not_null]
       - name: fylke_nr
         description: Derived 2-digit fylkesnummer only when region_code matches a fylke code 
           pattern.
@@ -905,10 +912,15 @@ models:
         description: ingest `loaded_at` from raw.ssb_08487.
         data_tests: [not_null]
     data_tests:
+      # The natural key includes the REGION, and region lives in kommune_nr /
+      # fylke_nr — not in contents_code. It used to be smuggled into
+      # contents_code, which made this test pass for the wrong reason and cost
+      # 17GB downstream (see the model header). fylke_nr is part of the key so
+      # kommune, fylke and national rows are distinguished properly.
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns:
             - source_id
-            - kommune_nr
+            - region_code
             - year
             - contents_code
 
