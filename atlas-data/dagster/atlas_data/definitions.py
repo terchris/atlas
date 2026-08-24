@@ -34,7 +34,7 @@ from atlas_data.assets import api_v1, migrations, raw_fhi, raw_other, raw_ssb
 from atlas_data.assets._factory import pipes_subprocess_client
 from atlas_data.assets.dbt import atlas_dbt_models, dbt_cli_resource
 from atlas_data.automation import automation_sensors
-from atlas_data.schedules import jobs, schedules, sensors
+from atlas_data.schedules import _ingest_executor, jobs, schedules, sensors
 
 defs = Definitions(
     assets=[
@@ -56,6 +56,12 @@ defs = Definitions(
     schedules=schedules,
     # Chains the checks after the transform build — see schedules.py.
     sensors=[*sensors, *automation_sensors],
+    # Declarative automation launches runs that belong to no job, so a
+    # job-level executor cannot bound them. Setting it here keeps the
+    # ATLAS_MAX_CONCURRENT_INGESTS bound the tester verified in round 4 —
+    # without this, migrating to automation would have quietly discarded it and
+    # let 38 assets open as many concurrent writers as the pod has CPUs.
+    executor=_ingest_executor(),
     resources={
         "pipes_subprocess_client": pipes_subprocess_client(),
         "dbt": dbt_cli_resource(),

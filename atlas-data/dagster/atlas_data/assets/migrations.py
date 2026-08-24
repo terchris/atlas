@@ -24,7 +24,13 @@ skips them — so re-running is cheap and safe.
 import os
 
 from atlas_data.paths import ingest_dir
-from dagster import AssetExecutionContext, MaterializeResult, PipesSubprocessClient, asset
+from dagster import (
+    AssetExecutionContext,
+    AutomationCondition,
+    MaterializeResult,
+    PipesSubprocessClient,
+    asset,
+)
 
 MIGRATIONS_ASSET_KEY = ["raw", "_migrations"]
 
@@ -33,6 +39,20 @@ MIGRATIONS_ASSET_KEY = ["raw", "_migrations"]
     name="_migrations",
     key_prefix=["raw"],
     group_name="raw_infrastructure",
+    # ⚠️ This condition is load-bearing, and its absence is the trap the
+    # declarative-automation pilot found.
+    #
+    # `AutomationCondition.on_cron` expands to "cron tick passed AND all deps
+    # updated since that tick". Every ingest asset depends on this one. If this
+    # asset has no condition of its own it is never updated by the daemon, so
+    # that dep clause can never be satisfied and **all 40 automated sources
+    # silently never run** — no failed run, no error, just nothing.
+    #
+    # `any_downstream_conditions` is the answer: migrations materialise whenever
+    # any downstream asset is about to, whatever that downstream's cadence.
+    # One upstream serving weekly, monthly and scraper cadences without
+    # enumerating any of them.
+    automation_condition=AutomationCondition.any_downstream_conditions(),
     description=(
         "Applies atlas-data/migrations/*.sql via `npm run migrate`, creating the "
         "raw.* and private_raw.* tables every ingest writes into. Idempotent — "

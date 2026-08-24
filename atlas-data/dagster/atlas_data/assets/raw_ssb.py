@@ -8,11 +8,8 @@ this module just exposes one @asset per source for Dagster to schedule and
 materialise.
 """
 
-from datetime import timedelta
-
-from dagster import AutomationCondition, FreshnessPolicy
-
 from atlas_data.assets._factory import make_raw_ingest_assets
+from atlas_data import cadence
 
 # SSB PxWeb sources — annual or near-annual cadence. New ones added by:
 # 1. Add to atlas-data/ingest/src/sources/ssb-<id>/index.ts + manifest.yml.
@@ -49,29 +46,22 @@ SSB_CRIME_SOURCES = [
 ]
 
 assets = (
-    make_raw_ingest_assets(SSB_SOURCES, group_name="raw_ssb")
-    # ── Declarative-automation pilot (2026-08-24) ────────────────────────────
-    # The Klass family is the pilot slice for the idiomatic Dagster shape. It
-    # declares its own cadence here, on the asset, instead of being enumerated
-    # into a job in schedules.py. Same monthly cadence, expressed where the
-    # source is defined — which is what makes "adding a source touches zero job
-    # definitions" structural rather than a convention people have to remember.
-    #
-    # klass_monthly still exists and still selects these assets. Both ship
-    # STOPPED; enable one or the other, never both, or the source is fetched
-    # twice. The comparison is the point of the pilot.
+    make_raw_ingest_assets(
+        SSB_SOURCES,
+        group_name="raw_ssb",
+        automation_condition=cadence.weekly_polled(),
+        freshness_policy=cadence.WEEKLY_FRESHNESS,
+    )
     + make_raw_ingest_assets(
         SSB_KLASS_SOURCES,
         group_name="raw_ssb_klass",
-        automation_condition=AutomationCondition.on_cron("0 1 1 * *", "Europe/Oslo"),
-        # What "fresh" means for this source, declared where the source is.
-        # WARN at 45 days (a monthly cadence may miss one cycle), FAIL at 90
-        # (by then something is actually wrong). Deliberately not tight: a
-        # check that cries wolf is a check people learn to ignore.
-        freshness_policy=FreshnessPolicy.time_window(
-            fail_window=timedelta(days=90),
-            warn_window=timedelta(days=45),
-        ),
+        automation_condition=cadence.monthly_polled(),
+        freshness_policy=cadence.MONTHLY_FRESHNESS,
     )
-    + make_raw_ingest_assets(SSB_CRIME_SOURCES, group_name="raw_ssb_crime")
+    + make_raw_ingest_assets(
+        SSB_CRIME_SOURCES,
+        group_name="raw_ssb_crime",
+        automation_condition=cadence.weekly_polled(),
+        freshness_policy=cadence.WEEKLY_FRESHNESS,
+    )
 )

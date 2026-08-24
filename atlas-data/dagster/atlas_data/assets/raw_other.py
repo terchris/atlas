@@ -21,6 +21,7 @@ See _factory.make_raw_ingest_asset. Currently:
 """
 
 from atlas_data.assets._factory import make_raw_ingest_assets
+from atlas_data import cadence
 
 OTHER_SOURCES = [
     "bufdir-barnefattigdom",
@@ -28,4 +29,24 @@ OTHER_SOURCES = [
     "redcross-branches",
 ]
 
-assets = make_raw_ingest_assets(OTHER_SOURCES, group_name="raw_other")
+# frr is absent from these lists on purpose — it has no cadence and no freshness
+# policy. See cadence.UNSCHEDULED_SOURCES for why.
+assets = [
+    *make_raw_ingest_assets(
+        ["bufdir-barnefattigdom"],
+        group_name="raw_other",
+        automation_condition=cadence.weekly_polled(),
+        freshness_policy=cadence.WEEKLY_FRESHNESS,
+    ),
+    *make_raw_ingest_assets(
+        ["redcross-branches"],
+        group_name="raw_other",
+        automation_condition=cadence.scraper_polled(),
+        freshness_policy=cadence.WEEKLY_FRESHNESS,
+    ),
+    # No condition, no freshness policy — manual and local-only by design.
+    *make_raw_ingest_assets(
+        sorted(cadence.UNSCHEDULED_SOURCES),
+        group_name="raw_other",
+    ),
+]
