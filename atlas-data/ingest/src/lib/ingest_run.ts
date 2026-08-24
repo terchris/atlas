@@ -34,6 +34,7 @@ import * as dagsterPipes from "@dagster-io/dagster-pipes";
 import { startRun, finishRun, type FinishRunArgs } from "./scraping/index.js";
 import { closeSql, getSql } from "./postgres.js";
 import { logger } from "./logger.js";
+import { buildMaterializationMetadata } from "./pipes_metadata.js";
 
 /**
  * What a source's work function returns. The `output` is the per-source
@@ -126,16 +127,11 @@ function reportPipesMaterialization(
   runId: number | null,
 ): void {
   try {
-    pipes.reportAssetMaterialization({
-      source_id: sourceId,
-      ingest_run_id: runId,
-      rows_scraped: record.rowsScraped ?? null,
-      rows_parsed: record.rowsParsed ?? null,
-      rows_skipped: record.rowsSkipped ?? null,
-      warnings_count: record.warningsCount ?? null,
-      errors_count: record.errorsCount ?? null,
-      upstream_updated_at: record.upstreamUpdatedAt?.toISOString() ?? null,
-    });
+    // Null values make the SDK's normalizeMetadata throw and cost the whole
+    // payload — see buildMaterializationMetadata.
+    pipes.reportAssetMaterialization(
+      buildMaterializationMetadata(sourceId, record, runId),
+    );
   } catch (err) {
     // Pipes reporting failures must not break the ingest — log and continue.
     logger.warn("dagster_pipes.report_failed", {
