@@ -4,7 +4,7 @@
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Active — pilot implemented, findings below, decision pending
+## Status: Active — pilot ran, Terje approved adoption, migration implemented
 
 **Goal**: Answer with evidence whether Atlas should move from hand-written jobs and cron schedules to Dagster's asset-centric automation — by running it on one slice, beside the existing jobs, not instead of them.
 
@@ -103,8 +103,8 @@ Suggested order, if Terje agrees:
 
 ### Tasks
 
-- [ ] 3.1 Terje decides: adopt, adopt-freshness-only, or revert.
-- [ ] 3.2 If adopting, cut the migration PLAN(s) from the order above.
+- [x] 3.1 Terje decides: adopt, adopt-freshness-only, or revert.
+- [x] 3.2 If adopting, cut the migration PLAN(s) from the order above.
 - [ ] 3.3 If reverting, delete `atlas_data/automation.py` and the two keyword arguments.
 
 ---
@@ -114,9 +114,73 @@ Suggested order, if Terje agrees:
 - [x] Pilot runs on one slice with the existing job intact and everything shipped STOPPED.
 - [x] Evidence gathered on whether the idiomatic shape suits Atlas.
 - [x] No change to the other 39 sources or the transform jobs.
-- [ ] A decision.
+- [x] A decision — adopt, 2026-08-24.
 
 ## Out of Scope
 
 - Partitions — worth their own investigation; they fit the ingest layer far better than marts models joining many sources.
 - The 41-source live ingest run — **approval still open with Terje; do not run it.**
+
+
+---
+
+## Phase 4: The migration (2026-08-24) — implemented
+
+Terje approved the recommendation, so the pilot became the migration in one pass.
+
+**Freshness, all 41 sources.** `cadence.py` declares the semantics once. Bounds
+follow the **polling** cadence, not the publication cadence — an annual SSB table is
+still fetched weekly, so "not fetched in a month" means the pipeline is broken
+regardless of whether SSB published anything. Weekly-polled sources WARN at 14 days
+and FAIL at 30; Klass WARNs at 45 and FAILs at 90.
+
+⚠️ **`frr` gets no freshness policy and no condition.** It reads the private repo,
+which is absent from the image by design, so it materialises zero rows on any public
+deployment. A freshness policy there would be permanently violated — an alarm that is
+always on, which is the same as no alarm at all.
+
+**Automation, 41 assets** (40 sources + `raw/_migrations`). Cadence moved from job
+membership lists onto the assets. `raw/_migrations` uses
+`AutomationCondition.any_downstream_conditions()` — it materialises whenever any
+downstream wants to, serving weekly, monthly and scraper cadences without
+enumerating any of them. That is the direct fix for Finding 1, and **it is what
+stops all 40 sources silently never running.**
+
+Measured before and after, with `evaluate_automation_conditions`:
+
+| | requested on the weekly tick |
+|---|---:|
+| Before (migrations unautomated) | **0** — everything stranded |
+| After | **41** |
+
+### Three deviations from the plan as written, and why
+
+1. **The ingest jobs were kept; only their schedules were deleted.** The plan said
+   delete both. But `klass_refresh` is how the integration tester runs a family on
+   demand, and it is the fallback if automation misbehaves. A job nobody schedules
+   costs nothing; losing the ability to run one by hand costs a debugging session.
+   What was actually removed is the *clock*, which is the part automation replaces.
+2. **The pilot's scoped automation sensor was deleted.** Once every asset has a
+   condition, Dagster supplies `default_automation_condition_sensor` covering all of
+   them. Keeping a second, narrower sensor over the same assets would be two things
+   deciding when Klass runs. Verified the default ships **STOPPED**.
+3. **A `Definitions`-level executor was added.** Automation launches runs that belong
+   to no job, so the job-level executor could not bound them — migrating would have
+   *silently discarded* the `ATLAS_MAX_CONCURRENT_INGESTS` bound the tester verified
+   in round 4, letting 38 assets open as many concurrent Postgres writers as the pod
+   has CPUs. Setting it on `Definitions` keeps it.
+
+### What is still unverified, and it is the important part
+
+**Steady-state behaviour could not be simulated faithfully.** `evaluate_automation_conditions`
+requests but does not execute, and materialisations reported into a test instance carry
+real timestamps rather than the simulated clock — so multi-cycle sequences (does the
+weekly tick fire again next Sunday?) do not reproduce reliably offline. The first-tick
+behaviour and the Finding-1 fix are solid; *repeat* behaviour needs a daemon.
+
+Also: `any_downstream_conditions` is flagged **beta** by Dagster, and it is now
+load-bearing for every source. Worth knowing.
+
+**Everything ships STOPPED.** The migration changes what *would* run, not what does.
+Nothing starts itself on deploy, and enabling the automation sensor is a deliberate act
+that should follow cluster verification, not precede it.

@@ -260,27 +260,6 @@ def run_dbt_checks_after_api_v1(context: RunStatusSensorContext):
 # Times are staggered so the waves do not collide under the platform's 4-slot
 # cap: sources land first, the transform runs afterwards with room to spare.
 
-annual_sources_schedule = ScheduleDefinition(
-    name="annual_sources_weekly",
-    job=annual_sources_job,
-    cron_schedule="0 2 * * 0",  # Sunday 02:00
-    execution_timezone=TIMEZONE,
-)
-
-klass_schedule = ScheduleDefinition(
-    name="klass_monthly",
-    job=klass_job,
-    cron_schedule="0 1 1 * *",  # 1st of the month, 01:00 — before the weekly wave
-    execution_timezone=TIMEZONE,
-)
-
-redcross_branches_schedule = ScheduleDefinition(
-    name="redcross_branches_weekly",
-    job=redcross_branches_job,
-    cron_schedule="30 3 * * 0",  # Sunday 03:30 — after the annual wave has drained
-    execution_timezone=TIMEZONE,
-)
-
 transform_schedule = ScheduleDefinition(
     name="transform_daily",
     job=transform_job,
@@ -288,10 +267,23 @@ transform_schedule = ScheduleDefinition(
     execution_timezone=TIMEZONE,
 )
 
+# ── What happened to the ingest schedules ────────────────────────────────────
+#
+# annual_sources_weekly / klass_monthly / redcross_branches_weekly are gone.
+# Their cadence now lives on the assets themselves as automation conditions
+# (see cadence.py), which is what makes "adding a source touches zero job
+# definitions" structural instead of a convention — there is no membership list
+# left to forget to edit.
+#
+# The JOBS are deliberately kept. They are no longer triggered by a clock, but
+# they remain the way a human or the integration tester runs a family on demand
+# ("materialise klass_refresh"), and they are the fallback if declarative
+# automation misbehaves. A job nobody schedules costs nothing; losing the
+# ability to run one by hand costs a debugging session.
+#
+# transform_daily stays a schedule: the transform side was not part of this
+# migration.
 schedules = [
-    annual_sources_schedule,
-    klass_schedule,
-    redcross_branches_schedule,
     transform_schedule,
 ]
 

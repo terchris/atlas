@@ -7,6 +7,7 @@ varies by indicator (some annual, some quarterly, some sporadic).
 """
 
 from atlas_data.assets._factory import make_raw_ingest_assets
+from atlas_data import cadence
 
 FHI_SOURCES = [
     "fhi-alkohol",
@@ -32,4 +33,9 @@ FHI_SOURCES = [
     "fhi-vgs-gjennomforing",
 ]
 
-assets = make_raw_ingest_assets(FHI_SOURCES, group_name="raw_fhi")
+assets = make_raw_ingest_assets(
+    FHI_SOURCES,
+    group_name="raw_fhi",
+    automation_condition=cadence.weekly_polled(),
+    freshness_policy=cadence.WEEKLY_FRESHNESS,
+)
