@@ -4,7 +4,7 @@
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Active — round 3: Tier 1 + criteria 8/9 PASS, 10–12 fixed; HELD pending tester queue
+## Status: Completed (2026-08-24) — verified by imac, round 6 PASS
 
 **Goal**: Complete Atlas's side of the Dagster integration — the last un-orchestrated ingest source, the dbt half of the asset graph, schedules — and declare it for independent verification by the fleet tester.
 
@@ -460,3 +460,23 @@ TypeScript structured logs don't reach Dagster's event log — only the Pipes
 open/close lines do. Real debuggability gap (the tester read run-pod stdout to see
 them), but forwarding the logger through Pipes is its own change, not a rider on a
 connection fix.
+
+
+---
+
+## Closed 2026-08-24 — verified
+
+Task 4.4 is done: imac returned PASS. Criteria 1–9 and 13 passed in round 4; 10–12
+were closed by the tester while verifying the platform's start-timeout bump, on a
+database carrying the round-4 ingest. Their summary is the fair one: *"your code was
+never the blocker; the plan just could not be built in time to prove it."*
+
+Six declaration rounds. Four cluster-breaking defects reached the tester — the
+positional path resolution, `dagster-postgres`, the `.env` wrapper, and dbt's libpq
+env — and every one of them was a **local-dev mechanism that did not survive
+containerisation**. Three of the four are now build-time gates in the Dockerfile, so
+that class fails in CI rather than in a cluster.
+
+Superseded in part by [PLAN-transform-checks-split](./PLAN-transform-checks-split.md)
+and [PLAN-declarative-automation-pilot](./PLAN-declarative-automation-pilot.md), which
+changed the job shape and the trigger model after this plan's work was verified.
