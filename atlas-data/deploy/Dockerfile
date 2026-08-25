@@ -58,6 +58,13 @@ COPY dbt/models ./dbt/models
 COPY dbt/seeds ./dbt/seeds
 COPY dbt/macros ./dbt/macros
 COPY dbt/scripts ./dbt/scripts
+# ⚠️ Singular tests live in dbt/tests/ and are NOT covered by models/.
+# Omitting this directory left three singular tests — including
+# api_v1_descriptions_complete, a gate on the public API surface — absent from
+# the compiled manifest, so dbt could never run them in a cluster. Nothing
+# failed; they simply were not there. Found by the imac tester in the course of
+# correcting an image comparison.
+COPY dbt/tests ./dbt/tests
 COPY migrations ./migrations
 
 # --- Install the Dagster code-location package after source is in place -----
@@ -127,6 +134,21 @@ RUN cd /app/ingest \
     && node --env-file-if-exists=.env -e "process.exit(0)" \
     && ! grep -q -- "--env-file=" package.json \
     && echo "smoke: npm scripts safe without a .env file"
+
+# The manifest is the only thing that decides which tests can ever run, so
+# assert the singular tests actually made it in. This exact defect — a test
+# present in git, absent from the image, silently never executed — is the shape
+# the contents_code guard exists to catch, and it had happened to the guard
+# itself.
+RUN cd / && python -c "\
+import json; \
+m = json.load(open('/app/dbt/target/manifest.json')); \
+sing = sorted(n['name'] for n in m['nodes'].values() \
+              if n['resource_type'] == 'test' and n.get('test_metadata') is None); \
+print(f'smoke: {len(sing)} singular tests in the manifest: {sing}'); \
+assert 'contents_code_identifies_an_indicator' in sing, \
+    f'the fan-out guard is missing from the image manifest: {sing}'; \
+assert len(sing) >= 3, f'expected at least 3 singular tests, found {len(sing)}'"
 
 # --- Dagster gRPC server -----------------------------------------------------
 # Port 4000 matches the UIS Dagster doc's expected user-deployments port.
