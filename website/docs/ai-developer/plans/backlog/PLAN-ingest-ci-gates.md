@@ -4,7 +4,7 @@
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Active — phases 1 and 2 implemented 2026-08-25; phase 3 (Node 24) still open
+## Status: Backlog — **phases 1 and 2 shipped 2026-08-25**; only phase 3 (the C12 move to Node 24) remains, and it needs a real Node 24 to validate against rather than an assumption
 
 **Goal**: Make `atlas-data/ingest`'s typecheck and test gates both *pass* and *actually run in CI*, so the PR gates named in `CLAUDE.md` mean something.
 

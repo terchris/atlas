@@ -351,3 +351,47 @@ describe("parseDataSheet (error paths)", () => {
     );
   });
 });
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// discoverZipUrl — the sole-upload fallback
+//
+// July 2026: Bufdir moved the monitor onto a Strapi CMS and the ZIP filename
+// became generic and hashed, with no "barnefattigdom" in it. Every existing tier
+// required that literal, so the source failed on the first full production run.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const STRAPI_ZIP =
+  "https://ca-statistikk-strapi-prod.example.norwayeast.azurecontainerapps.io" +
+  "/uploads/Filer_publisert_03_07_26_og_2025_640b1b30b3.zip";
+
+describe("discoverZipUrl — generic filenames", () => {
+  it("falls back to the only /uploads/ ZIP when no tier names barnefattigdom", () => {
+    const html = `<a href="${STRAPI_ZIP}">Last ned</a>`;
+    expect(discoverZipUrl(html)).toEqual({
+      url: STRAPI_ZIP,
+      matchTier: "sole-upload",
+    });
+  });
+
+  it("still prefers a canonical URL when one is present", () => {
+    const canonical =
+      "https://cdn.example.io/uploads/2026_07_03_barnefattigdom_monitor_abc123.zip";
+    const html = `<a href="${STRAPI_ZIP}">a</a><a href="${canonical}">b</a>`;
+    expect(discoverZipUrl(html).matchTier).toBe("canonical");
+  });
+
+  // Guessing would be worse than failing: the parse could well succeed and
+  // quietly ingest the wrong dataset.
+  it("refuses to guess when several unnamed ZIPs are present", () => {
+    const other =
+      "https://cdn.example.io/uploads/Filer_publisert_annet_datasett_999.zip";
+    const html = `<a href="${STRAPI_ZIP}">a</a><a href="${other}">b</a>`;
+    expect(() => discoverZipUrl(html)).toThrow(/Found 2 ZIPs/);
+  });
+
+  it("ignores duplicate links to the same ZIP", () => {
+    const html = `<a href="${STRAPI_ZIP}">a</a><a href="${STRAPI_ZIP}">again</a>`;
+    expect(discoverZipUrl(html).matchTier).toBe("sole-upload");
+  });
+});
