@@ -11,7 +11,7 @@ an **in-cluster** Postgres instead of Odin pg through a relay.
 |---|---|---|
 | Sources ingested | 39/41 | **40/41** |
 | Rows written | 2,824,464 | **2,904,664** |
-| Ingest wall clock | ~49 min | **~31.5 min** |
+| Ingest wall clock | ~49 min | **2m39s** |
 | `transform_and_publish` | 2m38s | **38.05 s** |
 | `atlas_db` size | 944 MB | 1038 MB |
 
@@ -39,36 +39,48 @@ ingest fine but transform slow → dbt; uniformly slower → round-trips* — re
 Worth stating plainly for the next tenant that crosses that relay: **at this scale
 it is not the bottleneck, and it is not close.**
 
-## The real lever is pod startup, not throughput
+## What the executor actually did — one pod, multiprocess, as declared
 
-The number that matters for anyone wanting this faster:
+`annual_sources_refresh` created **exactly one** run pod, and its log reads
+`Executing steps using multiprocess executor: parent process (pid: 1)`. So the
+platform runs **one pod per run** and Atlas's own executor drives the steps as
+subprocesses inside it — which is precisely what the job declares.
 
-```
-ingest wall clock      ~31.5 min
-actual transfer work     3.7 min   (sum of per-source durations, 224 s)
-unaccounted             ~28 min    ← Dagster pod scheduling
-```
+**`ATLAS_MAX_CONCURRENT_INGESTS` is therefore live, not inert.** It configures that
+multiprocess executor's `max_concurrent`, so it is the bound that actually ran. It
+should be kept, and it remains the first knob to reach for if the shared Postgres
+ever needs protecting.
 
-**Nearly 90% of the ingest was waiting for pods, not moving data.** 38 assets at a
-concurrency of 4 means roughly ten waves, and the overhead works out at about 175
-seconds per wave.
+> ⚠️ **This entry was briefly wrong in the opposite direction, and the mistake is
+> worth keeping.** The first version of this page recorded a 31.5-minute ingest with
+> ~28 minutes of "pod scheduling", and concluded from it that the executor was being
+> overridden and the knob was dead — I was ready to delete a working safety
+> mechanism. The 31.5 minutes came from comparing a launch time against the moment
+> someone happened to look, rather than against completion. Two people then reasoned
+> confidently from it. What settled it was asking for the pod count and the run's
+> executor rather than continuing to infer. **Arithmetic on bad inputs is still
+> arithmetic, and it is persuasive.**
 
-So optimisation effort should go to pod startup — image size, pull caching, or
-running more steps per pod — and **not** to dbt, the SQL, or the relay. Atlas's
-image is ~1.5–2 GiB, which is the obvious first suspect.
+### One thing genuinely worth a look
 
-⚠️ **Open question, and it bears on a safety property.** The observed shape (one pod
-per asset) is *not* what Atlas's code asks for. `annual_sources_refresh` declares a
-`multiprocess_executor`, which should run 38 steps as subprocesses inside **one** pod
-— and the arithmetic agrees: 224 s of work at 4-way concurrency in a single pod is
-one to two minutes, not 31.5.
+| | |
+|---|---|
+| Sum of per-source durations | 224 s |
+| Wall clock | 159 s |
+| **Effective parallelism** | **~1.4×** |
 
-If steps are executing as separate pods, the platform's executor is overriding
-Atlas's, which means **`ATLAS_MAX_CONCURRENT_INGESTS` is inert on asgard** — a knob
-everyone believes in, doing nothing. The concurrency of 4 observed would then be the
-platform's cap rather than Atlas's bound. The imac tester verified that bound working
-in round 4, so this would be an environment difference, not a code regression.
-Being chased with ops.
+With `max_concurrent` at its default of 4, a perfectly packed run would be nearer
+56 s of work plus startup, and the two slowest sources alone are 87.7 s. So the
+observed 1.4× is well short of what 4-way should deliver.
+
+Most likely explanation: **per-step subprocess startup dominates.** Every step
+spawns `npm run ingest:<id>` → npm → tsx → Node → module load, and 38 of those is
+real time that no amount of database concurrency removes. If ingest wall clock ever
+needs to come down, that is the thing to measure first — not the relay, and not the
+database. It is also the same shape as the image-size question: process startup, not
+data movement.
+
+Not urgent. 2m39s for 2.9M rows is not a problem that needs solving.
 
 ## Slowest sources
 
