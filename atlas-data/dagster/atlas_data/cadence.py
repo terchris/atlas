@@ -67,10 +67,32 @@ MONTHLY_FRESHNESS = FreshnessPolicy.time_window(
     warn_window=timedelta(days=45),
 )
 
-# ⚠️ `frr` deliberately gets NO freshness policy and NO automation condition.
-# It reads atlas-private-data-repo/, which is absent from the image by design,
-# so on any public deployment it materialises zero rows and only when a human
-# runs it locally with the private data present. A freshness policy would be
-# permanently violated — an alarm that is always on, which is the same as no
-# alarm at all. See dbt/models/private_marts/sources.yml for the contract.
-UNSCHEDULED_SOURCES = {"frr"}
+# ── Sources that must never self-trigger ─────────────────────────────────────
+#
+# These get NO automation condition and NO freshness policy. Both omissions are
+# deliberate and they are not the same omission:
+#
+#   - no condition  → the daemon never launches it, so an enabled automation
+#                     sensor cannot inherit a guaranteed failure.
+#   - no freshness  → it cannot run, so a freshness policy would be permanently
+#                     violated. An alarm that is always on is the same as no
+#                     alarm at all, and it would bury the ones that mean
+#                     something.
+#
+# Both remain runnable by hand — the jobs are kept — which is how they get
+# exercised the moment their blocker clears.
+#
+# `frr`: private by design. It reads atlas-private-data-repo/, deliberately
+# absent from the image, so on any public deployment it materialises zero rows.
+# See dbt/models/private_marts/sources.yml for the contract. This one is
+# permanent, not a park.
+#
+# `redcross-branches`: **parked 2026-08-25** pending Terje's Red Cross API
+# credential. It carried `on_cron(30 3 * * 0)`, so with the automation sensor
+# enabled it would have failed every Sunday at 03:30 — and Phase 3's acceptance
+# is "no orphaned or hung runs", which that would have compromised by design
+# rather than by discovery. Unparking is: give it back
+# `automation_condition=cadence.scraper_polled()` and
+# `freshness_policy=cadence.WEEKLY_FRESHNESS` in assets/raw_other.py, one line
+# each. See PLAN-redcross-branches-private-input.
+UNSCHEDULED_SOURCES = {"frr", "redcross-branches"}

@@ -38,13 +38,10 @@ assets = [
         automation_condition=cadence.weekly_polled(),
         freshness_policy=cadence.WEEKLY_FRESHNESS,
     ),
-    *make_raw_ingest_assets(
-        ["redcross-branches"],
-        group_name="raw_other",
-        automation_condition=cadence.scraper_polled(),
-        freshness_policy=cadence.WEEKLY_FRESHNESS,
-    ),
-    # No condition, no freshness policy — manual and local-only by design.
+    # No condition, no freshness policy: frr (private by design) and
+    # redcross-branches (parked pending its credential). Neither may
+    # self-trigger; both stay runnable by hand. See cadence.UNSCHEDULED_SOURCES
+    # for why the two omissions are different omissions.
     *make_raw_ingest_assets(
         sorted(cadence.UNSCHEDULED_SOURCES),
         group_name="raw_other",
