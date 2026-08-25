@@ -144,6 +144,26 @@ def render_sql(wrappers: list[WrapperView], removed_views: list[str]) -> str:
     # (per their INVESTIGATE-postgrest.md) but isn't yet implemented. The DO
     # block lets this migration apply both before and after UIS runs configure
     # — see PLAN-004 [Q11/Q12](ii).
+    #
+    # ⚠️ DO NOT delete these as "duplicating what ./uis configure already does".
+    # They look redundant and are not.
+    #
+    # `ALTER DEFAULT PRIVILEGES` applies only to objects created by the role that
+    # SET it. UIS's configure runs as `postgres`, so its default ACL reads
+    # `atlas_web_anon=r/postgres` and covers objects postgres creates. The api_v1
+    # views are created by the `atlas` role, by this SQL — so the platform's
+    # default privileges do not reach them.
+    #
+    # This block is therefore the thing that keeps the public API working across a
+    # refresh: every `dbt run` drops the api_v1 views via CASCADE, the api_v1 asset
+    # re-creates them as `atlas`, and it is the ALTER DEFAULT PRIVILEGES below —
+    # owned by `atlas` — that makes the new views readable by the anon role.
+    # Remove it and the API goes dark after the next transform, silently, with the
+    # views present and empty of permission rather than of rows.
+    #
+    # Verified locally 2026-08-25: a view created as `atlas` in api_v1 is readable
+    # by atlas_web_anon, and pg_default_acl shows `atlas ... {atlas_web_anon=r/atlas}`
+    # — set by this block, not by the platform.
     out.extend(
         [
             "-- Grant SELECT to the per-app anon role if it exists (created by UIS's",
