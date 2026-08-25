@@ -135,20 +135,31 @@ RUN cd /app/ingest \
     && ! grep -q -- "--env-file=" package.json \
     && echo "smoke: npm scripts safe without a .env file"
 
-# The manifest is the only thing that decides which tests can ever run, so
-# assert the singular tests actually made it in. This exact defect — a test
-# present in git, absent from the image, silently never executed — is the shape
-# the contents_code guard exists to catch, and it had happened to the guard
-# itself.
+# Every singular dbt test must be REACHABLE, not merely present.
+#
+# Two failures in a row came from this one gap, each a level further along:
+#   1. dbt/tests/ was not copied, so the tests were absent from the manifest.
+#   2. Once copied, api_v1_descriptions_complete was IN the manifest and still
+#      never ran — no ref(), so dbt infers no parent, so dagster-dbt builds no
+#      asset check, and nothing in the pipeline invokes bare `dbt test`.
+#
+# Being in the manifest and being executed are different things. A singular test
+# earns its place only if something actually runs it, so this asserts each one
+# is attached as an asset check — and fails the build naming any that is not,
+# rather than letting it sit in the image looking like coverage.
 RUN cd / && python -c "\
 import json; \
+from atlas_data.assets.dbt import atlas_dbt_models; \
 m = json.load(open('/app/dbt/target/manifest.json')); \
 sing = sorted(n['name'] for n in m['nodes'].values() \
               if n['resource_type'] == 'test' and n.get('test_metadata') is None); \
-print(f'smoke: {len(sing)} singular tests in the manifest: {sing}'); \
-assert 'contents_code_identifies_an_indicator' in sing, \
-    f'the fan-out guard is missing from the image manifest: {sing}'; \
-assert len(sing) >= 3, f'expected at least 3 singular tests, found {len(sing)}'"
+checks = {c.name for c in atlas_dbt_models.check_specs}; \
+unreachable = [t for t in sing if t not in checks]; \
+print(f'smoke: singular tests {sing}; unreachable: {unreachable or \"none\"}'); \
+assert not unreachable, ( \
+    f'these singular dbt tests are in the manifest but nothing runs them: {unreachable}. ' \
+    'Give each a ref() so dbt attaches it to a parent asset, or re-home it as a ' \
+    'Python asset check (see assets/api_v1.py).')"
 
 # --- Dagster gRPC server -----------------------------------------------------
 # Port 4000 matches the UIS Dagster doc's expected user-deployments port.

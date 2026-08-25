@@ -198,7 +198,7 @@ cd atlas-data/dbt
 ./regenerate-api-v1.sh
 ```
 
-This updates `atlas-data/dbt/api_v1_generated.sql` and `api_v1_state.json`. Inspect the diff: a new `CREATE OR REPLACE VIEW api_v1.<your_view>` block plus per-column `COMMENT ON COLUMN` lines should appear. **Also update [`atlas-data/dbt/tests/api_v1_rowcount_matches_marts.sql`](https://github.com/terchris/atlas/blob/main/atlas-data/dbt/tests/api_v1_rowcount_matches_marts.sql)** — add a `union all` line for the new view pair (the test is hand-maintained today; future iteration may auto-generate it).
+This updates `atlas-data/dbt/api_v1_generated.sql` and `api_v1_state.json`. Inspect the diff: a new `CREATE OR REPLACE VIEW api_v1.<your_view>` block plus per-column `COMMENT ON COLUMN` lines should appear. No test file to update: the row-count check is an asset check on `api_v1` that enumerates the schema from the catalog, so a new wrapper is covered automatically.
 
 If your model is in `models/marts/` but NOT under `models/marts/api/` (e.g. a fact or internal mart consumed by other dbt models), skip this step — that view is internal-only.
 
@@ -220,7 +220,7 @@ uv run --env-file ../ingest/.env dbt test --select indicators__<source_id>   # m
 ./check-osmosis.sh                                                    # must pass
 ./check-api-v1.sh                                                     # must pass (only if step 9b applies)
 ./apply-api-v1.sh                                                     # only if step 9b applies; idempotent
-uv run --env-file ../ingest/.env dbt test --select api_v1_descriptions_complete api_v1_rowcount_matches_marts   # only if step 9b applies
+(cd ../dagster && dagster job execute -j api_v1_checks -m atlas_data.definitions)   # only if step 9b applies
 ```
 
 If any command fails or any test warns, **fix before committing**. No "we'll clean up later."
@@ -263,7 +263,7 @@ A two-phase process — the api_v1 wrapper has external consumers and can't be d
 
 Wrapper still serves traffic; consumers are notified via release notes. Grace period: at least one consumer-notice cycle.
 
-**Phase B — Remove.** After grace period and confirmed no traffic: delete the model from `models/marts/api/`. Run `./regenerate-api-v1.sh` — the generator notices the view is in `api_v1_state.json` but not in the current manifest, and emits `DROP VIEW IF EXISTS api_v1.<name> CASCADE`. Apply via `./apply-api-v1.sh`. Remove the corresponding line from `tests/api_v1_rowcount_matches_marts.sql`.
+**Phase B — Remove.** After grace period and confirmed no traffic: delete the model from `models/marts/api/`. Run `./regenerate-api-v1.sh` — the generator notices the view is in `api_v1_state.json` but not in the current manifest, and emits `DROP VIEW IF EXISTS api_v1.<name> CASCADE`. Apply via `./apply-api-v1.sh`.
 
 ---
 

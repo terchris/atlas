@@ -137,20 +137,16 @@ def dbt_translator() -> AtlasDbtTranslator:
     return AtlasDbtTranslator(settings=_TRANSLATOR_SETTINGS)
 
 
-# `dbt run` rebuilds marts.mart_* by swapping in a new table and dropping the
-# old one CASCADE — which takes the api_v1.* views that depend on it with it.
-# That is normal, and it is exactly why the api_v1 asset re-applies the wrappers
-# downstream of dbt.
+# Both api_v1 singular tests have been retired from dbt and re-homed as Python
+# asset checks on the api_v1 asset (see assets/api_v1.py). They could not work
+# as dbt tests: neither uses ref(), so dbt inferred no parent, so dagster-dbt
+# built no asset check — and nothing in the pipeline invokes bare `dbt test`.
+# One of them additionally ran BEFORE the views it inspected existed, because
+# dbt scheduled it early while the same build was dropping them via CASCADE.
 #
-# But tests/api_v1_rowcount_matches_marts.sql hardcodes `api_v1.<view>` instead
-# of using ref(), so dbt infers no dependencies for it and schedules it early —
-# against views the same invocation is in the middle of destroying. Inside a
-# one-shot `dbt build` it is a coin flip; on a schedule it fails every time.
-#
-# So it is excluded here and its intent is enforced instead as a Dagster asset
-# check on api_v1, which runs after the views are re-applied — the only point at
-# which the comparison is meaningful. See assets/api_v1.py.
-_MISORDERED_TESTS = ["api_v1_rowcount_matches_marts"]
+# Nothing to exclude here any more; the list is kept empty and named so the
+# next person to add a singular test finds this explanation.
+_MISORDERED_TESTS: list[str] = []
 
 
 def _dbt_command_for(context: AssetExecutionContext) -> list:
