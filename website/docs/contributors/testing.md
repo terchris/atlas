@@ -97,6 +97,8 @@ There's no end-to-end test today; verify the change works by clicking through th
 
 ## What CI runs
 
+`ingest-ci.yml` runs `npm run typecheck` and `npm test` for `atlas-data/ingest` on every PR touching it, on Node 22. Before 2026-08-25 **nothing did** — the 104 unit tests were enforced by no workflow at all, which is how a typecheck failure sat on `main` unnoticed.
+
 CI configuration is currently minimal — most gates are run locally. The known gates that will block a merge:
 
 - **`check-osmosis.sh` strict mode** — fails CI if any column lacks a description. Required because PostgREST projects descriptions verbatim into the public OpenAPI spec.
