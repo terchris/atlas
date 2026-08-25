@@ -135,8 +135,34 @@ the file is deferred, and it is deferred deliberately rather than forgotten.
 - Production on asgard starts at **10/13 populated views**, and that is fine.
 - Nothing waits on this. The asgard plan proceeds.
 
-**To un-park**: deliver the file, then work tasks 1.2–1.7 below. It is a short change —
-the design work is already done.
+**To un-park**: deliver the credential/file, then work tasks 1.2–1.7 below, and give the
+asset back its cadence — `automation_condition=cadence.scraper_polled()` and
+`freshness_policy=cadence.WEEKLY_FRESHNESS` in `assets/raw_other.py`, one line each.
+
+### 2026-08-25: the automation condition was removed while parked
+
+`raw/redcross_branches` carried `on_cron(30 3 * * 0, Europe/Oslo)`. Harmless while
+everything ships STOPPED, but Phase 3.1 enables the automation sensor — so the soak
+would have inherited a **guaranteed failure every Sunday at 03:30**, and Phase 3's
+acceptance criterion is "no orphaned or hung runs". That would have been compromised
+**by design rather than discovered**, which is the worse of the two.
+
+It now sits in `cadence.UNSCHEDULED_SOURCES` alongside `frr`, with no condition and no
+freshness policy. The two omissions are deliberate and different: no condition means the
+daemon cannot launch it; no freshness means it cannot report permanently-violated
+staleness, since an alarm that is always on is the same as no alarm.
+
+`frr` is permanent — private by design. **This one is a park**, and the comment says so
+so nobody mistakes it for the same thing.
+
+The `redcross_branches_refresh` job is deliberately kept, so the moment the credential
+lands it can be exercised by hand before anything is re-armed.
+
+**Note for whoever un-parks it**: ops now describes the blocker as *Terje's APIM
+subscription key*, which is a different mechanism from the static dump this plan was
+designed around. The design decision above (commit the dump into the repo) may need
+revisiting if the data is to come from a live API instead. Worth settling before
+implementing, not during.
 
 ### Exactly what is affected, since "3 empty views" is the headline but not the whole picture
 
