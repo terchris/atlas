@@ -193,3 +193,71 @@ def api_v1_rowcount_matches_marts():
             "mismatches": ", ".join(mismatches) if mismatches else "none",
         },
     )
+
+
+@asset_check(
+    asset=api_v1_surface,
+    name="descriptions_complete",
+    description=(
+        "Every column in api_v1.* carries a Postgres COMMENT. PostgREST sources "
+        "the OpenAPI spec's column descriptions from pg_description, so an "
+        "undescribed column becomes an empty entry in the public API docs."
+    ),
+)
+def api_v1_descriptions_complete():
+    """
+    The Dagster-side home of dbt's tests/api_v1_descriptions_complete.sql.
+
+    That test existed for months and **never ran in a cluster**. First
+    `dbt/tests/` was not copied into the image at all, so it was absent from the
+    compiled manifest. Once that was fixed it was in the manifest but still
+    unreachable: it has no `ref()`, so dbt infers no parent, so dagster-dbt makes
+    no asset check from it — and the only things that invoke dbt are
+    `transform_and_publish` (which excludes tests) and `transform_checks` (which
+    selects asset checks). In the manifest and executed are two different things.
+
+    As a check on `api_v1` it has an owner and a run: the asset whose surface it
+    describes, in the job that verifies that surface after publishing.
+    """
+    import psycopg2
+
+    database_url = os.environ.get("ATLAS_DATABASE_URL") or os.environ.get(
+        "DATABASE_URL"
+    )
+    if not database_url:
+        raise RuntimeError(
+            "ATLAS_DATABASE_URL (or DATABASE_URL) must be set to check the "
+            "api_v1 surface."
+        )
+
+    with psycopg2.connect(database_url) as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                select c.table_name, c.column_name
+                from information_schema.columns c
+                join pg_class pgc on pgc.relname = c.table_name
+                join pg_namespace pgn
+                  on pgn.oid = pgc.relnamespace and pgn.nspname = c.table_schema
+                left join pg_description pgd
+                  on pgd.objoid = pgc.oid and pgd.objsubid = c.ordinal_position
+                where c.table_schema = 'api_v1'
+                  and pgd.description is null
+                order by c.table_name, c.ordinal_position
+                """
+            )
+            undocumented = [f"{t}.{c}" for t, c in cur.fetchall()]
+            cur.execute(
+                "select count(*) from information_schema.columns "
+                "where table_schema = 'api_v1'"
+            )
+            total_columns = cur.fetchone()[0]
+
+    return AssetCheckResult(
+        passed=not undocumented,
+        severity=AssetCheckSeverity.ERROR,
+        metadata={
+            "columns_checked": total_columns,
+            "undocumented": ", ".join(undocumented) if undocumented else "none",
+        },
+    )

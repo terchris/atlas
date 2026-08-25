@@ -49,7 +49,10 @@ defs = Definitions(
         # api_v1.* — the public PostgREST surface. Terminal asset.
         api_v1.api_v1_surface,
     ],
-    asset_checks=[api_v1.api_v1_rowcount_matches_marts],
+    asset_checks=[
+        api_v1.api_v1_rowcount_matches_marts,
+        api_v1.api_v1_descriptions_complete,
+    ],
     jobs=jobs,
     # Cadence comes from each source's declared periodicity — see schedules.py.
     # They ship stopped; turning them on is a go-live decision.

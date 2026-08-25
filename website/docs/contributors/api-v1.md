@@ -101,9 +101,10 @@ The full ingest+dbt workflow lives in [adding-a-source.md](./adding-a-source.md)
 3. Apply to your local DB so the runtime tests pass:
    ```bash
    ./apply-api-v1.sh
-   uv run --env-file ../ingest/.env dbt test --select api_v1_descriptions_complete api_v1_rowcount_matches_marts
+   # The api_v1 checks are Dagster asset checks, not dbt tests — run them via the job:
+   (cd ../dagster && dagster job execute -j api_v1_checks -m atlas_data.definitions)
    ```
-4. **Update `tests/api_v1_rowcount_matches_marts.sql`** — add a `union all` line for the new view pair (the test is hand-maintained today).
+4. *(Nothing to do — this step used to say "add a `union all` line to `tests/api_v1_rowcount_matches_marts.sql`". That test is retired: the row-count check is now an asset check on `api_v1` that enumerates the schema from the catalog, so a new wrapper is covered automatically.)*
 5. Commit: dbt model + schema.yml + the regenerated artefacts + the test edit.
 
 The drift gate (`./check-api-v1.sh`) catches step 1 if you forget; the row-count test catches step 4. Naming-conventions rule #9 enforces this in PR review.
@@ -131,7 +132,7 @@ The wrapper still serves traffic; consumers see the deprecation in release notes
 ./regenerate-api-v1.sh
 ```
 
-The generator notices the view is in `api_v1_state.json` but not in the current manifest, and emits `DROP VIEW IF EXISTS api_v1.<name> CASCADE` at the top of the new SQL. The diff of `api_v1_state.json` is the audit trail. Apply via `./apply-api-v1.sh`. Don't forget to remove the corresponding line from `tests/api_v1_rowcount_matches_marts.sql`.
+The generator notices the view is in `api_v1_state.json` but not in the current manifest, and emits `DROP VIEW IF EXISTS api_v1.<name> CASCADE` at the top of the new SQL. The diff of `api_v1_state.json` is the audit trail. Apply via `./apply-api-v1.sh`.
 
 ### Changing a column description
 
@@ -149,8 +150,10 @@ The generator notices the view is in `api_v1_state.json` but not in the current 
 
 `dbt test` runs two singular tests against an applied database:
 
-4. **Runtime description coverage** ([`tests/api_v1_descriptions_complete.sql`](https://github.com/terchris/atlas/blob/main/atlas-data/dbt/tests/api_v1_descriptions_complete.sql)) — `pg_catalog.pg_description` returns no NULLs for `api_v1.*` columns.
-5. **Row-count parity** ([`tests/api_v1_rowcount_matches_marts.sql`](https://github.com/terchris/atlas/blob/main/atlas-data/dbt/tests/api_v1_rowcount_matches_marts.sql)) — every `api_v1.X` row count matches `marts.mart_X`.
+4. **Runtime description coverage** — the `descriptions_complete` asset check on `api_v1`: `pg_catalog.pg_description` returns no NULLs for `api_v1.*` columns.
+5. **Row-count parity** — the `rowcount_matches_marts` asset check on `api_v1`: every `api_v1.X` row count matches `marts.mart_X`.
+
+   Both were dbt singular tests until 2026-08-25 and **never ran in a cluster** — first because `dbt/tests/` was not copied into the image, then because a singular test with no `ref()` gets no parent asset and so no asset check, and nothing in the pipeline invokes bare `dbt test`. As Python asset checks on the `api_v1` asset they run in the `api_v1_checks` job, straight after the publish. See [`atlas-data/dagster/atlas_data/assets/api_v1.py`](https://github.com/terchris/atlas/blob/main/atlas-data/dagster/atlas_data/assets/api_v1.py).
 
 All five must be green to merge a PR touching `api_v1`.
 
