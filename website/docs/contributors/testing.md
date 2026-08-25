@@ -150,6 +150,42 @@ A new column appeared without a description. See [check-osmosis.md § how to fix
 
 ---
 
+## A test that exists is not a test that runs
+
+Four separate defects in the Dagster integration came from the same mistake, and
+none of them made anything fail — they made things *quietly stop being checked*.
+Worth knowing before you add a test, because each looked correct at the level it
+was checked at:
+
+| What was verified | What was actually true |
+|---|---|
+| The test is in the repo (`git`) | `dbt/tests/` was never copied into the image |
+| The test is in the image | It was absent from the compiled `manifest.json` |
+| The test is in the manifest | Nothing invoked it — no `ref()`, so no parent asset, so no asset check |
+| The guard against all this | Shipped inert for the same reason, protecting nothing |
+
+The pattern: **evidence one level away from where the thing actually runs.** A
+green CI log says the build succeeded, not that the test executes in a cluster.
+
+Two practical rules follow.
+
+**Singular tests need a `ref()`, or they need re-homing.** dagster-dbt turns a dbt
+test into an asset check by looking at the model it depends on. A singular test in
+`dbt/tests/` that queries relations by name — `select ... from api_v1.foo` — has no
+parent, gets no check, and nothing in the pipeline runs it. Either `ref()` the model
+it is really about, or write it as a Python asset check on the asset that owns the
+thing (see `atlas-data/dagster/atlas_data/assets/api_v1.py`). The image build now
+fails naming any singular test nothing runs, so this is enforced rather than
+remembered.
+
+**Make a new guard fail once, on purpose, before trusting it.** Every guard in this
+repo was verified in both directions — the ENOENT fix was reproduced before it was
+fixed, and the fan-out guard was run against the pre-fix model to watch it fail. A
+guard that has never failed is a guard nobody has tested, and this codebase has
+shipped exactly that.
+
+---
+
 ## Cross-references
 
 - [setup.md](./setup.md) — first-time dev environment
