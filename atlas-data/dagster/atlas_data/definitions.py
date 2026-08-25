@@ -28,6 +28,8 @@ Cross-references:
   (the original Atlas-side implementation; this file extends it to all sources)
 """
 
+import os
+
 from dagster import Definitions
 
 from atlas_data.assets import api_v1, migrations, raw_fhi, raw_other, raw_ssb
@@ -36,7 +38,13 @@ from atlas_data.assets.dbt import atlas_dbt_models, dbt_cli_resource
 from atlas_data.automation import automation_sensors
 from atlas_data.schedules import _ingest_executor, jobs, schedules, sensors
 
+# Surfaced in the Dagster UI on the code location, so "which commit is asgard
+# actually running?" is a question the orchestrator answers rather than one
+# someone answers from a tag they typed. See the Dockerfile's provenance block.
+_GIT_SHA = os.getenv("ATLAS_GIT_SHA", "unknown")
+
 defs = Definitions(
+    metadata={"atlas_git_sha": _GIT_SHA},
     assets=[
         # raw.* schema DDL — the root of the graph.
         migrations.raw_migrations,

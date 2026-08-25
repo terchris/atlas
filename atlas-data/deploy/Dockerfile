@@ -102,6 +102,23 @@ RUN cd /app/dbt \
 ENV ATLAS_DBT_PROJECT_DIR=/app/dbt
 ENV ATLAS_INGEST_DIR=/app/ingest
 
+# --- Provenance: let the artefact say what it is ------------------------------
+# Four times in this integration, "fixed in git" was mistaken for "fixed where it
+# runs" — most recently a code location that had been redeployed in name only,
+# still serving an image from before the fix. ops hit the same shape on another
+# layer the same day (`:latest` resolving to an image predating the change).
+#
+# The missing affordance is that nothing could be ASKED what it was running; you
+# could only read a tag someone had typed and trust it. So the commit is baked in
+# here and surfaced as code-location metadata in definitions.py, which means the
+# orchestrator can answer "what commit is this?" without anyone trusting a string.
+#
+# Defaults to "unknown" so a local `docker build` with no --build-arg still works.
+ARG ATLAS_GIT_SHA=unknown
+ENV ATLAS_GIT_SHA=${ATLAS_GIT_SHA}
+LABEL org.opencontainers.image.revision=${ATLAS_GIT_SHA}
+LABEL org.opencontainers.image.source=https://github.com/terchris/atlas
+
 # --- Build-time smoke test ---------------------------------------------------
 # Import the code location exactly as the pod does, and from `/` rather than
 # /app so the run cannot accidentally depend on the working directory — the
@@ -112,10 +129,12 @@ ENV ATLAS_INGEST_DIR=/app/ingest
 # that a single import would have caught.
 RUN cd / && python -c "\
 from atlas_data.definitions import defs; \
-import atlas_data; \
+import atlas_data, os; \
 n = len(defs.resolve_asset_graph().get_all_asset_keys()); \
-print(f'smoke: imported {atlas_data.__file__} -> {n} assets'); \
-assert n > 100, f'expected >100 assets, got {n}'"
+sha = os.environ.get('ATLAS_GIT_SHA', 'unknown'); \
+print(f'smoke: imported {atlas_data.__file__} -> {n} assets @ {sha}'); \
+assert n > 100, f'expected >100 assets, got {n}'; \
+assert sha != 'unknown', 'ATLAS_GIT_SHA was not passed as a build-arg; the image would ship unable to say what commit it is'"
 
 # Run pods run THIS image and must hydrate the platform's run storage before
 # executing any step. dagster_postgres is not part of the documented image

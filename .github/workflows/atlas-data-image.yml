@@ -65,6 +65,8 @@ jobs:
         with:
           context: atlas-data
           file: atlas-data/deploy/Dockerfile
+          build-args: |
+            ATLAS_GIT_SHA=${{ github.sha }}
           push: false
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -75,6 +77,8 @@ jobs:
         with:
           context: atlas-data
           file: atlas-data/deploy/Dockerfile
+          build-args: |
+            ATLAS_GIT_SHA=${{ github.sha }}
           push: true
           tags: ${{ steps.tags.outputs.tags }}
           cache-from: type=gha
