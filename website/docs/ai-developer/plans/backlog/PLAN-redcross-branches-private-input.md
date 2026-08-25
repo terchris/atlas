@@ -4,7 +4,7 @@
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Backlog — **decision made 2026-08-25 (option 1)**; blocked only on receiving the file
+## Status: **PARKED** (Terje, 2026-08-25) — decision and design stand; only the data delivery is deferred
 
 **Goal**: Stop `redcross-branches` hard-failing in the cluster, without silently publishing three permanently empty API views.
 
@@ -123,9 +123,46 @@ Two things will be checked on receipt, before it is committed:
 - [ ] 1.6 Document the refresh path — who re-exports it, and how a contributor would know it is due.
 - [ ] 1.7 Verify locally: ingest runs with no private repo present; the 3 dependent views populate.
 
+## Parked — 2026-08-25
+
+Terje parked the dump delivery. **Nothing about the decision is reopened**: the
+clearance stands, option 1 stands, and the design below stands. Only the delivery of
+the file is deferred, and it is deferred deliberately rather than forgotten.
+
+**The interim state, accepted knowingly:**
+
+- `redcross-branches` keeps its **loud failure** — which remains the right behaviour. A source that cannot find its input should say so, and this repo has argued three times that a silent zero is worse than a visible failure.
+- Production on asgard starts at **10/13 populated views**, and that is fine.
+- Nothing waits on this. The asgard plan proceeds.
+
+**To un-park**: deliver the file, then work tasks 1.2–1.7 below. It is a short change —
+the design work is already done.
+
+### Exactly what is affected, since "3 empty views" is the headline but not the whole picture
+
+Five api_v1 views sit downstream of `redcross-branches`, in two different states:
+
+| View | State without the dump |
+|---|---|
+| `api_v1.activity_catalog` | **empty** |
+| `api_v1.distrikt_summary` | **empty** |
+| `api_v1.kommune_local_chapters` | **empty** |
+| `api_v1.ngo_index` | populated, **missing Red Cross chapters** |
+| `api_v1.ngo_overview` | populated, **missing Red Cross chapters** |
+
+The last two are worth flagging, because they are the ones a consumer could be misled
+by. An empty view says plainly that there is nothing there. A view that returns 250 rows
+when it should return more says nothing at all — it under-reports silently, and Red
+Cross is Norway's largest NGO by chapter count.
+
+**Recommendation, not yet done** (it touches public-facing docs, so it is Terje's call):
+note in the dataset catalogue which views are currently empty or partial and why. Cheap,
+and it is the difference between "known gap, documented" and "the API quietly disagrees
+with reality". Say the word and I will add it.
+
 ## Timing
 
-Phase 2.2 of `PLAN-atlas-asgard-001-deployment` is a **fresh production ingest**. If this
-lands first, production starts at **13/13 views populated** rather than 10/13. It is
-therefore worth doing before that ingest, but it is not worth *delaying* the ingest for —
-re-running one source later is cheap, and the pipeline is designed for exactly that.
+Superseded by the park. The earlier note said this was worth landing before Phase 2.2's
+fresh ingest for 13/13 views — that no longer applies, and the same note already said it
+was **not** worth delaying the ingest for. That half stands: whenever the file arrives,
+re-running one source is cheap and the pipeline is built for it.
