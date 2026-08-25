@@ -1,0 +1,59 @@
+name: Ingest CI (typecheck + tests)
+
+# The gates CLAUDE.md has always named as PR requirements, finally enforced.
+#
+# Until 2026-08-25 NO workflow ran `npm run typecheck` or `npm test` for
+# atlas-data/ingest: website-build.yml typechecks the WEBSITE, check-manifests.yml
+# runs only the manifest validator, and atlas-data-image.yml builds the image. So
+# 104 unit tests existed, passed, and were enforced by nothing — a PR could break
+# every one of them and go green. That is also how a typecheck failure sat on main
+# unnoticed: the gate that would have caught it was not wired up.
+#
+# See website/docs/ai-developer/plans/backlog/PLAN-ingest-ci-gates.md.
+
+on:
+  pull_request:
+    paths:
+      - 'atlas-data/ingest/**'
+      - '.github/workflows/ingest-ci.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'atlas-data/ingest/**'
+      - '.github/workflows/ingest-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ingest-ci:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: atlas-data/ingest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          # ⚠️ 22, not 20. Vitest 4's rolldown imports `styleText` from
+          # `node:util`, which Node 20.11 lacks, so the suite dies at startup
+          # before running a single test. Conformance C12 targets the latest LTS
+          # (Node 24) — moving there is phase 3 of the plan above, and wants
+          # validating rather than assuming.
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: atlas-data/ingest/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Unit tests
+        run: npm test

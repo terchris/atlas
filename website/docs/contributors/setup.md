@@ -10,7 +10,8 @@ The full per-tool docs live alongside the code; this page is a guided ordering w
 
 You need:
 
-- **Node.js ≥ 20** (uses built-in `fetch` and `import.meta.url`). Check with `node --version`.
+- **Node.js ≥ 22** (uses built-in `fetch` and `import.meta.url`). Check with `node --version`.
+  On Node 20 the test suite dies at startup rather than failing a test — Vitest 4's bundler imports `styleText` from `node:util`, added in 20.12 — so an old Node looks like a broken repo. CI runs 22. The platform target is the latest LTS (Node 24); Atlas moves there once it is validated.
 - **npm** (Atlas's `package.json` uses npm; pnpm also works).
 - **uv** — the Python env manager dbt uses. Install with `brew install uv` (macOS) or see [uv's install docs](https://github.com/astral-sh/uv).
 - **Postgres** reachable from your machine. Atlas runs against Postgres in the [Urbalurba Infrastructure Stack (UIS)](https://github.com/helpers-no/urbalurba-infrastructure) for local dev — UIS spins up a Postgres pod inside Rancher Desktop k8s. See [Bootstrap atlas_db on UIS Postgres](#connecting-to-postgres-in-uis) below for the one-shot setup. If you don't have UIS, any local Postgres ≥ 14 works for ingest + dbt; you'll skip the frontend until you point at a real Atlas database.

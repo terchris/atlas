@@ -4,7 +4,7 @@
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Backlog
+## Status: Active — phases 1 and 2 implemented 2026-08-25; phase 3 (Node 24) still open
 
 **Goal**: Make `atlas-data/ingest`'s typecheck and test gates both *pass* and *actually run in CI*, so the PR gates named in `CLAUDE.md` mean something.
 
@@ -58,8 +58,8 @@ The bigger finding. `CLAUDE.md` names typecheck and tests as PR gates, but audit
 
 ### Tasks
 
-- [ ] 1.1 Fix the ajv imports in `src/sources/validate-manifests.ts` — the `.default` interop dance (`import ajvModule from "ajv/dist/2020.js"; const Ajv2020 = ajvModule.default ?? ajvModule;`) or whatever the cleanest form is for ajv 8 under NodeNext. Verify the script still runs, not just that it compiles: `npm run sources:check-manifests`.
-- [ ] 1.2 Confirm `npm run typecheck` is clean with zero errors.
+- [x] 1.1 Fix the ajv imports in `src/sources/validate-manifests.ts` — the `.default` interop dance (`import ajvModule from "ajv/dist/2020.js"; const Ajv2020 = ajvModule.default ?? ajvModule;`) or whatever the cleanest form is for ajv 8 under NodeNext. Verify the script still runs, not just that it compiles: `npm run sources:check-manifests`.
+- [x] 1.2 Confirm `npm run typecheck` is clean with zero errors.
 
 ### Validation
 
@@ -71,10 +71,37 @@ The bigger finding. `CLAUDE.md` names typecheck and tests as PR gates, but audit
 
 ### Tasks
 
-- [ ] 2.1 Add an `atlas-data/ingest` job — extend `check-manifests.yml` or add `ingest-ci.yml`, path-filtered to `atlas-data/ingest/**` — running `npm ci`, `npm run typecheck`, and `npm test`.
-- [ ] 2.2 Pin that job to **Node 22** initially (see Problem Summary §3), then see phase 3 — the platform target is the latest LTS.
-- [ ] 2.3 Raise the `engines.node` floor in `atlas-data/ingest/package.json` to `>=22` and note it in [`contributors/setup.md`](../../../contributors/setup.md), so a contributor on Node 20 gets a clear message instead of a rolldown `SyntaxError`.
-- [ ] 2.4 Deliberately break a test locally and confirm the new job fails — an unverified gate is the thing this PLAN exists to fix.
+- [x] 2.1 Add an `atlas-data/ingest` job — extend `check-manifests.yml` or add `ingest-ci.yml`, path-filtered to `atlas-data/ingest/**` — running `npm ci`, `npm run typecheck`, and `npm test`.
+- [x] 2.2 Pin that job to **Node 22** initially (see Problem Summary §3), then see phase 3 — the platform target is the latest LTS.
+- [x] 2.3 Raise the `engines.node` floor in `atlas-data/ingest/package.json` to `>=22` and note it in [`contributors/setup.md`](../../../contributors/setup.md), so a contributor on Node 20 gets a clear message instead of a rolldown `SyntaxError`.
+- [x] 2.4 Deliberately break a test locally and confirm the new job fails — an unverified gate is the thing this PLAN exists to fix.
+
+### Outcome (2026-08-25) — phases 1 and 2 complete, gate proven in both directions
+
+The gate was **made to fail on purpose** before being trusted, in CI rather than
+locally, because "does the workflow catch it" is a different question from "does
+vitest catch it":
+
+```
+ingest-ci  pass  (real code)
+ingest-ci  fail  (one assertion flipped)
+   FAIL src/lib/__tests__/pipes_metadata.test.ts > keeps zero, which is a real row count
+   AssertionError: expected +0 to be 999
+   Tests  1 failed | 103 passed (104)
+ingest-ci  pass  (reverted)
+```
+
+Before this, that same break would have gone green.
+
+**The ajv fix**, for the next person who meets this class: ajv 8 and ajv-formats
+ship CommonJS with `export default` in their `.d.ts`. Under `"module": "NodeNext"`
+with `"type": "module"`, a default import of such a package is typed as the
+*module namespace*, so `new Ajv2020(...)` is "not constructable" and
+`addFormats(ajv)` is "not callable" — while both work perfectly at runtime, which
+is exactly why it survived. ajv exposes a named export (`import { Ajv2020 }`),
+which resolves cleanly; ajv-formats does not, so its callable is taken from
+`.default` — confirmed present at runtime before relying on it — and typed as
+`FormatsPlugin` rather than `any`, so misuse is still caught.
 
 ### Validation
 

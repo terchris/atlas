@@ -24,9 +24,22 @@ import { readFileSync, readdirSync, existsSync, statSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import Ajv2020 from "ajv/dist/2020.js";
-import addFormats from "ajv-formats";
+// ajv 8 and ajv-formats ship CommonJS with `export default` in their types.
+// Under `"module": "NodeNext"` + `"type": "module"`, a default import of such a
+// package is typed as the module namespace, so `new Ajv2020(...)` and
+// `addFormats(ajv)` fail to typecheck — while working perfectly at runtime,
+// which is why this sat broken on main unnoticed (see PLAN-ingest-ci-gates).
+//
+// ajv exposes a named export, which resolves cleanly. ajv-formats does not, so
+// its callable is taken from `.default` — verified present at runtime — with the
+// plugin's own type rather than `any`, so misuse is still caught.
+import { Ajv2020 } from "ajv/dist/2020.js";
+import addFormatsModule from "ajv-formats";
+import type { FormatsPlugin } from "ajv-formats";
 import { load as parseYaml } from "js-yaml";
+
+const addFormats = (addFormatsModule as unknown as { default: FormatsPlugin })
+  .default;
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const SCHEMA_PATH = join(SCRIPT_DIR, "manifest.schema.json");
