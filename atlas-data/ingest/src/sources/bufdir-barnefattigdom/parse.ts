@@ -65,7 +65,8 @@ export type DiscoveryMatch = {
     | "canonical"
     | "loose-date-format"
     | "loose-monitor"
-    | "loose-bare";
+    | "loose-bare"
+    | "sole-upload";
 };
 
 const DISCOVERY_TIERS: { name: DiscoveryMatch["matchTier"]; re: RegExp }[] = [
@@ -87,10 +88,35 @@ const DISCOVERY_TIERS: { name: DiscoveryMatch["matchTier"]; re: RegExp }[] = [
   },
 ];
 
+// Last resort: any ZIP under /uploads/ on the page.
+//
+// Every tier above requires the literal "barnefattigdom" in the URL. In July 2026
+// Bufdir moved the monitor onto a Strapi CMS and the filename became generic and
+// hashed — `Filer_publisert_03_07_26_og_2025_<hash>.zip` — so all four missed and
+// the source failed on the first full production run. The comment above correctly
+// anticipated the HOST moving; what actually moved was the filename.
+//
+// Deliberately not folded into the tier list, because matching "any zip" is only
+// safe when there is exactly one. If Bufdir ever publishes two, guessing which is
+// the child-poverty bundle would be worse than failing: the parse might well
+// succeed and quietly ingest the wrong dataset.
+const SOLE_UPLOAD_RE = /https:\/\/[^\s"'<>]+\/uploads\/[^\s"'<>]*\.zip/gi;
+
 export function discoverZipUrl(html: string): DiscoveryMatch {
   for (const tier of DISCOVERY_TIERS) {
     const m = html.match(tier.re);
     if (m) return { url: m[0], matchTier: tier.name };
+  }
+  const uploads = [...new Set(html.match(SOLE_UPLOAD_RE) ?? [])];
+  if (uploads.length === 1) {
+    return { url: uploads[0]!, matchTier: "sole-upload" };
+  }
+  if (uploads.length > 1) {
+    throw new Error(
+      `Found ${uploads.length} ZIPs under /uploads/ and none names barnefattigdom, ` +
+        `so which one holds the child-poverty data is a guess. Pick one deliberately ` +
+        `and add a tier for it. Candidates: ${uploads.join(", ")}`,
+    );
   }
   throw new Error(
     "Could not find any barnefattigdom .zip URL in monitor page HTML — Bufdir likely restructured the page; investigate before retrying.",
