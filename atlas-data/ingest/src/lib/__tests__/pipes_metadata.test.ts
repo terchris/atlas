@@ -29,7 +29,7 @@ describe("buildMaterializationMetadata", () => {
 
   it("keeps zero, which is a real row count and must not be dropped", () => {
     const m = buildMaterializationMetadata("frr", { rowsParsed: 0 }, 7);
-    expect(m["rows_parsed"]).toBe(999); // DELIBERATE BREAK — verifying the gate fails
+    expect(m["rows_parsed"]).toBe(0);
   });
 
   it("serialises upstreamUpdatedAt as an ISO string", () => {

@@ -74,7 +74,34 @@ The bigger finding. `CLAUDE.md` names typecheck and tests as PR gates, but audit
 - [x] 2.1 Add an `atlas-data/ingest` job — extend `check-manifests.yml` or add `ingest-ci.yml`, path-filtered to `atlas-data/ingest/**` — running `npm ci`, `npm run typecheck`, and `npm test`.
 - [x] 2.2 Pin that job to **Node 22** initially (see Problem Summary §3), then see phase 3 — the platform target is the latest LTS.
 - [x] 2.3 Raise the `engines.node` floor in `atlas-data/ingest/package.json` to `>=22` and note it in [`contributors/setup.md`](../../../contributors/setup.md), so a contributor on Node 20 gets a clear message instead of a rolldown `SyntaxError`.
-- [ ] 2.4 Deliberately break a test locally and confirm the new job fails — an unverified gate is the thing this PLAN exists to fix.
+- [x] 2.4 Deliberately break a test locally and confirm the new job fails — an unverified gate is the thing this PLAN exists to fix.
+
+### Outcome (2026-08-25) — phases 1 and 2 complete, gate proven in both directions
+
+The gate was **made to fail on purpose** before being trusted, in CI rather than
+locally, because "does the workflow catch it" is a different question from "does
+vitest catch it":
+
+```
+ingest-ci  pass  (real code)
+ingest-ci  fail  (one assertion flipped)
+   FAIL src/lib/__tests__/pipes_metadata.test.ts > keeps zero, which is a real row count
+   AssertionError: expected +0 to be 999
+   Tests  1 failed | 103 passed (104)
+ingest-ci  pass  (reverted)
+```
+
+Before this, that same break would have gone green.
+
+**The ajv fix**, for the next person who meets this class: ajv 8 and ajv-formats
+ship CommonJS with `export default` in their `.d.ts`. Under `"module": "NodeNext"`
+with `"type": "module"`, a default import of such a package is typed as the
+*module namespace*, so `new Ajv2020(...)` is "not constructable" and
+`addFormats(ajv)` is "not callable" — while both work perfectly at runtime, which
+is exactly why it survived. ajv exposes a named export (`import { Ajv2020 }`),
+which resolves cleanly; ajv-formats does not, so its callable is taken from
+`.default` — confirmed present at runtime before relying on it — and typed as
+`FormatsPlugin` rather than `any`, so misuse is still caught.
 
 ### Validation
 
