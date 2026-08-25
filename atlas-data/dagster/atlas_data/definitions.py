@@ -52,6 +52,7 @@ defs = Definitions(
     asset_checks=[
         api_v1.api_v1_rowcount_matches_marts,
         api_v1.api_v1_descriptions_complete,
+        api_v1.api_v1_public_role_scope,
     ],
     jobs=jobs,
     # Cadence comes from each source's declared periodicity — see schedules.py.

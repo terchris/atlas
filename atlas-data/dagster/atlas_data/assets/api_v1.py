@@ -261,3 +261,116 @@ def api_v1_descriptions_complete():
             "undocumented": ", ".join(undocumented) if undocumented else "none",
         },
     )
+
+
+# The PostgREST anonymous role, by UIS convention `<app>_web_anon`. Overridable
+# because the convention is the platform's, not Atlas's, and a rename should not
+# require an Atlas rebuild.
+ANON_ROLE_ENV = "ATLAS_POSTGREST_ANON_ROLE"
+DEFAULT_ANON_ROLE = "atlas_web_anon"
+
+
+@asset_check(
+    asset=api_v1_surface,
+    name="public_role_reaches_only_api_v1",
+    description=(
+        "The PostgREST anonymous role can read every api_v1 view and nothing "
+        "else. Audits the actual grants rather than assuming them."
+    ),
+)
+def api_v1_public_role_scope():
+    """
+    Makes Phase 4.2 of the asgard deployment plan runnable instead of manual.
+
+    That gate requires the anonymous role be "read-only on api_v1 only —
+    **audited, not assumed**", before a public hostname exists. This is that
+    audit, owned by the asset that publishes the surface.
+
+    Two failure directions, and both matter:
+
+    - **Over-exposure**: the role can read something outside api_v1. PostgREST
+      reaches other schemas via the `Accept-Profile` header, so a stray grant on
+      `marts` or `raw` is not theoretical — it is an unauthenticated read of
+      Atlas's internals. `private_raw` would be worse.
+    - **Under-exposure**: the role can read none of api_v1, so the public API
+      serves nothing. This has a real cause: `dbt run` drops the api_v1 views by
+      CASCADE, and it is the re-apply that re-grants them.
+
+    Checks relation-level SELECT, not schema USAGE. Postgres grants USAGE on
+    `public` to everyone by default, so a schema-level test reports a false
+    positive on every database in existence.
+
+    Passes when the role does not exist, which is normal local dev — PostgREST is
+    a platform component and nobody configures it to run dbt. A check that fails
+    on every contributor's laptop is one they learn to ignore, and this one needs
+    to be believed the day it fires.
+    """
+    import psycopg2
+
+    database_url = os.environ.get("ATLAS_DATABASE_URL") or os.environ.get(
+        "DATABASE_URL"
+    )
+    if not database_url:
+        raise RuntimeError(
+            "ATLAS_DATABASE_URL (or DATABASE_URL) must be set to audit the "
+            "api_v1 grants."
+        )
+    role = os.getenv(ANON_ROLE_ENV, DEFAULT_ANON_ROLE)
+
+    with psycopg2.connect(database_url) as conn:
+        with conn.cursor() as cur:
+            cur.execute("select 1 from pg_roles where rolname = %s", (role,))
+            if cur.fetchone() is None:
+                return AssetCheckResult(
+                    passed=True,
+                    severity=AssetCheckSeverity.WARN,
+                    metadata={
+                        "anon_role": role,
+                        "status": (
+                            "role does not exist — PostgREST is not configured "
+                            "against this database (expected in local dev)"
+                        ),
+                    },
+                )
+
+            cur.execute(
+                """
+                select count(*) from pg_class c
+                join pg_namespace n on n.oid = c.relnamespace
+                where n.nspname = 'api_v1'
+                  and has_table_privilege(%s, c.oid, 'SELECT')
+                """,
+                (role,),
+            )
+            readable_in_api_v1 = cur.fetchone()[0]
+
+            cur.execute(
+                """
+                select n.nspname || '.' || c.relname
+                from pg_class c
+                join pg_namespace n on n.oid = c.relnamespace
+                where c.relkind in ('r', 'v', 'm', 'p', 'f')
+                  and n.nspname not in ('pg_catalog', 'information_schema', 'api_v1')
+                  and has_table_privilege(%s, c.oid, 'SELECT')
+                order by 1
+                """,
+                (role,),
+            )
+            leaked = [r[0] for r in cur.fetchall()]
+
+    problems = []
+    if leaked:
+        problems.append(f"readable outside api_v1: {', '.join(leaked)}")
+    if readable_in_api_v1 == 0:
+        problems.append("no api_v1 relation is readable — the API would serve nothing")
+
+    return AssetCheckResult(
+        passed=not problems,
+        severity=AssetCheckSeverity.ERROR,
+        metadata={
+            "anon_role": role,
+            "readable_in_api_v1": readable_in_api_v1,
+            "readable_outside_api_v1": ", ".join(leaked) if leaked else "none",
+            "problems": "; ".join(problems) if problems else "none",
+        },
+    )
