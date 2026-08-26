@@ -41,17 +41,16 @@ const config: Config = {
           routeBasePath: '/',
           sidebarPath: './sidebars.ts',
           editUrl: `https://github.com/${GITHUB_ORG}/${GITHUB_REPO}/tree/main/website/`,
-          // ⚠️ Fleet agent messages must never be published.
+          // Fleet agent messages are not written in this repo at all.
           //
-          // Under TALK v2.1 they live in `terchris/home` only, so there should be
-          // no `ai-developer/talk/` here at all — mine was removed when v2.1
-          // landed. The pattern is kept anyway as a guard: this repo's
-          // `ai-developer/` sits inside the Docusaurus root, so a message file
-          // dropped here would otherwise publish at atlas.sovereignsky.no, and
-          // one stale link in a handoff would fail the site build with
-          // onBrokenLinks: 'throw'. That is the exact defect mimer filed against
-          // v2, and a rule that says "don't" is weaker than a config that makes
-          // it harmless.
+          // TALK v2.2 keys message location on repo VISIBILITY: `terchris/atlas`
+          // is PUBLIC, so its handoffs live in `terchris/home` instead. This
+          // pattern only stops a stray file being *rendered* as a page.
+          //
+          // ⚠️ It is NOT a safety control, and an earlier version of this comment
+          // wrongly implied it was. A markdown file in this repo is world-readable
+          // on github.com whether Docusaurus renders it or not, so an exclude
+          // protects the site build — never the contents.
           //
           // `plans/talk/**` covers unrelated legacy research transcripts.
           exclude: ['**/plans/talk/**', '**/ai-developer/talk/**'],
