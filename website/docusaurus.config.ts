@@ -43,14 +43,17 @@ const config: Config = {
           editUrl: `https://github.com/${GITHUB_ORG}/${GITHUB_REPO}/tree/main/website/`,
           // ⚠️ Fleet agent messages must never be published.
           //
-          // TALK protocol v2 puts messages at `<repo>/ai-developer/talk/`, which
-          // in this repo resolves to `website/docs/ai-developer/talk/` — inside
-          // the Docusaurus docs root. Without the second pattern below, every
-          // message between agents would be built into the public site at
-          // atlas.sovereignsky.no, and any malformed link in one would fail the
-          // docs build.
+          // Under TALK v2.1 they live in `terchris/home` only, so there should be
+          // no `ai-developer/talk/` here at all — mine was removed when v2.1
+          // landed. The pattern is kept anyway as a guard: this repo's
+          // `ai-developer/` sits inside the Docusaurus root, so a message file
+          // dropped here would otherwise publish at atlas.sovereignsky.no, and
+          // one stale link in a handoff would fail the site build with
+          // onBrokenLinks: 'throw'. That is the exact defect mimer filed against
+          // v2, and a rule that says "don't" is weaker than a config that makes
+          // it harmless.
           //
-          // `plans/talk/**` covers the v1 shared-file messages, kept for history.
+          // `plans/talk/**` covers unrelated legacy research transcripts.
           exclude: ['**/plans/talk/**', '**/ai-developer/talk/**'],
         },
         blog: false,
