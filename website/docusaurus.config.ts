@@ -41,7 +41,17 @@ const config: Config = {
           routeBasePath: '/',
           sidebarPath: './sidebars.ts',
           editUrl: `https://github.com/${GITHUB_ORG}/${GITHUB_REPO}/tree/main/website/`,
-          exclude: ['**/plans/talk/**'],
+          // ⚠️ Fleet agent messages must never be published.
+          //
+          // TALK protocol v2 puts messages at `<repo>/ai-developer/talk/`, which
+          // in this repo resolves to `website/docs/ai-developer/talk/` — inside
+          // the Docusaurus docs root. Without the second pattern below, every
+          // message between agents would be built into the public site at
+          // atlas.sovereignsky.no, and any malformed link in one would fail the
+          // docs build.
+          //
+          // `plans/talk/**` covers the v1 shared-file messages, kept for history.
+          exclude: ['**/plans/talk/**', '**/ai-developer/talk/**'],
         },
         blog: false,
         theme: {
