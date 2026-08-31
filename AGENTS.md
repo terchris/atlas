@@ -1,14 +1,32 @@
-# Atlas — Agent Instructions
+# AGENTS.md
 
-See `CLAUDE.md` for full project context. If instructions conflict, `CLAUDE.md` and
-task-specific runbooks under `website/docs/ai-developer/` win.
+This file is the entry point for Codex / OpenAI-family tooling and other agents. Same orientation
+as [`CLAUDE.md`](CLAUDE.md) — see that file for the full Start-Here reading order.
+
+## Short version
+
+- This repo is **`atlas`** — an open semantic layer over Norwegian public data and NGO supply
+  data, published through a public PostgREST API.
+- Read [`website/docs/ai-developer/project-atlas.md`](website/docs/ai-developer/project-atlas.md)
+  first; it is the authoritative project doc.
+- Read [`website/docs/ai-developer/README.md`](website/docs/ai-developer/README.md) next for the
+  AI-developer workflow.
+- Plans live in [`website/docs/ai-developer/plans/`](website/docs/ai-developer/plans/).
+- Fleet work arrives in `mailboxes/atlas/inbox/` (`terchris/urb-agents`), not in this repo.
+- 🔴 This repository is **public** — read
+  [SECURITY.md](website/docs/ai-developer/SECURITY.md) before writing anything sensitive.
+
+If instructions conflict, `CLAUDE.md` and task-specific runbooks under
+`website/docs/ai-developer/` win.
 
 ## Cursor Cloud specific instructions
 
 ### System dependencies
 
 The Cloud VM requires these installed before any work:
-- **Node.js ≥20** (via nodesource)
+- **Node.js ≥22** (via nodesource) — `npm test` needs it. Vitest 4 dies at *startup* on
+  Node 20 (missing `styleText` from `node:util`), which looks like a broken repo rather than an
+  unsupported runtime.
 - **PostgreSQL 16** (via apt; start with `pg_ctlcluster 16 main start`)
 - **uv** (via `pip install uv`)
 

@@ -1,3 +1,8 @@
+---
+mdx:
+  format: md
+---
+
 # Running Two Claude Sessions in the Same Repo
 
 Running multiple Claude Code (or Claude VS Code) sessions against the same
@@ -10,20 +15,20 @@ each on its own branch, all sharing a single `.git` object database.
 
 ## Setup
 
-From your repo root (example: `~/code/urbalurba-infrastructure` on `main`):
+From your repo root (example: `~/code/<repo>` on `main`):
 
 ```bash
 cd ..
-git -C urbalurba-infrastructure worktree add urbalurba-featA -b featA
-git -C urbalurba-infrastructure worktree add urbalurba-featB -b featB
+git -C <repo> worktree add <repo>-featA -b featA
+git -C <repo> worktree add <repo>-featB -b featB
 ```
 
 You now have three sibling folders:
 
 ```
-~/code/urbalurba-infrastructure    # main
-~/code/urbalurba-featA             # featA
-~/code/urbalurba-featB             # featB
+~/code/<repo>         # main
+~/code/<repo>-featA    # featA
+~/code/<repo>-featB    # featB
 ```
 
 Each folder has an independent `HEAD`, working tree, and index. Git refuses

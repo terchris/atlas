@@ -2,7 +2,9 @@
 
 How two AI coding agents work in parallel on the Atlas repo without colliding. Each agent has a name (the work area they're focused on); they coordinate by appending messages to `talk.md` in this folder.
 
-This is **distinct from** the testing protocol described in [`../../TALK.md`](../../TALK.md). That file describes a contributor↔tester pattern with the talk folder OUTSIDE the repo (because credentials get exchanged). This folder is INSIDE the repo because the messages are about code structure, plan deltas, and commit boundaries — no secrets, version-controlled with the rest of the project.
+This folder is legacy coordination material, kept because the threads record why past decisions were made. The messages are about code structure, plan deltas, and commit boundaries — no secrets, version-controlled with the rest of the project.
+
+> **Note**: this folder was previously contrasted with a `TALK.md` testing protocol at `../../TALK.md`. That path was overwritten by a fleet-wide protocol sync in `ea389b4` and the file has since been removed; the original testing protocol is recoverable from `git show ea389b4^:website/docs/ai-developer/TALK.md` if it is wanted back.
 
 ---
 
@@ -45,7 +47,7 @@ docs/ai-developer/plans/talk/
 └── …
 ```
 
-Same archive convention as the testing TALK.md: when a topic is fully resolved, the active `talk.md` gets renamed to the next free `talk<N>.md` and a fresh `talk.md` opens for the next coordination thread.
+Archive convention: when a topic is fully resolved, the active `talk.md` gets renamed to the next free `talk<N>.md` and a fresh `talk.md` opens for the next coordination thread.
 
 ---
 

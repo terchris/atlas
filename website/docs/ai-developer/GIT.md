@@ -1,3 +1,8 @@
+---
+mdx:
+  format: md
+---
+
 # Git Safety Rules and Operations
 
 Git operations require user confirmation. The AI must never run destructive git commands without explicit approval.

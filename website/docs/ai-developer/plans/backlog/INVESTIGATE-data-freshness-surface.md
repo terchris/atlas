@@ -26,7 +26,7 @@
 **Out of scope:**
 - Operator-facing observability — that's `mart_ingest_health` from [`INVESTIGATE-ngo-scraping-infrastructure.md`](../completed/INVESTIGATE-ngo-scraping-infrastructure.md). This investigation is about the *reader-facing* surface, not the ops dashboard.
 - SLA guarantees or refresh-cadence decisions per source — cadence is set by the ingest plan for each source.
-- Alerting when data goes stale — separate ops concern.
+- Alerting when data goes stale — separate ops concern, now filed as [INVESTIGATE-ingest-freshness-visibility](./INVESTIGATE-ingest-freshness-visibility.md).
 - Retroactively backfilling `updated_at` onto sources that don't yet expose it cleanly.
 
 ---
