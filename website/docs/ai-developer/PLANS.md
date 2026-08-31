@@ -1,3 +1,8 @@
+---
+mdx:
+  format: md
+---
+
 # Implementation Plans
 
 How we plan, track, and implement features and fixes.
@@ -54,6 +59,8 @@ Examples:
 - `INVESTIGATE-authentication-options.md`
 - `INVESTIGATE-performance-issues.md`
 
+**Cluster naming:** `INVESTIGATE-<id><nn>-<topic>.md` — when several investigations belong to one programme, they share a short cluster id plus a two-digit number: `INVESTIGATE-api01-redcross-api-plan.md`, `INVESTIGATE-api02-taxonomy.md`, … The id groups the family in every file listing and gives each member a short stable handle ("api07") for cross-references and discussion. Numbers are allocated in creation order, are **identity not sequence** (execution order lives in the umbrella's plan), and are **never reused or renumbered**. The first cluster is `api` — the Red Cross API programme, with `api01` as its umbrella.
+
 **What makes a good investigation:**
 
 - **Research best practices** — use web search to find how others have solved similar problems, what patterns exist, what pitfalls to avoid
@@ -64,6 +71,8 @@ Examples:
 - **Iterate** — investigations improve through multiple rounds of questions and analysis. The first draft is rarely complete.
 
 The investigation file is a **living document** — it captures decisions, rejected options, and the reasoning behind choices. When someone asks "why did we do it this way?" months later, the investigation has the answer.
+
+Like PLAN files, an investigation must open with a **one-line abstract** as its first prose line (after the H1, before the IMPLEMENTATION RULES blockquote) — describe the question it explores. See the [Header](#1-header-required) convention; the `plans/*` index cards are auto-generated from this line.
 
 **After investigation:** Create one or more PLAN files with the chosen approach.
 
@@ -132,6 +141,8 @@ Every plan has these sections:
 ```markdown
 # Plan Title
 
+One-line purpose abstract: what this plan delivers (not its status). Plain prose, no links.
+
 > **IMPLEMENTATION RULES:** Before implementing this plan, read and follow:
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
@@ -144,6 +155,8 @@ Every plan has these sections:
 ```
 
 The **IMPLEMENTATION RULES** blockquote ensures the AI reads the workflow and plan guidelines before starting work.
+
+**The one-line abstract is required** and must be the first prose line, immediately after the H1 and before the IMPLEMENTATION RULES blockquote. The `plans/*` index pages are Docusaurus `generated-index` pages whose cards auto-derive their blurb from this first line — so without it, the card shows the boilerplate "IMPLEMENTATION RULES" text instead of a useful summary. Describe the plan's **purpose** (it should add information beyond the title); keep status/date in the `## Status` line. The same rule applies to `INVESTIGATE-*.md` (describe the question it explores) and the `talk/*` channels (describe the channel).
 
 ### 2. Dependencies (If applicable)
 
@@ -575,7 +588,7 @@ When drafting a plan that changes documented behaviour, include the docs update 
 
 ## Keeping `backlog/1PRIORITY.md` current
 
-[`plans/backlog/1PRIORITY.md`](plans/backlog/1PRIORITY.md) is the priority view across all open INVESTIGATE files — it tiers them by what to investigate next, what to defer pending prereqs, and what's still an idea (not a real investigation yet). It's a triage tool, not a roadmap.
+`plans/backlog/1PRIORITY.md` is required. It is the priority view across all open INVESTIGATE files — it tiers them by what to investigate next, what to defer pending prereqs, and what's still an idea (not a real investigation yet). It's a triage tool, not a roadmap. The skeleton is in this template.
 
 Update it when any of the following happens:
 

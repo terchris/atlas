@@ -1,3 +1,8 @@
+---
+mdx:
+  format: md
+---
+
 # Plan to Implementation Workflow
 
 How ideas become implemented features.

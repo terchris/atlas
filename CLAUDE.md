@@ -1,68 +1,59 @@
-# Claude Code Instructions
+# CLAUDE.md
 
-Project-specific instructions for Claude Code when working on Atlas.
+This repo (`atlas`) is an open semantic layer over Norwegian public data and NGO supply data,
+published through a public PostgREST API.
 
-## What is Atlas
+The repo uses the URB AI-developer workflow. **Before doing anything else, read the docs in
+[`website/docs/ai-developer/`](website/docs/ai-developer/).**
 
-Atlas builds an open semantic layer over Norwegian public data (SSB, FHI, Brreg) and NGO supply data, exposed via a public PostgREST API.
+## Start here (in order)
 
-- **Data side**: [`atlas-data/`](atlas-data/) — TypeScript ingest modules write `raw.*`; dbt transforms to `marts.*`.
-- **Contributor frontend**: [`atlas-contributor-frontend/`](atlas-contributor-frontend/) — Next.js app for ingestion verification and dbt-output diagnostics; reads `marts.*` directly. Dev/staging only. Default port `4000`.
-- **Customer frontend**: [`atlas-frontend/`](atlas-frontend/) — Next.js app consuming `api-atlas.helpers.no` (PostgREST); deploys to `atlas.helpers.no`. No DB role; fully introspection-driven catalog at `/data`. Self-contained / forkable as a reference implementation. Default port `3001`.
-- **Public docs**: [`website/docs/`](website/docs/) — Docusaurus-bound markdown (build/deploy pending).
+1. **[`website/docs/ai-developer/project-atlas.md`](website/docs/ai-developer/project-atlas.md)** —
+   the authoritative description of *this* repo: what it is, where code lives, which commands to
+   run, which framework docs apply, and the non-negotiable contracts. **Read this first.**
+2. **[`website/docs/ai-developer/README.md`](website/docs/ai-developer/README.md)** — how the
+   AI-developer system works and the full reading order.
+3. Reference these as needed — only if `project-atlas.md` says they apply:
+   - [WORKFLOW.md](website/docs/ai-developer/WORKFLOW.md) — idea → plan → implementation
+   - [PLANS.md](website/docs/ai-developer/PLANS.md) — plan/investigation structure
+   - [GIT.md](website/docs/ai-developer/GIT.md) — git safety; this repo is GitHub, so `gh` applies
+   - [WORKTREE.md](website/docs/ai-developer/WORKTREE.md) — multi-agent worktree safety
+   - [SECURITY.md](website/docs/ai-developer/SECURITY.md) — **read before writing anything into
+     this repo or the published site; the repo is public**
+   - [AZURE-DEVOPS.md](website/docs/ai-developer/AZURE-DEVOPS.md) — not applicable here
+   - [DEVCONTAINER.md](website/docs/ai-developer/DEVCONTAINER.md) — not applicable; there is no
+     devcontainer
 
-## Multi-agent repo — read first
+**Fleet coordination is not in this repo.** The protocol lives in `terchris/urb-agents`
+(`protocol/communication.md`), read remotely — do not clone urb-agents and do not copy `protocol/`
+here. This agent's mailbox is `mailboxes/atlas/inbox/`. Do not revive `talk/` or `TALK.md` as a
+fleet bus.
 
-Atlas is worked on concurrently by multiple agents + the human. **Always verify branch / cwd / state before any git op.** See [`website/docs/ai-developer/WORKTREE.md`](website/docs/ai-developer/WORKTREE.md) and [`website/docs/ai-developer/GIT.md`](website/docs/ai-developer/GIT.md).
+Plans live in [`website/docs/ai-developer/plans/`](website/docs/ai-developer/plans/) (`backlog/`,
+`active/`, `completed/`). Current triage is
+[`plans/backlog/1PRIORITY.md`](website/docs/ai-developer/plans/backlog/1PRIORITY.md). Keep it true
+on a change, not on a timer.
 
-## Plan Workflow
+## The three surfaces
 
-**BEFORE implementing any plan, read these files for context:**
+- **Data** — [`atlas-data/`](atlas-data/): TypeScript ingest writes `raw.*`; dbt transforms to
+  `marts.*` and the `api_v1` view contract; Dagster orchestrates.
+- **Customer frontend** — [`atlas-frontend/`](atlas-frontend/): consumes the public PostgREST API
+  with **no database role**, introspection-driven catalog at `/data`, forkable as a reference
+  implementation. Default port `3001`.
+- **Contributor frontend** — [`atlas-contributor-frontend/`](atlas-contributor-frontend/):
+  diagnostics over direct Postgres, dev/staging only. Default port `4000`.
 
-- [`website/docs/ai-developer/PLANS.md`](website/docs/ai-developer/PLANS.md) — plan structure, templates, conventions
-- [`website/docs/ai-developer/WORKFLOW.md`](website/docs/ai-developer/WORKFLOW.md) — implementation workflow and process
-- [`website/docs/ai-developer/GIT.md`](website/docs/ai-developer/GIT.md) — branch / commit / PR conventions
-- [`website/docs/ai-developer/WORKTREE.md`](website/docs/ai-developer/WORKTREE.md) — git worktree usage (multi-agent safety)
+## Always-critical rules
 
-When implementing a plan from [`website/docs/ai-developer/plans/`](website/docs/ai-developer/plans/):
+- 🔴 **This repository is public.** No internal topology, addresses, capacity figures or runtime
+  identifiers. A Docusaurus `exclude` hides a page from the site, never from github.com.
+- **`api_v1` is a published contract.** Adding to it is public exposure and waits for a human.
+- **Never commit to `main`** — feature branch, PR, squash-merge.
+- **Every marts column is documented**; the `check-osmosis.sh` gate enforces it repo-wide.
+- **This agent has no cluster access.** It declares; another agent applies; a third verifies.
 
-1. **Read the full plan first** — understand all phases before starting.
-2. **Work phase by phase** — never skip ahead. Pause for user review where the plan says.
-3. **Move PLAN file** from `backlog/` → `active/` when starting; `active/` → `completed/` when done.
-4. **Update the plan file as you go**: mark phase status, check off tasks, add an outcome note at the close of each phase.
-5. **One feature branch per PLAN** (or per phase for large PLANs). PR per phase or per PLAN, depending on scope.
-
-## Creating Plans
-
-When user requests a new feature or fix:
-
-1. If the problem is clear and the approach is known → create a `PLAN-*.md` directly in [`website/docs/ai-developer/plans/backlog/`](website/docs/ai-developer/plans/backlog/).
-2. If the problem needs research → create an `INVESTIGATE-*.md` first; the PLAN follows once decisions are resolved.
-3. Always ask the user to review the plan before starting implementation.
-
-## Git Commits
-
-- Ask for confirmation before running git commands (add, commit, push) when the task involves committing.
-- Use feature branches for multi-phase work. Squash-merge via `gh pr merge --squash --delete-branch`.
-- Never push to `main` directly.
-
-## Documentation
-
-All public docs live under [`website/docs/`](website/docs/):
-
-- User-facing docs: `website/docs/` (about, sector, getting-started, concepts, sources, measurements)
-- Contributor docs: `website/docs/contributors/` (added in PLAN-003 phases 2–4)
-- AI-developer docs: `website/docs/ai-developer/`
-- Plans: `website/docs/ai-developer/plans/{active,backlog,completed}/`
-
-In-repo `docs/` is a thin pointer; new documentation goes under `website/docs/`.
-
-## Key Folders
-
-- [`atlas-data/`](atlas-data/) — ingest + dbt; canonical data side. See `atlas-data/README.md`.
-- [`atlas-data/dbt/`](atlas-data/dbt/) — dbt project; the `check-osmosis.sh` gate enforces "every column documented" repo-wide.
-- [`atlas-data/ingest/`](atlas-data/ingest/) — TypeScript ingest modules writing `raw.*`.
-- [`atlas-contributor-frontend/`](atlas-contributor-frontend/) — Next.js diagnostics app, direct Postgres, dev/staging only.
-- [`atlas-frontend/`](atlas-frontend/) — Next.js customer app, PostgREST consumer, forkable reference; introspection-driven catalog at `/data`.
-- [`website/`](website/) — Docusaurus-bound docs source.
-- [`website/docs/developers/`](website/docs/developers/) — external API consumer docs (stub; full content tracked by `INVESTIGATE-developer-docs-surface.md`).
+⚠️ **Unverified**: `website/docusaurus.config.ts` and the generated sources registry both give the
+public hosts as `atlas.sovereignsky.no` and `api-atlas.sovereignsky.no`. An earlier version of this
+file said `atlas.helpers.no` / `api-atlas.helpers.no`. The code-derived values are used above; a
+human should confirm which is current.
