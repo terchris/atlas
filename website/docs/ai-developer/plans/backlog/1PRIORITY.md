@@ -29,6 +29,18 @@ and three of the four have been open for days.
 
 ---
 
+## 🔴 Fleet-wide constraint, recorded 2026-09-05
+
+**No one can observe asgard.** `kubectl` is absent on tecMacDev and on the ops host; the ops host
+has the kubeconfig but no client; huginn runs inside the cluster but is excluded pending login.
+The tester's green Dagster verification of 2026-09-04 describes **its own cluster**, not ours.
+**asgard's Dagster is unverified since 2026-08-30.** The public API hostnames also do not resolve
+from this machine, so the data cannot be probed from outside either.
+
+This is not an Atlas defect and not something Atlas can fix. It is recorded here because it
+bounds what any item below can claim: **no plan may treat "verified" as meaning verified on the
+instance that serves data**, unless it names who ran the check and where.
+
 ## Tier 1 — do next
 
 ### Data platform (from the 2026-08-30 Sunday tick)
