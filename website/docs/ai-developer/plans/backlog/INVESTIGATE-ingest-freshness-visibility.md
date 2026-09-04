@@ -49,6 +49,51 @@ This is a known failure shape, not a novel one. Monitoring that cannot tell *wor
   scope. This item is that out-of-scope half. The two should stay separate and cross-referenced;
   they may well share the underlying `max(loaded_at)` per-source model.
 
+## 🔴 Constraint discovered 2026-09-05: nobody can observe the production instance
+
+This changes the design, so it is stated before the questions rather than after.
+
+The fleet **cannot reach asgard at all**. `kubectl` is absent on both tecMacDev and the ops
+host; the ops host holds the asgard kubeconfig but has no client to use it; and huginn, which
+runs inside the cluster, is excluded pending login. The independent tester verified Dagster on
+2026-09-04 and all four checks passed — **on its own Rancher Desktop cluster**, where every
+schedule is deliberately STOPPED and the newest run is 2026-08-24. That is a different instance
+from the one that carries our data.
+
+**asgard's Dagster has therefore been unverified since 2026-08-30**, and the evidence from that
+date is still the newest that exists.
+
+Nor can this be routed around through the data. Measured from tecMacDev on 2026-09-05:
+
+| host | result |
+|---|---|
+| `atlas.sovereignsky.no` (docs site) | HTTP 200 |
+| `api-atlas.sovereignsky.no` | NXDOMAIN |
+| `api-atlas.helpers.no` | NXDOMAIN |
+| `atlas.helpers.no` | NXDOMAIN |
+
+⚠️ Unverified: whether those names resolve inside the tailnet or from the cluster. This machine
+roams, so the honest claim is *not reachable from here now*, not *the API is down*. Either way,
+the observability path this investigation would naturally have used is not available today.
+
+### What that means for the design
+
+The original sketch assumed a freshness assertion evaluated **inside the check suite**, alongside
+the other 649 checks. That assumption is now suspect, because it inherits the same blind spot as
+everything else: if the daemon stalls, no schedule fires, no transform runs, **and no check runs
+either** — so a check that lives in the suite cannot report that the suite did not run. The
+platform has the counterpart control for its half (`./uis verify dagster` check C, the daemon
+heartbeat, confirmed trustworthy by the tester on 2026-09-04), but **nobody in the fleet can
+currently execute it against asgard**.
+
+So the question sharpens: **the freshness signal must be readable from somewhere that does not
+depend on the pipeline having run, and does not require cluster access.** A row in Postgres
+carrying `max(loaded_at)` per source satisfies the first half and is the natural substrate; what
+is missing is a reader for it that works from outside the cluster. Whether that is the public API
+surface, an external probe, or something pushed outward on a timer is exactly what this
+investigation now has to decide — and it should not settle on a mechanism that only an agent with
+cluster access can read, because at present no such agent exists.
+
 ## Questions to resolve
 
 1. **What is the assertion?** Probably: for each source, `max(loaded_at)` is within its expected
