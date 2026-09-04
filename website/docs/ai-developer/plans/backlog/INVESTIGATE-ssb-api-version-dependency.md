@@ -49,6 +49,44 @@ point at v0" — is a move *backwards* onto a surface SSB intends to retire. It 
 candidate at best, not a destination. This investigation exists because the direction is not
 obvious, and tonight's evidence is an input to it, not an answer.
 
+## 🔴 Answered 2026-09-05: `/v2/` has shipped, and `/v2-beta/` is stale
+
+Question 1 below is closed, and the answer is worse than the question anticipated.
+
+`https://data.ssb.no/api/pxwebapi/v2/config` returns HTTP 200, `apiVersion 2.3.2`. So the stable
+surface exists. Comparing table metadata across both surfaces from tecMacDev on 2026-09-05:
+
+| table | `/v2-beta/` period | `/v2/` period |
+|---|---|---|
+| 13995 | 2022–**2024** | 2022–**2025** |
+| 07459 | 1986–**2025** | 1986–**2026** |
+| 12063 | 2015–**2024** | 2015–**2025** |
+| 10826 | 2001–**2025** | 2001–**2026** |
+| 08764 | 2005–2024 | 2005–2024 (same) |
+
+**Four of five sampled tables carry a newer final period on `/v2/`.** Our ingest defaults to the
+latest `Tid` period only, so for those tables Atlas is ingesting and publishing a period behind
+whatever SSB actually offers — silently, with no error and no failing check. The 503 outage of
+2026-08-30 was the loud symptom of depending on a beta surface; this is the quiet one, and it has
+presumably been true for some time.
+
+### The swap is not a one-liner
+
+`/v2/` metadata is a **superset** of `/v2-beta/`, not a different shape: no keys are removed, an
+extra `link` key appears (`{"related": …}`), and `dimension` is larger. That is encouraging, but
+"no keys removed" is not the same as "our parser produces identical rows", and the difference in
+`dimension` size is unexplained. What must be proven before the base URL changes:
+
+- the parsed row set for a table is identical apart from the newly available period;
+- `raw.*` row counts move by the expected delta and not more;
+- nothing downstream depends on the last period being the one it was yesterday.
+
+That needs a real database and a real ingest run, which is why this is a PLAN with a verification
+step rather than a one-line edit. Base URL lives at `ingest/src/lib/pxweb.ts:8`.
+
+⚠️ Do **not** treat `v0` as the fallback. It is the deprecated legacy API; the choice here is
+`/v2-beta/` versus `/v2/`, and the evidence now points one way.
+
 ## Questions to resolve
 
 1. **Has `/v2/` shipped?** The 2026-04-21 note said no. Re-check; if it has, this collapses into a

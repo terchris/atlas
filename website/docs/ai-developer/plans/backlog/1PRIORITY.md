@@ -50,7 +50,7 @@ instance that serves data**, unless it names who ran the check and where.
 | 1 | [INVESTIGATE-ingest-freshness-visibility](INVESTIGATE-ingest-freshness-visibility.md) | M | 🔴 **Highest.** On 2026-08-30, 15 of 41 sources silently did not refresh and *every signal stayed green* — the check suite returned identical numbers. We cannot currently tell "refreshed and unchanged" from "never refreshed". Monitoring that cannot distinguish those is not monitoring. |
 | 2 | [PLAN-ingest-retry-budget](PLAN-ingest-retry-budget.md) | S-M | A short `Retry-After` **overrides** the backoff ladder and collapses the retry budget to ~4s; two of three HTTP clients ignore `Retry-After` entirely. Decides whether the next weekly tick survives a wobble. Does **not** help against a multi-hour outage. |
 | 3 | [PLAN-ingest-ci-gates](PLAN-ingest-ci-gates.md) phase 3 | S | Phases 1–2 shipped 2026-08-25. Only the C12 move to Node 24 remains, and it needs a real Node 24 to validate rather than an assumption. |
-| 4 | [INVESTIGATE-ssb-api-version-dependency](INVESTIGATE-ssb-api-version-dependency.md) | S-M | All SSB ingest depends on a **beta** API surface that was 503 for hours on 2026-08-30 while the rest of SSB answered. Durable reliability, not incident response. Question 1 (has `/v2/` shipped?) may collapse this to a one-line change. |
+| 4 | [INVESTIGATE-ssb-api-version-dependency](INVESTIGATE-ssb-api-version-dependency.md) | S-M | 🔴 **Raised 2026-09-05 — this is a correctness bug, not a reliability question.** `/v2/` has shipped and `/v2-beta/`, which all SSB ingest uses, serves an **older final period** on 4 of 5 sampled tables. Atlas publishes a period behind, silently. |
 
 ### Semantics and catalogue
 
