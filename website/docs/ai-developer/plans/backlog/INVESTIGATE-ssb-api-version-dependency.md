@@ -49,43 +49,45 @@ point at v0" — is a move *backwards* onto a surface SSB intends to retire. It 
 candidate at best, not a destination. This investigation exists because the direction is not
 obvious, and tonight's evidence is an input to it, not an answer.
 
-## 🔴 Answered 2026-09-05: `/v2/` has shipped, and `/v2-beta/` is stale
+## Answered 2026-09-05: `/v2/` has shipped. The two surfaces serve identical data.
 
-Question 1 below is closed, and the answer is worse than the question anticipated.
+Question 1 is closed. `https://data.ssb.no/api/pxwebapi/v2/config` returns HTTP 200 at
+`apiVersion 2.3.2`, so the stable surface exists and is usable.
 
-`https://data.ssb.no/api/pxwebapi/v2/config` returns HTTP 200, `apiVersion 2.3.2`. So the stable
-surface exists. Comparing table metadata across both surfaces from tecMacDev on 2026-09-05:
+### ⚠️ Retraction — an earlier version of this section claimed the beta surface was stale
 
-| table | `/v2-beta/` period | `/v2/` period |
+It said `/v2-beta/` served an older period than `/v2/` on four of five sampled tables, and that
+Atlas was therefore publishing a period behind. **That conclusion was wrong and is withdrawn.**
+The independent tester challenged it, could not reproduce it, and was right to push back.
+
+What is actually true, measured with a unique cache-busting key so every read was an origin read
+(`x-cache: MISS`, `age: 0`):
+
+| endpoint | `/v2-beta/` | `/v2/` |
 |---|---|---|
-| 13995 | 2022–**2024** | 2022–**2025** |
-| 07459 | 1986–**2025** | 1986–**2026** |
-| 12063 | 2015–**2024** | 2015–**2025** |
-| 10826 | 2001–**2025** | 2001–**2026** |
-| 08764 | 2005–2024 | 2005–2024 (same) |
+| `…/13995/data` → `Tid` | **2025** | **2025** |
+| `…/07459/data` → `Tid` | **2026** | **2026** |
+| `…/12063/data` → `Tid` | **2025** | **2025** |
 
-**Four of five sampled tables carry a newer final period on `/v2/`.** Our ingest defaults to the
-latest `Tid` period only, so for those tables Atlas is ingesting and publishing a period behind
-whatever SSB actually offers — silently, with no error and no failing check. The 503 outage of
-2026-08-30 was the loud symptom of depending on a beta surface; this is the quiet one, and it has
-presumably been true for some time.
+**The data endpoints agree exactly.** The only difference is in the metadata `label` *string* —
+for some tables `/v2-beta/` renders a period range one behind `/v2/` while both serve the same
+rows. The ingest reads data, not the label, so nothing we publish was ever affected.
 
-### The swap is not a one-liner
+### Two traps worth keeping, since they cost a wrong conclusion
 
-`/v2/` metadata is a **superset** of `/v2-beta/`, not a different shape: no keys are removed, an
-extra `link` key appears (`{"related": …}`), and `dimension` is larger. That is encouraging, but
-"no keys removed" is not the same as "our parser produces identical rows", and the difference in
-`dimension` size is unexplained. What must be proven before the base URL changes:
+**1. The metadata `label` is not a description of the data.** It can name a narrower period range
+than the data endpoint actually returns, on the same table, at the same moment, with the same
+`updated` stamp. Do not use it to reason about coverage — read `dimension.Tid` from the data
+response.
 
-- the parsed row set for a table is identical apart from the newly available period;
-- `raw.*` row counts move by the expected delta and not more;
-- nothing downstream depends on the last period being the one it was yesterday.
+**2. `Cache-Control: no-cache` does not bust SSB's cache.** Responses come through Varnish
+(`via: 1.1 varnish`). A request sent with `Cache-Control: no-cache` and `Pragma: no-cache` still
+returned `x-cache: HIT` with `age: 558`. Only a **distinct cache key** — a unique dummy query
+parameter — produced `x-cache: MISS`. Any measurement of SSB that does not do this may be reading
+a cached object of unknown age, which is how the wrong conclusion above survived a re-check.
 
-That needs a real database and a real ingest run, which is why this is a PLAN with a verification
-step rather than a one-line edit. Base URL lives at `ingest/src/lib/pxweb.ts:8`.
-
-⚠️ Do **not** treat `v0` as the fallback. It is the deprecated legacy API; the choice here is
-`/v2-beta/` versus `/v2/`, and the evidence now points one way.
+This second point is worth remembering beyond this investigation: it applies to any debugging of
+SSB behaviour, including the 429/503 incident of 2026-08-30.
 
 ## Questions to resolve
 
