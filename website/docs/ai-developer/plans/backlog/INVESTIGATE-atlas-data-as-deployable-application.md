@@ -1,0 +1,138 @@
+# INVESTIGATE: Make atlas-data a self-contained application anyone can deploy on UIS
+
+## Status: Backlog
+
+**Question**: What has to be true for `atlas-data` to be a single deployable application — one that gathers all the data and exposes it as a queryable API — installable on a UIS instance by someone who is not us?
+
+**Last Updated**: 2026-09-05
+
+**Priority**: High. It is the shape the whole product is aimed at, and the pieces are closer than the repo layout suggests.
+
+**Origin**: Terje, 2026-09-05: *"the goal is to have a deployment that can be deployed to uis as an application that gathers all the data and makes it possible to query. this so that the frontend can consume the data. the frontend is an example that anyone can use as inspiration to create their own frontend and reporting."*
+
+---
+
+## The goal, stated so it can be tested
+
+Someone with a UIS instance and no connection to this project should be able to install
+**one thing** and end up with Norwegian public data, refreshed on a cadence, queryable over
+HTTP. The Atlas frontend is then **a** consumer of that API — a reference implementation to fork
+or ignore — not a required part of the installation.
+
+That gives a concrete acceptance test for the whole investigation:
+
+> A person who has never seen this repository installs the application on a fresh UIS instance,
+> waits for the first refresh, and gets rows back from an HTTP query. Nothing in the process
+> requires reading our source, asking us a question, or running a command we wrote by hand.
+
+Everything below is scoped by whether it moves that sentence closer to true.
+
+## What already exists — more than the repo layout suggests
+
+⚠️ **`atlas-data` is already a container deployed on UIS.** Anyone reasoning from the folder
+structure will assume otherwise and plan work that is already done.
+
+| piece | state |
+|---|---|
+| Container image | ✅ `atlas-data/deploy/Dockerfile`, polyglot — TypeScript ingest + Python dbt/Dagster |
+| Build and publish | ✅ `.github/workflows/atlas-data-image.yml` → GHCR, date+SHA tags, never `:latest` |
+| Runs on UIS | ✅ as a Dagster **code location** — the documented tenant contract |
+| Deployed today | ✅ `ghcr.io/terchris/atlas-data:v20260905-d7f884d`, on two clusters |
+| Ingest cadence | ✅ declarative, on the assets (`cadence.py`: weekly Sunday 02:00, monthly, scraper) |
+| Query **schema** | ✅ owned here — `dbt/scripts/generate_api_v1.py`, `api_v1_generated.sql`, `dagster/…/assets/api_v1.py` |
+| Freshness signal | ✅ `raw_sources_were_refreshed_recently`, proven on-cluster 2026-09-05 |
+
+## What is missing — and it is not the container
+
+| piece | state | who owns it today |
+|---|---|---|
+| **Installer** that registers the tenant | ❌ absent | done by hand, ops-side |
+| Code-location declaration | ❌ not in this repo | `.uis.extend/dagster-code-locations.yaml`, cluster-side |
+| Database + schema provisioning | ❌ undefined | by hand |
+| Secret creation (`env_secrets`) | ❌ undefined | by hand |
+| **PostgREST exposure** of `api_v1` | ❌ not declared here | a separate UIS service, deployed by ops |
+| Separate git repo | ❌ still a monorepo folder | — |
+
+`atlas-data/README.md` promised `deploy/` would hold "Dockerfile + Dagster code-location manifest
++ ArgoCD app". **Only the Dockerfile exists.** That gap is the actual distance between "we can
+deploy it" and "anyone can deploy it", and it is larger than the repo split.
+
+Note the split-trigger conditions in that README have **all three already fired**: real source
+code landed, Dagster is deployed pointing at a real image, and other agents now contribute to the
+data side. The split is overdue on our own stated criteria.
+
+## 🔴 The blocker nobody wrote down
+
+`atlas-data/README.md` claims imports do not cross the boundary except through the database.
+That is true of **runtime** code — the frontends have no package-level dependency on
+`atlas-data`, which is a genuinely clean boundary and worth preserving.
+
+**The website build crosses it**, measured 2026-09-05:
+
+```
+website/scripts/generate-sources-registry.mjs  → atlas-data/ingest/src/sources/  (prebuild, EVERY build)
+website/scripts/snapshot-lineage.mjs           → ../atlas-data/dbt, ../atlas-data/ingest/.env
+```
+
+Plus **1,221 `atlas-data/` path references across 141 files** in `website/docs/`.
+
+So a naive `git subtree split` leaves the documentation site unable to build. The `prebuild` step
+that emits "41 sources, 7 categories" reads the ingest source tree directly from disk.
+
+### Three options, costed
+
+| # | Option | What it costs | What it buys |
+|---|---|---|---|
+| 1 | **Commit the generated registry**; `atlas-data` CI regenerates it and opens a PR to the website repo | A cross-repo sync step, and a window where the committed registry is stale. Simplest to build. | Docs build becomes independent immediately. No runtime contract to version. |
+| 2 | **`atlas-data` publishes the registry as a release artifact**; the website fetches it at build time | Needs artifact versioning, an offline/air-gapped fallback, and a build that fails honestly when the fetch fails rather than silently using a stale copy. | Matches the pattern the product already commits to — the contract is published output, not a filesystem path. Any third party building their own docs gets the same artifact. |
+| 3 | **Keep the website inside the data repo** | Splits the wrong seam: docs about the whole product would live in the data application, and a third-party installer inherits our documentation site. | Avoids the problem entirely. Cheapest today, wrong shape tomorrow. |
+
+**Leaning option 2**, for a reason specific to the stated goal rather than to elegance: the goal
+says a stranger should be able to consume this. Option 1 works only for people who can open a PR
+against our website repo, and option 3 hands them our docs site. Option 2 is the only one where
+the boundary a third party meets is the same boundary we use ourselves — the dogfood argument
+that already governs `atlas-frontend`.
+
+⚠️ Not a decision. Option 2 is also the only one with a failure mode that can go quiet — a
+fetched artifact that silently falls back to a stale copy is the same disease as the freshness
+gap. If it is chosen, the fetch must fail the build loudly.
+
+## Questions to resolve
+
+1. **What is the unit of installation?** A Dagster code location plus a PostgREST instance plus a
+   database is three UIS objects. Does the application declare all three, or does it stay a
+   Dagster tenant and document the rest as prerequisites? The goal sentence implies the former.
+2. **Who provisions the database and the role?** Today: by hand. A stranger has no hand to use.
+3. **What does the installer look like?** The UIS Dagster page says an application's own installer
+   writes its `.uis.extend` entry and creates its secrets. We have no installer. Is it a script in
+   `deploy/`, a Helm chart, or an ArgoCD application?
+4. **How does a third party point it at their own database and registry?** Every value we hardcode
+   is a value they cannot change.
+5. **Does `api_v1` stay the contract?** It is generated here and exposed by a UIS service deployed
+   elsewhere. If the application is to be self-contained, that exposure has to be declared by it.
+6. **What is the minimum viable install?** Probably not 41 sources. A stranger evaluating this
+   wants a small subset that works in minutes.
+7. **Does the repo split come first, or last?** It may be easier to build the installer inside the
+   monorepo and split once it works — the split is the reversible-looking step that is hardest to
+   reverse.
+8. **What happens to `atlas-private-data-repo`?** `frr` reads a private tree that is absent on any
+   public deployment. A stranger's install must not fail because of a source they cannot have.
+
+## What would make this investigation wrong
+
+- If UIS expects tenants to be Dagster code locations **only**, then declaring PostgREST and a
+  database from the application is fighting the platform, and questions 1 and 5 collapse into
+  "document the prerequisites". **Ask tor-agent, who owns UIS, before designing against it.**
+- If the frontend is not in fact forkable without our repo, the reference-implementation goal
+  needs its own investigation first. Current evidence says it is: no package-level dependency on
+  `atlas-data`, and it reads only the public API with no database role.
+
+## Related
+
+- [INVESTIGATE-deployment-pipeline](INVESTIGATE-deployment-pipeline.md) — ⚠️ premise partly
+  overtaken; the deployment shipped. Re-read before opening.
+- [INVESTIGATE-private-atlas-deployments](INVESTIGATE-private-atlas-deployments.md) — per-tenant
+  private deployments. This investigation is its public counterpart and may absorb some of it.
+- [INVESTIGATE-developer-docs-surface](INVESTIGATE-developer-docs-surface.md) — what a third-party
+  consumer reads once they have an install.
+- `atlas-data/README.md` — the split-trigger conditions, all three now fired.
