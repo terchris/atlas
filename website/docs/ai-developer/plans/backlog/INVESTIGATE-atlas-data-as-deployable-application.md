@@ -317,6 +317,62 @@ The database on that cluster is **`atlas`**, not `atlas_db`. `atlas_db` is the l
 `ingest/.env` and the dbt profile. Deployed truth differs from local convention; do not hardcode
 either.
 
+## Two contract defects found 2026-09-05, both about documentation disagreeing with reality
+
+### 1. The OpenAPI document advertises writes the API refuses
+
+Every configuration path was eliminated by measurement, not inference:
+
+| checked | result |
+|---|---|
+| `openapi_mode` in deployment env, both secret keys, every configmap in the namespace | unset |
+| `openapi_mode` in `pg_db_role_setting`, `pg_roles.rolconfig`, `pg_settings like 'pgrst%'` | unset |
+| write grants for `atlas_web_anon` | none — SELECT on 13 views, nothing else anywhere |
+| write grants for `atlas_authenticator` | **none at all** on `api_v1` — fewer than anon |
+| superuser / RLS bypass on either role | neither |
+| views auto-updatable | **YES**, all 13 |
+| spec advertises `post`/`delete` | **yes** — and both return 401, Postgres `42501` |
+
+Default mode is `follow-privileges` (documented identically in PostgREST v12, v13 and v14), no role
+holds a write privilege by any path, and the document still lists write methods. The only input
+distinguishing these relations from read-only ones is that they are auto-updatable.
+
+**Surviving explanation after elimination — not a claim about PostgREST's source**: the advertised
+methods appear to derive from relation updatability rather than from the role's grants.
+
+**Not fixable from here without a bad trade.** Making the views non-auto-updatable would change the
+semantics of a published contract to work around a documentation surface, on behalf of a bug that is
+probably upstream. Rejected. The available mitigation is to **document the discrepancy** so a
+stranger reading the spec is not surprised at runtime — that belongs with
+[INVESTIGATE-developer-docs-surface](INVESTIGATE-developer-docs-surface.md).
+
+Reporting it upstream is outward-facing and therefore a human's decision. A clean reproduction
+exists: PostgREST 14.10, default `openapi_mode`, SELECT-only anon, authenticator with nothing,
+thirteen `SELECT *` views over `marts.*`.
+
+### 2. 🔴 The deployed schema list contradicts the shipped posture
+
+`PLAN-007-data-display-open-by-default` decided **`--schemas api_v1,marts,raw`** — *"anything not
+explicitly gated is queryable"* — and UIS shipped the flag at Atlas's request as PR #140. The
+customer frontend's `/data` renders **119 endpoint cards** across all three schemas via
+`api_v1.meta_endpoints` (13 api_v1 + 61 marts + 47 raw), and the public developer docs state all
+three are anonymous-read.
+
+**The instance on the test cluster serves `PGRST_DB_SCHEMAS = api_v1` only.** Pointed at it, `/data`
+would find 13 endpoints instead of 119, every `marts`/`raw` route would 404, and the developer
+documentation would be describing schemas the API does not serve.
+
+⚠️ **I made this worse.** On 2026-09-05 I instructed the platform and test agents that
+*"Atlas wants `api_v1` exposed and nothing else"*, framed as the tenant's preference, overriding the
+documented `api_v1,marts,raw` example on least-privilege reasoning — **without checking this
+repository.** That was not least privilege applied to an open question; it reversed a decision that
+was made, coordinated across two repos, shipped, documented publicly and built upon. Corrected on
+`urb-agents` #136 and #137.
+
+**Unresolved**: whether that instance predates the PLAN-007 rollout or was narrowed deliberately, and
+whether the open-by-default posture still holds. Widening what a public API serves is a human's call
+even when a completed plan already decided it, so it is with Terje rather than being applied.
+
 ## Questions to resolve
 
 1. **What is the unit of installation?** A Dagster code location plus a PostgREST instance plus a
