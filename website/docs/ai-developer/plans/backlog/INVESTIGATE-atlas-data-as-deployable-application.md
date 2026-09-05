@@ -221,39 +221,62 @@ at runtime and reasonably concludes our API is broken rather than our documentat
 Owned here, not by the platform. The fix belongs with
 [INVESTIGATE-developer-docs-surface](INVESTIGATE-developer-docs-surface.md).
 
-### ⚠️ "There is no external exposure" — UNDER VERIFICATION, and probably wrong
+### ✅ RETRACTED — the route exists, and has for eleven days
 
-**Do not act on this section until #129 comes back.** The claim below was generalised from a
-report of `ingress matching postgrest/atlas: none`. tor-agent has since established that UIS
-creates a **Traefik `traefik.io/v1alpha1 IngressRoute`**, a CRD — *not* a core
-`networking.k8s.io` Ingress. So `kubectl get ingress` returns nothing **whether or not the route
-exists**, and the check that settles it is `kubectl get ingressroute -n postgrest`.
-
-The error is mine: I took a negative result about one kind of object and restated it as a general
-absence, without checking it was the right object to ask about.
-
-If the IngressRoute exists, the host is `api-atlas.<any domain Traefik serves>` — on a laptop,
-`api-atlas.localhost` — and the question for a human changes from *should we expose this* to *it
-is already reachable, did we mean that*. Materially different conversation.
-
-### 🔴 The original claim, pending that check
+**An earlier version of this document claimed "there is no external exposure, ClusterIP only, no
+ingress". That was wrong and is withdrawn.**
 
 ```
-atlas-postgrest.postgrest.svc.cluster.local:3000   type: ClusterIP
-ingress matching postgrest/atlas: none
+$ kubectl get ingressroute -n postgrest
+NAME              AGE
+atlas-postgrest   11d
+
+match: HostRegexp(`api-atlas\..+`)  ->  service atlas-postgrest port 3000
+entryPoints: [web]
 ```
 
-**Cluster-internal only.** Distinct from the DNS finding — even with working DNS there is no ingress
-for this service. Together they mean there is currently nothing outside the cluster for a frontend to
-point at.
+Not merely present — **answering**, with real `api_v1` rows read from the body rather than inferred
+from a status code:
 
-That collides with the goal this investigation exists to serve: *the frontend is an example anyone can
-use as inspiration to create their own*. A reference implementation that only runs inside the cluster
-it reads from is not forkable by a stranger.
+```
+Host: api-atlas.localhost   GET /indicator_summary?limit=1   ->  200, real rows
+Host: api-atlas.localhost   GET /                            ->  200, swagger, PostgREST 14.10
+Host: atlas-postgrest.localhost                              ->  404
+POST /indicator_summary via api-atlas.localhost              ->  401
+```
 
-**Exposing it is a human decision** — public exposure of a published contract, per this repo's
-contracts and fleet rule 7. Raised with Terje 2026-09-05; not an agent's call and not blocked on
-design work here.
+**Two failures compounded to produce the wrong claim.** The tester ran `kubectl get ingress`, which
+returns nothing on this cluster whether or not a route exists, because UIS uses Traefik
+`IngressRoute` CRDs — four other services there do the same. It then reported "ingress … none",
+which is true and useless. I generalised that into "no exposure" without checking whether the right
+kind of object had been asked about. Either of us checking would have caught it.
+
+⚠️ **Any "no ingress" claim made with the core Kubernetes API on a UIS cluster is worthless.** Ask
+for `ingressroute`.
+
+### What is actually true
+
+- The **404 on `atlas-postgrest.localhost` confirms empirically** what the section below reasons
+  from source: the route matches on `--url-prefix`, and the Service name does not resolve through
+  Traefik.
+- **Read-only holds on the exposed path**, attempted rather than assumed — an ingress could
+  plausibly have been wired to a more privileged role, and it was not.
+- 🔴 **Scope, stated precisely so it is not overstated**: the route matches `api-atlas\..+` — *any*
+  domain suffix. On this cluster that resolves to `api-atlas.localhost`, reachable on that host
+  only. It is **not** internet-reachable today; that would need a public domain pointed at the
+  cluster. So the local plumbing is complete and the public step is still a deliberate act.
+
+### The question for a human, restated
+
+Not *"should we expose this"*. Rather: **the route exists, is anonymous and read-only, and matches
+any domain — is that the exposure we want, and do we point a public domain at it?** Two things
+belong in that decision:
+
+1. `HostRegexp(`api-atlas\..+`)` is a **broad match** by design. Presumably intended, but it
+   deserves a deliberate nod rather than a shrug.
+2. The OpenAPI document served there **advertises `post` and `delete`** on every view. Writes are
+   refused, but the published spec says otherwise — and it is now published on a reachable host
+   rather than only inside the cluster.
 
 ### Settled 2026-09-05: the public name is `api-atlas`
 
