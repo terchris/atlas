@@ -175,6 +175,77 @@ platform support; it cannot produce a running instance. For anything that only e
 running, a third party with cluster access has to execute it. That is a property of the current
 fleet, not of this design, and any plan here that assumes otherwise is wrong.
 
+## ✅ Confirmed on the cluster 2026-09-05 — and it was already running
+
+The tester checked whether the prerequisite existed before anyone built it. It had been running for
+**eleven days**:
+
+```
+deployment.apps/atlas-postgrest   2/2 Running   11d
+labels: app.kubernetes.io/managed-by=uis, name=postgrest, instance=atlas
+PGRST_DB_SCHEMAS   = api_v1
+PGRST_DB_ANON_ROLE = atlas_web_anon
+```
+
+`managed-by=uis` — the platform's own PostgREST, instanced for Atlas. So the design question is
+settled by documentation *and* by a running instance: **Atlas uses the shipped PostgREST, and
+already does.** `GET /` returns HTTP 200 with swagger and advertises all 13 `api_v1` views, matching
+the 13 in the database.
+
+`./uis verify postgrest --app atlas` exits 0 — app can write, API serves it, **API refuses writes**.
+
+### The published surface is genuinely read-only, proven by attempt
+
+Not inferred from grants. All three write methods issued against a live view:
+
+```
+DELETE / PATCH / POST  ->  HTTP 401
+body: {"code":"42501","message":"permission denied for view indicator_summary"}
+```
+
+`42501` is **Postgres** refusing, not PostgREST declining to try — the strongest form the answer can
+take. The tester used filters matching nothing on DELETE and PATCH so no data could be lost even had
+the write been permitted, then confirmed the insert did not land. `atlas_web_anon` holds SELECT only
+on all 13 views.
+
+### ⚠️ Atlas defect: the OpenAPI document advertises writes that do not exist
+
+The generated spec lists `post` and `delete` on **every** view. That is PostgREST describing the
+relation, not stating permission — but the effect is that **our published contract tells a reader the
+API is writable when it is not.**
+
+This matters more for Atlas than for a typical tenant, because the entire point of this surface is
+that strangers consume it without asking us. Someone building against the spec writes code that 401s
+at runtime and reasonably concludes our API is broken rather than our documentation wrong.
+
+Owned here, not by the platform. The fix belongs with
+[INVESTIGATE-developer-docs-surface](INVESTIGATE-developer-docs-surface.md).
+
+### 🔴 There is no external exposure, and that blocks the stated goal
+
+```
+atlas-postgrest.postgrest.svc.cluster.local:3000   type: ClusterIP
+ingress matching postgrest/atlas: none
+```
+
+**Cluster-internal only.** Distinct from the DNS finding — even with working DNS there is no ingress
+for this service. Together they mean there is currently nothing outside the cluster for a frontend to
+point at.
+
+That collides with the goal this investigation exists to serve: *the frontend is an example anyone can
+use as inspiration to create their own*. A reference implementation that only runs inside the cluster
+it reads from is not forkable by a stranger.
+
+**Exposing it is a human decision** — public exposure of a published contract, per this repo's
+contracts and fleet rule 7. Raised with Terje 2026-09-05; not an agent's call and not blocked on
+design work here.
+
+### Correction to a detail
+
+The database on that cluster is **`atlas`**, not `atlas_db`. `atlas_db` is the local convention in
+`ingest/.env` and the dbt profile. Deployed truth differs from local convention; do not hardcode
+either.
+
 ## Questions to resolve
 
 1. **What is the unit of installation?** A Dagster code location plus a PostgREST instance plus a
