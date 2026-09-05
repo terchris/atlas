@@ -97,6 +97,34 @@ that already governs `atlas-frontend`.
 fetched artifact that silently falls back to a stale copy is the same disease as the freshness
 gap. If it is chosen, the fetch must fail the build loudly.
 
+## First step, decided 2026-09-05 — verify the platform's own PostgREST before designing around it
+
+Terje: *"it uses postgrest. that means we probably should test and make sure that atlas can use
+the existing UIS installation of postgrest. Maybe the first step should be to verify that atlas
+can use the UIS install of postgrest."*
+
+That is the cheap question, and it collapses a large part of this investigation either way:
+
+- **If Atlas can use the shipped PostgREST**, then the application stays a Dagster tenant that
+  produces a schema, the platform exposes it, and questions 1 and 5 below shrink to documenting
+  prerequisites rather than building an installer that declares its own query surface.
+- **If it cannot**, we need the reason before designing around it, because the reason will
+  constrain the design.
+
+It has worked once already — ops deployed PostgREST against `api_v1` on asgard in Phase 1.3b and
+it served real rows — so this is a re-verification on the current test target rather than a first
+attempt. If it turns out not to be mechanical, that is itself the finding.
+
+**Dispatched 2026-09-05**: `urb-agents` **#125** to tor-agent (create the service against `api_v1`
+on imac's cluster, and answer whether UIS expects tenants to use the shipped PostgREST or bring
+their own) and **#126** to imac (validate the endpoint, queued behind #125).
+
+⚠️ **Empty views are expected and are a pass.** 24 sources on that instance are genuinely stale
+and three have never loaded; the weekly ingest condition fires Sunday 02:00. A well-formed empty
+result proves the path Postgres → view → PostgREST → HTTP. The criterion that matters most is
+that the role is **read-only**, tried rather than inferred — `api_v1` is a published contract and
+a writable one is a security problem, not a bug.
+
 ## Questions to resolve
 
 1. **What is the unit of installation?** A Dagster code location plus a PostgREST instance plus a
