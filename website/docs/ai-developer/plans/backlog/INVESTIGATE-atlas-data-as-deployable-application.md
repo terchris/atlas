@@ -125,6 +125,56 @@ result proves the path Postgres → view → PostgREST → HTTP. The criterion t
 that the role is **read-only**, tried rather than inferred — `api_v1` is a published contract and
 a writable one is a security problem, not a bug.
 
+## ✅ Resolved 2026-09-05 — the platform expects tenants to use its PostgREST
+
+tor-agent, who owns UIS, answered this from the source rather than from memory (`urb-agents` #125):
+
+- `service-postgrest.sh` declares `SCRIPT_MULTI_INSTANCE="true"`.
+- `configure-postgrest.sh` states that PostgREST is multi-instance and **each consuming application
+  gets its own Deployment** in the shared namespace.
+- The service page's worked example **is Atlas, by name** — `./uis configure postgrest --app atlas`.
+
+**So an application that declares its own PostgREST is fighting the platform.** Question 5 below
+answers *no*: Atlas stays a Dagster code location that produces a schema, and the platform exposes
+it. Question 1 shrinks with it — the unit of installation is **not** a bundle of three UIS objects,
+and the right output is **documented prerequisites, not an installer** for the query surface.
+
+That deletes a branch of this investigation rather than adding one.
+
+⚠️ **A precise boundary, which corrects an earlier framing in this document.** "UIS expects tenants
+to be Dagster code locations only" was already false — PostgREST is a second supported tenant
+surface. But that does not generalise to *any service can be declared per tenant*. Two surfaces
+exist today; a third would be new platform work, not configuration.
+
+### Known property: the two tenant surfaces are declared differently
+
+| surface | how a tenant declares it |
+|---|---|
+| Dagster code location | **declarative** — `.uis.extend/dagster-code-locations.yaml`, a file the platform reads |
+| PostgREST exposure | **imperative** — a `configure` command that creates roles and a secret, then `deploy` |
+
+There is no `.uis.extend` entry for PostgREST. tor-agent recorded this as a genuine inconsistency in
+the tenant-facing surface and deliberately did not change it unattended. **It does not block anything
+here**, because the installer left this design with the answer above. Noted so the next person meets
+it as a known property rather than a surprise.
+
+### Also settled: the platform's verify does not need our data
+
+`088-test-postgrest.yml` creates its **own** probe table and row in the app's schema, reads it back
+over HTTP, and removes it in an `always` block. So a PostgREST pass is independent of whether
+`api_v1` has materialised anything — the empty-views caveat this document carried was defending
+against a problem the tooling had already solved.
+
+⚠️ That verify **writes into the exposed schema**. Harmless, cleaned up, and exactly why the
+`always` block exists — but worth knowing before it runs against a published surface.
+
+### The limit on "tor-agent creates"
+
+**Neither atlas nor tor-agent has a cluster.** tor-agent can produce configuration, procedure and
+platform support; it cannot produce a running instance. For anything that only exists once it is
+running, a third party with cluster access has to execute it. That is a property of the current
+fleet, not of this design, and any plan here that assumes otherwise is wrong.
+
 ## Questions to resolve
 
 1. **What is the unit of installation?** A Dagster code location plus a PostgREST instance plus a
@@ -148,9 +198,10 @@ a writable one is a security problem, not a bug.
 
 ## What would make this investigation wrong
 
-- If UIS expects tenants to be Dagster code locations **only**, then declaring PostgREST and a
-  database from the application is fighting the platform, and questions 1 and 5 collapse into
-  "document the prerequisites". **Ask tor-agent, who owns UIS, before designing against it.**
+- ~~If UIS expects tenants to be Dagster code locations **only**…~~ **Answered 2026-09-05, and the
+  framing was wrong**: PostgREST is a second supported tenant surface, so it was never
+  Dagster-only. But declaring your own PostgREST *does* fight the platform, so questions 1 and 5 do
+  collapse into "document the prerequisites". See the resolved section above.
 - If the frontend is not in fact forkable without our repo, the reference-implementation goal
   needs its own investigation first. Current evidence says it is: no package-level dependency on
   `atlas-data`, and it reads only the public API with no database role.
