@@ -221,7 +221,22 @@ at runtime and reasonably concludes our API is broken rather than our documentat
 Owned here, not by the platform. The fix belongs with
 [INVESTIGATE-developer-docs-surface](INVESTIGATE-developer-docs-surface.md).
 
-### 🔴 There is no external exposure, and that blocks the stated goal
+### ⚠️ "There is no external exposure" — UNDER VERIFICATION, and probably wrong
+
+**Do not act on this section until #129 comes back.** The claim below was generalised from a
+report of `ingress matching postgrest/atlas: none`. tor-agent has since established that UIS
+creates a **Traefik `traefik.io/v1alpha1 IngressRoute`**, a CRD — *not* a core
+`networking.k8s.io` Ingress. So `kubectl get ingress` returns nothing **whether or not the route
+exists**, and the check that settles it is `kubectl get ingressroute -n postgrest`.
+
+The error is mine: I took a negative result about one kind of object and restated it as a general
+absence, without checking it was the right object to ask about.
+
+If the IngressRoute exists, the host is `api-atlas.<any domain Traefik serves>` — on a laptop,
+`api-atlas.localhost` — and the question for a human changes from *should we expose this* to *it
+is already reachable, did we mean that*. Materially different conversation.
+
+### 🔴 The original claim, pending that check
 
 ```
 atlas-postgrest.postgrest.svc.cluster.local:3000   type: ClusterIP
@@ -239,6 +254,26 @@ it reads from is not forkable by a stranger.
 **Exposing it is a human decision** — public exposure of a published contract, per this repo's
 contracts and fleet rule 7. Raised with Terje 2026-09-05; not an agent's call and not blocked on
 design work here.
+
+### Settled 2026-09-05: the public name is `api-atlas`
+
+tor-agent read it out of `088-postgrest-ingressroute.yml.j2`: the route matches
+``HostRegexp(`{{ _url_prefix }}\..+`)``. **The Kubernetes Service name plays no part in the host.**
+`atlas-postgrest` is the in-cluster Service (`atlas-postgrest.postgrest.svc.cluster.local:3000`);
+`api-atlas` is the public prefix, and it matches any domain Traefik serves — `api-atlas.localhost`
+locally, `api-atlas.sovereignsky.no` via cloudflared. Local and public names do not diverge.
+
+This confirms what the repo already committed to: the generated registry emits
+`postgrest_base_url: https://api-atlas.sovereignsky.no`, and 165 references use that host. Nothing
+needs changing.
+
+⚠️ **Platform defect to know when redeploying**: `configure` defaults and prints `url_prefix` but
+does **not persist** it, while `deploy` requires it and does not default it — so a bare
+`./uis deploy postgrest --app atlas` fails an assert whose own error message recommends the command
+that reproduces the failure. Pass it explicitly:
+`./uis deploy postgrest --app atlas --url-prefix api-atlas`. The schema list *is* persisted in the
+per-app secret, so one configure-time value survives and the other does not. tor-agent has it;
+deliberately not fixed mid-use.
 
 ### Correction to a detail
 
