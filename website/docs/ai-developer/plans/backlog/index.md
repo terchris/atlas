@@ -14,6 +14,7 @@ in progress.
 
 | Item | What it does | Priority |
 |---|---|---|
+| [INVESTIGATE-atlas-data-as-deployable-application](INVESTIGATE-atlas-data-as-deployable-application.md) | Make atlas-data one installable UIS application that gathers the data and serves it queryable, so the frontend is a forkable example rather than a requirement | Tier 1 |
 | [INVESTIGATE-ingest-freshness-visibility](INVESTIGATE-ingest-freshness-visibility.md) | A source can stop refreshing while every downstream signal stays green — decide what asserts freshness, where, and how sources with no cadence avoid alarming | Tier 1 |
 | [PLAN-ingest-retry-budget](PLAN-ingest-retry-budget.md) | A short `Retry-After` overrides the backoff ladder and collapses the retry budget to ~4s; unify the three HTTP clients | Tier 1 |
 | [PLAN-ingest-ci-gates](PLAN-ingest-ci-gates.md) | Phases 1–2 shipped; only the C12 move to Node 24 remains | Tier 1 |
