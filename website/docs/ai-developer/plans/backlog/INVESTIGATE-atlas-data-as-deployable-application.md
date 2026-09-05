@@ -362,12 +362,28 @@ three are anonymous-read.
 would find 13 endpoints instead of 119, every `marts`/`raw` route would 404, and the developer
 documentation would be describing schemas the API does not serve.
 
-⚠️ **I made this worse.** On 2026-09-05 I instructed the platform and test agents that
-*"Atlas wants `api_v1` exposed and nothing else"*, framed as the tenant's preference, overriding the
-documented `api_v1,marts,raw` example on least-privilege reasoning — **without checking this
-repository.** That was not least privilege applied to an open question; it reversed a decision that
-was made, coordinated across two repos, shipped, documented publicly and built upon. Corrected on
-`urb-agents` #136 and #137.
+⚠️ **How this happened, corrected 2026-09-05 after the platform maintainer checked the record.**
+
+The `--schemas api_v1` recommendation **originated with the platform side**, not here — least
+privilege applied to what looked like an open question. It was not open: the three-schema flag
+exists because Atlas asked for it, and the plan recording that sits in the platform's own
+`completed/` folder.
+
+**Atlas's error was ratification, not origination, and that was the load-bearing step.** The
+instruction sent onward read: *"I am stating this as the tenant's preference so it is on the record
+and **not tor-agent's guess**: Atlas wants `api_v1` exposed and nothing else."* A platform-side
+suggestion was converted into an authoritative tenant decision, and the marker that would have
+prompted anyone to check — *this is the platform's guess* — was explicitly removed, on the authority
+of a repository nobody had opened.
+
+Only Atlas could declare what Atlas wants publicly served, so only Atlas could make that
+recommendation uncheckable. **An instruction is followed by someone who has no reason to check it,
+because receiving one means the sender did the checking.** That assertion was made and was false.
+
+Corrected on `urb-agents` #136 and #137. The platform has since marked the schema list in its own
+docs as **a tenant decision rather than an illustration** — and guarded the opposite error too:
+three schemas is *Atlas's* answer, not a default to copy into another tenant. The rule is that an
+application names what it intends to serve publicly; the number is an output of that.
 
 **Unresolved**: whether that instance predates the PLAN-007 rollout or was narrowed deliberately, and
 whether the open-by-default posture still holds. Widening what a public API serves is a human's call
