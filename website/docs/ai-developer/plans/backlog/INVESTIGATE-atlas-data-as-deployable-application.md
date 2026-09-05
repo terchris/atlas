@@ -278,7 +278,20 @@ belong in that decision:
    refused, but the published spec says otherwise — and it is now published on a reachable host
    rather than only inside the cluster.
 
-### Settled 2026-09-05: the public name is `api-atlas`
+### ✅ DECIDED by Terje 2026-09-05: the public name is `api-atlas.<domain | localhost>`
+
+> *"the api-atlas.\<domain / localhost\> is the way i want it"*
+
+This is now a decision, not an inference. **Do not propose an alternative naming scheme.** One
+prefix serves every environment — `api-atlas.localhost` on a laptop, `api-atlas.<domain>` wherever
+a real domain is pointed at the cluster — which is the property the convention exists to protect,
+and it is what the platform already implements.
+
+⚠️ **This settles the name, not the exposure.** Pointing a public domain at the cluster is a
+separate infrastructure act. The route exists and answers locally today; nothing in this decision
+makes it internet-reachable.
+
+### How the platform implements it
 
 tor-agent read it out of `088-postgrest-ingressroute.yml.j2`: the route matches
 ``HostRegexp(`{{ _url_prefix }}\..+`)``. **The Kubernetes Service name plays no part in the host.**
