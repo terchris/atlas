@@ -70,6 +70,25 @@
 -- half needs a reader outside the pipeline and is tracked in
 -- INVESTIGATE-ingest-freshness-visibility.
 
+-- HOW THIS TEST GETS RUN AT ALL — read before removing the ref() below
+--
+-- A singular dbt test that references only sources has no parent model, so
+-- dagster-dbt attaches it to no asset and NOTHING EVER RUNS IT. It sits in the
+-- manifest looking exactly like coverage. The image build refuses to ship in
+-- that state (`atlas-data/deploy/Dockerfile`, the singular-test reachability
+-- assertion), and it caught this test on its first CI run — which is the guard
+-- doing precisely the job it was written for.
+--
+-- The `depends_on` hint below creates that edge without putting the model into
+-- the query. dbt's own compiler suggests this form, and it is honest rather
+-- than a formality: the fact table is only trustworthy if the raw inputs behind
+-- it are current, which is exactly this test's claim.
+--
+-- ⚠️ Remove the hint and this test silently stops running. That is the failure
+-- mode it was written to prevent, so it would be a bad one to reintroduce.
+
+-- depends_on: {{ ref('fact_kommune_indicators') }}
+
 {% set exempt_prefixes = var('freshness_exempt_prefixes', ['frr_', 'redcross_']) %}
 {% set max_age_days = var('max_ingest_age_days', 8) %}
 
