@@ -16,6 +16,18 @@ import { logger } from "./logger.js";
  * 2026-09-06 while all 21 FHI steps in the same run succeeded — which is what
  * identified this file as the only one implicated.
  *
+ * ⚠️ The only thing that distinguishes `/v2/` from `/v2-beta/` here is that one
+ * answers and one does not. The commit that made this change claimed the beta
+ * endpoint had also gone stale — that `06913` and `07459` "now report 2026,
+ * newer than the 2025 the beta was serving". **That was false and is
+ * withdrawn.** Beta-era rows ingested 2026-08-24 already carried 2026, and row
+ * counts are identical before and after the cutover. The "2025" was recycled
+ * from a metadata-*label* comparison that had already been retracted four days
+ * earlier for exactly the reason it was wrong then: the label lags, the data
+ * does not. A retracted claim reappearing in a new context, without its
+ * retraction, is its own failure mode — the endpoint returning 503 was always
+ * sufficient reason for this change and no story about staleness was needed.
+ *
  * ⚠️ This was written down and then came due early. The note in
  * `sources/ssb-08764/README.md` said "re-check annually; move to /v2/ when the
  * beta flag is dropped". The flag was dropped roughly four months into that

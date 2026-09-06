@@ -89,6 +89,37 @@ a cached object of unknown age, which is how the wrong conclusion above survived
 This second point is worth remembering beyond this investigation: it applies to any debugging of
 SSB behaviour, including the 429/503 incident of 2026-08-30.
 
+## Closed 2026-09-06 — `/v2-beta/` was retired and the cutover shipped
+
+SSB retired the beta path. It returns **503 for every request**, including `/config`, and that took
+all 15 SSB ingest steps down on the weekly tick while all 21 FHI steps in the same run succeeded.
+`PXWEB_BASE` moved to `/v2/` in `5d77b13`; verified on-cluster by the tester — **15/15 steps SUCCESS,
+freshness 20 → 2**, `loaded_at` moved off 2026-08-24 on all 18 SSB tables.
+
+**The annual re-check this investigation inherited did not catch it.** The note said *"re-check
+annually; move to `/v2/` when the beta flag is dropped"*, written 2026-04-21; the flag was dropped
+about four months in. A calendar interval cannot catch an upstream that moves on its own schedule.
+The ingest-freshness check merged the previous day caught it on its first weekly tick.
+
+### ⚠️ Withdrawn: the claim that beta had gone stale
+
+The cutover commit said `06913` and `07459` "now report 2026, newer than the 2025 the beta was
+serving", framed as a beta endpoint frozen before it stopped answering. **False.** Beta-era rows
+ingested 2026-08-24 already carried 2026, and row counts are identical before and after the cutover.
+
+The "2025" came from the metadata-**label** comparison earlier in this file — the one retracted on
+2026-09-05 because the label lags while the data does not. It was recycled four days later as though
+it were a fact about data, into a commit message, a PR body and an acceptance criterion sent to
+another agent.
+
+**A retracted claim can reappear in a new context without its retraction travelling with it.** The
+retraction lived here; the number moved elsewhere. That is worth guarding against, and the guard that
+caught it was a falsification the tester noticed could not have fired — it was already at its pass
+value before the change.
+
+**The only real distinction between the two surfaces was that one answered and one did not**, which
+was always sufficient reason for the cutover.
+
 ## Questions to resolve
 
 1. **Has `/v2/` shipped?** The 2026-04-21 note said no. Re-check; if it has, this collapses into a
