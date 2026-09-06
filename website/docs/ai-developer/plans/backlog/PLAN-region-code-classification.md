@@ -99,46 +99,76 @@ reproducible from source rows at all, whether it is computed over a different ko
 whether `1151 Utsira` being null — Norway's smallest municipality, ~200 people — indicates a
 suppression rule `0000` treats differently.
 
-## The discriminator: a correspondence table, not a code list
+## The discriminator: grunnkrets decomposition
 
-KLASS 131 exposes **no flag** separating the missingness bucket from a municipality — `9999
-Uoppgitt`, `3101 Halden` and `0301 Oslo` all sit at level 1 with no parent and no validity marker.
-The only distinguishing field is the *name*, and matching on `name = 'Uoppgitt'` is prose-matching.
-**Do not.**
+**A municipality has ground under it.** Every real municipality decomposes into *grunnkretser* —
+basic statistical units. A missingness bucket cannot, because it has no territory.
 
-The tell is that a municipality belongs to exactly one county and the bucket does not. Verified
-live against KLASS rather than taken on trust:
+> A code is a municipality **iff**, at the row's own date, it decomposes into at least one
+> grunnkrets.
+
+Verified live, not taken on trust:
 
 ```
-ct 1017  Fylkesinndeling 2024 - Kommuneinndeling 2024   358 maps   99 Uoppgitt -> 9999
-ct  975  Fylkesinndeling 2020 - Kommuneinndeling 2020   356 maps   9999 ABSENT ENTIRELY
+ct 1458  Kommuneinndeling 2024 - grunnkretsinndeling 2024   357 kommuner  9999 ABSENT  min gk 2
+ct  969  Kommuneinndeling 2020 - grunnkretsinndeling 2020   356 kommuner  9999 ABSENT  min gk 2
+
+  0301 Oslo      592 grunnkretser        1151 Utsira   2   <- smallest real municipality
+  9999 Uoppgitt  absent from the table entirely
 ```
 
-🔴 **The representation is not stable across versions.** In 2024 the bucket is present and mapped to
-`99`; in 2020 it is missing from the correspondence altogether. A rule written only as *"maps to
-`99`"* silently reclassifies `9999` as a municipality for every pre-2024 vintage.
+**Minimum for any real municipality is 2; the bucket is absent.** No overlap and no threshold to
+tune. Stable across every version checked — where other correspondences *changed how they represent*
+the bucket, this one has always simply omitted it, because the omission is a fact about territory
+rather than a modelling choice.
 
-**The rule that holds in both**, and the one to implement:
+It also disposes of `Ialt` for free: not in KLASS 131, therefore no grunnkretser, therefore not a
+municipality. One predicate, four cases, no special case for a representation change.
 
-> A code is a municipality **iff**, at the row's own date, it maps to a fylke **other than `99`** —
-> where *absent from the correspondence* counts as **not** qualifying.
+### Why not the alternatives
 
-Width-independent, format-independent, date-aware, derived rather than listed, and it catches any
-future bucket SSB adds without editing a constant.
+- ⚠️ **Not by name.** KLASS 131 gives `9999 Uoppgitt`, `3101 Halden` and `0301 Oslo` the same level,
+  no parent and no validity marker. The only distinguishing field is the *name*, and matching on
+  `name = 'Uoppgitt'` is prose-matching.
+- ⚠️ **Not by fylke correspondence.** *"Maps to a fylke other than `99`"* works, but needs a
+  complement: in `ct 1017` (2024) the bucket is present and mapped to `99`; in `ct 975` (2020) it is
+  **absent entirely**. A rule carrying a special case for a representation change is waiting for the
+  next one. Keep it as corroboration, not as the implementation.
+- ⚠️ **Not by attribute in any classification.** KLASS 104 carries `99 Uoppgitt` beside the real
+  counties and KLASS 127 carries `9900` in the same position. Neither flags the bucket.
+
+### The fylke side grounds out without circularity
+
+*"Is `99` a real county"* reduces to *"is `9999` a real municipality"* under the correspondence rule.
+Under this one it terminates:
+
+> A fylke is real **iff** it contains at least one municipality that has grunnkretser.
+
+**15 of 15 real counties qualify; the 1 bucket does not.** Cardinality alone would have failed —
+Oslo also contains exactly one municipality. It is the grunnkretser that separate them, not the
+count.
 
 ### 🔴 Present-tense consequence, measured in this warehouse
 
-`raw.ssb_klass_kommuner` contains `9999 Uoppgitt`, and `dim_kommune` is built straight from it with
-no exclusion:
+Both dimensions are `select`-from-KLASS with no exclusion, and both classifications carry the bucket:
 
 ```
 raw.ssb_klass_kommuner:  0301 Oslo · 3101 Halden · 9999 Uoppgitt
+raw.ssb_klass_fylker:    03 Oslo · 34 Innlandet · 99 Uoppgitt
 ```
 
-**So `dim_kommune` contains a non-place today** — and the FK test that has warned for weeks is
-complaining that nineteen `XX99` buckets are *missing* from a dimension that already admits an
-identical bucket. `dim_fylke` is built the same way from `ssb_klass_fylker`, and KLASS 104 carries
-`99 Uoppgitt` beside the real counties, so it has the same exposure one level up.
+**So `dim_kommune` and `dim_fylke` both contain a non-place today.**
+
+### What that does to the warning this plan exists for
+
+> **The dimension rejects nineteen missingness codes and accepts one.**
+
+For weeks the FK warning has been read as *"the dimension is missing rows"*. It is not — **the
+dimension is inconsistent.** The nineteen `XX99` rows it rejects are the same kind of object as the
+`9999` row it admits. **Adding the nineteen and removing the one are opposite fixes**, and the
+warning has until now been read as arguing for the first.
+
+⚠️ **The warning count is therefore not a progress metric.** Removing `9999` will not reduce it.
 
 ## The four cases, and what each requires
 
