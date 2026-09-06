@@ -56,6 +56,43 @@ sum of uoppgitt               1,446      <- lost if excluded
 **Excluding `uoppgitt` would silently reduce a national crime total.** A rule written from
 population data alone would have done exactly that.
 
+## The reconciliation, measured 2026-09-06 — and two codes that break both predicates
+
+`ssb_08487`, slice `2024-2025` / `1AAAAA-9ZZZZz` / `AnmeldteLovbrudd`. Every aggregate row named:
+
+```
+Ialt   I alt              345,009      <- = 00 + 99 exactly, residual 0
+0      Hele landet        335,157
+00     Alle fylker        334,118
+0000   Alle kommuner      332,675
+99     Uoppgitt fylke      10,891
+       sum of 32 XX99       1,446
+       sum of KLASS131      332,759    (356 non-null of 357 present)
+```
+
+🔴 **`Ialt` is the residual, and no predicate discussed so far can see it.** A **non-numeric**
+region code, four characters wide. A width-based scan sweeps it in with historical kommuner; a
+`not in KLASS 131` rule classifies it as an unknown code to exclude. It is neither — it is the
+grand total, and `Ialt = 00 + 99` to the unit.
+
+🔴 **`9999 Uoppgitt` is *inside* KLASS 131.** The kommune standard's single `*99` member is itself
+a missingness bucket. So **"in KLASS 131" does not mean "is a municipality"** — the rule that looked
+safest is the one that admits a non-place. Anything built from KLASS 131 without excluding `9999`,
+including `dim_kommune`, inherits it.
+
+⚠️ **The hierarchy does not decompose the way it looks.** `99 Uoppgitt fylke` is 10,891, far larger
+than the ~1,039 needed for `0 = 00 + 99`, and `00 + 99` exceeds `Hele landet`. `99` is not a simple
+additive child of the national total. **What it is has not been established, and Phase 1 must not
+assume.**
+
+### Unresolved, named rather than absorbed
+
+`sum(KLASS 131 codes) = 332,759` against `0000 Alle kommuner = 332,675` — **a difference of 84**.
+Not a reform double-count: no municipality name appears under two codes in the slice, and no
+historical kommune code carries a value. Two municipalities happen to have value 84 (`3438`
+Sør-Fron, `5634` Vardø), which is coincidence and not an explanation. **Unexplained, and Phase 1
+must close it before any exclusion rule is written against a total nobody can reproduce.**
+
 ## The four cases, and what each requires
 
 | the code is… | what it is | do |
@@ -88,8 +125,18 @@ GET /api/klass/v1/classifications/131/codesAt?date=YYYY-MM-DD
 
 ## Phases
 
+### Phase 0 — reproduce the totals before classifying anything
+- [ ] For one slice of each relation, **reproduce the published national total exactly**, naming
+      every component. Not "a national total is unchanged" — *every row accounted for by exactly
+      one family*.
+- [ ] Close the 84 discrepancy above, or explain it.
+- [ ] Establish what `99 Uoppgitt fylke` actually is. Do not assume it is additive.
+
 ### Phase 1 — measure, per dataset, before designing
 - [ ] Run the family breakdown across **all** SSB relations, not the four measured here.
+- [ ] **Scan predicate: any code not in KLASS 131 at the row's own date, whatever its width or
+      format.** Width-independence is the point — `99` is two characters and `Ialt` is not numeric,
+      and both were invisible to the first scan.
 - [ ] Record, per dataset, whether `21`–`28` and `XX99` are empty or populated.
 - [ ] ⚠️ Do not generalise a per-dataset result into a global rule. That is the mistake this plan
       exists because of — twice.
@@ -108,6 +155,11 @@ GET /api/klass/v1/classifications/131/codesAt?date=YYYY-MM-DD
       different reform year. **This is the one a reconciling total will not catch.**
 - [ ] 🔴 **`uoppgitt` retained where populated**: `08487`'s 1,446-per-slice must still be present and
       attributed to `region_type = 'uoppgitt'`, not dropped and not redistributed into counties.
+- [ ] 🔴 **The decomposition closes to the unit.** Every row in the published total is attributed to
+      exactly one family, with no residual. This is the case that catches all three errors found
+      while writing this plan — a rule keyed on an undated classification, a scan keyed on code
+      width, and a total that reconciles while rows sit unattributed. A national total being
+      *unchanged* passes while 1,036 offences are unaccounted for; closing *to the unit* does not.
 - [ ] Make each red case fail on purpose before trusting the green.
 
 ## Acceptance
