@@ -24,6 +24,10 @@ Calling `/data?lang=no&outputFormat=json-stat2` without an explicit `Tid` filter
 
 **Done 2026-09-06, and not by the annual re-check.** SSB retired `/v2-beta/` — it now returns **503 for every request**, including `/config` — and that took all 15 SSB ingest steps down on the weekly tick while all 21 FHI steps in the same run succeeded. `src/lib/pxweb.ts` now points at `/v2/`.
 
+⚠️ A claim made alongside this change — that the beta endpoint had gone stale as well as being
+retired — was **false and has been withdrawn**. The two surfaces served identical data; beta simply
+stopped answering. See the note in `src/lib/pxweb.ts`.
+
 The note above was written on 2026-04-21 with an annual re-check. The flag was dropped roughly four months in. **A calendar interval cannot catch an upstream that moves on its own schedule**; what caught it was the ingest-freshness check, the morning it happened.
 
 ### Region code `9999` appears with suppressed values
