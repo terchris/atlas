@@ -51,41 +51,116 @@ from tecMacDev and got rows back. Until someone has, the frontend has nothing to
 2026-09-05: an application that declares its own PostgREST is fighting the platform. Nothing here
 should reopen it.
 
-## What is missing: there is no unit of installation
+## ✅ Ruled 2026-09-06 by the UIS maintainer: **option A**, and my gap description was wrong
 
-Installing Atlas today is **four manual steps across two different mechanisms**:
+**B — a UIS `Application` type — is not new work awaiting a decision. It is deferred work with a
+written reason.** UIS's own `ANALYSIS-nais-uis.md` ranks it **#13 of 13** adoptable ideas from NAIS,
+effort L, marked *"New investigation — and it should be explicitly deferred"*, with the note that it
+is *"the most seductive, and also the one most likely to produce a half-built abstraction"*. Its
+stated preconditions — per-workload named secrets, default-deny NetworkPolicy, OTEL
+auto-instrumentation — have not landed. Being the first real tenant is an argument for A now, not
+for jumping that queue.
 
-1. Create the database and owning role — no provisioning defined anywhere.
-2. Create the secrets in the `dagster` namespace for `env_secrets` — UIS explicitly does not.
-3. Register the code location in `.uis.extend/dagster-code-locations.yaml`, then `./uis deploy dagster`.
-4. `./uis configure postgrest --app atlas …` then `./uis deploy postgrest --app atlas --url-prefix api-atlas`.
+### My "four steps across two mechanisms" was wrong on three of the four
 
-Steps 3 and 4 are **not the same kind of thing**. A Dagster code location is *declarative* — a file
-the platform reads. PostgREST is *imperative* — a command that creates roles and a secret. There is
-no `.uis.extend` entry for PostgREST, and nothing anywhere expresses *"these four belong to one
-application"*.
+Corrected against the UIS source, and this makes A much smaller than this file first claimed:
 
-That is the gap. Not the container, not the code.
+| step | what I claimed | what is true |
+|---|---|---|
+| database + owning role | *"nothing defines this"* | ❌ wrong — `configure-postgresql.sh` creates a per-app database and role, grants it, and applies migrations from stdin with rollback |
+| secrets | *"UIS explicitly does not"* | ❌ wrong — `configure.sh` takes `--namespace` and `--secret-name-prefix`; UIS writes the Secret idempotently. It is the mechanism `env_secrets` consumes |
+| code location | declarative, hand-edited | ✅ correct, and **the only genuinely undefined step** — nothing writes `dagster-code-locations.yaml` |
+| PostgREST | imperative | ✅ correct, and already app-shaped (`--app`, multi-instance since it shipped) |
 
-## The question for the platform, which is tor-agent's to answer
+**The real gap: three commands already exist, one file is hand-edited, and nothing names the four as
+one application.**
 
-Terje's framing is that Atlas should install *"just like a service"*. UIS has a service concept and
-Atlas is not one — it is a tenant that consumes three services and needs objects created inside
-them. So either:
+### The sub-question answered itself, and it argues against B
 
-- **A: Atlas becomes expressible in the existing mechanisms** — a `.uis.extend` declaration per
-  surface plus documented prerequisites, with `./uis deploy atlas` as a thin orchestration over
-  what already exists; or
-- **B: UIS grows an `Application` type** — a first-class unit above services that owns a code
-  location, a database, secrets and an exposure, installed and verified as one thing.
+I asked whether an `Application` type would *remove* the declarative/imperative split or merely
+*wrap* it, and said only removal survives. The maintainer reframed it as **where the state lives**:
+the code location is installation configuration and contains nothing secret, so it can live in a
+file; the PostgREST app config contains a generated password that UIS deliberately does not store.
+An `Application` could never move the second into a file without breaking that rule — so it could
+only ever wrap. **By my own test, B fails.**
 
-⚠️ **This is a platform architecture decision and it is not Atlas's to make.** tor-agent has already
-drawn the relevant boundary: PostgREST being a second tenant surface *"does not generalise to
-any-service-per-tenant. Two surfaces exist; a third would be new work, not configuration."* An
-`Application` type is that new work.
+### Resolved without a change: the database URL
 
-**Do not design B into this repo before tor-agent has ruled on it.** Atlas's job is to state what it
-needs created and why, precisely enough that either answer can be built against it.
+The maintainer flagged that UIS injects the secret key as `DATABASE_URL`, not `ATLAS_DATABASE_URL`,
+and offered a `--secret-key` flag if Atlas needed the prefixed name. **It does not.**
+
+```python
+database_url = os.environ.get("ATLAS_DATABASE_URL") or os.environ.get("DATABASE_URL")
+```
+
+The ingest reads `DATABASE_URL` directly. **Both halves already accept what UIS supplies** — no flag,
+no shim. Only the comment in UIS's own `.default` template is wrong, and that is being fixed there.
+
+⚠️ **The Secret is named `<prefix>-db`, not `<prefix>`.** `--secret-name-prefix atlas-database`
+produces `atlas-database-db`. An `env_secrets:` entry that does not match exactly leaves the pod
+starting **silently without the variable** — a failure with no error, which is this project's
+recurring shape.
+
+## The declaration Atlas wants — a requirements statement, not an implementation
+
+The mechanism is `uis template install`, which already implements a unit above a service:
+`template-info.yaml` with `install_type: stack`, a `provides:` list of services each with optional
+`config:`, and `params:` substitution. This is what Atlas would need it to express.
+
+```yaml
+install_type: stack
+params:
+  app_name: atlas
+
+provides:
+  - service: postgresql
+    config:
+      database: "{{ params.app_name }}"
+      namespace: dagster
+      secret_name_prefix: "{{ params.app_name }}-database"
+      init: migrations/          # raw.* schema, applied with rollback on failure
+
+  - service: dagster
+    config:
+      code_location:
+        name: "{{ params.app_name }}-data"
+        image: ghcr.io/terchris/atlas-data
+        tag: <immutable, never :latest>
+        module: atlas_data.definitions
+        why: "Atlas ingest and dbt transforms; without it marts.* and api_v1 stop refreshing"
+        env_secrets: ["{{ params.app_name }}-database-db"]   # note the -db suffix
+
+  - service: postgrest
+    config:
+      app: "{{ params.app_name }}"
+      schemas: api_v1            # ⚠️ pending: PLAN-007 shipped api_v1,marts,raw
+      url_prefix: api-atlas
+```
+
+**Ordering is not incidental**: postgresql before dagster, because the code-location pod will not
+start without the Secret; dagster before postgrest, because `api_v1` does not exist until the
+transform has run at least once.
+
+### What this declaration cannot yet express
+
+- **A code-location entry.** Nothing writes `dagster-code-locations.yaml`; it is hand-edited by
+  design, and its `.default` template already carries Atlas as the worked example.
+- **`--app` on a deploy call**, which multi-instance PostgREST needs.
+- **Whether an application may ship its own template from its own repository** — the difference
+  between UIS carrying a template per tenant and a tenant carrying its own.
+
+### Verify: two halves, no third
+
+`./uis verify atlas` should **not** exist. The boundary is **the platform verifies the pipe, the
+tenant verifies the data**:
+
+- `./uis verify postgrest --app atlas` already proves the whole path using a probe row it owns —
+  so it cannot be fooled by an empty Atlas nor corrupt a full one.
+- The **ingest freshness check** proves the data is arriving, and is already shipped and proven
+  red-then-green.
+
+A template's verify step should **call both** rather than invent a third. That closes the failure
+this project keeps meeting — a code location LOADED, an API answering, and zero rows.
 
 ## Questions to resolve
 
