@@ -4,6 +4,47 @@
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
+## 🔴 The authoritative code list, 2026-09-06 — and this is two decisions, not one
+
+Measured by the tester by **executing dbt's own compiled predicate**, not by re-deriving the join.
+That distinction matters here: a hand-written version disagreed with dbt's count because the
+`relationships` test carries `where kommune_nr is not null`, and the NULLs are large — 9,116 null
+`kommune_nr` and 202,036 null `fylke_nr`. Those NULLs are invisible to the warning and were nearly
+reported as part of it.
+
+The largest warning, `ssb_07459` on `kommune_nr`: **9,964 rows across 47 distinct codes.**
+
+| family | codes | count |
+|---|---|---|
+| **`XX99` "uoppgitt kommune"** — unspecified municipality within a county | `0199 0299 0399 … 2099` | **19** |
+| Svalbard | `2101 … 2131`, `2199` | 21 |
+| Jan Mayen | `2211`, `2299` | 2 |
+| Continental shelf | `2300`, `2311`, `2321`, `2399` | 4 |
+
+Fylke side adds `21 22 23 25 26 88`.
+
+### Why this reframes the blocked question
+
+This investigation has been described — by me, repeatedly — as *"the Svalbard question"*, and the
+decision waiting on a human as *"does Atlas cover Svalbard"*. **The largest single family is not
+Svalbard.** Nineteen of the 47 codes are `XX99`, meaning *the municipality was not specified* for a
+row SSB does attribute to a county.
+
+Those are two different questions with potentially different answers:
+
+1. **Territorial coverage** — Svalbard, Jan Mayen, the shelf. Places outside the kommune system.
+   Answering it decides whether they get dim rows and appear on the map.
+2. **Unattributed rows** — `XX99`. Not a place at all; a row SSB could not or would not assign to a
+   municipality. The question is whether an unattributed value is dropped, aggregated to its county,
+   or surfaced as a distinct "unspecified" bucket. **A decision about Svalbard says nothing about
+   this**, and a fix that adds dim rows for the 27 territorial codes would leave 19 codes still
+   warning.
+
+⚠️ Anyone answering this should be asked both questions explicitly. Asking only about Svalbard and
+applying the answer to all 47 codes would be a fair reading of how this file was previously written,
+and it would be wrong.
+
+
 ## Status: Backlog
 
 **Goal**: Get Atlas to **zero permanent WARNs**, by deciding what Svalbard, Jan Mayen, the continental shelf and "unspecified" *are* in the Atlas data model.
