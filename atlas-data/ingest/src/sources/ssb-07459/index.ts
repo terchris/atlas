@@ -5,7 +5,7 @@
  * Five dimensions: Region × Kjonn × Alder × ContentsCode × Tid. The Alder
  * dimension has 106 single-year codes ("000".."104", plus "105+"), which
  * makes this the largest SSB pull in the Atlas catalogue so far
- * (~210 k cells at the v2-beta default of one Tid period).
+ * (~210 k cells at the PxWebAPI default of one Tid period).
  */
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";

@@ -20,7 +20,11 @@ Calling `/data?lang=no&outputFormat=json-stat2` without an explicit `Tid` filter
 
 ### The v2 API is served under `/v2-beta/`
 
-SSB's documentation says "v2" but the live endpoint (as of 2026-04-21) is at `https://data.ssb.no/api/pxwebapi/v2-beta/…`. Our client (`src/lib/pxweb.ts`) points at `v2-beta` for now. Re-check annually; move to `/v2/` when the beta flag is dropped.
+~~SSB's documentation says "v2" but the live endpoint (as of 2026-04-21) is at `/v2-beta/`… Re-check annually; move to `/v2/` when the beta flag is dropped.~~
+
+**Done 2026-09-06, and not by the annual re-check.** SSB retired `/v2-beta/` — it now returns **503 for every request**, including `/config` — and that took all 15 SSB ingest steps down on the weekly tick while all 21 FHI steps in the same run succeeded. `src/lib/pxweb.ts` now points at `/v2/`.
+
+The note above was written on 2026-04-21 with an annual re-check. The flag was dropped roughly four months in. **A calendar interval cannot catch an upstream that moves on its own schedule**; what caught it was the ingest-freshness check, the morning it happened.
 
 ### Region code `9999` appears with suppressed values
 
