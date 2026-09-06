@@ -19,19 +19,22 @@ use the config system that we already have in UIS."*
 
 ## The end state, stated so it can fail
 
-> **Atlas is installed on the imac cluster, and its API is reachable from tecMacDev**, because the
-> frontend will be built against it from there.
+> **Atlas is installed on the imac cluster, and its API answers from tecMacDev over the LAN.**
 
-That is the acceptance test, and it is stricter than anything this repo has been held to before.
-Every previous "it works" has been *from inside the cluster*. This one is not:
+That is the acceptance test. The frontend will be built from tecMacDev against this API, so "it
+works" means *from the other machine on the same network* — not from inside the cluster, which is
+all any previous check has shown.
 
-- A request issued **on tecMacDev** returns Atlas rows from the imac cluster.
-- Nothing in the path requires a human to have run a command by hand that morning.
+**Scope, deliberately narrow**: this is two machines on one LAN. No public domain, no DNS records,
+no tunnel, nothing internet-facing. Traefik already routes `<prefix>.*`, and `api-atlas` is the
+confirmed prefix, so the missing piece is only that a request from the other machine arrives at
+imac's Traefik with a matching `Host` header.
 
-⚠️ **Today this fails**, and not marginally. The route exists and answers on `api-atlas.localhost`,
-which resolves only on the machine running the cluster. From tecMacDev, `api-atlas.sovereignsky.no`,
-`api-atlas.helpers.no` and `atlas.helpers.no` are all NXDOMAIN. **Cross-machine reachability is the
-one requirement with no partial credit.**
+⚠️ **Today this is unverified.** The route answers on the cluster host; nobody has issued a request
+from tecMacDev and got rows back. Until someone has, the frontend has nothing to build against.
+
+⚠️ **Do not put host addresses in this repository.** It is public. Name the machine, not its address
+— see [SECURITY.md](../../SECURITY.md).
 
 ## What is already true, so nobody re-solves it
 
@@ -93,10 +96,12 @@ needs created and why, precisely enough that either answer can be built against 
 4. **Does the declarative/imperative split get fixed or wrapped?** An `Application` type that hides
    the difference is not the same as one that removes it, and only one of those survives contact
    with the third surface.
-5. 🔴 **How does an installation become reachable from another machine?** Traefik routes
-   `<prefix>.*`, which is what makes a single prefix serve `api-atlas.localhost` and any external
-   domain. The remaining link is cloudflared or equivalent. **This is the acceptance test and it has
-   never been done for Atlas.**
+5. 🔴 **What makes the API answer from the other machine on the LAN?** Traefik matches on the
+   `Host` header and routes `<prefix>.*`, so the question is only how a request from tecMacDev
+   reaches imac's Traefik with a matching host — a hosts entry, a LAN-resolvable name, or an
+   explicit `Host` header against imac's address. **This is the acceptance test and it has never
+   been done for Atlas.** It is also the smallest of the open questions, and it is the one with a
+   person waiting on it.
 6. **What does `./uis verify atlas` assert?** A service verify has meaning; an application's should
    too — probably that the code location is LOADED, the API answers, and the data is fresh.
 7. **What is the minimum viable install?** Probably not 41 sources. A stranger evaluating this wants
@@ -108,8 +113,9 @@ needs created and why, precisely enough that either answer can be built against 
 
 - **The install is not one command** — if it still takes four steps in a documented order, nothing
   has been solved, only written down.
-- **It works only on the machine running the cluster.** The reachability requirement is not
-  satisfied by `localhost` under any name.
+- **It works only on the machine running the cluster.** A request issued on tecMacDev must return
+  Atlas rows. `localhost` under any name does not satisfy this, and neither does a tunnel nobody
+  has to run — the LAN path either works unattended or it does not.
 - **A second installation is impossible or collides.** Multi-instance is the platform's design; an
   Atlas that can only exist once has hardcoded something.
 - ⚠️ **The install reports success while the data is empty.** The freshness check exists precisely
