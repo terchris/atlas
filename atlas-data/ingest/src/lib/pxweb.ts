@@ -2,10 +2,31 @@ import type { JsonStat2Response, PxRow } from "./types.js";
 import { logger } from "./logger.js";
 
 /**
- * SSB PxWebAPI v2 client. The v2 API is currently served at `/v2-beta/`
- * (confirmed live 2026-04-21); v1 is deprecated but still available.
+ * SSB PxWebAPI v2 client.
+ *
+ * Served at `/v2/`. It moved off `/v2-beta/` on 2026-09-06, and the move was
+ * not graceful: the beta path now returns **503 for every request**, including
+ * `/config`. Measured that morning with a cache-busting key so the reads hit
+ * origin rather than SSB's Varnish:
+ *
+ *     /v2-beta/config                  -> 503      /v2/config                  -> 200
+ *     /v2-beta/tables/13995/data       -> 503      /v2/tables/13995/data       -> 200
+ *
+ * That retirement took all 15 SSB ingest steps down on the weekly tick of
+ * 2026-09-06 while all 21 FHI steps in the same run succeeded — which is what
+ * identified this file as the only one implicated.
+ *
+ * ⚠️ This was written down and then came due early. The note in
+ * `sources/ssb-08764/README.md` said "re-check annually; move to /v2/ when the
+ * beta flag is dropped". The flag was dropped roughly four months into that
+ * annual interval. A calendar re-check cannot catch an upstream that moves on
+ * its own schedule; the freshness check added on 2026-09-05 is what actually
+ * caught it, and it caught it the morning it happened.
+ *
+ * ⚠️ Do NOT fall back to `/v0/`. It answers, but it is the deprecated legacy
+ * API — a different surface, not an older copy of this one.
  */
-const PXWEB_BASE = "https://data.ssb.no/api/pxwebapi/v2-beta";
+const PXWEB_BASE = "https://data.ssb.no/api/pxwebapi/v2";
 
 export type PxWebOptions = {
   /** Table id, e.g. "08764". */

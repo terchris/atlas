@@ -61,7 +61,8 @@ export async function run(): Promise<Ssb06913Summary> {
     const started = Date.now();
 
     // 06913 requires explicit valuecodes for every dimension. Without them
-    // PxWebAPI v2-beta returns 400 "Non-existent value" — observed 2026-04-28
+    // PxWebAPI returns 400 "Non-existent value" — observed 2026-04-28 on v2-beta,
+    // still true on /v2/ (re-run 2026-09-06)
     // (probably a server-side guard for tables above some cell-count threshold:
     // 06913 is 1288×8×76 ≈ 783k cells, while small tables like 08764 still
     // accept the no-filter default).
