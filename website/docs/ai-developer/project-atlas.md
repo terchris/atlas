@@ -83,6 +83,12 @@ apply. Run commands on the host. Do not invent a cage.
 - **Prefer a build-time assertion over a rule people must remember** — and make the guard fail on
   purpose once before trusting it. This repo has shipped a guard that protected nothing, and a
   green uniqueness test once masked a real fan-out bug.
+- **A retraction must travel with the claim it retracts.** On 2026-09-05 a claim was measured,
+  found wrong and retracted in a PR thread and an investigation file. Four days later the same
+  number was recycled — into a commit message, a PR body, and an acceptance criterion sent to
+  another agent — because the retraction lived in one place and the number moved to another. When
+  withdrawing something, put the withdrawal where the claim will next be read, not only where it was
+  made.
 - **Never commit to `main`.** Feature branch, then a PR, squash-merged.
 - **This agent has no cluster access.** No `kubectl`, no `docker`, no cluster shell. It declares;
   another agent applies; a third verifies. Do not write a plan that assumes otherwise.
