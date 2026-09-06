@@ -14,6 +14,7 @@ in progress.
 
 | Item | What it does | Priority |
 |---|---|---|
+| [INVESTIGATE-atlas-as-a-uis-application](INVESTIGATE-atlas-as-a-uis-application.md) | Install Atlas on UIS with one command, using the Dagster/Postgres/PostgREST it already ships — and reachable from another machine | Tier 0 |
 | [INVESTIGATE-atlas-data-as-deployable-application](INVESTIGATE-atlas-data-as-deployable-application.md) | Make atlas-data one installable UIS application that gathers the data and serves it queryable, so the frontend is a forkable example rather than a requirement | Tier 1 |
 | [INVESTIGATE-ingest-freshness-visibility](INVESTIGATE-ingest-freshness-visibility.md) | A source can stop refreshing while every downstream signal stays green — decide what asserts freshness, where, and how sources with no cadence avoid alarming | Tier 1 |
 | [PLAN-region-code-classification](PLAN-region-code-classification.md) | Classify SSB region codes against KLASS by date instead of failing an FK — the 17 standing warnings, where no code family is universally safe to exclude | Tier 2 |
