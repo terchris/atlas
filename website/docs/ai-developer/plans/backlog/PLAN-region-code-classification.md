@@ -88,10 +88,57 @@ assume.**
 ### Unresolved, named rather than absorbed
 
 `sum(KLASS 131 codes) = 332,759` against `0000 Alle kommuner = 332,675` — **a difference of 84**.
-Not a reform double-count: no municipality name appears under two codes in the slice, and no
-historical kommune code carries a value. Two municipalities happen to have value 84 (`3438`
-Sør-Fron, `5634` Vardø), which is coincidence and not an explanation. **Unexplained, and Phase 1
-must close it before any exclusion rule is written against a total nobody can reproduce.**
+
+⚠️ **This is upstream, not ours.** Reproduced independently straight from PxWeb, without touching
+this warehouse: the codes present in the table intersected with KLASS 131 @2026 sum to **332,759**,
+against SSB's own published `0000 Alle kommuner` of **332,675**. **SSB's published aggregate does
+not equal the sum of SSB's own municipality rows in the same slice.**
+
+So Phase 0 must **not** look for a warehouse bug. The open questions are whether `0000` is
+reproducible from source rows at all, whether it is computed over a different kommune vintage, and
+whether `1151 Utsira` being null — Norway's smallest municipality, ~200 people — indicates a
+suppression rule `0000` treats differently.
+
+## The discriminator: a correspondence table, not a code list
+
+KLASS 131 exposes **no flag** separating the missingness bucket from a municipality — `9999
+Uoppgitt`, `3101 Halden` and `0301 Oslo` all sit at level 1 with no parent and no validity marker.
+The only distinguishing field is the *name*, and matching on `name = 'Uoppgitt'` is prose-matching.
+**Do not.**
+
+The tell is that a municipality belongs to exactly one county and the bucket does not. Verified
+live against KLASS rather than taken on trust:
+
+```
+ct 1017  Fylkesinndeling 2024 - Kommuneinndeling 2024   358 maps   99 Uoppgitt -> 9999
+ct  975  Fylkesinndeling 2020 - Kommuneinndeling 2020   356 maps   9999 ABSENT ENTIRELY
+```
+
+🔴 **The representation is not stable across versions.** In 2024 the bucket is present and mapped to
+`99`; in 2020 it is missing from the correspondence altogether. A rule written only as *"maps to
+`99`"* silently reclassifies `9999` as a municipality for every pre-2024 vintage.
+
+**The rule that holds in both**, and the one to implement:
+
+> A code is a municipality **iff**, at the row's own date, it maps to a fylke **other than `99`** —
+> where *absent from the correspondence* counts as **not** qualifying.
+
+Width-independent, format-independent, date-aware, derived rather than listed, and it catches any
+future bucket SSB adds without editing a constant.
+
+### 🔴 Present-tense consequence, measured in this warehouse
+
+`raw.ssb_klass_kommuner` contains `9999 Uoppgitt`, and `dim_kommune` is built straight from it with
+no exclusion:
+
+```
+raw.ssb_klass_kommuner:  0301 Oslo · 3101 Halden · 9999 Uoppgitt
+```
+
+**So `dim_kommune` contains a non-place today** — and the FK test that has warned for weeks is
+complaining that nineteen `XX99` buckets are *missing* from a dimension that already admits an
+identical bucket. `dim_fylke` is built the same way from `ssb_klass_fylker`, and KLASS 104 carries
+`99 Uoppgitt` beside the real counties, so it has the same exposure one level up.
 
 ## The four cases, and what each requires
 
@@ -155,8 +202,11 @@ GET /api/klass/v1/classifications/131/codesAt?date=YYYY-MM-DD
       different reform year. **This is the one a reconciling total will not catch.**
 - [ ] 🔴 **`uoppgitt` retained where populated**: `08487`'s 1,446-per-slice must still be present and
       attributed to `region_type = 'uoppgitt'`, not dropped and not redistributed into counties.
-- [ ] 🔴 **The decomposition closes to the unit.** Every row in the published total is attributed to
-      exactly one family, with no residual. This is the case that catches all three errors found
+- [ ] 🔴 **The decomposition closes to the unit** — against a total **we can derive**, not against
+      SSB's published aggregate. `0000 Alle kommuner` is 84 off the sum of its own constituent rows,
+      so a red case keyed on the published figure would fail for an upstream reason. Document the
+      upstream gap; do not chase it. Every row in the derived total is attributed to exactly one
+      family, with no residual. This is the case that catches all three errors found
       while writing this plan — a rule keyed on an undated classification, a scan keyed on code
       width, and a total that reconciles while rows sit unattributed. A national total being
       *unchanged* passes while 1,036 offences are unaccounted for; closing *to the unit* does not.
