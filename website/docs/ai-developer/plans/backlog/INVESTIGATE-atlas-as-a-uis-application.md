@@ -17,24 +17,44 @@ use the config system that we already have in UIS."*
 
 ---
 
-## The end state, stated so it can fail
+## ✅ The end state, ACHIEVED 2026-09-07
 
-> **Atlas is installed on the imac cluster, and its API answers from tecMacDev over the LAN.**
+> **Atlas is installed on the imac cluster, and its API answers from tecMacDev.**
 
-That is the acceptance test. The frontend will be built from tecMacDev against this API, so "it
-works" means *from the other machine on the same network* — not from inside the cluster, which is
-all any previous check has shown.
+Measured from tecMacDev, the machine the frontend will be built on:
 
-**Scope, deliberately narrow**: this is two machines on one LAN. No public domain, no DNS records,
-no tunnel, nothing internet-facing. Traefik already routes `<prefix>.*`, and `api-atlas` is the
-confirmed prefix, so the missing piece is only that a request from the other machine arrives at
-imac's Traefik with a matching `Host` header.
+```
+GET  /                              HTTP 200   PostgREST 14.10 OpenAPI, 82,746 b
+GET  /indicator_summary?limit=2     HTTP 200   real rows —
+       fhi-bor-alene · RATE · latest_year 2025 · 357 kommuner · upstream_updated 2026-09-06
+POST /indicator_summary             HTTP 401   Postgres 42501, permission denied
+```
 
-⚠️ **Today this is unverified.** The route answers on the cluster host; nobody has issued a request
-from tecMacDev and got rows back. Until someone has, the frontend has nothing to build against.
+**Atlas data, over the network, from another machine.** That had never been done before this date.
+Any hostname beginning `api-atlas.` reaches it — the route matches `HostRegexp(api-atlas\..+)` — so a
+single hosts-file line on the client is all a browser needs. **Use `http` on port 80**: 443 is bound
+but the IngressRoute carries no TLS section and returns 404 for this host.
 
-⚠️ **Do not put host addresses in this repository.** It is public. Name the machine, not its address
-— see [SECURITY.md](../../SECURITY.md).
+**The read-only contract holds across the network.** The `401` is Postgres `42501`, the database
+refusing — not the ingress. Crossing a network weakens nothing.
+
+### 🔴 It breaks on every reboot of the host, silently
+
+`application.autoStart: false`, `startInBackground: false`, and Rancher Desktop is a GUI app that
+needs a display. **When that machine restarts, nothing serves the API until someone starts it by
+hand** — about 90 seconds, with Traefik needing one restart to go Ready.
+
+⚠️ **There is no error when this happens.** The host still answers ping; nothing serves HTTP. That
+signature is *identical* to a loopback-only binding, and this investigation misdiagnosed it as
+exactly that on 2026-09-06 — concluding "no hosts entry can fix this" when the binding had always
+been on all interfaces and the cluster was simply down. **Establish the thing is running before
+explaining how it behaves.**
+
+Whether that host should auto-start its cluster is a human decision. It is the difference between
+an API a frontend can rely on and one that disappears without notice.
+
+⚠️ **Do not put host addresses in this repository.** It is public. Name the machine, not its
+address — see [SECURITY.md](../../SECURITY.md).
 
 ## What is already true, so nobody re-solves it
 
