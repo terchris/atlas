@@ -53,6 +53,26 @@ explaining how it behaves.**
 Whether that host should auto-start its cluster is a human decision. It is the difference between
 an API a frontend can rely on and one that disappears without notice.
 
+**Answered 2026-09-07 by the UIS maintainer, and it is smaller than it looks:**
+
+- **All cluster state survives a host reboot** — Deployments, Services, IngressRoutes, Secrets and
+  the Postgres roles are persisted. When the cluster comes back the kubelet restarts the pods and
+  the API answers again. **Nothing needs re-deploying and no declaration needs re-applying.**
+- **Only the cluster process does not survive.**
+- ⚠️ **UIS's "autostart" is not a boot mechanism.** `.uis.extend/enabled-services.conf` controls
+  *which services `./uis deploy` deploys when run with no arguments*. It is a list for a manual
+  command. **Nothing in UIS runs at boot**, and the name misleads.
+- So the fix is **neither `uis deploy` at boot nor GitOps** — it is making the cluster start with
+  the host. Rancher Desktop is installed at OS level, deliberately outside UIS's control, so this
+  is one autostart setting or k3s under systemd. **Installation implementation, five minutes, not
+  platform work** — it does not queue behind any platform decision.
+
+🔴 **GitOps cannot fix this, and it would be a wrong premise to carry.** ArgoCD is itself a pod in
+the cluster it reconciles. If the cluster is down, ArgoCD is down with it and nothing reconciles
+anything. **This is the one problem GitOps structurally cannot solve.** Recorded because the
+opposite was suggested — by this agent, in passing — and a throwaway line is exactly how a wrong
+premise enters an investigation and gets built on.
+
 ⚠️ **Do not put host addresses in this repository.** It is public. Name the machine, not its
 address — see [SECURITY.md](../../SECURITY.md).
 
@@ -160,6 +180,22 @@ provides:
 **Ordering is not incidental**: postgresql before dagster, because the code-location pod will not
 start without the Secret; dagster before postgrest, because `api_v1` does not exist until the
 transform has run at least once.
+
+### `schemas:` — the mechanics, so the decision is made with them in hand
+
+- `configure-postgrest.sh` emits, **per schema**: `GRANT USAGE ON SCHEMA`, `GRANT SELECT ON ALL
+  TABLES`, and `ALTER DEFAULT PRIVILEGES … GRANT SELECT ON TABLES` to the anon role. The last is why
+  newly-created views become readable without a re-grant.
+- The list is stored on the per-app secret as `PGRST_DB_SCHEMAS` and read by the Deployment via
+  `secretKeyRef`. **`deploy` does not accept `--schemas`** — one source of truth, deliberately.
+- Widening is therefore `./uis configure postgrest --app atlas --schemas api_v1,marts,raw`, then a
+  pod restart to pick up the changed secret. **A re-configure, not a flag.**
+
+⚠️ **The forward-looking consequence, which is the part that matters for the decision.** Those
+default-privileges grants cut both ways: with `marts` and `raw` exposed, the anon role can read
+**everything in them, including tables added later** — no future review, no per-table opt-in. That
+is what makes this a posture rather than a configuration value, and why three schemas is *Atlas's*
+answer rather than a default any tenant should copy.
 
 ### What this declaration cannot yet express
 
