@@ -4,6 +4,73 @@
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
+## 🔴 Answered 2026-09-07 by the UIS maintainer — and the finding is bigger than the questions
+
+Three of this file's open questions are now answered from the UIS source, and a fourth thing was
+found that nobody had asked about.
+
+### ArgoCD is a real UIS service, not an aspiration
+
+`service-argocd.sh`, priority 80, `220-setup-argocd.yml`, with `uis argocd register|remove|list|verify`.
+
+**Q on drift detection — answered, and better than expected.** Every registered Application is
+created with `syncPolicy.automated.prune: true` and `selfHeal: true`. **Drift correction is on by
+default, no flag.** Given this project has twice graded artefacts that did not contain the fix, that
+is not a luxury feature.
+
+**Q on tag-following — it does not exist and cannot as things stand.** There is no
+`argocd-image-updater` in the tree, and `targetRevision: HEAD` follows a **git** HEAD, not an image
+tag.
+
+### 🔴 The finding: UIS has two deployment paths, and they do not meet
+
+From UIS's own contributor guide, `adding-a-service.md`:
+
+> *"UIS has two separate deployment concepts… `./uis argocd register` — Deploys user applications
+> from external GitHub repos via ArgoCD. **This is a completely different flow.**"*
+
+| | what it watches | what it applies |
+|---|---|---|
+| **Path 2 — ArgoCD** | a repo's `manifests/` directory | **raw Kubernetes** |
+| **Path 1 — Atlas** | `.uis.extend/dagster-code-locations.yaml` | a **Helm values overlay** rendered by `./uis deploy dagster` |
+
+**ArgoCD as UIS runs it today cannot manage Atlas at all.** Not "does not yet" — the object it would
+need to reconcile is not a Kubernetes manifest, and it lives in a file ArgoCD does not watch, in a
+different repository.
+
+**Atlas is the first real application and it straddles both paths.** That is the actual gap, and it
+was named by neither side until the question was asked directly.
+
+### The secrets boundary is movable, which changes what a declaration can be
+
+The argument that a complete declarative manifest is impossible rested on PostgREST's generated
+password being something *"UIS does not store"*. That does not imply a declaration cannot be
+complete — **it implies it cannot be complete in plaintext.** sealed-secrets keeps an encrypted blob
+in git; external-secrets keeps only a reference.
+
+UIS has **neither as a service**: no sealed-secrets anywhere, and external-secrets exists as one
+hand-written `ClusterSecretStore` on a single production host. But a path is already measured —
+UIS's own OpenBao investigation found that nothing talks to the vault except ESO, so **the interface
+needing parity is the store *name*, not an address.** Same store name in-cluster and every
+`ExternalSecret` works unchanged on a laptop.
+
+### Two things that were being conflated, including by this file
+
+| | what it is | who reconciles |
+|---|---|---|
+| a NAIS-style `Application` | one CRD; an **operator** generates the Kubernetes objects | an operator in the cluster |
+| **GitOps / ArgoCD** | a **repo of manifests** reconciled against the cluster | ArgoCD, from git |
+
+They are complementary — NAIS runs both — but they answer different questions, and the deferred
+NAIS item is **only the first column**. If the destination is GitOps, an `Application` CRD would be
+the expensive way to arrive.
+
+**⚠️ Open, and a human's to answer**: whether UIS's application-deployment story becomes GitOps.
+That question is *upstream* of the NAIS item, and it makes the per-workload-secrets work a
+**prerequisite rather than a by-product** — GitOps without it means plaintext in a repo or an
+incomplete declaration.
+
+
 ## Status: Backlog
 
 **Goal**: Decide how every Atlas-side **deployable** artefact — the Docusaurus site (which also hosts the Scalar API playground and dbt-docs) and the `atlas-data` polyglot image that registers as a Dagster code location — goes from a developer's commit to running on UIS. Covers CI test gates, image build + registry, hostnames, secrets, database migrations, rollback, the cross-repo handshake with the UIS Dagster install, and which environments exist (prod-only or also staging / PR previews).
