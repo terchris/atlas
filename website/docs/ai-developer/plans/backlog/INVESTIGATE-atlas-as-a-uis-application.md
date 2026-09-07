@@ -197,6 +197,57 @@ default-privileges grants cut both ways: with `marts` and `raw` exposed, the ano
 is what makes this a posture rather than a configuration value, and why three schemas is *Atlas's*
 answer rather than a default any tenant should copy.
 
+### 🔴 What the declaration found, 2026-09-07 — two blockers, both the platform's
+
+Writing it down as a requirements statement surfaced two defects in an afternoon that designing
+against an imagined tenant would not have.
+
+**TPL-F8 — the install order is impossible today.** UIS service priorities are
+`postgresql 30 → postgrest 50 → dagster 56`. Atlas needs `postgresql → dagster → postgrest`, so
+**the last two are inverted**. And it is a hard failure rather than an inefficiency:
+`configure-postgrest.sh` refuses a schema that does not exist —
+
+> *"Schema '<s>' does not exist in database '<db>'. Create it first (typically via the consuming
+> app's migration), then retry"*
+
+— and `api_v1` does not exist until a transform has run once. So `uis template install atlas` would
+deploy PostgreSQL, **fail** on PostgREST, and never reach Dagster. **The first real application
+cannot be installed in priority order at all.**
+
+⚠️ **The declaration is not to be restructured around this.** Service priority is *platform boot
+order*, a global property; bending it for one tenant would satisfy Atlas and mis-state the platform.
+What is needed is ordering *within* a declaration. Promoted upstream to
+`PLAN-templates-000-install-ordering` because it changes what `config:` must mean.
+
+**TPL-F7 — `init:` takes one file, not a directory.** `template.sh` resolves `init` to a single
+file and `cat`s it; Atlas's `migrations/` is 49 numbered DDL files and fails outright. Whatever
+fixes it must preserve **apply order** — a partial apply is exactly what `configure-postgresql`'s
+rollback exists to undo. **Keep `migrations/` in the declaration**: it states the requirement
+correctly, and the defect is the platform's.
+
+### Two things the declaration settled
+
+- ✅ **No `--secret-key` will be built.** Atlas reads `DATABASE_URL` with a fallback, so the
+  hardcoded key is accepted. An option removed by a fact rather than a preference.
+- ✅ **Writing `atlas-database-db` out literally was right** — templating it would have hidden the
+  suffix whose mismatch starts a pod silently without the variable.
+
+### Verify vs monitor: the first-install paradox dissolves
+
+I argued the tenant half must be able to fail a verify, then found that on a **first install it
+legitimately fails** because no ingest has run. Both true — and together they are the tell that the
+assertion is in the wrong place.
+
+**"The install worked" and "data is flowing" are different claims and should not be one command.**
+A verify that reds on a correct install teaches people to ignore it, which is the same failure as an
+install that looks healthy with zero rows, pointed the other way.
+
+So the provisional answer is that **freshness is a monitor, not a verify** — and UIS has that
+convention in flight (`.uis.extend/monitors.yaml`). A monitor red between install and first ingest
+is *correct and visible*; a verify red there is a bug. **Nothing about the freshness check changes** —
+only which command asserts it. Deliberately not settled yet, to avoid becoming the third consumer of
+an undecided convention.
+
 ### What this declaration cannot yet express
 
 - **A code-location entry.** Nothing writes `dagster-code-locations.yaml`; it is hand-edited by
