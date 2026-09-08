@@ -178,18 +178,36 @@ provides:
 ```
 
 **Ordering is not incidental**: postgresql before dagster, because the code-location pod will not
-start without the Secret; dagster before postgrest, because `api_v1` does not exist until the
-transform has run at least once.
+start without the Secret. ~~dagster before postgrest, because `api_v1` does not exist until the
+transform has run at least once.~~ **Corrected 2026-09-08 (urb-agents #323):** the second clause was
+wrong twice over. `uis deploy dagster` only *registers* a code location — it runs nothing, so no
+ordering makes a transform happen at install. And `api_v1` is now created empty by
+[`migrations/050`](../../../../../atlas-data/migrations/050_create_api_v1_schema.sql), so the schema
+exists before PostgREST is configured. **Required order is postgresql first, then dagster and
+postgrest in either order** — which the existing priorities already satisfy.
 
 ### `schemas:` — the mechanics, so the decision is made with them in hand
 
 - `configure-postgrest.sh` emits, **per schema**: `GRANT USAGE ON SCHEMA`, `GRANT SELECT ON ALL
   TABLES`, and `ALTER DEFAULT PRIVILEGES … GRANT SELECT ON TABLES` to the anon role. The last is why
   newly-created views become readable without a re-grant.
+- ⚠️ **…but only if UIS runs that statement as the role that later creates the views.**
+  `ALTER DEFAULT PRIVILEGES` without `FOR ROLE` records an entry keyed to `current_user`
+  (`pg_default_acl.defaclrole`), and it applies *only* to objects that role goes on to create.
+  Verified on Postgres 15.18, 2026-09-08: grants emitted as the admin role, view then created by
+  the app role → `has_table_privilege(anon, view, 'SELECT')` = **`f`**. Emitted as the app role, or
+  as admin with `FOR ROLE <app>` → `t`. Which role UIS connects as lives in its
+  `lib/pg-connection.sh` and is **not visible from this repo** — raised with tor-agent on
+  urb-agents #323. If it is the admin role, the empty-schema install still yields a permanently
+  empty API and the auto-grant never fires.
 - The list is stored on the per-app secret as `PGRST_DB_SCHEMAS` and read by the Deployment via
   `secretKeyRef`. **`deploy` does not accept `--schemas`** — one source of truth, deliberately.
 - Widening is therefore `./uis configure postgrest --app atlas --schemas api_v1,marts,raw`, then a
   pod restart to pick up the changed secret. **A re-configure, not a flag.**
+- ✅ **Widening needs no further migration.** `raw` and `marts` are both created by
+  [`migrations/001`](../../../../../atlas-data/migrations/001_create_schemas.sql), so all three
+  schemas in the widened list already exist at install time. (The migrations README used to say the
+  scope was "raw landing tables only", which is what suggested otherwise; corrected.)
 
 ⚠️ **The forward-looking consequence, which is the part that matters for the decision.** Those
 default-privileges grants cut both ways: with `marts` and `raw` exposed, the anon role can read
@@ -201,6 +219,14 @@ answer rather than a default any tenant should copy.
 
 Writing it down as a requirements statement surfaced two defects in an afternoon that designing
 against an imagined tenant would not have.
+
+> ✅ **TPL-F8 no longer blocks Atlas (2026-09-08, urb-agents #323).** tor-agent retracted the
+> diagnosis below: ordering was the symptom, not the cause, and reordering would have failed one
+> step later. The fix is one line in Atlas's own migrations —
+> [`050_create_api_v1_schema.sql`](../../../../../atlas-data/migrations/050_create_api_v1_schema.sql)
+> creates `api_v1` empty so `configure postgrest` finds it. TPL-F8 remains a **latent platform
+> defect** for a future application with a genuine cross-surface dependency, but it is off Atlas's
+> critical path. The analysis is kept below as written, because the retraction is the useful part.
 
 **TPL-F8 — the install order is impossible today.** UIS service priorities are
 `postgresql 30 → postgrest 50 → dagster 56`. Atlas needs `postgresql → dagster → postgrest`, so
