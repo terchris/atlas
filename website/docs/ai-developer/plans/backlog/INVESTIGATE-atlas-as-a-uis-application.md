@@ -212,6 +212,19 @@ postgrest in either order** — which the existing priorities already satisfy.
   `secretKeyRef`. **`deploy` does not accept `--schemas`** — one source of truth, deliberately.
 - Widening is therefore `./uis configure postgrest --app atlas --schemas api_v1,marts,raw`, then a
   pod restart to pick up the changed secret. **A re-configure, not a flag.**
+- ✅ **…but a cheap one, and this cuts *for* starting narrow** (tor-agent, urb-agents #351).
+  `configure` is a **wipe-and-rewrite in one transaction**: it drops every grant the anon role holds
+  and re-applies from the new list, so there is **no diff state and no accumulated drift**. Going
+  `api_v1` → `+marts` → `+raw` later is one command plus a pod restart, and `api_v1`-only installs
+  cleanly today because `CREATE SCHEMA IF NOT EXISTS api_v1` is already in the migrations. Narrowing
+  genuinely revokes rather than half-revoking — though it cannot un-publish what a consumer already
+  fetched, which is the asymmetry that argues for starting narrow rather than for widening freely.
+- 🔴 **State the commitment the way tor-agent states it, because "43 tables" understates it:**
+  the commitment is not *"these 43 tables"*, it is ***"whatever the pipeline writes there, from now
+  on."*** Under an exposed `marts` or `raw` there is **no moment at which a future table is looked
+  at before it becomes public** — Atlas adds sources regularly, and each new `raw.*` landing would
+  publish the moment it lands, by a decision taken once, earlier. Open with Terje as
+  urb-agents **#350**; the running instance serves `api_v1` only until he answers.
 - ✅ **Widening needs no further migration.** `raw` and `marts` are both created by
   [`migrations/001`](../../../../../atlas-data/migrations/001_create_schemas.sql), so all three
   schemas in the widened list already exist at install time. (The migrations README used to say the
