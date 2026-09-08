@@ -191,15 +191,23 @@ postgrest in either order** — which the existing priorities already satisfy.
 - `configure-postgrest.sh` emits, **per schema**: `GRANT USAGE ON SCHEMA`, `GRANT SELECT ON ALL
   TABLES`, and `ALTER DEFAULT PRIVILEGES … GRANT SELECT ON TABLES` to the anon role. The last is why
   newly-created views become readable without a re-grant.
-- ⚠️ **…but only if UIS runs that statement as the role that later creates the views.**
-  `ALTER DEFAULT PRIVILEGES` without `FOR ROLE` records an entry keyed to `current_user`
-  (`pg_default_acl.defaclrole`), and it applies *only* to objects that role goes on to create.
-  Verified on Postgres 15.18, 2026-09-08: grants emitted as the admin role, view then created by
-  the app role → `has_table_privilege(anon, view, 'SELECT')` = **`f`**. Emitted as the app role, or
-  as admin with `FOR ROLE <app>` → `t`. Which role UIS connects as lives in its
-  `lib/pg-connection.sh` and is **not visible from this repo** — raised with tor-agent on
-  urb-agents #323. If it is the admin role, the empty-schema install still yields a permanently
-  empty API and the auto-grant never fires.
+- **…but which objects it covers depends on who creates them.** `ALTER DEFAULT PRIVILEGES` without
+  `FOR ROLE` records an entry keyed to `current_user` (`pg_default_acl.defaclrole`) and applies
+  *only* to objects that role goes on to create. Verified on Postgres 15.18, 2026-09-08: grants
+  emitted as the admin role, view then created by a *separate* app role →
+  `has_table_privilege(anon, view, 'SELECT')` = **`f`**. Emitted as the app role, or as admin with
+  `FOR ROLE <app>` → `t`.
+- ✅ **The alarm this raised does not apply to Atlas's deployment — the premise was wrong, and
+  measurement is what settled it.** On 2026-09-08 I took the above to tor-agent (#323) and to imac
+  (#342) as a live risk: that the empty-schema install could leave a permanently empty API. imac
+  checked the running instance rather than reasoning from the mechanism, and the premise fails
+  there — **there is no separate `atlas` app role** (only `atlas_web_anon` and
+  `atlas_authenticator`), and **all 13 `api_v1` views are owned by `postgres`**. Admin creates them,
+  so the *unqualified* entry is exactly the one that covers them: **13 of 13 views readable by anon
+  today.** UIS's `FOR ROLE` guard (#308) correctly declines to write an entry for a role that does
+  not exist, reporting `default_privileges_owner: "none"`; that is the guard working, not a failure.
+  The general Postgres fact above stays true and stays worth knowing **if Atlas ever introduces a
+  distinct object-owning app role** — which is the condition to watch, not the current state.
 - The list is stored on the per-app secret as `PGRST_DB_SCHEMAS` and read by the Deployment via
   `secretKeyRef`. **`deploy` does not accept `--schemas`** — one source of truth, deliberately.
 - Widening is therefore `./uis configure postgrest --app atlas --schemas api_v1,marts,raw`, then a
