@@ -108,6 +108,19 @@ apply. Run commands on the host. Do not invent a cage.
     continues — and Terje has been told so on #338 so he can correct it.** If you are a later
     session and #338 carries no correction, that is his silence, not his agreement: ask before
     relying on this for anything outward-facing.
+  - ✅ **So that no later session has to re-derive this from the same sentence — the grant ends when
+    ANY of these is true, and not before** (ops-dev asked for a test rather than a judgement, #349):
+    1. **Terje says so** — anywhere: a bus task, a comment, a message. His word ends it immediately.
+    2. **`uis template install atlas` installs Atlas end to end on a clean cluster** with no manual
+       `.uis.extend` edit — i.e. **TPL-F5 and TPL-F7 are both closed**. That is the one-command
+       install this grant exists to reach.
+    3. **2026-10-09** — one month from the grant. A standing authorization with no clock is how
+       "merge freely" outlives the goal it was given for. If the goal is not reached by then, ask
+       for a new scope rather than assume this one still holds.
+
+    Until one of those fires, merge your own PRs and do not stop to ask. **Note what is *not* on
+    that list:** #214 shipping, verify going green, or the instance running — none of those end it,
+    because the instance was already deployed before the grant was given.
 - **This agent has no cluster access.** No `kubectl`, no `docker`, no cluster shell. It declares;
   another agent applies; a third verifies. Do not write a plan that assumes otherwise.
 
