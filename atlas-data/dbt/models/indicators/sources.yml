@@ -11,6 +11,8 @@ sources:
           SSB 08484 — reported offences nationally by offence classification.
           Populated by atlas-data/ingest/src/sources/ssb-crime-tables.
         loaded_at_field: loaded_at
+        meta:
+          ingest_cadence: weekly
         freshness:
           warn_after: {count: 400, period: day}
           error_after: {count: 800, period: day}
@@ -41,6 +43,8 @@ sources:
           SSB 08487 — reported offences by gjerningssted (kommune and aggregates);
           two-year averages. Populated by atlas-data/ingest/src/sources/ssb-crime-tables.
         loaded_at_field: loaded_at
+        meta:
+          ingest_cadence: weekly
         freshness:
           warn_after: {count: 400, period: day}
           error_after: {count: 800, period: day}
@@ -77,6 +81,8 @@ sources:
           SSB 09405 — investigated offences by police disposition (national).
           Populated by atlas-data/ingest/src/sources/ssb-crime-tables.
         loaded_at_field: loaded_at
+        meta:
+          ingest_cadence: weekly
         freshness:
           warn_after: {count: 400, period: day}
           error_after: {count: 800, period: day}
@@ -111,6 +117,8 @@ sources:
           SSB 09406 — investigated offence counts and clearance rate (national).
           Populated by atlas-data/ingest/src/sources/ssb-crime-tables.
         loaded_at_field: loaded_at
+        meta:
+          ingest_cadence: weekly
         freshness:
           warn_after: {count: 400, period: day}
           error_after: {count: 800, period: day}
@@ -142,6 +150,8 @@ sources:
           med lavinntekt (EU- og OECD-skala). Annual, region-resolved.
           Populated by atlas-data/ingest/src/sources/ssb-08764.
         loaded_at_field: loaded_at
+        meta:
+          ingest_cadence: weekly
         # Freshness thresholds: SSB publishes annually around February/March.
         # We warn if the landing table hasn't been touched in 400 days, error
         # at 800 days. These are intentionally generous; tightened once we
@@ -181,6 +191,8 @@ sources:
           Annual, region-resolved, same 3-dimension shape as ssb_08764.
           Populated by atlas-data/ingest/src/sources/ssb-06913.
         loaded_at_field: loaded_at
+        meta:
+          ingest_cadence: weekly
         freshness:
           warn_after: {count: 400, period: day}
           error_after: {count: 800, period: day}
@@ -205,6 +217,8 @@ sources:
           couple with/without kids, etc.). Populated by
           atlas-data/ingest/src/sources/ssb-06083.
         loaded_at_field: loaded_at
+        meta:
+          ingest_cadence: weekly
         freshness:
           warn_after: {count: 400, period: day}
           error_after: {count: 800, period: day}
@@ -232,6 +246,8 @@ sources:
           × ContentsCode × Tid. Includes bydeler (delområder) in Region.
           Populated by atlas-data/ingest/src/sources/ssb-06944.
         loaded_at_field: loaded_at
+        meta:
+          ingest_cadence: weekly
         freshness:
           warn_after: {count: 400, period: day}
           error_after: {count: 800, period: day}
@@ -259,6 +275,8 @@ sources:
       - name: ssb_09429
         description: SSB 09429 — educational attainment by kommune and sex (5 dims).
         loaded_at_field: loaded_at
+        meta:
+          ingest_cadence: weekly
         freshness:
           warn_after: {count: 400, period: day}
           error_after: {count: 800, period: day}
@@ -284,6 +302,8 @@ sources:
       - name: ssb_12063
         description: SSB KOSTRA 12063 — municipal leisure services / voluntary youth associations.
         loaded_at_field: loaded_at
+        meta:
+          ingest_cadence: weekly
         freshness:
           warn_after: {count: 400, period: day}
           error_after: {count: 800, period: day}
@@ -305,6 +325,8 @@ sources:
       - name: ssb_12131
         description: SSB KOSTRA 12131 — social-assistance monthly rates.
         loaded_at_field: loaded_at
+        meta:
+          ingest_cadence: weekly
         freshness:
           warn_after: {count: 400, period: day}
           error_after: {count: 800, period: day}
@@ -326,6 +348,8 @@ sources:
       - name: ssb_12132
         description: SSB KOSTRA 12132 — welfare benefit-income rules.
         loaded_at_field: loaded_at
+        meta:
+          ingest_cadence: weekly
         freshness:
           warn_after: {count: 400, period: day}
           error_after: {count: 800, period: day}
@@ -350,6 +374,8 @@ sources:
           ContentsCodes × ~891 regions × 2015-2024. Populated by
           atlas-data/ingest/src/sources/ssb-12292.
         loaded_at_field: loaded_at
+        meta:
+          ingest_cadence: weekly
         freshness:
           warn_after: {count: 400, period: day}
           error_after: {count: 800, period: day}
@@ -374,6 +400,8 @@ sources:
           beløp og stønadstid. 34 content codes × ~891 regions × 2022-2025.
           Populated by atlas-data/ingest/src/sources/ssb-13995.
         loaded_at_field: loaded_at
+        meta:
+          ingest_cadence: weekly
         freshness:
           warn_after: {count: 400, period: day}
           error_after: {count: 800, period: day}
@@ -398,6 +426,8 @@ sources:
           (EU/OECD scale). Same 5 ContentsCodes as ssb-08764 but for all
           ages. Populated by atlas-data/ingest/src/sources/ssb-06947.
         loaded_at_field: loaded_at
+        meta:
+          ingest_cadence: weekly
         freshness:
           warn_after: {count: 400, period: day}
           error_after: {count: 800, period: day}
@@ -427,6 +457,8 @@ sources:
           (Region × Kjonn × Alder × ContentsCode × Tid).
           Populated by atlas-data/ingest/src/sources/ssb-07459.
         loaded_at_field: loaded_at
+        meta:
+          ingest_cadence: weekly
         freshness:
           warn_after: {count: 400, period: day}
           error_after: {count: 800, period: day}
@@ -466,6 +498,8 @@ sources:
           Stavanger, Bergen and Trondheim.
           Populated by atlas-data/ingest/src/sources/ssb-10826.
         loaded_at_field: loaded_at
+        meta:
+          ingest_cadence: weekly
         freshness:
           warn_after: {count: 400, period: day}
           error_after: {count: 800, period: day}
@@ -511,6 +545,8 @@ sources:
       - name: fhi_mobbing
         description: FHI 377 — bullying share 7./10. klasse, 3-year averages.
         loaded_at_field: loaded_at
+        meta:
+          ingest_cadence: weekly
         freshness:
           warn_after: {count: 400, period: day}
           error_after: {count: 800, period: day}
@@ -539,6 +575,8 @@ sources:
         description: >-
           FHI 360 — upper-secondary completion rate, by region × sex × parents-education × immigration-category.
         loaded_at_field: loaded_at
+        meta:
+          ingest_cadence: weekly
         freshness:
           warn_after: {count: 400, period: day}
           error_after: {count: 800, period: day}
@@ -565,6 +603,8 @@ sources:
         description: FHI 794 — overcrowded-housing share by region × age × education × 
           housing-status.
         loaded_at_field: loaded_at
+        meta:
+          ingest_cadence: weekly
         freshness:
           warn_after: {count: 400, period: day}
           error_after: {count: 800, period: day}
@@ -598,6 +638,8 @@ sources:
           Region × AAR × ALDER × MEASURE_TYPE. First non-SSB source in
           Atlas. Populated by atlas-data/ingest/src/sources/fhi-bor-alene.
         loaded_at_field: loaded_at
+        meta:
+          ingest_cadence: weekly
         freshness:
           warn_after: {count: 400, period: day}
           error_after: {count: 800, period: day}
@@ -626,6 +668,8 @@ sources:
           the official bulk ZIP of `Indikator_*.xlsx` exports (monitor page resolves the CDN ZIP URL).
           Populated by atlas-data/ingest/src/sources/bufdir-barnefattigdom.
         loaded_at_field: loaded_at
+        meta:
+          ingest_cadence: weekly
         freshness:
           warn_after: {count: 400, period: day}
           error_after: {count: 800, period: day}
@@ -697,6 +741,8 @@ sources:
           uses rolling three-year periods as the time axis.
           Populated by atlas-data/ingest/src/sources/ssb-12944.
         loaded_at_field: loaded_at
+        meta:
+          ingest_cadence: weekly
         freshness:
           warn_after: {count: 400, period: day}
           error_after: {count: 800, period: day}

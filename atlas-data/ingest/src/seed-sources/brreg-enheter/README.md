@@ -52,7 +52,20 @@ Downstream "active NGO?" queries filter on these instead of expecting a syntheti
 
 ## Refresh cadence
 
-Manual. Brreg-side churn is slow (a few new Folkehjelp lokallag per year, occasional konkurs or dissolution flag flips). Add a cron when Atlas has a job-runner.
+**Monthly, orchestrated** — `MONTHLY_CRON`, the 1st at 01:00 Europe/Oslo. This is a
+Dagster asset (`raw/brreg_enheter`, see `dagster/atlas_data/assets/raw_seeds.py`) and the
+only seed source that is one.
+
+Monthly rather than weekly because Brreg-side churn is slow: a few new Folkehjelp lokallag
+per year, occasional konkurs or dissolution flag flips. But it is scheduled rather than
+manual because those flag flips are the point — downstream "active NGO?" queries filter on
+`konkurs` / `under_avvikling` / `under_tvangsavvikling`, so a dissolved lokallag that Atlas
+still reports as active is a **wrong** answer rather than a stale one.
+
+> Until 2026-09-08 this section read *"Manual. … Add a cron when Atlas has a job-runner."*
+> Atlas got a job-runner in the declarative-automation pilot and nobody came back to this
+> note. The gap surfaced only when the ingest-freshness test began reporting
+> `raw.brreg_enheter` as permanently stale — correctly, for three weeks.
 
 ## Implementation
 

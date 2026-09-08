@@ -180,6 +180,38 @@ assert not unreachable, ( \
     'Give each a ref() so dbt attaches it to a parent asset, or re-home it as a ' \
     'Python asset check (see assets/api_v1.py).')"
 
+# Every source that declares a loaded_at_field must declare its CADENCE.
+#
+# dbt/tests/raw_sources_were_refreshed_recently.sql derives each source's
+# staleness bound from `meta.ingest_cadence`, and raises a compiler error if a
+# source is missing one. But that check runs under `{% if execute %}`, and the
+# build above runs only `dbt parse` — where execute is False and graph.sources
+# is empty. So the in-test guard cannot fire here; without this step a source
+# with no cadence ships happily and takes down the nightly transform instead.
+#
+# The parse manifest already carries source meta, so the same assertion is
+# cheap at build time. This is the earlier, louder half of that guard — the
+# in-test one still matters, because it also fires for anyone running dbt by
+# hand outside the image.
+RUN cd / && python -c "\
+import json; \
+m = json.load(open('/app/dbt/target/manifest.json')); \
+srcs = [s for s in m['sources'].values() if s.get('loaded_at_field')]; \
+missing = sorted(s['name'] for s in srcs if not s.get('meta', {}).get('ingest_cadence')); \
+unargued = sorted(s['name'] for s in srcs \
+                  if s.get('meta', {}).get('ingest_cadence') == 'none' \
+                  and not s.get('meta', {}).get('cadence_note')); \
+print(f'smoke: {len(srcs)} sources declare a cadence; missing: {missing or \"none\"}'); \
+assert not missing, ( \
+    f'these raw sources declare a loaded_at_field but no meta.ingest_cadence: {missing}. ' \
+    'Add weekly, monthly, or none — see the header of ' \
+    'dbt/tests/raw_sources_were_refreshed_recently.sql. Defaulting one in is how ' \
+    'the KLASS sources acquired a threshold nobody chose.'); \
+assert not unargued, ( \
+    f'these sources claim ingest_cadence: none with no meta.cadence_note: {unargued}. ' \
+    \"'none' silences the freshness check for that source, so it is the one value \" \
+    'that has to be argued for in writing.')"
+
 # --- Dagster gRPC server -----------------------------------------------------
 # Port 4000 matches the UIS Dagster doc's expected user-deployments port.
 # `--host 0.0.0.0` so Dagster's webserver/daemon (in a different pod) can reach.

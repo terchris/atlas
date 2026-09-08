@@ -21,8 +21,9 @@
 import { readFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { recordIngestRun, type IngestRunResult } from "../../lib/ingest_run.js";
 import { logger } from "../../lib/logger.js";
-import { closeSql, getSql, upsert } from "../../lib/postgres.js";
+import { getSql, upsert } from "../../lib/postgres.js";
 import {
   fetchNgoUnits,
   type FetchNgoUnitsOpts,
@@ -106,7 +107,12 @@ function shape(enhet: Enhet, now: Date): Row | null {
   };
 }
 
-export async function run(): Promise<void> {
+/**
+ * The actual work. Returns the ingest-run record rather than writing it — the
+ * `recordIngestRun` wrapper below owns raw.ingest_runs and the Dagster Pipes
+ * materialisation, exactly as the 42 sources under src/sources/ do.
+ */
+async function fetchAndUpsert(): Promise<IngestRunResult<void>> {
   logger.info("source.start", { source_id: SOURCE_ID });
   const started = Date.now();
 
@@ -131,6 +137,10 @@ export async function run(): Promise<void> {
   const now = new Date();
   const rows: Row[] = [];
   const seenOrgnrs = new Set<string>();
+  // Counters for raw.ingest_runs, so a run that quietly drops half its rows is
+  // visible in mart_ingest_health rather than only in the log stream.
+  let skipped = 0;
+  let warnings = 0;
 
   for (const ngo of ngosWithQuery) {
     const ngoStarted = Date.now();
@@ -147,6 +157,7 @@ export async function run(): Promise<void> {
       duration_ms: Date.now() - ngoStarted,
     });
     if (enheter.length === 0) {
+      warnings += 1;
       logger.warn("brreg.ngo_zero_matches", {
         source_id: SOURCE_ID,
         ngo_slug: ngo.slug,
@@ -156,8 +167,14 @@ export async function run(): Promise<void> {
     }
     for (const enhet of enheter) {
       const row = shape(enhet, now);
-      if (!row) continue;
-      if (seenOrgnrs.has(row.orgnr)) continue; // same orgnr across NGOs (unlikely but defensive)
+      if (!row) {
+        skipped += 1; // malformed; shape() has already logged which field was missing
+        continue;
+      }
+      if (seenOrgnrs.has(row.orgnr)) {
+        skipped += 1; // same orgnr across NGOs (unlikely but defensive)
+        continue;
+      }
       seenOrgnrs.add(row.orgnr);
       rows.push(row);
     }
@@ -175,32 +192,50 @@ export async function run(): Promise<void> {
     ngos_fetched: ngosWithQuery.length,
   });
 
+  // No try/finally around closeSql here: recordIngestRun owns the pool's
+  // lifetime and closes it once, after finishRun has written the run row. A
+  // close in this function would pull the connection out from under that write.
   const sql = getSql();
-  try {
-    const upsertStarted = Date.now();
-    const written = await upsert(sql, {
-      table: TABLE,
-      rows,
-      columns: COLUMNS,
-      conflictKeys: ["orgnr"],
-    });
-    logger.info("postgres.upsert.done", {
-      table: TABLE,
-      rows_written: written,
-      duration_ms: Date.now() - upsertStarted,
-    });
+  const upsertStarted = Date.now();
+  const written = await upsert(sql, {
+    table: TABLE,
+    rows,
+    columns: COLUMNS,
+    conflictKeys: ["orgnr"],
+  });
+  logger.info("postgres.upsert.done", {
+    table: TABLE,
+    rows_written: written,
+    duration_ms: Date.now() - upsertStarted,
+  });
 
-    logger.info("source.done", {
-      source_id: SOURCE_ID,
-      duration_ms: Date.now() - started,
-      rows: rows.length,
-      in_frivillighetsreg: rows.filter((r) => r.i_frivillighetsreg).length,
-      konkurs: rows.filter((r) => r.konkurs).length,
-      under_avvikling: rows.filter((r) => r.under_avvikling).length,
-    });
-  } finally {
-    await closeSql();
-  }
+  logger.info("source.done", {
+    source_id: SOURCE_ID,
+    duration_ms: Date.now() - started,
+    rows: rows.length,
+    in_frivillighetsreg: rows.filter((r) => r.i_frivillighetsreg).length,
+    konkurs: rows.filter((r) => r.konkurs).length,
+    under_avvikling: rows.filter((r) => r.under_avvikling).length,
+  });
+
+  return {
+    output: undefined,
+    record: {
+      rowsScraped: rows.length,
+      rowsParsed: rows.length,
+      rowsSkipped: skipped,
+      warningsCount: warnings,
+      errorsCount: 0,
+      // Brreg's API exposes no collection-wide "last changed" timestamp on the
+      // enheter search endpoint, so there is nothing honest to put here. NULL
+      // means "upstream does not tell us", not "upstream never changed".
+      upstreamUpdatedAt: null,
+    },
+  };
+}
+
+export async function run(): Promise<void> {
+  await recordIngestRun(SOURCE_ID, fetchAndUpsert);
 }
 
 run().catch((err) => {

@@ -32,7 +32,7 @@ import os
 
 from dagster import Definitions
 
-from atlas_data.assets import api_v1, migrations, raw_fhi, raw_other, raw_ssb
+from atlas_data.assets import api_v1, migrations, raw_fhi, raw_other, raw_seeds, raw_ssb
 from atlas_data.assets._factory import pipes_subprocess_client
 from atlas_data.assets.dbt import atlas_dbt_models, dbt_cli_resource
 from atlas_data.automation import automation_sensors
@@ -52,6 +52,7 @@ defs = Definitions(
         *raw_ssb.assets,
         *raw_fhi.assets,
         *raw_other.assets,
+        *raw_seeds.assets,
         # marts.* — the dbt project, with the ingest assets as real upstreams.
         atlas_dbt_models,
         # api_v1.* — the public PostgREST surface. Terminal asset.
