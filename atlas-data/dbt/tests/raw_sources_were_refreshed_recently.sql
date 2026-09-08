@@ -43,9 +43,20 @@
 -- every 31, for two sources behaving exactly as designed.
 --
 -- That is cry-wolf by construction, which is the precise failure this test was
--- written to prevent, reintroduced by the test itself. It had not fired yet
--- only because the cluster's automation was young; it was due to start on
--- 2026-09-09.
+-- written to prevent, reintroduced by the test itself. On the cluster it was
+-- measured to cross at 2026-09-13 03:10Z and would then have stayed red until
+-- 10-01: eighteen consecutive red days on its first instance, and the steady
+-- ~23-in-31 thereafter.
+--
+-- ⚠️ PREDICT FRESHNESS FROM RUN HISTORY, NOT FROM THE CRON. This crossing was
+-- first predicted for 09-09 by reading MONTHLY_CRON and assuming the last load
+-- was the 1st. It was four days later, because a tester had hand-refreshed
+-- klass on 09-05 while proving something unrelated. Agents write to these
+-- tables too, so `loaded_at` reflects the cron plus whoever has been poking the
+-- cluster — and a manual refresh silently moves a boundary you are predicting
+-- against. The mechanism was right and the date was wrong; on a test whose
+-- whole purpose is telling real staleness from apparent staleness, that is the
+-- distinction worth getting right.
 --
 -- A binary exempt/not-exempt flag could not have expressed the fix, because the
 -- klass sources are not exempt — they must absolutely be checked, just not at
