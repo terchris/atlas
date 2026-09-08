@@ -90,6 +90,14 @@ apply. Run commands on the host. Do not invent a cage.
   withdrawing something, put the withdrawal where the claim will next be read, not only where it was
   made.
 - **Never commit to `main`.** Feature branch, then a PR, squash-merged.
+- **⏳ Standing authorization, scoped to "until atlas is deployed" (Terje, 2026-09-08, via
+  urb-agents #338).** Verbatim: *"Atlas, I want you to change code and merge freely until we get
+  atlas deployed. No need to wait for my confirmation on merge."* So **merge your own PRs on
+  `terchris/atlas` without waiting for Terje** — do not stop to ask, which is what this note exists
+  to prevent. It removes the wait for his click, **not the test**: deployable work is still declared
+  with acceptance criteria and falsifications a stranger can run, imac still tests it, and this
+  agent still does not grade its own work. **The scope ends when atlas is deployed and verified** —
+  after that, ask again rather than assume it carries over.
 - **This agent has no cluster access.** No `kubectl`, no `docker`, no cluster shell. It declares;
   another agent applies; a third verifies. Do not write a plan that assumes otherwise.
 
