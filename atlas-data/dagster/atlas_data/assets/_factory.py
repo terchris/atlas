@@ -2,7 +2,8 @@
 Asset factory for ingest-source `@asset`s.
 
 Every Atlas ingest source has the same Dagster shape: invoke
-`npm run ingest:<source_id>` as a subprocess via PipesSubprocessClient.
+`npm run ingest:<source_id>` (or `refresh:<source_id>` for the seed sources —
+see `npm_script_prefix`) as a subprocess via PipesSubprocessClient.
 Rather than hand-write 40 near-identical @asset functions, this factory
 turns a source-id string into an asset.
 
@@ -13,10 +14,16 @@ raw.redcross_branches and raw.redcross_branch_activities), the asset
 key represents the *ingest run* rather than a single table.
 
 The Pipes wiring is centralised inside the TypeScript side (see
-atlas-data/ingest/src/lib/ingest_run.ts) — every source already calls
-recordIngestRun(), which opens Pipes + emits a materialisation event
+atlas-data/ingest/src/lib/ingest_run.ts) — every source reachable as an asset
+calls recordIngestRun(), which opens Pipes + emits a materialisation event
 on success. So the Python side here just needs to launch the subprocess
 and surface the result.
+
+⚠️ That is a requirement, not a description: a script which does not call
+recordIngestRun() will run to completion and then fail in
+`get_materialize_result()` with nothing obviously wrong in its own logs. Most
+of the seed sources under src/seed-sources/ are still in that state, which is
+why only one of them is an asset today.
 """
 
 from __future__ import annotations
@@ -51,17 +58,25 @@ def make_raw_ingest_asset(
     description: str | None = None,
     automation_condition: "AutomationCondition | None" = None,
     freshness_policy: "FreshnessPolicy | None" = None,
+    npm_script_prefix: str = "ingest",
 ) -> AssetsDefinition:
     """
     Build a Dagster @asset that materialises `raw.<source_id>` by shelling
-    out to `npm run ingest:<source_id>`. The TypeScript side calls
+    out to `npm run <npm_script_prefix>:<source_id>`. The TypeScript side calls
     reportAssetMaterialization via the centralised Pipes wrapper in
     lib/ingest_run.ts; we just need to launch the subprocess.
+
+    `npm_script_prefix` exists because the seed sources under
+    ingest/src/seed-sources/ are wired to `refresh:` scripts rather than
+    `ingest:` ones. It is a naming difference only — a source reached either
+    way must still call recordIngestRun(), or `get_materialize_result()` below
+    finds no materialisation and the run fails. See assets/raw_seeds.py.
     """
     asset_name = source_id.replace("-", "_")
+    npm_script = f"{npm_script_prefix}:{source_id}"
     auto_description = (
         f"Atlas ingest source `{source_id}`. Materialised by shelling out to "
-        f"`npm run ingest:{source_id}` via Dagster Pipes."
+        f"`npm run {npm_script}` via Dagster Pipes."
     )
 
     @asset(
@@ -94,11 +109,11 @@ def make_raw_ingest_asset(
         if not database_url:
             raise RuntimeError(
                 f"ATLAS_DATABASE_URL (or DATABASE_URL) must be set for "
-                f"`npm run ingest:{source_id}` to reach Postgres. For local "
+                f"`npm run {npm_script}` to reach Postgres. For local "
                 f"dev, source atlas-data/ingest/.env."
             )
         return pipes_subprocess_client.run(
-            command=["npm", "run", f"ingest:{source_id}"],
+            command=["npm", "run", npm_script],
             context=context,
             cwd=str(_INGEST_DIR),
             env={"DATABASE_URL": database_url},
@@ -113,6 +128,7 @@ def make_raw_ingest_assets(
     group_name: str,
     automation_condition: "AutomationCondition | None" = None,
     freshness_policy: "FreshnessPolicy | None" = None,
+    npm_script_prefix: str = "ingest",
 ) -> list[AssetsDefinition]:
     """Bulk-version of make_raw_ingest_asset for a list of source ids."""
     return [
@@ -121,6 +137,7 @@ def make_raw_ingest_assets(
             group_name=group_name,
             automation_condition=automation_condition,
             freshness_policy=freshness_policy,
+            npm_script_prefix=npm_script_prefix,
         )
         for sid in source_ids
     ]

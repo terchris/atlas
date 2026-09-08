@@ -1,4 +1,5 @@
--- Singular dbt test: every scheduled raw source must have been refreshed recently.
+-- Singular dbt test: every scheduled raw source must have been refreshed within
+-- the window its own declared cadence allows.
 --
 -- WHY THIS EXISTS
 --
@@ -27,35 +28,80 @@
 -- answers the ingest question, inside the suite, where the rest of the checks
 -- already run.
 --
+-- ══════════════════════════════════════════════════════════════════════════
+-- WHY THIS ASKS "HOW OFTEN", NOT "WHETHER" — the 2026-09-08 correction
+-- ══════════════════════════════════════════════════════════════════════════
+--
+-- The first version of this test asserted ONE threshold — 8 days — over every
+-- source, with an escape hatch listing name prefixes that were exempt. That
+-- encoded a false assumption, and the escape hatch was the wrong shape.
+--
+-- **Not every source is weekly.** `cadence.py` has had two cadences since the
+-- automation pilot: WEEKLY_CRON and MONTHLY_CRON. `ssb_klass_kommuner` and
+-- `ssb_klass_fylker` poll on the 1st of the month. Against a fixed 8-day bound
+-- they turn red on the 9th and stay red until the 1st — roughly 23 red days in
+-- every 31, for two sources behaving exactly as designed.
+--
+-- That is cry-wolf by construction, which is the precise failure this test was
+-- written to prevent, reintroduced by the test itself. It had not fired yet
+-- only because the cluster's automation was young; it was due to start on
+-- 2026-09-09.
+--
+-- A binary exempt/not-exempt flag could not have expressed the fix, because the
+-- klass sources are not exempt — they must absolutely be checked, just not at
+-- eight days. So the declaration now carries the CADENCE and the threshold is
+-- derived from it. There is one number per cadence, in one place, and adding a
+-- cadence to `cadence.py` without adding it here fails at compile time.
+--
 -- WHAT IT ASSERTS
 --
--- For every raw source table that declares a `loaded_at_field`, the newest
--- `loaded_at` must be within `max_ingest_age_days` (default 8 — one day of
--- slack beyond the weekly cadence, so a single missed weekly tick is caught
--- while normal jitter is not).
+-- For every raw source that declares a `loaded_at_field`, the newest value of
+-- that field must be within the window its `meta.ingest_cadence` allows.
 --
 -- A table whose max is NULL — no rows at all — is also a failure. "Never
 -- loaded" and "loaded long ago" are the same defect from a consumer's point of
 -- view, and treating an empty table as passing is how this class of bug hides.
 --
--- SOURCES WITH NO CADENCE BY DESIGN ARE EXEMPT
+-- ══════════════════════════════════════════════════════════════════════════
+-- DECLARING CADENCE — every source with a loaded_at_field must do this
+-- ══════════════════════════════════════════════════════════════════════════
 --
--- `var('freshness_exempt_prefixes')` lists table-name prefixes that legitimately
--- never refresh on a timer:
+--     meta:
+--       ingest_cadence: weekly | monthly | none
+--       cadence_note: >-          # REQUIRED when, and only when, cadence: none
+--         why this source has no cadence at all
 --
---   frr_*       permanent and private by design; read from a private data repo
---               that is not present on any public deployment.
---   redcross_*  parked pending an API credential — the three views it feeds are
---               deliberately empty.
+-- `weekly` / `monthly` must match the asset's `automation_condition` in the
+-- Dagster package. This file does not read `cadence.py` — the two are coupled
+-- by convention, and that coupling is the known soft spot in this design.
 --
--- These are exempt because they have no automation condition and no freshness
--- policy, for different reasons. That is the trap this design had to avoid: a
--- naive "everything must be fresh" check fires on both from day one, gets muted,
--- and then protects nothing.
+-- ⚠️ `none` IS A CLAIM THAT A SOURCE SHOULD NEVER REFRESH ON A TIMER. It is
+-- the only value that silences a row, so it is the only one that can turn this
+-- test into decoration. That is why it is the only one that must be argued for
+-- in writing, at the declaration, where the next reader meets it. **If a source
+-- is late, fix the source.** Reach for `none` only when the honest answer is
+-- "nothing will ever refresh this", and say what makes that true.
 --
--- ⚠️ AN EXEMPTION IS A CLAIM THAT A SOURCE SHOULD NEVER REFRESH. Adding a prefix
--- here to quiet a failing source is how this test becomes decoration. If a
--- source is late, fix the source.
+-- The four that legitimately carry it today are two of a kind each:
+--
+--   sitemap_log, ingest_runs      library bookkeeping, not ingested sources.
+--                                 The scraping library writes them as a side
+--                                 effect of other sources' runs.
+--   redcross_branches, and its    parked pending an API credential; no
+--   _branch_activities            automation condition, so it cannot refresh.
+--
+-- ⚠️ `ingest_runs` was PASSING before it was declared `none`, which is why it
+-- was never noticed. It was green because other ingests happened to be running
+-- — luck, not a cadence. A source that passes for a reason unrelated to what
+-- the test claims to measure is not evidence of anything, and the day the luck
+-- changed it would have reported a fault in the wrong place entirely.
+--
+-- ⚠️ There was also, from the first version until 2026-09-08, an exemption for
+-- `frr_` carrying a paragraph of justification. It never excluded anything:
+-- `frr_resources` declares no `loaded_at_field`, so the guard below had always
+-- skipped it. It read exactly like coverage for three weeks. A mechanism whose
+-- entries can be inert is a bad mechanism, which is the second reason the
+-- prefix list is gone: `meta` cannot be attached to a source that isn't there.
 --
 -- THIS TEST MUST BE SEEN TO FAIL BEFORE IT IS TRUSTED
 --
@@ -89,22 +135,64 @@
 
 -- depends_on: {{ ref('fact_kommune_indicators') }}
 
-{% set exempt_prefixes = var('freshness_exempt_prefixes', ['frr_', 'redcross_']) %}
-{% set max_age_days = var('max_ingest_age_days', 8) %}
+{#-
+  Cadence -> maximum tolerated age. Each is the polling interval plus enough
+  slack to absorb one late tick without crying wolf, and no more:
+    weekly   7 + 1
+    monthly  31 + 4   (a 31-day month, then four days to notice a missed tick)
+  A cadence named on a source but absent here is a compile error, not a
+  default — silently defaulting an unknown cadence to a weekly bound is the
+  exact bug the klass sources were sitting on.
+-#}
+{% set cadence_max_age = var('ingest_cadence_max_age_days', {'weekly': 8, 'monthly': 35}) %}
 
 {% if execute %}
     {% set checked = [] %}
-    {% for node in graph.sources.values() %}
+    {% set errors = [] %}
+
+    {% for node in graph.sources.values() | sort(attribute='name') %}
         {% if node.loaded_at_field %}
-            {% set ns = namespace(skip=false) %}
-            {% for p in exempt_prefixes %}
-                {% if node.name.startswith(p) %}{% set ns.skip = true %}{% endif %}
-            {% endfor %}
-            {% if not ns.skip %}
-                {% do checked.append(node) %}
+            {% set cadence = node.meta.get('ingest_cadence') %}
+
+            {% if not cadence %}
+                {#- A new source must state its cadence. Defaulting one in is how
+                    the klass sources acquired a threshold nobody chose. -#}
+                {% do errors.append(
+                    node.name ~ ": declares loaded_at_field '" ~ node.loaded_at_field ~
+                    "' but no meta.ingest_cadence. Add weekly, monthly, or none"
+                    " (none also requires meta.cadence_note)."
+                ) %}
+
+            {% elif cadence == 'none' %}
+                {#- Silencing a row is the one action that must be argued for. -#}
+                {% if not node.meta.get('cadence_note') %}
+                    {% do errors.append(
+                        node.name ~ ": meta.ingest_cadence is 'none' but there is no"
+                        " meta.cadence_note. 'none' claims the source will never refresh;"
+                        " say what makes that true."
+                    ) %}
+                {% endif %}
+
+            {% elif cadence not in cadence_max_age %}
+                {% do errors.append(
+                    node.name ~ ": unknown meta.ingest_cadence '" ~ cadence ~ "'."
+                    " Known: " ~ (cadence_max_age.keys() | list | join(', ')) ~ ", none."
+                    " Add it to ingest_cadence_max_age_days with a bound before using it."
+                ) %}
+
+            {% else %}
+                {% do checked.append({'node': node, 'max_age': cadence_max_age[cadence]}) %}
             {% endif %}
         {% endif %}
     {% endfor %}
+
+    {% if errors %}
+        {{ exceptions.raise_compiler_error(
+            "Source cadence declarations are incomplete, so the ingest-freshness test"
+            " cannot say what it checks:\n  - " ~ errors | join("\n  - ") ~
+            "\nSee the header of dbt/tests/raw_sources_were_refreshed_recently.sql."
+        ) }}
+    {% endif %}
 {% else %}
     {% set checked = [] %}
 {% endif %}
@@ -117,17 +205,18 @@ select
     'no-sources-checked' as source_table,
     cast(null as timestamptz) as last_loaded_at,
     cast(null as numeric) as age_days,
-    {{ max_age_days }} as max_age_days
+    cast(null as integer) as max_age_days
 where 1 = 1
 
 {% else %}
 
 with per_source as (
-{% for node in checked %}
+{% for c in checked %}
     select
-        '{{ node.name }}' as source_table,
-        max({{ node.loaded_at_field }}) as last_loaded_at
-    from {{ source(node.source_name, node.name) }}
+        '{{ c.node.name }}' as source_table,
+        max({{ c.node.loaded_at_field }}) as last_loaded_at,
+        {{ c.max_age }} as max_age_days
+    from {{ source(c.node.source_name, c.node.name) }}
     {% if not loop.last %}union all{% endif %}
 {% endfor %}
 )
@@ -136,10 +225,10 @@ select
     source_table,
     last_loaded_at,
     round(extract(epoch from (current_timestamp - last_loaded_at)) / 86400.0, 2) as age_days,
-    {{ max_age_days }} as max_age_days
+    max_age_days
 from per_source
 where last_loaded_at is null
-   or last_loaded_at < current_timestamp - interval '{{ max_age_days }} days'
+   or last_loaded_at < current_timestamp - make_interval(days => max_age_days)
 order by last_loaded_at nulls first
 
 {% endif %}

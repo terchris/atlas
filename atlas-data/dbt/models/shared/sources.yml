@@ -13,6 +13,12 @@ sources:
           per source_slug — concurrent-run lock per INVESTIGATE-ngo-scraping-infrastructure §E.3.1. Feeds
           marts.mart_ingest_health.
         loaded_at_field: finished_at
+        meta:
+          ingest_cadence: none
+          cadence_note: >-
+            Run-history bookkeeping written by the scraping library, not an ingested source.
+            Its finished_at is green only while other ingests happen to run, which is luck
+            rather than a cadence.
         columns:
           - name: run_id
             data_type: bigint
@@ -44,6 +50,12 @@ sources:
           <lastmod> (NULL for HTML-index sources) and first/last seen timestamps. Drives fetch-skip and
           orphan detection per INVESTIGATE-ngo-scraping-infrastructure §C.2.
         loaded_at_field: last_seen_at
+        meta:
+          ingest_cadence: none
+          cadence_note: >-
+            Per-URL discovery log written by the scraping library, not an ingested source. Its
+            last_seen_at moves as a side effect of other sources' fetches, so asserting an
+            ingest cadence on it is a category error.
         columns:
           - name: source_slug
             data_type: text
@@ -63,6 +75,8 @@ sources:
           come straight from Brreg; downstream 'active NGO' queries filter on those rather than expecting
           a synthetic is_active. See PLAN-001-brreg-enheter.
         loaded_at_field: loaded_at
+        meta:
+          ingest_cadence: monthly
         columns:
           - name: orgnr
             data_type: text

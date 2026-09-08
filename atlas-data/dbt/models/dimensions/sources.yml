@@ -11,6 +11,8 @@ sources:
           Source for dim_kommune. Populated by
           atlas-data/ingest/src/sources/ssb-klass-kommuner.
         loaded_at_field: loaded_at
+        meta:
+          ingest_cadence: monthly
         freshness:
           warn_after: {count: 90, period: day}
           error_after: {count: 400, period: day}
@@ -52,6 +54,8 @@ sources:
           One row per (code, valid_from_in_range). Source for dim_fylke.
           Populated by atlas-data/ingest/src/sources/ssb-klass-fylker.
         loaded_at_field: loaded_at
+        meta:
+          ingest_cadence: monthly
         freshness:
           warn_after: {count: 90, period: day}
           error_after: {count: 400, period: day}

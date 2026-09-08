@@ -9,6 +9,12 @@ sources:
           Norges Røde Kors branches (HQ + Distrikt + Lokalforening + Ukjent). Loaded by atlas-data/ingest/src/sources/redcross-branches
           from a static API dump (live polling deferred — see INVESTIGATE-ngo-supply Q39).
         loaded_at_field: loaded_at
+        meta:
+          ingest_cadence: none
+          cadence_note: >-
+            Parked pending the Red Cross API credential (cadence.UNSCHEDULED_SOURCES). It has
+            no automation condition, so it cannot refresh and must not be asserted as if it
+            could.
         columns:
           - name: branch_id
             data_type: text
@@ -65,6 +71,10 @@ sources:
           Per-branch activities for Røde Kors. global_activity_name is Red Cross's canonical term (50
           distinct values).
         loaded_at_field: loaded_at
+        meta:
+          ingest_cadence: none
+          cadence_note: >-
+            Written by the same parked redcross-branches ingest; see redcross_branches.
         columns:
           - name: branch_id
             data_type: text
