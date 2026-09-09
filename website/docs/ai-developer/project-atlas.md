@@ -90,37 +90,38 @@ apply. Run commands on the host. Do not invent a cage.
   withdrawing something, put the withdrawal where the claim will next be read, not only where it was
   made.
 - **Never commit to `main`.** Feature branch, then a PR, squash-merged.
-- **⏳ Standing authorization, scoped to "until atlas is deployed" (Terje, 2026-09-08, via
-  urb-agents #338).** Verbatim: *"Atlas, I want you to change code and merge freely until we get
-  atlas deployed. No need to wait for my confirmation on merge."* So **merge your own PRs on
-  `terchris/atlas` without waiting for Terje** — do not stop to ask, which is what this note exists
-  to prevent. It removes the wait for his click, **not the test**: deployable work is still declared
-  with acceptance criteria and falsifications a stranger can run, imac still tests it, and this
-  agent still does not grade its own work. **The scope ends when atlas is deployed and verified** —
-  after that, ask again rather than assume it carries over.
-  - ⚠️ **2026-09-09 — the expiry phrase is ambiguous, and this note deliberately does not resolve it
-    in its own favour.** The #338 chain completed: `#214` is deployed, `050` proved load-bearing by
-    counterfactual, and `uis verify postgrest --app atlas` is **green** (imac, #342). On the narrow
-    reading the grant has lapsed. But the atlas *instance* was already deployed before any of this
-    (imac, #263), so "until we get atlas deployed" cannot sensibly mean "the instance runs" — it
-    reads as the Tier-0 goal, **one-command install**, which is *not* done (TPL-F5 and TPL-F7 remain,
-    and no template exercises a directory `init:`). **Operating on the broader reading — the grant
-    continues — and Terje has been told so on #338 so he can correct it.** If you are a later
-    session and #338 carries no correction, that is his silence, not his agreement: ask before
-    relying on this for anything outward-facing.
-  - ✅ **So that no later session has to re-derive this from the same sentence — the grant ends when
-    ANY of these is true, and not before** (ops-dev asked for a test rather than a judgement, #349):
-    1. **Terje says so** — anywhere: a bus task, a comment, a message. His word ends it immediately.
-    2. **`uis template install atlas` installs Atlas end to end on a clean cluster** with no manual
-       `.uis.extend` edit — i.e. **TPL-F5 and TPL-F7 are both closed**. That is the one-command
-       install this grant exists to reach.
-    3. **2026-10-09** — one month from the grant. A standing authorization with no clock is how
-       "merge freely" outlives the goal it was given for. If the goal is not reached by then, ask
-       for a new scope rather than assume this one still holds.
+- **⏳ Standing authorization to merge your own PRs (Terje, urb-agents #338, condition confirmed
+  #364).** From #364, verbatim: *"keep merging your own PRs on terchris/atlas until 'uis template
+  install atlas' works end to end. Silence from me is not a change."*
 
-    Until one of those fires, merge your own PRs and do not stop to ask. **Note what is *not* on
-    that list:** #214 shipping, verify going green, or the instance running — none of those end it,
-    because the instance was already deployed before the grant was given.
+  So **merge your own PRs on `terchris/atlas` without waiting for Terje** — do not stop to ask,
+  which is the whole reason this note exists. It removes the wait for his click, **not the test**:
+  deployable work is still declared with acceptance criteria and falsifications a stranger can run,
+  imac still tests it, and this agent still does not grade its own work.
+
+  **It ends when either is true, and not before:**
+  1. **Terje says so** — anywhere; a bus task, a comment, a message. His word ends it immediately.
+  2. **`uis template install atlas` installs Atlas end to end on a clean cluster**, with no manual
+     `.uis.extend` edit. TPL-F5 is the known remaining blocker. (TPL-F7 is no longer on Atlas's path:
+     per #362 the install definition uses a **single-file** `init:` and Dagster owns the migrations.)
+
+  **What does *not* end it:** #214 shipping, `uis verify postgrest` going green, or the atlas
+  instance running. The instance was already deployed *before* the grant was given (#263), so none
+  of those can be what "deployed" meant. That ambiguity is settled — do not re-litigate it.
+
+  **Two things this note used to say, both now superseded — recorded so their absence looks
+  deliberate rather than lost:**
+  - It warned that Terje's silence was "not agreement" and told you to ask before relying on this.
+    #364 reverses that explicitly: *silence from me is not a change.* Do not go back to him on a
+    schedule.
+  - It carried a self-imposed one-month expiry (2026-10-09), added as a guard against a grant with
+    no clock. #364 supersedes it by naming the real condition. **Removed rather than kept quietly**,
+    because enforcing my own timer over his stated condition would substitute my judgement for his
+    on something that is his.
+
+  The one genuine gap left: if the one-command-install goal is **abandoned or redefined**, condition
+  2 becomes undefined and this grant has no end. Ask then — that is a change in the goal, not
+  silence.
 - **This agent has no cluster access.** No `kubectl`, no `docker`, no cluster shell. It declares;
   another agent applies; a third verifies. Do not write a plan that assumes otherwise.
 
