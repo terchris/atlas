@@ -173,9 +173,29 @@ provides:
   - service: postgrest
     config:
       app: "{{ params.app_name }}"
-      schemas: api_v1            # ⚠️ pending: PLAN-007 shipped api_v1,marts,raw
+      schemas: api_v1            # ✅ DECIDED 2026-09-09 (Terje, urb-agents #350)
       url_prefix: api-atlas
 ```
+
+✅ **`schemas: api_v1` is settled — Terje, 2026-09-09 (urb-agents #350), verbatim:**
+
+> *"A. The public API serves `api_v1` only — the curated, documented views. `marts` and `raw` stay
+> behind it; if a consumer needs a mart, it gets an `api_v1` view of it."*
+
+So the value above is a decision, not a placeholder, and **the rule it implies is the operative
+one**: a consumer request for mart data is answered by *adding an `api_v1` view* — a reviewed,
+documented act — never by widening the list. Nothing changed on the running instance, which already
+served `api_v1` only.
+
+⏳ **Where this must still be encoded.** Terje also settled TPL-Q3 (#354): an application ships its
+own install definition **inside its published image** as `/uis/template-info.yaml`, beside the
+migrations it references, with `dev-templates` holding only a pointer to an immutable pin
+(`v<date>-<sha>`) and the pin PR as the review. So `schemas: api_v1` belongs in
+`/uis/template-info.yaml` in the `atlas-data` image — **atlas's work when `PLAN-templates-002`
+reaches atlas's part**, not before. Two further things that plan settles and this declaration does
+not yet reflect: **the unit is the application, not the repository** (atlas is *two* — this backend
+now, the frontend later, joined by an install-time `requires:`), and web applications install as
+services reached at `<name>.localhost` / `<name>.<domain>` through Traefik.
 
 **Ordering is not incidental**: postgresql before dagster, because the code-location pod will not
 start without the Secret. ~~dagster before postgrest, because `api_v1` does not exist until the
@@ -223,8 +243,10 @@ postgrest in either order** — which the existing priorities already satisfy.
   the commitment is not *"these 43 tables"*, it is ***"whatever the pipeline writes there, from now
   on."*** Under an exposed `marts` or `raw` there is **no moment at which a future table is looked
   at before it becomes public** — Atlas adds sources regularly, and each new `raw.*` landing would
-  publish the moment it lands, by a decision taken once, earlier. Open with Terje as
-  urb-agents **#350**; the running instance serves `api_v1` only until he answers.
+  publish the moment it lands, by a decision taken once, earlier. **This is the argument Terje
+  accepted: the answer is `api_v1` only (#350, 2026-09-09).** Kept here because it is the reasoning
+  behind a live rule, not a closed debate — anyone proposing to widen the list is proposing to take
+  on that standing commitment, and has to say so.
 - ✅ **Widening needs no further migration.** `raw` and `marts` are both created by
   [`migrations/001`](../../../../../atlas-data/migrations/001_create_schemas.sql), so all three
   schemas in the widened list already exist at install time. (The migrations README used to say the

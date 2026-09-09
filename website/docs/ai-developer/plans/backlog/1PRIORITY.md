@@ -18,7 +18,15 @@ deck; Tier 4 means "don't open this yet".
 ## 🔴 Waiting on Terje — not startable by atlas
 
 These are decisions, not work. Listed first because they are the largest source of stalled items,
-and several have been open for days. **The four added 2026-09-07 all came out of the UIS-installability discussion; none of them blocks the work in Tier 1.**
+and several have been open for days. The remainder of the UIS-installability batch does not block Tier 1.
+
+✅ **Two of these were answered on 2026-09-09, and how they got answered is the lesson.** The
+`schemas:` posture (**A — the public API serves `api_v1` only**, Terje, urb-agents #350) and TPL-Q3
+(**an application ships its install definition inside its published image**; the catalogue holds an
+immutable pin and the pin PR is the review — #354, now `PLAN-templates-002`). Both had sat for days
+looking owned because two agents each recorded "waiting on Terje" in a status file. **A status file
+is not a queue**; only an `auth-required` hold reaches Terje's escalation. Filed as holds, both were
+answered within hours.
 
 | What | File | Since | Why it blocks |
 |---|---|---|---|
@@ -26,8 +34,6 @@ and several have been open for days. **The four added 2026-09-07 all came out of
 | **F1 redcross data delivery** — blocked on an APIM credential | [PLAN-redcross-branches-private-input](PLAN-redcross-branches-private-input.md) | 2026-08-25 | Design settled; the blocker changed shape from a static dump to an API credential, which may reopen the design. Keeps 3 of 13 views empty. |
 | **Phase 5 frontend** | asgard deployment plan (in `terchris/home`) | 2026-08-25 | Held at Terje's request while he reads the code himself. |
 | 🔴 **Is GitOps the direction for UIS?** And should that investigation be opened? | [INVESTIGATE-atlas-as-a-uis-application](INVESTIGATE-atlas-as-a-uis-application.md) | 2026-09-07 | The discussion Terje asked for has happened and produced an answer for everything except this. UIS has **two deployment paths that do not meet** and Atlas straddles them. If GitOps is the direction, per-workload secrets become **prerequisites, not by-products**. The UIS maintainer declined to open a Tier 1 platform-direction investigation on one message without Terje in it. **Blocks nothing** — A proceeds regardless. |
-| **`schemas:` — one or three?** | [INVESTIGATE-atlas-as-a-uis-application](INVESTIGATE-atlas-as-a-uis-application.md) | 2026-09-05 | PLAN-007 shipped `api_v1,marts,raw` at Atlas's request; the running instance serves `api_v1` only. Widening is a **re-configure plus pod restart**, not a flag. ⚠️ It is a **posture, not a value**: default-privileges grants make an exposed `marts`/`raw` readable in full, **including tables added later**, with no per-table review. |
-| **May an application ship its own template from its own repo?** (UIS TPL-Q3) | UIS `INVESTIGATE-templates-multi-surface-application` | 2026-09-07 | A **supply-chain** decision — UIS would execute a deploy plan and pipe an init file into `psql` from an arbitrary repository. Blocks the most useful form of one-command install. Neither atlas nor the UIS maintainer will advocate: each is a beneficiary. |
 | **Should imac's cluster start with its host?** | [INVESTIGATE-atlas-as-a-uis-application](INVESTIGATE-atlas-as-a-uis-application.md) | 2026-09-07 | The API **disappears silently on every reboot** and a frontend is about to be built against it. All cluster state survives; only the process does not. **One host setting, ~5 minutes** — Rancher Desktop autostart or k3s under systemd. Not platform work, queues behind nothing. |
 | **Public-docs topology** — internal detail in a public repo | raised in `terchris/home` talk | 2026-08-26 | `asgard-performance-baseline.md` is world-readable and names infrastructure. Proposed a platform-facts-to-home split. **Still unanswered.** Recurs every time a doc mentions infrastructure. |
 
