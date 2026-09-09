@@ -68,6 +68,9 @@ import sys, yaml
 d = yaml.safe_load(open(sys.argv[1]))
 svc = {s["service"]: s["config"] for s in d["provides"]["services"]}
 assert d["kind"] == "application", d.get("kind")
+# An absent id is legal but toothless: UIS refuses only a *conflicting* id, so
+# without this a catalogue entry pointing at the wrong artifact goes unnoticed.
+assert d.get("id") == "atlas", d.get("id")
 assert svc["postgrest"]["schemas"] == "api_v1", svc["postgrest"]["schemas"]
 assert svc["postgresql"]["init"] == "uis/init/001_bootstrap.sql", svc["postgresql"]["init"]
 cl = svc["dagster"]["code_location"]

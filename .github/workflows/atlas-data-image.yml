@@ -24,7 +24,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write   # needed to cut the release that carries uis-artifact.json
   packages: write   # needed to push to GHCR on main
 
 env:
@@ -124,15 +124,78 @@ jobs:
           # ORAS reads the credentials docker/login-action already wrote.
           oras push "$REF" template-info.yaml uis/init/ | tee /tmp/oras.out
 
-          # The digest is what UIS pulls; the tag is only displayed. Surface it
-          # so a human can pin without re-resolving the tag.
-          DIGEST=$(grep -oE 'sha256:[0-9a-f]{64}' /tmp/oras.out | head -1)
+          # The digest is what UIS pulls; the tag is only displayed. Take it from
+          # the `Digest:` line specifically rather than the first sha256 anywhere
+          # in the output, and FAIL if it cannot be read: a provenance record
+          # that silently says "unknown" is worse than no record.
+          DIGEST=$(awk '/^Digest: /{print $2; exit}' /tmp/oras.out)
+          if [[ ! "$DIGEST" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+            echo "::error::could not read the artifact digest from oras output" >&2
+            cat /tmp/oras.out >&2
+            exit 1
+          fi
+
+          # The record dev-templates consumes (urb-agents #483). It exists so the
+          # digest reaching the catalogue is the one THIS build produced, rather
+          # than something re-resolved from the tag later — a tag can be
+          # re-pointed, and a catalogue that re-resolves would bless the new
+          # artifact silently.
+          cat > uis-artifact.json <<JSON
+          {
+            "id": "atlas",
+            "tag": "${TAG}",
+            "artifact": "${REF}",
+            "digest": "${DIGEST}",
+            "image": "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${TAG}",
+            "commit": "${GITHUB_SHA}",
+            "published_at": "$(date -u +'%Y-%m-%dT%H:%M:%SZ')",
+            "run": "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          }
+          JSON
+          python3 -m json.tool uis-artifact.json > /dev/null   # fail on malformed JSON
+
           {
             echo "### UIS install definition published"
             echo ""
             echo "| | |"
             echo "|---|---|"
             echo "| artifact | \`${REF}\` |"
-            echo "| digest | \`${DIGEST:-unknown}\` |"
+            echo "| digest | \`${DIGEST}\` |"
             echo "| image it names | \`${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${TAG}\` |"
           } >> "$GITHUB_STEP_SUMMARY"
+
+      # The digest reaches dev-templates as a release asset rather than by
+      # re-resolving the tag. A tag can be re-pointed at a different artifact; a
+      # catalogue that re-resolves would bless the new one silently, and UIS pins
+      # no version of the registry so nothing downstream could tell.
+      #
+      # A release rather than a commit back to main on purpose: committing would
+      # push to main touching atlas-data/**, retriggering this very workflow.
+      # Creating a tag does not match `push: branches: [main]`, so there is no
+      # loop to guard against.
+      - name: Publish the artifact digest as a release asset (main)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        working-directory: atlas-data
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TAG='${{ steps.tags.outputs.immutable }}'
+          DIGEST=$(python3 -c 'import json;print(json.load(open("uis-artifact.json"))["digest"])')
+
+          # Idempotent: re-running a failed job must not die on "already exists".
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "release $TAG exists — replacing the asset"
+            gh release upload "$TAG" uis-artifact.json --clobber
+            exit 0
+          fi
+
+          gh release create "$TAG" uis-artifact.json \
+            --title "atlas-data $TAG" \
+            --notes "UIS install artifact: \`ghcr.io/${{ env.IMAGE_NAME }}/uis:${TAG}\`
+          Digest: \`${DIGEST}\`
+          Image: \`ghcr.io/${{ env.IMAGE_NAME }}:${TAG}\`
+
+          \`uis-artifact.json\` below is the machine-readable form, for the dev-templates catalogue entry (urb-agents #483)."
+
+          echo "| release asset | ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/releases/download/${TAG}/uis-artifact.json |" >> "$GITHUB_STEP_SUMMARY"

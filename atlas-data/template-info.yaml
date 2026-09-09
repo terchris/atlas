@@ -24,6 +24,12 @@
 
 kind: application
 
+# The application this artifact installs. An absent id is tolerated by UIS
+# (1.6.26) and only a *conflicting* one is refused — which means the check has
+# nothing to bite on unless this is present. It is what catches a catalogue
+# entry pointing at the wrong artifact. (tor-agent, urb-agents #483.)
+id: atlas
+
 params:
   app_name: atlas
 
