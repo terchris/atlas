@@ -102,8 +102,18 @@ apply. Run commands on the host. Do not invent a cage.
   **It ends when either is true, and not before:**
   1. **Terje says so** — anywhere; a bus task, a comment, a message. His word ends it immediately.
   2. **`uis template install atlas` installs Atlas end to end on a clean cluster**, with no manual
-     `.uis.extend` edit. TPL-F5 is the known remaining blocker. (TPL-F7 is no longer on Atlas's path:
-     per #362 the install definition uses a **single-file** `init:` and Dagster owns the migrations.)
+     `.uis.extend` edit.
+     - ✅ **No platform blocker remains** (2026-09-09). TPL-F5 shipped in UIS 1.6.19 and was
+       cluster-verified — a `provides` entry may declare a `code_location` and UIS writes
+       `.uis.extend/` itself (#367, #480). TPL-F7 left Atlas's path earlier: per #362 the definition
+       uses a **single-file** `init:` and Dagster owns the migrations. **The remaining work is
+       Atlas's own**, and the critical path is: publish the artifact → install it from a local
+       registry → imac falsifies it on a cluster.
+     - ⚠️ Note how this was found. Atlas held TPL-F5 as a blocker for hours *after it had shipped*,
+       because the UIS CLI reference still said a code location "remains a manual edit". A stale doc
+       kept a condition open on a standing authorization from Terje. **When a blocker is load-bearing
+       for something Terje granted, confirm it against the code or the maintainer before pacing off
+       it.**
 
   **What does *not* end it:** #214 shipping, `uis verify postgrest` going green, or the atlas
   instance running. The instance was already deployed *before* the grant was given (#263), so none

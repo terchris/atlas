@@ -58,6 +58,18 @@ jobs:
           DATE=$(date -u +'%Y%m%d')
           SHORT_SHA=${GITHUB_SHA::7}
           echo "tags=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:v${DATE}-${SHORT_SHA},${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:sha-${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+          # The single immutable tag, on its own: the UIS install artifact is
+          # published at exactly this value so the definition and the image it
+          # names are the same release.
+          echo "immutable=v${DATE}-${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+
+      # The install definition is validated on every PR that touches atlas-data,
+      # with a synthetic tag, and thrown away. A definition that cannot render is
+      # a broken install, and it should fail here rather than on someone's
+      # cluster.
+      - name: Validate the UIS install definition (PR)
+        if: github.event_name == 'pull_request'
+        run: atlas-data/uis/render-template-info.sh v20260101-0000000 "$RUNNER_TEMP/template-info.yaml"
 
       - name: Build (PR — no push)
         if: github.event_name == 'pull_request'
@@ -83,3 +95,44 @@ jobs:
           tags: ${{ steps.tags.outputs.tags }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      # ---------------------------------------------------------------------
+      # The UIS install definition, published as an OCI artifact beside the
+      # image at the SAME immutable tag.
+      #
+      # Per urb-agents #362/#480 the artifact carries template-info.yaml and the
+      # single-file init/ ONLY — never migrations/, which Dagster's
+      # raw/_migrations asset owns. Shipping them in both places would put the
+      # same 51 files in two published locations from one commit with nothing
+      # enforcing that they match.
+      # ---------------------------------------------------------------------
+      - name: Set up ORAS
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: oras-project/setup-oras@v1
+
+      - name: Publish UIS install definition (main)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        working-directory: atlas-data
+        run: |
+          set -euo pipefail
+          TAG='${{ steps.tags.outputs.immutable }}'
+          REF="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/uis:${TAG}"
+
+          # Renders into place and refuses anything that would fail late.
+          uis/render-template-info.sh "$TAG" template-info.yaml
+
+          # ORAS reads the credentials docker/login-action already wrote.
+          oras push "$REF" template-info.yaml uis/init/ | tee /tmp/oras.out
+
+          # The digest is what UIS pulls; the tag is only displayed. Surface it
+          # so a human can pin without re-resolving the tag.
+          DIGEST=$(grep -oE 'sha256:[0-9a-f]{64}' /tmp/oras.out | head -1)
+          {
+            echo "### UIS install definition published"
+            echo ""
+            echo "| | |"
+            echo "|---|---|"
+            echo "| artifact | \`${REF}\` |"
+            echo "| digest | \`${DIGEST:-unknown}\` |"
+            echo "| image it names | \`${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${TAG}\` |"
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -1,0 +1,35 @@
+-- 001_bootstrap.sql — the ONLY SQL UIS applies when it installs atlas.
+--
+-- It is one statement on purpose. See urb-agents #362: Dagster's `raw/_migrations`
+-- asset owns atlas-data/migrations/*.sql, and this file owns nothing except the
+-- install-time guarantee UIS actually needs.
+--
+-- WHAT UIS NEEDS AT INSTALL, AND WHY IT IS ONLY THIS
+--
+-- `configure postgrest` checks pg_namespace, not tables:
+--
+--     SELECT 1 FROM pg_namespace WHERE nspname='api_v1'
+--
+-- and refuses a schema that is not there. Terje settled `schemas: api_v1`
+-- (#350), so exactly one schema has to exist before PostgREST is configured.
+-- Grants are emitted by `configure postgrest` itself — this file must not.
+--
+-- WHY NOT SHIP migrations/ HERE
+--
+-- The runner keeps no bookkeeping table: every Dagster materialisation
+-- re-applies all 51 files. If UIS applied them too, the same files would ship in
+-- two published places from one commit — the OCI artifact and the image — with
+-- nothing enforcing that they stay identical. One owner instead.
+--
+-- The duplication that remains is deliberate and is one line: migration 050 also
+-- runs CREATE SCHEMA IF NOT EXISTS api_v1. One line duplicated beats fifty files
+-- duplicated, and both are idempotent so the order they run in does not matter.
+--
+-- WHAT A FRESH INSTALL LOOKS LIKE AFTER THIS
+--
+-- An API that answers, is correctly granted, and serves ZERO endpoints until the
+-- first Dagster run builds marts.* and applies the api_v1 views. That is correct,
+-- not a failure — and it is why data freshness is a monitor rather than an
+-- install-time verify (#323).
+
+CREATE SCHEMA IF NOT EXISTS api_v1;

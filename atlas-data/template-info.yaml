@@ -1,0 +1,89 @@
+# atlas — UIS install definition.
+#
+# Published as an OCI artifact beside the atlas-data image, at the SAME immutable
+# tag, by .github/workflows/atlas-data-image.yml:
+#
+#     oras push ghcr.io/terchris/atlas-data/uis:v<date>-<sha> template-info.yaml uis/init/
+#
+# ⚠️ `tag:` below is the placeholder __IMAGE_TAG__ in the repository and is
+# substituted at publish time with the same v<date>-<sha> the image gets. The
+# workflow FAILS if the placeholder survives or if the result is not immutable —
+# a build-time assertion rather than a rule someone has to remember.
+#
+# Provenance for every value that is a decision rather than a fact:
+#   schemas: api_v1        — Terje, urb-agents #350
+#   init: single file      — atlas, #362 (Dagster owns migrations/, not UIS)
+#   code_location          — TPL-F5, UIS 1.6.19 (#367, #480); no manual
+#                            .uis.extend edit any more
+
+kind: application
+
+params:
+  app_name: atlas
+
+provides:
+  services:
+    # ---------------------------------------------------------------------
+    # PostgreSQL — the database, the app role, and the Secret Dagster reads.
+    # ---------------------------------------------------------------------
+    - service: postgresql
+      config:
+        database: "{{ params.app_name }}"
+
+        # The ONLY SQL UIS applies. One statement: CREATE SCHEMA IF NOT EXISTS
+        # api_v1, so `configure postgrest` finds the schema it checks for.
+        # Everything else is Dagster's `raw/_migrations` asset (#362).
+        init: uis/init/001_bootstrap.sql
+
+        namespace: dagster
+        secret_name_prefix: "{{ params.app_name }}-database"
+
+    # ---------------------------------------------------------------------
+    # PostgREST — the public API.
+    # ---------------------------------------------------------------------
+    - service: postgrest
+      config:
+        # Terje, #350: "The public API serves api_v1 only — the curated,
+        # documented views. marts and raw stay behind it; if a consumer needs a
+        # mart, it gets an api_v1 view of it."
+        #
+        # This is a posture, not a value. The per-schema ALTER DEFAULT PRIVILEGES
+        # grant makes an exposed schema readable in full INCLUDING TABLES ADDED
+        # LATER. Widening this list is not choosing today's tables, it is
+        # choosing whatever the pipeline writes there from now on. Do not widen
+        # it without Terje.
+        schemas: api_v1
+
+        url_prefix: "api-{{ params.app_name }}"
+
+    # ---------------------------------------------------------------------
+    # Dagster — the code location that runs the ETL.
+    # ---------------------------------------------------------------------
+    - service: dagster
+      config:
+        code_location:
+          # ⚠️ {{ params.* }} is substituted into this name at INSTALL time and
+          # the substituted value is what gets recorded (UIS 1.6.21 fixed install
+          # recording the raw string, which made `template remove` word-split it
+          # into three tokens and report three successes while the entry
+          # survived). Sanity-check this field first on a first install.
+          name: "{{ params.app_name }}-data"
+
+          image: ghcr.io/terchris/atlas-data
+
+          # Substituted at publish time. Must be immutable — latest/main/master/
+          # head are refused. Helm also needs a unique value to roll the pod.
+          tag: __IMAGE_TAG__
+
+          module: atlas_data.definitions
+          why: "the ETL that fills api_v1; without it marts.* and api_v1 stop refreshing"
+
+          # ⚠️ The `-db` suffix is NOT optional and is the thing everyone gets
+          # wrong first. `configure postgresql --namespace dagster
+          # --secret-name-prefix atlas-database` writes a Secret named
+          # `atlas-database-db` with the key DATABASE_URL. A mismatch starts the
+          # pod silently without the variable.
+          env_secrets: "{{ params.app_name }}-database-db"
+
+exports:
+  api-url: "http://api-{{ params.app_name }}.localhost"
