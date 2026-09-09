@@ -9,7 +9,17 @@ Creating an empty `api_v1` here is what lets a fresh UIS install configure Postg
 ## Conventions
 
 - File name: `NNN_short_description.sql`, zero-padded to three digits.
-- Every statement is idempotent (`create schema if not exists`, `create table if not exists`, etc.). Re-running is always safe.
+- Every statement is idempotent (`create schema if not exists`, `create table if not exists`, etc.).
+- **Idempotent per file is not enough — the *set* must converge.** The runner keeps no bookkeeping
+  table ([`migrate.ts`](../ingest/scripts/migrate.ts)); every run re-applies every file, so the
+  schema after one run must equal the schema after two. `051` exists because that was not true:
+  `006`/`007` set comments *unconditionally*, `008` changes those tables' shape behind a guard, so
+  from the second run onward the old comments outlived the shape they described. Each file was
+  individually idempotent and the set still did not converge until `n=2`.
+  **If you add a migration that alters something an earlier one describes, re-assert the
+  description in your own file** — the earlier `COMMENT` will fire again on the next run.
+  The check is cheap: apply `*.sql` twice to a throwaway database and `diff` two `pg_dump
+  --schema-only` outputs (ignore pg_dump's random `\restrict` line).
 - One logical change per file. Don't amend an applied migration — add a new one.
 - Comments (`comment on …`) explain the role of each table and non-obvious columns.
 

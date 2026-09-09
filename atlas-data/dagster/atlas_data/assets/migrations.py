@@ -1,7 +1,7 @@
 """
 `raw.*` schema migrations, as the root of the asset graph.
 
-The 49 numbered SQL files in atlas-data/migrations/ create the `raw.*` and
+The 51 numbered SQL files in atlas-data/migrations/ create the `raw.*` and
 `private_raw.*` tables every ingest writes into. Nothing in Dagster used to run
 them: the graph started at the ingests and simply assumed the tables existed.
 The imac tester hit that in round 2 — the first ingest attempt in a fresh cluster
@@ -17,8 +17,17 @@ lineage, not automatic execution: materialising a single `raw/*` asset will not
 silently run migrations behind your back. The scheduled jobs include it, so a
 scheduled refresh is self-sufficient.
 
-The runner is idempotent — it tracks applied files in `schema_migrations` and
-skips them — so re-running is cheap and safe.
+⚠️ **The runner does NOT track applied files.** This docstring claimed it kept a
+`schema_migrations` table and skipped what was already applied. It does not, and
+never has — `scripts/migrate.ts` says so in its own header: *"this runner does
+not track state (no `schema_migrations` table). Re-running applies every file
+again."* Every materialisation re-applies all 51 files.
+
+That is safe, but it is safe for a different reason than the one this file used
+to give: the files are individually idempotent, and (since `051`) the set
+converges on the first run. Corrected 2026-09-09 — the false claim had already
+propagated into a platform design question about who owns migrations once UIS
+installs atlas from the catalogue (urb-agents #362).
 """
 
 import os
@@ -55,8 +64,10 @@ MIGRATIONS_ASSET_KEY = ["raw", "_migrations"]
     automation_condition=AutomationCondition.any_downstream_conditions(),
     description=(
         "Applies atlas-data/migrations/*.sql via `npm run migrate`, creating the "
-        "raw.* and private_raw.* tables every ingest writes into. Idempotent — "
-        "already-applied files are skipped. Upstream of every raw ingest asset."
+        "raw.* and private_raw.* tables every ingest writes into. The runner "
+        "keeps no bookkeeping table: every run re-applies all 51 files. That is "
+        "safe because each file is idempotent and the set converges on the first "
+        "run. Upstream of every raw ingest asset."
     ),
 )
 def raw_migrations(
