@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+# render-template-info.sh <immutable-tag> <output-path>
+#
+# Substitutes __IMAGE_TAG__ in atlas-data/template-info.yaml and refuses to
+# produce output that would fail late at install time.
+#
+# The checks exist because every one of them is a failure that is invisible
+# until a cluster rejects it (or worse, accepts it):
+#   - an unsubstituted placeholder is not in UIS's refused-tag list, so it would
+#     pass validation and fail at image pull
+#   - a mutable tag (latest/main/master/head) is refused by UIS, and Helm needs a
+#     unique value to roll the code-location pod at all
+#
+# Run by CI on both paths: pull requests render with a synthetic tag and throw
+# the result away; main renders with the real tag and publishes it.
+set -euo pipefail
+
+TAG="${1:-}"; OUT="${2:-}"
+if [[ -z "$TAG" || -z "$OUT" ]]; then
+  echo "usage: render-template-info.sh <v20260909-abc1234> <output-path>" >&2
+  exit 2
+fi
+
+SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/template-info.yaml"
+[[ -f "$SRC" ]] || { echo "✗ not found: $SRC" >&2; exit 1; }
+
+if [[ ! "$TAG" =~ ^v[0-9]{8}-[0-9a-f]{7}$ ]]; then
+  echo "✗ tag '$TAG' is not the immutable v<date>-<sha> shape UIS requires" >&2
+  exit 1
+fi
+
+# Render via a temp file so that OUT == SRC is safe. `sed src > src` truncates
+# src before sed reads it, and rendering in place is the natural thing for a
+# caller to want — CI does exactly that.
+TMP="$(mktemp)"
+trap 'rm -f "$TMP"' EXIT
+sed "s|__IMAGE_TAG__|${TAG}|g" "$SRC" > "$TMP"
+
+if grep -q '__IMAGE_TAG__' "$TMP"; then
+  echo "✗ placeholder survived substitution" >&2; exit 1
+fi
+if ! grep -qE "^[[:space:]]+tag: ${TAG}\$" "$TMP"; then
+  echo "✗ no 'tag: ${TAG}' line rendered — did the field move?" >&2; exit 1
+fi
+for mutable in latest main master head; do
+  if grep -qE "^[[:space:]]+tag: ${mutable}\$" "$TMP"; then
+    echo "✗ mutable tag '${mutable}' rendered" >&2; exit 1
+  fi
+done
+
+cp "$TMP" "$OUT"
+
+# Parse it if we can. Never silently skip — say which happened.
+if python3 -c 'import yaml' 2>/dev/null; then
+  python3 - "$TMP" <<'PY'
+import sys, yaml
+d = yaml.safe_load(open(sys.argv[1]))
+svc = {s["service"]: s["config"] for s in d["provides"]["services"]}
+assert d["kind"] == "application", d.get("kind")
+assert svc["postgrest"]["schemas"] == "api_v1", svc["postgrest"]["schemas"]
+assert svc["postgresql"]["init"] == "uis/init/001_bootstrap.sql", svc["postgresql"]["init"]
+cl = svc["dagster"]["code_location"]
+assert cl["module"] == "atlas_data.definitions", cl["module"]
+assert cl["env_secrets"].endswith("-database-db"), cl["env_secrets"]
+print("  ✓ parsed; schemas=api_v1, init=single file, env_secrets ends -database-db")
+PY
+else
+  echo "  ! pyyaml unavailable — skipped the parse check (text checks still ran)"
+fi
+
+echo "✓ rendered ${OUT} at ${TAG}"
