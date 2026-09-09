@@ -344,11 +344,15 @@ curl -s -H 'Accept-Profile: raw' http://api-atlas.localhost/ssb_08764?limit=3 | 
 # expect: 3 (raw.ssb_08764 via Accept-Profile header)
 ```
 
-The `--schemas` flag (plural, comma-separated) is what tells UIS's configure handler to grant the `atlas_web_anon` role on each named schema and pin them as PostgREST's `db-schemas` value. The candidates are **`api_v1`** (the curated wrapper views — production-stable contract), **`marts`** (every dbt-built table for "open by default" data exploration), and **`raw`** (verbatim ingest landings for full provenance). `private_marts` and `private_raw` stay outside the list under every option — FRR personal data lives there and the public `atlas_web_anon` role doesn't get any grants on those schemas. Hitting `/frr_resources` returns 404 by default and 406 with `Accept-Profile: private_marts` because PostgREST refuses any schema name not in its configured list.
+The `--schemas` flag (plural, comma-separated) is what tells UIS's configure handler to grant the `atlas_web_anon` role on each named schema and pin them as PostgREST's `db-schemas` value. **Atlas serves exactly one: `api_v1`** — the curated wrapper views, every column documented. `marts` (dbt-built tables) and `raw` (verbatim ingest landings) stay behind it, and `private_marts` / `private_raw` are excluded outright — FRR personal data lives there and the public `atlas_web_anon` role gets no grants on them. Hitting `/frr_resources` returns 404 by default and 406 with `Accept-Profile: private_marts` because PostgREST refuses any schema name not in its configured list.
 
-:::warning What is actually deployed is `api_v1` only
+:::info Why one schema, and what to do when you need a mart
 
-This page previously stated that Atlas "opts into three schemas". **That describes an intent, not the deployment.** The running instance serves **`api_v1` alone** — 13 curated views, confirmed on the cluster 2026-09-09. Widening to `marts` and/or `raw` is an open decision held with Terje (urb-agents #350) because it is a *posture*, not a value: the per-schema `ALTER DEFAULT PRIVILEGES` grant makes an exposed schema readable in full **including every table added to it later**, with no per-table review. This note stays until that decision lands, at which point this section is corrected to whatever was chosen.
+Decided by Terje on 2026-09-09: **the public API serves `api_v1` only. If a consumer needs a mart, it gets an `api_v1` view of it** — a reviewed, documented addition — rather than the list being widened.
+
+The reason is a mechanism, not a preference. The per-schema `ALTER DEFAULT PRIVILEGES` grant makes an exposed schema readable **in full, including every table added to it later**, with no per-table review at the point it appears. So exposing `marts` or `raw` would not be a commitment to today's tables; it would be a commitment to *whatever the pipeline writes there from now on*. Widening is technically cheap and reversible — one `configure` plus a pod restart, no accumulated drift — but it cannot un-publish what a consumer has already fetched, and that asymmetry is the whole argument.
+
+So: **adding an `api_v1` view is the supported way to expose data.** See [`api-v1.md`](./api-v1.md).
 :::
 
 The configure step creates `atlas_authenticator` + `atlas_web_anon` Postgres roles in `atlas_db` and grants the anonymous role read access on each schema in the configured list — today `api_v1.*` only, per the warning above. The deploy step renders a per-app Deployment + Service + IngressRoute in the `postgrest` namespace; `PGRST_DB_SCHEMAS` lives on the per-app secret so configure and deploy can't drift.
