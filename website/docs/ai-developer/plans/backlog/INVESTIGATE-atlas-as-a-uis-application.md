@@ -141,6 +141,26 @@ produces `atlas-database-db`. An `env_secrets:` entry that does not match exactl
 starting **silently without the variable** — a failure with no error, which is this project's
 recurring shape.
 
+⏳ **2026-09-09 — and the right fix is to stop naming it at all (urb-agents #494).** UIS wires the
+Secret it created **unasked**: if the install ran `configure postgresql --secret-name-prefix
+atlas-database`, then `atlas-database-db` is added to the code location automatically. So an
+`env_secrets:` entry repeating it is a *second place that must agree*, and it would drift the moment
+`secret_name_prefix` changed. `env_secrets` should mean only **"Secrets this install did not
+create"**.
+
+**Not yet changed in `atlas-data/template-info.yaml`, deliberately**, for two reasons worth stating
+because the field is currently redundant rather than wrong:
+
+1. **Terje has not decided it.** tor-agent has *recommended* dropping it from the spec (#493); that
+   is a recommendation, not a settled shape, and pre-empting it would put my artifact ahead of the
+   spec it implements.
+2. **imac's teardown-and-reinstall is the acceptance test for Terje's "nothing done by hand".**
+   Changing the artifact hours before that run swaps the input to the definitive test — and any
+   failure would then be ambiguous between UIS's fix and my change.
+
+Do it at the first publish *after* that run passes and #493 settles. The scalar-vs-list defect this
+came from is fixed in UIS 1.6.34 (both forms accepted), so the current entry is correct today.
+
 ## The declaration Atlas wants — a requirements statement, not an implementation
 
 The mechanism is `uis template install`, which already implements a unit above a service:
@@ -228,6 +248,21 @@ postgrest in either order** — which the existing priorities already satisfy.
   not exist, reporting `default_privileges_owner: "none"`; that is the guard working, not a failure.
   The general Postgres fact above stays true and stays worth knowing **if Atlas ever introduces a
   distinct object-owning app role** — which is the condition to watch, not the current state.
+- 🔴 **2026-09-09 — that condition has fired. Read the entry above as history, not as the current
+  state.** On a clean install the `api_v1` views are now owned by the **`atlas`** role, not by
+  `postgres` (imac, urb-agents #494). So the distinct object-owning app role I said was the condition
+  to watch now exists, and the `FOR ROLE` mechanism (#308) is doing real work rather than correctly
+  declining. My original alarm on #323 was retracted for a premise that was true then and is false
+  now; **do not cite the retraction as evidence that ownership does not matter here.**
+- ⚠️ **And the part worth more than the correction: the assertion I designed was green the whole
+  time, including while the property it tests did not hold.** `has_table_privilege(anon, view,
+  'SELECT')` returned true on #342 because the views were admin-owned and the *unqualified* default
+  privilege covered them — the right answer for the wrong reason. It returns true today because the
+  app role owns them and the `FOR ROLE` entry covers them. Nothing failed, nothing was reported, and
+  the change was only noticed because someone looked at *why* it was green. **A green check is not
+  evidence that the mechanism under test is the one producing the green.** If that assertion is ever
+  cited as proof the grant model works, check ownership in the same breath:
+  `SELECT relowner::regrole FROM pg_class …` alongside the privilege check.
 - The list is stored on the per-app secret as `PGRST_DB_SCHEMAS` and read by the Deployment via
   `secretKeyRef`. **`deploy` does not accept `--schemas`** — one source of truth, deliberately.
 - Widening is therefore `./uis configure postgrest --app atlas --schemas api_v1,marts,raw`, then a
