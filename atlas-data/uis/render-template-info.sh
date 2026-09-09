@@ -29,6 +29,17 @@ if [[ ! "$TAG" =~ ^v[0-9]{8}-[0-9a-f]{7}$ ]]; then
   exit 1
 fi
 
+# The placeholder must appear exactly once — on the `tag:` line. Substitution is
+# a plain sed, so a second occurrence in prose gets rewritten too and the
+# published artifact ends up carrying a comment that describes itself wrongly.
+# That is exactly what shipped in v20260909-c1076cc.
+OCCURRENCES=$(grep -c '__IMAGE_TAG__' "$SRC" || true)
+if [[ "$OCCURRENCES" != "1" ]]; then
+  echo "✗ placeholder appears ${OCCURRENCES}x in $(basename "$SRC") — expected exactly 1 (the tag: line)." >&2
+  echo "  A second occurrence in prose would be substituted too. Reword the prose." >&2
+  exit 1
+fi
+
 # Render via a temp file so that OUT == SRC is safe. `sed src > src` truncates
 # src before sed reads it, and rendering in place is the natural thing for a
 # caller to want — CI does exactly that.

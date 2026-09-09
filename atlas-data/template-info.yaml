@@ -5,10 +5,16 @@
 #
 #     oras push ghcr.io/terchris/atlas-data/uis:v<date>-<sha> template-info.yaml uis/init/
 #
-# ⚠️ `tag:` below is the placeholder __IMAGE_TAG__ in the repository and is
+# ⚠️ The `tag:` field below carries a placeholder in the repository and is
 # substituted at publish time with the same v<date>-<sha> the image gets. The
 # workflow FAILS if the placeholder survives or if the result is not immutable —
 # a build-time assertion rather than a rule someone has to remember.
+#
+# The placeholder token is deliberately NOT written out anywhere in this file
+# except on the `tag:` line itself: substitution is a plain `sed`, so any prose
+# mentioning the token would be rewritten too and end up describing itself
+# wrongly in the published artifact. That happened once (v20260909-c1076cc);
+# render-template-info.sh now refuses a source that contains it more than once.
 #
 # Provenance for every value that is a decision rather than a fact:
 #   schemas: api_v1        — Terje, urb-agents #350
