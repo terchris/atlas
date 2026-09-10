@@ -116,7 +116,10 @@ company register does not obviously have**:
 Frivillighetsregisteret flag, the NGO population becomes *derived* — and Atlas's coverage-gap analysis
 stops being bounded by who someone remembered to add.
 
-## 🔴 Three decisions, all Terje's
+## Decisions, all Terje's
+
+⚠️ **One of the three below was wrong when first written and is now marked as such.** Decision 2 is
+not a blocker; it resolved into an attribution gap Atlas already has.
 
 ### 1. Ingest scope
 
@@ -129,18 +132,39 @@ stops being bounded by who someone remembered to add.
 **C is not a straw man.** If the answer to "which organisations" is "these thirty", C is hours of work
 and no new obligations.
 
-### 2. 🔴 Personal data — this one is not a preference
+### 2. ✅ Personal data — I overstated this, and Terje corrected it
 
-Enhetsregisteret includes **enkeltpersonforetak (ENK)**, where the organisation name is frequently a
-natural person's name, alongside their business address. There are several hundred thousand of them.
+**This section originally said Atlas holding Brreg's enkeltpersonforetak was "a governance decision
+before a technical one" and implied it could block the wider ingest. That was wrong.**
 
-**Ingesting the full register means Atlas holds personal data at scale**, whatever it publishes. That
-engages data-protection obligations Atlas does not currently have, because today's 122 units are
-organisations rather than people.
+Terje, 2026-09-10: *"the persons in brreg are public because they are related to companies. by that
+the law says that they should be in the register."*
 
-This is a governance decision before it is a technical one, and it should be taken deliberately rather
-than as a side effect of choosing option A. **If the answer is B, the question largely goes away** —
-FLI and STI are organisations, not people.
+He is right, and it is not a small correction. **The persons are in Enhetsregisteret because the law
+requires them to be, and the register is public for exactly that reason** — transparency about who
+stands behind a legal entity is the register's purpose, not a side effect of it. Brreg publishes the
+whole thing as open data under **NLOD**. Re-use, including republication, is what the licence is for.
+
+So there is no lawful-basis question to settle before ingesting, and I should not have framed one.
+
+#### What actually attaches, and it is smaller and more concrete
+
+🔴 **Attribution.** NLOD requires it, Atlas already has the machinery — every module under
+`ingest/src/sources/` declares `license: NLOD`, `license_url` and an `attribution` string, and
+`api_v1.meta_sources` publishes all three.
+
+**`seed-sources/brreg-enheter/` declares none of them.** It has only `README.md` and `index.ts`; there
+is no `manifest.yml`. So Atlas is already serving Brreg-derived data with no licence or attribution
+recorded — at 122 rows today, and it would be at any scale. **That is a live gap independent of this
+investigation** and worth closing whichever scope is chosen.
+
+⚠️ **Staying in sync, which is a data-quality obligation rather than a legal one.** If Brreg corrects
+or removes an entry, a shadow copy must follow it. A stale copy that missed a deletion is
+republishing something the authoritative register has withdrawn — which is worse than not holding it.
+
+That is an argument **for** the change feed rather than against the ingest: shadow-brreg's
+`endringstype` handling is exactly the mechanism that discharges it, and a bulk-snapshot-only design
+would not. It also makes the polling interval a correctness question rather than a politeness one.
 
 ### 3. What, if anything, is published
 
