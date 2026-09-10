@@ -127,6 +127,30 @@ operational:
 
   timezone: Europe/Oslo
 
+  # ⚠️ The gap imac found on urb-agents #507: enabling the schedules does NOT
+  # backfill. Every condition above is `on_cron`, which means *next fire* — a
+  # Thursday install waits until Sunday 02:00 for raw data and 1 October for the
+  # monthly sources. A user who correctly makes the go-live decision still sees
+  # an empty API for days, with nothing telling them why.
+  first_data:
+    why: >-
+      Enabling the schedules does not backfill. The crons above are the next
+      fire, not a catch-up, so a fresh install stays empty until one comes round.
+    how: Launch these jobs, in this order, from the Dagster UI.
+    jobs: [annual_sources_refresh, klass_refresh, transform_and_publish]
+    takes: ~10 minutes; ~2.9M rows across 47 raw and 64 marts tables
+    measured: imac, clean cluster, urb-agents #507 — 10.1 min, zero step failures
+
+  # For the "what is this about to do to my cluster" question (#507 item 1).
+  # provides.services below is the authoritative list; this is the human summary.
+  install:
+    deploys: [postgresql, postgrest, dagster]
+    takes: a few minutes; the data load afterwards is the long part
+    note: >-
+      Immediately after install the API is live and serves zero endpoints. The
+      advertised meta_sources / meta_endpoints / meta_dimensions return 404 until
+      the first pipeline run. That is correct, not a failed install.
+
   cadence:
     - cron: "0 2 * * 0"
       what: ~37 annual public-sector sources — SSB, FHI, Bufdir
