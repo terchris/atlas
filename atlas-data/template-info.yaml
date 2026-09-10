@@ -139,7 +139,7 @@ operational:
     how: Launch these jobs, in this order, from the Dagster UI.
     jobs: [annual_sources_refresh, klass_refresh, seed_sources_refresh, transform_and_publish]
     takes: ~11 minutes; ~2.9M rows across 47 raw and 64 marts tables
-    measured: imac, clean cluster, urb-agents #507 — 11.1 min, 2,906,194 rows
+    measured: "imac, clean cluster, urb-agents #507 — 11.1 min, 2,906,194 rows"
 
   # For the "what is this about to do to my cluster" question (#507 item 1).
   # provides.services below is the authoritative list; this is the human summary.

@@ -47,6 +47,18 @@ TMP="$(mktemp)"
 trap 'rm -f "$TMP"' EXIT
 sed "s|__IMAGE_TAG__|${TAG}|g" "$SRC" > "$TMP"
 
+# An unquoted YAML scalar containing " #" is truncated at the hash — silently,
+# with no error, and the parse still succeeds. It ate the `measured:` figures in
+# v20260910-6429719 and v20260910-4e9f13c, and was invisible until someone read
+# the published artifact rather than the source. Everything Atlas publishes cites
+# urb-agents issue numbers, so this is a hazard the file invites.
+if HAZARD=$(grep -nE '^[[:space:]]+[a-z_]+:[[:space:]]+[^"'"'"'|>&*[:space:]][^"'"'"']*[[:space:]]#' "$SRC"); then
+  echo "✗ unquoted YAML value containing ' #' — everything after the hash is a comment" >&2
+  echo "$HAZARD" | sed 's/^/    /' >&2
+  echo "  Quote the value. The parse will succeed either way; the text just vanishes." >&2
+  exit 1
+fi
+
 if grep -q '__IMAGE_TAG__' "$TMP"; then
   echo "✗ placeholder survived substitution" >&2; exit 1
 fi
