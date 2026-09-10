@@ -63,6 +63,7 @@ cp "$TMP" "$OUT"
 
 # Parse it if we can. Never silently skip — say which happened.
 export ATLAS_DAGSTER_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../dagster/atlas_data" && pwd)"
+export ATLAS_JOBS_OUT="$(mktemp)"
 if python3 -c 'import yaml' 2>/dev/null; then
   python3 - "$TMP" <<'PY'
 import os, sys, yaml
@@ -109,11 +110,16 @@ assert not missing_jobs, f"first_data names jobs not defined in schedules.py: {s
 declared_services = {x["service"] for x in d["provides"]["services"]}
 assert set(op["install"]["deploys"]) == declared_services, (op["install"]["deploys"], declared_services)
 print(f"  ✓ first_data jobs exist ({len(declared_jobs)}), install.deploys matches provides.services")
+# Existence is not coverage — see check-first-data-coverage.py. Hand the job
+# list to the coverage checker rather than duplicating its logic here.
+pathlib.Path(os.environ["ATLAS_JOBS_OUT"]).write_text(",".join(sorted(declared_jobs)))
 print(f"  ✓ operational block matches the code: {len(declared)} crons, "
       f"unscheduled={sorted(unscheduled_code)}, tz={tz}")
 
 print("  ✓ parsed; schemas=api_v1, init=single file, env_secrets ends -database-db")
 PY
+  python3 "$(dirname "${BASH_SOURCE[0]}")/check-first-data-coverage.py" \
+    "$ATLAS_DAGSTER_DIR" "$(cat "$ATLAS_JOBS_OUT")"
 else
   echo "  ! pyyaml unavailable — skipped the parse check (text checks still ran)"
 fi
