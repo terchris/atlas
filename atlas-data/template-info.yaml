@@ -97,5 +97,54 @@ provides:
           # pod silently without the variable.
           env_secrets: "{{ params.app_name }}-database-db"
 
+# ─────────────────────────────────────────────────────────────────────────────
+# What this application DOES once installed, as opposed to what it creates.
+#
+# Here because it is a property of the IMAGE: the cadence lives in cadence.py and
+# schedules.py inside the container, so pinned here it is version-locked to the
+# code it describes and changes only when the tag changes. In the catalogue entry
+# alone it would be a second place that must agree, drifting silently — the same
+# argument imac made about env_secrets, pointed the other way (urb-agents #499).
+#
+# ⚠️ Every cron and name below is ASSERTED against cadence.py and schedules.py by
+# uis/render-template-info.sh on every PR and every publish. If you change a
+# schedule in the code and not here, the build fails. Do not hand-edit these to
+# match prose — change the code, and let the gate tell you.
+#
+# Nothing in UIS reads this today; it is inert by design and cannot affect an
+# install.
+operational:
+  # The single most important line for an operator: installing commits you to
+  # nothing that runs.
+  automation: >-
+    Ships stopped. No data is fetched and no external service is contacted until
+    an operator enables the schedules; that is a go-live decision, not a side
+    effect of installing.
+
+  first_load: >-
+    ~2.9M rows across 47 raw and 60 marts tables, from ~40 sources, in one pass
+    (measured on a clean install by imac, urb-agents #496).
+
+  timezone: Europe/Oslo
+
+  cadence:
+    - cron: "0 2 * * 0"
+      what: ~37 annual public-sector sources — SSB, FHI, Bufdir
+    - cron: "30 3 * * 0"
+      what: scraper-based sources
+    - cron: "0 1 1 * *"
+      what: SSB Klass classifications (kommune/fylke)
+    - cron: "0 5 * * *"
+      what: dbt transform and publish — no external calls
+
+  # Deliberately conservative: an annual statistical table is polled weekly, not
+  # nightly. Nightly would be ~15,000 pointless requests a year against
+  # public-sector APIs Atlas depends on staying welcome at.
+  external_services: [SSB, FHI, Bufdir, Brønnøysundregistrene]
+
+  # No automation condition, no freshness policy — these never self-trigger.
+  # Parked pending a Red Cross API credential.
+  unscheduled: [redcross-branches, frr]
+
 exports:
   api-url: "http://api-{{ params.app_name }}.localhost"
