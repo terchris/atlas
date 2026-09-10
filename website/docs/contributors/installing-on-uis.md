@@ -179,9 +179,75 @@ uis dagster verify                        # A/B/C PASS, code location LOADED
 uis dagster automation --expect running   # verify alone passes whether or not schedules are on
 ```
 
+## See your data
+
+The install is not finished until you have read a row out of it. Every endpoint below is live once
+step 3 has run:
+
+```
+/coverage_gap_barnefattigdom   /indicator_latest_values   /indicator_missing_kommuner
+/indicator_summary             /kommune_local_chapters    /ngo_index
+/ngo_overview                  /distrikt_summary          /activity_catalog
+/bufdir_indicator_alias        /meta_sources              /meta_endpoints
+/meta_dimensions
+```
+
+```
+GET /coverage_gap_barnefattigdom?limit=2
+```
+
+```json
+{"kommune_nr":"0301","kommune_name":"Oslo","fylke_name":"Oslo","year":2024,"value_pct":13,"personer":130343}
+{"kommune_nr":"1101","kommune_name":"Eigersund","fylke_name":"Rogaland","year":2024,"value_pct":8.6,"personer":3270}
+```
+
+**That is what you built** — child-poverty coverage by kommune, joined to the NGOs that respond to it.
+
+`/indicator_missing_kommuner` is worth opening early: it exposes the same discrepancy as the 17
+warnings below, which is a friendlier introduction to them than a red test run.
+
+### Getting your machine to reach it
+
+The route matches on **hostname**, so `api-atlas.<your-domain>` must resolve to the ingress. On a real
+cluster with real DNS that is already true.
+
+:::warning On a laptop this is the last undocumented step
+How `.localhost` resolves depends on your Kubernetes distribution and your OS, and this guide will not
+guess for you. **If the hostname does not resolve, port-forward instead** — it works regardless of
+DNS:
+
+```sh
+kubectl port-forward -n postgrest svc/<postgrest-service> 8080:80
+curl -H 'Host: api-atlas.localhost' 'http://localhost:8080/coverage_gap_barnefattigdom?limit=2'
+```
+
+The `Host` header is not optional: Traefik routes on it, so a request without it gets a 404 from
+Traefik rather than an answer from Atlas.
+:::
+
 ## Things that look like failure and are not
 
 This section exists because every item in it has produced a wrong conclusion by someone experienced.
+
+### Every run you just launched alerts as failed, fifteen minutes later
+
+Fifteen minutes after your data load succeeds, monitoring may raise `PodNotReady` for **every job you
+ran**. On a production install today that was six alerts, one per job, **all six having SUCCEEDED**.
+
+**A completed Kubernetes Job pod is `0/1` and reports `ready=false` permanently** — that is what a
+finished pod looks like. The alert rule matches any not-ready pod, and its own description says *"Too
+long for a deployment"*: the annotation names the intended scope and the expression does not enforce
+it.
+
+So: **a `PodNotReady` alert naming a `dagster-run-*` pod is expected and is not a failure.** Check the
+run's status in Dagster, not the pod's readiness.
+
+:::danger This one has a compound cost
+On that install the six false alerts were sitting beside **one real alert that had been firing for
+four days** — a dead metrics exporter — and the real one was invisible among them. A rule that cannot
+stop firing does not add noise; it spends the credibility of the channel. Fixing the rule is UIS's;
+knowing the alerts are false is yours.
+:::
 
 ### `transform_checks` looks hung. It is slow.
 
@@ -206,7 +272,16 @@ codes retired in the 2020 reorganisation; the dimensions carry current Klass cod
 says so in place: *"Historical fylker (pre-2020 01-20 numbering) may appear — warn."*
 
 They surface as non-passing asset checks in Dagster because a dbt warning is not a pass. **A run that
-succeeds with exactly these 17 is a correct install.** The underlying question — whether Atlas covers
+succeeds with exactly these 17 is a correct install.**
+
+This is measured, not assumed. Two installs on different topologies, different hardware and different
+UIS versions both report **630 succeeded · 17 failed · 647 total**, and the *sets* were compared
+rather than the counts — the same 12 tables, the same fylke-only and kommune-only split. Two lists
+that both totalled 17 and named different checks would have looked like agreement and meant the
+opposite.
+
+⚠️ **Documented is not the same as acceptable.** The semantic question underneath — whether Atlas
+covers pseudo-regions or merely represents them — is open. The underlying question — whether Atlas covers
 pseudo-regions or merely represents them — is open and tracked in
 `INVESTIGATE-ssb-pseudo-regions`.
 
