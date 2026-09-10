@@ -107,7 +107,7 @@ instance that serves data**, unless it names who ran the check and where.
 ## Recently closed
 
 - **PLAN-007** (customer-frontend data display) — shipped; `INVESTIGATE-customer-frontend-data-display` needs no further investigation work.
-- **The asgard deployment** — Phase 2 complete (2.3: 649 checks, 629 dbt PASS, 17 known WARNs, 10/13 views, 0 orphans) and Phase 3.2's concurrency bound verified at 4 against a real weekly fan-out on 2026-08-30. ⚠️ The observed weekly cycle **failed** (15 SSB sources, HTTP 429), so the *bound* is proven but a clean end-to-end weekly cycle has not yet been observed.
+- **The asgard deployment** — Phase 2 complete (2.3: 649 checks, 629 dbt PASS, 17 known WARNs, 10/13 views, 0 orphans — ⚠️ those three figures do not subtract, and ops caught it on urb-agents #632. They reconcile only if 649 is the *combined* pre-split suite: 629 + 17 = 646 dbt checks, plus `api_v1_checks`' 3. **Today the split makes it 647 in `transform_checks` and 3 in `api_v1_checks`**, measured identically on two topologies. Cite the current figures, not these) and Phase 3.2's concurrency bound verified at 4 against a real weekly fan-out on 2026-08-30. ⚠️ The observed weekly cycle **failed** (15 SSB sources, HTTP 429), so the *bound* is proven but a clean end-to-end weekly cycle has not yet been observed.
 
 ---
 
