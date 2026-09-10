@@ -45,7 +45,7 @@ from dagster import (
     run_status_sensor,
 )
 
-from atlas_data.assets import api_v1, migrations, raw_fhi, raw_other, raw_ssb
+from atlas_data.assets import api_v1, migrations, raw_fhi, raw_other, raw_seeds, raw_ssb
 from atlas_data.assets.dbt import atlas_dbt_models
 
 # All ingest sources are Norwegian public-sector data and the operators are in
@@ -134,6 +134,24 @@ klass_job = define_asset_job(
         "they are kept on their own schedule rather than buried in the weekly "
         "wave — a bad Klass refresh is a wide blast radius and worth being able "
         "to point at."
+    ),
+)
+
+seed_sources_job = define_asset_job(
+    name="seed_sources_refresh",
+    selection=_asset_selection(raw_seeds.SEED_SOURCES),
+    executor_def=_ingest_executor(),
+    description=(
+        "Reference seeds — currently brreg-enheter, the Brønnøysund unit "
+        "register that gives every NGO a stable orgnr. Monthly: a register of "
+        "legal entities does not justify a weekly poll on Atlas's behalf.\n\n"
+        "This job exists because these assets had an automation condition and "
+        "belonged to no named job, so they ran on their cron and were invisible "
+        "to anyone loading Atlas by hand. imac hit exactly that on urb-agents "
+        "#507: running the three obvious jobs left brreg_enheter empty, "
+        "ref_brreg_icnpo transforming an empty input, and "
+        "raw_sources_were_refreshed_recently red. A source reachable only via "
+        "__ASSET_JOB is a source nobody will think to run."
     ),
 )
 
@@ -290,6 +308,7 @@ schedules = [
 jobs = [
     annual_sources_job,
     klass_job,
+    seed_sources_job,
     redcross_branches_job,
     transform_job,
     api_v1_checks_job,
