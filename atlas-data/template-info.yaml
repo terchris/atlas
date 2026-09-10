@@ -136,7 +136,12 @@ operational:
     why: >-
       Enabling the schedules does not backfill. The crons above are the next
       fire, not a catch-up, so a fresh install stays empty until one comes round.
-    how: Launch these jobs, in this order, from the Dagster UI.
+    how: >-
+      Launch these jobs from the Dagster UI, serially, in exactly this order.
+      The order is not arbitrary: seed_sources_refresh contains raw/_migrations
+      and runs third, so the migrations apply after two source jobs have already
+      written. That is safe because they are idempotent, but reordering these has
+      not been tested (ops, urb-agents #627).
     jobs: [annual_sources_refresh, klass_refresh, seed_sources_refresh, transform_and_publish]
     takes: ~11 minutes; ~2.9M rows across 47 raw and 64 marts tables
     measured: "imac, clean cluster, urb-agents #507 — 11.1 min, 2,906,194 rows"
