@@ -62,9 +62,10 @@ done
 cp "$TMP" "$OUT"
 
 # Parse it if we can. Never silently skip — say which happened.
+export ATLAS_DAGSTER_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../dagster/atlas_data" && pwd)"
 if python3 -c 'import yaml' 2>/dev/null; then
   python3 - "$TMP" <<'PY'
-import sys, yaml
+import os, sys, yaml
 d = yaml.safe_load(open(sys.argv[1]))
 svc = {s["service"]: s["config"] for s in d["provides"]["services"]}
 assert d["kind"] == "application", d.get("kind")
@@ -76,6 +77,27 @@ assert svc["postgresql"]["init"] == "uis/init/001_bootstrap.sql", svc["postgresq
 cl = svc["dagster"]["code_location"]
 assert cl["module"] == "atlas_data.definitions", cl["module"]
 assert cl["env_secrets"].endswith("-database-db"), cl["env_secrets"]
+
+# The operational block duplicates facts that live in cadence.py and
+# schedules.py. Duplication is the point — it has to travel in the artifact —
+# so the drift it invites is closed here rather than by remembering.
+import re, pathlib
+root = pathlib.Path(os.environ["ATLAS_DAGSTER_DIR"])
+cad = (root / "cadence.py").read_text()
+sch = (root / "schedules.py").read_text()
+code_crons = set(re.findall(r'^[A-Z_]*CRON\s*=\s*"([^"]+)"', cad, re.M))
+code_crons |= set(re.findall(r'cron_schedule="([^"]+)"', sch))
+op = d["operational"]
+declared = {c["cron"] for c in op["cadence"]}
+missing = declared - code_crons
+assert not missing, f"cron in template-info.yaml not found in code: {sorted(missing)}"
+unscheduled_code = set(re.findall(r'"([a-z-]+)"', re.search(r'UNSCHEDULED_SOURCES\s*=\s*\{([^}]*)\}', cad).group(1)))
+assert set(op["unscheduled"]) == unscheduled_code, (op["unscheduled"], unscheduled_code)
+tz = re.search(r'^TIMEZONE\s*=\s*"([^"]+)"', cad, re.M).group(1)
+assert op["timezone"] == tz, (op["timezone"], tz)
+print(f"  ✓ operational block matches the code: {len(declared)} crons, "
+      f"unscheduled={sorted(unscheduled_code)}, tz={tz}")
+
 print("  ✓ parsed; schemas=api_v1, init=single file, env_secrets ends -database-db")
 PY
 else
