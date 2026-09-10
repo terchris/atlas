@@ -154,13 +154,17 @@ operational:
   cadence:
     - cron: "0 2 * * 0"
       what: ~37 annual public-sector sources — SSB, FHI, Bufdir
-    - cron: "30 3 * * 0"
-      what: scraper-based sources
     - cron: "0 1 1 * *"
       what: SSB Klass classifications (kommune/fylke)
     - cron: "0 5 * * *"
       what: dbt transform and publish — no external calls
 
+  # No scraper row: SCRAPER_CRON (Sunday 03:30) still exists in cadence.py, but
+  # its only consumer was redcross-branches, which is parked in
+  # UNSCHEDULED_SOURCES. Nothing carries that condition, so nothing polls at that
+  # time and the block must not say Atlas scrapes anyone's website weekly. It
+  # comes back when redcross unparks — the gate will require it then.
+  #
   # Deliberately conservative: an annual statistical table is polled weekly, not
   # nightly. Nightly would be ~15,000 pointless requests a year against
   # public-sector APIs Atlas depends on staying welcome at.

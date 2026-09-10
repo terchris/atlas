@@ -104,6 +104,29 @@ op = d["operational"]
 declared = {c["cron"] for c in op["cadence"]}
 missing = declared - code_crons
 assert not missing, f"cron in template-info.yaml not found in code: {sorted(missing)}"
+
+# Defined is not live. SCRAPER_CRON existed as a constant long after its only
+# consumer (redcross-branches) was parked, so the block advertised a Sunday
+# 03:30 poll that nothing performs. Same shape as the first_data existence check
+# imac caught on #507: the easy property, not the promised one.
+#
+# A cron is live if either an asset uses the builder that wraps it, or it is a
+# ScheduleDefinition's own cron_schedule.
+asset_src = "\n".join(p.read_text() for p in sorted((root / "assets").glob("*.py")))
+builder_of = dict(re.findall(
+    r'def ([a-z_]+)\(\) -> AutomationCondition:\s*\n\s*return AutomationCondition\.on_cron\(\s*([A-Z_]+)',
+    cad))
+live = set(re.findall(r'cron_schedule="([^"]+)"', sch))
+const_value = dict(re.findall(r'^([A-Z_]*CRON)\s*=\s*"([^"]+)"', cad, re.M))
+for builder, const in builder_of.items():
+    if re.search(rf'\b{builder}\(\)', asset_src):
+        live.add(const_value[const])
+dead = declared - live
+assert not dead, (
+    f"cron declared in operational.cadence but nothing uses it: {sorted(dead)}. "
+    "The constant exists; no asset carries the condition and no schedule runs it. "
+    "Remove the row, or wire the condition back up."
+)
 unscheduled_code = set(re.findall(r'"([a-z-]+)"', re.search(r'UNSCHEDULED_SOURCES\s*=\s*\{([^}]*)\}', cad).group(1)))
 assert set(op["unscheduled"]) == unscheduled_code, (op["unscheduled"], unscheduled_code)
 tz = re.search(r'^TIMEZONE\s*=\s*"([^"]+)"', cad, re.M).group(1)
