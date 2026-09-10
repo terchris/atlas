@@ -95,6 +95,20 @@ unscheduled_code = set(re.findall(r'"([a-z-]+)"', re.search(r'UNSCHEDULED_SOURCE
 assert set(op["unscheduled"]) == unscheduled_code, (op["unscheduled"], unscheduled_code)
 tz = re.search(r'^TIMEZONE\s*=\s*"([^"]+)"', cad, re.M).group(1)
 assert op["timezone"] == tz, (op["timezone"], tz)
+
+# first_data names the jobs a user must launch to get data on day one. A renamed
+# job would leave the artifact telling them to launch something that no longer
+# exists — worse than saying nothing, because it looks authoritative.
+code_jobs = set(re.findall(r'name="([a-z_]+)"', sch))
+declared_jobs = set(op["first_data"]["jobs"])
+missing_jobs = declared_jobs - code_jobs
+assert not missing_jobs, f"first_data names jobs not defined in schedules.py: {sorted(missing_jobs)}"
+
+# install.deploys must match the services the definition actually provides,
+# or the summary promises a different cluster than the deploy performs.
+declared_services = {x["service"] for x in d["provides"]["services"]}
+assert set(op["install"]["deploys"]) == declared_services, (op["install"]["deploys"], declared_services)
+print(f"  ✓ first_data jobs exist ({len(declared_jobs)}), install.deploys matches provides.services")
 print(f"  ✓ operational block matches the code: {len(declared)} crons, "
       f"unscheduled={sorted(unscheduled_code)}, tz={tz}")
 
