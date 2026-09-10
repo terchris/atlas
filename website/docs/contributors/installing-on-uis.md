@@ -27,7 +27,8 @@ filed; until they land, this guide gives you the exact calls.
 uis template install atlas --dry-run
 ```
 
-This pulls the definition and installs nothing. **Run it first.** The plan it prints is exactly what
+This pulls the definition and installs nothing. **Run it first.** (From UIS 1.6.52 `template list`
+and `template info` point you at it too.) The plan it prints is exactly what
 will happen:
 
 ```
@@ -46,9 +47,13 @@ external services it contacts.
 
 ### Before you install
 
-- **Do not run `uis pull` while anything else is running.** `pull` stops and restarts the container
-  that `uis template install` runs inside. Mid-install it would leave a database created, some
-  services deployed, and nothing recording which.
+- **Do not run `uis pull`, `uis stop` or `uis restart` while anything else is running.** All three
+  stop the container that `uis template install` runs inside. Mid-install that leaves a database
+  created, some services deployed, and nothing recording which — no UIS command repairs it.
+
+  **From UIS 1.6.52 the tool refuses for you**, naming the command it found running, and tells you to
+  wait. If you are certain it is safe, `UIS_FORCE=1 ./uis pull` overrides. On anything older there is
+  no guard and the warning above is the whole protection.
 - **`uis pull --check` before `uis pull`.** The version advertised as available is not always the
   version that installs; trust the installed version, not the advertised one.
 
@@ -261,7 +266,7 @@ fails loudly with that instruction if it is missing. You are not expected to kno
 
 | gap | status |
 |---|---|
-| No `uis dagster run <job>` — loading data needs GraphQL | requested |
-| No `uis dagster automation --start` — going live needs GraphQL | requested |
+| No `uis dagster run <job>` — loading data needs GraphQL | in `PLAN-cli-load-and-report-on-application-data`; both verbs are new CLI surface and wait on a decision, not on implementation |
+| No `uis dagster automation --start` — going live needs GraphQL | as above |
 | Job order is documented, not enforced | see step 3 |
 | `transform_checks` start latency | tracked in `INVESTIGATE-transform-job-decomposition` |
