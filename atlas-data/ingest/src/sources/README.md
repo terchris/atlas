@@ -129,7 +129,8 @@ uv run --directory atlas-data/dbt python scripts/build_sources_seed.py --readme 
 <!-- BEGIN auto-generated source table — do not edit; run `uv run python atlas-data/dbt/scripts/build_sources_seed.py --readme atlas-data/ingest/src/sources/README.md` -->
 | Source | Provider | What it is | Topic | EU theme | Geo | Cadence |
 |---|---|---|---|---|---|---|
-| [bufdir-barnefattigdom](./bufdir-barnefattigdom/) | bufdir | Barne-, ungdoms- og familiedirektoratet (Bufdir) publishes the Barnefattigdom kommunemonitor as an open web application backed by a publi… | income | SOCI | kommune | annual |
+| [brreg-enheter-alle](./brreg-enheter-alle/) | brreg | Brønnøysundregistrene's Enhetsregisteret holds every legal entity registered in Norway — companies, foundations, associations, public bod… | organisations | GOVE | kommune | daily |
+| [bufdir-barnefattigdom](./bufdir-barnefattigdom/) | bufdir | Barne-, ungdoms- og familiedirektoratet (Bufdir) publishes the Barnefattigdom kommunemonitor on bufdir.no and ships a single bulk ZIP of… | income | SOCI | kommune | annual |
 | [fhi-alkohol](./fhi-alkohol/) | fhi | FHI Folkehelsestatistikk table 332 — share of Ungdata respondents reporting alcohol use one or more times in the past year. Risk-directio… | health | HEAL | kommune | annual |
 | [fhi-befolkning](./fhi-befolkning/) | fhi | FHI Folkehelsestatistikk table 338 — Befolkningssammensetning. Population counts by region × sex × age band, used as the demographic deno… | demographics | SOCI | kommune | annual |
 | [fhi-befolkningsvekst](./fhi-befolkningsvekst/) | fhi | FHI Folkehelsestatistikk table 185 — year-over-year population growth per region (counts and percent rates). Pairs with fhi-befolkning (o… | demographics | SOCI | kommune | annual |

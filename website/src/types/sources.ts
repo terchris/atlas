@@ -29,7 +29,12 @@ export interface ResolvedPublisher {
   id: string;
   display_name: string;
   homepage: string;
-  logo: string;
+  /**
+   * Path under website/static/. Optional: not every publisher ships a mark
+   * Atlas may redistribute, and an entry with no logo renders the page without
+   * one rather than a broken <img>.
+   */
+  logo?: string;
 }
 
 export interface ResolvedCategory {
@@ -73,7 +78,7 @@ export interface ViewBuiltFromSourceParent {
   parent_kind: 'source';
   source_id: string;
   upstream_title: string;
-  publisher: { id: string; display_name: string; logo: string };
+  publisher: { id: string; display_name: string; logo?: string };
   category: { id: string; name: string; emoji: string };
 }
 
@@ -149,7 +154,8 @@ export interface Publisher {
   id: string;
   display_name: string;
   homepage: string;
-  logo: string;
+  /** See ResolvedPublisher.logo — optional for the same reason. */
+  logo?: string;
   feedback_url: string;
   notes: string;
   source_count: number;
