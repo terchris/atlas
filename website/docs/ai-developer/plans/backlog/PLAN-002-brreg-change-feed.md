@@ -58,9 +58,10 @@ correctly does not save it**, because the feed is never walked at all, and a tes
 enum passes. So: build the cursor, and **leave no page-based fallback in**, because the fallback is
 the broken path.
 
-🔴 **`totalElements` is NOT the backlog depth — retracted.** An earlier version of this section said
-*"the response's `totalElements` is the backlog depth, so 'how far behind are we' is one request."*
-It is not, and the numbers are mutually inconsistent:
+#### ⚠️ `totalElements` — I retracted this, and the retraction was wrong. Restored with proof.
+
+On 2026-09-12 I struck the claim that `totalElements` gives the backlog depth, on ops-dev's relay of
+imac's measurement that the figures were *"mutually inconsistent"*:
 
 ```
 unfiltered                 16,417,370
@@ -68,22 +69,127 @@ at oppdateringsid=1000000  15,751,321
 at oppdateringsid=16417000   7,815,236
 ```
 
-Ids are sparse too — asking for `16,417,000` returns a first record with id `16,427,801` — so id
-arithmetic measures nothing either. **No watermark, progress bar or completeness assertion may be
-built on either.** Task 2.5 below is struck for this reason.
+I reproduced those numbers and agreed too readily. **They are not inconsistent.** They only look so
+under the assumption that `oppdateringsid` is a record ordinal — that a cursor at 16,417,000 out of
+16,417,370 records must leave ~370 to go. It is not an ordinal. Ids are **sparse**, and the id space
+runs to ~25.18M while the record count is 16.4M, so a cursor at 16.4M genuinely has 7.8M records
+ahead of it.
 
-🔴 **The deletion value is `Sletting`, not `Fjernet`.** A 500-change live sample on 2026-09-11:
+Two independent checks, measured 2026-09-12:
+
+**The three segments sum exactly to the unfiltered total.**
+
+```
+[1, 1M)            666,049
+[1M, 16.417M)    7,936,085
+[16.417M, end)   7,815,236
+                ----------
+                16,417,370   = the unfiltered total, exactly
+```
+
+**And an enumerated window matches the predicted count exactly.** Walking `[25,000,000, 25,100,000)`
+by cursor and counting every record:
+
+```
+totalElements at 25,000,000    141,187
+totalElements at 25,100,000     58,526
+predicted in the window         82,661
+actually enumerated             82,661   ← exact match
+```
+
+🟢 **So `totalElements` at a cursor IS the number of records remaining from that cursor**, it costs
+one request with `size=1`, and it decreases monotonically as the watermark advances. Task 2.5 is
+restored.
+
+🔴 **What is genuinely true from imac's finding, and it is narrower:** *id arithmetic* does not
+measure distance. Asking for `oppdateringsid=16,417,000` returns a first record with id
+`16,427,801` — a 10,801-id gap holding zero records. **Never compute "how far behind" by subtracting
+ids.** Count records with `totalElements`; never infer them from the id space.
+
+⚠️ Recorded at this length because I got it wrong in both directions within a day: first claiming more
+than I had measured, then withdrawing something that was true. The measurement above is what settles
+it, not either argument.
+
+🔴 **The deletion value in current traffic is `Sletting`, not `Fjernet`.** A 500-change live sample
+on 2026-09-11, re-confirmed by imac:
 
 | value | count |
 |---|---|
 | `Endring` | 351 |
 | `Ny` | 100 |
 | **`Sletting`** | **49** |
-| `Fjernet` | **0 — did not appear** |
+| `Fjernet` | 0 in this sample |
 
-An earlier draft of the investigation said `Fjernet` was the deletion. **An implementation built from
-that text would match a value the API never emits, delete nothing, and serve withdrawn records
-indefinitely** — while passing every row-count check. Handle all four.
+An earlier draft of the investigation said `Fjernet` was *the* deletion. **An implementation built
+from that text would match a value current traffic does not emit, delete nothing, and serve withdrawn
+records indefinitely** — while passing every row-count check.
+
+⚠️ **But `Fjernet` is real, and both ops-dev and I wrote "zero `Fjernet`" off a single day's sample.**
+Sampling across the id range on 2026-09-12 found it:
+
+```
+cursor          1   Ukjent 500                                    2018-04-23
+cursor  5,000,000   Endring 500                                   2019-11-11
+cursor 14,000,000   Endring 494, Sletting 6                       2022-03-29
+cursor 16,400,000   Endring 342, Sletting 112, Fjernet 23, Ny 23  2022-12-15
+```
+
+**All five values are real and all five must be handled.** "Did not appear in my sample" is not
+"does not occur", and a catch-up from an old watermark walks straight through the era where `Fjernet`
+is common.
+
+#### 🔴 `_links.next` is a PAGE link. Following HAL correctly walks into the cap.
+
+Measured 2026-09-12. The response carries `first` / `self` / `next` / `last`, and every one of them
+except `self` is built with `page=`:
+
+```
+self   …/oppdateringer/enheter?oppdateringsid=16000000&size=500
+next   …/oppdateringer/enheter?oppdateringsid=16000000&page=1&size=500
+last   …/oppdateringer/enheter?oppdateringsid=16000000&page=2653510&size=500
+```
+
+Following `next` from a cursor start survives 20 hops and then:
+
+```
+hop 19: ok, next -> …&page=20&size=500
+hop 20: HTTP 400
+```
+
+⚠️ **This is the trap wearing best-practice clothing.** "Follow the HAL `next` link rather than
+constructing URLs yourself" is the correct instinct for every other endpoint, and here it is the
+broken path. The cap is not a documented limit a reader would look for — it is reachable only by
+walking into it.
+
+🔴 **And `lib/brreg/client.ts`'s `paginate()` helper is exactly this pattern** — it increments `page`
+until `totalPages`. So the investigation's *"extend the existing client rather than writing a new
+one"* (**[Q24]**) is the **wrong instruction for this endpoint**, and following it would reproduce
+the defect. The feed advances by setting `oppdateringsid` to `last seen + 1`. Nothing else.
+
+#### 🟢 `size` goes to at least 10,000, not 500
+
+Verified: `size=500`, `1000`, `5000`, `10000` all return 200 with that many records. A full catch-up
+from id 1 is ~1,650 requests at `size=10000` rather than ~33,000 at 500. Use a large batch; the cap
+on `page` has no bearing on `size`.
+
+#### 🔴 The caught-up response has NO `_embedded` key at all
+
+```
+GET …?oppdateringsid=99000000&size=100
+  → keys: ['_links', 'page']          ← _embedded is ABSENT, not an empty array
+  → page: {"totalElements": 0, "totalPages": 0}
+```
+
+⚠️ A loader written as `body["_embedded"]["oppdaterteEnheter"]` throws a `KeyError` **at exactly the
+moment it catches up** — that is, on every healthy run once the backlog is cleared, and never during
+development against a stale watermark. The termination condition is *absent `_embedded` or empty
+list*, and it is the normal end of every successful run, not an error.
+
+#### Cursor semantics, stated exactly
+
+`?oppdateringsid=N` returns records with **id ≥ N**, not id > N, and not "the Nth record". Asking for
+`16,000,000` returns a first record of `16,043,822`. Advance with `last seen id + 1`; re-asking with
+the same N re-delivers the same record, which is what makes an interrupted run safe to resume.
 
 ## Phase 1: Watermark and queue
 
@@ -113,11 +219,18 @@ A watermark row exists after PLAN-001's bootstrap and names a plausible id (~25M
 
 ### Tasks
 
-- [ ] 2.1 Ingest module: read watermark → advance the **cursor** with `?oppdateringsid=` → append
-      every change to `raw.brreg_oppdateringer` → advance the watermark **only after** the batch is
-      committed. 🔴 **No `page` parameter anywhere in the module**, not even as a fallback — see the
-      Problem Summary. Worth a source-text guard like the one on the bootstrap's `DELETE`: what makes
-      this correct is the absence of a parameter, and no unit test covers an absence.
+- [ ] 2.1 Ingest module: read watermark → advance the **cursor** with `?oppdateringsid=<last+1>` →
+      append every change to `raw.brreg_oppdateringer` → advance the watermark **only after** the
+      batch is committed. `size=10000`.
+      🔴 **No `page` parameter and no `_links.next` anywhere in the module**, not even as a fallback —
+      both are the broken path, and `next` is the one a careful developer reaches for. Guard it with a
+      source-text check like the bootstrap's no-`DELETE` one: what makes this correct is the absence
+      of a parameter, and no unit test covers an absence.
+      🔴 **Do not use `lib/brreg/client.ts`'s `paginate()`** — it increments `page`, which is exactly
+      the defect. This endpoint is the one place the shared client must not be reused.
+- [ ] 2.1b Terminate on **absent `_embedded` or an empty list**, and treat that as the normal,
+      successful end of a run. ⚠️ Not `body["_embedded"][...]` — the key is missing when caught up, so
+      that spelling throws on every healthy run.
 - [ ] 2.2 🔴 Branch on **all five** `endringstype` values: `Ny`, `Endring`, `Sletting`, `Fjernet` and
       **`Ukjent`**. `Sletting` is the deletion. Put the sample counts from the Problem Summary in a
       code comment beside the branch, so the next reader sees evidence rather than an assertion.
@@ -133,12 +246,12 @@ A watermark row exists after PLAN-001's bootstrap and names a plausible id (~25M
 - [ ] 2.4 A `Sletting` appends a **tombstone row** (`doc` null, `endringstype='Sletting'`) rather than
       deleting anything. Deletion becomes a filter in dbt, so *"what did this organisation look like
       before it was removed"* stays answerable.
-- [x] 2.5 ~~Emit backlog depth (`totalElements` at the current watermark) as run metadata.~~
-      🔴 **Struck 2026-09-12.** `totalElements` is not the backlog depth and id arithmetic does not
-      measure distance — see the Problem Summary. Emit what is actually true instead: the count of
-      changes processed this run, the highest `oppdateringsid` seen, and the `endringstype` histogram
-      including `Ukjent`. A run that processes zero changes when it should not is visible from those;
-      a number wrong by millions is worse than no number.
+- [ ] 2.5 Emit as run metadata: **backlog depth** (`totalElements` at the watermark, which is a
+      correct remaining-record count — see the Problem Summary for the proof, and for the retraction
+      of the retraction), the count of changes processed this run, the highest `oppdateringsid` seen,
+      and the `endringstype` histogram **including `Ukjent`**.
+      🔴 **Never compute backlog by subtracting ids** — ids are sparse and the arithmetic is
+      meaningless. Count records; do not infer them from the id space.
 - [ ] 2.6 Resumability: a run interrupted mid-page leaves the watermark unadvanced and re-processes
       that page. Append with `on conflict (oppdateringsid) do nothing`.
 
