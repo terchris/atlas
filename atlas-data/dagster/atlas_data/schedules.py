@@ -190,7 +190,7 @@ brreg_bootstrap_job = define_asset_job(
 
 brreg_feed_job = define_asset_job(
     name="brreg_change_feed",
-    selection=_asset_selection(raw_brreg.BRREG_FEED_SOURCES),
+    selection=_asset_selection(raw_brreg.BRREG_DAILY_SOURCES),
     executor_def=_ingest_executor(),
     description=(
         "Brreg's change feed, walked forward daily from a durable watermark in "
@@ -206,7 +206,12 @@ brreg_feed_job = define_asset_job(
         "raw.brreg_oppdateringer and raw.brreg_enheter_versions and never writes "
         "to the 1.17M-row snapshot, so a bug here cannot damage the expensive "
         "table. It also refuses to run without a watermark rather than starting "
-        "at id 1, which would walk 16.4M historical changes."
+        "at id 1, which would walk 16.4M historical changes.\n\n"
+        "Frivillighetsregisteret rides along on the same schedule. It has no "
+        "change feed and no bulk download of its own, so a full re-walk is the "
+        "only option — ~727 requests, a few minutes, upserting. It supplies "
+        "icnpoKategorier and nothing else does; NGO membership already comes "
+        "from the Enhetsregister snapshot."
     ),
 )
 

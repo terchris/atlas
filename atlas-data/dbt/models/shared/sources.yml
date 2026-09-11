@@ -67,6 +67,95 @@ sources:
             data_type: timestamp with time zone
           - name: last_seen_at
             data_type: timestamp with time zone
+      - name: brreg_frivillige
+        description: >-
+          Frivillighetsregisteret — the ~72,800 organisations registered as voluntary, with the
+          attributes Enhetsregisteret does not carry. Loaded by ingest/src/sources/brreg-frivillige.
+          🔴 NOT the source of NGO membership: registrertIFrivillighetsregisteret is on 100% of
+          Enhetsregisteret's records already. This table supplies icnpoKategorier — the registrant's
+          own classification — plus grasrotandel, innfoertDato and vedtekter.
+          ⚠️ This register has NO change feed and no bulk download (verified 2026-09-12), so it is
+          re-walked in full each run.
+        loaded_at_field: loaded_at
+        meta:
+          ingest_cadence: daily
+        columns:
+          - name: organisasjonsnummer
+            data_type: text
+          - name: icnpo_nummer
+            data_type: text
+          - name: icnpo_kategori
+            data_type: text
+          - name: doc
+            data_type: jsonb
+          - name: loaded_at
+            data_type: timestamp with time zone
+      - name: brreg_enheter_snapshot
+        description: >-
+          The complete Enhetsregisteret — every organisation registered in Norway, ~1.17M rows, stored
+          verbatim as jsonb. Loaded by ingest/src/sources/brreg-enheter-alle from Brreg's daily bulk
+          download (PLAN-001). Not indexed on doc: a GIN index was measured at +42% storage for an
+          access pattern nothing uses. ⚠️ A bulk file cannot express a deletion, so removals arrive
+          through brreg_enheter_versions, never by a row disappearing from here.
+        loaded_at_field: loaded_at
+        meta:
+          ingest_cadence: manual
+          cadence_note: >-
+            Bootstrap only. Run once by hand via the brreg_bootstrap job; it has no automation
+            condition on purpose, because re-running a bulk load against a populated database is the
+            one genuinely destructive operation in this pipeline. Currency comes from the change feed.
+        columns:
+          - name: organisasjonsnummer
+            data_type: text
+          - name: doc
+            data_type: jsonb
+          - name: snapshot_file_date
+            data_type: date
+          - name: loaded_at
+            data_type: timestamp with time zone
+      - name: brreg_oppdateringer
+        description: >-
+          Append-only log of every change Brreg reported to Enhetsregisteret, one row per
+          oppdateringsid. Loaded daily by ingest/src/sources/brreg-oppdateringer (PLAN-002).
+          ⚠️ oppdateringsid is SPARSE — the gap between two ids is not the number of changes between
+          them, so never compute a backlog by subtracting them.
+        loaded_at_field: processed_at
+        meta:
+          ingest_cadence: daily
+        columns:
+          - name: oppdateringsid
+            data_type: bigint
+          - name: dato
+            data_type: timestamp with time zone
+          - name: organisasjonsnummer
+            data_type: text
+          - name: endringstype
+            data_type: text
+          - name: processed_at
+            data_type: timestamp with time zone
+          - name: process_status
+            data_type: text
+      - name: brreg_enheter_versions
+        description: >-
+          Append-only version history: each organisation's document as it stood at each change.
+          The only place deletions are expressible — Sletting and Fjernet rows are tombstones, and
+          marts.dim_brreg_enhet filters them out of current state rather than deleting anything.
+          ⚠️ For a tombstone, doc is Brreg's six-key deletion stub and NOT a full Enhet: a deleted
+          organisation still answers HTTP 200. Branch on endringstype.
+        loaded_at_field: fetched_at
+        meta:
+          ingest_cadence: daily
+        columns:
+          - name: oppdateringsid
+            data_type: bigint
+          - name: organisasjonsnummer
+            data_type: text
+          - name: endringstype
+            data_type: text
+          - name: doc
+            data_type: jsonb
+          - name: fetched_at
+            data_type: timestamp with time zone
       - name: brreg_enheter
         description: >-
           Cross-NGO Brreg Enhetsregister landing. Populated by ingest/src/seed-sources/brreg-enheter/

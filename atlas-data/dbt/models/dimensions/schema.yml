@@ -275,3 +275,140 @@ models:
     data_tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns: [ngo_orgnr, canonical_name]
+  - name: dim_brreg_enhet
+    description: |
+      Current state of every organisation registered in Norway — the whole of
+      Brønnøysundregistrene's Enhetsregisteret, ~1.17M rows, reconciled from the
+      bulk snapshot (PLAN-001) plus the change feed (PLAN-002).
+
+      🔴 Deleted organisations are FILTERED OUT here, not deleted anywhere. The
+      tombstone rows stay in raw.brreg_enheter_versions, so "what did this
+      organisation look like before it was removed" is still answerable.
+      Deletions are 8.0% of change traffic and arrive only through the feed — a
+      bulk file cannot express one.
+
+      Typing is selective: the columns below are what Atlas queries, and the
+      other ~35 upstream fields stay available in `doc` rather than being
+      flattened into columns nobody selected.
+    columns:
+      - name: organisasjonsnummer
+        description: >-
+          Nine-digit Norwegian organisation number, and the natural key. Text, never a number —
+          leading zeros are significant. Stable for the life of the organisation and retained after
+          deletion, which is what makes it a safe join key across every Norwegian source.
+        data_tests:
+          - not_null
+          - unique
+      - name: navn
+        description: Registered name of the organisation, verbatim from Brreg.
+        data_tests: [not_null]
+      - name: organisasjonsform_kode
+        description: >-
+          Legal form code, e.g. AS (aksjeselskap), FLI (forening/lag/innretning), STI (stiftelse),
+          ENK (enkeltpersonforetak). The usual filter for "is this a company or an association".
+        data_tests: [not_null]
+      - name: organisasjonsform_beskrivelse
+        description: Human-readable Norwegian label for organisasjonsform_kode, as Brreg publishes it.
+      - name: naeringskode1_kode
+        description: >-
+          Primary NACE industry code (SN2007), e.g. 94.992. The route to an ICNPO-style classification
+          for organisations that are NOT in Frivillighetsregisteret; those that are carry the
+          registrant's own icnpoKategorier instead, which is better evidence. Null for ~2% of records.
+      - name: kommune_nr
+        description: >-
+          Kommune code of the registered business address (forretningsadresse.kommunenummer). ⚠️ Joins
+          to dim_kommune with severity warn, not error — some codes will not resolve, which is the same
+          family of pseudo-region codes as INVESTIGATE-ssb-pseudo-regions and is an open question with
+          Terje. Null where the organisation has no registered business address (~6% of records).
+        data_tests:
+          # 🔴 warn, not error, and deliberately so. Some codes will not resolve —
+          # historical kommune numbers on organisations registered before a merger,
+          # and the same family of pseudo-region codes as the 47 in
+          # INVESTIGATE-ssb-pseudo-regions. That question is open with Terje
+          # (urb-agents #700), so failing the build here would either stop the
+          # pipeline on a known-open question or push someone into inventing an
+          # answer. A warn counts them and leaves the decision where it belongs.
+          - relationships:
+              to: ref('dim_kommune')
+              field: kommune_nr
+              config:
+                severity: warn
+      - name: antall_ansatte
+        description: >-
+          Registered employee count. ⚠️ NULL MEANS "NOT REPORTED", NOT ZERO — the field is present on
+          only ~4% of records. Reading NULL as 0 understates staffed organisations by a wide margin;
+          use har_registrert_antall_ansatte to tell the two apart.
+      - name: har_registrert_antall_ansatte
+        description: >-
+          Whether Brreg holds a registered employee count at all. Present on 100% of records, and the
+          only way to distinguish "zero employees" from "no figure reported".
+        data_tests: [not_null]
+      - name: konkurs
+        description: Whether the organisation is in bankruptcy proceedings. Straight from Brreg.
+        data_tests: [not_null]
+      - name: under_avvikling
+        description: Whether the organisation is being wound up voluntarily. Straight from Brreg.
+        data_tests: [not_null]
+      - name: under_tvangsavvikling
+        description: >-
+          Whether the organisation is under compulsory winding-up or dissolution
+          (underTvangsavviklingEllerTvangsopplosning). Straight from Brreg.
+        data_tests: [not_null]
+      - name: registrert_i_frivillighetsregisteret
+        description: >-
+          Whether the organisation is in Frivillighetsregisteret, the voluntary-organisation register.
+          True for ~72,798 of the register. 🟢 This flag is what makes the NGO population DERIVED
+          rather than curated — Atlas stops asking "which of these 11 organisations" and starts asking
+          "which organisations". It needs no second API call: it is on 100% of bulk records.
+        data_tests: [not_null]
+      - name: registrert_dato
+        description: Date the organisation was entered in Enhetsregisteret (registreringsdatoEnhetsregisteret).
+      - name: icnpo_nummer
+        description: >-
+          Primary ICNPO code from Frivillighetsregisteret, e.g. "9100" — the registrant's own
+          classification of itself, which is better evidence than one derived from a NACE code. Null
+          for the ~94% of the register not in Frivillighetsregisteret, and for members who declare
+          none. ⚠️ Null here does NOT mean "not voluntary": use
+          registrert_i_frivillighetsregisteret for that.
+      - name: icnpo_kategori
+        description: >-
+          Primary ICNPO category label paired with icnpo_nummer, e.g.
+          "ICNPOKategori.internasjonaleOrganisasjoner".
+      - name: grasrotandel_deltar_i
+        description: >-
+          Whether the organisation participates in Grasrotandelen, Norsk Tipping's grassroots funding
+          scheme. From Frivillighetsregisteret; null for organisations not in it.
+      - name: frivillig_innfoert_dato
+        description: >-
+          Date the organisation was entered in Frivillighetsregisteret. Distinct from registrert_dato,
+          which is its Enhetsregisteret entry — an organisation exists for years before registering as
+          voluntary, and comparing the two is the point of keeping both.
+      - name: is_active
+        description: >-
+          Convenience boolean — true when the organisation is not in konkurs, avvikling or
+          tvangsavvikling. ⚠️ Means "trading", not "exists": all three states are still registered and
+          still answer from Brreg. Consumers who want everything registered should ignore this column
+          rather than expect it to mean something else.
+        data_tests: [not_null]
+      - name: last_endringstype
+        description: >-
+          The type of the most recent change the feed reported for this organisation — Ny, Endring or
+          Ukjent. Never Sletting or Fjernet: those rows are filtered out of current state. Null for an
+          organisation the feed has not touched since the snapshot.
+      - name: last_oppdateringsid
+        description: >-
+          Brreg's change id for that most recent change, or null if none. ⚠️ Ids are SPARSE — never
+          subtract two of them and read the result as a number of changes.
+      - name: snapshot_file_date
+        description: >-
+          Date of the bulk file this organisation was first loaded from, or null for one the feed saw
+          before any snapshot did. Provenance of the transfer, not of the organisation.
+      - name: last_seen_at
+        description: When Atlas last wrote this organisation, from either the snapshot load or a feed run.
+        data_tests: [not_null]
+      - name: doc
+        description: >-
+          The full upstream Enhet document, verbatim. Every field Brreg publishes, including the ~35
+          this model does not type into columns. Read a field from here rather than adding a column
+          for a one-off question.
+        data_tests: [not_null]

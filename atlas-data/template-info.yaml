@@ -180,9 +180,11 @@ operational:
       what: SSB Klass classifications (kommune/fylke)
     - cron: "0 4 * * *"
       what: >-
-        Brønnøysundregistrene change feed — the day's register changes, ~3,300
-        records. One hour before the transform on purpose, so they reach the API
-        the same morning rather than a day later.
+        Brønnøysundregistrene — the day's Enhetsregister changes (~3,000 records,
+        measured median over 30 days) plus a full re-walk of Frivillighetsregisteret
+        (~727 requests; it has no change feed of its own). One hour before the
+        transform on purpose, so both reach the API the same morning rather than a
+        day later.
     - cron: "0 5 * * *"
       what: dbt transform and publish — no external calls
 
