@@ -84,6 +84,10 @@ comment on column raw.brreg_oppdateringer.process_status is
 -- organisasjonsnummer, historiskeNavn, slettedato, respons_klasse) against the
 -- ~30 a live entity carries. Not 404, not 410.
 --
+-- ⚠️ `slettedato` is the distinguishing key, and it is the ONLY one:
+-- `respons_klasse` appears on every record, live or deleted (300 of 300 sampled
+-- 2026-09-12), so its presence proves nothing.
+--
 -- So an implementation that detects deletion from the HTTP status sees nothing
 -- wrong and writes a six-key stub over a full record. Deletion is detected from
 -- the FEED's endringstype, and `slettedato` inside the body is the corroborating

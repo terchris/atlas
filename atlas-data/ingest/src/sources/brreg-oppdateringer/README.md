@@ -57,7 +57,8 @@ Sletting  929915224  →  200,  ~6 keys, slettedato 2026-09-10
 ```
 
 Not 404, not 410. Deletion comes from the feed's `endringstype`; `slettedato` corroborates it; the
-status code never says anything.
+status code never says anything. ⚠️ And `slettedato` is the only distinguishing key — `respons_klasse`
+is on every record, live or deleted (300 of 300 sampled), so its presence proves nothing.
 
 ## Other things that are easy to get wrong
 

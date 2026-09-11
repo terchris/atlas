@@ -85,9 +85,32 @@ for name, sel in re.findall(
     sel = sel.strip()
     if sel.startswith("["):
         job_sources[name] = set(re.findall(r'"([^"]+)"', sel))
-    else:
-        key = sel.split(".")[-1]
-        job_sources[name] = set(sched_lists.get(sel, sched_lists.get(key, per_module.get(key, []))))
+        continue
+    # A bare reference — `raw_brreg.BRREG_DAILY_SOURCES` or a local constant.
+    # ⚠️ Anything else is an EXPRESSION this parser cannot evaluate: two lists
+    # concatenated, a comprehension, a slice. Resolving it to the empty set makes
+    # the job look like it covers nothing, which fails safe but reports the wrong
+    # thing — "source X is uncovered" when the truth is "the checker cannot read
+    # this selection". Say which. That distinction cost a confusing minute on
+    # 2026-09-12 and would cost worse on a day someone is rushing.
+    if not re.fullmatch(r'[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)?', sel):
+        sys.exit(
+            f"✗ job {name!r} has a selection this checker cannot resolve: "
+            f"_asset_selection({sel})\n"
+            f"  It reads plain list literals and single names, because it parses "
+            f"rather than imports (CI has no dagster).\n"
+            f"  Assign the sources to one flat list of string literals and pass "
+            f"that name."
+        )
+    key = sel.split(".")[-1]
+    resolved = sched_lists.get(sel, sched_lists.get(key, per_module.get(key)))
+    if resolved is None:
+        sys.exit(
+            f"✗ job {name!r} selects {sel}, which this checker cannot find in "
+            f"schedules.py or assets/*.py.\n"
+            f"  It must be a list of string literals, or coverage is under-reported."
+        )
+    job_sources[name] = set(resolved)
 
 unknown = declared_jobs - all_jobs
 if unknown:

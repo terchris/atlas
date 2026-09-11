@@ -51,21 +51,35 @@ BRREG_BULK_SOURCES = [
     "brreg-enheter-alle",
 ]
 
-# The change feed (PLAN-002). Opposite treatment to the bootstrap above, and the
+# The daily Brreg sources. Opposite treatment to the bootstrap above, and the
 # contrast is the point:
 #
 #   the bootstrap  runs once, by hand, and must never self-trigger
-#   the feed       runs every day, unattended, and must never be forgotten
+#   these          run every day, unattended, and must never be forgotten
 #
-# It is safe to automate precisely because it is small and additive: ~3,300
-# changes a day, appended to raw.brreg_oppdateringer and
-# raw.brreg_enheter_versions, never touching the 1.17M-row snapshot. A bug here
-# cannot damage the expensive table.
+# They are safe to automate precisely because they are small and additive.
 #
-# 04:00 is load-bearing — transform_and_publish runs at 05:00, so the day's
-# register changes reach marts the same morning. See cadence.DAILY_CRON.
-BRREG_FEED_SOURCES = [
+#   brreg-oppdateringer — the change feed (PLAN-002). ~3,000 changes a day
+#     (measured median over 30 days), appended to raw.brreg_oppdateringer and
+#     raw.brreg_enheter_versions, never touching the 1.17M-row snapshot. A bug
+#     here cannot damage the expensive table.
+#
+#   brreg-frivillige — Frivillighetsregisteret (PLAN-003 phase 3). Daily for a
+#     different reason: it has NO change feed and no bulk download of its own, so
+#     a full re-walk is the only option. ~727 requests, a few minutes, upserting.
+#     🔴 It does not supply NGO membership — that flag is already on every
+#     Enhetsregisteret record. It supplies icnpoKategorier, which nothing else
+#     does.
+#
+# ⚠️ ONE FLAT LIST OF STRING LITERALS, DELIBERATELY. uis/check-first-data-coverage.py
+# parses this file rather than importing it (it runs in CI without dagster), and it
+# resolves `NAME = ["a", "b"]` literals. An expression — two lists concatenated at
+# the call site — resolves to nothing, and the gate then reports the sources as
+# uncovered. That is the gate failing safe, and it is still a gate you have to go
+# and fix. Keep the literal.
+BRREG_DAILY_SOURCES = [
     "brreg-oppdateringer",
+    "brreg-frivillige",
 ]
 
 # No automation_condition and no freshness_policy arguments at all — see the
@@ -77,7 +91,7 @@ assets = [
         group_name="raw_brreg",
     ),
     *make_raw_ingest_assets(
-        BRREG_FEED_SOURCES,
+        BRREG_DAILY_SOURCES,
         group_name="raw_brreg",
         automation_condition=cadence.daily_polled(),
         freshness_policy=cadence.DAILY_FRESHNESS,

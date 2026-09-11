@@ -51,7 +51,7 @@
       "description": "Norwegian NGO supply data — chapters, activities, and operational\nfootprint across the civil-society sector. Pairs with the population\nand need indicators to surface coverage gaps.\n",
       "emoji": "🤝",
       "order": 60,
-      "source_count": 3
+      "source_count": 4
     },
     {
       "id": "organisations",
@@ -77,7 +77,7 @@
       "homepage": "https://www.brreg.no/",
       "feedback_url": "https://www.brreg.no/om-oss/kontakt-oss/",
       "notes": "The Brønnøysund Register Centre — the Norwegian government agency that\noperates the country's central registers. Atlas reads Enhetsregisteret\n(every registered legal entity, ~1.17M) and Frivillighetsregisteret (the\nvoluntary-organisation register, a filtered view of the same entities).\nData released under NLOD 2.0; `organisasjonsnummer` is the join key that\nmakes organisational data from any Norwegian source line up.\n\nNo logo: Brreg's mark is not offered under the same open licence as the\ndata, so the publisher page renders without one rather than\nredistributing it.\n",
-      "source_count": 2
+      "source_count": 3
     },
     {
       "id": "bufdir",
@@ -200,6 +200,100 @@
       "citation": {
         "text": "Brønnøysundregistrene. (n.d.). Enhetsregisteret — alle registrerte enheter. Retrieved from https://data.brreg.no/enhetsregisteret/api/dokumentasjon. Available in Atlas at https://atlas.sovereignsky.no/datasets/brreg-enheter-alle.",
         "bibtex": "@misc{atlas_brreg_enheter_alle,\n  author = {Brønnøysundregistrene},\n  title  = {Enhetsregisteret — alle registrerte enheter},\n  year   = {n.d.},\n  url    = {https://data.brreg.no/enhetsregisteret/api/dokumentasjon},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/brreg-enheter-alle}\n}"
+      },
+      "feedback_url": "https://www.brreg.no/om-oss/kontakt-oss/",
+      "consuming_marts": [],
+      "consuming_models": [],
+      "joined_with": [],
+      "last_ingested_at": null,
+      "latest_row_count": null,
+      "total_runs": null,
+      "downstream_model_count": null
+    },
+    {
+      "kind": "source",
+      "source_id": "brreg-frivillige",
+      "upstream_id": "frivillighetsregisteret",
+      "upstream_url": "https://data.brreg.no/frivillighetsregisteret/api/frivillige-organisasjoner",
+      "upstream_landing_page": "https://www.brreg.no/organisasjon/frivillighetsregisteret/",
+      "upstream_title": "Frivillighetsregisteret — frivillige organisasjoner",
+      "description": "Brønnøysundregistrene's Frivillighetsregisteret holds the ~72,800 Norwegian\norganisations registered as voluntary. Atlas walks it in full and stores each\nrecord verbatim in `raw.brreg_frivillige`, typing out the registrant's own ICNPO\nclassification.\n\n🔴 This is not where Atlas learns which organisations are voluntary. That flag —\n`registrertIFrivillighetsregisteret` — is on 100% of Enhetsregisteret's bulk\nrecords and true for ~72,798 of them, so the NGO population is derived from the\nsnapshot alone with no second API call. This source exists for the attributes\nEnhetsregisteret does not carry: `icnpoKategorier`, `grasrotandel`,\n`innfoertDato`, `vedtekter` and `regnskapsrapportering`.\n\nThat split was designed in deliberately. If this register becomes unavailable,\nthe membership half of Atlas's NGO population survives untouched and only the\nenrichment half needs rethinking.\n",
+      "atlas_summary": null,
+      "publisher": {
+        "id": "brreg",
+        "display_name": "Brønnøysundregistrene",
+        "homepage": "https://www.brreg.no/"
+      },
+      "category": {
+        "id": "ngo-supply",
+        "name": "NGO supply",
+        "emoji": "🤝"
+      },
+      "license": "NLOD",
+      "license_url": "https://data.norge.no/nlod/no/2.0",
+      "periodicity": "P1D",
+      "eu_theme": "GOVE",
+      "attribution": "Inneholder data under norsk lisens for offentlige data (NLOD) tilgjengeliggjort av Brønnøysundregistrene",
+      "tags": {
+        "provider": "brreg",
+        "topic": "ngo-supply",
+        "geo": "national",
+        "cadence": "daily"
+      },
+      "keywords": [
+        "frivillighetsregisteret",
+        "icnpo",
+        "voluntary-organisations",
+        "grasrotandel",
+        "brreg"
+      ],
+      "lifecycle": "beta",
+      "time_coverage": {
+        "start": null,
+        "end": null
+      },
+      "methodology_notes": "🔴 This API is the exact opposite of the Enhetsregister change feed, and the\nopposite mistake is available in each. Measured 2026-09-12:\n\n|  | oppdateringer/enheter | frivillige-organisasjoner |\n|---|---|---|\n| `page=` | works, capped at 20 — the trap | rejected, HTTP 400 even at page=0 |\n| `_links.next` | built with `page=` — the trap | `searchAfter=`, the only way to walk |\n| `size` max | ≥ 10,000 | 100 (101 → 400) |\n| `page` block | present, totalElements usable | absent — no backlog signal at all |\n\nSo the change feed must never follow `_links.next` and this source must do\nnothing else. A house rule of either \"always follow next\" or \"never follow next\"\nwould be wrong for exactly one of them.\n\nThere is no change feed and no bulk download for this register: `/oppdateringer`,\n`/oppdateringer/frivillige-organisasjoner` and `/frivillige-organisasjoner/lastned`\nall return 404. A full re-walk is the only option — ~727 requests at the size cap\nof 100, a few minutes. The load upserts, so a walk that finds nothing new is a\nno-op.\n\n⚠️ The endpoint was reported as 404 by another agent on urb-agents #711. It is\nnot: the report tested `/frivillighetsregisteret/api`, its `/dokumentasjon`, and\nthe camelCase `/frivilligeOrganisasjoner`, none of which is the hyphenated path\nabove. Three consecutive requests here returned 200.\n",
+      "suggested_joins": [
+        "brreg-enheter-alle"
+      ],
+      "related_by_topic": [
+        "frr",
+        "redcross-branches",
+        "ssb-12063"
+      ],
+      "dimensions": [
+        {
+          "code": "organisasjonsnummer",
+          "meaning": "The organisation's nine-digit identifier, and the join key to Enhetsregisteret",
+          "value_format": "9 digits, leading zeros significant — always text",
+          "notes": "Also the pagination key: this API walks by `searchAfter=<last organisasjonsnummer>` rather than by page number."
+        },
+        {
+          "code": "icnpo_nummer",
+          "meaning": "Primary ICNPO code as the organisation classified itself",
+          "value_format": "4-digit string, e.g. \"9100\"",
+          "notes": "🟢 Taken from `icnpoKategorier` at `rekkefoelge` 1, not array position 0 — the array is not guaranteed sorted and taking the first element would silently promote a secondary classification. The registrant's own classification is better evidence than one derived from a NACE industry code, which is the route available for organisations NOT in this register."
+        },
+        {
+          "code": "icnpo_kategori",
+          "meaning": "Primary ICNPO category label",
+          "value_format": "e.g. ICNPOKategori.internasjonaleOrganisasjoner",
+          "notes": "Paired with icnpo_nummer from the same array element. Null when the organisation declares none."
+        },
+        {
+          "code": "doc",
+          "meaning": "The upstream record exactly as Brreg published it",
+          "value_format": "jsonb object",
+          "notes": "Holds frivilligOrganisasjonsstatus, kontonummer, innfoertDato, foersteGangInnfoert, grasrotandel, regnskapsrapportering, vedtekter, paategninger and the complete icnpoKategorier array including any secondary categories the typed columns do not carry."
+        }
+      ],
+      "raw_tables": [
+        "brreg_frivillige"
+      ],
+      "sample_query": "https://api-atlas.sovereignsky.no/brreg_frivillige?limit=5",
+      "citation": {
+        "text": "Brønnøysundregistrene. (n.d.). Frivillighetsregisteret — frivillige organisasjoner. Retrieved from https://www.brreg.no/organisasjon/frivillighetsregisteret/. Available in Atlas at https://atlas.sovereignsky.no/datasets/brreg-frivillige.",
+        "bibtex": "@misc{atlas_brreg_frivillige,\n  author = {Brønnøysundregistrene},\n  title  = {Frivillighetsregisteret — frivillige organisasjoner},\n  year   = {n.d.},\n  url    = {https://www.brreg.no/organisasjon/frivillighetsregisteret/},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/brreg-frivillige}\n}"
       },
       "feedback_url": "https://www.brreg.no/om-oss/kontakt-oss/",
       "consuming_marts": [],
@@ -3266,6 +3360,7 @@
       "methodology_notes": null,
       "suggested_joins": [],
       "related_by_topic": [
+        "brreg-frivillige",
         "redcross-branches",
         "ssb-12063"
       ],
@@ -3356,6 +3451,7 @@
       "methodology_notes": null,
       "suggested_joins": [],
       "related_by_topic": [
+        "brreg-frivillige",
         "frr",
         "ssb-12063"
       ],
@@ -5168,6 +5264,7 @@
       "methodology_notes": null,
       "suggested_joins": [],
       "related_by_topic": [
+        "brreg-frivillige",
         "frr",
         "redcross-branches"
       ],

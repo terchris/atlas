@@ -1,0 +1,106 @@
+# Hand-authored catalogue metadata for Frivillighetsregisteret.
+# Ingest runs do not modify this file.
+
+source_id: brreg-frivillige
+upstream_id: frivillighetsregisteret
+upstream_url: https://data.brreg.no/frivillighetsregisteret/api/frivillige-organisasjoner
+upstream_landing_page: https://www.brreg.no/organisasjon/frivillighetsregisteret/
+upstream_title: "Frivillighetsregisteret — frivillige organisasjoner"
+description: |
+  Brønnøysundregistrene's Frivillighetsregisteret holds the ~72,800 Norwegian
+  organisations registered as voluntary. Atlas walks it in full and stores each
+  record verbatim in `raw.brreg_frivillige`, typing out the registrant's own ICNPO
+  classification.
+
+  🔴 This is not where Atlas learns which organisations are voluntary. That flag —
+  `registrertIFrivillighetsregisteret` — is on 100% of Enhetsregisteret's bulk
+  records and true for ~72,798 of them, so the NGO population is derived from the
+  snapshot alone with no second API call. This source exists for the attributes
+  Enhetsregisteret does not carry: `icnpoKategorier`, `grasrotandel`,
+  `innfoertDato`, `vedtekter` and `regnskapsrapportering`.
+
+  That split was designed in deliberately. If this register becomes unavailable,
+  the membership half of Atlas's NGO population survives untouched and only the
+  enrichment half needs rethinking.
+publisher: Brønnøysundregistrene
+license: NLOD
+license_url: https://data.norge.no/nlod/no/2.0
+periodicity: P1D
+eu_theme: GOVE
+attribution: "Inneholder data under norsk lisens for offentlige data (NLOD) tilgjengeliggjort av Brønnøysundregistrene"
+
+tags:
+  provider: brreg
+  topic: ngo-supply
+  geo: national
+  cadence: daily
+
+raw_tables:
+  - brreg_frivillige
+
+dimensions:
+  - code: organisasjonsnummer
+    meaning: The organisation's nine-digit identifier, and the join key to Enhetsregisteret
+    value_format: 9 digits, leading zeros significant — always text
+    notes: >-
+      Also the pagination key: this API walks by `searchAfter=<last
+      organisasjonsnummer>` rather than by page number.
+  - code: icnpo_nummer
+    meaning: Primary ICNPO code as the organisation classified itself
+    value_format: 4-digit string, e.g. "9100"
+    notes: >-
+      🟢 Taken from `icnpoKategorier` at `rekkefoelge` 1, not array position 0 — the
+      array is not guaranteed sorted and taking the first element would silently
+      promote a secondary classification. The registrant's own classification is
+      better evidence than one derived from a NACE industry code, which is the route
+      available for organisations NOT in this register.
+  - code: icnpo_kategori
+    meaning: Primary ICNPO category label
+    value_format: e.g. ICNPOKategori.internasjonaleOrganisasjoner
+    notes: Paired with icnpo_nummer from the same array element. Null when the organisation declares none.
+  - code: doc
+    meaning: The upstream record exactly as Brreg published it
+    value_format: jsonb object
+    notes: >-
+      Holds frivilligOrganisasjonsstatus, kontonummer, innfoertDato,
+      foersteGangInnfoert, grasrotandel, regnskapsrapportering, vedtekter,
+      paategninger and the complete icnpoKategorier array including any secondary
+      categories the typed columns do not carry.
+
+lifecycle: beta
+time_coverage:
+  start: null
+  end: null
+keywords:
+  - frivillighetsregisteret
+  - icnpo
+  - voluntary-organisations
+  - grasrotandel
+  - brreg
+methodology_notes: |
+  🔴 This API is the exact opposite of the Enhetsregister change feed, and the
+  opposite mistake is available in each. Measured 2026-09-12:
+
+  |  | oppdateringer/enheter | frivillige-organisasjoner |
+  |---|---|---|
+  | `page=` | works, capped at 20 — the trap | rejected, HTTP 400 even at page=0 |
+  | `_links.next` | built with `page=` — the trap | `searchAfter=`, the only way to walk |
+  | `size` max | ≥ 10,000 | 100 (101 → 400) |
+  | `page` block | present, totalElements usable | absent — no backlog signal at all |
+
+  So the change feed must never follow `_links.next` and this source must do
+  nothing else. A house rule of either "always follow next" or "never follow next"
+  would be wrong for exactly one of them.
+
+  There is no change feed and no bulk download for this register: `/oppdateringer`,
+  `/oppdateringer/frivillige-organisasjoner` and `/frivillige-organisasjoner/lastned`
+  all return 404. A full re-walk is the only option — ~727 requests at the size cap
+  of 100, a few minutes. The load upserts, so a walk that finds nothing new is a
+  no-op.
+
+  ⚠️ The endpoint was reported as 404 by another agent on urb-agents #711. It is
+  not: the report tested `/frivillighetsregisteret/api`, its `/dokumentasjon`, and
+  the camelCase `/frivilligeOrganisasjoner`, none of which is the hyphenated path
+  above. Three consecutive requests here returned 200.
+suggested_joins:
+  - brreg-enheter-alle

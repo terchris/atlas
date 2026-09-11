@@ -130,6 +130,7 @@ uv run --directory atlas-data/dbt python scripts/build_sources_seed.py --readme 
 | Source | Provider | What it is | Topic | EU theme | Geo | Cadence |
 |---|---|---|---|---|---|---|
 | [brreg-enheter-alle](./brreg-enheter-alle/) | brreg | Brønnøysundregistrene's Enhetsregisteret holds every legal entity registered in Norway — companies, foundations, associations, public bod… | organisations | GOVE | kommune | daily |
+| [brreg-frivillige](./brreg-frivillige/) | brreg | Brønnøysundregistrene's Frivillighetsregisteret holds the ~72,800 Norwegian organisations registered as voluntary. Atlas walks it in full… | ngo-supply | GOVE | national | daily |
 | [brreg-oppdateringer](./brreg-oppdateringer/) | brreg | Brønnøysundregistrene publishes every change to Enhetsregisteret as an ordered feed: one record per change, carrying the organisation num… | organisations | GOVE | kommune | daily |
 | [bufdir-barnefattigdom](./bufdir-barnefattigdom/) | bufdir | Barne-, ungdoms- og familiedirektoratet (Bufdir) publishes the Barnefattigdom kommunemonitor on bufdir.no and ships a single bulk ZIP of… | income | SOCI | kommune | annual |
 | [fhi-alkohol](./fhi-alkohol/) | fhi | FHI Folkehelsestatistikk table 332 — share of Ungdata respondents reporting alcohol use one or more times in the past year. Risk-directio… | health | HEAL | kommune | annual |
