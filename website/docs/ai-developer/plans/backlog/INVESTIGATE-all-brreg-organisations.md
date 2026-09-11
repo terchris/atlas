@@ -73,24 +73,48 @@ to *derive* ICNPO codes, only map the register's own codes onto `ref_atlas_servi
 source half of the crosswalk is solved by the upstream. Whether that removes the sequencing dependency
 or merely shrinks it is for whoever picks up #9 to judge — **but it should be judged, not inherited.**
 
+## 🔴 What "everything" means — and the part the decision did not cover
+
+The decision above says the full Enhetsregisteret. **Enhetsregisteret is two registers, and this file
+did not previously mention the second one:**
+
+```
+/enhetsregisteret/api/enheter         1,174,098    the legal entities
+/enhetsregisteret/api/underenheter      862,903    their establishments — own register, own change feed
+```
+
+Underenheter are ~42% more rows on top of the decided scope, and this is **not academic for Atlas**:
+some NGO local branches are registered as underenheter (`BEDR`) rather than as `FLI` enheter, so a
+copy of enheter alone has a population gap exactly where Atlas cares.
+
+**Recommendation, for confirmation rather than assumed:** **enheter only in the first PLAN**,
+underenheter as a follow-on once the machinery is proven. The change-feed design is identical for
+both — `/oppdateringer/underenheter` exists and behaves the same way — so adding them later is more of
+the same rather than a redesign, and doing them together doubles the first thing that has to work.
+
+⚠️ **Terje should confirm or correct this.** "Everything" was answered before this distinction was
+put in front of him, so the decision recorded above is about enheter by default rather than by
+choice.
+
 ## Where this file is still the right place to look
 
 Candidate #9 is one scored row in a catalogue of fourteen. This file is the design deep-dive for it,
 plus two questions the catalogue does not cover:
 
-- **Option A — the full Enhetsregisteret (~1.17M).** That is Terje's original question and is *not*
-  candidate #9. #9 is the voluntary subset (**72,806**, 6.2% of the register).
+- **The full Enhetsregisteret (1,174,098)** — Terje's original question, and what he chose. That is
+  *not* candidate #9; #9 is the voluntary subset (**72,806**, 6.2% of the register), which is now the
+  enrichment half rather than an alternative.
 - **The implementation** — shadow-brreg's change-feed architecture, and the 2026 verification of it.
 
-So: **if the answer is B, this is not a new dataset — it is candidate #9 with a design attached.**
-A and C remain genuinely open and are this file's own.
+So candidate #9 is not a competing option: it is a component of the chosen design, and this file is
+where that design lives.
 
-## The question
+## Why this came up
 
-Atlas today holds **122 organisational units**. Brreg's Enhetsregister holds roughly **1.1 million**.
+Atlas today holds **122 organisational units**. Enhetsregisteret holds **1,174,098**.
 
-That is not a gap in the load — it is the design working as specified. But it bounds what Atlas can
-answer, and the question is whether that bound is still the one we want.
+That is not a gap in the load — it is the design working as specified. But it bounded what Atlas could
+answer, which is why Terje asked, and the answer is the decision recorded above.
 
 ## What Atlas has today, and why
 
@@ -198,9 +222,17 @@ Three properties make this good, and Atlas should preserve all three:
    there is no separate backfill and no "how far behind are we" guessing.
 2. **A queue table** (`oppdaterteEnheter`, with `urb_processed` / `urb_processed_status`) so a batch
    interrupted halfway is resumable rather than lost.
-3. **Deletions are handled.** `endringstype: "Fjernet"` has its own branch (`index.ts:459, 571`) that
-   marks the shadow record. A copy that kept serving a withdrawn entity would be publishing something
-   the authoritative register has removed — this is what discharges that obligation.
+3. **Deletions are handled.** shadow-brreg branches on all four `endringstype` values
+   (`index.ts`): `Ny`, `Endring`, `Sletting`, `Fjernet`. A copy that kept serving a withdrawn entity
+   would be publishing something the authoritative register has removed — this is what discharges that
+   obligation.
+
+   🔴 **Corrected 2026-09-11 — this file previously said the deletion value was `Fjernet`. It is
+   `Sletting`.** A 500-change sample from the live feed contained `Endring` 351, `Ny` 100,
+   **`Sletting` 49**, and **no `Fjernet` at all**. shadow-brreg's code is right; my description of it
+   was wrong. **Anyone implementing from the earlier text would have matched on a value the API does
+   not emit, never deleted anything, and produced exactly the stale-copy failure this section warns
+   about.** Handle all four; treat `Sletting` as the deletion.
 
 ### The mapping
 
@@ -244,7 +276,7 @@ raw.brreg_oppdateringer       append-only change feed               (ingest, pol
 raw.brreg_enheter_versions    each fetched version of a changed org (ingest, polled)
         │
         └── dbt incremental model ──► marts.dim_brreg_enhet   current state,
-                                                              `Fjernet` filtered out
+                                                              `Sletting` filtered out
 ```
 
 Deletions stop being a `DELETE` and become **a row that is filtered**, which means "what did this
@@ -319,7 +351,7 @@ company register does not obviously have**:
 | Brreg field | what Atlas gains |
 |---|---|
 | `registrert_i_frivillighetsregisteret` | 🔴 **the whole voluntary sector, discovered rather than listed.** Atlas stops asking "which of these 11" and starts asking "which organisations" |
-| `naeringskode1.kode` | maps to ICNPO through machinery Atlas already has — `brreg-icnpo` and `ref_brreg_icnpo` |
+| `naeringskode1.kode` | an ICNPO route for the ~1.1M that are **not** in Frivillighetsregisteret, via `brreg-icnpo` / `ref_brreg_icnpo`. ⚠️ For the 72,806 that *are*, prefer `icnpoKategorier` from the dedicated register — it is the registrant's own classification rather than one derived from an industry code |
 | `forretningsadresse.kommunenummer` | joins straight to `dim_kommune`; every organisation gets a geography without a new crosswalk |
 | `antall_ansatte`, `konkurs`, `under_avvikling` | size and liveness signals that today exist only for the curated 122 |
 
@@ -327,21 +359,23 @@ company register does not obviously have**:
 Frivillighetsregisteret flag, the NGO population becomes *derived* — and Atlas's coverage-gap analysis
 stops being bounded by who someone remembered to add.
 
-## Decisions, all Terje's
+## How the decisions were reached
 
-⚠️ **One of the three below was wrong when first written and is now marked as such.** Decision 2 is
-not a blocker; it resolved into an attribution gap Atlas already has.
+**All three are settled.** Kept because the reasoning is why the design looks as it does, and because
+one of them was a mistake of mine that a later reader should meet rather than repeat.
 
-### 1. Ingest scope
+### 1. Ingest scope — ✅ decided: everything
 
-| | what is loaded | rows | note |
+The options that were weighed, for the record:
+
+| | what is loaded | rows | outcome |
 |---|---|---|---|
-| **A** | everything | ~1.1M | shadow-brreg's answer; maximum future optionality |
-| **B** | Frivillighetsregisteret + relevant forms (FLI, STI, …) | tens of thousands | serves Atlas's stated purpose directly |
-| **C** | keep the curated list, add NGOs to `landscape.json` | ~hundreds | no new machinery at all |
+| **A** | everything | **1,174,098** | ✅ **chosen** — shadow-brreg's answer; maximum future optionality |
+| **B** | Frivillighetsregisteret only | 72,806 | not chosen as the scope — **became the enrichment half** |
+| **C** | keep the curated list, extend `landscape.json` | ~hundreds | not chosen |
 
-**C is not a straw man.** If the answer to "which organisations" is "these thirty", C is hours of work
-and no new obligations.
+I recommended **B** and Terje chose **A**. Recording that plainly: the case for A is optionality, and
+it is the design he originally built.
 
 ### 2. ✅ Personal data — I overstated this, and Terje corrected it
 
@@ -367,10 +401,10 @@ no manifest is recorded there as the one concrete known gap.
 
 ⚠️ **One thing stays here because it is a design constraint rather than a licence question.** If Brreg
 corrects or removes an entry, Atlas's copy must follow it — a stale copy serving a withdrawn record is
-worse than not holding one. That is an argument **for** the change feed, and shadow-brreg's
-`endringstype: "Fjernet"` handling is what discharges it.
+worse than not holding one. That is an argument **for** the change feed, and shadow-brreg's handling of
+all four `endringstype` values — `Ny`, `Endring`, **`Sletting`**, `Fjernet` — is what discharges it.
 
-### 3. What, if anything, is published
+### 3. What is published — ✅ decided: no new endpoint
 
 Terje's standing rule (urb-agents #350) is that **the public API serves `api_v1` only** — *"if a
 consumer needs a mart, it gets an `api_v1` view of it."* That rule already does the work here: the
@@ -384,13 +418,13 @@ deleted; a row someone fetched cannot be un-fetched.
 
 Not answers — the things that would have to be measured before committing:
 
-1. **Actual size on disk.** The 44-column flattened shape at ~1.1M rows, plus indexes, against the
+1. **Actual size on disk.** The 44-column flattened shape at 1,174,098 rows, plus indexes, against the
    659 MB `raw` schema Atlas has today.
 2. **Bulk-load duration**, and whether it fits inside a Dagster run pod's limits — the existing
    `transform_checks` startability work suggests Atlas's run pods have real bounds.
 3. **Change-feed volume at the chosen interval.** Retention is no longer a question — the feed goes
    back to 2018 — so this is only "how many changes per day, and does draining them fit in a run".
-4. **Whether the append-only versions table earns its storage** at ~1.1M organisations, or whether
+4. **Whether the append-only versions table earns its storage** at 1,174,098 organisations, or whether
    the current-state-only shape is enough. This is the main cost of the dbt-incremental design above.
 5. **Whether `jsonb` beats the flattened 44 columns.** Storing the source document and typing views
    on top would preserve fields nobody selected — the ones the CSV config silently drops.
@@ -400,11 +434,30 @@ Not answers — the things that would have to be measured before committing:
 
 ## Falsification
 
-The claim this investigation rests on is *"Atlas's questions are bounded by the curated list"*.
+⚠️ **This section previously tested whether the curated list was sufficient — i.e. whether option C was
+right. That test is now incoherent: if it passed it would contradict the decision recorded at the top
+of this file.** Replaced with one that tests the thing which can actually fail.
 
-**It is falsifiable and someone should try**: take three coverage questions Atlas is actually asked,
-and check whether the answer changes if the population is the whole Frivillighetsregisteret rather
-than 11 NGOs. **If the answers do not move, option C is correct and the rest of this is expensive.**
+**The claim the design rests on is: *the change feed keeps Atlas's copy identical to Brreg.*** The
+bulk load is easy to get right and easy to verify. **Drift appears in the feed**, silently, and a
+copy that has quietly stopped applying changes looks exactly like one that is working.
+
+**The test:**
+
+1. Let the automated poll run for **at least a week** — not immediately after the bulk load, which
+   proves only that the snapshot imported.
+2. Take **50 random `organisasjonsnummer`** from Atlas's copy. Fetch each from
+   `/enhetsregisteret/api/enheter/{orgnr}` live.
+3. Diff every field. **Any mismatch is a defect.**
+4. Separately, take 50 orgnr that the feed reported as `Sletting` during that week and confirm **none
+   of them is still being served** by Atlas.
+
+**One mismatch falsifies it.** Step 4 is the one that matters most: an implementation that applies
+`Ny` and `Endring` but silently drops `Sletting` passes steps 1–3 perfectly and is still wrong —
+which is exactly the bug the earlier `Fjernet` error in this file would have produced.
+
+⚠️ **Do not substitute a row count.** `count(*)` matching Brreg's `totalElements` is consistent with
+having missed a deletion and an insertion in the same window.
 
 ## References
 
