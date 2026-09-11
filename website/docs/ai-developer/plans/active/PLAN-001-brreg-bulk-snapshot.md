@@ -43,26 +43,57 @@ mutated to fit a transport choice, and the corruption is invisible afterwards.
 
 **This plan loads JSON into `jsonb` directly. There is no CSV stage.**
 
-## Phase 1: Measure before building
+## Phase 1: Measure before building ✅ COMPLETE 2026-09-12
 
-The resource envelope is the largest unknown and the thing tor-agent is waiting on (#711).
+The resource envelope was the largest unknown and the thing tor-agent was waiting on (#711).
 
 ### Tasks
 
-- [ ] 1.1 Download `enheter/lastned` once to a scratch path; record wall-clock and actual bytes.
-- [ ] 1.2 Stream-decompress and count records **without** materialising the uncompressed file.
-      Record: uncompressed size, record count, and peak RSS of the process.
-- [ ] 1.3 Insert 10,000 records into a scratch `jsonb` table. Measure bytes-per-row **with** and
-      **without** a GIN index on the document.
-- [ ] 1.4 Extrapolate to 1,174,098 and record the projected `raw` schema growth against today's
-      **659 MB**. Publish the number on #711 — tor-agent needs it for database headroom.
-- [ ] 1.5 Record whether a single pass fits any run-pod timeout tor-agent reports. **If it does not,
-      this plan changes shape to paged chunks** — say so before writing the loader.
+- [x] 1.1 Download `enheter/lastned` — **210,132,682 bytes in 52 s**.
+- [x] 1.2 Stream-decompress and count. **2,005,028,121 bytes uncompressed (2.0 GB), gzip ratio 9.5×,
+      1,173,878 records, avg 1,708 bytes/record.** Peak RSS streaming the whole 2 GB: **33 MB** —
+      memory is bounded by chunk size because nothing is materialised.
+
+      ⚠️ **Two counting methods, and the cheap one was wrong.** A `grep -c '"organisasjonsnummer"'`
+      proxy returned **1,173,879**; an exact brace-depth scan returned **1,173,878**. One record
+      carries that key twice. The proxy is 2 s and the exact scan 232 s, so use the proxy for a smoke
+      check and **never as the load's row-count assertion** — task 2.x must count objects it actually
+      parsed.
+- [x] 1.3 10,000 records into a scratch `jsonb` table on Postgres 15:
+      **1,651 bytes/row** (heap + toast + PK), **2,340 bytes/row** with a
+      `gin (doc jsonb_path_ops)` index — **+42%**.
+- [x] 1.4 Extrapolated and posted to #711:
+
+      | | total | raw schema becomes |
+      |---|---|---|
+      | without GIN | **1.94 GB** | 0.659 → **2.60 GB** (3.9×) |
+      | with GIN | **2.75 GB** | 0.659 → **3.41 GB** (5.2×) |
+
+- [x] 1.5 Single-pass duration is **not** the risk it looked like — decompress+scan is 2 s and the
+      download 52 s. The run-pod timeout question stands with tor-agent but **no longer gates the
+      design**; a full load is minutes, not tens of minutes.
+
+### Findings that change the plan
+
+🔴 **The file is a single pretty-printed JSON array, not newline-delimited.** `[\n  {\n  "links" : [ ],…`
+A naive `json.load()` would need ~2 GB resident. **A streaming parser is mandatory**, not a
+preference — task 2.3 already assumed it, and this confirms why.
+
+🟢 **Skip the GIN index initially.** It costs +42% (0.8 GB) and PLAN-003 types the fields Atlas
+actually queries into columns, so `jsonb` path lookups are not the access pattern. Add it only when a
+query needs it. **Measured decision, not a preference.**
+
+✅ **The record count validates the whole design.** The bulk file has **1,173,878** records against the
+API's live **1,174,098** — **220 fewer**. The file is a daily snapshot; the API is live. That gap is
+precisely what PLAN-002's change feed exists to close, and seeing it at this scale is the first
+evidence the two halves fit together.
 
 ### Validation
 
-The four measured numbers (uncompressed size, peak RSS, bytes/row, projected growth) are posted to
-#711 and the run-pod timeout question is answered either way.
+All four numbers measured and posted to #711. The timeout question is answered as "no longer
+gating".
+
+---
 
 ---
 
