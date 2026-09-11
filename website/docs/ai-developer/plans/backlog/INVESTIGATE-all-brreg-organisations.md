@@ -11,7 +11,11 @@ mdx:
 Brønnøysundregistrene and pointed at his own earlier implementation,
 [`terchris/shadow-brreg`](https://github.com/terchris/shadow-brreg), as the thing to analyse.
 
-No child PLAN yet. **Three decisions below are Terje's and none of them are technical.**
+**Direction set by Terje, 2026-09-11:** *"focus now is taking the concept that i wrote in that repo many years ago and implementing it in atlas."* So this is no longer weighing whether to do it — it is establishing what a PLAN must contain.
+
+The API was re-verified against the live service on 2026-09-11 rather than trusted from the 2023 code, at his instruction. **Both questions that would have blocked a PLAN are now answered** (no retention window; poll by `oppdateringsid`). NLOD attribution has moved to [INVESTIGATE-nlod-attribution](INVESTIGATE-nlod-attribution.md) so it is handled separately.
+
+**Two decisions remain Terje's**: ingest scope, and what reaches `api_v1`.
 
 ## The question
 
@@ -182,19 +186,61 @@ gave up and Atlas would get for free.
 ⚠️ **This is a design sketch, not a decision.** Whether the versions table is worth its storage at
 ~1.1M organisations is exactly the kind of thing a PLAN must measure rather than assume.
 
-### 🔴 Two open questions about the interval
+### ✅ Verified against the live API, 2026-09-11 — and both open questions are answered
 
-**How often should Atlas poll?** shadow-brreg's every-minute was right for a live mirror. Atlas's
-cadence discipline says poll no faster than the data changes and no faster than is courteous —
-`cadence.py` already carries the argument that fetching annual tables nightly would be ~15,000
-pointless requests a year. Daily would keep Atlas within a day of truth for a register that changes
-slowly. **But:**
+I checked rather than trusting the 2023 code, because Terje was right that Brreg may have moved. **It
+has not, in shape — and two things are better than shadow-brreg could use.**
 
-**Does `/oppdateringer/enheter?dato=` accept an arbitrarily old date?** If the feed has a retention
-window, a slow cadence risks a *gap* — changes that happened and can no longer be requested, with
-nothing to signal it. **A daily poll that silently misses a week after an outage is worse than a
-weekly poll that catches up correctly.** This must be established before an interval is chosen, and it
-is a question for Brreg's API documentation rather than for us to infer.
+| | measured |
+|---|---|
+| `GET /enhetsregisteret/api/enheter/lastned` | **200**, `enheter_alle.json.gz`, **210 MB gzipped**, `last-modified` the same morning — **regenerated daily** |
+| `GET /oppdateringer/enheter?dato=…` | **200**, same HAL shape: `_embedded.oppdaterteEnheter[]` with `oppdateringsid`, `dato`, `organisasjonsnummer`, `endringstype` |
+
+#### 🟢 There is no retention window
+
+```
+?dato=2015-01-01  →  first result: oppdateringsid 1, dato 2018-04-23T06:03:29Z
+?dato=2020-01-01  →  first result: oppdateringsid 6369376
+```
+
+A request for 2015 returns **the first update Brreg ever recorded**. The feed is the complete history
+since April 2018.
+
+**So cadence is a freshness choice, not a correctness one.** The risk I flagged — a slow poll silently
+missing changes after an outage — does not exist. Atlas can poll daily, weekly or monthly and catch up
+completely whenever it next runs. That removes the question that would otherwise have had to be
+settled before choosing an interval.
+
+#### 🟢 Poll by `oppdateringsid`, not by `dato`
+
+The endpoint accepts `?oppdateringsid=` and returns from that id onward:
+
+```
+?oppdateringsid=25150890&size=2
+  → 25150890, 25150892
+  → page: {"totalElements": 23108, "totalPages": 11554}
+```
+
+This is strictly better than the date-based watermark shadow-brreg used, and it is what Atlas should
+build on:
+
+- **no timestamp ties.** Several changes can share a millisecond; ids cannot collide.
+- **exactly resumable.** Store the last processed id; ask for the next one.
+- 🔴 **`totalElements` is the backlog depth.** Atlas can answer *"how far behind are we"* with one
+  request — a monitoring signal shadow-brreg had no way to produce.
+
+#### Two smaller findings
+
+- **`_links.enhet.href` is on every change**, pointing at the changed entity. shadow-brreg fetched the
+  entity separately; the link is already there.
+- **The bulk file is regenerated daily**, so a re-bootstrap is never more than a day stale — which
+  makes "snapshot then catch up from the feed" cheap to redo if it is ever needed.
+
+#### What remains open about cadence
+
+Only the ordinary question: how fresh does Atlas want to be. `cadence.py` already carries the
+argument that polling faster than data changes is discourteous, and the register moves slowly. **Daily
+is defensible and so is weekly; nothing breaks either way.**
 
 ## Why this matters more to Atlas than it did to shadow-brreg
 
@@ -244,24 +290,17 @@ whole thing as open data under **NLOD**. Re-use, including republication, is wha
 
 So there is no lawful-basis question to settle before ingesting, and I should not have framed one.
 
-#### What actually attaches, and it is smaller and more concrete
+#### What survives, and it has moved out of this investigation
 
-🔴 **Attribution.** NLOD requires it, Atlas already has the machinery — every module under
-`ingest/src/sources/` declares `license: NLOD`, `license_url` and an `attribution` string, and
-`api_v1.meta_sources` publishes all three.
+**Attribution is a repo-wide obligation, not a Brreg one**, and it is now
+[INVESTIGATE-nlod-attribution](INVESTIGATE-nlod-attribution.md) at Terje's direction — so it does not
+sit here looking Brreg-specific and get closed along with this. `seed-sources/brreg-enheter/` having
+no manifest is recorded there as the one concrete known gap.
 
-**`seed-sources/brreg-enheter/` declares none of them.** It has only `README.md` and `index.ts`; there
-is no `manifest.yml`. So Atlas is already serving Brreg-derived data with no licence or attribution
-recorded — at 122 rows today, and it would be at any scale. **That is a live gap independent of this
-investigation** and worth closing whichever scope is chosen.
-
-⚠️ **Staying in sync, which is a data-quality obligation rather than a legal one.** If Brreg corrects
-or removes an entry, a shadow copy must follow it. A stale copy that missed a deletion is
-republishing something the authoritative register has withdrawn — which is worse than not holding it.
-
-That is an argument **for** the change feed rather than against the ingest: shadow-brreg's
-`endringstype` handling is exactly the mechanism that discharges it, and a bulk-snapshot-only design
-would not. It also makes the polling interval a correctness question rather than a politeness one.
+⚠️ **One thing stays here because it is a design constraint rather than a licence question.** If Brreg
+corrects or removes an entry, Atlas's copy must follow it — a stale copy serving a withdrawn record is
+worse than not holding one. That is an argument **for** the change feed, and shadow-brreg's
+`endringstype: "Fjernet"` handling is what discharges it.
 
 ### 3. What, if anything, is published
 
@@ -281,10 +320,8 @@ Not answers — the things that would have to be measured before committing:
    659 MB `raw` schema Atlas has today.
 2. **Bulk-load duration**, and whether it fits inside a Dagster run pod's limits — the existing
    `transform_checks` startability work suggests Atlas's run pods have real bounds.
-3. **Change-feed retention, before volume.** Whether `/oppdateringer/enheter?dato=` accepts an
-   arbitrarily old date decides whether a slow cadence is safe at all. Then volume: shadow-brreg
-   polled every minute; the right interval for Atlas is empirical, and `MONTHLY_CRON` already exists
-   for slow reference data.
+3. **Change-feed volume at the chosen interval.** Retention is no longer a question — the feed goes
+   back to 2018 — so this is only "how many changes per day, and does draining them fit in a run".
 4. **Whether the append-only versions table earns its storage** at ~1.1M organisations, or whether
    the current-state-only shape is enough. This is the main cost of the dbt-incremental design above.
 5. **Whether `jsonb` beats the flattened 44 columns.** Storing the source document and typing views
