@@ -45,7 +45,15 @@ from dagster import (
     run_status_sensor,
 )
 
-from atlas_data.assets import api_v1, migrations, raw_fhi, raw_other, raw_seeds, raw_ssb
+from atlas_data.assets import (
+    api_v1,
+    migrations,
+    raw_brreg,
+    raw_fhi,
+    raw_other,
+    raw_seeds,
+    raw_ssb,
+)
 from atlas_data.assets.dbt import atlas_dbt_models
 
 # All ingest sources are Norwegian public-sector data and the operators are in
@@ -152,6 +160,31 @@ seed_sources_job = define_asset_job(
         "ref_brreg_icnpo transforming an empty input, and "
         "raw_sources_were_refreshed_recently red. A source reachable only via "
         "__ASSET_JOB is a source nobody will think to run."
+    ),
+)
+
+brreg_bootstrap_job = define_asset_job(
+    name="brreg_bootstrap",
+    selection=_asset_selection(raw_brreg.BRREG_BULK_SOURCES),
+    executor_def=_ingest_executor(),
+    description=(
+        "The complete Enhetsregisteret — ~1.17M Norwegian organisations from "
+        "Brreg's daily bulk file into raw.brreg_enheter_snapshot. Run this ONCE "
+        "on a fresh install.\n\n"
+        "It has no schedule and its asset has no automation condition, and that "
+        "is the design rather than an omission: re-running a bulk load against a "
+        "populated database is the one genuinely destructive operation in this "
+        "pipeline, so nothing self-triggers it. The loader upserts and never "
+        "truncates, so a re-run is safe — but 'safe if the code is correct' is "
+        "not a reason to let a daemon do it unattended.\n\n"
+        "Keeping the register current afterwards is the change feed's job "
+        "(PLAN-002), which reads /oppdateringer/enheter and touches only what "
+        "moved. A bulk file cannot express a deletion at all: absence from a "
+        "1.17M-record file is indistinguishable from a truncated download.\n\n"
+        "This job exists so the source is reachable by name. A source reachable "
+        "only via __ASSET_JOB is a source nobody will think to run — that is the "
+        "lesson from urb-agents #507, where running the three obvious jobs left "
+        "brreg_enheter empty."
     ),
 )
 
@@ -309,6 +342,7 @@ jobs = [
     annual_sources_job,
     klass_job,
     seed_sources_job,
+    brreg_bootstrap_job,
     redcross_branches_job,
     transform_job,
     api_v1_checks_job,
