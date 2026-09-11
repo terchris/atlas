@@ -99,6 +99,103 @@ Atlas must not reproduce this. `COPY … FORMAT csv` handles quoting properly, a
 Postgres can ingest the JSON directly (`jsonb`) with no CSV stage at all — which also removes the
 "TAKES TIME" conversion the script apologises for.
 
+## The polling mechanism in detail, and how it maps onto Atlas's stack
+
+Terje asked for this specifically. **shadow-brreg does poll automatically** — it is not a
+re-download-and-diff, it is a proper change-feed consumer, and that is the part worth carrying over.
+
+### What it actually does, per run
+
+| | |
+|---|---|
+| `app/shadow/cronjobs.txt` | `*/1 * * * * …/shadow-cronjob.sh` — **every minute** |
+| `shadow-init_json.sh:162` | `crontab "$GITHUBDIR/$CRONJOBSFILE"` installs it at container start |
+| `shadow-cronjob.sh` | `flock -x -n` — a slow run cannot be overlapped by the next minute's tick |
+| `index.ts:686` `main()` | three steps, below |
+
+```
+getLastDateWeStoredOpdatesFromBrregAPI()   → read watermark from urbalurba_status
+getAllOppdaterteEnheterFromBrregAPI(...)   → GET /oppdateringer/enheter?dato=<watermark>&page&size=100
+updateBrregShadowDatabaseWithChanges(...)  → drain the oppdaterteEnheter queue into brreg_enheter_alle
+```
+
+Three properties make this good, and Atlas should preserve all three:
+
+1. **A durable watermark** (`urbalurba_status.last_brreg_oppdateringsid` / `last_brreg_update_date`,
+   written back after each batch). Catch-up after downtime is *the same code path* as steady state —
+   there is no separate backfill and no "how far behind are we" guessing.
+2. **A queue table** (`oppdaterteEnheter`, with `urb_processed` / `urb_processed_status`) so a batch
+   interrupted halfway is resumable rather than lost.
+3. **Deletions are handled.** `endringstype: "Fjernet"` has its own branch (`index.ts:459, 571`) that
+   marks the shadow record. A copy that kept serving a withdrawn entity would be publishing something
+   the authoritative register has removed — this is what discharges that obligation.
+
+### The mapping
+
+| shadow-brreg | Atlas equivalent | note |
+|---|---|---|
+| `*/1 * * * *` cron | Dagster automation condition | `cadence.py` already has the pattern; the *interval* is an open question, below |
+| `flock -x -n` | Dagster run coordinator + `ATLAS_MAX_CONCURRENT_INGESTS` | already in place, already bounded at 4 |
+| `urbalurba_status` watermark | a `raw.*` watermark table | ⚠️ **not** a Dagster sensor cursor — see below |
+| `oppdaterteEnheter` queue | `raw.brreg_oppdateringer`, append-only | it is data, not orchestration |
+| the TypeScript update loop | **dbt incremental model** | 🔴 this is the real change — see below |
+
+### ⚠️ Keep the watermark in Postgres, not in Dagster
+
+Dagster offers cursors, and it would be the obvious place. **It is the wrong place here.** A cursor
+lives in the Dagster instance database — the one that survives `uis undeploy dagster` by luck rather
+than design, and that ops preserved on #591 specifically because it holds evidence. If it is lost or
+rebuilt, Atlas silently restarts the feed from nowhere.
+
+A watermark row in `raw` is backed up with the data it describes, inspectable with `psql`, and
+consistent with `raw.ingest_runs`. shadow-brreg put it in Postgres and that was right.
+
+### 🔴 The one thing that must change: raw is a landing layer, not a mutable table
+
+shadow-brreg **mutates `brreg_enheter_alle` in place** — insert, update and delete against the single
+table that is also the thing you query. That is correct for a shadow database whose only job is to
+mirror.
+
+It is wrong for Atlas, and not stylistically: **`raw.*` is a landing layer written by ingest and read
+by dbt.** An in-place-mutated raw table breaks two things Atlas relies on —
+
+- **marts can no longer be rebuilt from raw.** A `dbt run` after an UPDATE sees only the current
+  state; the history that produced it is gone.
+- **the change feed's own value is discarded.** Brreg tells us *what changed and when*; overwriting
+  the row throws that away at the moment of receiving it.
+
+The Atlas-native shape keeps ingest append-only and moves the reconciliation into dbt:
+
+```
+raw.brreg_enheter_snapshot    one bulk load, point-in-time          (ingest, rare)
+raw.brreg_oppdateringer       append-only change feed               (ingest, polled)
+raw.brreg_enheter_versions    each fetched version of a changed org (ingest, polled)
+        │
+        └── dbt incremental model ──► marts.dim_brreg_enhet   current state,
+                                                              `Fjernet` filtered out
+```
+
+Deletions stop being a `DELETE` and become **a row that is filtered**, which means "what did this
+organisation look like before it was removed" remains answerable. That is a capability shadow-brreg
+gave up and Atlas would get for free.
+
+⚠️ **This is a design sketch, not a decision.** Whether the versions table is worth its storage at
+~1.1M organisations is exactly the kind of thing a PLAN must measure rather than assume.
+
+### 🔴 Two open questions about the interval
+
+**How often should Atlas poll?** shadow-brreg's every-minute was right for a live mirror. Atlas's
+cadence discipline says poll no faster than the data changes and no faster than is courteous —
+`cadence.py` already carries the argument that fetching annual tables nightly would be ~15,000
+pointless requests a year. Daily would keep Atlas within a day of truth for a register that changes
+slowly. **But:**
+
+**Does `/oppdateringer/enheter?dato=` accept an arbitrarily old date?** If the feed has a retention
+window, a slow cadence risks a *gap* — changes that happened and can no longer be requested, with
+nothing to signal it. **A daily poll that silently misses a week after an outage is worse than a
+weekly poll that catches up correctly.** This must be established before an interval is chosen, and it
+is a question for Brreg's API documentation rather than for us to infer.
+
 ## Why this matters more to Atlas than it did to shadow-brreg
 
 shadow-brreg's purpose was exploration — *"play with machine learning, data science… on your local
@@ -184,12 +281,15 @@ Not answers — the things that would have to be measured before committing:
    659 MB `raw` schema Atlas has today.
 2. **Bulk-load duration**, and whether it fits inside a Dagster run pod's limits — the existing
    `transform_checks` startability work suggests Atlas's run pods have real bounds.
-3. **Change-feed volume.** shadow-brreg polled every minute. Atlas's cadence discipline says poll no
-   faster than the data changes; the right interval is an empirical question, and `MONTHLY_CRON`
-   already exists for slow reference data.
-4. **Whether `jsonb` beats the flattened 44 columns.** Storing the source document and typing views
+3. **Change-feed retention, before volume.** Whether `/oppdateringer/enheter?dato=` accepts an
+   arbitrarily old date decides whether a slow cadence is safe at all. Then volume: shadow-brreg
+   polled every minute; the right interval for Atlas is empirical, and `MONTHLY_CRON` already exists
+   for slow reference data.
+4. **Whether the append-only versions table earns its storage** at ~1.1M organisations, or whether
+   the current-state-only shape is enough. This is the main cost of the dbt-incremental design above.
+5. **Whether `jsonb` beats the flattened 44 columns.** Storing the source document and typing views
    on top would preserve fields nobody selected — the ones the CSV config silently drops.
-5. **Whether the existing `brreg-enheter` seed survives or is subsumed.** Two Brreg tables with
+6. **Whether the existing `brreg-enheter` seed survives or is subsumed.** Two Brreg tables with
    different populations is exactly the "second place that must agree" failure this project keeps
    meeting.
 
