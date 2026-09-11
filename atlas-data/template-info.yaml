@@ -122,8 +122,11 @@ operational:
     effect of installing.
 
   first_load: >-
-    ~2.9M rows across 47 raw and 60 marts tables, from ~40 sources, in one pass
-    (measured on a clean install by imac, urb-agents #496).
+    ~4.1M rows across 48 raw and 60 marts tables, from ~41 sources. That is
+    imac's measured 2,906,194 on a clean install (urb-agents #496, #507) plus the
+    1,173,878-record Enhetsregisteret bulk load added in PLAN-001. The row count
+    is arithmetic on two measured figures; the combined WALL TIME is not measured
+    and is deliberately not stated here.
 
   timezone: Europe/Oslo
 
@@ -142,9 +145,17 @@ operational:
       and runs third, so the migrations apply after two source jobs have already
       written. That is safe because they are idempotent, but reordering these has
       not been tested (ops, urb-agents #627).
-    jobs: [annual_sources_refresh, klass_refresh, seed_sources_refresh, transform_and_publish]
-    takes: ~11 minutes; ~2.9M rows across 47 raw and 64 marts tables
-    measured: "imac, clean cluster, urb-agents #507 — 11.1 min, 2,906,194 rows"
+
+      brreg_bootstrap is the odd one out and the one most likely to be skipped.
+      It has NO schedule and its asset has NO automation condition, on purpose —
+      re-running a 1.17M-record bulk load against a populated database is the one
+      genuinely destructive operation in this pipeline, so nothing self-triggers
+      it. Run it once, here. Skipping it leaves the organisation register empty
+      with nothing saying why; running it twice is safe (upsert, never truncate)
+      but pointless.
+    jobs: [annual_sources_refresh, klass_refresh, seed_sources_refresh, brreg_bootstrap, transform_and_publish]
+    takes: "~11 minutes for the first four, plus the Brreg bulk load; ~4.1M rows across 48 raw and 64 marts tables"
+    measured: "imac, clean cluster, urb-agents #507 — 11.1 min, 2,906,194 rows. That figure PREDATES brreg_bootstrap and does not include it: the download alone is 210 MB / 52 s and the database write time is not yet measured. Do not read 11 minutes as the new total."
 
   # For the "what is this about to do to my cluster" question (#507 item 1).
   # provides.services below is the authoritative list; this is the human summary.
@@ -174,6 +185,13 @@ operational:
   # nightly. Nightly would be ~15,000 pointless requests a year against
   # public-sector APIs Atlas depends on staying welcome at.
   external_services: [SSB, FHI, Bufdir, Brønnøysundregistrene]
+
+  # Runs only when a human launches it. Not in `unscheduled` below, because that
+  # list means CANNOT run (frr has no private data on a public deployment;
+  # redcross-branches has no credential) and both are correctly absent from the
+  # first-data sequence. brreg_bootstrap is the opposite: it MUST run once, on
+  # day one, and then be left alone. Different reason, different list.
+  manual_only: [brreg_bootstrap]
 
   # No automation condition, no freshness policy — these never self-trigger.
   # Parked pending a Red Cross API credential.

@@ -11,7 +11,19 @@ Loads all 1,174,098 Norwegian organisations from Brønnøysundregistrene into `r
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Active
+## Status: Active — all three phases built, cluster verification outstanding
+
+Every task in phases 1-3 is done and merged. The plan stays **Active** rather than moving to
+`completed/` because three things can only be falsified where there is a database, and this agent has
+neither Postgres nor a container runtime:
+
+1. the full load, and `count(*)` against `/enheter?size=1` on the same day;
+2. the second run on a populated table — the one genuinely destructive operation here;
+3. migration convergence, as a `pg_dump --schema-only` diff rather than as reasoning.
+
+It moves to `completed/` when imac reports on those, not before. Declaring it done on my own say-so
+is exactly the thing the declare / apply / verify split exists to prevent.
+
 
 **Goal**: a complete, point-in-time copy of Enhetsregisteret in `raw`, loadable on a fresh install and re-runnable without corrupting an existing one.
 
@@ -174,22 +186,49 @@ and the README rather than left as an implicit property of "upsert".
 
 ### Tasks
 
-- [ ] 3.1 Asset `raw/brreg_enheter_snapshot` in a new `raw_brreg` group.
-- [ ] 3.2 Job `brreg_bootstrap`, registered in `schedules.py`'s `jobs` list.
-- [ ] 3.3 🔴 **No automation condition and no freshness policy**, deliberately — same treatment as
-      `UNSCHEDULED_SOURCES`. Re-running a bulk load against a populated database is the one genuinely
-      destructive operation in this design and it must never self-trigger. Record the reason in the
-      asset docstring, not only here.
-- [ ] 3.4 Add `brreg_bootstrap` to `operational.first_data.jobs` in `template-info.yaml`. ⚠️ A novice
-      who skips it has an empty register and no signal why. The build gate will require the job to
-      exist in `schedules.py`.
-- [ ] 3.5 Update `operational.first_load` — the current claim of *"~2.9M rows"* becomes ~4.1M — and
-      `install.takes`.
+- [x] 3.1 Asset in a new `assets/raw_brreg.py`, group `raw_brreg`. The key resolves to
+      **`raw/brreg_enheter_alle`**, not `raw/brreg_enheter_snapshot` as this task wrote it: the
+      factory's convention is `["raw", source_id_with_underscores]`, and the asset represents the
+      *ingest run* rather than the table it writes. Named here because the task and the code now
+      differ on purpose rather than by accident.
+- [x] 3.2 Job `brreg_bootstrap`, in `schedules.py`'s `jobs` list. Resolves to
+      `{raw/_migrations, raw/brreg_enheter_alle}` — verified by loading the definitions, not by
+      reading the selection.
+- [x] 3.3 No automation condition and no freshness policy. Verified against the loaded asset spec
+      (`automation condition: None`, `freshness_policy: None`) rather than asserted from the source.
+      The reason is in the asset docstring and the job description, both of which travel with the
+      code into the Dagster UI.
+- [x] 3.4 `brreg_bootstrap` added to `operational.first_data.jobs`, fourth of five.
+- [x] 3.5 `first_load` is now ~4.1M rows across 48 raw tables, and `install.takes` says plainly that
+      imac's 11.1-minute figure **predates** this job and is not the new total.
+
+### The distinction this phase had to make explicit
+
+`cadence.UNSCHEDULED_SOURCES` means **cannot run** — `frr` has no private data on a public
+deployment, `redcross-branches` has no credential — and both are correctly absent from the first-day
+sequence. `brreg-enheter-alle` is the opposite: it **must** run, once, on day one, and then be left
+alone.
+
+Parking it would have kept the coverage gate quiet and left a new user with an empty organisation
+register and nothing saying why. So it stays out of `UNSCHEDULED_SOURCES` and gets a named job
+instead, and `template-info.yaml` grows a `manual_only:` row so the artifact states the difference
+rather than implying it. **The gate was made to fail on purpose**: removing `brreg_bootstrap` from
+`first_data.jobs` produces
+
+```
+✗ first_data.jobs does not cover 1 automated source(s): ['brreg-enheter-alle']
+```
 
 ### Validation
 
-`uis template info atlas` shows `brreg_bootstrap` in the first-data sequence; the render gate passes;
-imac can run the job on a clean install and reach the Phase 2 row count.
+- ✅ The definitions load; `brreg_bootstrap` is among the eight jobs and resolves to the right two
+  assets; the asset carries neither a condition nor a policy.
+- ✅ `render-template-info.sh` passes every gate, and coverage went from 40 to **41** automated
+  sources with the same two parked.
+- ✅ The coverage gate proven to fail on purpose.
+- ⬜ **Not verified here:** imac running `brreg_bootstrap` on a clean install and reaching the phase 2
+  row count. `uis template info atlas` showing the new first-data sequence needs a publish, which
+  happens on the next tag.
 
 ---
 
