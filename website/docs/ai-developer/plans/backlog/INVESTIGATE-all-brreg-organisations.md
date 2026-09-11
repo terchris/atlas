@@ -15,6 +15,21 @@ Brønnøysundregistrene and pointed at his own earlier implementation,
 
 The API was re-verified against the live service on 2026-09-11 rather than trusted from the 2023 code, at his instruction. **Both questions that would have blocked a PLAN are now answered** (no retention window; poll by `oppdateringsid`). NLOD attribution has moved to [INVESTIGATE-nlod-attribution](INVESTIGATE-nlod-attribution.md) so it is handled separately.
 
+## ✅ Spawned PLANs — 2026-09-11
+
+This investigation stays in `backlog/` until every child PLAN has shipped (`PLANS.md`).
+
+| plan | state | delivers |
+|---|---|---|
+| [PLAN-001-brreg-bulk-snapshot](../active/PLAN-001-brreg-bulk-snapshot.md) | **Active** | the one-time load of 1,174,098 enheter into `raw`, streaming, no CSV stage |
+| [PLAN-002-brreg-change-feed](PLAN-002-brreg-change-feed.md) | Backlog | the daily poller — `oppdateringsid` watermark in Postgres, append-only, `Sletting` as the deletion |
+| [PLAN-003-brreg-dim-and-frivillig](PLAN-003-brreg-dim-and-frivillig.md) | Backlog | dbt incremental → `marts.dim_brreg_enhet`, Frivillighetsregisteret enrichment, `dim_ngo` derived |
+
+**Three decisions taken by ops-dev on 2026-09-11** under Terje's delegation (#711), so they are
+settled rather than open: **enheter only** in the first plan (underenheter a named follow-on),
+**daily** cadence, and the versions table decided **by measurement** in PLAN-003 phase 1 rather than
+by argument.
+
 ## ✅ Decided by Terje, 2026-09-11
 
 | | |
