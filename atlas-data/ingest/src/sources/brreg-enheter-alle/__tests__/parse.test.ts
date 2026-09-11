@@ -112,12 +112,33 @@ describe("parseEnheter", () => {
   });
 
   it("takes the top-level key when a nested object carries the same name", async () => {
-    // Measured on 2026-09-11: `grep -c '"organisasjonsnummer"'` over the bulk
-    // file returned 1,173,879 against 1,173,878 records — one record carries the
-    // key twice, nested. The top-level value is the primary key.
+    // Nested `organisasjonsnummer` is real — `overordnetEnhet` carries one — and
+    // the top-level value is the primary key.
     const file = `[{"organisasjonsnummer":"111111111","overordnetEnhet":{"organisasjonsnummer":"222222222"}}]`;
     const [record] = await collect(parseEnheter(streamArrayElements(chunked(file, 9))));
     expect(record!.organisasjonsnummer).toBe("111111111");
+  });
+
+  it("is unaffected by the word appearing as a VALUE, which is what breaks the grep proxy", async () => {
+    // The off-by-one between `grep -c '"organisasjonsnummer"'` (1,173,879) and
+    // the real record count (1,173,878) is NOT a duplicated key, which is what
+    // this file used to claim. Verified against the bulk file on 2026-09-12
+    // after imac's correction on urb-agents #711: the extra hit is the literal
+    // in one organisation's free-text `aktivitet` array —
+    //
+    //   "aktivitet" : [ "…drifte Eggum vannverk med samme", "organisasjonsnummer" ]
+    //
+    // which means the proxy is not stably wrong by one. It is wrong by however
+    // many times the public types that word into a registration form, and it can
+    // drift any morning. Parsing is immune; grep is not.
+    const file = `[{"organisasjonsnummer":"333333333","aktivitet":["Drift av gatelys. Skal også drifte Eggum vannverk med samme","organisasjonsnummer"]}]`;
+    const records = await collect(parseEnheter(streamArrayElements(chunked(file, 11))));
+    expect(records).toHaveLength(1);
+    expect(records[0]!.organisasjonsnummer).toBe("333333333");
+    expect(records[0]!.doc["aktivitet"]).toEqual([
+      "Drift av gatelys. Skal også drifte Eggum vannverk med samme",
+      "organisasjonsnummer",
+    ]);
   });
 });
 

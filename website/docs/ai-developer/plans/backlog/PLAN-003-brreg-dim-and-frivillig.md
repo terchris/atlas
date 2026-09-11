@@ -15,7 +15,7 @@ Turns the raw register and its change feed into a current-state marts dimension,
 
 **Goal**: `marts.dim_brreg_enhet` as reconciled current state, `marts.dim_ngo` derived rather than curated, and no new public endpoint.
 
-**Last Updated**: 2026-09-11
+**Last Updated**: 2026-09-12
 
 **Investigation**: [INVESTIGATE-all-brreg-organisations](../backlog/INVESTIGATE-all-brreg-organisations.md)
 **Prerequisites**: PLAN-001 and PLAN-002 — there is nothing to reconcile without a snapshot and a feed
@@ -51,6 +51,24 @@ which is not superseded by Terje's decision — it is the enrichment half of it.
 
 ⚠️ `registrert_i_frivillighetsregisteret` in Enhetsregisteret says **which** organisations are
 voluntary. Only the dedicated register says **what they do**. The flag is not a substitute.
+
+> ✅ **Endpoint re-verified 2026-09-12, after imac reported it as 404** (urb-agents #711). It is not
+> 404: three consecutive requests returned **200** with `icnpoKategorier`, `grasrotandel`,
+> `innfoertDato`, `vedtekter` and `paategninger` on the record, and the single-organisation path
+> `/frivillige-organisasjoner/<orgnr>` returns 200 as well.
+>
+> The four paths imac listed do 404 from here too — `/frivillighetsregisteret/api`, its
+> `/dokumentasjon`, and the camelCase `/frivilligeOrganisasjoner` — but none of them is the endpoint
+> above. **The hyphenated `frivillige-organisasjoner` is the one that answers.** Phase 3 stands as
+> designed; do not redesign it around the 404.
+>
+> 🟢 **imac's underlying point holds and is the more useful half.** FRR *membership* needs no second
+> source: `registrertIFrivillighetsregisteret` is on 100% of bulk records and true for **72,798**,
+> against the ~72,806 this plan quotes. So phase 2's `dim_brreg_enhet` can carry membership on day one
+> from the snapshot alone, and **phase 3 is only ever about the FRR-specific attributes** —
+> `icnpoKategorier`, `grasrotandel`, `innfoertDato`, `vedtekter`. If this endpoint does disappear
+> later, the membership half survives and only the enrichment half needs a rethink. That split is
+> worth having designed in before it is needed.
 
 ## Phase 1: The measured decision ops-dev would not let me assume
 
