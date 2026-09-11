@@ -15,7 +15,29 @@ Brønnøysundregistrene and pointed at his own earlier implementation,
 
 The API was re-verified against the live service on 2026-09-11 rather than trusted from the 2023 code, at his instruction. **Both questions that would have blocked a PLAN are now answered** (no retention window; poll by `oppdateringsid`). NLOD attribution has moved to [INVESTIGATE-nlod-attribution](INVESTIGATE-nlod-attribution.md) so it is handled separately.
 
-**Two decisions remain Terje's**: ingest scope, and what reaches `api_v1`.
+## ✅ Decided by Terje, 2026-09-11
+
+| | |
+|---|---|
+| **Ingest scope** | **Everything — the full Enhetsregisteret, 1,174,098 organisations.** Not the voluntary subset. |
+| **Publication** | **No new public endpoint.** The gain shows up in existing `api_v1` views getting better as the NGO population becomes derived rather than curated. |
+
+🔴 **What the full-register choice changes, and it is not what I expected.** I had recommended the
+voluntary subset partly because its dedicated API returns `icnpoKategorier` natively. Choosing
+everything does **not** discard that — it makes the design use **two Brreg sources, not one**:
+
+- **`/enhetsregisteret/api/enheter/lastned` + `/oppdateringer/enheter`** — the base: all 1,174,098
+  organisations and the change feed that keeps them current. This is shadow-brreg's design.
+- **`/frivillighetsregisteret/api/frivillige-organisasjoner`** — enrichment for the ~72,806 that are
+  voluntary, adding `icnpoKategorier`, `grasrotandel`, `innfoertDato` and `vedtekter`, none of which
+  Enhetsregisteret carries.
+
+So **candidate #9 is not superseded by this decision — it becomes the enrichment half of it.** A PLAN
+must cover both, and the join key is `organisasjonsnummer` in each.
+
+⚠️ `registrert_i_frivillighetsregisteret` in Enhetsregisteret identifies *which* organisations are
+voluntary, but only the dedicated register says *what they do*. Do not treat the flag as a substitute
+for the second source.
 
 ## 🔴 Read this first — most of this was already decided, and I did not check
 
