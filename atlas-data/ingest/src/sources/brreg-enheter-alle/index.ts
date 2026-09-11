@@ -28,6 +28,7 @@ import { StringDecoder } from "node:string_decoder";
 import { recordIngestRun } from "../../lib/ingest_run.js";
 import { logger } from "../../lib/logger.js";
 import { getSql, upsert } from "../../lib/postgres.js";
+import type postgres from "postgres";
 import {
   parseEnheter,
   snapshotFileDate,
@@ -52,6 +53,8 @@ const DOWNLOAD_URL = "https://data.brreg.no/enhetsregisteret/api/enheter/lastned
 const ACCEPT = "application/vnd.brreg.enhetsregisteret.enhet.v2+gzip";
 
 const TARGET_TABLE = "raw.brreg_enheter_snapshot";
+
+const FEED_URL = "https://data.brreg.no/enhetsregisteret/api/oppdateringer/enheter";
 
 const WRITE_COLUMNS = [
   "organisasjonsnummer",
@@ -129,6 +132,79 @@ async function openSnapshot(): Promise<{
 }
 
 /**
+ * Seed the change feed's watermark from this snapshot, so PLAN-002's poller knows
+ * where to start.
+ *
+ * 🔴 The watermark is the first `oppdateringsid` at **00:00 on the snapshot
+ * file's own date**, not the newest id at download time. Those are different, and
+ * the difference is a silent data gap: the file is generated around 04:30 and may
+ * be downloaded hours later, so the newest-id-now choice skips every change made
+ * in between. Anchoring to the file's date guarantees the feed re-processes a few
+ * hours it already has — which is free, because every write is an upsert — rather
+ * than missing hours it does not.
+ *
+ * ⚠️ Only seeds when there is NO watermark. A re-bootstrap must not drag the
+ * watermark backwards *or* forwards over a feed that is already ahead: backwards
+ * costs a harmless re-walk, forwards silently skips changes. Leaving an existing
+ * watermark alone is the only option that cannot lose anything.
+ */
+async function seedFeedWatermark(
+  sql: postgres.Sql,
+  fileDate: string | null,
+): Promise<void> {
+  if (!fileDate) {
+    logger.warn("brreg.watermark.not_seeded", {
+      reason: "no snapshot_file_date — cannot anchor the feed without one",
+    });
+    return;
+  }
+
+  const existing = await sql<{ last_oppdateringsid: string }[]>`
+    select last_oppdateringsid from raw.brreg_feed_watermark where id = 1
+  `;
+  if (existing[0]) {
+    logger.info("brreg.watermark.left_alone", {
+      existing: existing[0].last_oppdateringsid,
+      reason: "a feed already ahead of this snapshot must not be moved",
+    });
+    return;
+  }
+
+  const url = `${FEED_URL}?dato=${fileDate}T00:00:00.000Z&size=1`;
+  const response = await fetch(url, { headers: { Accept: "application/json" } });
+  if (!response.ok) {
+    logger.warn("brreg.watermark.not_seeded", {
+      reason: `feed returned HTTP ${response.status} for the snapshot date`,
+    });
+    return;
+  }
+  const body = (await response.json()) as {
+    _embedded?: { oppdaterteEnheter?: { oppdateringsid?: number; dato?: string }[] };
+  };
+  const first = body._embedded?.oppdaterteEnheter?.[0];
+  if (typeof first?.oppdateringsid !== "number") {
+    logger.warn("brreg.watermark.not_seeded", {
+      reason: "the feed reported no change on the snapshot date",
+    });
+    return;
+  }
+
+  // Store one BELOW the first id of that day, because the poller asks for
+  // `watermark + 1` and the cursor is inclusive. Storing the id itself would
+  // skip that first change.
+  const watermark = first.oppdateringsid - 1;
+  await sql`
+    insert into raw.brreg_feed_watermark (id, last_oppdateringsid, last_dato, updated_at)
+    values (1, ${watermark}, ${first.dato ?? null}, now())
+    on conflict (id) do nothing
+  `;
+  logger.info("brreg.watermark.seeded", {
+    last_oppdateringsid: watermark,
+    anchored_to: `${fileDate}T00:00:00.000Z`,
+  });
+}
+
+/**
  * Stream the register into Postgres.
  *
  * 🔴 IDEMPOTENCE (PLAN-001 task 2.6). This never truncates and never deletes.
@@ -200,6 +276,8 @@ async function loadSnapshot(sampleOnly: number): Promise<BrregEnheterAlleSummary
     }
   }
   await flush();
+
+  if (sql) await seedFeedWatermark(sql, fileDate);
 
   return {
     recordsRead,

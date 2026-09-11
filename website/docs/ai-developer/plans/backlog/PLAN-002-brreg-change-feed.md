@@ -11,7 +11,11 @@ Keeps the register copy current by consuming Brreg's `oppdateringer` feed daily 
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Backlog
+## Status: Active — phases 1-3 built, phase 4 is imac's
+
+Phases 1, 2 and 3 are implemented and merged. Phase 4 is the falsification and is deliberately not
+mine to run: an implementation that applies `Ny` and `Endring` but drops `Sletting` passes every
+row-count check I can write and is still wrong.
 
 **Goal**: Atlas's copy of Enhetsregisteret stays identical to Brreg's, including deletions, with no manual intervention and no separate backfill path.
 
@@ -185,6 +189,22 @@ moment it catches up** — that is, on every healthy run once the backlog is cle
 development against a stale watermark. The termination condition is *absent `_embedded` or empty
 list*, and it is the normal end of every successful run, not an error.
 
+#### 🔴 A deleted organisation still returns HTTP 200, with a stub body
+
+Measured 2026-09-12, following `_links.enhet.href` for one change of each type sampled from
+`?dato=2026-09-10`:
+
+```
+Ny        938461023  →  200, ~30 keys, slettedato null
+Endring   987832975  →  200, ~30 keys, slettedato null
+Sletting  929915224  →  200,  ~6 keys, slettedato 2026-09-10, plus a `respons_klasse` key
+```
+
+⚠️ Not 404 and not 410. **An implementation that detects deletion from the HTTP status sees nothing
+wrong** and writes a six-key stub over a full record — losing the organisation's history at the
+moment it most needs preserving. Deletion is detected from the **feed's `endringstype`**;
+`slettedato` in the body corroborates it; the status code never does.
+
 #### Cursor semantics, stated exactly
 
 `?oppdateringsid=N` returns records with **id ≥ N**, not id > N, and not "the Nth record". Asking for
@@ -195,23 +215,36 @@ the same N re-delivers the same record, which is what makes an interrupted run s
 
 ### Tasks
 
-- [ ] 1.1 Migration: `raw.brreg_feed_watermark` — single row, `last_oppdateringsid bigint not null`,
+- [x] 1.1 Migration: `raw.brreg_feed_watermark` — single row, `last_oppdateringsid bigint not null`,
       `last_dato timestamptz`, `updated_at timestamptz`.
-- [ ] 1.2 🔴 **The watermark lives in Postgres, not in a Dagster cursor.** A cursor lives in the
+- [x] 1.2 🔴 **The watermark lives in Postgres, not in a Dagster cursor.** A cursor lives in the
       Dagster instance database — the one that survived `uis undeploy dagster` by luck rather than
       design, and that ops preserved on #591 *specifically because it holds evidence*. If it is
       rebuilt, the feed silently restarts from nowhere. A `raw.*` row is backed up with the data it
       describes and matches `raw.ingest_runs`. **Put this reason in the migration comment** — it is
       exactly the kind of thing a later reader "simplifies".
-- [ ] 1.3 Migration: `raw.brreg_oppdateringer` — append-only.
+- [x] 1.3 Migration: `raw.brreg_oppdateringer` — append-only.
       `oppdateringsid bigint primary key`, `dato timestamptz`, `organisasjonsnummer text`,
       `endringstype text`, `processed_at timestamptz`, `process_status text`.
-- [ ] 1.4 Seed the watermark from the snapshot: the bootstrap records the max `oppdateringsid` current
+- [x] 1.4 Seed the watermark from the snapshot: the bootstrap records the max `oppdateringsid` current
       at download time, so the first feed run starts there rather than at 1.
+
+### How the watermark is seeded, and the mistake that was available
+
+🔴 The watermark is the first `oppdateringsid` at **00:00 on the snapshot file's own date**, not the
+newest id at download time. Those differ, and the difference is a silent gap: Brreg generates the file
+around 04:30 and it may be downloaded hours later, so anchoring to "newest now" skips every change
+made in between. Anchoring to the file's date re-processes a few hours Atlas already has — free,
+because every write is an upsert — rather than missing hours it does not.
+
+⚠️ And the bootstrap seeds **only when there is no watermark**. A re-bootstrap must not drag an
+existing watermark backwards *or* forwards: backwards costs a harmless re-walk, forwards silently
+skips changes. Leaving it alone is the only option that cannot lose anything.
 
 ### Validation
 
 A watermark row exists after PLAN-001's bootstrap and names a plausible id (~25M as of 2026-09).
+⬜ Needs a database — imac.
 
 ---
 
@@ -219,7 +252,7 @@ A watermark row exists after PLAN-001's bootstrap and names a plausible id (~25M
 
 ### Tasks
 
-- [ ] 2.1 Ingest module: read watermark → advance the **cursor** with `?oppdateringsid=<last+1>` →
+- [x] 2.1 Ingest module: read watermark → advance the **cursor** with `?oppdateringsid=<last+1>` →
       append every change to `raw.brreg_oppdateringer` → advance the watermark **only after** the
       batch is committed. `size=10000`.
       🔴 **No `page` parameter and no `_links.next` anywhere in the module**, not even as a fallback —
@@ -228,31 +261,31 @@ A watermark row exists after PLAN-001's bootstrap and names a plausible id (~25M
       of a parameter, and no unit test covers an absence.
       🔴 **Do not use `lib/brreg/client.ts`'s `paginate()`** — it increments `page`, which is exactly
       the defect. This endpoint is the one place the shared client must not be reused.
-- [ ] 2.1b Terminate on **absent `_embedded` or an empty list**, and treat that as the normal,
+- [x] 2.1b Terminate on **absent `_embedded` or an empty list**, and treat that as the normal,
       successful end of a run. ⚠️ Not `body["_embedded"][...]` — the key is missing when caught up, so
       that spelling throws on every healthy run.
-- [ ] 2.2 🔴 Branch on **all five** `endringstype` values: `Ny`, `Endring`, `Sletting`, `Fjernet` and
+- [x] 2.2 🔴 Branch on **all five** `endringstype` values: `Ny`, `Endring`, `Sletting`, `Fjernet` and
       **`Ukjent`**. `Sletting` is the deletion. Put the sample counts from the Problem Summary in a
       code comment beside the branch, so the next reader sees evidence rather than an assertion.
-- [ ] 2.2b 🔴 **`Ukjent` is a deliberate branch, not a default case.** It is counted and surfaced in
+- [x] 2.2b 🔴 **`Ukjent` is a deliberate branch, not a default case.** It is counted and surfaced in
       run metadata, it never crashes the run, it is never silently skipped, and **it never deletes
       anything**. The whole of the reachable-by-page history is `Ukjent` (2018-08 and earlier), so a
       catch-up from an early watermark meets a great many of them.
-- [ ] 2.3 For each changed org, fetch its current document via `_links.enhet.href` (already in the
+- [x] 2.3 For each changed org, fetch its current document via `_links.enhet.href` (already in the
       feed — no separate lookup needed) and append to `raw.brreg_enheter_versions`
       (`organisasjonsnummer`, `doc jsonb`, `oppdateringsid`, `endringstype`, `fetched_at`).
       **Append-only — never update in place.** `raw.*` is a landing layer; overwriting discards the
       change feed's own value at the moment of receiving it and makes `marts` unrebuildable.
-- [ ] 2.4 A `Sletting` appends a **tombstone row** (`doc` null, `endringstype='Sletting'`) rather than
+- [x] 2.4 A `Sletting` appends a **tombstone row** (`doc` null, `endringstype='Sletting'`) rather than
       deleting anything. Deletion becomes a filter in dbt, so *"what did this organisation look like
       before it was removed"* stays answerable.
-- [ ] 2.5 Emit as run metadata: **backlog depth** (`totalElements` at the watermark, which is a
+- [x] 2.5 Emit as run metadata: **backlog depth** (`totalElements` at the watermark, which is a
       correct remaining-record count — see the Problem Summary for the proof, and for the retraction
       of the retraction), the count of changes processed this run, the highest `oppdateringsid` seen,
       and the `endringstype` histogram **including `Ukjent`**.
       🔴 **Never compute backlog by subtracting ids** — ids are sparse and the arithmetic is
       meaningless. Count records; do not infer them from the id space.
-- [ ] 2.6 Resumability: a run interrupted mid-page leaves the watermark unadvanced and re-processes
+- [x] 2.6 Resumability: a run interrupted mid-page leaves the watermark unadvanced and re-processes
       that page. Append with `on conflict (oppdateringsid) do nothing`.
 
 ### Validation
@@ -272,22 +305,26 @@ validation exists to catch, and it is not the one the original tasks would have 
 
 ### Tasks
 
-- [ ] 3.1 `DAILY_CRON = "0 4 * * *"` in `cadence.py`, Europe/Oslo.
-- [ ] 3.2 🔴 **04:00 specifically.** `transform_daily` runs at `0 5 * * *`; feeding at 04:00 puts the
+- [x] 3.1 `DAILY_CRON = "0 4 * * *"` in `cadence.py`, Europe/Oslo.
+- [x] 3.2 🔴 **04:00 specifically.** `transform_daily` runs at `0 5 * * *`; feeding at 04:00 puts the
       day's register changes into `marts` the same morning. Later than 05:00 delays them a full day.
       Say so in the constant's comment.
-- [ ] 3.3 Asset `raw/brreg_oppdateringer` + `raw/brreg_enheter_versions`, job `brreg_change_feed`,
+- [x] 3.3 Asset `raw/brreg_oppdateringer` + `raw/brreg_enheter_versions`, job `brreg_change_feed`,
       `automation_condition=cadence.daily_polled()`.
-- [ ] 3.4 Freshness policy: warn ~3 days, fail ~7 — tighter than anything else in Atlas, and
+- [x] 3.4 Freshness policy: warn ~3 days, fail ~7 — tighter than anything else in Atlas, and
       derivable from the daily cadence the way the existing bounds are.
-- [ ] 3.5 `template-info.yaml`: new `operational.cadence` row for `0 4 * * *`. ⚠️ The build gate
+- [x] 3.5 `template-info.yaml`: new `operational.cadence` row for `0 4 * * *`. ⚠️ The build gate
       asserts every declared cron is **live** — an asset must reference `daily_polled()` or the gate
       fails.
 
 ### Validation
 
-`./uis template info atlas` renders the new cadence row; the drift gate passes; a manual run advances
-the watermark and appends versions.
+- ✅ The definitions load; `brreg_change_feed` is among nine jobs and resolves to
+  `{raw/_migrations, raw/brreg_oppdateringer}`; the asset carries
+  `on_cron(0 4 * * *, Europe/Oslo)` and the 3-day/7-day freshness policy — read off the loaded spec,
+  not asserted from the source.
+- ✅ The render gate passes with four crons; `first_data` covers all **42** automated sources.
+- ⬜ A manual run advancing the watermark and appending versions — imac.
 
 ---
 

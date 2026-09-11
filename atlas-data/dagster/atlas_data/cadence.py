@@ -37,6 +37,17 @@ WEEKLY_CRON = "0 2 * * 0"  # Sunday 02:00 — the annual-source poll
 MONTHLY_CRON = "0 1 1 * *"  # 1st of the month 01:00 — Klass classifications
 SCRAPER_CRON = "30 3 * * 0"  # Sunday 03:30 — offset from the annual wave
 
+# Brreg's change feed. 🔴 04:00 SPECIFICALLY, and the hour is load-bearing:
+# transform_and_publish runs at 05:00, so a 04:00 poll puts the day's register
+# changes into marts the same morning. Any hour after 05:00 delays every change by
+# a full day, for no saving — the poll is ~3,300 changes and a few seconds.
+#
+# Daily rather than weekly because the bulk snapshot is regenerated daily, so the
+# two halves stay in step and a re-bootstrap is never more than one cycle stale.
+# The feed has no retention window, so cadence is a freshness choice and not a
+# correctness one: a missed week catches up completely on the next run.
+DAILY_CRON = "0 4 * * *"
+
 
 def weekly_polled() -> AutomationCondition:
     return AutomationCondition.on_cron(WEEKLY_CRON, TIMEZONE)
@@ -48,6 +59,10 @@ def monthly_polled() -> AutomationCondition:
 
 def scraper_polled() -> AutomationCondition:
     return AutomationCondition.on_cron(SCRAPER_CRON, TIMEZONE)
+
+
+def daily_polled() -> AutomationCondition:
+    return AutomationCondition.on_cron(DAILY_CRON, TIMEZONE)
 
 
 # ── Freshness ────────────────────────────────────────────────────────────────
@@ -65,6 +80,17 @@ WEEKLY_FRESHNESS = FreshnessPolicy.time_window(
 MONTHLY_FRESHNESS = FreshnessPolicy.time_window(
     fail_window=timedelta(days=90),
     warn_window=timedelta(days=45),
+)
+
+# Daily-polled: the tightest bound in Atlas, and the only source that earns one.
+# Three days without a successful poll is worth a look; a week means Atlas has
+# been serving organisations it knows Brreg has changed — including ones Brreg has
+# deleted, which is the failure that matters. Still two missed cycles before
+# anyone is told, on the same principle as the others: a check that cries wolf is
+# one people learn to ignore.
+DAILY_FRESHNESS = FreshnessPolicy.time_window(
+    fail_window=timedelta(days=7),
+    warn_window=timedelta(days=3),
 )
 
 # ── Sources that must never self-trigger ─────────────────────────────────────

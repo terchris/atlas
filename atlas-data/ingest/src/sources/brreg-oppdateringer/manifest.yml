@@ -1,0 +1,116 @@
+# Hand-authored catalogue metadata for the Brreg change feed.
+# Ingest runs do not modify this file.
+
+source_id: brreg-oppdateringer
+upstream_id: enhetsregisteret-oppdateringer
+upstream_url: https://data.brreg.no/enhetsregisteret/api/oppdateringer/enheter
+upstream_landing_page: https://data.brreg.no/enhetsregisteret/api/dokumentasjon
+upstream_title: "Enhetsregisteret — oppdateringer (endringsfeed)"
+description: |
+  Brønnøysundregistrene publishes every change to Enhetsregisteret as an ordered
+  feed: one record per change, carrying the organisation number, a change type and
+  a monotonic `oppdateringsid`. Atlas walks it forward daily from a durable
+  watermark, recording each change in `raw.brreg_oppdateringer` and the
+  organisation's document at that moment in `raw.brreg_enheter_versions`.
+
+  This is what keeps the bulk snapshot (`brreg-enheter-alle`) from going stale.
+  The snapshot is a point in time; a bulk file cannot express a deletion, because
+  absence from a 1.17M-record file is indistinguishable from a truncated download.
+  Deletions arrive here, as `Sletting` and `Fjernet` change types.
+
+  The feed has no retention window — it reaches back to `oppdateringsid` 1 in April
+  2018 — so a missed day, week or month catches up completely on the next run.
+  Cadence is a freshness choice, not a correctness one.
+publisher: Brønnøysundregistrene
+license: NLOD
+license_url: https://data.norge.no/nlod/no/2.0
+periodicity: P1D
+eu_theme: GOVE
+attribution: "Inneholder data under norsk lisens for offentlige data (NLOD) tilgjengeliggjort av Brønnøysundregistrene"
+
+tags:
+  provider: brreg
+  topic: organisations
+  geo: kommune
+  cadence: daily
+
+raw_tables:
+  - brreg_oppdateringer
+  - brreg_enheter_versions
+  - brreg_feed_watermark
+
+dimensions:
+  - code: oppdateringsid
+    meaning: Brreg's monotonic change identifier, and the cursor the feed is walked by
+    value_format: bigint, sparse
+    notes: >-
+      🔴 Sparse, and that matters. The id space runs to ~25.18M against ~16.4M
+      records, so the gap between two ids is NOT the number of changes between
+      them — asking for id 16,417,000 returns a first record of 16,427,801.
+      Never compute a backlog by subtracting ids; read `page.totalElements` at the
+      cursor, which is a correct remaining-record count.
+  - code: endringstype
+    meaning: What kind of change Brreg recorded
+    value_format: Ny, Endring, Sletting, Fjernet or Ukjent
+    notes: >-
+      All five occur and all five are handled. `Sletting` is the deletion in
+      current traffic; `Fjernet` is real but concentrated in older eras (23 of 500
+      at oppdateringsid 16,400,000, and absent from the 2026-09-11 daily sample);
+      `Ukjent` is the entire pre-2018-08 history and must never delete anything.
+      Stored verbatim and not constrained to an enum — a sixth value must land and
+      be counted, not rejected at the door.
+  - code: organisasjonsnummer
+    meaning: The organisation the change is about
+    value_format: 9 digits, leading zeros significant — always text
+    notes: >-
+      Joins to raw.brreg_enheter_snapshot. Retained after deletion, which is what
+      lets a tombstone address a row that no longer has a live entity behind it.
+  - code: doc
+    meaning: The organisation's document as it stood when the change was received
+    value_format: jsonb, or null when the entity fetch failed
+    notes: >-
+      ⚠️ For a `Sletting` this is Brreg's SIX-KEY STUB, not a full record — a
+      deleted organisation still answers HTTP 200 with `slettedato` set. Branch on
+      endringstype; never assume doc is a complete Enhet, and never detect deletion
+      from a status code.
+  - code: process_status
+    meaning: What Atlas did with the change
+    value_format: applied, tombstoned or skipped_unknown
+    notes: >-
+      Derived from endringstype at load time. `skipped_unknown` covers both
+      `Ukjent` and any future sixth value, deliberately — the run counts and
+      surfaces them rather than guessing an action.
+
+lifecycle: beta
+time_coverage:
+  start: 2018
+  end: null
+keywords:
+  - enhetsregisteret
+  - change-feed
+  - oppdateringer
+  - organisasjonsnummer
+  - brreg
+methodology_notes: |
+  🔴 The feed is walked by CURSOR ONLY — `?oppdateringsid=<last+1>&size=10000`.
+
+  `page` is capped at 20, and Brreg's HAL `_links.next` is built with `page=`, so
+  following the next link — the idiomatic, careful thing to do — returns HTTP 400
+  after 20 hops having seen only the oldest 10,000 changes, every one of them
+  `Ukjent`, and not a single deletion. It would look perfectly healthy. A
+  source-text test asserts the module contains neither `page=` nor `_links.next`.
+
+  Termination is an ABSENT `_embedded` key, not an empty array: a caught-up
+  response is `{_links, page}` with `totalElements: 0`. A poller spelled
+  `body._embedded.oppdaterteEnheter` throws at exactly the moment it catches up.
+
+  The watermark lives in `raw.brreg_feed_watermark`, not in a Dagster cursor. A
+  cursor lives in the Dagster instance database, which has a different lifecycle;
+  if it is rebuilt, a cursor-based feed restarts from nowhere and silently stops
+  applying deletions.
+
+  A run is capped at 50,000 changes (`BRREG_FEED_MAX_CHANGES`). Each change costs
+  one entity fetch, and a watermark of 1 would mean 16.4M requests against a
+  public-sector API Atlas depends on staying welcome at.
+suggested_joins:
+  - brreg-enheter-alle

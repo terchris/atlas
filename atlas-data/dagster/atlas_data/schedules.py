@@ -188,6 +188,28 @@ brreg_bootstrap_job = define_asset_job(
     ),
 )
 
+brreg_feed_job = define_asset_job(
+    name="brreg_change_feed",
+    selection=_asset_selection(raw_brreg.BRREG_FEED_SOURCES),
+    executor_def=_ingest_executor(),
+    description=(
+        "Brreg's change feed, walked forward daily from a durable watermark in "
+        "raw.brreg_feed_watermark. ~3,300 changes a day.\n\n"
+        "This is the only way deletions reach Atlas. A bulk file cannot express "
+        "one — absence from a 1.17M-record file is indistinguishable from a "
+        "truncated download — so Sletting and Fjernet arrive here or not at "
+        "all.\n\n"
+        "04:00 is deliberate: transform_and_publish runs at 05:00, so the day's "
+        "register changes reach marts the same morning. Any later delays every "
+        "change by a full day.\n\n"
+        "Safe to automate, unlike the bootstrap it complements: it appends to "
+        "raw.brreg_oppdateringer and raw.brreg_enheter_versions and never writes "
+        "to the 1.17M-row snapshot, so a bug here cannot damage the expensive "
+        "table. It also refuses to run without a watermark rather than starting "
+        "at id 1, which would walk 16.4M historical changes."
+    ),
+)
+
 redcross_branches_job = define_asset_job(
     name="redcross_branches_refresh",
     selection=_asset_selection(["redcross-branches"]),
@@ -343,6 +365,7 @@ jobs = [
     klass_job,
     seed_sources_job,
     brreg_bootstrap_job,
+    brreg_feed_job,
     redcross_branches_job,
     transform_job,
     api_v1_checks_job,

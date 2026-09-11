@@ -146,6 +146,12 @@ operational:
       written. That is safe because they are idempotent, but reordering these has
       not been tested (ops, urb-agents #627).
 
+      brreg_change_feed runs immediately after brreg_bootstrap for a reason: the
+      bootstrap seeds the feed's watermark from the snapshot's own date, so the
+      feed has nothing to start from until it has run. Running the feed first
+      fails loudly rather than silently walking history — it refuses to start
+      without a watermark.
+
       brreg_bootstrap is the odd one out and the one most likely to be skipped.
       It has NO schedule and its asset has NO automation condition, on purpose —
       re-running a 1.17M-record bulk load against a populated database is the one
@@ -153,7 +159,7 @@ operational:
       it. Run it once, here. Skipping it leaves the organisation register empty
       with nothing saying why; running it twice is safe (upsert, never truncate)
       but pointless.
-    jobs: [annual_sources_refresh, klass_refresh, seed_sources_refresh, brreg_bootstrap, transform_and_publish]
+    jobs: [annual_sources_refresh, klass_refresh, seed_sources_refresh, brreg_bootstrap, brreg_change_feed, transform_and_publish]
     takes: "~11 minutes for the first four, plus the Brreg bulk load; ~4.1M rows across 48 raw and 64 marts tables"
     measured: "imac, clean cluster, urb-agents #507 — 11.1 min, 2,906,194 rows. That figure PREDATES brreg_bootstrap and does not include it: the download alone is 210 MB / 52 s and the database write time is not yet measured. Do not read 11 minutes as the new total."
 
@@ -172,6 +178,11 @@ operational:
       what: ~37 annual public-sector sources — SSB, FHI, Bufdir
     - cron: "0 1 1 * *"
       what: SSB Klass classifications (kommune/fylke)
+    - cron: "0 4 * * *"
+      what: >-
+        Brønnøysundregistrene change feed — the day's register changes, ~3,300
+        records. One hour before the transform on purpose, so they reach the API
+        the same morning rather than a day later.
     - cron: "0 5 * * *"
       what: dbt transform and publish — no external calls
 

@@ -45,15 +45,41 @@ validation section for what imac is verifying.
 """
 
 from atlas_data.assets._factory import make_raw_ingest_assets
+from atlas_data import cadence
 
 BRREG_BULK_SOURCES = [
     "brreg-enheter-alle",
 ]
 
+# The change feed (PLAN-002). Opposite treatment to the bootstrap above, and the
+# contrast is the point:
+#
+#   the bootstrap  runs once, by hand, and must never self-trigger
+#   the feed       runs every day, unattended, and must never be forgotten
+#
+# It is safe to automate precisely because it is small and additive: ~3,300
+# changes a day, appended to raw.brreg_oppdateringer and
+# raw.brreg_enheter_versions, never touching the 1.17M-row snapshot. A bug here
+# cannot damage the expensive table.
+#
+# 04:00 is load-bearing — transform_and_publish runs at 05:00, so the day's
+# register changes reach marts the same morning. See cadence.DAILY_CRON.
+BRREG_FEED_SOURCES = [
+    "brreg-oppdateringer",
+]
+
 # No automation_condition and no freshness_policy arguments at all — see the
 # module docstring. Their absence is the design, so do not "fix" it by adding
 # cadence.monthly_polled() to match the neighbouring source families.
-assets = make_raw_ingest_assets(
-    BRREG_BULK_SOURCES,
-    group_name="raw_brreg",
-)
+assets = [
+    *make_raw_ingest_assets(
+        BRREG_BULK_SOURCES,
+        group_name="raw_brreg",
+    ),
+    *make_raw_ingest_assets(
+        BRREG_FEED_SOURCES,
+        group_name="raw_brreg",
+        automation_condition=cadence.daily_polled(),
+        freshness_policy=cadence.DAILY_FRESHNESS,
+    ),
+]
