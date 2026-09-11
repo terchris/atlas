@@ -59,7 +59,7 @@
       "description": "The Norwegian register of legal entities — Brønnøysundregistrene's\nEnhetsregisteret, held in full. Not an indicator: it is the population\nof organisations that every other NGO and sector question is asked\nabout, and the join target for organisasjonsnummer.\n",
       "emoji": "🏛️",
       "order": 65,
-      "source_count": 1
+      "source_count": 2
     },
     {
       "id": "reference",
@@ -77,7 +77,7 @@
       "homepage": "https://www.brreg.no/",
       "feedback_url": "https://www.brreg.no/om-oss/kontakt-oss/",
       "notes": "The Brønnøysund Register Centre — the Norwegian government agency that\noperates the country's central registers. Atlas reads Enhetsregisteret\n(every registered legal entity, ~1.17M) and Frivillighetsregisteret (the\nvoluntary-organisation register, a filtered view of the same entities).\nData released under NLOD 2.0; `organisasjonsnummer` is the join key that\nmakes organisational data from any Norwegian source line up.\n\nNo logo: Brreg's mark is not offered under the same open licence as the\ndata, so the publisher page renders without one rather than\nredistributing it.\n",
-      "source_count": 1
+      "source_count": 2
     },
     {
       "id": "bufdir",
@@ -164,7 +164,9 @@
         "frr",
         "redcross-branches"
       ],
-      "related_by_topic": [],
+      "related_by_topic": [
+        "brreg-oppdateringer"
+      ],
       "dimensions": [
         {
           "code": "organisasjonsnummer",
@@ -198,6 +200,106 @@
       "citation": {
         "text": "Brønnøysundregistrene. (n.d.). Enhetsregisteret — alle registrerte enheter. Retrieved from https://data.brreg.no/enhetsregisteret/api/dokumentasjon. Available in Atlas at https://atlas.sovereignsky.no/datasets/brreg-enheter-alle.",
         "bibtex": "@misc{atlas_brreg_enheter_alle,\n  author = {Brønnøysundregistrene},\n  title  = {Enhetsregisteret — alle registrerte enheter},\n  year   = {n.d.},\n  url    = {https://data.brreg.no/enhetsregisteret/api/dokumentasjon},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/brreg-enheter-alle}\n}"
+      },
+      "feedback_url": "https://www.brreg.no/om-oss/kontakt-oss/",
+      "consuming_marts": [],
+      "consuming_models": [],
+      "joined_with": [],
+      "last_ingested_at": null,
+      "latest_row_count": null,
+      "total_runs": null,
+      "downstream_model_count": null
+    },
+    {
+      "kind": "source",
+      "source_id": "brreg-oppdateringer",
+      "upstream_id": "enhetsregisteret-oppdateringer",
+      "upstream_url": "https://data.brreg.no/enhetsregisteret/api/oppdateringer/enheter",
+      "upstream_landing_page": "https://data.brreg.no/enhetsregisteret/api/dokumentasjon",
+      "upstream_title": "Enhetsregisteret — oppdateringer (endringsfeed)",
+      "description": "Brønnøysundregistrene publishes every change to Enhetsregisteret as an ordered\nfeed: one record per change, carrying the organisation number, a change type and\na monotonic `oppdateringsid`. Atlas walks it forward daily from a durable\nwatermark, recording each change in `raw.brreg_oppdateringer` and the\norganisation's document at that moment in `raw.brreg_enheter_versions`.\n\nThis is what keeps the bulk snapshot (`brreg-enheter-alle`) from going stale.\nThe snapshot is a point in time; a bulk file cannot express a deletion, because\nabsence from a 1.17M-record file is indistinguishable from a truncated download.\nDeletions arrive here, as `Sletting` and `Fjernet` change types.\n\nThe feed has no retention window — it reaches back to `oppdateringsid` 1 in April\n2018 — so a missed day, week or month catches up completely on the next run.\nCadence is a freshness choice, not a correctness one.\n",
+      "atlas_summary": null,
+      "publisher": {
+        "id": "brreg",
+        "display_name": "Brønnøysundregistrene",
+        "homepage": "https://www.brreg.no/"
+      },
+      "category": {
+        "id": "organisations",
+        "name": "Organisations register",
+        "emoji": "🏛️"
+      },
+      "license": "NLOD",
+      "license_url": "https://data.norge.no/nlod/no/2.0",
+      "periodicity": "P1D",
+      "eu_theme": "GOVE",
+      "attribution": "Inneholder data under norsk lisens for offentlige data (NLOD) tilgjengeliggjort av Brønnøysundregistrene",
+      "tags": {
+        "provider": "brreg",
+        "topic": "organisations",
+        "geo": "kommune",
+        "cadence": "daily"
+      },
+      "keywords": [
+        "enhetsregisteret",
+        "change-feed",
+        "oppdateringer",
+        "organisasjonsnummer",
+        "brreg"
+      ],
+      "lifecycle": "beta",
+      "time_coverage": {
+        "start": 2018,
+        "end": null
+      },
+      "methodology_notes": "🔴 The feed is walked by CURSOR ONLY — `?oppdateringsid=<last+1>&size=10000`.\n\n`page` is capped at 20, and Brreg's HAL `_links.next` is built with `page=`, so\nfollowing the next link — the idiomatic, careful thing to do — returns HTTP 400\nafter 20 hops having seen only the oldest 10,000 changes, every one of them\n`Ukjent`, and not a single deletion. It would look perfectly healthy. A\nsource-text test asserts the module contains neither `page=` nor `_links.next`.\n\nTermination is an ABSENT `_embedded` key, not an empty array: a caught-up\nresponse is `{_links, page}` with `totalElements: 0`. A poller spelled\n`body._embedded.oppdaterteEnheter` throws at exactly the moment it catches up.\n\nThe watermark lives in `raw.brreg_feed_watermark`, not in a Dagster cursor. A\ncursor lives in the Dagster instance database, which has a different lifecycle;\nif it is rebuilt, a cursor-based feed restarts from nowhere and silently stops\napplying deletions.\n\nA run is capped at 50,000 changes (`BRREG_FEED_MAX_CHANGES`). Each change costs\none entity fetch, and a watermark of 1 would mean 16.4M requests against a\npublic-sector API Atlas depends on staying welcome at.\n",
+      "suggested_joins": [
+        "brreg-enheter-alle"
+      ],
+      "related_by_topic": [
+        "brreg-enheter-alle"
+      ],
+      "dimensions": [
+        {
+          "code": "oppdateringsid",
+          "meaning": "Brreg's monotonic change identifier, and the cursor the feed is walked by",
+          "value_format": "bigint, sparse",
+          "notes": "🔴 Sparse, and that matters. The id space runs to ~25.18M against ~16.4M records, so the gap between two ids is NOT the number of changes between them — asking for id 16,417,000 returns a first record of 16,427,801. Never compute a backlog by subtracting ids; read `page.totalElements` at the cursor, which is a correct remaining-record count."
+        },
+        {
+          "code": "endringstype",
+          "meaning": "What kind of change Brreg recorded",
+          "value_format": "Ny, Endring, Sletting, Fjernet or Ukjent",
+          "notes": "All five occur and all five are handled. `Sletting` is the deletion in current traffic; `Fjernet` is real but concentrated in older eras (23 of 500 at oppdateringsid 16,400,000, and absent from the 2026-09-11 daily sample); `Ukjent` is the entire pre-2018-08 history and must never delete anything. Stored verbatim and not constrained to an enum — a sixth value must land and be counted, not rejected at the door."
+        },
+        {
+          "code": "organisasjonsnummer",
+          "meaning": "The organisation the change is about",
+          "value_format": "9 digits, leading zeros significant — always text",
+          "notes": "Joins to raw.brreg_enheter_snapshot. Retained after deletion, which is what lets a tombstone address a row that no longer has a live entity behind it."
+        },
+        {
+          "code": "doc",
+          "meaning": "The organisation's document as it stood when the change was received",
+          "value_format": "jsonb, or null when the entity fetch failed",
+          "notes": "⚠️ For a `Sletting` this is Brreg's SIX-KEY STUB, not a full record — a deleted organisation still answers HTTP 200 with `slettedato` set. Branch on endringstype; never assume doc is a complete Enhet, and never detect deletion from a status code."
+        },
+        {
+          "code": "process_status",
+          "meaning": "What Atlas did with the change",
+          "value_format": "applied, tombstoned or skipped_unknown",
+          "notes": "Derived from endringstype at load time. `skipped_unknown` covers both `Ukjent` and any future sixth value, deliberately — the run counts and surfaces them rather than guessing an action."
+        }
+      ],
+      "raw_tables": [
+        "brreg_oppdateringer",
+        "brreg_enheter_versions",
+        "brreg_feed_watermark"
+      ],
+      "sample_query": "https://api-atlas.sovereignsky.no/brreg_oppdateringer?limit=5",
+      "citation": {
+        "text": "Brønnøysundregistrene. (n.d.). Enhetsregisteret — oppdateringer (endringsfeed). Retrieved from https://data.brreg.no/enhetsregisteret/api/dokumentasjon. Available in Atlas at https://atlas.sovereignsky.no/datasets/brreg-oppdateringer.",
+        "bibtex": "@misc{atlas_brreg_oppdateringer,\n  author = {Brønnøysundregistrene},\n  title  = {Enhetsregisteret — oppdateringer (endringsfeed)},\n  year   = {n.d.},\n  url    = {https://data.brreg.no/enhetsregisteret/api/dokumentasjon},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/brreg-oppdateringer}\n}"
       },
       "feedback_url": "https://www.brreg.no/om-oss/kontakt-oss/",
       "consuming_marts": [],

@@ -22,7 +22,7 @@ This investigation stays in `backlog/` until every child PLAN has shipped (`PLAN
 | plan | state | delivers |
 |---|---|---|
 | [PLAN-001-brreg-bulk-snapshot](../active/PLAN-001-brreg-bulk-snapshot.md) | **Active** | the one-time load of 1,174,098 enheter into `raw`, streaming, no CSV stage |
-| [PLAN-002-brreg-change-feed](PLAN-002-brreg-change-feed.md) | Backlog | the daily poller — `oppdateringsid` watermark in Postgres, append-only, `Sletting` as the deletion |
+| [PLAN-002-brreg-change-feed](../active/PLAN-002-brreg-change-feed.md) | **Active** | the daily poller — `oppdateringsid` watermark in Postgres, append-only, cursor only (never `page`), `Sletting` and `Fjernet` as the deletions |
 | [PLAN-003-brreg-dim-and-frivillig](PLAN-003-brreg-dim-and-frivillig.md) | Backlog | dbt incremental → `marts.dim_brreg_enhet`, Frivillighetsregisteret enrichment, `dim_ngo` derived |
 
 **Three decisions taken by ops-dev on 2026-09-11** under Terje's delegation (#711), so they are
@@ -378,26 +378,43 @@ So **PLAN-002 designs for the cursor and leaves no page-based fallback in**, bec
 the broken path. And `Ukjent` gets a deliberate branch: counted and surfaced, never crashed on, never
 silently skipped, and **never treated as a deletion**.
 
-#### 🔴 `totalElements` is NOT the backlog depth — retracted
+#### ⚠️ `totalElements` — claimed, retracted, and then the retraction withdrawn. It stands.
 
-An earlier version of this section said, in bold: *"`totalElements` is the backlog depth. Atlas can
-answer 'how far behind are we' with one request — a monitoring signal shadow-brreg had no way to
-produce."* **That was wrong.** imac measured it (urb-agents #711) and I reproduced it on 2026-09-12:
+This section said `totalElements` gives the backlog depth. On 2026-09-12 I **struck** that on imac's
+measurement, relayed by ops-dev as *"mutually inconsistent"*:
 
 ```
 unfiltered                16,417,370
 at oppdateringsid=1000000 15,751,321
-at oppdateringsid=16417000  7,815,236    ← mutually inconsistent
+at oppdateringsid=16417000  7,815,236
 ```
 
-Ids are also **sparse**: asking for `oppdateringsid=16417000` returns a first record with id
-**16,427,801**, so id arithmetic does not measure distance either.
+I reproduced the numbers and agreed. **I should not have.** They look inconsistent only if
+`oppdateringsid` is a record ordinal — a cursor at 16,417,000 of 16,417,370 records "should" leave
+370. It is not an ordinal: ids are sparse and the id space runs to ~25.18M against 16.4M records, so
+7.8M records genuinely remain.
 
-🔴 **No watermark, progress bar or completeness assertion may be built on `totalElements` or on id
-arithmetic.** This removes the one monitoring capability this investigation claimed as a gain over
-shadow-brreg. Dropping it is better than shipping a "how far behind are we" number that is wrong by
-millions. The retraction is left here in place of the claim, rather than only in the thread where it
-was made.
+Measured two ways on 2026-09-12. The three segments sum **exactly** to the unfiltered total
+(666,049 + 7,936,085 + 7,815,236 = 16,417,370), and an enumerated window matches its prediction
+exactly:
+
+```
+totalElements at 25,000,000   141,187
+totalElements at 25,100,000    58,526
+predicted in [25.0M, 25.1M)    82,661
+actually enumerated            82,661   ← exact
+```
+
+🟢 **So the capability is real**: one request with `size=1` gives the number of records remaining from
+the watermark, and it decreases monotonically as the watermark advances.
+
+🔴 **What is true from imac's finding is narrower, and still matters:** *id arithmetic* measures
+nothing. Asking for `16,417,000` returns a first record of `16,427,801` — a 10,801-id gap containing
+zero records. Count records with `totalElements`; never subtract ids.
+
+⚠️ Left at this length deliberately. Within one day I claimed more than I had measured, then withdrew
+something true on someone else's reading of the same numbers. Neither error was caught by argument;
+both were settled by enumerating the window. **When a number is disputed, count it.**
 
 #### Two smaller findings
 

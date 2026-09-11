@@ -93,6 +93,22 @@ apply. Run commands on the host. Do not invent a cage.
 - **Prefer a build-time assertion over a rule people must remember** — and make the guard fail on
   purpose once before trusting it. This repo has shipped a guard that protected nothing, and a
   green uniqueness test once masked a real fan-out bug.
+- **Absence-guards are a pattern here. Look for the existing ones before inventing a third.**
+  Sometimes what makes code correct is that a statement is *not* there, and no ordinary test covers an
+  absence — the code passes every test right up until someone adds the line. The answer is a test that
+  asserts over the module's own source text. It fails on the pull request that adds the line, rather
+  than on the cluster that loses the data.
+
+  Two exist today, both in `atlas-data/ingest/src/sources/brreg-enheter-alle/__tests__/`:
+  - **no `DELETE` / `TRUNCATE`** in the bulk loader — a re-run must upsert, and a neighbouring module
+    (`bufdir-barnefattigdom`) *does* delete-then-insert, so copying a neighbour is a live route to
+    introducing it.
+  - **no `page` parameter and no `_links.next`** in the change-feed poller (PLAN-002) — Brreg's feed
+    caps `page` at 20 and its HAL `next` link is page-based, so following the link *correctly* walks
+    into an HTTP 400 after 20 hops and silently never sees a deletion.
+
+  Both were made to fail on purpose before being trusted. If you need a third, copy the shape from
+  these — and add it to this list, because the fourth person will not find the first three.
 - **A retraction must travel with the claim it retracts.** On 2026-09-05 a claim was measured,
   found wrong and retracted in a PR thread and an investigation file. Four days later the same
   number was recycled — into a commit message, a PR body, and an acceptance criterion sent to
