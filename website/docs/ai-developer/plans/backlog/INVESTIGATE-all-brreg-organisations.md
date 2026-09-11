@@ -88,6 +88,21 @@ to *derive* ICNPO codes, only map the register's own codes onto `ref_atlas_servi
 source half of the crosswalk is solved by the upstream. Whether that removes the sequencing dependency
 or merely shrinks it is for whoever picks up #9 to judge — **but it should be judged, not inherited.**
 
+> ✅ **Re-verified 2026-09-12, because imac reported this endpoint as 404.** It is not. Three
+> consecutive requests from here returned **200**, with `icnpoKategorier`, `grasrotandel`,
+> `innfoertDato`, `vedtekter` and `paategninger` on the record, and the single-organisation path
+> (`/frivillige-organisasjoner/<orgnr>`) also returns 200.
+>
+> imac's four other paths do 404 from here too — `/frivillighetsregisteret/api`,
+> `/frivillighetsregisteret/api/dokumentasjon`, `/frivillighetsregisteret/api/frivilligeOrganisasjoner`
+> (camelCase) — but none of those is the endpoint named above. **The hyphenated
+> `frivillige-organisasjoner` is the one that answers**, and the enrichment half of PLAN-003 stands as
+> designed. Recorded here rather than only in the thread, so nobody redesigns it on the 404.
+>
+> 🟢 imac's independent point holds regardless and is the more useful half: **FRR *membership* needs no
+> second source at all.** `registrertIFrivillighetsregisteret` is present on 100% of bulk records and
+> true for 72,798 — against the ~72,806 quoted above. Only FRR-*specific attributes* need this API.
+
 ## 🔴 What "everything" means — and the part the decision did not cover
 
 The decision above says the full Enhetsregisteret. **Enhetsregisteret is two registers, and this file
@@ -336,13 +351,53 @@ The endpoint accepts `?oppdateringsid=` and returns from that id onward:
   → page: {"totalElements": 23108, "totalPages": 11554}
 ```
 
-This is strictly better than the date-based watermark shadow-brreg used, and it is what Atlas should
-build on:
+This is not merely *better* than the date-based watermark shadow-brreg used. **It is the only thing
+that works** — see the paging cap below.
 
 - **no timestamp ties.** Several changes can share a millisecond; ids cannot collide.
 - **exactly resumable.** Store the last processed id; ask for the next one.
-- 🔴 **`totalElements` is the backlog depth.** Atlas can answer *"how far behind are we"* with one
-  request — a monitoring signal shadow-brreg had no way to produce.
+
+#### 🔴 The page parameter is capped at 20, and the reachable pages are all `Ukjent`
+
+Found by imac (urb-agents #711), reproduced here on 2026-09-12:
+
+```
+size=500, page 0-19      →  200
+size=500, page 20+       →  HTTP 400     (the cap applies inside a ?dato= window too)
+advertised totalPages    →  32,835       of which 32,815 are unreachable by page
+page 0, 500 records      →  endringstype: Ukjent × 500, all dated 2018-04-23
+?dato=2026-09-10, 500    →  Endring 314, Ny 133, Sletting 53
+```
+
+⚠️ **A loader that walks the feed by incrementing `page` gets twenty pages of `Ukjent`, then HTTP 400,
+and never sees a single `Sletting`.** It would look perfectly healthy and delete nothing. Matching
+`Sletting` correctly does not save it, because the feed is never walked at all — a test that only
+checks the enum passes.
+
+So **PLAN-002 designs for the cursor and leaves no page-based fallback in**, because the fallback is
+the broken path. And `Ukjent` gets a deliberate branch: counted and surfaced, never crashed on, never
+silently skipped, and **never treated as a deletion**.
+
+#### 🔴 `totalElements` is NOT the backlog depth — retracted
+
+An earlier version of this section said, in bold: *"`totalElements` is the backlog depth. Atlas can
+answer 'how far behind are we' with one request — a monitoring signal shadow-brreg had no way to
+produce."* **That was wrong.** imac measured it (urb-agents #711) and I reproduced it on 2026-09-12:
+
+```
+unfiltered                16,417,370
+at oppdateringsid=1000000 15,751,321
+at oppdateringsid=16417000  7,815,236    ← mutually inconsistent
+```
+
+Ids are also **sparse**: asking for `oppdateringsid=16417000` returns a first record with id
+**16,427,801**, so id arithmetic does not measure distance either.
+
+🔴 **No watermark, progress bar or completeness assertion may be built on `totalElements` or on id
+arithmetic.** This removes the one monitoring capability this investigation claimed as a gain over
+shadow-brreg. Dropping it is better than shipping a "how far behind are we" number that is wrong by
+millions. The retraction is left here in place of the claim, rather than only in the thread where it
+was made.
 
 #### Two smaller findings
 

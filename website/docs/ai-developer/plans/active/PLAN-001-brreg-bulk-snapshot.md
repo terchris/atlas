@@ -67,10 +67,29 @@ The resource envelope was the largest unknown and the thing tor-agent was waitin
       memory is bounded by chunk size because nothing is materialised.
 
       ⚠️ **Two counting methods, and the cheap one was wrong.** A `grep -c '"organisasjonsnummer"'`
-      proxy returned **1,173,879**; an exact brace-depth scan returned **1,173,878**. One record
-      carries that key twice. The proxy is 2 s and the exact scan 232 s, so use the proxy for a smoke
-      check and **never as the load's row-count assertion** — task 2.x must count objects it actually
-      parsed.
+      proxy returned **1,173,879**; an exact brace-depth scan returned **1,173,878**. The proxy is 2 s
+      and the exact scan 232 s, so use the proxy for a smoke check and **never as the load's row-count
+      assertion** — task 2.x must count objects it actually parsed.
+
+      🔴 **My explanation of the off-by-one was wrong, and the truth is worse.** I wrote that one
+      record carries the key twice, nested. imac's colon-aware scan (urb-agents #711) showed
+      otherwise, and I reproduced it against the file on 2026-09-12:
+
+      ```
+      bare "organisasjonsnummer"            1,173,879
+      "organisasjonsnummer"\s*:  (as a key)  1,173,878   ← matches the brace-depth truth
+      ```
+
+      The extra hit is the literal appearing **as a value**, in one organisation's free-text
+      `aktivitet` array, at line 11,241,685 of the uncompressed file:
+
+      ```
+      "aktivitet" : [ "Drift av gatelys. Skal også drifte Eggum vannverk med samme", "organisasjonsnummer" ],
+      ```
+
+      So the proxy is not stably wrong by one. **It is wrong by however many times the public types
+      that word into a registration form, and it can drift any morning.** Keeping it as a smoke check
+      and never an assertion was right; this is the reason, and the reason I originally gave was not.
 - [x] 1.3 10,000 records into a scratch `jsonb` table on Postgres 15:
       **1,651 bytes/row** (heap + toast + PK), **2,340 bytes/row** with a
       `gin (doc jsonb_path_ops)` index — **+42%**.

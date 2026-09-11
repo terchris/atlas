@@ -15,7 +15,7 @@ Keeps the register copy current by consuming Brreg's `oppdateringer` feed daily 
 
 **Goal**: Atlas's copy of Enhetsregisteret stays identical to Brreg's, including deletions, with no manual intervention and no separate backfill path.
 
-**Last Updated**: 2026-09-11
+**Last Updated**: 2026-09-12
 
 **Investigation**: [INVESTIGATE-all-brreg-organisations](../backlog/INVESTIGATE-all-brreg-organisations.md)
 **Prerequisites**: PLAN-001 must be complete — there is nothing to update until a snapshot exists
@@ -38,9 +38,39 @@ Two properties were measured and both shape this plan:
   is the complete history. **Cadence is a freshness choice, not a correctness one** — a missed week
   catches up completely.
 - 🟢 **`?oppdateringsid=` is supported**, and is a better watermark than the date
-  [`shadow-brreg`](https://github.com/terchris/shadow-brreg) had to use: ids cannot tie, resumption is
-  exact, and the response's `totalElements` is the **backlog depth**, so *"how far behind are we"* is
-  one request.
+  [`shadow-brreg`](https://github.com/terchris/shadow-brreg) had to use: ids cannot tie and resumption
+  is exact.
+
+🔴 **`page` is capped at 20, and every reachable page is `Ukjent`. The cursor is not merely better —
+it is the only thing that works.** Found by imac (urb-agents #711), reproduced 2026-09-12:
+
+```
+size=500, page 0-19    →  200
+size=500, page 20+     →  HTTP 400    (the cap applies inside a ?dato= window too)
+advertised totalPages  →  32,835      of which 32,815 are unreachable by page
+page 0                 →  endringstype: Ukjent × 500, all dated 2018-04-23
+?dato=2026-09-10       →  Endring 314, Ny 133, Sletting 53
+```
+
+⚠️ **A loader that increments `page` gets twenty pages of `Ukjent`, then HTTP 400, and never sees a
+single `Sletting`** — deleting nothing while looking perfectly healthy. **Matching `Sletting`
+correctly does not save it**, because the feed is never walked at all, and a test that checks only the
+enum passes. So: build the cursor, and **leave no page-based fallback in**, because the fallback is
+the broken path.
+
+🔴 **`totalElements` is NOT the backlog depth — retracted.** An earlier version of this section said
+*"the response's `totalElements` is the backlog depth, so 'how far behind are we' is one request."*
+It is not, and the numbers are mutually inconsistent:
+
+```
+unfiltered                 16,417,370
+at oppdateringsid=1000000  15,751,321
+at oppdateringsid=16417000   7,815,236
+```
+
+Ids are sparse too — asking for `16,417,000` returns a first record with id `16,427,801` — so id
+arithmetic measures nothing either. **No watermark, progress bar or completeness assertion may be
+built on either.** Task 2.5 below is struck for this reason.
 
 🔴 **The deletion value is `Sletting`, not `Fjernet`.** A 500-change live sample on 2026-09-11:
 
@@ -83,11 +113,18 @@ A watermark row exists after PLAN-001's bootstrap and names a plausible id (~25M
 
 ### Tasks
 
-- [ ] 2.1 Ingest module: read watermark → page `?oppdateringsid=` → append every change to
-      `raw.brreg_oppdateringer` → advance the watermark **only after** the page is committed.
-- [ ] 2.2 🔴 Branch on **all four** `endringstype` values. `Sletting` is the deletion. Put the sample
-      counts from the Problem Summary in a code comment beside the branch, so the next reader sees
-      evidence rather than an assertion.
+- [ ] 2.1 Ingest module: read watermark → advance the **cursor** with `?oppdateringsid=` → append
+      every change to `raw.brreg_oppdateringer` → advance the watermark **only after** the batch is
+      committed. 🔴 **No `page` parameter anywhere in the module**, not even as a fallback — see the
+      Problem Summary. Worth a source-text guard like the one on the bootstrap's `DELETE`: what makes
+      this correct is the absence of a parameter, and no unit test covers an absence.
+- [ ] 2.2 🔴 Branch on **all five** `endringstype` values: `Ny`, `Endring`, `Sletting`, `Fjernet` and
+      **`Ukjent`**. `Sletting` is the deletion. Put the sample counts from the Problem Summary in a
+      code comment beside the branch, so the next reader sees evidence rather than an assertion.
+- [ ] 2.2b 🔴 **`Ukjent` is a deliberate branch, not a default case.** It is counted and surfaced in
+      run metadata, it never crashes the run, it is never silently skipped, and **it never deletes
+      anything**. The whole of the reachable-by-page history is `Ukjent` (2018-08 and earlier), so a
+      catch-up from an early watermark meets a great many of them.
 - [ ] 2.3 For each changed org, fetch its current document via `_links.enhet.href` (already in the
       feed — no separate lookup needed) and append to `raw.brreg_enheter_versions`
       (`organisasjonsnummer`, `doc jsonb`, `oppdateringsid`, `endringstype`, `fetched_at`).
@@ -96,8 +133,12 @@ A watermark row exists after PLAN-001's bootstrap and names a plausible id (~25M
 - [ ] 2.4 A `Sletting` appends a **tombstone row** (`doc` null, `endringstype='Sletting'`) rather than
       deleting anything. Deletion becomes a filter in dbt, so *"what did this organisation look like
       before it was removed"* stays answerable.
-- [ ] 2.5 Emit backlog depth (`totalElements` at the current watermark) as run metadata, so a run that
-      is falling behind is visible without a query.
+- [x] 2.5 ~~Emit backlog depth (`totalElements` at the current watermark) as run metadata.~~
+      🔴 **Struck 2026-09-12.** `totalElements` is not the backlog depth and id arithmetic does not
+      measure distance — see the Problem Summary. Emit what is actually true instead: the count of
+      changes processed this run, the highest `oppdateringsid` seen, and the `endringstype` histogram
+      including `Ukjent`. A run that processes zero changes when it should not is visible from those;
+      a number wrong by millions is worse than no number.
 - [ ] 2.6 Resumability: a run interrupted mid-page leaves the watermark unadvanced and re-processes
       that page. Append with `on conflict (oppdateringsid) do nothing`.
 
@@ -105,6 +146,12 @@ A watermark row exists after PLAN-001's bootstrap and names a plausible id (~25M
 
 Kill the job mid-run; re-run it; assert no duplicate `oppdateringsid` rows and no gap between the
 watermark and the lowest unprocessed change.
+
+🔴 **And assert the feed was actually walked**, not merely that the enum was matched. Seed the
+watermark at an id from 2018 and run: a correct implementation crosses out of the `Ukjent` era and
+reaches real `Endring` / `Ny` / `Sletting` values. A page-based implementation stops at 10,000
+records of `Ukjent` and then 400s — and every enum test still passes. That is the failure this
+validation exists to catch, and it is not the one the original tasks would have caught.
 
 ---
 

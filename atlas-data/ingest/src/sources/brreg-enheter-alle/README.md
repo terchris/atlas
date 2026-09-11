@@ -39,9 +39,22 @@ No NDJSON output file — at this volume that is a 2 GB write per run with no re
   containing a pipe, a newline and a double quote survives byte-identical. That test has been made
   to fail on purpose by reintroducing the strip; it is not decorative.
 - **`organisasjonsnummer` is text, not a number.** Leading zeros are significant.
-- **Counting by grep over-counts.** `grep -c '"organisasjonsnummer"'` returned 1,173,879 against
-  1,173,878 actual records — one record carries the key twice, nested. Fine as a 2-second smoke
-  check, never as the load's row-count assertion.
+- **Counting by grep over-counts, and not by a fixed amount.** `grep -c '"organisasjonsnummer"'`
+  returns 1,173,879 against 1,173,878 actual records. The extra hit is **not** a duplicated key —
+  it is the literal appearing as a *value*, in one organisation's free-text `aktivitet`:
+
+  ```
+  "aktivitet" : [ "Drift av gatelys. Skal også drifte Eggum vannverk med samme", "organisasjonsnummer" ],
+  ```
+
+  So the proxy is wrong by however many times the public types that word into a registration form,
+  and it can drift any morning. Fine as a 2-second smoke check, never as the load's row-count
+  assertion. (Corrected 2026-09-12 after imac's colon-aware scan on urb-agents #711; this file
+  previously gave the duplicated-key explanation, which was wrong.)
+- **The bulk file is pretty-printed; the live API is compact.** `"organisasjonsnummer" : "810034882"`
+  with spaces around the colon, against `{"organisasjonsnummer":"810034882"}`. Any string matching
+  written against the API's shape silently matches **zero** in the bulk file — imac hit exactly that.
+  Another reason the loader parses rather than pattern-matches.
 - **The bulk file and the live API disagree by design.** 1,173,878 in the file against the API's
   1,174,098 on the same day: the churn between the file's generation and the query. PLAN-002 closes
   it; neither number is wrong.
