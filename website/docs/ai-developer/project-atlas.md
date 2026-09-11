@@ -78,6 +78,16 @@ apply. Run commands on the host. Do not invent a cage.
   `private_marts.*` (Red Cross personal data) stays gated.
 - **The frontend dogfoods the public API.** `atlas-frontend` has no database role and reads only
   what an external consumer can read. Do not give it one to make something easier.
+- 🔴 **A new dataset is a scored decision, and the scoring already exists. Read it before proposing
+  one.** [`plans/backlog/INVESTIGATE-new-norwegian-public-sources.md`](plans/backlog/INVESTIGATE-new-norwegian-public-sources.md)
+  holds the **five selection criteria** — report fit, geographic resolution, access mechanism, licence
+  and attribution, ingestion complexity vs upstream cadence — and **fourteen candidates already scored
+  and tiered** against them. `AGENT-onboard-source.md` is the *how*; that file is the *whether*, and it
+  is where the editorial decisions live.
+  **Check whether the dataset is already a candidate before writing anything new.** On 2026-09-11 this
+  agent was asked about Brreg organisations, did not check, and wrote a fresh investigation that
+  duplicated candidate #9 — which had already scored it Tier 2, named the correct API endpoint, and
+  recorded a sequencing dependency. The rules were fine; they were unreachable from here.
 - **Every marts column is documented.** The dbt-osmosis gate enforces it repo-wide; a new column
   without a description fails the gate.
 - **Prefer a build-time assertion over a rule people must remember** — and make the guard fail on

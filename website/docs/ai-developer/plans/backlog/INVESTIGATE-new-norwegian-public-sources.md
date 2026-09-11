@@ -205,6 +205,18 @@ These don't fill an existing report — they enable an *11th, 12th, 13th* report
 **Source-specific quirks**:
 - **[Q24]** Atlas already has shared `raw.brreg_enheter` (per [PLAN-001-brreg-enheter](../completed/PLAN-001-brreg-enheter.md)) — Frivillighetsregisteret is a sibling endpoint at the same data.brreg.no host. Pattern: extend the existing Brreg ingest module rather than spinning up a new one.
 - **[Q25]** Lottstift's momskompensasjon Excel is annual; one parser per yearly file. Fits the [scraping infra `bulk_excel_drop` pattern](../completed/INVESTIGATE-ngo-scraping-infrastructure.md).
+- 🟢 **[Q26] update, 2026-09-11 — the upstream supplies ICNPO itself.** Verified against the live
+  dedicated API: `GET /frivillighetsregisteret/api/frivillige-organisasjoner` returns
+  `icnpoKategorier` per organisation — e.g. `{"icnpoNummer": "9100", "kategori":
+  "ICNPOKategori.internasjonaleOrganisasjoner"}` — alongside `grasrotandel`, `innfoertDato` and
+  `vedtekter`. So Atlas does not need to *derive* ICNPO codes, only map the register's own onto
+  `ref_atlas_service_category`. **The sequencing dependency below should be re-judged rather than
+  inherited**; it may shrink to a mapping table.
+  Design deep-dive, including the change-feed architecture and the 2026 API verification:
+  [INVESTIGATE-all-brreg-organisations](INVESTIGATE-all-brreg-organisations.md).
+  ⚠️ That file also carries a *wider* question this candidate does not: whether Atlas should hold the
+  **full Enhetsregisteret (~1.17M)** rather than the voluntary subset (**72,806**). This candidate is
+  the subset.
 - **[Q26]** ICNPO category mapping. Atlas's existing `ref_atlas_service_category` (22 cross-NGO categories from PLAN-002) needs an explicit ICNPO crosswalk. Companion: [`INVESTIGATE-tag-indicators-sdg-icnpo.md`](./INVESTIGATE-tag-indicators-sdg-icnpo.md) is already in the backlog and resolves the vocabulary side. **Sequencing dependency**: this candidate should land *after* the SDG/ICNPO tagging investigation produces a settled crosswalk.
 
 ---

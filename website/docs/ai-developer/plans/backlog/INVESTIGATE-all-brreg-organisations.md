@@ -17,6 +17,52 @@ The API was re-verified against the live service on 2026-09-11 rather than trust
 
 **Two decisions remain Terje's**: ingest scope, and what reaches `api_v1`.
 
+## 🔴 Read this first — most of this was already decided, and I did not check
+
+**Option B below is candidate #9 of
+[INVESTIGATE-new-norwegian-public-sources](INVESTIGATE-new-norwegian-public-sources.md)**, scored
+Tier 2 long before this file was written. I wrote this investigation without opening that one. The
+duplication is mine, and this section exists so the next reader meets the catalogue rather than
+re-deriving it.
+
+**What candidate #9 already settled**, and this file now adopts rather than rediscovers:
+
+| | |
+|---|---|
+| **Fit** | generalises **Report #7 (NGO Footprint vs Need)** from Red-Cross-only supply to all-Norwegian-NGO supply |
+| **Licence / geo / cadence** | NLOD · per-orgnr, aggregates to kommune via registered address · continuous |
+| **[Q24]** | **extend the existing Brreg ingest module**, do not spin up a new one |
+| **[Q26]** | sequencing dependency on the SDG/ICNPO tagging investigation producing a settled crosswalk |
+
+⚠️ **And it named the right endpoint, which I had wrong.** I was heading for Enhetsregisteret filtered
+with `?registrertIFrivillighetsregisteret=true`. Candidate #9 names
+`data.brreg.no/frivillighetsregisteret/`, and that is the better source — verified 2026-09-11:
+
+```
+GET /frivillighetsregisteret/api/frivillige-organisasjoner
+  → organisasjonsnummer, frivilligOrganisasjonsstatus, kontonummer, innfoertDato,
+    foersteGangInnfoert, grasrotandel, regnskapsrapportering, vedtekter,
+    icnpoKategorier, paategninger
+```
+
+🟢 **`icnpoKategorier` arrives natively** — `{"icnpoNummer": "9100", "kategori":
+"ICNPOKategori.internasjonaleOrganisasjoner"}`. **That materially reduces [Q26]**: Atlas does not have
+to *derive* ICNPO codes, only map the register's own codes onto `ref_atlas_service_category`. The
+source half of the crosswalk is solved by the upstream. Whether that removes the sequencing dependency
+or merely shrinks it is for whoever picks up #9 to judge — **but it should be judged, not inherited.**
+
+## Where this file is still the right place to look
+
+Candidate #9 is one scored row in a catalogue of fourteen. This file is the design deep-dive for it,
+plus two questions the catalogue does not cover:
+
+- **Option A — the full Enhetsregisteret (~1.17M).** That is Terje's original question and is *not*
+  candidate #9. #9 is the voluntary subset (**72,806**, 6.2% of the register).
+- **The implementation** — shadow-brreg's change-feed architecture, and the 2026 verification of it.
+
+So: **if the answer is B, this is not a new dataset — it is candidate #9 with a design attached.**
+A and C remain genuinely open and are this file's own.
+
 ## The question
 
 Atlas today holds **122 organisational units**. Brreg's Enhetsregister holds roughly **1.1 million**.
