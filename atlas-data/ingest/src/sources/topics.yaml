@@ -61,6 +61,16 @@ categories:
     emoji: 🤝
     order: 60
 
+  - id: organisations
+    name: Organisations register
+    description: |
+      The Norwegian register of legal entities — Brønnøysundregistrene's
+      Enhetsregisteret, held in full. Not an indicator: it is the population
+      of organisations that every other NGO and sector question is asked
+      about, and the join target for organisasjonsnummer.
+    emoji: 🏛️
+    order: 65
+
   - id: reference
     name: Reference geographies
     description: |

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-26",
+  "generated_at": "2026-09-11",
   "manifest_schema_id": "https://atlas.sovereignsky.no/schemas/manifest.schema.json",
   "atlas_base_url": "https://atlas.sovereignsky.no",
   "postgrest_base_url": "https://api-atlas.sovereignsky.no",
@@ -54,6 +54,14 @@
       "source_count": 3
     },
     {
+      "id": "organisations",
+      "name": "Organisations register",
+      "description": "The Norwegian register of legal entities — Brønnøysundregistrene's\nEnhetsregisteret, held in full. Not an indicator: it is the population\nof organisations that every other NGO and sector question is asked\nabout, and the join target for organisasjonsnummer.\n",
+      "emoji": "🏛️",
+      "order": 65,
+      "source_count": 1
+    },
+    {
       "id": "reference",
       "name": "Reference geographies",
       "description": "Canonical geographic dimensions used as join keys across every\nindicator: kommune and fylke classifications from SSB Klass.\n",
@@ -63,6 +71,14 @@
     }
   ],
   "publishers": [
+    {
+      "id": "brreg",
+      "display_name": "Brønnøysundregistrene",
+      "homepage": "https://www.brreg.no/",
+      "feedback_url": "https://www.brreg.no/om-oss/kontakt-oss/",
+      "notes": "The Brønnøysund Register Centre — the Norwegian government agency that\noperates the country's central registers. Atlas reads Enhetsregisteret\n(every registered legal entity, ~1.17M) and Frivillighetsregisteret (the\nvoluntary-organisation register, a filtered view of the same entities).\nData released under NLOD 2.0; `organisasjonsnummer` is the join key that\nmakes organisational data from any Norwegian source line up.\n\nNo logo: Brreg's mark is not offered under the same open licence as the\ndata, so the publisher page renders without one rather than\nredistributing it.\n",
+      "source_count": 1
+    },
     {
       "id": "bufdir",
       "display_name": "Barne-, ungdoms- og familiedirektoratet",
@@ -101,6 +117,97 @@
     }
   ],
   "sources": [
+    {
+      "kind": "source",
+      "source_id": "brreg-enheter-alle",
+      "upstream_id": "enhetsregisteret",
+      "upstream_url": "https://data.brreg.no/enhetsregisteret/api/enheter/lastned",
+      "upstream_landing_page": "https://data.brreg.no/enhetsregisteret/api/dokumentasjon",
+      "upstream_title": "Enhetsregisteret — alle registrerte enheter",
+      "description": "Brønnøysundregistrene's Enhetsregisteret holds every legal entity registered in\nNorway — companies, foundations, associations, public bodies and sole\nproprietorships — around 1.17 million of them. Brreg regenerates a complete\ngzipped JSON export daily; Atlas downloads that file, streams it, and stores each\nrecord verbatim as jsonb in `raw.brreg_enheter_snapshot`, keyed on\norganisasjonsnummer.\n\nAtlas previously held 122 organisational units, selected by a curated list of 11\nNGOs. Holding the whole register instead means any Norwegian organisation can be\nresolved from its organisasjonsnummer without a new ingest, and it is what makes\norganisational data from unrelated sources join at all.\n\nThis is the **bootstrap** load: a complete point-in-time copy. Keeping it current\nis the change feed's job (PLAN-002, `/oppdateringer/enheter`), which reads only\nwhat moved. Underenheter (~863k sub-units) are a separate follow-on.\n\nNothing is flattened, renamed or re-encoded on the way in. Typed columns for the\nfields Atlas actually queries are built in dbt (PLAN-003).\n",
+      "atlas_summary": null,
+      "publisher": {
+        "id": "brreg",
+        "display_name": "Brønnøysundregistrene",
+        "homepage": "https://www.brreg.no/"
+      },
+      "category": {
+        "id": "organisations",
+        "name": "Organisations register",
+        "emoji": "🏛️"
+      },
+      "license": "NLOD",
+      "license_url": "https://data.norge.no/nlod/no/2.0",
+      "periodicity": "P1D",
+      "eu_theme": "GOVE",
+      "attribution": "Inneholder data under norsk lisens for offentlige data (NLOD) tilgjengeliggjort av Brønnøysundregistrene",
+      "tags": {
+        "provider": "brreg",
+        "topic": "organisations",
+        "geo": "kommune",
+        "cadence": "daily"
+      },
+      "keywords": [
+        "enhetsregisteret",
+        "organisasjonsnummer",
+        "organisations",
+        "company-register",
+        "brreg"
+      ],
+      "lifecycle": "beta",
+      "time_coverage": {
+        "start": null,
+        "end": null
+      },
+      "methodology_notes": "Source file: GET https://data.brreg.no/enhetsregisteret/api/enheter/lastned —\none gzipped, pretty-printed JSON array, regenerated daily. Measured 2026-09-11:\n210,132,682 bytes compressed, 2,005,028,121 uncompressed, 1,173,878 records.\n\nIt is not newline-delimited, so the loader streams it with a depth-aware scanner\nand parses one element at a time; the whole register loads in ~33 MB of resident\nmemory.\n\n🔴 One thing this load deliberately does not do. The reference implementation\n(terchris/shadow-brreg) converted the JSON to pipe-delimited CSV and stripped\nevery `|` from the source first, so any organisation with a pipe in its name or\naddress was silently altered. There is no delimited format anywhere in Atlas's\npath, and a test asserts a record containing a pipe, a newline and a double quote\nsurvives byte-identical.\n\nThe bulk file and the live API do not agree exactly: on 2026-09-11 the file held\n1,173,878 records against the API's 1,174,098 — a 220-record gap, the day's churn\nbetween the file's generation and the query. Closing it is what the change feed is\nfor, not a defect in either number.\n\nPersonal names appear in this register (roles, sole proprietorships). They are\nlawfully public: Norwegian law requires the persons connected to a registered\norganisation to be in the register. That is a ruling from Terje on 2026-09-11, not\nan assumption made here.\n",
+      "suggested_joins": [
+        "frr",
+        "redcross-branches"
+      ],
+      "related_by_topic": [],
+      "dimensions": [
+        {
+          "code": "organisasjonsnummer",
+          "meaning": "The organisation's nine-digit national identifier, and the table's primary key",
+          "value_format": "9 digits, leading zeros significant — always text, never a number",
+          "notes": "Stable for the life of the organisation and retained after deletion from the register, which is why it is a safe join key and why the change feed can address a row that no longer has a live entity behind it. Storing it as an integer loses leading zeros; several real orgnr begin with 0."
+        },
+        {
+          "code": "doc",
+          "meaning": "The upstream Enhet object exactly as Brreg published it",
+          "value_format": "jsonb object, ~30 top-level keys, several nested",
+          "notes": "Not flattened and not indexed. Contains navn, organisasjonsform, forretningsadresse, naeringskode1..3, registreringsdatoEnhetsregisteret, konkurs / underAvvikling flags and more. A GIN index over it was measured at +42% storage (~0.8 GB) for an access pattern nothing uses — see the migration header. Read fields through dbt models, not through jsonb paths in ad-hoc SQL."
+        },
+        {
+          "code": "snapshot_file_date",
+          "meaning": "The date of the bulk file this row was loaded from",
+          "value_format": "date, or null when the download sent no Last-Modified",
+          "notes": "Provenance of the transfer, not of the organisation. The organisation's own registration and update dates live inside doc. Null is honest — a guessed date would be worse than an absent one."
+        },
+        {
+          "code": "loaded_at",
+          "meaning": "When Atlas last wrote this row",
+          "value_format": "timestamptz",
+          "notes": "Updated by every upsert, so it tracks Atlas's load rather than any upstream event. A row whose loaded_at is older than the newest snapshot means the bootstrap did not reach it, not that the organisation is stale."
+        }
+      ],
+      "raw_tables": [
+        "brreg_enheter_snapshot"
+      ],
+      "sample_query": "https://api-atlas.sovereignsky.no/brreg_enheter_snapshot?limit=5",
+      "citation": {
+        "text": "Brønnøysundregistrene. (n.d.). Enhetsregisteret — alle registrerte enheter. Retrieved from https://data.brreg.no/enhetsregisteret/api/dokumentasjon. Available in Atlas at https://atlas.sovereignsky.no/datasets/brreg-enheter-alle.",
+        "bibtex": "@misc{atlas_brreg_enheter_alle,\n  author = {Brønnøysundregistrene},\n  title  = {Enhetsregisteret — alle registrerte enheter},\n  year   = {n.d.},\n  url    = {https://data.brreg.no/enhetsregisteret/api/dokumentasjon},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/brreg-enheter-alle}\n}"
+      },
+      "feedback_url": "https://www.brreg.no/om-oss/kontakt-oss/",
+      "consuming_marts": [],
+      "consuming_models": [],
+      "joined_with": [],
+      "last_ingested_at": null,
+      "latest_row_count": null,
+      "total_runs": null,
+      "downstream_model_count": null
+    },
     {
       "kind": "source",
       "source_id": "bufdir-barnefattigdom",

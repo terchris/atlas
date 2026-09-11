@@ -319,7 +319,7 @@ import SourcePublisherList from '@site/src/components/sources/SourcePublisherLis
 
 # ${publisher.display_name}
 
-<img src="${publisher.logo}" alt="${publisher.display_name} logo" style={{maxWidth: '200px', marginBottom: '1rem'}} />
+${publisher.logo ? `<img src="${publisher.logo}" alt="${publisher.display_name} logo" style={{maxWidth: '200px', marginBottom: '1rem'}} />` : ''}
 
 ${publisher.notes ?? ''}
 

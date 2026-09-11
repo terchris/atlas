@@ -52,3 +52,19 @@ publishers:
       Organizations API (branches and per-branch activities). The Frivillig
       Resource Register (FRR) is also from Red Cross but is private operational
       data, never exposed via the public API.
+
+  - id: brreg
+    display_name: Brønnøysundregistrene
+    homepage: https://www.brreg.no/
+    feedback_url: https://www.brreg.no/om-oss/kontakt-oss/
+    notes: |
+      The Brønnøysund Register Centre — the Norwegian government agency that
+      operates the country's central registers. Atlas reads Enhetsregisteret
+      (every registered legal entity, ~1.17M) and Frivillighetsregisteret (the
+      voluntary-organisation register, a filtered view of the same entities).
+      Data released under NLOD 2.0; `organisasjonsnummer` is the join key that
+      makes organisational data from any Norwegian source line up.
+
+      No logo: Brreg's mark is not offered under the same open licence as the
+      data, so the publisher page renders without one rather than
+      redistributing it.

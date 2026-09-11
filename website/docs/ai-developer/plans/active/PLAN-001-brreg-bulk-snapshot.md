@@ -15,7 +15,7 @@ Loads all 1,174,098 Norwegian organisations from Brønnøysundregistrene into `r
 
 **Goal**: a complete, point-in-time copy of Enhetsregisteret in `raw`, loadable on a fresh install and re-runnable without corrupting an existing one.
 
-**Last Updated**: 2026-09-11
+**Last Updated**: 2026-09-12
 
 **Investigation**: [INVESTIGATE-all-brreg-organisations](../backlog/INVESTIGATE-all-brreg-organisations.md)
 **Blocks**: PLAN-002 (the change feed has nothing to update until a snapshot exists)
@@ -101,27 +101,72 @@ gating".
 
 ### Tasks
 
-- [ ] 2.1 Migration: `raw.brreg_enheter_snapshot` — `organisasjonsnummer text primary key`,
-      `doc jsonb not null`, `loaded_at timestamptz not null default now()`,
-      `snapshot_file_date date`. **No flattened columns**; typing happens in dbt (PLAN-003).
-- [ ] 2.2 Ingest module under `ingest/src/sources/brreg-enheter-alle/`, extending the existing
-      `lib/brreg/` client rather than a new one (candidate #9 **[Q24]**).
-- [ ] 2.3 Stream `gunzip → JSON records → COPY`/batched insert. 🔴 **No CSV, no `awk`, no delimiter
-      choice that can collide with data.** Assert in a test that a record containing `|`, a newline
-      and a double quote survives a round trip byte-identical.
-- [ ] 2.4 `manifest.yml` with `publisher`, `license: NLOD`, `license_url`, `attribution` —
-      the existing `seed-sources/brreg-enheter/` has none, which
-      [INVESTIGATE-nlod-attribution](../backlog/INVESTIGATE-nlod-attribution.md) records as a live
-      gap. **Do not repeat it here.**
-- [ ] 2.5 `recordIngestRun()` wrapping, so it appears in `raw.ingest_runs` and `mart_ingest_health`
-      like every other source.
-- [ ] 2.6 Idempotence: re-running upserts on `organisasjonsnummer` and never truncates. A second run
-      on a populated table must be safe.
+- [x] 2.1 Migration `052_raw_brreg_enheter_snapshot.sql` — `organisasjonsnummer text primary key`,
+      `doc jsonb not null`, `snapshot_file_date date`, `loaded_at timestamptz not null default now()`.
+      No flattened columns, and **no GIN index** (phase 1 measured +42% for an access pattern nothing
+      uses); the reasoning is in the file header, not only here.
+- [x] 2.2 Ingest module at `ingest/src/sources/brreg-enheter-alle/`.
+
+      ⚠️ **It does not extend `lib/brreg/client.ts`, and the task said it should.** That client is
+      `openapi-fetch` over the paginated HAL API — typed query params against Brreg's OpenAPI spec.
+      The bulk endpoint is not in that spec, returns a gzip stream rather than a HAL envelope, and is
+      consumed by a byte pipeline rather than a typed call. Routing it through the client would have
+      meant a cast at the boundary and no type safety gained. Recorded as a deviation rather than
+      done quietly; PLAN-002's change feed **is** a HAL endpoint and should use the client.
+- [x] 2.3 Streams `gunzip → depth-aware scan → JSON.parse → batched upsert`. No CSV, no `awk`, no
+      delimiter anywhere in the path. The round-trip test asserts a record containing a pipe, a
+      newline, a double quote, a tab, a backslash and an emoji survives byte-identical — on the read
+      path **and** through the `JSON.stringify` the database write applies.
+- [x] 2.4 `manifest.yml` with `publisher: Brønnøysundregistrene`, `license: NLOD`,
+      `license_url`, and the NLOD attribution string. Required a new `publishers.yaml` entry and a new
+      `organisations` topic — see "Decisions this phase made" below.
+- [x] 2.5 `recordIngestRun()` wrapping; `upstreamUpdatedAt` carries the snapshot file date.
+- [x] 2.6 Upserts on `organisasjonsnummer`, no `DELETE`, no `TRUNCATE`. Guarded by a test over the
+      module source, because what makes this safe is the *absence* of a statement and no unit test
+      covers an absence. Both new guards were made to fail on purpose before being trusted.
+
+### Findings that change the plan
+
+🔴 **`Accept: application/json` is answered with HTTP 400.** The bulk endpoint is content-negotiated
+and wants `application/vnd.brreg.enhetsregisteret.enhet.v2+gzip`. Found by running the loader against
+the live service rather than by reading the docs. The Accept is pinned to `.v2` on purpose: a v3
+rollout then returns 406 and the run fails loudly, where a wildcard would hand back a different record
+shape that `doc` stores without complaint and dbt reads wrongly.
+
+🔴 **Brreg's `Last-Modified` is not an HTTP date.** It is `Fri Sep 11 04:27:17 CEST 2026` — Java's
+`Date.toString()`, which `Date.parse` returns `NaN` for. A loader trusting `Date.parse` would have
+recorded `snapshot_file_date = null` on every run and looked like the header was missing. It is not
+missing; it is differently shaped. Both accepted shapes are now read as stated calendar dates rather
+than converted through UTC, because a file generated at 00:30 CEST is 22:30 UTC the day before.
+
+⚠️ **A bulk load cannot express a deletion.** An organisation Brreg removed since the last run stays
+in the table, because absence from a 1.17M-record file is indistinguishable from a truncated
+download. `Sletting` / `Fjernet` events arrive through PLAN-002. Named in the migration, the module
+and the README rather than left as an implicit property of "upsert".
+
+### Decisions this phase made
+
+- **A new `organisations` topic** in `topics.yaml`. The register is not NGO supply and not a reference
+  geography; labelling 1.17M companies as either would be false on the public catalogue page. Adding a
+  topic is a public-site navigation change, so it is called out here to be overruled easily.
+- **`publisher.logo` is now optional.** Brreg's mark is not offered under the same open licence as the
+  data, and the generator emitted an unconditional `<img>` that would have rendered broken. The page
+  now renders without a logo instead.
 
 ### Validation
 
-`select count(*) from raw.brreg_enheter_snapshot` equals the `totalElements` reported by
-`/enheter?size=1` on the same day, ±the day's churn. The round-trip test in 2.3 passes.
+- ✅ 15 unit tests; both new guards proven to fail on purpose (a reintroduced pipe-strip, and an
+  added `delete from`).
+- ✅ `npm run typecheck`, the full 119-test ingest suite, `check-manifests.sh` (42 manifests), and
+  `npm run build` for the site all pass.
+- ✅ Live against the real service: HTTP 200, `snapshot_file_date` parsed as `2026-09-11`, real
+  records framed and parsed (`npm run ingest:brreg-enheter-alle -- --sample 3`).
+- ⬜ **Not verified here, and cannot be from this agent:** the full load, the row count against
+  `/enheter?size=1`, and the second-run-on-a-populated-table case. There is no Postgres and no
+  container runtime on this machine — this agent declares, another applies, a third verifies. The
+  migration converges trivially (one guarded `create table`, comments re-asserted unconditionally to
+  the same text, and nothing later alters it), but that is reasoning, not a `pg_dump` diff.
+  **imac: please run the double-apply diff and the re-run case on a throwaway database.**
 
 ---
 
