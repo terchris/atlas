@@ -45,8 +45,10 @@ from dagster import (
     run_status_sensor,
 )
 
+from atlas_data import cadence
 from atlas_data.assets import (
     api_v1,
+    dbt,
     migrations,
     raw_brreg,
     raw_fhi,
@@ -273,6 +275,65 @@ transform_job = define_asset_job(
 # risk of hitting the same start-timeout that caused this split. Keeping them
 # apart means a publish-gate failure is never hidden behind, or blocked by, the
 # bulk test suite.
+# ── The Brreg-only transform ─────────────────────────────────────────────────
+#
+# 🔴 THE PREREQUISITE, NOT THE OPTIMISATION (ops, urb-agents #766).
+#
+# Keeping the register current means rebuilding its dimension often. Doing that
+# through `transform_and_publish` would rebuild the whole dbt project each time,
+# and most of that project is SSB, FHI and Bufdir models that refresh weekly and
+# monthly. Measured on asgard: the transform's three runs were 16 s, 117 s and
+# 524 s.
+#
+# ⚠️ And the deciding number is duty cycle, not pod count — which is where my own
+# analysis was wrong. Against a 524 s run:
+#
+#     */30    29% duty     fine
+#     */15    58% duty     working more than half the time
+#     */5    175% duty     🔴 cannot finish before the next tick — runs queue,
+#                          the concurrency cap binds, and LAG GROWS
+#
+# ops's framing: "freshness is bounded by how long the work takes, not by how
+# often you ask for it." A cadence that outruns the work makes the API staler,
+# not fresher. Splitting the job does not merely remove waste — it moves that
+# table in our favour, which is why both tor-agent and ops made this job a
+# condition of raising the cron at all.
+#
+# 🔴 WHY api_v1 IS NOT IN THIS SELECTION, AND WHEN THAT STOPS BEING TRUE.
+#
+# marts.mart_brreg_enhet is a VIEW over marts.dim_brreg_enhet, and api_v1's
+# wrapper is a view over that — so refreshing the dimension is visible through
+# the public API immediately, with no publish step. Including api_v1 here would
+# re-apply all 14 wrapper views and reload PostgREST's schema cache every half
+# hour for no gain.
+#
+# ⚠️ The day any model between the dimension and the API becomes a TABLE, that
+# stops being true and this job must gain the publish. Nothing enforces it, so
+# it is written here and beside the materialisation in mart_brreg_enhet.sql.
+#
+# The check chain is safe: run_api_v1_checks_after_transform is scoped with
+# monitored_jobs=[transform_job], so this job does not drag the 784-test suite
+# along behind it every cycle. Verified before adding the job, not after.
+brreg_transform_job = define_asset_job(
+    name="brreg_transform",
+    selection=AssetSelection.assets(*dbt.dbt_model_asset_keys("dim_brreg_enhet")),
+    description=(
+        "Reconciles the Brreg register into marts.dim_brreg_enhet and nothing "
+        "else — the incremental rebuild of one model, plus its deletion check.\n\n"
+        "Exists so the register can track a feed that changes 3.8 times a minute "
+        "without rebuilding SSB, FHI and Bufdir models that change once a year. "
+        "Both tor-agent and ops made it a precondition of raising the Brreg cron "
+        "(urb-agents #766); ops: raising the cron without it 'buys freshness at "
+        "1.57 h/day of pure waste — and it would work, which is what makes it "
+        "tempting'.\n\n"
+        "Checks are deliberately INCLUDED here, unlike transform_and_publish. "
+        "That job excludes them because 784 tests made its gRPC plan too large to "
+        "construct inside the start timeout; this selection is one model and one "
+        "check, and that check is the guard on the exact thing this job does — "
+        "tombstoned organisations leaving the dimension."
+    ),
+)
+
 _API_V1_CHECKS = AssetSelection.checks_for_assets(api_v1.api_v1_surface)
 
 api_v1_checks_job = define_asset_job(
@@ -361,8 +422,22 @@ transform_schedule = ScheduleDefinition(
 #
 # transform_daily stays a schedule: the transform side was not part of this
 # migration.
+brreg_transform_schedule = ScheduleDefinition(
+    name="brreg_transform_half_hourly",
+    job=brreg_transform_job,
+    cron_schedule=cadence.BRREG_TRANSFORM_CRON,
+    execution_timezone=cadence.TIMEZONE,
+    description=(
+        "Reconciles the register into marts.dim_brreg_enhet, ten minutes after "
+        "each feed poll. The offset is load-bearing: firing alongside the feed "
+        "would reconcile data the feed had not written yet, every cycle, leaving "
+        "the dimension permanently one cycle behind a feed that is current."
+    ),
+)
+
 schedules = [
     transform_schedule,
+    brreg_transform_schedule,
 ]
 
 jobs = [
@@ -371,6 +446,7 @@ jobs = [
     seed_sources_job,
     brreg_bootstrap_job,
     brreg_feed_job,
+    brreg_transform_job,
     redcross_branches_job,
     transform_job,
     api_v1_checks_job,

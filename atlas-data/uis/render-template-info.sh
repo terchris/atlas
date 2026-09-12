@@ -156,6 +156,15 @@ builder_of = dict(re.findall(
     cad))
 live = set(re.findall(r'cron_schedule="([^"]+)"', sch))
 const_value = dict(re.findall(r'^([A-Z_]*CRON)\s*=\s*"([^"]+)"', cad, re.M))
+# A ScheduleDefinition may reference the constant instead of repeating the
+# literal — `cron_schedule=cadence.BRREG_TRANSFORM_CRON`. That is the BETTER
+# spelling, because duplicating the cron into schedules.py is exactly the drift
+# this gate exists to catch. Resolve it rather than forcing the duplication.
+for const in re.findall(r'cron_schedule=cadence\.([A-Z_]+)', sch):
+    if const not in const_value:
+        sys.exit(f"✗ schedules.py references cadence.{const}, which is not a "
+                 f"cron constant in cadence.py")
+    live.add(const_value[const])
 for builder, const in builder_of.items():
     if re.search(rf'\b{builder}\(\)', asset_src):
         live.add(const_value[const])

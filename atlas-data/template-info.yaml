@@ -213,13 +213,21 @@ operational:
       what: ~37 annual public-sector sources — SSB, FHI, Bufdir
     - cron: "0 1 1 * *"
       what: SSB Klass classifications (kommune/fylke)
+    - cron: "0,30 * * * *"
+      what: >-
+        Brønnøysundregistrene change feed — only what moved, ~114 records per
+        cycle at the measured 3.8 changes a minute. Half-hourly because the
+        register is a live subscription, not a daily table.
+    - cron: "10,40 * * * *"
+      what: >-
+        Brreg reconciliation into marts — one incremental model, ten minutes
+        behind each poll. The offset is deliberate: firing alongside the feed
+        would reconcile data the feed had not written yet.
     - cron: "0 4 * * *"
       what: >-
-        Brønnøysundregistrene — the day's Enhetsregister changes (~3,000 records,
-        measured median over 30 days) plus a full re-walk of Frivillighetsregisteret
-        (~727 requests; it has no change feed of its own). One hour before the
-        transform on purpose, so both reach the API the same morning rather than a
-        day later.
+        Frivillighetsregisteret — a full re-walk of ~72,800 organisations
+        (~727 requests). Daily, NOT on the feed's cadence: this register has no
+        change feed, so every refresh is the whole register.
     - cron: "0 5 * * *"
       what: dbt transform and publish — no external calls
 

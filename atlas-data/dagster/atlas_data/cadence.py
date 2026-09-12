@@ -37,16 +37,53 @@ WEEKLY_CRON = "0 2 * * 0"  # Sunday 02:00 — the annual-source poll
 MONTHLY_CRON = "0 1 1 * *"  # 1st of the month 01:00 — Klass classifications
 SCRAPER_CRON = "30 3 * * 0"  # Sunday 03:30 — offset from the annual wave
 
-# Brreg's change feed. 🔴 04:00 SPECIFICALLY, and the hour is load-bearing:
-# transform_and_publish runs at 05:00, so a 04:00 poll puts the day's register
-# changes into marts the same morning. Any hour after 05:00 delays every change by
-# a full day, for no saving — the poll is ~3,300 changes and a few seconds.
+# Brreg's change feed, and the Brreg-only transform that follows it.
 #
-# Daily rather than weekly because the bulk snapshot is regenerated daily, so the
-# two halves stay in step and a re-bootstrap is never more than one cycle stale.
-# The feed has no retention window, so cadence is a freshness choice and not a
-# correctness one: a missed week catches up completely on the next run.
-DAILY_CRON = "0 4 * * *"
+# 🔴 */30, AND THE DECIDING NUMBER IS DUTY CYCLE, NOT POD COUNT.
+#
+# tor-agent and ops independently chose */30 by different routes (urb-agents
+# #766), both conditional on the Brreg-only transform job existing first. Against
+# the transform's measured 524 s run on asgard:
+#
+#     */30    29% duty     fine
+#     */15    58% duty     working more than half the time
+#     */5    175% duty     🔴 cannot finish before the next tick
+#
+# At */5 runs queue, the concurrency cap binds, and lag GROWS — the cadence would
+# make the API staler, not fresher. ops: "freshness is bounded by how long the
+# work takes, not by how often you ask for it."
+#
+# ⚠️ If the Brreg-only transform job is ever removed, this must go back to hourly.
+# Most of that 524 s is rebuilding SSB, FHI and Bufdir models that change once a
+# year, and raising the cron without the split "buys freshness at 1.57 h/day of
+# pure waste — and it would work, which is what makes it tempting" (ops).
+BRREG_FEED_CRON = "0,30 * * * *"
+
+# 🔴 TEN MINUTES AFTER THE FEED, NOT ALONGSIDE IT.
+#
+# Both on */30 would fire simultaneously and the transform would reconcile data
+# the feed had not written yet — every cycle, silently, producing a dimension
+# permanently one cycle behind a feed that is itself current. The offset is the
+# whole reason this is not `*/30` twice.
+#
+# Ten minutes is generous against the work: a 30-minute window holds ~114 changes
+# at the measured 3.8/minute, each costing one entity fetch at four concurrent.
+# Generous on purpose — the cost of being early is a stale cycle, and the cost of
+# being late is nothing at all.
+BRREG_TRANSFORM_CRON = "10,40 * * * *"
+
+# 🔴 Frivillighetsregisteret stays DAILY, and must not inherit the feed's cadence.
+#
+# It has no change feed and no bulk download (all three paths 404, verified
+# 2026-09-12), so the only way to refresh it is to re-walk the whole register:
+# ~727 requests at the API's size cap of 100. At the feed's half-hourly cadence
+# that is ~35,000 requests a day against a public-sector API, to observe a
+# register that changes a few times a day.
+#
+# ⚠️ This nearly shipped. Both Brreg ingests were in one list with one condition,
+# so raising the feed to */30 silently raised this too — a 48x increase in load on
+# someone else's service, invisible in the diff, and it would have worked.
+FRIVILLIG_CRON = "0 4 * * *"
 
 
 def weekly_polled() -> AutomationCondition:
@@ -61,8 +98,12 @@ def scraper_polled() -> AutomationCondition:
     return AutomationCondition.on_cron(SCRAPER_CRON, TIMEZONE)
 
 
-def daily_polled() -> AutomationCondition:
-    return AutomationCondition.on_cron(DAILY_CRON, TIMEZONE)
+def brreg_feed_polled() -> AutomationCondition:
+    return AutomationCondition.on_cron(BRREG_FEED_CRON, TIMEZONE)
+
+
+def frivillig_polled() -> AutomationCondition:
+    return AutomationCondition.on_cron(FRIVILLIG_CRON, TIMEZONE)
 
 
 # ── Freshness ────────────────────────────────────────────────────────────────
@@ -82,13 +123,22 @@ MONTHLY_FRESHNESS = FreshnessPolicy.time_window(
     warn_window=timedelta(days=45),
 )
 
-# Daily-polled: the tightest bound in Atlas, and the only source that earns one.
-# Three days without a successful poll is worth a look; a week means Atlas has
-# been serving organisations it knows Brreg has changed — including ones Brreg has
-# deleted, which is the failure that matters. Still two missed cycles before
-# anyone is told, on the same principle as the others: a check that cries wolf is
-# one people learn to ignore.
-DAILY_FRESHNESS = FreshnessPolicy.time_window(
+# Brreg-polled: by far the tightest bound in Atlas, and the only source that
+# earns one. At a 30-minute cadence the old 3-day warn was 144 missed cycles
+# before anyone was told — imac's acceptance host sat 13.5 hours behind Brreg
+# with every check green, which is exactly that gap.
+#
+# Two hours warns after four missed cycles; six hours fails after twelve. Still
+# room to miss a cycle without crying wolf, on the same principle as the others,
+# but measured against a half-hour cadence rather than a daily one.
+BRREG_FRESHNESS = FreshnessPolicy.time_window(
+    fail_window=timedelta(hours=6),
+    warn_window=timedelta(hours=2),
+)
+
+# Frivillighetsregisteret: daily-polled, so bounded like the other daily sources
+# rather than like the feed. Three days warns, a week fails.
+FRIVILLIG_FRESHNESS = FreshnessPolicy.time_window(
     fail_window=timedelta(days=7),
     warn_window=timedelta(days=3),
 )
