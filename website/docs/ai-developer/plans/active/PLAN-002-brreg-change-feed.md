@@ -347,3 +347,45 @@ validation exists to catch, and it is not the one the original tasks would have 
 
 imac reports 4.2 and 4.3. **4.3 is the one that matters**: an implementation that applies `Ny` and
 `Endring` but drops `Sletting` passes 4.2 perfectly and is still wrong.
+
+---
+
+## 🔴 What this design does NOT close: set reconciliation
+
+**The feed applies deletions Brreg *reports*. It does not reconcile Atlas's copy against the register
+as a set, and nothing else does either.**
+
+An organisation that Atlas holds but Brreg never had will never appear in the change feed — no event
+will ever mention it — so no tombstone can exist for it and no automatic path removes it. Re-running
+the bootstrap cannot either: it upserts and never truncates, by design.
+
+⚠️ **This was demonstrated, not theorised.** imac planted a ghost organisation, `999999999`, that
+exists nowhere in Brreg, ran a full 1,173,878-record bootstrap re-run, and it survived — correctly.
+ops-dev's reading at the time was *"in the build shipping tonight there is no mechanism by which a
+deletion can ever take effect"* (urb-agents #720). PLAN-002 answered half of that:
+
+| | closed by PLAN-002? |
+|---|---|
+| Brreg deletes an organisation | 🟢 **yes** — `Sletting` / `Fjernet` → tombstone → filtered from `dim_brreg_enhet` |
+| Atlas holds a row Brreg never had | 🔴 **no** — invisible to the feed by construction |
+
+🔵 **Naming it matters because the two look identical from the outside.** Both are "a row in Atlas that
+should not be there", and the first is now handled well enough that the second is easy to assume is
+handled too. A test that plants a ghost and expects the feed to remove it will report a defect that
+does not exist; a test that uses a real `Sletting` from the feed is testing the mechanism that exists.
+
+**What would close it:** a periodic set-difference against a fresh bulk snapshot — every
+`organisasjonsnummer` in `raw.brreg_enheter_snapshot` that is absent from a newly downloaded file, and
+that the feed has not tombstoned, is a row Atlas should not be holding. That is a **follow-on plan,
+not a fix to this one**, and it is not free: the comparison needs the full 1.17M-record download the
+bootstrap uses, so it belongs on the bootstrap's cadence rather than the feed's.
+
+⚠️ **Until it exists, "Atlas's copy equals Brreg's register" is true for everything Brreg has told us
+about and unverified for anything else.** That is a weaker claim than the plan's goal sentence makes,
+and the goal sentence should be read against this section.
+
+> **Why this was recorded late (2026-09-12).** The finding is from 2026-09-11, and writing it down was
+> deliberately deferred: every commit under `atlas-data/**` republishes the OCI artifact, and
+> dev-templates was mid-pin on a nominated tag each time it came up. Recorded here, under
+> `website/docs/`, which has its own workflow and does not retag. **A deferral that is never collected
+> is just a thing forgotten**, so it is written now rather than at the next convenient moment.
