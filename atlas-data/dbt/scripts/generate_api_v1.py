@@ -50,6 +50,19 @@ class WrapperView:
     source_schema: str  # e.g. "marts"
     source_relation: str  # e.g. "mart_indicator_summary"
     columns: tuple[WrapperColumn, ...]
+    # The model's own description, emitted as COMMENT ON VIEW.
+    #
+    # This is how a published view carries its own documentation to consumers:
+    # PostgREST surfaces relation comments in its OpenAPI output, so an external
+    # caller reading /rest/v1/ sees it without knowing meta_sources exists.
+    #
+    # 🔴 That matters legally, not only ergonomically. NLOD 2.0 requires
+    # attribution to accompany redistributed data, and a consumer querying
+    # api_v1.brreg_enhet has no reason to go and look up a separate catalogue
+    # row. Putting the attribution in the view comment costs nothing per row —
+    # unlike a repeated column across 1.17M records — and travels with the
+    # endpoint.
+    description: str = ""
 
 
 # --- Manifest extraction ---------------------------------------------------
@@ -80,6 +93,7 @@ def extract_wrappers(
                 source_schema=node["schema"],
                 source_relation=node.get("alias") or node["name"],
                 columns=cols,
+                description=(node.get("description") or "").strip(),
             )
         )
     wrappers.sort(key=lambda w: w.view_name)
@@ -132,6 +146,11 @@ def render_sql(wrappers: list[WrapperView], removed_views: list[str]) -> str:
         out.append(
             f"CREATE OR REPLACE VIEW api_v1.{w.view_name} AS SELECT * FROM {fq_source};"
         )
+        if w.description:
+            out.append(
+                f"COMMENT ON VIEW api_v1.{w.view_name} IS "
+                f"{_quote_literal(w.description)};"
+            )
         for c in w.columns:
             if c.description:
                 out.append(
