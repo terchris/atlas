@@ -116,6 +116,28 @@ apply. Run commands on the host. Do not invent a cage.
   withdrawing something, put the withdrawal where the claim will next be read, not only where it was
   made.
 - **Never commit to `main`.** Feature branch, then a PR, squash-merged.
+- **✅ Standing authorization to merge your own PRs — BROADENED 2026-09-12 and no longer conditional.**
+  Terje, verbatim: *"you have full control of your own repo and you do merge when you see fit."*
+
+  That supersedes the conditional grant below, which ended when `uis template install atlas` worked
+  end to end. **There is now no end condition**, so the paragraphs that follow are history rather than
+  the operative rule. They are kept because the reasoning in them still applies to *how* to merge, not
+  *whether*.
+
+  🔴 **What this does not change, and it is the part worth re-reading when nothing is stopping you.**
+  Merging is still not self-grading: deployable work is declared with acceptance criteria a stranger
+  can run, imac still tests it, and a green CI run is not a verification. **The authorization removes
+  the wait, not the evidence.** It also does not widen the two contracts above it — `api_v1` additions
+  are still public exposure, and `private_marts.*` is still gated.
+
+  ⚠️ And one that only bites once merging is unrestricted: **every merge touching `atlas-data/**`
+  publishes an OCI artifact.** Merging freely means tagging freely, and a tag appearing while another
+  agent is pinning or testing a nominated one is the ambiguity that cost real time on 2026-09-12.
+  Judgement about *when* is now the whole of the constraint.
+
+  <details>
+  <summary>Superseded: the conditional grant (urb-agents #338, #364)</summary>
+
 - **⏳ Standing authorization to merge your own PRs (Terje, urb-agents #338, condition confirmed
   #364).** From #364, verbatim: *"keep merging your own PRs on terchris/atlas until 'uis template
   install atlas' works end to end. Silence from me is not a change."*
@@ -158,6 +180,13 @@ apply. Run commands on the host. Do not invent a cage.
   The one genuine gap left: if the one-command-install goal is **abandoned or redefined**, condition
   2 becomes undefined and this grant has no end. Ask then — that is a change in the goal, not
   silence.
+
+  </details>
+
+  🔵 That gap is what closed, and not the way it was expected to. The note anticipated the *goal*
+  changing; what actually happened is that Terje removed the condition entirely. **Recorded rather
+  than deleted, because a grant that quietly broadens looks identical to one that was never
+  constrained** — and the difference matters to anyone auditing why this agent merges its own work.
 - **This agent has no cluster access.** No `kubectl`, no `docker`, no cluster shell. It declares;
   another agent applies; a third verifies. Do not write a plan that assumes otherwise.
 

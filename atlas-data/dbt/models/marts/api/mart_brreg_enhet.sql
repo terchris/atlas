@@ -47,6 +47,17 @@ select
   grasrotandel_deltar_i,
   frivillig_innfoert_dato,
   last_seen_at,
+  -- 🔴 Both clocks, published together and deliberately. `last_seen_at` is when
+  -- the ingest wrote this organisation into raw; `reconciled_at` is when the
+  -- transform last reconciled it into marts. The feed polls every half hour and
+  -- the reconciliation follows ten minutes behind, so raw can be fresher than
+  -- what this view serves.
+  --
+  -- Without both, "current" means two different things depending on which table
+  -- you read — and a consumer of a public endpoint has no way to tell which one
+  -- they are on. An install once sat 13.5 hours behind Brreg with every health
+  -- check green; this is the column that makes that visible from outside.
+  reconciled_at,
   -- Every remaining upstream field, verbatim: postal and business addresses,
   -- telephone, mobile, email, website, capital, sector code, articles of
   -- association, historical names and the rest. Brreg publishes all of it

@@ -985,8 +985,19 @@ models:
           voluntary.
       - name: last_seen_at
         description: >-
-          When Atlas last wrote this row, from either the bulk snapshot or a change-feed run.
-          Tracks Atlas's load, not an upstream event.
+          When the INGEST last wrote this row into Atlas's raw layer, from either the bulk snapshot or
+          a change-feed run. Tracks Atlas's load, not an upstream event. Read it together with
+          reconciled_at — this is the ingest clock, that is the transform clock.
+        data_tests: [not_null]
+      - name: reconciled_at
+        description: >-
+          When the TRANSFORM last reconciled this row into the served layer. 🔴 Read both clocks: the
+          change feed polls every half hour and this reconciliation follows ten minutes behind it, so
+          the data behind this endpoint can be older than what Atlas has already ingested. Without
+          both, "current" means different things depending on which table you read — an install once
+          sat 13.5 hours behind Brreg with every health check green. ⚠️ Only organisations that
+          actually changed are re-stamped, so an old value means "nothing about this organisation has
+          changed since then", not "this endpoint is stale".
         data_tests: [not_null]
       - name: doc
         description: >-
