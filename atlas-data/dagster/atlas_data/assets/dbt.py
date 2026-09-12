@@ -211,7 +211,70 @@ def atlas_dbt_models(context: AssetExecutionContext, dbt: DbtCliResource):
         # Only meaningful when tests are actually being run.
         for test in _MISORDERED_TESTS:
             args += ["--exclude", test]
-    yield from dbt.cli(args, context=context).stream()
+
+    invocation = dbt.cli(args, context=context)
+    yield from invocation.stream()
+    _log_node_timings(context, invocation)
+
+
+def _log_node_timings(context: AssetExecutionContext, invocation) -> None:
+    """
+    Log per-node execution time, because `run_results.json` does not survive the
+    run pod and this question keeps being asked.
+
+    🔴 WHY THIS EXISTS
+
+    dbt writes `target/run_results.json` with an `execution_time` per node. In a
+    run pod that file dies with the pod: the image ships only the build-time
+    `manifest.json`, and the pod's filesystem is gone by the time anyone asks.
+
+    On urb-agents #757 the question was "which dbt models account for the build
+    time" — a decision between three materially different designs rested on it.
+    It could not be answered. The best available substitute was comparing two
+    whole-build durations from Dagster's event log, one from before the Brreg
+    models existed, which bounded the answer at "72% is the Brreg lineage as a
+    whole" and could not split it further. imac's words: *"nobody can answer this
+    from a cluster otherwise, and it will be asked again."*
+
+    ⚠️ Deliberately logged rather than attached as asset metadata. @dbt_assets
+    yields materialisations for the models it builds; attaching timings would
+    mean emitting a second event per asset after the stream has already closed
+    them, which risks duplicating materialisations for a reporting convenience.
+    The run log is durable in Dagster's event storage, which is the property that
+    was missing.
+
+    Failure here must never fail a build that has already succeeded — the
+    timings are diagnostics, and losing them is not worth losing a transform.
+    """
+    try:
+        run_results = invocation.get_artifact("run_results.json")
+    except Exception as err:  # noqa: BLE001 — see the docstring
+        context.log.warning(f"dbt timings unavailable: {err!r}")
+        return
+
+    rows = []
+    for result in run_results.get("results", []):
+        node = result.get("unique_id", "?")
+        seconds = result.get("execution_time")
+        if isinstance(seconds, (int, float)):
+            rows.append((seconds, node, result.get("status", "?")))
+
+    if not rows:
+        context.log.warning("dbt run_results carried no execution_time values")
+        return
+
+    rows.sort(reverse=True)
+    total = sum(s for s, _, _ in rows)
+    lines = [
+        f"dbt node timings — {len(rows)} nodes, {total:.1f}s total",
+        *(
+            f"  {seconds:8.2f}s  {status:8}  {node}"
+            for seconds, node, status in rows[:20]
+        ),
+    ]
+    if len(rows) > 20:
+        lines.append(f"  … {len(rows) - 20} more, {sum(s for s, _, _ in rows[20:]):.1f}s combined")
+    context.log.info("\n".join(lines))
 
 
 def dbt_cli_resource() -> DbtCliResource:
