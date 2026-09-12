@@ -111,5 +111,5 @@ comment on table raw.brreg_enheter_versions is
 comment on column raw.brreg_enheter_versions.doc is
   'The entity document at the time of the change, verbatim. ⚠️ For a Sletting this is Brreg''s SIX-KEY STUB, not a full record — the deleted entity still answers HTTP 200 (see the header). Consumers must branch on endringstype, never assume doc is a complete Enhet. Null when the fetch failed and the change was recorded without a body.';
 
-comment on index brreg_enheter_versions_orgnr_idx is
+comment on index raw.brreg_enheter_versions_orgnr_idx is
   'Supports "the latest version of this organisation" — the access pattern PLAN-003''s reconciliation uses, and the only one this table has.';
