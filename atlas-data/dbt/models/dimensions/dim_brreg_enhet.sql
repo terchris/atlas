@@ -1,7 +1,25 @@
 {{
   config(
-    materialized='table',
+    materialized='incremental',
+    unique_key='organisasjonsnummer',
+    incremental_strategy='delete+insert',
     schema='marts',
+    post_hook=[
+      """
+      delete from {{ this }} d
+       where exists (
+         select 1
+           from (
+             select distinct on (organisasjonsnummer)
+                    organisasjonsnummer, endringstype
+               from raw.brreg_enheter_versions
+              order by organisasjonsnummer, oppdateringsid desc
+           ) v
+          where v.organisasjonsnummer = d.organisasjonsnummer
+            and v.endringstype in ('Sletting', 'Fjernet')
+       )
+      """
+    ],
     indexes=[
       {'columns': ['organisasjonsnummer'], 'unique': True},
       {'columns': ['kommune_nr']},
@@ -10,6 +28,46 @@
     ]
   )
 }}
+
+-- 🔴 INCREMENTAL, AND `delete+insert` IS THE PART THAT MAKES DELETIONS WORK.
+--
+-- Measured by imac (urb-agents #757): the dbt build went 117.9 s → 414.1 s when
+-- the Brreg models arrived, so 72% of it is this lineage. A full rebuild of
+-- 1.17M rows to apply the ~57 organisations that change in a quarter of an hour
+-- is what kept served freshness a day behind a feed that is minutes behind.
+--
+-- 🔴 THE POST-HOOK IS NOT BELT-AND-BRACES. IT IS THE ONLY THING THAT DELETES.
+--
+-- I first wrote this relying on `delete+insert` alone, reasoning that a
+-- tombstoned organisation's key would be dropped and the WHERE clause below
+-- would decline to re-insert it. **That is wrong, and it is worth spelling out
+-- because it is convincing.** dbt's delete+insert is:
+--
+--     delete from target where unique_key in (select unique_key from tmp);
+--     insert into target select * from tmp;
+--
+-- The WHERE clause at the bottom of this model excludes tombstoned
+-- organisations, so they are **not in tmp** — so the delete does not match them
+-- and the row survives untouched, forever. The filter that looks like it removes
+-- deletions is exactly what prevents them from being removed.
+--
+-- ⚠️ A full refresh hides this completely: the table is rebuilt from a select
+-- that excludes them, so it looks correct. It only goes wrong on the second run
+-- onward, and only for organisations deleted since the first.
+--
+-- So deletion is done explicitly, by the post-hook, where it can be read.
+-- `tests/tombstoned_organisations_leave_the_dimension.sql` is what notices if it
+-- stops working, and it was written before this config changed.
+--
+-- COST, since it scans the version history each run: the inner `distinct on` is
+-- O(brreg_enheter_versions), which is append-only and grows ~2M rows/year. At
+-- 51k rows today it is milliseconds. Revisit when that table passes ~5M rows —
+-- with a measurement, as with the storage threshold in PLAN-003 phase 1.
+--
+-- Deletions silently not applying is this project's recurring failure: the
+-- `Fjernet` sampling error, the feed's page cap (20 pages of `Ukjent` and never
+-- a `Sletting`), and a bulk file that cannot express a deletion at all. All
+-- three looked healthy.
 
 -- dim_brreg_enhet — current state of every organisation in Enhetsregisteret.
 --
@@ -39,13 +97,47 @@
 -- without this model having an opinion about all of them and without a migration
 -- every time Brreg adds a field.
 
-with snapshot as (
+with
+
+{% if is_incremental() %}
+-- The organisations to rebuild this run: everything the feed has touched since
+-- the newest change already reflected in the dimension.
+--
+-- 🔴 THE WATERMARK IS READ FROM `this`, NOT FROM raw.brreg_feed_watermark, AND
+-- THE DIFFERENCE IS A DATA-LOSS BUG IN ONE DIRECTION.
+--
+-- The feed's watermark is how far the POLLER has consumed. It is normally ahead
+-- of what this model has applied — the feed runs, then the transform runs. Using
+-- it here would select changes newer than the feed's position and therefore skip
+-- every change between the last build and the last poll. Silently, and only for
+-- the organisations that actually changed, which is the worst possible subset.
+--
+-- ⚠️ Reading `max(last_oppdateringsid)` from `this` can only ever LAG, never
+-- lead: a tombstoned organisation is absent from the dimension, so its id is not
+-- counted, and the watermark sits at the newest surviving change instead. The
+-- consequence is that a few changes get re-processed. Every write here is a
+-- delete-then-insert keyed on organisasjonsnummer, so re-processing is a no-op.
+--
+-- Lagging costs work. Leading loses data. This reads the one that lags.
+changed as (
+  select distinct organisasjonsnummer
+  from {{ source('raw', 'brreg_enheter_versions') }}
+  where oppdateringsid > (
+    select coalesce(max(last_oppdateringsid), 0) from {{ this }}
+  )
+),
+{% endif %}
+
+snapshot as (
   select
     organisasjonsnummer,
     doc,
     snapshot_file_date,
     loaded_at
   from {{ source('raw', 'brreg_enheter_snapshot') }}
+  {% if is_incremental() %}
+  where organisasjonsnummer in (select organisasjonsnummer from changed)
+  {% endif %}
 ),
 
 -- The most recent change per organisation. `distinct on` with a descending
@@ -60,6 +152,9 @@ latest_change as (
     doc as changed_doc,
     fetched_at
   from {{ source('raw', 'brreg_enheter_versions') }}
+  {% if is_incremental() %}
+  where organisasjonsnummer in (select organisasjonsnummer from changed)
+  {% endif %}
   order by organisasjonsnummer, oppdateringsid desc
 ),
 
