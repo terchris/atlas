@@ -312,8 +312,52 @@ same column contracts; `schemas: api_v1` unchanged in `template-info.yaml`.
 
 ---
 
+## 🔴 The upgrade path is invisible to everyone except imac
+
+**Written down at ops-dev's instruction (urb-agents #784) rather than remembered, because it is a
+property of how this project tests rather than a fact about one bug.**
+
+On 2026-09-12 two defects shipped in `v20260912-2616c9c` and took `api_v1` to **zero views** on any
+cluster that already held data. Neither was a careless mistake and neither was visible to the people
+who wrote or reviewed them:
+
+| | why it could not see the defect |
+|---|---|
+| **a fresh install** | there is no old table to preserve, so a schema-change defect cannot occur |
+| **atlas (this agent)** | no database and no cluster — cannot run the upgrade at all |
+| **CI** | builds and parses; never materialises a model over existing data |
+| **imac** | installed onto a cluster with data — **the only party who could see it** |
+
+⚠️ **So the install path everyone tests first is precisely the path that hides this class of defect.**
+
+### What this means for any future change
+
+🔴 **Anything that changes a model's SHAPE — a new column, a renamed one, a changed materialisation or
+incremental strategy — is untestable by atlas and untestable by CI.** It must go to imac as an
+**upgrade** test on a cluster with existing data, not as an install test.
+
+**Concretely, the two that shipped:**
+
+- **`on_schema_change` was unset**, so dbt's default `ignore` applied. Adding `reconciled_at` meant an
+  existing table silently never gained it; the incremental run then succeeded into the old shape and
+  everything downstream that read the column died. ⚠️ **The error surfaced two models away from the
+  config that caused it**, so the natural place to start debugging was the wrong one. Now
+  `on_schema_change='fail'` — see the model for why the obvious alternative is worse.
+- **A repair by `--full-refresh` re-owns the objects.** It drops and recreates, so the tables take the
+  running user's ownership. Run it as `atlas`; running it as a superuser leaves the next Dagster run
+  with `permission denied`.
+
+🔵 **And the reason the staged handoff caught it is not the one it was designed for.** It was justified
+as *external blast radius* — a public surface deserves a verification step. The sharper reason, in
+ops-dev's words, is that **"our entire test method is fresh-install, and an upgrade is a different
+program."** The blast radius argument would not have applied to a purely internal model shape change;
+this one does, and it is the reason worth keeping.
+
+---
+
 ## Out of scope
 
 - **Underenheter** — follow-on plan (ops-dev, #711).
-- **A public endpoint for the register** — Terje's decision, 2026-09-11.
+- **A public endpoint for the register** — ~~Terje's decision, 2026-09-11~~ **reversed 2026-09-12**;
+  see phase 4 task 4.4. `api_v1.brreg_enhet` is published.
 - **NLOD attribution across Atlas** — [INVESTIGATE-nlod-attribution](../backlog/INVESTIGATE-nlod-attribution.md).
