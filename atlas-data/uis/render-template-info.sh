@@ -183,6 +183,21 @@ assert op["timezone"] == tz, (op["timezone"], tz)
 # job would leave the artifact telling them to launch something that no longer
 # exists — worse than saying nothing, because it looks authoritative.
 code_jobs = set(re.findall(r'name="([a-z_]+)"', sch))
+
+# Every cadence row names the job that owns it, and the name must be real.
+# The field exists because two agents read four Brreg crons as one job and one
+# costed a public-API outage at 48x its rate (urb-agents #780, #786). A field
+# added to prevent a misreading that is itself allowed to go stale would be
+# worse than not having it.
+cadence_jobs = {c.get("job") for c in op["cadence"]}
+missing_job = {j for j in cadence_jobs if j is None}
+assert not missing_job, "every operational.cadence row must name its `job:`"
+unknown_cadence_jobs = cadence_jobs - code_jobs
+assert not unknown_cadence_jobs, (
+    f"operational.cadence names jobs not defined in schedules.py: "
+    f"{sorted(unknown_cadence_jobs)}"
+)
+
 declared_jobs = set(op["first_data"]["jobs"])
 missing_jobs = declared_jobs - code_jobs
 assert not missing_jobs, f"first_data names jobs not defined in schedules.py: {sorted(missing_jobs)}"

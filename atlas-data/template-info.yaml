@@ -241,28 +241,57 @@ operational:
         reporting a failed transform, not a fault of its own. Fix the run and the
         endpoints return. Nothing needs reinstalling.
 
+  # ⚠️ EVERY ROW NAMES THE JOB THAT OWNS IT, and that is not decoration.
+  #
+  # This block used to list four Brreg crons with no owner, and two agents
+  # independently read them as one job (urb-agents #780, #786). One of them
+  # costed a public-API outage at 48x its real rate and nearly weighed a cadence
+  # rollback against it — because "the Brreg cron" looked like a single thing
+  # that ran every half hour and also rebuilt marts.
+  #
+  # It does not. `brreg_change_feed` polls; `brreg_transform` reconciles one
+  # incremental model and cannot drop a view; `transform_and_publish` rebuilds
+  # every mart and is the only one that touches api_v1. That distinction was true
+  # in the code and invisible here, which is the same defect as a retraction that
+  # does not travel with its claim.
   cadence:
     - cron: "0 2 * * 0"
+      job: annual_sources_refresh
       what: ~37 annual public-sector sources — SSB, FHI, Bufdir
     - cron: "0 1 1 * *"
+      job: klass_refresh
       what: SSB Klass classifications (kommune/fylke)
     - cron: "0,30 * * * *"
+      job: brreg_change_feed
       what: >-
         Brønnøysundregistrene change feed — only what moved, ~114 records per
         cycle at the measured 3.8 changes a minute. Half-hourly because the
-        register is a live subscription, not a daily table.
+        register is a live subscription, not a daily table. Appends to raw only;
+        rebuilds nothing and cannot affect the public API.
     - cron: "10,40 * * * *"
+      job: brreg_transform
       what: >-
-        Brreg reconciliation into marts — one incremental model, ten minutes
+        Brreg reconciliation into marts — ONE incremental model, ten minutes
         behind each poll. The offset is deliberate: firing alongside the feed
-        would reconcile data the feed had not written yet.
+        would reconcile data the feed had not written yet. Incremental means rows
+        are inserted and deleted, never the table replaced, so no api_v1 view is
+        disturbed by this job.
     - cron: "0 4 * * *"
+      job: brreg_change_feed
       what: >-
         Frivillighetsregisteret — a full re-walk of ~72,800 organisations
         (~727 requests). Daily, NOT on the feed's cadence: this register has no
-        change feed, so every refresh is the whole register.
+        change feed, so every refresh is the whole register. Same job as the
+        half-hourly row above, different source and different automation
+        condition — one job, two cadences.
     - cron: "0 5 * * *"
-      what: dbt transform and publish — no external calls
+      job: transform_and_publish
+      what: >-
+        dbt transform and publish — no external calls. ⚠️ The ONLY scheduled job
+        that rebuilds marts tables, and therefore the only one during which
+        api_v1 views are briefly recreated. Each wrapper is restored immediately
+        after its own mart, so the gap is milliseconds per view rather than the
+        length of the run.
 
   # No scraper row: SCRAPER_CRON (Sunday 03:30) still exists in cadence.py, but
   # its only consumer was redcross-branches, which is parked in
