@@ -882,3 +882,117 @@ models:
     data_tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns: [source_id, code]
+
+  - name: mart_brreg_enhet
+    description: |
+      Every organisation registered in Norway — the whole of Brønnøysundregistrene's
+      Enhetsregisteret, around 1.17 million rows, current as of the last change-feed run.
+      Companies, foundations, associations, public bodies and sole proprietorships.
+
+      Kilde: Brønnøysundregistrene. Inneholder data under norsk lisens for offentlige data
+      (NLOD) tilgjengeliggjort av Brønnøysundregistrene — https://data.norge.no/nlod/no/2.0.
+      Re-users must carry this attribution onward; it is a condition of the licence, not a
+      courtesy.
+
+      Deleted organisations are excluded. Brreg reports deletions through its change feed and
+      Atlas applies them, so an organisation removed upstream disappears from here — but the
+      version history is kept, so what it looked like before removal remains answerable.
+
+      Completeness caveat: this reflects deletions Brreg REPORTS. A row Atlas holds that Brreg
+      never had would not be removed by any automatic path, because no change event would ever
+      mention it.
+    columns:
+      - name: organisasjonsnummer
+        description: >-
+          Nine-digit Norwegian organisation number. Text, never a number — leading zeros are
+          significant. Stable for the life of the organisation, and the join key for
+          organisational data from any Norwegian source.
+        data_tests:
+          - not_null
+          - unique
+      - name: navn
+        description: >-
+          Registered name, verbatim from Brreg. For an enkeltpersonforetak (organisasjonsform
+          ENK) this is very often the proprietor's own personal name, because that is how the
+          register records them.
+        data_tests: [not_null]
+      - name: organisasjonsform_kode
+        description: >-
+          Legal form code — AS (aksjeselskap), ENK (enkeltpersonforetak), FLI
+          (forening/lag/innretning), STI (stiftelse) and others. The usual filter for separating
+          companies from associations, or for excluding sole proprietorships.
+        data_tests: [not_null]
+      - name: organisasjonsform_beskrivelse
+        description: Human-readable Norwegian label for organisasjonsform_kode, as Brreg publishes it.
+      - name: naeringskode1_kode
+        description: >-
+          Primary NACE industry code (SN2007), e.g. 94.992. Null for roughly 2% of the register.
+      - name: kommune_nr
+        description: >-
+          Kommune code of the registered business address. For an enkeltpersonforetak the
+          registered business address is commonly the proprietor's home address. Null where no
+          business address is registered (~6%). Some codes are historical or pseudo-regions and
+          will not resolve against a current kommune list.
+      - name: antall_ansatte
+        description: >-
+          Registered employee count. NULL MEANS "NOT REPORTED", NOT ZERO — the field is present
+          on only ~4% of records. Use har_registrert_antall_ansatte to distinguish the two;
+          reading NULL as 0 understates staffed organisations badly.
+      - name: har_registrert_antall_ansatte
+        description: >-
+          Whether Brreg holds a registered employee count at all. Present on 100% of records, and
+          the only way to tell "zero employees" from "no figure reported".
+        data_tests: [not_null]
+      - name: konkurs
+        description: Whether the organisation is in bankruptcy proceedings. Straight from Brreg.
+        data_tests: [not_null]
+      - name: under_avvikling
+        description: Whether the organisation is being wound up voluntarily. Straight from Brreg.
+        data_tests: [not_null]
+      - name: under_tvangsavvikling
+        description: Whether the organisation is under compulsory winding-up or dissolution.
+        data_tests: [not_null]
+      - name: is_active
+        description: >-
+          Convenience boolean — true when none of konkurs, under_avvikling or
+          under_tvangsavvikling is set. Means "trading", not "exists": all three states are still
+          registered organisations. Ignore this column if you want everything registered.
+        data_tests: [not_null]
+      - name: registrert_i_frivillighetsregisteret
+        description: >-
+          Whether the organisation is in Frivillighetsregisteret, the voluntary-organisation
+          register — true for roughly 72,800 records. This is what makes the Norwegian voluntary
+          sector discoverable as a population rather than a curated list.
+        data_tests: [not_null]
+      - name: registrert_dato
+        description: Date the organisation was entered in Enhetsregisteret.
+      - name: icnpo_nummer
+        description: >-
+          Primary ICNPO code as the organisation classified itself in Frivillighetsregisteret,
+          e.g. "9100". Null for organisations not in that register, and for members declaring
+          none. Null does not mean "not voluntary" — use registrert_i_frivillighetsregisteret
+          for that.
+      - name: icnpo_kategori
+        description: Primary ICNPO category label paired with icnpo_nummer.
+      - name: grasrotandel_deltar_i
+        description: >-
+          Whether the organisation participates in Grasrotandelen, Norsk Tipping's grassroots
+          funding scheme. Null for organisations not in Frivillighetsregisteret.
+      - name: frivillig_innfoert_dato
+        description: >-
+          Date of entry in Frivillighetsregisteret — distinct from registrert_dato, which is the
+          Enhetsregisteret entry. Organisations often exist for years before registering as
+          voluntary.
+      - name: last_seen_at
+        description: >-
+          When Atlas last wrote this row, from either the bulk snapshot or a change-feed run.
+          Tracks Atlas's load, not an upstream event.
+        data_tests: [not_null]
+      - name: doc
+        description: >-
+          The complete upstream record as Brreg published it, with nothing dropped or renamed —
+          including postal and business addresses, telephone, mobile, email, website, capital,
+          institutional sector code, articles of association and historical names. Responses are
+          large: a document averages ~1.7 kB, so select the typed columns instead unless you need
+          a field this view does not surface.
+        data_tests: [not_null]
