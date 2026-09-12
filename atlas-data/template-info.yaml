@@ -208,6 +208,39 @@ operational:
       advertised meta_sources / meta_endpoints / meta_dimensions return 404 until
       the first pipeline run. That is correct, not a failed install.
 
+  # ⚠️ Rendered at install by UIS 1.6.65 alongside `automation`, so this reaches
+  # the operator rather than only the catalogue. Written for someone who has just
+  # watched a run fail at 02:00 and has no other instruction.
+  #
+  # It exists because imac found the remedy lived only in a SQL comment inside
+  # the image (urb-agents #786): "whoever hits this at 02:00 gets a dbt schema
+  # error and no instruction, on a surface that is currently serving nothing."
+  troubleshooting:
+    - symptom: >-
+        A transform run fails with a dbt schema error naming dim_brreg_enhet —
+        "the source and target schemas on this incremental model are out of sync".
+      cause: >-
+        An Atlas upgrade added a column to a model that is materialised
+        incrementally. The existing table cannot gain it in place, and Atlas
+        refuses to continue rather than silently building into the old shape.
+      fix: >-
+        Rebuild that model once, AS THE atlas DATABASE USER, not as a superuser
+        — a full refresh drops and recreates, so the tables take the running
+        user's ownership and a superuser leaves the next run with "permission
+        denied". From the dbt project - "dbt build --full-refresh --select
+        dim_brreg_enhet+". It takes about four minutes for 1.17M rows.
+    - symptom: >-
+        The public API returns 404 for every endpoint, and stays that way.
+      cause: >-
+        api_v1 views are rebuilt by each transform run. A run that FAILS partway
+        leaves the views it had already replaced missing, and nothing restores
+        them until a run succeeds. A successful run repairs this by itself within
+        seconds, so a persistent 404 means the last run failed.
+      fix: >-
+        Look at the last transform run rather than at PostgREST — the API is
+        reporting a failed transform, not a fault of its own. Fix the run and the
+        endpoints return. Nothing needs reinstalling.
+
   cadence:
     - cron: "0 2 * * 0"
       what: ~37 annual public-sector sources — SSB, FHI, Bufdir
