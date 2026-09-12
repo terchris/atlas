@@ -77,8 +77,27 @@ BRREG_BULK_SOURCES = [
 # the call site — resolves to nothing, and the gate then reports the sources as
 # uncovered. That is the gate failing safe, and it is still a gate you have to go
 # and fix. Keep the literal.
+# The job's selection covers both Brreg ingests, so first_data and a manual run
+# reach them together. Their CADENCES differ and must stay separate — see below.
+#
+# ⚠️ One flat list of string literals: uis/check-first-data-coverage.py parses
+# this file rather than importing it, and resolves `NAME = ["a", "b"]` only.
 BRREG_DAILY_SOURCES = [
     "brreg-oppdateringer",
+    "brreg-frivillige",
+]
+
+# Half-hourly. The change feed reads only what moved: ~114 changes per cycle at
+# the measured 3.8/minute, each costing one entity fetch.
+BRREG_FEED_SOURCES = [
+    "brreg-oppdateringer",
+]
+
+# 🔴 Daily, NOT half-hourly, and the difference is 48x load on someone else's
+# service. Frivillighetsregisteret has no change feed and no bulk download, so
+# every refresh is a full ~727-request re-walk of the register. See
+# cadence.FRIVILLIG_CRON.
+BRREG_FRIVILLIGE_SOURCES = [
     "brreg-frivillige",
 ]
 
@@ -91,9 +110,15 @@ assets = [
         group_name="raw_brreg",
     ),
     *make_raw_ingest_assets(
-        BRREG_DAILY_SOURCES,
+        BRREG_FEED_SOURCES,
         group_name="raw_brreg",
-        automation_condition=cadence.daily_polled(),
-        freshness_policy=cadence.DAILY_FRESHNESS,
+        automation_condition=cadence.brreg_feed_polled(),
+        freshness_policy=cadence.BRREG_FRESHNESS,
+    ),
+    *make_raw_ingest_assets(
+        BRREG_FRIVILLIGE_SOURCES,
+        group_name="raw_brreg",
+        automation_condition=cadence.frivillig_polled(),
+        freshness_policy=cadence.FRIVILLIG_FRESHNESS,
     ),
 ]

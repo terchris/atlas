@@ -28,6 +28,7 @@ Three things here are deliberate:
    inviting a click. Set ATLAS_DAGSTER_INCLUDE_PRIVATE=1 for local work.
 """
 
+import json
 import os
 import sys
 from pathlib import Path
@@ -177,6 +178,37 @@ def _dbt_command_for(context: AssetExecutionContext) -> list:
     if has_assets and not has_checks:
         return ["build", "--exclude-resource-type", "test"]
     return ["build"]
+
+
+def dbt_model_asset_keys(*model_names: str) -> "list[AssetKey]":
+    """
+    Asset keys for named dbt models, from the translator rather than by hand.
+
+    ⚠️ A dbt model's key inherits a prefix from its configured schema, so
+    `dim_brreg_enhet` is `marts/dim_brreg_enhet` and NOT `dim_brreg_enhet`.
+    Constructing keys by hand has already cost this repo once: api_v1 was wired
+    to 13 hand-built keys that matched nothing, so it looked downstream of the
+    marts and was downstream of nothing. Ask the translator — it is the same one
+    @dbt_assets uses, so the two cannot disagree.
+
+    🔴 Raises on an unknown name rather than returning a short list. A silently
+    missing key produces a job that selects fewer assets than intended and still
+    runs green, which is the failure this repo keeps meeting in other forms.
+    """
+    manifest = json.loads(_require_manifest().read_text())
+    translator = dbt_translator()
+    by_name = {
+        node["name"]: node
+        for node in manifest.get("nodes", {}).values()
+        if node.get("resource_type") == "model"
+    }
+    missing = [n for n in model_names if n not in by_name]
+    if missing:
+        raise ValueError(
+            f"no dbt model named {missing} in the manifest — "
+            f"a job selecting it would silently select nothing"
+        )
+    return [translator.get_asset_key(by_name[name]) for name in model_names]
 
 
 @dbt_assets(
