@@ -37,13 +37,33 @@
 -- Brreg's own monotonic sequence; there are no ties to break.
 --
 -- Returns one row per violation, so dbt fails and names the offenders.
+--
+-- ⚠️ WHY raw.brreg_enheter_versions IS NAMED LITERALLY AND NOT VIA source().
+--
+-- dagster-dbt attaches a singular test as an ASSET CHECK only when the test has
+-- exactly ONE dbt parent. Measured against this repo's own manifest:
+--
+--   contents_code_identifies_an_indicator   1 parent (a model)   attached ✓
+--   raw_sources_were_refreshed_recently     1 parent (a model)   attached ✓
+--   this test, with source() + ref()        2 parents            attached ✗
+--
+-- Two parents and the test still exists in the manifest, still passes `dbt test`
+-- — and nothing in the pipeline ever runs it. The image build refuses that
+-- ("these singular dbt tests are in the manifest but nothing runs them"), which
+-- is how this was caught rather than shipped as decorative coverage.
+--
+-- So the dependency on the version history is deliberately untracked, to keep
+-- `ref('dim_brreg_enhet')` the single parent and keep the check wired up. The
+-- cost is a missing lineage edge; the alternative was a test that does not run.
+-- raw.brreg_enheter_versions is created by migration 053 and its name is fixed
+-- there.
 
 with latest_version as (
   select distinct on (organisasjonsnummer)
     organisasjonsnummer,
     oppdateringsid,
     endringstype
-  from {{ source('raw', 'brreg_enheter_versions') }}
+  from raw.brreg_enheter_versions
   order by organisasjonsnummer, oppdateringsid desc
 ),
 
