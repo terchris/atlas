@@ -47,6 +47,19 @@ models:
     marts:
       +materialized: table
       +schema: marts
+      # 🔴 Every api_v1 wrapper is recreated the instant its mart is rebuilt.
+      #
+      # Rebuilding a mart table drops it `cascade` (dbt's own table.sql renames
+      # the old aside, then drops it), which destroys the api_v1 view on top of
+      # it. `apply-api-v1.sh` used to be the only thing that put them back — at
+      # the END of the run — so the public API served 404 for the length of every
+      # transform, and indefinitely after any FAILED one.
+      #
+      # Set here rather than on fourteen models so a new api mart inherits it
+      # without anyone remembering. See macros/restore_api_v1_view.sql for the
+      # mechanism, the measurement, and what this deliberately does not fix.
+      api:
+        +post-hook: "{{ restore_api_v1_view() }}"
 
 seeds:
   atlas:
