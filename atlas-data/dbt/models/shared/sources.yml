@@ -121,7 +121,14 @@ sources:
           them, so never compute a backlog by subtracting them.
         loaded_at_field: processed_at
         meta:
-          ingest_cadence: daily
+          ingest_cadence: half_hourly
+          cadence_note: >-
+            Written by the change feed, which polls every half hour (cadence.BRREG_FEED_CRON)
+            and writes rows only when changes actually arrive. So this measures upstream
+            ACTIVITY, not pipeline health, and its one-day bound is derived from Brreg's
+            quiet periods rather than from the polling interval — the longest observed gap on
+            a Sunday is 4.2h. The tight pipeline-health signal is Dagster's FreshnessPolicy
+            at 2h warn / 6h fail.
         columns:
           - name: oppdateringsid
             data_type: bigint
@@ -144,7 +151,14 @@ sources:
           organisation still answers HTTP 200. Branch on endringstype.
         loaded_at_field: fetched_at
         meta:
-          ingest_cadence: daily
+          ingest_cadence: half_hourly
+          cadence_note: >-
+            Written by the change feed, which polls every half hour (cadence.BRREG_FEED_CRON)
+            and writes rows only when changes actually arrive. So this measures upstream
+            ACTIVITY, not pipeline health, and its one-day bound is derived from Brreg's
+            quiet periods rather than from the polling interval — the longest observed gap on
+            a Sunday is 4.2h. The tight pipeline-health signal is Dagster's FreshnessPolicy
+            at 2h warn / 6h fail.
         columns:
           - name: oppdateringsid
             data_type: bigint
