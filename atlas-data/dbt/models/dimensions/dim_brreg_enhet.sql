@@ -3,6 +3,7 @@
     materialized='incremental',
     unique_key='organisasjonsnummer',
     incremental_strategy='delete+insert',
+    on_schema_change='fail',
     schema='marts',
     post_hook=[
       """
@@ -18,6 +19,9 @@
           where v.organisasjonsnummer = d.organisasjonsnummer
             and v.endringstype in ('Sletting', 'Fjernet')
        )
+      """,
+      """
+      delete from {{ this }} where doc is null
       """
     ],
     indexes=[
@@ -35,6 +39,55 @@
 -- the Brreg models arrived, so 72% of it is this lineage. A full rebuild of
 -- 1.17M rows to apply the ~57 organisations that change in a quarter of an hour
 -- is what kept served freshness a day behind a feed that is minutes behind.
+--
+-- 🔴 THE SECOND POST-HOOK EXISTS FOR THE SAME REASON AS THE FIRST, AND I ALMOST
+-- SHIPPED THE SAME BUG TWICE.
+--
+-- The WHERE clause at the bottom now excludes rows with a null `doc`. That stops
+-- new ones entering — and does nothing about the ones already in the table,
+-- because `delete+insert` only deletes keys present in `tmp`, and the WHERE is
+-- exactly what keeps them out of `tmp`.
+--
+-- ⚠️ Identical shape to the tombstone case below: **a filter that looks like it
+-- removes rows is what prevents their removal.** I reasoned my way to that once,
+-- imac falsified it with `DELETE 0` against `DELETE 1`, and I still had to catch
+-- myself repeating it here. Anything excluded by that WHERE needs an explicit
+-- delete, or it lives in the table forever.
+--
+-- Kept as a separate statement rather than folded into the first: one job each,
+-- and the two have different reasons.
+--
+-- 🔴 `on_schema_change='fail'` — AND WHY NOT THE OTHER THREE.
+--
+-- dbt's default is `ignore`, and it took the whole Brreg pipeline down on an
+-- upgrade (imac, urb-agents #780). Adding `reconciled_at` to this model meant an
+-- EXISTING table never gained the column: the incremental run succeeded into the
+-- old shape, `mart_brreg_enhet` then could not be created, and `api_v1` served
+-- ZERO views — on every subsequent run, not just the first.
+--
+-- ⚠️ Two properties made it as bad as it was:
+--   - **A fresh install never sees it.** There is no old table to preserve, so
+--     the install path everyone tests is exactly the path that hides it.
+--   - **The error surfaces two models away** from the config that causes it, so
+--     whoever hits it starts debugging the mart.
+--
+-- `append_new_columns` looks like the obvious fix and is worse here. It adds the
+-- column and leaves 1.17M existing rows NULL — and `reconciled_at` carries a
+-- `not_null` test, so the build goes red anyway, now for a reason that reads
+-- like a data problem rather than a migration. Dropping the test to suit would
+-- weaken a contract to accommodate a mechanism. `sync_all_columns` has the same
+-- flaw and also drops columns, which on a published surface is worse.
+--
+-- `fail` stops the run AT THIS MODEL with "the source and target schemas are out
+-- of sync", which is the true statement. The upgrade is then a deliberate
+-- `dbt build --full-refresh --select dim_brreg_enhet+` — 256 s for 1.17M rows,
+-- measured by imac.
+--
+-- 🔴 RUN THAT FULL REFRESH AS `atlas`, NOT AS A SUPERUSER. `--full-refresh`
+-- drops and recreates, so the new tables take the running user's ownership. imac
+-- did it as `postgres` while diagnosing this and the next Dagster run died with
+-- `permission denied for table dim_brreg_enhet`. The repair is
+-- `alter table … owner to atlas`, but not needing it is better.
 --
 -- 🔴 THE POST-HOOK IS NOT BELT-AND-BRACES. IT IS THE ONLY THING THAT DELETES.
 --
@@ -289,3 +342,28 @@ from typed
 -- exists yet to carry the endringstype.
 where coalesce(endringstype, '') not in ('Sletting', 'Fjernet')
   and slettedato is null
+  -- 🔴 An organisation the feed MENTIONED but nothing ever DESCRIBED is not a
+  -- register entry, and must not be served as one.
+  --
+  -- The feed reports changes for organisations the bulk file never contained,
+  -- and an `Ukjent` change carries no usable document. The full outer join above
+  -- is right to let them in — a `Ny` organisation registered after the snapshot
+  -- must appear — but a row whose `doc` is null has every typed column null and
+  -- says nothing about anybody.
+  --
+  -- ⚠️ AND IT DOES NOT SAY NOTHING. It asserts. `coalesce((doc ->> 'konkurs'),
+  -- false)` turns an absent document into the positive claim that the
+  -- organisation is NOT bankrupt and NOT being wound up, and `is_active` then
+  -- reads true. imac found 145 such rows on the public API (urb-agents #780):
+  -- no name, no legal form, no kommune — and `konkurs: false`, stated as fact,
+  -- on a register of ~462,000 natural persons.
+  --
+  -- 🔵 The contract already said these rows should not exist: `not_null` on
+  -- `navn`, `organisasjonsform_kode` and `doc` all failed on the scheduled run.
+  -- The model was emitting rows its own tests forbade, so this makes the model
+  -- enforce what the schema already asserted rather than adding a new rule.
+  --
+  -- An organisation excluded here is not lost: it is absent until a change
+  -- arrives carrying a document, and then it appears complete. Omitting what we
+  -- cannot describe is the honest failure; publishing defaults is not.
+  and doc is not null
