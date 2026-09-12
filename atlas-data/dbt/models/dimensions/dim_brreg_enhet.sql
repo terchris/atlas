@@ -263,6 +263,24 @@ select
   oppdateringsid as last_oppdateringsid,
   snapshot_file_date,
   last_seen_at,
+  -- 🔴 THE SECOND CLOCK. `last_seen_at` says when the INGEST last wrote this
+  -- organisation into raw; this says when the TRANSFORM last reconciled it into
+  -- marts. They are different times and the gap between them is real: the feed
+  -- polls every half hour and the reconciliation follows ten minutes later.
+  --
+  -- Without both, "current" means two different things depending on which table
+  -- you read — raw can be minutes fresh while the served API is hours stale, and
+  -- a consumer of api_v1 has no way to tell. That was invisible until imac's
+  -- acceptance host sat 13.5 hours behind Brreg with every check green.
+  --
+  -- ⚠️ On an incremental run only the rebuilt organisations get a new value, which
+  -- is the honest answer rather than a limitation: a row untouched since Tuesday
+  -- was last reconciled on Tuesday, and stamping it with today's build time would
+  -- assert a freshness the row does not have.
+  --
+  -- `run_started_at` is dbt's own timestamp for the invocation, so it cannot
+  -- drift from the build the way a hand-set now() in a post-hook could.
+  '{{ run_started_at }}'::timestamptz as reconciled_at,
   doc
 from typed
 -- 🔴 The deletion filter. Tombstoned rows stay in raw.brreg_enheter_versions and
