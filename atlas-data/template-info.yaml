@@ -141,10 +141,20 @@ provides:
 operational:
   # The single most important line for an operator: installing commits you to
   # nothing that runs.
+  # ⚠️ This sentence is rendered at the END OF AN INSTALL as of UIS 1.6.65, not
+  # only by `uis template info`. Until then it reached people browsing the
+  # catalogue and never the operator who had just installed (tor-agent,
+  # urb-agents #758) — so it was written blind, for the wrong reader.
+  #
+  # Write it for someone who has just watched an install finish and is deciding
+  # what to do next. Seven of the other operational.* fields are still info-only
+  # by design, so this one cannot assume they were read.
   automation: >-
     Ships stopped. No data is fetched and no external service is contacted until
-    an operator enables the schedules; that is a go-live decision, not a side
-    effect of installing.
+    an operator enables both the schedules and the sensors; that is a go-live
+    decision, not a side effect of installing. Enabling them starts the NEXT
+    scheduled run — it does not backfill, so a fresh install stays empty until
+    the first-data jobs are launched by hand.
 
   first_load: >-
     ~4.1M rows across 48 raw and 60 marts tables, from ~41 sources. That is
