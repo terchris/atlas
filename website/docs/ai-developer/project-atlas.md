@@ -93,6 +93,14 @@ apply. Run commands on the host. Do not invent a cage.
 - **Prefer a build-time assertion over a rule people must remember** — and make the guard fail on
   purpose once before trusting it. This repo has shipped a guard that protected nothing, and a
   green uniqueness test once masked a real fan-out bug.
+- 🔴 **A model's SHAPE cannot be tested here, or in CI. Send it to imac as an UPGRADE, not an install.**
+  A new column, a renamed one, a changed materialisation or incremental strategy — this agent has no
+  database, CI never materialises over existing data, and **a fresh install cannot exhibit the defect
+  at all, because there is no old table to preserve.** Only a cluster that already holds data can.
+  On 2026-09-12 an unset `on_schema_change` took `api_v1` to zero views on every existing install
+  while every fresh install passed. The full account is in
+  [`plans/active/PLAN-003-brreg-dim-and-frivillig.md`](plans/active/PLAN-003-brreg-dim-and-frivillig.md)
+  under *"The upgrade path is invisible to everyone except imac"*.
 - **Absence-guards are a pattern here. Look for the existing ones before inventing a third.**
   Sometimes what makes code correct is that a statement is *not* there, and no ordinary test covers an
   absence — the code passes every test right up until someone adds the line. The answer is a test that
