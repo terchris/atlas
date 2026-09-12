@@ -404,7 +404,20 @@ models:
           Date of the bulk file this organisation was first loaded from, or null for one the feed saw
           before any snapshot did. Provenance of the transfer, not of the organisation.
       - name: last_seen_at
-        description: When Atlas last wrote this organisation, from either the snapshot load or a feed run.
+        description: >-
+          When the INGEST last wrote this organisation into raw, from either the snapshot load or a
+          feed run. Pair it with reconciled_at — this is the raw clock, that is the marts clock.
+        data_tests: [not_null]
+      - name: reconciled_at
+        description: >-
+          When the TRANSFORM last reconciled this organisation into marts — dbt's own timestamp for
+          the build that wrote the row. 🔴 The second of two clocks, and the gap between them is real:
+          the change feed polls every half hour and this reconciliation follows ten minutes behind it,
+          so raw can be minutes fresh while marts is older. Without both, "current" means different
+          things depending on which table you read — which is how an install sat 13.5 hours behind
+          Brreg with every check green. ⚠️ On an incremental run only the organisations that changed
+          get a new value; a row untouched since Tuesday genuinely was last reconciled on Tuesday, and
+          stamping it with today's build time would assert a freshness it does not have.
         data_tests: [not_null]
       - name: doc
         description: >-
