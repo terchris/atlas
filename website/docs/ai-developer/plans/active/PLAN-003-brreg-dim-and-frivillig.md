@@ -277,10 +277,33 @@ half is now written down.
 - [ ] 4.3 ⬜ **imac.** Verify existing `api_v1` views improve rather than break: `ngo_index`,
       `ngo_overview`, `coverage_gap_barnefattigdom`, `indicator_missing_kommuner`. This is the gate on
       4.1, not a follow-up to it.
-- [x] 4.4 🔴 **No new `api_v1` view and no `schemas:` change** — and none was made. Terje decided no
-      new public endpoint; the gain shows up in existing views getting better. `template-info.yaml`
-      still declares `schemas: api_v1` and `api_v1_generated.sql` is untouched by this work. Adding
-      one is a separate reviewed act, and this plan is not it.
+- [x] 4.4 ⚠️ **SUPERSEDED — Terje reversed this on 2026-09-12 and a new `api_v1` view now exists.**
+
+      This task used to read, and was correct when written: *"No new `api_v1` view and no `schemas:`
+      change. Terje decided no new public endpoint; the gain shows up in existing views getting
+      better. Adding one is a separate reviewed act, and this plan is not it."*
+
+      🔴 **It became a separate reviewed act.** Terje instructed directly that the whole register be
+      published, explicitly including ENK, and reaffirmed it when the sole-proprietor point was put to
+      him. His reason, verbatim: *"by norwegian law the info about ENK and other compenies are public
+      information"* and *"the norwegian law outranks any rules in the kingdom of norway."*
+
+      **What shipped:** `marts.mart_brreg_enhet` → `api_v1.brreg_enhet`, ~1.17M organisations, typed
+      columns plus the full upstream `doc`. `schemas:` is unchanged — it was already `api_v1`, which
+      is precisely why adding a view to that schema is publication rather than preparation.
+
+      ⚠️ **Left as a superseded record rather than rewritten.** The contract in `project-atlas.md` is
+      that `api_v1` additions are public exposure and wait for a named human. The value of that rule
+      is entirely in the audit trail it leaves, so the reversal is recorded where the original
+      decision lived — not tidied into looking as though the plan always said this.
+
+      🔵 **One thing the publication triggered rather than deferred:** NLOD 2.0 requires attribution to
+      accompany redistributed data. It had been parked in
+      [INVESTIGATE-nlod-attribution](../backlog/INVESTIGATE-nlod-attribution.md) as a repo-wide gap,
+      and parking it stopped being an option the moment Atlas republished Brreg openly. The attribution
+      now rides in the view's own `COMMENT ON VIEW`, where PostgREST surfaces it in the OpenAPI output
+      — a consumer querying the endpoint has no reason to go and find `meta_sources`, and a view
+      comment costs nothing per row where a repeated column across 1.17M records would not.
 
 ### Validation
 
