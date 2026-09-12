@@ -78,17 +78,39 @@
 -- ══════════════════════════════════════════════════════════════════════════
 --
 --     meta:
---       ingest_cadence: weekly | monthly | none
---       cadence_note: >-          # REQUIRED when, and only when, cadence: none
---         why this source has no cadence at all
+--       ingest_cadence: half_hourly | daily | weekly | monthly | manual | none
+--       cadence_note: >-          # REQUIRED for `manual` and `none`
+--         why this source has no bound
 --
--- `weekly` / `monthly` must match the asset's `automation_condition` in the
+-- The interval values must match the asset's `automation_condition` in the
 -- Dagster package. This file does not read `cadence.py` — the two are coupled
 -- by convention, and that coupling is the known soft spot in this design.
 --
--- ⚠️ `none` IS A CLAIM THAT A SOURCE SHOULD NEVER REFRESH ON A TIMER. It is
--- the only value that silences a row, so it is the only one that can turn this
--- test into decoration. That is why it is the only one that must be argued for
+-- 🔴 THAT SOFT SPOT BIT ON 2026-09-12, AND IT BROKE THE WHOLE CHECK JOB.
+--
+-- The Brreg sources were declared `daily` and `manual` when neither existed in
+-- the cadence map, so the test raised a compiler error — correctly — and
+-- `transform_checks` could not compile at all. It had been failing every run
+-- since those sources landed, and was found by imac executing it three times
+-- unattended rather than by anyone reading the file.
+--
+-- ⚠️ Then the cron moved to half-hourly and `sources.yml` was not updated with
+-- it, so two of them were declared `daily` while polling every thirty minutes.
+-- **The coupling is not merely a soft spot in theory; it has now been the same
+-- defect twice in one day.** Anything that changes `cadence.py` must change this
+-- file in the same commit.
+--
+-- 🔵 The design held even as the declaration failed: refusing to compile is why
+-- this was findable at all. A version that defaulted an unknown cadence to a
+-- weekly bound would have run green over sources it was silently mis-checking.
+--
+-- ⚠️ `none` AND `manual` ARE THE TWO VALUES THAT SILENCE A ROW, so they are the
+-- two that can turn this test into decoration. Both must be argued for in
+-- writing. They are NOT the same claim: `none` says nothing will ever refresh
+-- this; `manual` says a human refreshes it deliberately and there is no interval
+-- at which it becomes wrong. Keep them apart — collapsing them is how a
+-- bootstrap ends up with a freshness bound and someone wonders why it is
+-- permanently red. That is why it is the only one that must be argued for
 -- in writing, at the declaration, where the next reader meets it. **If a source
 -- is late, fix the source.** Reach for `none` only when the honest answer is
 -- "nothing will ever refresh this", and say what makes that true.
@@ -147,15 +169,41 @@
 -- depends_on: {{ ref('fact_kommune_indicators') }}
 
 {#-
-  Cadence -> maximum tolerated age. Each is the polling interval plus enough
-  slack to absorb one late tick without crying wolf, and no more:
-    weekly   7 + 1
-    monthly  31 + 4   (a 31-day month, then four days to notice a missed tick)
-  A cadence named on a source but absent here is a compile error, not a
-  default — silently defaulting an unknown cadence to a weekly bound is the
-  exact bug the klass sources were sitting on.
+  Cadence -> maximum tolerated age, in days. Mostly the polling interval plus
+  enough slack to absorb one late tick without crying wolf, and no more:
+    weekly        7 + 1
+    monthly      31 + 4   (a 31-day month, then four days to notice a missed tick)
+    daily         1 + 1
+
+  🔴 half_hourly IS NOT DERIVED FROM ITS INTERVAL, AND THAT IS DELIBERATE.
+
+  A half-hourly poll with a half-hourly bound would be wrong, because this test
+  measures the wrong thing for that source. It reads max(loaded_at_field) on the
+  TABLE, and the Brreg change feed only writes rows when changes actually arrive
+  — a run that finds nothing writes nothing. So for those tables this is a
+  measure of UPSTREAM ACTIVITY, not of pipeline health.
+
+  Measured against Brreg's quietest days (2026-09-12), the gap the bound has to
+  tolerate is real:
+
+    2026-09-06 Sun   298 changes   longest quiet gap 4.2h
+    2026-08-30 Sun   335 changes   longest quiet gap 4.1h   (and a 4.1h lead)
+    2026-08-16 Sun   163 changes   longest quiet gap 4.2h
+
+  A Saturday tail running into a Sunday lead bridges ~6h, and a public holiday
+  would be longer. So the bound is one day: tight enough to catch a dead feed
+  within a day, loose enough never to fire on a genuinely quiet weekend.
+
+  ⚠️ The TIGHT signal for those sources is Dagster's FreshnessPolicy
+  (cadence.BRREG_FRESHNESS, 2h warn / 6h fail), which measures materialisation —
+  did the pipeline RUN — and is the right instrument for that question. Two
+  systems, two questions. Do not tighten this one to match that one; it would
+  fire every quiet Sunday and teach people to ignore it.
 -#}
-{% set cadence_max_age = var('ingest_cadence_max_age_days', {'weekly': 8, 'monthly': 35}) %}
+{% set cadence_max_age = var(
+    'ingest_cadence_max_age_days',
+    {'half_hourly': 1, 'daily': 2, 'weekly': 8, 'monthly': 35}
+) %}
 
 {% if execute %}
     {% set checked = [] %}
@@ -170,8 +218,9 @@
                     the klass sources acquired a threshold nobody chose. -#}
                 {% do errors.append(
                     node.name ~ ": declares loaded_at_field '" ~ node.loaded_at_field ~
-                    "' but no meta.ingest_cadence. Add weekly, monthly, or none"
-                    " (none also requires meta.cadence_note)."
+                    "' but no meta.ingest_cadence. Add half_hourly, daily, weekly,"
+                    " monthly, manual or none (manual and none also require"
+                    " meta.cadence_note)."
                 ) %}
 
             {% elif cadence == 'none' %}
@@ -184,10 +233,33 @@
                     ) %}
                 {% endif %}
 
+            {% elif cadence == 'manual' %}
+                {#- 'manual' is excluded like 'none', and it is a SEPARATE category
+                    on purpose. 'none' means nothing refreshes this. 'manual' means
+                    a human refreshes it, deliberately, and it has no interval — so
+                    there is no age at which it becomes wrong.
+
+                    The bootstrap load is the case: it must never self-trigger, and
+                    the register's currency comes from the change feed rather than
+                    from re-running it. Both "never stale" and "always stale" are
+                    false of it, which is why it gets no bound rather than a
+                    generous one.
+
+                    ⚠️ Collapsing the two would lose the reason, and the reason is
+                    the thing that stops someone later giving a bootstrap a
+                    freshness bound and wondering why it is permanently red. -#}
+                {% if not node.meta.get('cadence_note') %}
+                    {% do errors.append(
+                        node.name ~ ": meta.ingest_cadence is 'manual' but there is no"
+                        " meta.cadence_note. 'manual' silences this row; say who runs"
+                        " it, and what keeps the data current in the meantime."
+                    ) %}
+                {% endif %}
+
             {% elif cadence not in cadence_max_age %}
                 {% do errors.append(
                     node.name ~ ": unknown meta.ingest_cadence '" ~ cadence ~ "'."
-                    " Known: " ~ (cadence_max_age.keys() | list | join(', ')) ~ ", none."
+                    " Known: " ~ (cadence_max_age.keys() | list | join(', ')) ~ ", manual, none."
                     " Add it to ingest_cadence_max_age_days with a bound before using it."
                 ) %}
 
