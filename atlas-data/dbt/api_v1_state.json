@@ -2,6 +2,7 @@
   "format_version": 1,
   "views": [
     "activity_catalog",
+    "brreg_enhet",
     "bufdir_indicator_alias",
     "coverage_gap_barnefattigdom",
     "distrikt_summary",

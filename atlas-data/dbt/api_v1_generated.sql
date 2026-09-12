@@ -16,6 +16,15 @@ CREATE SCHEMA IF NOT EXISTS api_v1;
 
 -- activity_catalog  ←  marts.mart_activity_catalog
 CREATE OR REPLACE VIEW api_v1.activity_catalog AS SELECT * FROM marts.mart_activity_catalog;
+COMMENT ON VIEW api_v1.activity_catalog IS 'One row per (NGO, activity) joining dim_activity to the
+service-category seed for the human-readable label, plus a count
+of active chapters offering each activity. Backs the per-NGO
+activity catalogue page (atlas-frontend
+/ngo/[slug]/aktiviteter); equivalent to listActivities().
+
+The full table is small (~35 rows for Red Cross alone in v1) and
+grows as new NGOs land. PostgREST consumers filter via
+?ngo_orgnr=eq.X.';
 COMMENT ON COLUMN api_v1.activity_catalog.activity_id IS 'Composite slug (e.g. ''redcross-besokstjeneste''). Stable across
 refreshes. Unique within this view.';
 COMMENT ON COLUMN api_v1.activity_catalog.ngo_orgnr IS '9-digit Brreg organisasjonsnummer of the NGO offering the activity.';
@@ -31,8 +40,62 @@ COMMENT ON COLUMN api_v1.activity_catalog.chapter_count IS 'Count of distinct ac
 when the activity exists in dim_activity but no active chapter
 provides it (rare but possible during transitions).';
 
+-- brreg_enhet  ←  marts.mart_brreg_enhet
+CREATE OR REPLACE VIEW api_v1.brreg_enhet AS SELECT * FROM marts.mart_brreg_enhet;
+COMMENT ON VIEW api_v1.brreg_enhet IS 'Every organisation registered in Norway — the whole of Brønnøysundregistrene''s
+Enhetsregisteret, around 1.17 million rows, current as of the last change-feed run.
+Companies, foundations, associations, public bodies and sole proprietorships.
+
+Kilde: Brønnøysundregistrene. Inneholder data under norsk lisens for offentlige data
+(NLOD) tilgjengeliggjort av Brønnøysundregistrene — https://data.norge.no/nlod/no/2.0.
+Re-users must carry this attribution onward; it is a condition of the licence, not a
+courtesy.
+
+Deleted organisations are excluded. Brreg reports deletions through its change feed and
+Atlas applies them, so an organisation removed upstream disappears from here — but the
+version history is kept, so what it looked like before removal remains answerable.
+
+Completeness caveat: this reflects deletions Brreg REPORTS. A row Atlas holds that Brreg
+never had would not be removed by any automatic path, because no change event would ever
+mention it.';
+COMMENT ON COLUMN api_v1.brreg_enhet.organisasjonsnummer IS 'Nine-digit Norwegian organisation number. Text, never a number — leading zeros are significant. Stable for the life of the organisation, and the join key for organisational data from any Norwegian source.';
+COMMENT ON COLUMN api_v1.brreg_enhet.navn IS 'Registered name, verbatim from Brreg. For an enkeltpersonforetak (organisasjonsform ENK) this is very often the proprietor''s own personal name, because that is how the register records them.';
+COMMENT ON COLUMN api_v1.brreg_enhet.organisasjonsform_kode IS 'Legal form code — AS (aksjeselskap), ENK (enkeltpersonforetak), FLI (forening/lag/innretning), STI (stiftelse) and others. The usual filter for separating companies from associations, or for excluding sole proprietorships.';
+COMMENT ON COLUMN api_v1.brreg_enhet.organisasjonsform_beskrivelse IS 'Human-readable Norwegian label for organisasjonsform_kode, as Brreg publishes it.';
+COMMENT ON COLUMN api_v1.brreg_enhet.naeringskode1_kode IS 'Primary NACE industry code (SN2007), e.g. 94.992. Null for roughly 2% of the register.';
+COMMENT ON COLUMN api_v1.brreg_enhet.kommune_nr IS 'Kommune code of the registered business address. For an enkeltpersonforetak the registered business address is commonly the proprietor''s home address. Null where no business address is registered (~6%). Some codes are historical or pseudo-regions and will not resolve against a current kommune list.';
+COMMENT ON COLUMN api_v1.brreg_enhet.antall_ansatte IS 'Registered employee count. NULL MEANS "NOT REPORTED", NOT ZERO — the field is present on only ~4% of records. Use har_registrert_antall_ansatte to distinguish the two; reading NULL as 0 understates staffed organisations badly.';
+COMMENT ON COLUMN api_v1.brreg_enhet.har_registrert_antall_ansatte IS 'Whether Brreg holds a registered employee count at all. Present on 100% of records, and the only way to tell "zero employees" from "no figure reported".';
+COMMENT ON COLUMN api_v1.brreg_enhet.konkurs IS 'Whether the organisation is in bankruptcy proceedings. Straight from Brreg.';
+COMMENT ON COLUMN api_v1.brreg_enhet.under_avvikling IS 'Whether the organisation is being wound up voluntarily. Straight from Brreg.';
+COMMENT ON COLUMN api_v1.brreg_enhet.under_tvangsavvikling IS 'Whether the organisation is under compulsory winding-up or dissolution.';
+COMMENT ON COLUMN api_v1.brreg_enhet.is_active IS 'Convenience boolean — true when none of konkurs, under_avvikling or under_tvangsavvikling is set. Means "trading", not "exists": all three states are still registered organisations. Ignore this column if you want everything registered.';
+COMMENT ON COLUMN api_v1.brreg_enhet.registrert_i_frivillighetsregisteret IS 'Whether the organisation is in Frivillighetsregisteret, the voluntary-organisation register — true for roughly 72,800 records. This is what makes the Norwegian voluntary sector discoverable as a population rather than a curated list.';
+COMMENT ON COLUMN api_v1.brreg_enhet.registrert_dato IS 'Date the organisation was entered in Enhetsregisteret.';
+COMMENT ON COLUMN api_v1.brreg_enhet.icnpo_nummer IS 'Primary ICNPO code as the organisation classified itself in Frivillighetsregisteret, e.g. "9100". Null for organisations not in that register, and for members declaring none. Null does not mean "not voluntary" — use registrert_i_frivillighetsregisteret for that.';
+COMMENT ON COLUMN api_v1.brreg_enhet.icnpo_kategori IS 'Primary ICNPO category label paired with icnpo_nummer.';
+COMMENT ON COLUMN api_v1.brreg_enhet.grasrotandel_deltar_i IS 'Whether the organisation participates in Grasrotandelen, Norsk Tipping''s grassroots funding scheme. Null for organisations not in Frivillighetsregisteret.';
+COMMENT ON COLUMN api_v1.brreg_enhet.frivillig_innfoert_dato IS 'Date of entry in Frivillighetsregisteret — distinct from registrert_dato, which is the Enhetsregisteret entry. Organisations often exist for years before registering as voluntary.';
+COMMENT ON COLUMN api_v1.brreg_enhet.last_seen_at IS 'When Atlas last wrote this row, from either the bulk snapshot or a change-feed run. Tracks Atlas''s load, not an upstream event.';
+COMMENT ON COLUMN api_v1.brreg_enhet.doc IS 'The complete upstream record as Brreg published it, with nothing dropped or renamed — including postal and business addresses, telephone, mobile, email, website, capital, institutional sector code, articles of association and historical names. Responses are large: a document averages ~1.7 kB, so select the typed columns instead unless you need a field this view does not surface.';
+
 -- bufdir_indicator_alias  ←  marts.mart_bufdir_indicator_alias
 CREATE OR REPLACE VIEW api_v1.bufdir_indicator_alias AS SELECT * FROM marts.mart_bufdir_indicator_alias;
+COMMENT ON VIEW api_v1.bufdir_indicator_alias IS 'Cross-release alias table for `bufdir-barnefattigdom`
+`indicator_api_id` renumbers. One row per (historical_id,
+canonical_id) mapping consumers join on for cross-time-series
+continuity when Bufdir splits, retires, or renumbers a workbook
+upstream — e.g. the observed `Indikator 9` → `9a` / `9b` split,
+and `Indikator 10` retired without successor.
+
+Thin republish of the editorial seed `bufdir_indicator_alias` so
+the PLAN-004 generator auto-emits `api_v1.bufdir_indicator_alias`
+(the leading `mart_` is stripped per `models/marts/api/README.md`
+§ Naming).
+
+See `website/docs/ai-developer/plans/active/PLAN-bufdir-surrogate-id-migration.md`
+for design rationale + the maintenance ritual that appends rows
+when a new Bufdir bundle release surfaces additional renumbering.';
 COMMENT ON COLUMN api_v1.bufdir_indicator_alias.source_id IS 'Source the alias applies to. Always `bufdir-barnefattigdom`
 today; forward-looking column kept so other ZIP sources can
 adopt the same convention without a schema migration.';
@@ -51,6 +114,22 @@ exists. One sentence; read by humans, not parsers.';
 
 -- coverage_gap_barnefattigdom  ←  marts.mart_coverage_gap_barnefattigdom
 CREATE OR REPLACE VIEW api_v1.coverage_gap_barnefattigdom AS SELECT * FROM marts.mart_coverage_gap_barnefattigdom;
+COMMENT ON VIEW api_v1.coverage_gap_barnefattigdom IS 'One row per active kommune for the latest year of SSB 08764 child
+poverty data, combining the EUskala60 share (% of children in
+low-income households) with the Personer count (number of
+children). Backs the barnefattigdom map page (atlas-frontend
+/coverage-gap/barnefattigdom).
+
+First member of the mart_coverage_gap_<topic> family. Future
+coverage-gap maps follow the same shape: latest year per kommune,
+one row per kommune, value(s) pivoted out of contents_code into
+named columns. PostgREST projects this view as a single endpoint;
+consumers don''t filter, they read the whole map dataset in one
+request.
+
+Inactive kommuner are excluded so the map renders today''s
+kommune set. NULL values are kept in place — Map.tsx renders
+them as "no data".';
 COMMENT ON COLUMN api_v1.coverage_gap_barnefattigdom.kommune_nr IS '4-digit zero-padded kommune code. FK to dim_kommune; only
 active kommuner are included. Unique within this view.';
 COMMENT ON COLUMN api_v1.coverage_gap_barnefattigdom.kommune_name IS 'Joined from fact_kommune_indicators (originally from dim_kommune).';
@@ -68,6 +147,18 @@ same year. NULL when upstream suppressed the cell.';
 
 -- distrikt_summary  ←  marts.mart_distrikt_summary
 CREATE OR REPLACE VIEW api_v1.distrikt_summary AS SELECT * FROM marts.mart_distrikt_summary;
+COMMENT ON VIEW api_v1.distrikt_summary IS 'One row per regional chapter (Red Cross "distrikt" level, and the
+equivalent regional tier for any other NGO with a hierarchy).
+Each row carries denormalised counts of how many child chapters
+the distrikt has and how many distinct kommuner those children
+cover. Backs atlas-frontend /ngo/[slug]/distrikter and the
+individual /distrikt/[id] pages; equivalent to the listDistrikter()
+inline query.
+
+Counts come from dim_chapter joined back to itself by
+parent_chapter_id, filtered to active children. PostgREST
+consumers filter via ?ngo_orgnr=eq.X (or ?chapter_id=eq.Y for the
+single-distrikt case).';
 COMMENT ON COLUMN api_v1.distrikt_summary.chapter_id IS 'Composite slug for the regional chapter (e.g.
 ''redcross-oslo''). Stable across refreshes. Unique within this
 view.';
@@ -89,6 +180,21 @@ a kommune.';
 
 -- indicator_latest_values  ←  marts.mart_indicator_latest_values
 CREATE OR REPLACE VIEW api_v1.indicator_latest_values AS SELECT * FROM marts.mart_indicator_latest_values;
+COMMENT ON VIEW api_v1.indicator_latest_values IS 'One row per (source_id, contents_code, kommune_nr) at each
+indicator''s latest_year, restricted to active kommuner. Backs the
+data explorer''s per-indicator detail page (atlas-frontend
+/data/[source_id]/[contents_code]) and is the equivalent of the
+loadIndicatorValues() inline query.
+
+PostgREST consumers filter via
+?source_id=eq.X&contents_code=eq.Y. The full table is the
+cross-product of every indicator with every active kommune that
+has a row at latest_year, so the unfiltered row count is large
+(~360 active kommuner × ~70 indicators in v1).
+
+Inactive kommuner (kommune_is_active = false) are excluded so the
+output reflects today''s kommune set, not historical codes that
+upstream still emits.';
 COMMENT ON COLUMN api_v1.indicator_latest_values.source_id IS 'Atlas source identifier, e.g. ''ssb-08764''. Joins back to
 fact_kommune_indicators.source_id.';
 COMMENT ON COLUMN api_v1.indicator_latest_values.contents_code IS 'Source-specific ContentsCode verbatim from upstream (e.g.
@@ -111,6 +217,21 @@ PostgREST consumers can read it without a separate join.';
 
 -- indicator_missing_kommuner  ←  marts.mart_indicator_missing_kommuner
 CREATE OR REPLACE VIEW api_v1.indicator_missing_kommuner AS SELECT * FROM marts.mart_indicator_missing_kommuner;
+COMMENT ON VIEW api_v1.indicator_missing_kommuner IS 'One row per (source_id, contents_code, kommune_nr) for every
+active kommune that has *no* non-NULL value at the indicator''s
+latest_year. The "coverage gap" sidebar on the data explorer
+detail page; equivalent to the listMissingKommuner() inline query.
+
+PostgREST consumers filter via
+?source_id=eq.X&contents_code=eq.Y. Membership semantics: a
+kommune is considered "missing" if it either has no row at
+latest_year, or has a row with value IS NULL. Status markers ('':'',
+''X'') do not count as a value.
+
+The full table is the cross-product of every indicator with every
+active kommune that lacks data. Most cells are present, so the
+unfiltered row count is the per-indicator gap-list aggregated
+across all indicators.';
 COMMENT ON COLUMN api_v1.indicator_missing_kommuner.source_id IS 'Atlas source identifier, e.g. ''ssb-08764''.';
 COMMENT ON COLUMN api_v1.indicator_missing_kommuner.contents_code IS 'Source-specific ContentsCode verbatim from upstream (e.g.
 ''EUskala60'', ''Folkemengde'').';
@@ -120,6 +241,23 @@ COMMENT ON COLUMN api_v1.indicator_missing_kommuner.kommune_name IS 'Joined from
 
 -- indicator_summary  ←  marts.mart_indicator_summary
 CREATE OR REPLACE VIEW api_v1.indicator_summary AS SELECT * FROM marts.mart_indicator_summary;
+COMMENT ON VIEW api_v1.indicator_summary IS 'One row per (source_id, contents_code) summarising the latest-year
+coverage and value range for every indicator in
+fact_kommune_indicators. This is the backing dataset for the data
+explorer index page (atlas-frontend /data) and is the equivalent of
+the listIndicators() inline query that PostgREST projects as
+/mart_indicator_summary on the public API.
+
+Query shape: latest-year-per-indicator + group-by + value/null counts
+filtered to active kommuner only. Inactive kommuner (historical
+codes retained by upstream) are excluded from the counts so consumers
+see "how many of today''s kommuner have data?" not "how many rows
+exist?".
+
+Refreshed nightly together with fact_kommune_indicators. The
+upstream_updated column carries the most recent raw load timestamp
+across the rows that contributed to this summary, so freshness can
+be inspected per indicator without joining to raw.* sources.';
 COMMENT ON COLUMN api_v1.indicator_summary.source_id IS 'Atlas source identifier, e.g. ''ssb-08764''. Joins back to
 fact_kommune_indicators.source_id and to the source declarations
 in indicators/sources.yml.';
@@ -148,6 +286,25 @@ per indicator without joining to raw.*.';
 
 -- kommune_local_chapters  ←  marts.mart_kommune_local_chapters
 CREATE OR REPLACE VIEW api_v1.kommune_local_chapters AS SELECT * FROM marts.mart_kommune_local_chapters;
+COMMENT ON VIEW api_v1.kommune_local_chapters IS 'Active local chapters in each kommune, decorated with the NGO
+name/brand and the service-category labels offered. Backs the
+kommune detail page (atlas-frontend /kommuner/[kommune_nr]);
+equivalent to listChaptersInKommune().
+
+**Important:** this view returns *multiple rows per chapter* —
+one per service category the chapter offers. A chapter that
+provides three service categories appears as three rows for the
+same kommune_nr / chapter_id, with different
+service_category_code values. Consumers that want unique chapters
+should distinct on chapter_id (or aggregate service categories
+into an array client-side).
+
+PostgREST consumers filter via ?kommune_nr=eq.X. Inactive
+chapters, non-local chapters (regional, national), and chapters
+with NULL kommune_nr are excluded. Svalbard (kommune_nr 2100,
+Longyearbyen Røde Kors) is included even though 2100 isn''t in
+dim_kommune — the FK relationships test is `warn`-severity to
+keep this row visible.';
 COMMENT ON COLUMN api_v1.kommune_local_chapters.kommune_nr IS '4-digit kommune code where the local chapter operates. FK to
 dim_kommune. The primary filter dimension for this view.
 Chapters with NULL kommune_nr are excluded by the view (this
@@ -175,6 +332,23 @@ on the row so consumers can sort without a separate query.';
 
 -- meta_dimensions  ←  marts.mart_meta_dimensions
 CREATE OR REPLACE VIEW api_v1.meta_dimensions AS SELECT * FROM marts.mart_meta_dimensions;
+COMMENT ON VIEW api_v1.meta_dimensions IS 'Per-source × per-dimension catalogue. Backs the "what does this
+column mean" panel on `/data/sources/[source_id]` (customer
+frontend, PLAN-007 phase 4) and exposes editorial semantics
+shoppers would otherwise have to leave Atlas to find on the
+upstream''s docs site.
+
+v1 scope (this PR): editorial pass-through over the
+`_sources_dimensions` seed (4 columns: `meaning`, `value_format`,
+`notes`). The `cardinality`, `example_values`, and `null_count`
+columns from PLAN-007 phase 3.4''s full spec require introspecting
+`raw.<source>` tables with per-source column-name rules — deferred
+to a follow-up PR. See `mart_meta_dimensions.sql` header for the
+open question (Jinja loop vs separate Python extract script vs
+per-source `column_name:` field in manifest.yml).
+
+Row count = same as `_sources_dimensions` (~216, growing with
+every new source × upstream-dimension).';
 COMMENT ON COLUMN api_v1.meta_dimensions.source_id IS 'Source the dimension belongs to. Joins to
 `mart_meta_sources.source_id` and `_sources_manifest.source_id`.';
 COMMENT ON COLUMN api_v1.meta_dimensions.code IS 'Upstream''s own dimension code (e.g. `Region`, `Tid`,
@@ -192,6 +366,23 @@ filtering decisions. Empty string when no notes apply.';
 
 -- meta_endpoints  ←  marts.mart_meta_endpoints
 CREATE OR REPLACE VIEW api_v1.meta_endpoints AS SELECT * FROM marts.mart_meta_endpoints;
+COMMENT ON VIEW api_v1.meta_endpoints IS 'One row per queryable Atlas endpoint, with tags inherited from
+upstream sources via the lineage graph and a `layer:<schema>` tag
+from the schema. Wraps to `api_v1.meta_endpoints` and backs the
+tag-filter catalogue at `/data` in the customer frontend
+(PLAN-007 phase 4).
+
+Includes endpoints from `api_v1.*`, `marts.*`, and `raw.*`
+(Atlas''s three open-by-default schemas; `private_marts.*` stays
+auth-gated and is excluded). Skips internal seeds prefixed `_`
+(`_sources_manifest`, `_sources_dimensions`) and any `dbt_*`
+diagnostic tables.
+
+Tag inheritance uses the **union** rule: a `mart_*` derived from
+many sources picks up every source''s `provider:`, `topic:`,
+`geo:`, `cadence:`, and `eu_theme:` tag, deduped. Filter
+"involves something annual" beats "purely annual" — see PLAN-007
+phase 3.2 for the design rationale.';
 COMMENT ON COLUMN api_v1.meta_endpoints.endpoint IS 'Schema-qualified table/view identifier (`<schema>.<table>`).
 Primary key.';
 COMMENT ON COLUMN api_v1.meta_endpoints.schema_name IS 'One of `api_v1`, `marts`, `raw`.';
@@ -208,6 +399,27 @@ distinguishing materialised marts from auto-wrapped views.';
 
 -- meta_sources  ←  marts.mart_meta_sources
 CREATE OR REPLACE VIEW api_v1.meta_sources AS SELECT * FROM marts.mart_meta_sources;
+COMMENT ON VIEW api_v1.meta_sources IS 'Per-source catalogue row — one per ingest source in
+`_sources_manifest`, joined to `raw.ingest_runs` aggregates so
+consumers see freshness alongside the static metadata. Wraps to
+`api_v1.meta_sources` and backs `/data/sources` in the customer
+frontend (PLAN-007 phase 4).
+
+Tags column is a Postgres `text[]` carrying the four declared
+namespaces (`provider:`, `topic:`, `geo:`, `cadence:`) plus the
+`eu_theme:` namespace. The customer frontend renders each as a
+filter pill; PostgREST consumers filter via `?tags=cs.{provider:ssb}`.
+
+`last_ingested_at` and `last_upstream_update_at` come from
+`raw.ingest_runs` aggregated over successful (`exit_code = 0`)
+runs. Sources whose ingest module hasn''t yet captured the
+upstream''s "updated" field leave `last_upstream_update_at` NULL —
+that''s the design (`raw.ingest_runs.upstream_updated_at` is
+nullable per migration 028).
+
+`downstream_model_count` is the number of distinct dbt models
+that derive from this source via the `lineage` seed (Phase 3.3).
+0 for sources whose data hasn''t yet been wired into a mart.';
 COMMENT ON COLUMN api_v1.meta_sources.source_id IS 'Atlas catalogue id; primary key. Matches `_sources_manifest.source_id`.';
 COMMENT ON COLUMN api_v1.meta_sources.upstream_id IS 'Upstream''s own identifier (SSB table number, FHI dataset slug, etc.).';
 COMMENT ON COLUMN api_v1.meta_sources.upstream_url IS 'Canonical link to the data on the upstream''s site (often the API endpoint).';
@@ -246,6 +458,15 @@ into a mart.';
 
 -- ngo_index  ←  marts.mart_ngo_index
 CREATE OR REPLACE VIEW api_v1.ngo_index AS SELECT * FROM marts.mart_ngo_index;
+COMMENT ON VIEW api_v1.ngo_index IS 'One row per NGO in dim_ngo with chapter_count and has_supply
+decorations. Backs the NGO landing page (atlas-frontend /ngo) and
+is equivalent to the listNgos() inline query.
+
+chapter_count counts only active chapters (dim_chapter.is_active),
+so a defunct NGO sits at 0 even if its historical chapters are
+retained. has_supply is the convenience boolean (chapter_count > 0).
+The full table is small (~11 rows in v1, growing as new NGOs
+land), so PostgREST consumers typically read all of it.';
 COMMENT ON COLUMN api_v1.ngo_index.orgnr IS '9-digit Brreg organisasjonsnummer (text — leading zeros are
 preserved). Natural key for this view.';
 COMMENT ON COLUMN api_v1.ngo_index.slug IS 'kebab-case URL-friendly identifier (e.g. ''redcross'', ''kirkens-bymisjon'').';
@@ -274,6 +495,16 @@ side of Atlas.';
 
 -- ngo_overview  ←  marts.mart_ngo_overview
 CREATE OR REPLACE VIEW api_v1.ngo_overview AS SELECT * FROM marts.mart_ngo_overview;
+COMMENT ON VIEW api_v1.ngo_overview IS 'One row per NGO in dim_ngo with the six count metrics shown on
+the per-NGO landing page (atlas-frontend /ngo/[slug]).
+Equivalent to the getNgoOverview() inline query, but precomputed
+for all NGOs so PostgREST projects it as a single endpoint
+consumers filter via ?orgnr=eq.X.
+
+Counts include both active and inactive chapters in the
+level-specific buckets (national/regional/local). kommune_count
+counts distinct kommune_nr only across *active* local chapters,
+matching the original query''s behaviour.';
 COMMENT ON COLUMN api_v1.ngo_overview.orgnr IS '9-digit Brreg organisasjonsnummer. Natural key for this view.';
 COMMENT ON COLUMN api_v1.ngo_overview.chapter_count IS 'Total count of chapters for this NGO across all levels (active + inactive).';
 COMMENT ON COLUMN api_v1.ngo_overview.national_count IS 'Count of chapters at chapter_level = ''national''.';
