@@ -84,6 +84,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Build and push (main)
+        id: build
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: docker/build-push-action@v5
         with:
@@ -118,8 +119,27 @@ jobs:
           TAG='${{ steps.tags.outputs.immutable }}'
           REF="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/uis:${TAG}"
 
+          # The digest of the image THIS run just pushed, straight from
+          # build-push-action — not looked up afterwards from a tag, which could
+          # already have moved and would defeat the point of declaring it.
+          IMAGE_DIGEST='${{ steps.build.outputs.digest }}'
+          if [[ -z "$IMAGE_DIGEST" ]]; then
+            echo "::error::build-push-action reported no digest — refusing to publish a definition that cannot pin its image" >&2
+            exit 1
+          fi
+
           # Renders into place and refuses anything that would fail late.
-          uis/render-template-info.sh "$TAG" template-info.yaml
+          uis/render-template-info.sh "$TAG" template-info.yaml "$IMAGE_DIGEST"
+
+          # 🔴 A publish must never carry the PR path's all-zero placeholder. The
+          # renderer accepts it so a pull request can validate the definition
+          # without an image; this is the assertion that it cannot escape onto a
+          # cluster. Checked on the rendered file rather than the variable,
+          # because what ships is the file.
+          if grep -q 'digest: sha256:0\{64\}' template-info.yaml; then
+            echo "::error::the rendered definition carries the placeholder digest — this would pin the image to nothing" >&2
+            exit 1
+          fi
 
           # ORAS reads the credentials docker/login-action already wrote.
           oras push "$REF" template-info.yaml uis/init/ | tee /tmp/oras.out

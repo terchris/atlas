@@ -87,6 +87,31 @@ provides:
           # head are refused. Helm also needs a unique value to roll the pod.
           tag: __IMAGE_TAG__
 
+          # 🔴 The image this definition was BUILT against, by content.
+          #
+          # Until UIS 1.6.62 there was no way to say this, and the consequence was
+          # narrow but real: the install was digest-pinned while the code that
+          # runs was not. A re-push of the same tag changes what executes, and
+          # every digest UIS prints stays identical — so imac verifies a digest,
+          # dev-templates pins a digest, and the container underneath moved.
+          #
+          # Declaring it makes UIS REFUSE the deploy when the declared digest and
+          # the resolved digest disagree. That is the case nobody would otherwise
+          # notice.
+          #
+          # ⚠️ The honest limit, in tor-agent's words: 1.6.62 makes the code
+          # location "pinnable and observable, not pinned" — the pin is enforced
+          # at deploy and the pull still goes by tag. It deliberately does not
+          # render `repository@sha256:…`, because whether the Dagster chart can
+          # express that is unestablished, and a field that renders a valid but
+          # wrong reference would be a worse bug than the one it fixes.
+          #
+          # Substituted at publish time from the digest docker/build-push-action
+          # reports for the image it just pushed — so it is the digest of THIS
+          # build, not one looked up afterwards from a tag that could already
+          # have moved.
+          digest: __IMAGE_DIGEST__
+
           module: atlas_data.definitions
           why: "the ETL that fills api_v1; without it marts.* and api_v1 stop refreshing"
 

@@ -15,10 +15,28 @@
 # the result away; main renders with the real tag and publishes it.
 set -euo pipefail
 
-TAG="${1:-}"; OUT="${2:-}"
+TAG="${1:-}"; OUT="${2:-}"; DIGEST="${3:-}"
 if [[ -z "$TAG" || -z "$OUT" ]]; then
-  echo "usage: render-template-info.sh <v20260909-abc1234> <output-path>" >&2
+  echo "usage: render-template-info.sh <v20260909-abc1234> <output-path> [sha256:<64 hex>]" >&2
   exit 2
+fi
+
+# The image digest is optional at the INTERFACE and mandatory on the PUBLISH
+# path — the PR path renders with a synthetic tag against an image that was
+# never pushed, so there is no digest to declare and inventing one would put a
+# plausible-looking lie through every gate below.
+#
+# A caller that omits it gets a synthetic placeholder that is REFUSED by UIS if
+# it ever reached a cluster, rather than a value that looks real. The workflow
+# passes the real one on main; see the `digest:` comment in template-info.yaml.
+if [[ -z "$DIGEST" ]]; then
+  DIGEST="sha256:0000000000000000000000000000000000000000000000000000000000000000"
+  echo "  ! no image digest supplied — rendering the all-zero placeholder (PR path)" >&2
+fi
+
+if [[ ! "$DIGEST" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+  echo "✗ digest '$DIGEST' is not sha256:<64 lowercase hex>" >&2
+  exit 1
 fi
 
 SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/template-info.yaml"
@@ -40,12 +58,23 @@ if [[ "$OCCURRENCES" != "1" ]]; then
   exit 1
 fi
 
+# Same rule, same reason, for the digest placeholder. The prose explaining the
+# digest field is long, which makes an accidental second mention of the token
+# more likely here than it was for the tag — and the tag is the one that already
+# shipped wrong once (v20260909-c1076cc).
+DIGEST_OCCURRENCES=$(grep -c '__IMAGE_DIGEST__' "$SRC" || true)
+if [[ "$DIGEST_OCCURRENCES" != "1" ]]; then
+  echo "✗ digest placeholder appears ${DIGEST_OCCURRENCES}x in $(basename "$SRC") — expected exactly 1 (the digest: line)." >&2
+  echo "  A second occurrence in prose would be substituted too. Reword the prose." >&2
+  exit 1
+fi
+
 # Render via a temp file so that OUT == SRC is safe. `sed src > src` truncates
 # src before sed reads it, and rendering in place is the natural thing for a
 # caller to want — CI does exactly that.
 TMP="$(mktemp)"
 trap 'rm -f "$TMP"' EXIT
-sed "s|__IMAGE_TAG__|${TAG}|g" "$SRC" > "$TMP"
+sed -e "s|__IMAGE_TAG__|${TAG}|g" -e "s|__IMAGE_DIGEST__|${DIGEST}|g" "$SRC" > "$TMP"
 
 # An unquoted YAML scalar containing " #" is truncated at the hash — silently,
 # with no error, and the parse still succeeds. It ate the `measured:` figures in
@@ -62,8 +91,14 @@ fi
 if grep -q '__IMAGE_TAG__' "$TMP"; then
   echo "✗ placeholder survived substitution" >&2; exit 1
 fi
+if grep -q '__IMAGE_DIGEST__' "$TMP"; then
+  echo "✗ digest placeholder survived substitution" >&2; exit 1
+fi
 if ! grep -qE "^[[:space:]]+tag: ${TAG}\$" "$TMP"; then
   echo "✗ no 'tag: ${TAG}' line rendered — did the field move?" >&2; exit 1
+fi
+if ! grep -qE "^[[:space:]]+digest: ${DIGEST}\$" "$TMP"; then
+  echo "✗ no 'digest: ${DIGEST}' line rendered — did the field move?" >&2; exit 1
 fi
 for mutable in latest main master head; do
   if grep -qE "^[[:space:]]+tag: ${mutable}\$" "$TMP"; then
@@ -78,7 +113,7 @@ export ATLAS_DAGSTER_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../dagster/atlas_
 export ATLAS_JOBS_OUT="$(mktemp)"
 if python3 -c 'import yaml' 2>/dev/null; then
   python3 - "$TMP" <<'PY'
-import os, sys, yaml
+import os, re, sys, yaml
 d = yaml.safe_load(open(sys.argv[1]))
 svc = {s["service"]: s["config"] for s in d["provides"]["services"]}
 assert d["kind"] == "application", d.get("kind")
@@ -89,6 +124,9 @@ assert svc["postgrest"]["schemas"] == "api_v1", svc["postgrest"]["schemas"]
 assert svc["postgresql"]["init"] == "uis/init/001_bootstrap.sql", svc["postgresql"]["init"]
 cl = svc["dagster"]["code_location"]
 assert cl["module"] == "atlas_data.definitions", cl["module"]
+# The digest must parse as a digest. A YAML scalar that lost its prefix, or a
+# quoted-then-truncated value, would otherwise reach a cluster looking plausible.
+assert re.fullmatch(r"sha256:[0-9a-f]{64}", str(cl["digest"])), cl["digest"]
 assert cl["env_secrets"].endswith("-database-db"), cl["env_secrets"]
 
 # The operational block duplicates facts that live in cadence.py and
