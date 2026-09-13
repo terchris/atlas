@@ -156,13 +156,6 @@ operational:
     scheduled run — it does not backfill, so a fresh install stays empty until
     the first-data jobs are launched by hand.
 
-  first_load: >-
-    ~4.1M rows across 48 raw and 60 marts tables, from ~41 sources. That is
-    imac's measured 2,906,194 on a clean install (urb-agents #496, #507) plus the
-    1,173,878-record Enhetsregisteret bulk load added in PLAN-001. The row count
-    is arithmetic on two measured figures; the combined WALL TIME is not measured
-    and is deliberately not stated here.
-
   timezone: Europe/Oslo
 
   # ⚠️ The gap imac found on urb-agents #507: enabling the schedules does NOT
@@ -203,6 +196,21 @@ operational:
   install:
     deploys: [postgresql, postgrest, dagster]
     takes: a few minutes; the data load afterwards is the long part
+    # ⚠️ MOVED HERE FROM A TOP-LEVEL `first_load:` ON 2026-09-13, because that key
+    # was rendered on no UIS surface at all — tor-agent found it while answering a
+    # question I asked about a different key (urb-agents #791).
+    #
+    # It belongs here on its own merits rather than as a workaround. `takes` says
+    # the data load is the long part; this says how long is long. Both answer the
+    # same question — "what is this about to do to my cluster" — asked by someone
+    # deciding whether to install and how much disk to give it. Splitting them
+    # across two keys was the reason one of them could go missing unnoticed.
+    first_load: >-
+      ~4.1M rows across 48 raw and 60 marts tables, from ~41 sources. That is
+      imac's measured 2,906,194 on a clean install (urb-agents #496, #507) plus
+      the 1,173,878-record Enhetsregisteret bulk load added in PLAN-001. The row
+      count is arithmetic on two measured figures; the combined WALL TIME is not
+      measured and is deliberately not stated here.
     note: >-
       Immediately after install the API is live and serves zero endpoints. The
       advertised meta_sources / meta_endpoints / meta_dimensions return 404 until
