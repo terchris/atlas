@@ -158,28 +158,46 @@ voluntary. Only the dedicated register says **what they do**. The flag is not a 
       about twelve months. Revisit retention then — with a count, not an estimate — rather than when a
       disk fills.
 
-- [ ] 1.2 ⬜ **Still open, and now much cheaper than written. imac.** The storage half is done —
-      estimated above from measured inputs. The `dbt run` duration half is the one input I could not
-      get, and it is the only thing keeping phase 1 open.
+- [ ] 1.2 ⬜ **Open. Lowest priority. Do not commission a host for it.**
 
-      ⚠️ **Re-scoped 2026-09-13.** As written this said *"build the model both ways on a copy and
-      compare"*, which means standing up a second variant of a 1.17M-row lineage. **That is no longer
-      the smallest test that answers the question.** `_log_node_timings()` already emits per-model
-      timings on every run, so the question becomes a read: **how much of `dim_brreg_enhet`'s build is
-      the versions reconciliation?** The reconciling join touches only the organisations the feed
-      changed — ~57 in a quarter hour — while the snapshot-scale work is common to both designs, so
-      the answer is expected to be a small fraction. **Expected, not known**, which is the point.
+      ⚠️ **THE 2026-09-13 RE-SCOPE WAS WRONG AND IS RETRACTED.** It said `_log_node_timings()` already
+      emits what this needs, making 1.2 a read rather than a build. **It does not.** imac: *"Item 1.2
+      asks a WITHIN-model question. Per-model timings give that model's TOTAL. They cannot decompose
+      one model into its CTEs, on any host, clean or not."* 🔴 **Per-node means one figure per dbt
+      model, and the versions reconciliation is a CTE inside one node.** I re-scoped a task to fit an
+      instrument without checking that the instrument answered the question.
 
-      🔴 **Do not let me close this on that reasoning.** The argument above is the same shape as the
-      one that produced the withdrawn join in `527455e`: a correctness-and-scale argument standing in
-      for a measurement, which imac then falsified at +42 s per run. **Phase 1's whole subject is
-      deciding by measurement rather than by argument**, and closing its last task on an estimate
-      would be the plan contradicting itself on the way out.
+      **The two methods that do answer it:**
 
-      ⚠️ **What it could and could not change.** If the reconciliation is a large share, 1.4 is worth
-      re-opening. But 1.4's first reason is a **contract** — current-state-only upsert makes `marts`
+      | | cost |
+      |---|---|
+      | build the model twice on a copy, reconciliation CTE removed | a second 1.17M-row lineage |
+      | `dbt --log-level debug`, per-statement timings inside the model | a read — but needs a **clean** host |
+
+      🔴 **And the indirect route is ruled out, not merely unattractive.** Fitting dim build time
+      against change volume across many runs would produce a number on a host where every run since
+      02:51 had a split `raw` and the three clean runs measured the withdrawn `527455e` predicate.
+      imac declined to offer it: *"a contaminated measurement would be worse than the argument, because
+      it would look like evidence."* ⚠️ **That is this task's own rule, applied to this task, by
+      someone else.**
+
+      **Pricing, since it is mine to set:** the debug-log method on a clean host, **whenever a clean
+      host exists for another reason.** A clean host today means a fresh install plus a bootstrap, and
+      a bootstrap is the one thing currently under a do-not-retry hold
+      ([INVESTIGATE-brreg-bulk-download-reliability](../backlog/INVESTIGATE-brreg-bulk-download-reliability.md)).
+      **Spending a bulk download to price a CTE is the wrong trade.**
+
+      ⚠️ **What the number can and cannot do, so whoever prices it later is not misled by this task's
+      framing.** 1.4's first reason is a **contract** — current-state-only upsert makes `marts`
       unrebuildable from `raw` — so a bad number does not reverse 1.4 by itself; it forces a
-      conversation about the contract. **Worth knowing before that conversation, not after.**
+      conversation about that contract. 🔵 **The realistic action from a bad number is retention
+      pruning, which 1.4 already schedules at 2 GB / ~12 months.** That is why this is lowest priority
+      rather than merely unscheduled.
+
+      🔴 **It is still NOT closable on reasoning.** The tempting argument — the reconciling join touches
+      only the ~57 organisations the feed changed, so the share must be small — is structurally the
+      argument imac falsified at +42 s per run on `527455e`. **Low value is a reason to defer a
+      measurement, never a reason to assume its result.**
 
 ### Validation
 
@@ -483,10 +501,27 @@ editorial (what `api_v1.ngo_index` is *for*), so it belongs to ops-dev or Terje,
         the good case: the gate catches it.
       - `website/static/lineage/index.html`, generated via `docusaurus.config.ts`.
 
-      ⚠️ And the consequence that is not a build artefact: a dataset disappears from the public
-      catalogue at `/data`. Retiring a source is a **published-surface change**, not only an internal
-      cleanup, so it carries the same "wait for a human" weight as adding one. `installing-on-uis.md`
-      mentions the table too and is hand-written, so it does not regenerate.
+      ⚠️ **RETRACTED 2026-09-13: this is NOT externally visible, and the claim that it was is mine.**
+      This task used to say *"a dataset disappears from the public catalogue at `/data`. Retiring a
+      source is a published-surface change … the same 'wait for a human' weight as adding one."*
+      **Measured, three ways, and all three say no:**
+
+      | | |
+      |---|---|
+      | `source_id` in `website/src/data/sources-registry.json` | **absent** (44 sources; the brreg ones are `-alle`, `-frivillige`, `-oppdateringer`) |
+      | page under `website/docs/datasets/` | **none** |
+      | references in `api_v1_generated.sql` | **0** |
+
+      🔴 **Why the claim was wrong, because the reasoning is the reusable part:** the registry is
+      generated from **per-source ingest manifests** (`ingest/src/sources/<id>/manifest.yml`) plus the
+      marts schema files — not from `dbt/models/shared/sources.yml`. `raw.brreg_enheter` is a *seed*
+      source under `ingest/src/seed-sources/`, and it has **no manifest**. I had correctly established
+      that dbt files feed the site generator and then assumed this source was among them without
+      checking which generator input it belonged to.
+
+      ✅ **So "catalogue" here means the dbt/UIS-internal source list. The count is sufficient and this
+      is an engineering decision, not Terje's.** ⚠️ `installing-on-uis.md` mentions the table and is
+      hand-written, so it still needs editing by hand.
 
       ⚠️ The Dagster surface is smaller than it looks: `assets/dbt.py`, `schedules.py` and
       `raw_seeds.py` mention `brreg_enheter` mostly in **prose** — module docstrings explaining why the
