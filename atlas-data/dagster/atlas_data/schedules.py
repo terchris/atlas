@@ -238,7 +238,7 @@ redcross_branches_job = define_asset_job(
 # inside start_timeout_seconds — the run died having created no pod, which is how
 # integration criteria 10-12 stayed blocked for a round.
 #
-# Excluding the checks takes the build's plan from 711 to ~65. The checks then run
+# Excluding the checks takes the build's plan from 711 to 67 (measured, not ~65). The checks then run
 # as their own job, and MUST run after the publish: `dbt run` rebuilds
 # marts.mart_* by swapping in new tables and dropping the old ones CASCADE, which
 # destroys the dependent api_v1.* views. rowcount_matches_marts compares the two,
@@ -268,7 +268,8 @@ transform_job = define_asset_job(
 #
 # The api_v1 check is a PUBLISH GATE: "does the public API surface match the
 # marts it wraps?" It answers a question about the thing external consumers see,
-# it belongs immediately after the publish, and it is one event.
+# it belongs immediately after the publish, and it is 3 events (measured; this
+# line said "one event" until 2026-09-13).
 #
 # The dbt tests are DATA QUALITY: "is the data itself sound?" Different
 # question, different audience, and — being hundreds of events — a materially different
@@ -334,22 +335,41 @@ brreg_transform_job = define_asset_job(
     ),
 )
 
-# 🔴 HOW THE CHECK COUNTS IN THIS FILE ARE DERIVED, because one of them went
-# stale by 26% and the reasoning above still rested on it (urb-agents #817).
+# 🔴 HOW TO COUNT THIS, AND IN WHICH UNIT — because the question has four
+# plausible answers and the most authoritative-looking one is the most wrong
+# (urb-agents #817, #842).
 #
-#   813  dbt tests in the project
-#   728  of those have exactly ONE dbt parent, so they become asset checks
-#    85  have two or more parents and cannot
+#   1     GraphQL executionPlanOrError        ops in the plan
+#   675   ASSET_CHECK_EVALUATION_PLANNED      asset checks planned   <- the unit 711 is in
+#   728   dbt tests with one parent           repo tests
+#   813   dbt tests                           repo assertions
 #
-# Recompute from the manifest rather than trusting these lines:
+# ⚠️ GraphQL's `executionPlanOrError` returns **1**: the dbt tests all execute
+# inside a single op, so the API literally named "execution plan" collapses the
+# thing 711 counts. It would be a confidently delivered wrong answer.
 #
-#   python3 -c "import json,collections;n=json.load(open('../dbt/target/manifest.json'))['nodes'];
+# ⚠️ And 728 is an upper bound, not the plan size — it overcounts by 53. A repo
+# count of tests is not a count of planned checks; only the run knows which are
+# selected and materialised.
+#
+# ✅ THE FREE, CORRECT METHOD: read `ASSET_CHECK_EVALUATION_PLANNED` from a run
+# that has ALREADY COMPLETED — the plan declaring what it contained, rather than
+# a construction that collapses it. No launch, no risk, about four minutes.
+#
+# The repo-side number is still worth having as a leading indicator, since it
+# moves the moment a test is added rather than at the next run:
+#
+#   python3 -c "import json;n=json.load(open('../dbt/target/manifest.json'))['nodes'];
 #   t=[x for x in n.values() if x['resource_type']=='test'];
 #   print(len(t), sum(1 for x in t if len(x['depends_on']['nodes'])==1))"
 #
+# 🔴 Treat this as a MONITOR, not as hygiene on a stale figure. The margin to 711
+# is 36 and shrinking: the comment said 644 while the plan was 675, so thirty-one
+# checks arrived without anyone noticing.
+#
 # ⚠️ `_API_V1_CHECKS` selects checks on the api_v1_surface asset, which is NOT a
 # dbt asset — so the dbt checks all land in transform_checks and the subtraction
-# below removes a different population rather than a slice of the 728.
+# below removes a different population rather than a slice of the 675.
 _API_V1_CHECKS = AssetSelection.checks_for_assets(api_v1.api_v1_surface)
 
 api_v1_checks_job = define_asset_job(
@@ -368,13 +388,16 @@ transform_checks_job = define_asset_job(
     description=(
         "The dbt data-quality suite — every dbt test as a Dagster asset check. "
         "Split out of transform_and_publish because the checks were 90.5% of a "
-        "711-event plan the run pod could not start. 🔴 This job now carries 728 "
-        "dbt asset checks — counted from the manifest on 2026-09-13, not the ~644 "
-        "this line used to state — so the number the startability warning rests "
-        "on has grown past the 711 that caused the original failure. Bounding it "
-        "durably is the subject of INVESTIGATE-transform-job-decomposition. "
-        "Triggered by the build succeeding rather than by a clock, since a fixed "
-        "offset would encode a guess about how long the build takes."
+        "711-event plan the run pod could not start. 🔴 THE SPLIT IS LOAD-BEARING "
+        "TODAY, not a past tidy-up: measured on 2026-09-13, this job plans 675 "
+        "asset checks, transform_and_publish 67 and api_v1_checks 3 — so "
+        "recombining them gives 742, past the 711 that produced the original "
+        "failure. It is the only reason the job starts. This line said '~644 "
+        "events' and read as 67 events of headroom; the real margin is 36 and has "
+        "been shrinking since the sentence was written. Bounding it durably is "
+        "the subject of INVESTIGATE-transform-job-decomposition. Triggered by the "
+        "build succeeding rather than by a clock, since a fixed offset would "
+        "encode a guess about how long the build takes."
     ),
 )
 
