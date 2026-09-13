@@ -348,6 +348,26 @@ operational:
   #
   # `unscheduled` means CANNOT run. This means MUST run, once, and then never
   # again. Collapsing them loses the only instruction an operator cannot skip.
+  #
+  # 🔴 DO NOT DELETE THIS KEY TO SILENCE `_warn_unrendered_operational`. Read the
+  # paragraph below before concluding it is dead weight — in six weeks this
+  # header is what someone tidying up will read, and the bus thread that settled
+  # it is archaeology. (urb-agents #824)
+  #
+  # Stage 4 passed on UIS 1.6.70 with `_warn_unrendered_operational` SILENT, and
+  # the warning went silent because tor-agent's renderer GREW to 15 keys and met
+  # this artifact's 15 — NOT because any key here was removed. `manual_only` was
+  # under a standing instruction to delete it as a duplicate of `unscheduled`; it
+  # survived because someone checked which surface each key actually reaches and
+  # put it back. ⚠️ Following that instruction would have destroyed the thing that
+  # made the install pass, and the pass would have been read as confirmation that
+  # deleting it was right.
+  #
+  # 🔵 The general shape, which is why it is worth this many lines: a key that
+  # reaches no renderer looks identical to a key that is not needed. The cheap
+  # fix is to delete it and watch the warning stop. The correct fix is to find
+  # out which surface it was supposed to reach and why it did not — because the
+  # warning is about the RENDERER, not about the content.
   manual_only: [brreg_bootstrap]
 
   # No scraper row: SCRAPER_CRON (Sunday 03:30) still exists in cadence.py, but
