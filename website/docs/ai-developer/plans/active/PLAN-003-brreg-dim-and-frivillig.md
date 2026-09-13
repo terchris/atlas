@@ -219,9 +219,17 @@ and generalising, which is the same discipline that the `Fjernet` mistake was mi
 
 - ✅ `dbt parse` resolves the model, its sources and the whole DAG; every column carries a description
   for the osmosis gate.
-- ⬜ **Needs a database — imac.** `dbt compile` and `dbt run` cannot execute from here (no Postgres, no
-  container runtime). Row count equals live `totalElements` minus tombstones, ±the day's churn, and no
-  tombstoned orgnr appears in current state.
+- ✅ **The model builds and tombstones are excluded.** `dim_brreg_enhet` has been built repeatedly on a
+  cluster — 1,174,007 organisations at stage 4 — and imac confirmed on urb-agents #839 that the 286
+  snapshot rows absent from the dimension are **all tombstoned, zero with no feed row**. The
+  `tombstoned_organisations_leave_the_dimension` test also runs as an asset check on every transform.
+- ⬜ **Still open: the count against live `totalElements` on the same day.** Nobody has taken that
+  comparison. ⚠️ It is easy to think stage 4 closed it — 1,174,007 looks like the right number — but
+  that is Atlas's own count, not a comparison against the register, and the two arithmetic paths do not
+  quite reconcile: 1,173,878 in the bulk file, +361 new organisations, −286 tombstones leaves 1,173,953
+  against a dimension of 1,174,007, a gap of 54 that nobody has explained. 🔵 Probably a day's churn
+  between the measurements, which is exactly what "±the day's churn" allows — **but "probably" is what
+  this line exists to replace.**
 
 ---
 
@@ -272,8 +280,17 @@ half is now written down.
 ### Validation
 
 - ✅ Model, tests and manifest in place; 10 unit tests including the pagination absence-guard.
-- ⬜ Every organisation with `registrert_i_frivillighetsregisteret = true` has an `icnpo_kategori` or a
-  recorded reason why not — needs a database.
+- ⬜ **Open, and nobody has looked.** Every organisation with
+  `registrert_i_frivillighetsregisteret = true` has an `icnpo_kategori` or a recorded reason why not —
+  needs a database.
+
+  ⚠️ **This is the only PLAN-003 item that could show the enrichment is incomplete rather than merely
+  unverified.** The Enhetsregister flag is on 100% of records and the FRR walk is a separate paged
+  source with a size cap, so the two populations can disagree silently: an organisation flagged
+  voluntary but missing from the FRR fetch would carry a null `icnpo_kategori` and nothing would say
+  why. 🔵 It is a two-column read against `dim_brreg_enhet`
+  (`count(*) filter (where registrert_i_frivillighetsregisteret and icnpo_nummer is null)`), not a
+  rebuild — cheap, and it has simply never been asked for.
 
 ---
 
