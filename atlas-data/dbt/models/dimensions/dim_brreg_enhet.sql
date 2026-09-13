@@ -278,12 +278,35 @@ combined as (
     -- only fetched at a different moment. And a tombstone MUST win regardless:
     -- the snapshot cannot express a deletion at all.
     --
-    -- ⚠️ If the feed were lossy this precedence would preserve a stale document
-    -- over a fresher file — which is a far more serious defect than any
-    -- ordering rule, and is the thing to test rather than to reason about. The
-    -- test is a read, not an argument: sample organisations whose snapshot row
-    -- differs from this dimension on something other than `snapshot_file_date`
-    -- or `reconciled_at`. ~0 means the feed is doing its job.
+    -- ✅ MEASURED, NOT ASSUMED — imac, 2026-09-13 (urb-agents #839). This stopped
+    -- being an assumption the day after it was written, and the numbers are here
+    -- because a load-bearing assumption without its evidence beside it decays
+    -- back into an assumption:
+    --
+    --     rows compared (of 866,000)                 865,876
+    --     differing on navn / kommune_nr / konkurs        94
+    --       explained by a feed change                    94
+    --       UNEXPLAINED                                    0
+    --     adjacent pairs (orgnr n and n+1 both differing)  0
+    --     mean gap between differing orgnrs        1,689,072
+    --
+    -- 🔴 The zero adjacent pairs across 161 million is the part that settles it,
+    -- not the 94. A lossy feed loses RUNS — a page cap, a cursor gap, a poll that
+    -- failed — and produces a contiguous block. This is maximally scattered
+    -- churn, which is what an intact feed and a stale file look like.
+    --
+    -- ⚠️ Exhaustive rather than sampled, which is stronger than what was asked
+    -- for: the request was for a contiguous sample, because a scattered sample
+    -- can pass over a clean-looking million. imac compared everything instead and
+    -- made the caveat moot.
+    --
+    -- ⚠️ BOUND, stated because it is not 100%: this covers the 74% of rows
+    -- carrying the newer file date. The remaining 308,239 still hold the file the
+    -- dimension was built from, so there is nothing to compare there. A completed
+    -- bootstrap would extend it.
+    --
+    -- If this ever has to be re-checked, the failure to look for is a contiguous
+    -- block of differing organisations, not a high count.
     --
     -- ⚠️ For a tombstone this is
     -- Brreg's six-key deletion stub, NOT a full record — a deleted organisation

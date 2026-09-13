@@ -21,7 +21,7 @@ This investigation stays in `backlog/` until every child PLAN has shipped (`PLAN
 
 | plan | state | delivers |
 |---|---|---|
-| [PLAN-001-brreg-bulk-snapshot](../active/PLAN-001-brreg-bulk-snapshot.md) | **Active** | the one-time load of 1,174,098 enheter into `raw`, streaming, no CSV stage |
+| [PLAN-001-brreg-bulk-snapshot](../completed/PLAN-001-brreg-bulk-snapshot.md) | ✅ **Completed** | the one-time load of 1,174,098 enheter into `raw`, streaming, no CSV stage |
 | [PLAN-002-brreg-change-feed](../active/PLAN-002-brreg-change-feed.md) | **Active** | the daily poller — `oppdateringsid` watermark in Postgres, append-only, cursor only (never `page`), `Sletting` and `Fjernet` as the deletions |
 | [PLAN-003-brreg-dim-and-frivillig](../active/PLAN-003-brreg-dim-and-frivillig.md) | **Active** | dbt incremental → `marts.dim_brreg_enhet`, Frivillighetsregisteret enrichment, `dim_ngo` derived |
 
