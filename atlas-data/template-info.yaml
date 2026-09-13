@@ -294,9 +294,12 @@ operational:
         meanwhile. Run one clean bootstrap the next day instead.
       note: >-
         A partial bootstrap leaves raw carrying two snapshot_file_date values at
-        once. That is not itself a fault, but it is a hazard for whoever next runs
-        a full refresh for an unrelated reason, so finish the load before one is
-        needed.
+        once. That is provenance, not corruption, and it does NOT block a full
+        refresh: on a full refresh dim_brreg_enhet rebuilds from the entire
+        versions history plus every snapshot row, and the feed document wins for
+        any organisation the feed has touched. An organisation the feed has not
+        touched has not changed, so its two file dates carry the same document.
+        Finish the load for provenance and completeness, not as a precondition.
     - symptom: >-
         A transform run fails with a dbt schema error naming dim_brreg_enhet —
         "the source and target schemas on this incremental model are out of sync".
