@@ -403,6 +403,14 @@ models:
         description: >-
           Date of the bulk file this organisation was first loaded from, or null for one the feed saw
           before any snapshot did. Provenance of the transfer, not of the organisation.
+      - name: snapshot_loaded_at
+        description: >-
+          When the BULK LOADER last wrote this organisation into raw.brreg_enheter_snapshot; null for
+          an organisation the change feed saw before any snapshot did. Deliberately narrower than
+          last_seen_at, which mixes both writers: this model's incremental predicate reads the maximum
+          of THIS column to decide what the bulk loader has written since the dimension last applied a
+          snapshot, and a column the feed could advance would skip real snapshot rows. Internal — not
+          carried into mart_brreg_enhet, so it is not part of the api_v1 contract.
       - name: last_seen_at
         description: >-
           When the INGEST last wrote this organisation into raw, from either the snapshot load or a

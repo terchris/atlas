@@ -291,6 +291,12 @@ operational:
         An Atlas upgrade added a column to a model that is materialised
         incrementally. The existing table cannot gain it in place, and Atlas
         refuses to continue rather than silently building into the old shape.
+        Expected on the upgrade that added dim_brreg_enhet.snapshot_loaded_at:
+        that column is what lets the dimension notice a bulk reload without
+        joining two multi-gigabyte tables on every half-hourly run, and it was
+        chosen over the join once the one-time refresh was measured at 256
+        seconds against the join's 42 seconds on every run. A planned cost, not a
+        fault.
       fix: >-
         Two steps, and the second is the one people miss. FIRST rebuild that
         model once, AS THE atlas DATABASE USER and not as a superuser — a full
