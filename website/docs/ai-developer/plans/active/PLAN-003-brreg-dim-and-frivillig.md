@@ -158,10 +158,28 @@ voluntary. Only the dedicated register says **what they do**. The flag is not a 
       about twelve months. Revisit retention then — with a count, not an estimate — rather than when a
       disk fills.
 
-- [ ] 1.2 ⬜ **Needs a database — imac.** Build the model both ways on a copy and compare storage and
-      `dbt run` duration. The storage half is estimated above from measured inputs; the `dbt run`
-      duration is not, and cannot be from here. **If the reconciling model turns out materially slower
-      than a current-state upsert, 1.4 is worth re-opening** — that is the one input I could not get.
+- [ ] 1.2 ⬜ **Still open, and now much cheaper than written. imac.** The storage half is done —
+      estimated above from measured inputs. The `dbt run` duration half is the one input I could not
+      get, and it is the only thing keeping phase 1 open.
+
+      ⚠️ **Re-scoped 2026-09-13.** As written this said *"build the model both ways on a copy and
+      compare"*, which means standing up a second variant of a 1.17M-row lineage. **That is no longer
+      the smallest test that answers the question.** `_log_node_timings()` already emits per-model
+      timings on every run, so the question becomes a read: **how much of `dim_brreg_enhet`'s build is
+      the versions reconciliation?** The reconciling join touches only the organisations the feed
+      changed — ~57 in a quarter hour — while the snapshot-scale work is common to both designs, so
+      the answer is expected to be a small fraction. **Expected, not known**, which is the point.
+
+      🔴 **Do not let me close this on that reasoning.** The argument above is the same shape as the
+      one that produced the withdrawn join in `527455e`: a correctness-and-scale argument standing in
+      for a measurement, which imac then falsified at +42 s per run. **Phase 1's whole subject is
+      deciding by measurement rather than by argument**, and closing its last task on an estimate
+      would be the plan contradicting itself on the way out.
+
+      ⚠️ **What it could and could not change.** If the reconciliation is a large share, 1.4 is worth
+      re-opening. But 1.4's first reason is a **contract** — current-state-only upsert makes `marts`
+      unrebuildable from `raw` — so a bad number does not reverse 1.4 by itself; it forces a
+      conversation about the contract. **Worth knowing before that conversation, not after.**
 
 ### Validation
 
