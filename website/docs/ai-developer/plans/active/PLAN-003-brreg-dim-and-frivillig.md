@@ -11,7 +11,7 @@ Turns the raw register and its change feed into a current-state marts dimension,
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Active — phases 1-3 built, phase 4 held on an editorial decision
+## Status: Active — phases 1-3 built, 4.1 built under B, 4.3 and 4.5 outstanding
 
 Phases 1, 2 and 3 are implemented and running on the half-hourly cadence. Phase 4 is **deliberately
 incomplete**, and on re-reading the code against this plan on 2026-09-13, **not for the reason it
@@ -343,18 +343,48 @@ editorial (what `api_v1.ngo_index` is *for*), so it belongs to ops-dev or Terje,
 
 ### Tasks
 
-- [ ] 4.1 ⬜ **Blocked on the A/B decision above, not on a database.** Rebuild the NGO population from
-      `dim_brreg_enhet` filtered to `registrert_i_frivillighetsregisteret`, retaining the curated
-      editorial fields for the 11 that have them via a left join on `orgnr`.
+- [x] 4.1 ✅ **Built under B.** ops-dev took **B** on urb-agents #815 and gave the reason for taking
+      it rather than escalating: *"A changes a published public contract. B does not. The branch that
+      alters an outward-facing surface needs Terje; the branch that leaves it alone is an engineering
+      call. Escalating B would be asking permission to change nothing."*
 
-      `mart_ngo_index` already carries `has_supply` and `chapter_count` — 🔵 **the discriminator a
-      wider population needs already exists and needs no new column.** A consumer wanting today's
-      eleven asks for `has_supply = true`.
+      **What shipped:** `mart_ngo_index` and `mart_ngo_overview` draw their population from
+      `dim_brreg_enhet` where `registrert_i_frivillighetsregisteret`, **unioned** with `dim_ngo` —
+      ~11 rows → ~72,798. `dim_ngo` itself is untouched, so its nine tests and the six inbound
+      `relationships` tests keep their meaning. `mart_kommune_local_chapters` is untouched, which is
+      what makes it the gate.
 
-      ⚠️ **Previously recorded here as *"deliberately not built yet … that proof needs a database this
-      agent does not have."*** Half of that stands: 4.3 still needs imac. The other half was wrong —
-      what actually blocks 4.1 is that nobody has chosen A or B, and this agent should not choose,
-      because the question is what the published view is for.
+      🔴 **The union is not decoration.** Deriving by filter alone would make "the eleven survive"
+      depend on the register agreeing with the seed on any given half hour. Unioning the curated rows
+      in means a published view cannot lose a curated NGO because Brreg's flag lagged.
+
+      🔴 **`is_curated` added, against ops-dev's note that it was not needed.** Their reasoning on #815
+      was that *"`has_supply = true` already discriminates today's eleven."* True today, and true by
+      coincidence: all eleven declare `has_chapters: true` in the seed. But `has_supply` is computed
+      from `dim_chapter` — it answers *"does Atlas HOLD chapter data"*, an ingest outcome, where the
+      question is *"has anyone written this organisation up"*, an editorial fact. The first NGO curated
+      before its chapters land makes them disagree, and a consumer filtering `has_supply` loses it
+      silently. Two questions that share an answer today are still two questions.
+
+      ⚠️ **Tests changed, and none of it is invisible:** five `not_null` tests removed from
+      `mart_ngo_index` (`slug`, `website_url`, `tier`, `chapter_data_shape`, `has_chapters`) because
+      those columns are now null by design — a test asserting a column that is null by design protects
+      nothing. `unique(slug)` **kept**: dbt's unique test ignores nulls, so it still catches a genuine
+      collision among the curated. `mart_ngo_overview.orgnr`'s `relationships` test repointed from
+      `dim_ngo` to `dim_brreg_enhet` — not a weakening, since it still asserts every organisation in a
+      published view is one Atlas actually reconciled from Brreg.
+
+      ⚠️ **Two things found while building, both fixed or recorded rather than left:**
+
+      - `chapter_data_shape`'s published description listed `'distrikt+local'` / `'flat'` / `'none'`,
+        **none of which are accepted values of the column**. PostgREST publishes these as the OpenAPI
+        field docs, so the public contract documented three values the data can never hold. Corrected.
+      - **A second clock.** `dim_brreg_enhet` rebuilds half-hourly; these two marts rebuild at 05:00
+        with `transform_daily`, whose selection does not include them. The published NGO population
+        now lags the register by **up to 24 hours**. Left that way deliberately — a day is fine for an
+        NGO index — but written into both model headers, because a derived view silently behind its
+        source is the exact failure `reconciled_at` was added to make visible.
+
 - [x] 4.2 🔴 **The two-table problem, resolved in writing: `raw.brreg_enheter` is subsumed, not kept.**
 
       The two tables hold Brreg data with different populations — the 122-row curated landing from a

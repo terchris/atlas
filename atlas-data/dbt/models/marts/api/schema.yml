@@ -268,15 +268,34 @@ models:
     meta:
       title: "NGO registry"
     description: |
-      One row per NGO in dim_ngo with chapter_count and has_supply
-      decorations. Backs the NGO landing page (atlas-frontend /ngo) and
-      is equivalent to the listNgos() inline query.
+      One row per organisation Atlas treats as an NGO. The POPULATION is
+      derived from Brreg — every organisation flagged
+      registrertIFrivillighetsregisteret, ~72,798 of them, reconciled
+      every half hour — unioned with the curated seed so no curated NGO
+      can drop out when the register disagrees. The EDITORIAL fields are
+      curated and are NULL for everything nobody has written up.
+
+      🔴 This view grew from ~11 rows to ~72,798 on 2026-09-13
+      (PLAN-003 phase 4.1). A consumer reading slug, tier, website_url,
+      chapter_data_shape, has_chapters or primary_focus now gets NULL for
+      almost every row. Nothing was removed, but widening a view is not a
+      backward-compatible act just because no column disappeared —
+      consumers that assumed ~11 rows and populated editorial fields must
+      filter is_curated = true to get the previous behaviour.
+
+      Use is_curated, NOT has_supply, to select the curated set.
+      has_supply answers "does Atlas hold chapter data for this
+      organisation" (an ingest outcome); is_curated answers "has anyone
+      written this organisation up" (an editorial fact). They agree today
+      and are not the same question.
+
+      Register-sourced attributes — kommune, ICNPO category, bankruptcy
+      status — are deliberately not copied here. Join api_v1.brreg_enhet
+      on orgnr for those.
 
       chapter_count counts only active chapters (dim_chapter.is_active),
       so a defunct NGO sits at 0 even if its historical chapters are
-      retained. has_supply is the convenience boolean (chapter_count > 0).
-      The full table is small (~11 rows in v1, growing as new NGOs
-      land), so PostgREST consumers typically read all of it.
+      retained.
     columns:
       - name: orgnr
         description: |
@@ -286,9 +305,13 @@ models:
           - not_null
           - unique
       - name: slug
-        description: kebab-case URL-friendly identifier (e.g. 'redcross', 'kirkens-bymisjon').
+        description: |
+          kebab-case URL-friendly identifier (e.g. 'redcross',
+          'kirkens-bymisjon'). Editorial: NULL for every derived row.
+          unique is kept and still means something — dbt's unique test
+          ignores NULLs, so it catches a genuine collision among the
+          curated without failing on the ~72,787 that have none.
         data_tests:
-          - not_null
           - unique
       - name: name
         description: Legal name from Brreg.
@@ -300,28 +323,38 @@ models:
           'Sanitetskvinnene' vs N.K.S.). NULL when the brand equals
           the legal name.
       - name: website_url
-        description: NGO's primary website. Used as the outbound link from the index page.
-        data_tests:
-          - not_null
+        description: |
+          NGO's primary website. Used as the outbound link from the index
+          page. Editorial: NULL for derived rows.
       - name: tier
         description: |
           Structural-fit tier (A / B / C) from
           docs/research/ngo-landscape.md. v1 includes Tier A only.
-        data_tests:
-          - not_null
+          Editorial: NULL for derived rows.
       - name: chapter_data_shape
         description: |
-          How this NGO models its chapters. Values: 'distrikt+local'
-          (Red Cross), 'flat' (single-tier), 'none' (no chapters).
-          Drives which supply staging model the NGO uses.
-        data_tests:
-          - not_null
+          How this NGO's per-chapter activity data is shaped — drives
+          which ingest pattern it uses. Values: 'api_canonical',
+          'cms_bins', 'programme_only', 'no_structure'. Editorial: NULL
+          for derived rows.
+
+          ⚠️ This description previously listed 'distrikt+local' / 'flat'
+          / 'none', none of which are accepted values of the column in
+          seeds/schema.yml. PostgREST publishes these descriptions as the
+          OpenAPI field docs, so the public contract documented three
+          values the data can never hold. Corrected here rather than left
+          because it was found.
       - name: has_chapters
-        description: True when the NGO has any chapters at all (regardless of activity).
-        data_tests:
-          - not_null
+        description: |
+          True when the NGO is expected to have chapters at all
+          (regardless of activity). Editorial and declarative — it is the
+          curator's statement of intent, not a count. Compare
+          chapter_count for what Atlas actually holds. NULL for derived
+          rows.
       - name: primary_focus
-        description: One-line description of the NGO's main mission area.
+        description: |
+          Sector classification from docs/research/ngo-landscape.md.
+          Editorial: NULL for derived rows.
       - name: icnpo_code_1
         description: |
           ICNPO classification code (primary). See ref_icnpo. NULL when
@@ -342,6 +375,21 @@ models:
           Convenience boolean: chapter_count > 0. True when the NGO has
           at least one active chapter — i.e. it appears on the supply
           side of Atlas.
+
+          ⚠️ Not the curated/derived discriminator. Use is_curated for
+          that; this one moves when ingest does.
+        data_tests:
+          - not_null
+      - name: is_curated
+        description: |
+          True when this organisation has a row in the curated dim_ngo
+          seed — i.e. someone has written it up and the editorial columns
+          on this view are populated for it. False for the derived
+          population taken from Brreg.
+
+          This is the column that reproduces the pre-2026-09-13 contents
+          of this view: is_curated = true returns the same organisations
+          it held when the population was the seed alone.
         data_tests:
           - not_null
 
@@ -349,8 +397,17 @@ models:
     meta:
       title: "NGO overview"
     description: |
-      One row per NGO in dim_ngo with the six count metrics shown on
-      the per-NGO landing page (atlas-frontend /ngo/[slug]).
+      One row per organisation in the derived NGO population (the same
+      union as mart_ngo_index) with the six count metrics shown on the
+      per-NGO landing page (atlas-frontend /ngo/[slug]).
+
+      🔴 Grew from ~11 rows to ~72,798 on 2026-09-13 (PLAN-003 phase
+      4.1). Every derived row reports zero on all six counts, which is
+      the honest answer rather than padding: Atlas holds chapter and
+      activity data for the curated organisations only, so for anything
+      nobody has ingested the amount of supply Atlas knows about is none.
+      Filter chapter_count > 0 for organisations with supply, or join
+      mart_ngo_index.is_curated for the editorially curated set.
       Equivalent to the getNgoOverview() inline query, but precomputed
       for all NGOs so PostgREST projects it as a single endpoint
       consumers filter via ?orgnr=eq.X.
@@ -365,9 +422,14 @@ models:
         data_tests:
           - not_null
           - unique
+          # Repointed from dim_ngo to dim_brreg_enhet in PLAN-003 phase
+          # 4.1. Against dim_ngo it would fail on every derived row. This
+          # is not a weakening: it still asserts that every organisation
+          # in a published view is one Atlas actually reconciled from
+          # Brreg, which is the property worth holding.
           - relationships:
-              to: ref('dim_ngo')
-              field: orgnr
+              to: ref('dim_brreg_enhet')
+              field: organisasjonsnummer
       - name: chapter_count
         description: Total count of chapters for this NGO across all levels (active + inactive).
         data_tests:

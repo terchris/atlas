@@ -1,6 +1,6 @@
 ---
 title: "NGO registry"
-description: "One row per NGO in dim_ngo with chapter_count and has_supply decorations."
+description: "One row per organisation Atlas treats as an NGO."
 slug: /datasets/ngo_index
 sidebar_label: "ngo_index"
 ---
@@ -40,4 +40,4 @@ Live PostgREST query that returns the first 5 rows. URL adapts to the current ho
 
 ## About this view
 
-<div style={{whiteSpace: 'pre-wrap'}}>{"One row per NGO in dim_ngo with chapter_count and has_supply\ndecorations. Backs the NGO landing page (atlas-frontend /ngo) and\nis equivalent to the listNgos() inline query.\n\nchapter_count counts only active chapters (dim_chapter.is_active),\nso a defunct NGO sits at 0 even if its historical chapters are\nretained. has_supply is the convenience boolean (chapter_count > 0).\nThe full table is small (~11 rows in v1, growing as new NGOs\nland), so PostgREST consumers typically read all of it."}</div>
+<div style={{whiteSpace: 'pre-wrap'}}>{"One row per organisation Atlas treats as an NGO. The POPULATION is\nderived from Brreg — every organisation flagged\nregistrertIFrivillighetsregisteret, ~72,798 of them, reconciled\nevery half hour — unioned with the curated seed so no curated NGO\ncan drop out when the register disagrees. The EDITORIAL fields are\ncurated and are NULL for everything nobody has written up.\n\n🔴 This view grew from ~11 rows to ~72,798 on 2026-09-13\n(PLAN-003 phase 4.1). A consumer reading slug, tier, website_url,\nchapter_data_shape, has_chapters or primary_focus now gets NULL for\nalmost every row. Nothing was removed, but widening a view is not a\nbackward-compatible act just because no column disappeared —\nconsumers that assumed ~11 rows and populated editorial fields must\nfilter is_curated = true to get the previous behaviour.\n\nUse is_curated, NOT has_supply, to select the curated set.\nhas_supply answers \"does Atlas hold chapter data for this\norganisation\" (an ingest outcome); is_curated answers \"has anyone\nwritten this organisation up\" (an editorial fact). They agree today\nand are not the same question.\n\nRegister-sourced attributes — kommune, ICNPO category, bankruptcy\nstatus — are deliberately not copied here. Join api_v1.brreg_enhet\non orgnr for those.\n\nchapter_count counts only active chapters (dim_chapter.is_active),\nso a defunct NGO sits at 0 even if its historical chapters are\nretained."}</div>

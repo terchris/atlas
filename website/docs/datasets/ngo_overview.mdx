@@ -1,6 +1,6 @@
 ---
 title: "NGO overview"
-description: "One row per NGO in dim_ngo with the six count metrics shown on the per-NGO landing page (atlas-frontend /ngo/[slug])."
+description: "One row per organisation in the derived NGO population (the same union as mart_ngo_index) with the six count metrics shown on the per-NGO landing page (atlas…"
 slug: /datasets/ngo_overview
 sidebar_label: "ngo_overview"
 ---
@@ -40,4 +40,4 @@ Live PostgREST query that returns the first 5 rows. URL adapts to the current ho
 
 ## About this view
 
-<div style={{whiteSpace: 'pre-wrap'}}>{"One row per NGO in dim_ngo with the six count metrics shown on\nthe per-NGO landing page (atlas-frontend /ngo/[slug]).\nEquivalent to the getNgoOverview() inline query, but precomputed\nfor all NGOs so PostgREST projects it as a single endpoint\nconsumers filter via ?orgnr=eq.X.\n\nCounts include both active and inactive chapters in the\nlevel-specific buckets (national/regional/local). kommune_count\ncounts distinct kommune_nr only across *active* local chapters,\nmatching the original query's behaviour."}</div>
+<div style={{whiteSpace: 'pre-wrap'}}>{"One row per organisation in the derived NGO population (the same\nunion as mart_ngo_index) with the six count metrics shown on the\nper-NGO landing page (atlas-frontend /ngo/[slug]).\n\n🔴 Grew from ~11 rows to ~72,798 on 2026-09-13 (PLAN-003 phase\n4.1). Every derived row reports zero on all six counts, which is\nthe honest answer rather than padding: Atlas holds chapter and\nactivity data for the curated organisations only, so for anything\nnobody has ingested the amount of supply Atlas knows about is none.\nFilter chapter_count > 0 for organisations with supply, or join\nmart_ngo_index.is_curated for the editorially curated set.\nEquivalent to the getNgoOverview() inline query, but precomputed\nfor all NGOs so PostgREST projects it as a single endpoint\nconsumers filter via ?orgnr=eq.X.\n\nCounts include both active and inactive chapters in the\nlevel-specific buckets (national/regional/local). kommune_count\ncounts distinct kommune_nr only across *active* local chapters,\nmatching the original query's behaviour."}</div>

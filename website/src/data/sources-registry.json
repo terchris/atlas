@@ -3538,16 +3538,16 @@
           "mart_name": "mart_ngo_index",
           "api_v1_name": "ngo_index",
           "title": "NGO registry",
-          "description_short": "One row per NGO in dim_ngo with chapter_count and has_supply decorations.",
-          "description_full": "One row per NGO in dim_ngo with chapter_count and has_supply\ndecorations. Backs the NGO landing page (atlas-frontend /ngo) and\nis equivalent to the listNgos() inline query.\n\nchapter_count counts only active chapters (dim_chapter.is_active),\nso a defunct NGO sits at 0 even if its historical chapters are\nretained. has_supply is the convenience boolean (chapter_count > 0).\nThe full table is small (~11 rows in v1, growing as new NGOs\nland), so PostgREST consumers typically read all of it.",
+          "description_short": "One row per organisation Atlas treats as an NGO.",
+          "description_full": "One row per organisation Atlas treats as an NGO. The POPULATION is\nderived from Brreg — every organisation flagged\nregistrertIFrivillighetsregisteret, ~72,798 of them, reconciled\nevery half hour — unioned with the curated seed so no curated NGO\ncan drop out when the register disagrees. The EDITORIAL fields are\ncurated and are NULL for everything nobody has written up.\n\n🔴 This view grew from ~11 rows to ~72,798 on 2026-09-13\n(PLAN-003 phase 4.1). A consumer reading slug, tier, website_url,\nchapter_data_shape, has_chapters or primary_focus now gets NULL for\nalmost every row. Nothing was removed, but widening a view is not a\nbackward-compatible act just because no column disappeared —\nconsumers that assumed ~11 rows and populated editorial fields must\nfilter is_curated = true to get the previous behaviour.\n\nUse is_curated, NOT has_supply, to select the curated set.\nhas_supply answers \"does Atlas hold chapter data for this\norganisation\" (an ingest outcome); is_curated answers \"has anyone\nwritten this organisation up\" (an editorial fact). They agree today\nand are not the same question.\n\nRegister-sourced attributes — kommune, ICNPO category, bankruptcy\nstatus — are deliberately not copied here. Join api_v1.brreg_enhet\non orgnr for those.\n\nchapter_count counts only active chapters (dim_chapter.is_active),\nso a defunct NGO sits at 0 even if its historical chapters are\nretained.",
           "sample_query": "https://api-atlas.sovereignsky.no/ngo_index?limit=5"
         },
         {
           "mart_name": "mart_ngo_overview",
           "api_v1_name": "ngo_overview",
           "title": "NGO overview",
-          "description_short": "One row per NGO in dim_ngo with the six count metrics shown on the per-NGO landing page (atlas-frontend /ngo/[slug]).",
-          "description_full": "One row per NGO in dim_ngo with the six count metrics shown on\nthe per-NGO landing page (atlas-frontend /ngo/[slug]).\nEquivalent to the getNgoOverview() inline query, but precomputed\nfor all NGOs so PostgREST projects it as a single endpoint\nconsumers filter via ?orgnr=eq.X.\n\nCounts include both active and inactive chapters in the\nlevel-specific buckets (national/regional/local). kommune_count\ncounts distinct kommune_nr only across *active* local chapters,\nmatching the original query's behaviour.",
+          "description_short": "One row per organisation in the derived NGO population (the same union as mart_ngo_index) with the six count metrics shown on the per-NGO landing page (atlas-frontend /ngo/[slug]).",
+          "description_full": "One row per organisation in the derived NGO population (the same\nunion as mart_ngo_index) with the six count metrics shown on the\nper-NGO landing page (atlas-frontend /ngo/[slug]).\n\n🔴 Grew from ~11 rows to ~72,798 on 2026-09-13 (PLAN-003 phase\n4.1). Every derived row reports zero on all six counts, which is\nthe honest answer rather than padding: Atlas holds chapter and\nactivity data for the curated organisations only, so for anything\nnobody has ingested the amount of supply Atlas knows about is none.\nFilter chapter_count > 0 for organisations with supply, or join\nmart_ngo_index.is_curated for the editorially curated set.\nEquivalent to the getNgoOverview() inline query, but precomputed\nfor all NGOs so PostgREST projects it as a single endpoint\nconsumers filter via ?orgnr=eq.X.\n\nCounts include both active and inactive chapters in the\nlevel-specific buckets (national/regional/local). kommune_count\ncounts distinct kommune_nr only across *active* local chapters,\nmatching the original query's behaviour.",
           "sample_query": "https://api-atlas.sovereignsky.no/ngo_overview?limit=5"
         }
       ],
@@ -7573,8 +7573,8 @@
       "mart_name": "mart_ngo_index",
       "api_v1_name": "ngo_index",
       "title": "NGO registry",
-      "description_short": "One row per NGO in dim_ngo with chapter_count and has_supply decorations.",
-      "description_full": "One row per NGO in dim_ngo with chapter_count and has_supply\ndecorations. Backs the NGO landing page (atlas-frontend /ngo) and\nis equivalent to the listNgos() inline query.\n\nchapter_count counts only active chapters (dim_chapter.is_active),\nso a defunct NGO sits at 0 even if its historical chapters are\nretained. has_supply is the convenience boolean (chapter_count > 0).\nThe full table is small (~11 rows in v1, growing as new NGOs\nland), so PostgREST consumers typically read all of it.",
+      "description_short": "One row per organisation Atlas treats as an NGO.",
+      "description_full": "One row per organisation Atlas treats as an NGO. The POPULATION is\nderived from Brreg — every organisation flagged\nregistrertIFrivillighetsregisteret, ~72,798 of them, reconciled\nevery half hour — unioned with the curated seed so no curated NGO\ncan drop out when the register disagrees. The EDITORIAL fields are\ncurated and are NULL for everything nobody has written up.\n\n🔴 This view grew from ~11 rows to ~72,798 on 2026-09-13\n(PLAN-003 phase 4.1). A consumer reading slug, tier, website_url,\nchapter_data_shape, has_chapters or primary_focus now gets NULL for\nalmost every row. Nothing was removed, but widening a view is not a\nbackward-compatible act just because no column disappeared —\nconsumers that assumed ~11 rows and populated editorial fields must\nfilter is_curated = true to get the previous behaviour.\n\nUse is_curated, NOT has_supply, to select the curated set.\nhas_supply answers \"does Atlas hold chapter data for this\norganisation\" (an ingest outcome); is_curated answers \"has anyone\nwritten this organisation up\" (an editorial fact). They agree today\nand are not the same question.\n\nRegister-sourced attributes — kommune, ICNPO category, bankruptcy\nstatus — are deliberately not copied here. Join api_v1.brreg_enhet\non orgnr for those.\n\nchapter_count counts only active chapters (dim_chapter.is_active),\nso a defunct NGO sits at 0 even if its historical chapters are\nretained.",
       "columns": [
         {
           "name": "orgnr",
@@ -7582,7 +7582,7 @@
         },
         {
           "name": "slug",
-          "description": "kebab-case URL-friendly identifier (e.g. 'redcross', 'kirkens-bymisjon')."
+          "description": "kebab-case URL-friendly identifier (e.g. 'redcross', 'kirkens-bymisjon'). Editorial: NULL for every derived row. unique is kept and still means something — dbt's unique test ignores NULLs, so it catches a genuine collision among the curated without failing on the ~72,787 that have none."
         },
         {
           "name": "name",
@@ -7594,23 +7594,23 @@
         },
         {
           "name": "website_url",
-          "description": "NGO's primary website. Used as the outbound link from the index page."
+          "description": "NGO's primary website. Used as the outbound link from the index page. Editorial: NULL for derived rows."
         },
         {
           "name": "tier",
-          "description": "Structural-fit tier (A / B / C) from docs/research/ngo-landscape.md. v1 includes Tier A only."
+          "description": "Structural-fit tier (A / B / C) from docs/research/ngo-landscape.md. v1 includes Tier A only. Editorial: NULL for derived rows."
         },
         {
           "name": "chapter_data_shape",
-          "description": "How this NGO models its chapters. Values: 'distrikt+local' (Red Cross), 'flat' (single-tier), 'none' (no chapters). Drives which supply staging model the NGO uses."
+          "description": "How this NGO's per-chapter activity data is shaped — drives which ingest pattern it uses. Values: 'api_canonical', 'cms_bins', 'programme_only', 'no_structure'. Editorial: NULL for derived rows. ⚠️ This description previously listed 'distrikt+local' / 'flat' / 'none', none of which are accepted values of the column in seeds/schema.yml. PostgREST publishes these descriptions as the OpenAPI field docs, so the public contract documented three values the data can never hold. Corrected here rather than left because it was found."
         },
         {
           "name": "has_chapters",
-          "description": "True when the NGO has any chapters at all (regardless of activity)."
+          "description": "True when the NGO is expected to have chapters at all (regardless of activity). Editorial and declarative — it is the curator's statement of intent, not a count. Compare chapter_count for what Atlas actually holds. NULL for derived rows."
         },
         {
           "name": "primary_focus",
-          "description": "One-line description of the NGO's main mission area."
+          "description": "Sector classification from docs/research/ngo-landscape.md. Editorial: NULL for derived rows."
         },
         {
           "name": "icnpo_code_1",
@@ -7630,7 +7630,11 @@
         },
         {
           "name": "has_supply",
-          "description": "Convenience boolean: chapter_count > 0. True when the NGO has at least one active chapter — i.e. it appears on the supply side of Atlas."
+          "description": "Convenience boolean: chapter_count > 0. True when the NGO has at least one active chapter — i.e. it appears on the supply side of Atlas. ⚠️ Not the curated/derived discriminator. Use is_curated for that; this one moves when ingest does."
+        },
+        {
+          "name": "is_curated",
+          "description": "True when this organisation has a row in the curated dim_ngo seed — i.e. someone has written it up and the editorial columns on this view are populated for it. False for the derived population taken from Brreg. This is the column that reproduces the pre-2026-09-13 contents of this view: is_curated = true returns the same organisations it held when the population was the seed alone."
         }
       ],
       "built_from": [
@@ -7650,8 +7654,8 @@
       "mart_name": "mart_ngo_overview",
       "api_v1_name": "ngo_overview",
       "title": "NGO overview",
-      "description_short": "One row per NGO in dim_ngo with the six count metrics shown on the per-NGO landing page (atlas-frontend /ngo/[slug]).",
-      "description_full": "One row per NGO in dim_ngo with the six count metrics shown on\nthe per-NGO landing page (atlas-frontend /ngo/[slug]).\nEquivalent to the getNgoOverview() inline query, but precomputed\nfor all NGOs so PostgREST projects it as a single endpoint\nconsumers filter via ?orgnr=eq.X.\n\nCounts include both active and inactive chapters in the\nlevel-specific buckets (national/regional/local). kommune_count\ncounts distinct kommune_nr only across *active* local chapters,\nmatching the original query's behaviour.",
+      "description_short": "One row per organisation in the derived NGO population (the same union as mart_ngo_index) with the six count metrics shown on the per-NGO landing page (atlas-frontend /ngo/[slug]).",
+      "description_full": "One row per organisation in the derived NGO population (the same\nunion as mart_ngo_index) with the six count metrics shown on the\nper-NGO landing page (atlas-frontend /ngo/[slug]).\n\n🔴 Grew from ~11 rows to ~72,798 on 2026-09-13 (PLAN-003 phase\n4.1). Every derived row reports zero on all six counts, which is\nthe honest answer rather than padding: Atlas holds chapter and\nactivity data for the curated organisations only, so for anything\nnobody has ingested the amount of supply Atlas knows about is none.\nFilter chapter_count > 0 for organisations with supply, or join\nmart_ngo_index.is_curated for the editorially curated set.\nEquivalent to the getNgoOverview() inline query, but precomputed\nfor all NGOs so PostgREST projects it as a single endpoint\nconsumers filter via ?orgnr=eq.X.\n\nCounts include both active and inactive chapters in the\nlevel-specific buckets (national/regional/local). kommune_count\ncounts distinct kommune_nr only across *active* local chapters,\nmatching the original query's behaviour.",
       "columns": [
         {
           "name": "orgnr",
