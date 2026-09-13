@@ -306,6 +306,42 @@ The route matches on **hostname**, not a path prefix. `api-atlas.<your-domain>` 
 ingress. Reaching it from your own machine is a DNS or hosts-file question about your setup, not
 something the install can do for you.
 
+### The API 404s even though the view exists, with rows and grants
+
+🔴 **This is the one that will waste your evening, and it is not a false failure — it is a real
+outage with a one-line fix.**
+
+You check the database and everything is right: the view is there, it returns rows, `atlas_web_anon`
+has `SELECT`. And `GET /brreg_enhet` still returns 404 on every replica.
+
+**PostgREST answers from a cached schema.** It does not read the catalogue per request. If that cache
+was last loaded at a moment when the view did not exist, it keeps serving that absence no matter what
+you do to the database.
+
+```
+recreate the view, no reload    404   — view exists, 1.17M rows, grants correct
+issue the reload                200   — instant
+```
+
+**The fix: materialise the `api_v1` asset**, or run `transform_and_publish`. That asset is what issues
+`NOTIFY pgrst, 'reload schema'`. It takes seconds.
+
+⚠️ **When this bites.** A transform run that *fails* partway leaves some `api_v1` views missing;
+nothing restores them until a run succeeds. If PostgREST reloads while they are missing — a pod
+restart is enough — the absence is cached. **Repairing the database by hand then fixes everything
+except the endpoint**, which is exactly the state that makes it confusing.
+
+🔵 **It is not a PostgREST fault.** It is serving the last schema it was told about, correctly.
+
+### `api_v1` views briefly lose their descriptions
+
+After a failed run, the views that were recreated carry no `COMMENT`, so PostgREST's OpenAPI
+descriptions come back empty — **the data is right and the published documentation is gone.** A
+successful `transform_and_publish` restores them, because the generated apply is what sets them.
+
+Bounded, not permanent: it lasts as long as the failure does. Worth knowing so an empty API doc is not
+mistaken for a schema problem.
+
 ## Removing and reinstalling
 
 **`uis template remove atlas` works for installs made by `uis template install`** — it reads the
