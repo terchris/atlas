@@ -101,6 +101,25 @@ apply. Run commands on the host. Do not invent a cage.
   while every fresh install passed. The full account is in
   [`plans/active/PLAN-003-brreg-dim-and-frivillig.md`](plans/active/PLAN-003-brreg-dim-and-frivillig.md)
   under *"The upgrade path is invisible to everyone except imac"*.
+- 🔴 **Two objects share every Atlas tag. Label every digest to its image, always, even when only
+  one appears.** `ghcr.io/terchris/atlas-data/uis:<tag>` is the **UIS install artifact** — the thing a
+  catalogue pin names — and `ghcr.io/terchris/atlas-data:<tag>` is the **code-location image** the
+  artifact points at. They carry the same tag and different digests. On 2026-09-13 a pin nomination
+  from this agent listed both images and one unlabelled `digest:`; it was the image's, ops-dev relayed
+  it as the artifact's, and dev-templates refused it at the catalogue. ⚠️ **The wrong value passes
+  every fetch-side check** — release asset and GHCR agree, the blob hashes to its manifest — and
+  surfaces much later as an unexplained pull failure. The publish workflow's run summary now labels
+  both, so a nomination copies rather than reconstructs; write them the same way:
+
+  ```
+  artifact digest       sha256:…   ghcr.io/terchris/atlas-data/uis:<tag>
+  code-location digest  sha256:…   ghcr.io/terchris/atlas-data:<tag>
+  ```
+
+  🔵 The same confusion appeared three times in one night across three agents — a hash of `/app/*`
+  used to check a fix living in `template-info.yaml`, two tree-identical commits that were identical
+  as *images* and different as *artifacts*, and this. **"Two objects share a tag and the claim does not
+  say which" is the shape; naming the object is the whole fix.**
 - 🔴 **An idempotence check on an already-converged system proves the weaker half. It needs a FRESH
   substrate.** This is the mirror of the rule above and the two are easy to confuse: a *shape* change
   needs a cluster that already holds data, and a *convergence* check needs one that does not. On

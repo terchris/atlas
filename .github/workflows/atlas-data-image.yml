@@ -160,13 +160,24 @@ jobs:
           # than something re-resolved from the tag later — a tag can be
           # re-pointed, and a catalogue that re-resolves would bless the new
           # artifact silently.
+          #
+          # ⚠️ `digest` is the ARTIFACT digest and is kept under that name because
+          # dev-templates reads it (#483) — renaming it would break the consumer
+          # this record exists for. `artifact_digest` is the same value under a
+          # name that says what it is, and `image_digest` is the other one, named
+          # so it can never be mistaken for the pin value. Additive on purpose:
+          # a self-describing field costs nothing and a bare `digest:` sitting
+          # between an `artifact` and an `image` key is ambiguous by construction
+          # (urb-agents #831).
           cat > uis-artifact.json <<JSON
           {
             "id": "atlas",
             "tag": "${TAG}",
             "artifact": "${REF}",
             "digest": "${DIGEST}",
+            "artifact_digest": "${DIGEST}",
             "image": "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${TAG}",
+            "image_digest": "${IMAGE_DIGEST}",
             "commit": "${GITHUB_SHA}",
             "published_at": "$(date -u +'%Y-%m-%dT%H:%M:%SZ')",
             "run": "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
@@ -174,14 +185,30 @@ jobs:
           JSON
           python3 -m json.tool uis-artifact.json > /dev/null   # fail on malformed JSON
 
+          # 🔴 EVERY DIGEST IS LABELLED TO ITS IMAGE, even though only one of them is
+          # the one a pin needs. This table used to read `artifact` / `digest` /
+          # `image it names` — two images named, one digest labelled neither — and
+          # on 2026-09-13 that cost a refused pin: a nomination copied out of this
+          # run carried the CODE-LOCATION digest under a bare `digest`, ops-dev
+          # relayed it as the artifact's, and dev-templates caught it at the
+          # catalogue (urb-agents #831).
+          #
+          # ⚠️ The wrong one passes every fetch-side check. Release asset and GHCR
+          # agree with each other and the blob hashes to its manifest — it is a
+          # valid digest resolving to the wrong object, surfacing much later as an
+          # unexplained pull failure with nothing pointing at the cause.
+          #
+          # Whoever nominates a pin copies from this table. It must not be
+          # possible to copy the right value under the wrong name.
           {
             echo "### UIS install definition published"
             echo ""
             echo "| | |"
             echo "|---|---|"
             echo "| artifact | \`${REF}\` |"
-            echo "| digest | \`${DIGEST}\` |"
-            echo "| image it names | \`${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${TAG}\` |"
+            echo "| **artifact digest** (this is what a pin needs) | \`${DIGEST}\` |"
+            echo "| code-location image | \`${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${TAG}\` |"
+            echo "| **code-location image digest** (NOT the pin value) | \`${IMAGE_DIGEST}\` |"
           } >> "$GITHUB_STEP_SUMMARY"
 
       # The digest reaches dev-templates as a release asset rather than by
