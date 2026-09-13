@@ -11,16 +11,30 @@ Turns the raw register and its change feed into a current-state marts dimension,
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Active — phases 1-3 built, phase 4 held on a database
+## Status: Active — phases 1-3 built, phase 4 held on an editorial decision
 
-Phases 1, 2 and 3 are implemented. Phase 4 is **deliberately incomplete**: its decisions are made and
-written down, but rebuilding `dim_ngo` changes the upstream of four published `api_v1` views, and the
-task that proves it improves them rather than breaking them needs a database this agent does not have.
-Building it blind would be changing a public surface on an argument instead of a test.
+Phases 1, 2 and 3 are implemented and running on the half-hourly cadence. Phase 4 is **deliberately
+incomplete**, and on re-reading the code against this plan on 2026-09-13, **not for the reason it
+said**.
 
-**Goal**: `marts.dim_brreg_enhet` as reconciled current state, `marts.dim_ngo` derived rather than curated, and no new public endpoint.
+⚠️ It used to read: *"rebuilding `dim_ngo` changes the upstream of four published `api_v1` views, and
+the task that proves it improves them rather than breaking them needs a database this agent does not
+have."* Two of those four views reference `dim_ngo` nowhere, a third joins it inwardly and cannot
+change, and the gate on the one real risk (4.3) does still need imac. But the thing actually blocking
+4.1 is **not** the missing database: it is that widening the NGO population can land in `dim_ngo` or
+in the marts, the two cost different tests, and choosing between them decides what `api_v1.ngo_index`
+is *for*. That is an editorial call, and this agent should not make it. See finding ② and the A/B
+table in phase 4.
 
-**Last Updated**: 2026-09-12
+🔵 **The opening question is nonetheless answered.** `api_v1.brreg_enhet` already publishes the whole
+register with `registrert_i_frivillighetsregisteret`, `icnpo_kategori` and `kommune_nr`, so *"which
+voluntary organisations are active where"* is one filtered request today. Phase 4 is about the shape
+of the NGO-specific views, not about whether Atlas holds the population.
+
+**Goal**: `marts.dim_brreg_enhet` as reconciled current state, the NGO population derived rather than
+curated, and the curated/derived boundary legible in the schema.
+
+**Last Updated**: 2026-09-13
 
 **Investigation**: [INVESTIGATE-all-brreg-organisations](../backlog/INVESTIGATE-all-brreg-organisations.md)
 **Prerequisites**: PLAN-001 and PLAN-002 — there is nothing to reconcile without a snapshot and a feed
@@ -245,20 +259,102 @@ half is now written down.
 
 ---
 
-## Phase 4: Derive `dim_ngo`, and retire the duplicate
+## Phase 4: Derive the NGO population, and retire the duplicate
+
+### 🔴 Read this before 4.1 — three things changed, and two of them are corrections to this plan
+
+Phases 1-3 shipped between the writing of this phase and now. Re-reading the code against what
+this phase *says* found two claims here that the code does not support, and one that makes the
+phase smaller than it looked. Corrected in place, with the original claim left visible, because a
+retraction that does not travel with its claim is not a retraction.
+
+**① ✅ The population question is already served — by `api_v1.brreg_enhet`, not by `dim_ngo`.**
+
+The published view carries `navn`, `kommune_nr`, `naeringskode1_kode`, `is_active`,
+`registrert_i_frivillighetsregisteret`, `icnpo_nummer` and `icnpo_kategori` across all ~1.17M
+organisations. *"Which voluntary organisations in ICNPO category X are active in kommune Y"* is one
+filtered request against an endpoint that exists today. So the opening question of
+[INVESTIGATE-all-brreg-organisations](../backlog/INVESTIGATE-all-brreg-organisations.md) — how Atlas
+could hold every organisation in Brønnøysundregistrene — **is answered by what has already shipped.**
+
+⚠️ I told ops-dev on urb-agents #805 that we had *"built the foundation for the question and not yet
+answered it."* That was too pessimistic by one endpoint. What remains unanswered is narrower and
+worth stating exactly: **not whether Atlas holds the population, but whether the NGO-shaped views
+should widen to it.** That is an editorial and contract decision, not a data-availability one, and
+it is the whole of 4.1.
+
+**② ❌ 4.3 named two views that cannot be affected, and missed one that can.**
+
+As written, 4.3 gated on `ngo_index`, `ngo_overview`, `coverage_gap_barnefattigdom` and
+`indicator_missing_kommuner`. The last two build on `fact_kommune_indicators` and `dim_kommune` and
+reference `dim_ngo` nowhere. The actual `ref('dim_ngo')` consumers are three:
+
+| consumer | how it joins | effect of a wider population |
+|---|---|---|
+| `mart_ngo_index` | `from dim_ngo` + left join | **11 → ~72,798 rows** |
+| `mart_ngo_overview` | `from dim_ngo` + left join | **11 → ~72,798 rows**, all-zero counts for the new ones |
+| `mart_kommune_local_chapters` | **inner** join, driven by `fact_chapter_activities` | 🔵 **none** — it cannot grow |
+
+The third is the useful correction: an inner join onto a widened dimension adds no rows, so one of
+the three published views was never at risk. A gate pointed at two views that cannot change, while
+one that can went unwatched, is this project's recurring failure shape — a correct check attached to
+the wrong object.
+
+**③ ✅ `raw.brreg_enheter` has no consumers, so retiring it is not blocked on 4.1.**
+
+4.2 below says the curated table *"survives only until `dim_ngo` is rebuilt on the snapshot … **not
+before**, because `dim_ngo` reads it today."* **`dim_ngo` does not read it.** `dim_ngo` is a seed CSV
+(`seeds/dim_ngo.csv`, 11 rows); `raw.brreg_enheter` is referenced by **no dbt model at all** — only by
+its own `sources.yml` declaration, a monthly Dagster seed asset, and the freshness test that watches
+it. It is a monthly ingest job and a freshness clock maintaining a table nothing reads. The ordering
+constraint 4.2 invents does not exist, and the retirement is now its own task (4.5) that can ship
+without 4.1.
+
+### The decision 4.1 has to take, with its measured cost
+
+*"Derived rather than curated"* (Terje, 2026-09-11) is a statement about the **NGO population**. It
+does not say which relation holds it, and the two readings cost different things. `dim_ngo` today
+carries **nine tests** — `not_null` on `slug`, `name`, `website_url`, `tier`, `chapter_data_shape`,
+`has_chapters`, `primary_focus`; `unique` on `orgnr` and `slug`; and `accepted_values` on `tier` and
+`primary_focus` — and **six inbound `relationships` tests** point at `dim_ngo.orgnr` from
+`dim_chapter`, `dim_activity`, `fact_chapter_activities` and two supply models.
+
+🔵 The inbound six are safe under every option: a referential test against a **superset** still
+passes. The cost is entirely in the outbound contract.
+
+| | **A — `dim_ngo` becomes the population** | **B — the marts derive, `dim_ngo` stays editorial** |
+|---|---|---|
+| what holds ~72,798 rows | `dim_ngo` itself | `mart_ngo_index` / `mart_ngo_overview`, from `dim_brreg_enhet` |
+| `unique(slug)` | 🔴 must invent a unique slug for 72,787 orgs; Brreg `navn` is **not** unique, so collisions are certain | ✅ untouched |
+| `accepted_values(tier, primary_focus)` | 🔴 closed vocabularies from `ngo-landscape.md` with no register equivalent and no `unknown` member — needs a sentinel in each | ✅ untouched |
+| `not_null` on editorial columns | 🔴 six break | ⚠️ five relax to nullable **in the mart** |
+| `relationships(mart_ngo_overview.orgnr → dim_ngo)` | ✅ holds | ⚠️ must repoint to `dim_brreg_enhet` |
+| the six inbound FK tests | ⚠️ still pass, but **silently weaken**: *"a chapter belongs to a curated NGO"* becomes *"…to any voluntary organisation"* | ✅ keep their meaning |
+| tests touched | **9** | **6** |
+
+⚠️ **Both options change a published contract the same way**, and that is the part no option avoids:
+a consumer reading `tier` or `slug` from `api_v1.ngo_index` gets `null` for 99.98% of rows the day
+this ships. Widening a view is not a backward-compatible act just because no column is removed.
+
+**Recommendation: B.** It costs three fewer tests, it keeps the curated/derived boundary legible in
+the schema rather than hidden behind sentinel values, and it leaves the six inbound FK tests saying
+what they were written to say. 🔴 **It is a recommendation, not a decision** — the choice is
+editorial (what `api_v1.ngo_index` is *for*), so it belongs to ops-dev or Terje, not to this agent.
 
 ### Tasks
 
-- [ ] 4.1 ⬜ **Deliberately not built yet.** Rebuild `dim_ngo` from `dim_brreg_enhet` filtered to the
-      voluntary sector, retaining the Atlas-curated editorial fields (`tier`, `primary_focus`,
-      `chapter_data_shape`) for the 11 that have them.
+- [ ] 4.1 ⬜ **Blocked on the A/B decision above, not on a database.** Rebuild the NGO population from
+      `dim_brreg_enhet` filtered to `registrert_i_frivillighetsregisteret`, retaining the curated
+      editorial fields for the 11 that have them via a left join on `orgnr`.
 
-      🔴 **Why it is not built:** `dim_ngo` is the upstream of four **published** `api_v1` views, and
-      4.3 below is the task that proves a rewrite improves them rather than breaking them. That proof
-      needs a database this agent does not have. Writing the rewrite anyway would mean changing four
-      public API surfaces on an argument rather than a test — which is exactly what the
-      declare / apply / verify split exists to stop. **Phases 1-3 are usable without it**; `dim_ngo`
-      keeps working as it does today until someone can run 4.3.
+      `mart_ngo_index` already carries `has_supply` and `chapter_count` — 🔵 **the discriminator a
+      wider population needs already exists and needs no new column.** A consumer wanting today's
+      eleven asks for `has_supply = true`.
+
+      ⚠️ **Previously recorded here as *"deliberately not built yet … that proof needs a database this
+      agent does not have."*** Half of that stands: 4.3 still needs imac. The other half was wrong —
+      what actually blocks 4.1 is that nobody has chosen A or B, and this agent should not choose,
+      because the question is what the published view is for.
 - [x] 4.2 🔴 **The two-table problem, resolved in writing: `raw.brreg_enheter` is subsumed, not kept.**
 
       The two tables hold Brreg data with different populations — the 122-row curated landing from a
@@ -267,16 +363,21 @@ half is now written down.
 
       **`brreg_enheter_snapshot` ⊃ `brreg_enheter`**: every one of the 122 is in the 1.17M, with more
       fields and fresher data, plus the change feed keeping it current where the seed source is a
-      monthly poll. The curated table has no column the snapshot lacks. So it survives only until
-      `dim_ngo` is rebuilt on the snapshot, and it is retired in the same change — **not before**,
-      because `dim_ngo` reads it today.
+      monthly poll. The curated table has no column the snapshot lacks.
 
-      ⚠️ Recorded as a decision now, executed with 4.1, because the order matters: retiring the table
-      first breaks the dimension, and building the dimension first without retiring the table leaves
-      exactly the duplication this task exists to prevent. Whoever does 4.1 does both.
-- [ ] 4.3 ⬜ **imac.** Verify existing `api_v1` views improve rather than break: `ngo_index`,
-      `ngo_overview`, `coverage_gap_barnefattigdom`, `indicator_missing_kommuner`. This is the gate on
-      4.1, not a follow-up to it.
+      ⚠️ **Correction, 2026-09-13.** This task used to continue: *"So it survives only until `dim_ngo`
+      is rebuilt on the snapshot, and it is retired in the same change — **not before**, because
+      `dim_ngo` reads it today. … Whoever does 4.1 does both."* **`dim_ngo` does not read it, and no
+      dbt model does** (finding ③ above). The decision to retire stands; the claimed dependency on
+      4.1 does not, and the work moves to **4.5**, which can ship on its own.
+- [ ] 4.3 ⬜ **imac — the gate on 4.1.** Verify the three real `dim_ngo` consumers, not the four this
+      task used to name (finding ② above): `api_v1.ngo_index` and `api_v1.ngo_overview` grow to the
+      voluntary population with the eleven still present and `has_supply = true`;
+      `api_v1.kommune_local_chapters` returns **byte-identical rows before and after**, because its
+      inner join makes any change there a defect rather than an improvement.
+
+      🔴 **That third check is the one worth running.** The first two confirm an intended change; only
+      the unchanged view can reveal an unintended one.
 - [x] 4.4 ⚠️ **SUPERSEDED — Terje reversed this on 2026-09-12 and a new `api_v1` view now exists.**
 
       This task used to read, and was correct when written: *"No new `api_v1` view and no `schemas:`
@@ -305,10 +406,30 @@ half is now written down.
       — a consumer querying the endpoint has no reason to go and find `meta_sources`, and a view
       comment costs nothing per row where a repeated column across 1.17M records would not.
 
+- [ ] 4.5 ⬜ **Retire `raw.brreg_enheter` — independent of 4.1.** Remove the `sources.yml` declaration,
+      the monthly Dagster seed asset in `assets/raw_seeds.py`, its entry in `schedules.py`, and the
+      seed source at `ingest/src/seed-sources/brreg-enheter/`; drop the table in a migration. The
+      freshness test `raw_sources_were_refreshed_recently` stops watching it as a consequence of the
+      `sources.yml` removal, not as a separate edit.
+
+      ⚠️ **Verify before dropping, not after**: confirm on a cluster with data that
+      `select count(*) from raw.brreg_enheter where orgnr not in (select organisasjonsnummer from
+      raw.brreg_enheter_snapshot)` returns **0**. The superset claim in 4.2 is an argument from how
+      the two sources are populated; this makes it a measurement. A table with no readers is safe to
+      stop *maintaining* today and safe to *drop* only once that returns zero.
+
 ### Validation
 
-`ngo_overview` returns more than 11 NGOs; the 13 existing `api_v1` views still return 200 with the
-same column contracts; `schemas: api_v1` unchanged in `template-info.yaml`.
+`api_v1.ngo_index` and `api_v1.ngo_overview` return the voluntary population with the eleven curated
+NGOs present and `has_supply = true`; `api_v1.kommune_local_chapters` returns byte-identical rows to
+the run before; the other ten `api_v1` views still return 200 with unchanged column contracts;
+`schemas: api_v1` unchanged in `template-info.yaml`; and after 4.5, `dbt build` passes with
+`raw.brreg_enheter` gone from `sources.yml`.
+
+⚠️ The previous validation line read *"`ngo_overview` returns more than 11 NGOs"*. Kept in substance,
+but *"more than 11"* passes at 12 and at 72,798 alike — the row count is not the assertion worth
+making. The assertion is that the eleven survive the widening **and** that the view which must not
+change did not.
 
 ---
 
