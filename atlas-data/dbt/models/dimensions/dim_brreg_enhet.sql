@@ -17,13 +17,55 @@
   `snapshot_loaded_at` is null for feed-only organisations, `max()` ignores nulls,
   and Postgres rewrites the aggregate to an ordered read that skips them.
 
-  ⚠️ THIS IS A HYPOTHESIS WITH A MECHANISM, NOT A MEASUREMENT. It predicts the
-  model returns to or below its 13.18 s baseline. If it does not, the cost is real
-  and belongs to the design rather than to a missing index, and the decision goes
-  back to accept-or-redesign on the new number.
+  ✅ MEASURED, AND THE HYPOTHESIS HELD (imac, urb-agents #896):
+
+      max(last_oppdateringsid)   6,063 ms  242,209 buffers  ->  1.4 ms  4 buffers
+      max(snapshot_loaded_at)    7,778 ms  241,936 buffers  ->  9.3 ms  4 buffers
+
+  🔴 The older scan was real. The 13.18 s baseline this design was argued against
+  contained a 6.1 s sequential scan of a 3,971 MB table that predates every change
+  in the thread — so part of what looks like a regression here is a defect that
+  was always present and is now fixed.
+
+  ⚠️ DO NOT SUBTRACT IT TO FLATTER THIS DESIGN. It is tempting to say the old
+  baseline "really" cost ~7 s once its own scan is removed, making the ratio ~3x.
+  imac refused that subtraction and so does this comment: no build pairs the old
+  predicate with the new indexes, so the counterfactual was never measured. The
+  honest pair is 13.18 s then, 21.6 s now — about 1.6x — and even that compares
+  two shipped configurations differing in three ways at once.
 
   ⚠️ dbt creates indexes on an incremental model when the table is CREATED, so
   these take effect on the next `--full-refresh` and not before.
+
+  🔴 THE DECISION, TAKEN 2026-09-13 AND RECORDED SO IT IS NOT RE-ARGUED FROM
+  SCRATCH: **accepted at ~21.6 s / ~139 s, against a stated target of ~97 s.**
+
+  I set that target myself and I am missing it by ~43%, so this is stated as a
+  miss rather than dressed as a pass. Why it is accepted anyway:
+
+    • What it buys is not optional. Without the snapshot arm a bootstrap is a
+      SILENT no-op — measured at 329 s, a green ASSET_MATERIALIZATION, and zero
+      rows written. Re-running the bootstrap is what an operator reaches for to
+      REPAIR the register, and that is the moment a false success costs most.
+    • ~8.4 s per run x 48 runs is ~6.7 min/day. The join withdrawn on the same
+      criterion cost ~34 min/day: this is a fifth of the thing already judged a
+      bad trade, and the alternative to paying it is a known silent failure
+      rather than a tolerable one.
+    • The target was a proxy for "do not pay a lot for a once-a-year path",
+      written before anyone knew what the path cost. Holding to the proxy over
+      the reasoning it stood for would be obeying a number I invented.
+
+  ⚠️ What is NOT claimed: that the remaining ~8.4 s is understood. The watermark
+  reads are now ~10 ms combined, so the cost is elsewhere — the union, the extra
+  column carried through `combined`/`typed`, or index maintenance on rebuild.
+  Nobody has run EXPLAIN on the whole predicate. That is a cheap follow-up and it
+  is not a condition of this decision.
+
+  🔴 AND ONE THING ABOUT MEASURING THIS AGAIN. The indexes survive a rollback:
+  any `dim_brreg_enhet` timing taken on imac's host from now on is an INDEXED
+  measurement whatever build is installed. **The 13.18 s baseline is historical,
+  not repeatable there** — a future `e0ef430` timing on that host would silently
+  be measuring something else while looking like a clean comparison.
 
   🔵 The first attempt at this change put the explanation inside the `config()`
   call as `#` comments. That is not a comment in Jinja — the list silently did not
