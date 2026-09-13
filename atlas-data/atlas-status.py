@@ -54,6 +54,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import sys
 import urllib.error
 import urllib.request
@@ -236,6 +237,42 @@ def ingest_block(cur, limit: int = 12) -> bool:
     return healthy
 
 
+def _last_error(cur, job: str) -> str | None:
+    """
+    The most recent STEP_FAILURE message for a job, from Dagster's event log.
+
+    ⚠️ `event_logs.event` is a serialised JSON blob whose shape is Dagster's, not
+    ours, and it changes between versions. Parsed defensively: JSON first, a
+    bounded regex second, and None rather than a guess if neither works — an
+    absent message is better than an invented one.
+    """
+    try:
+        cur.execute(
+            """
+            select event from event_logs
+            where dagster_event_type = 'STEP_FAILURE'
+              and event like %s
+            order by id desc limit 1
+            """,
+            (f"%{job}%",),
+        )
+        row = cur.fetchone()
+    except Exception:  # noqa: BLE001 — a schema this tool does not own
+        return None
+    if not row or not row[0]:
+        return None
+    blob = row[0]
+    try:
+        d = json.loads(blob)
+        msg = (d.get("event_specific_data") or {}).get("error", {}).get("message")
+        if msg:
+            return " ".join(msg.split())[:160]
+    except Exception:  # noqa: BLE001
+        pass
+    m = re.search(r'"message"\s*:\s*"([^"]{10,400})"', blob)
+    return " ".join(m.group(1).split())[:160] if m else None
+
+
 def jobs_block() -> bool:
     """
     Item 3 — job-level history, which the first version could not reach.
@@ -284,39 +321,102 @@ def jobs_block() -> bool:
                     streak += 1
                 else:
                     break
-            flag = f"   {streak} consecutive   ⚠️" if streak > 1 else ""
-            print(f"  {name:<26}{status:<10}{started:%Y-%m-%d %H:%M}{flag}")
+            # ⚠️ CRITERION C also asks for "a job that hasn't run". A job absent
+            # from `runs` entirely cannot be seen from here at all — stated
+            # below rather than silently omitted.
+            age_h = _hours_since(started)
+            stale = age_h is not None and age_h > 24
+            flags = []
             if streak > 1:
+                flags.append(f"{streak} consecutive")
+            if stale:
+                flags.append(f"no run in {age_h:.0f} h")
+            flag = ("   " + ", ".join(flags) + "   ⚠️") if flags else ""
+            print(f"  {name:<26}{status:<10}{started:%Y-%m-%d %H:%M}{flag}")
+            if flags:
                 healthy = False
+            # 🔴 The error's own text, criterion C. Printing "FAILURE" turns into
+            # a support round-trip; printing the message turns into a fix — the
+            # 7.5-hour outage was one line that named the problem exactly.
+            if status == "FAILURE":
+                msg = _last_error(cur, name)
+                if msg:
+                    print(f"      last error: {msg}")
+        print("  ⚠️ a job that has never run at all does not appear here — Dagster's")
+        print("     `runs` table has no row for it. Compare against schedules.py.")
     return healthy
 
 
-def last_changes(cur, n: int) -> None:
+def _api_orgnrs(orgnrs: list[str]) -> tuple[set[str] | None, str]:
+    """
+    One HTTP request asking the PUBLIC API which of these organisations it serves.
+
+    🔴 CRITERION B, AND I MISSED IT ONCE ALREADY. imac's rule is that the API
+    column must be an HTTP request rather than a database query. I applied it to
+    the deletion check and left `--last N` reading `marts.dim_brreg_enhet` —
+    the same mistake, one function further down, in the same commit that fixed it.
+
+    ⚠️ A dimension row proves the transform ran. It does not prove PostgREST is
+    serving it: the 70-second 404, the cached dropped view and the reverted
+    COMMENTs all had correct rows in Postgres.
+
+    One request, not N: PostgREST's `in.(...)` answers for the whole batch.
+    Returns (None, reason) when it cannot ask — never an empty set, because
+    "the API serves none of these" and "I could not reach the API" are opposite
+    findings that look identical as an empty set.
+    """
+    base = os.environ.get("ATLAS_POSTGREST_URL") or os.environ.get("POSTGREST_URL")
+    if not base:
+        return None, "set ATLAS_POSTGREST_URL to verify over the API"
+    joined = ",".join(orgnrs)
+    url = (f"{base.rstrip('/')}/brreg_enhet"
+           f"?organisasjonsnummer=in.({joined})&select=organisasjonsnummer")
+    try:
+        with urllib.request.urlopen(url, timeout=20) as resp:
+            rows = json.loads(resp.read().decode() or "[]")
+        return {r["organisasjonsnummer"] for r in rows}, ""
+    except Exception as exc:  # noqa: BLE001
+        return None, f"API unreachable: {exc}"
+
+
+def last_changes(cur, n: int) -> bool:
     """Terje's suggestion: for each recent change, what it was and whether it landed."""
     print()
     print(f"Last {n} changes")
     cur.execute(
         """
-        select v.oppdateringsid, v.organisasjonsnummer, v.endringstype, v.fetched_at,
-               d.organisasjonsnummer, d.last_oppdateringsid, d.navn
-        from (select * from raw.brreg_enheter_versions order by oppdateringsid desc limit %s) v
-        left join marts.dim_brreg_enhet d on d.organisasjonsnummer = v.organisasjonsnummer
-        order by v.oppdateringsid desc
+        select v.oppdateringsid, v.organisasjonsnummer, v.endringstype, v.fetched_at
+        from raw.brreg_enheter_versions v
+        order by v.oppdateringsid desc limit %s
         """,
         (n,),
     )
-    for oid, orgnr, kind, fetched, dim_org, dim_oid, navn in cur.fetchall():
-        if kind in ("Sletting", "Fjernet"):
+    rows = cur.fetchall()
+    if not rows:
+        print("  no changes in the feed yet")
+        return True
+
+    served, why = _api_orgnrs([r[1] for r in rows])
+    if served is None:
+        print(f"  ⚠️ cannot verify over the API — {why}")
+
+    healthy = True
+    for oid, orgnr, kind, fetched in rows:
+        if served is None:
+            verdict = "unknown   (API not asked)"
+        elif kind in ("Sletting", "Fjernet"):
             # The most informative line in the block: a deletion that failed to
             # propagate looks identical to one that succeeded unless you look.
-            verdict = "removed   (absent, correct)" if dim_org is None else "STILL PRESENT ⚠️"
-        elif dim_org is None:
-            verdict = "MISSING ⚠️"
-        elif dim_oid is not None and dim_oid >= oid:
-            verdict = f"ok        {(navn or '')[:28]}"
+            if orgnr in served:
+                verdict, healthy = "STILL SERVED ⚠️", False
+            else:
+                verdict = "removed   (absent, correct)"
+        elif orgnr in served:
+            verdict = "ok        served by the API"
         else:
-            verdict = f"STALE ⚠️  applied {dim_oid}"
+            verdict, healthy = "MISSING from the API ⚠️", False
         print(f"  {oid:<11}{orgnr:<12}{kind:<11}{fetched:%H:%M}   {verdict}")
+    return healthy
 
 
 def main(argv: list[str]) -> int:
@@ -348,7 +448,7 @@ def main(argv: list[str]) -> int:
             healthy &= deletion_block(cur)
             healthy &= ingest_block(cur)
             if n:
-                last_changes(cur, n)
+                healthy &= last_changes(cur, n)
     except CannotAnswer as exc:
         print(f"✗ {exc}", file=sys.stderr)
         return 2
