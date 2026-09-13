@@ -30,7 +30,7 @@ Cross-references:
 
 import os
 
-from dagster import Definitions
+from dagster import Definitions, load_asset_checks_from_modules
 
 from atlas_data.assets import (
     api_v1,
@@ -69,11 +69,25 @@ defs = Definitions(
         # api_v1.* — the public PostgREST surface. Terminal asset.
         api_v1.api_v1_surface,
     ],
-    asset_checks=[
-        api_v1.api_v1_rowcount_matches_marts,
-        api_v1.api_v1_descriptions_complete,
-        api_v1.api_v1_public_role_scope,
-    ],
+    # 🔴 ENUMERATED FROM THE MODULE, NOT LISTED BY HAND — and the hand-written
+    # list is why.
+    #
+    # This used to name three checks explicitly. On 2026-09-13 a fourth,
+    # `api_v1_descriptions_match_the_running_build`, was added to assets/api_v1.py
+    # and NOT added here, so it was defined, imported, decorated — and never ran.
+    # Nothing failed. `dagster definitions validate` passes, the module imports,
+    # the check simply does not exist as far as any run is concerned.
+    #
+    # ⚠️ That is the second time this exact thing has happened in this file's
+    # neighbourhood. `api_v1_descriptions_complete` carries a docstring about the
+    # first: a dbt test that "existed for months and never ran in a cluster …
+    # in the manifest and executed are two different things." The new check was
+    # written directly above that paragraph and repeated it.
+    #
+    # 🔵 A guard would have to be maintained and, with no dagster test suite in
+    # CI, would not run. Enumerating removes the class of error instead: a check
+    # decorated in assets/api_v1.py is registered by existing.
+    asset_checks=load_asset_checks_from_modules([api_v1]),
     jobs=jobs,
     # Cadence comes from each source's declared periodicity — see schedules.py.
     # They ship stopped; turning them on is a go-live decision.
