@@ -230,13 +230,29 @@ alone.
 
 Parking it would have kept the coverage gate quiet and left a new user with an empty organisation
 register and nothing saying why. So it stays out of `UNSCHEDULED_SOURCES` and gets a named job
-instead, and `template-info.yaml` grows a `manual_only:` row so the artifact states the difference
-rather than implying it. **The gate was made to fail on purpose**: removing `brreg_bootstrap` from
-`first_data.jobs` produces
+instead, and the artifact states the difference rather than implying it. **The gate was made to fail
+on purpose**: removing `brreg_bootstrap` from `first_data.jobs` produces
 
 ```
 ✗ first_data.jobs does not cover 1 automated source(s): ['brreg-enheter-alle']
 ```
+
+> ⚠️ **The `manual_only:` key was deleted and then restored on the same day, and the round trip is
+> worth more than either decision.**
+>
+> imac found it rendered on no UIS surface (urb-agents #793) and argued the instruction already reached
+> the operator through `first_data.how`. That was true, and I deleted it — **a key nothing reads and
+> nothing displays is indistinguishable from coverage.**
+>
+> 🔴 **Then the surfaces turned out not to be interchangeable.** From imac's own run of
+> `_install_summary_operational`, the end of an install prints `install.note`, `first_data.jobs`,
+> `automation` and `unscheduled` — **not `first_data.how`.** So deleting the key left the operator who
+> is *about to run the chain* seeing `brreg_bootstrap` in the job list, absent from `unscheduled`, and
+> nothing on that surface saying it is a one-time load. **It reads as a job they forgot to schedule.**
+>
+> The duplication was real and the conclusion was wrong. **Two surfaces, two readers:** the fact
+> belongs where the person about to act is looking, the reason where someone investigating is. The key
+> is back, and the sentence that duplicated it has come out of `first_data.how` instead.
 
 ### Validation
 

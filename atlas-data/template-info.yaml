@@ -156,13 +156,6 @@ operational:
     scheduled run — it does not backfill, so a fresh install stays empty until
     the first-data jobs are launched by hand.
 
-  first_load: >-
-    ~4.1M rows across 48 raw and 60 marts tables, from ~41 sources. That is
-    imac's measured 2,906,194 on a clean install (urb-agents #496, #507) plus the
-    1,173,878-record Enhetsregisteret bulk load added in PLAN-001. The row count
-    is arithmetic on two measured figures; the combined WALL TIME is not measured
-    and is deliberately not stated here.
-
   timezone: Europe/Oslo
 
   # ⚠️ The gap imac found on urb-agents #507: enabling the schedules does NOT
@@ -195,14 +188,32 @@ operational:
       with nothing saying why; running it twice is safe (upsert, never truncate)
       but pointless.
     jobs: [annual_sources_refresh, klass_refresh, seed_sources_refresh, brreg_bootstrap, brreg_change_feed, transform_and_publish]
-    takes: "~11 minutes for the first four, plus the Brreg bulk load; ~4.1M rows across 48 raw and 64 marts tables"
-    measured: "imac, clean cluster, urb-agents #507 — 11.1 min, 2,906,194 rows. That figure PREDATES brreg_bootstrap and does not include it: the download alone is 210 MB / 52 s and the database write time is not yet measured. Do not read 11 minutes as the new total."
+    # ⚠️ The caveat is INSIDE `takes` because `first_data.measured` renders on no
+    # UIS surface (imac, urb-agents #793). A figure whose "this is out of date"
+    # note is invisible is worse than no figure — the stale number reaches the
+    # reader and the correction does not.
+    takes: "~11 minutes for the first four, plus the Brreg bulk load; ~4.1M rows across 48 raw and 64 marts tables. The 11 minutes is imac's measurement on a clean cluster (urb-agents #507: 11.1 min, 2,906,194 rows) and PREDATES brreg_bootstrap — the bulk download alone is 210 MB / 52 s and its database write time is not yet measured. Do not read 11 minutes as the new total."
 
   # For the "what is this about to do to my cluster" question (#507 item 1).
   # provides.services below is the authoritative list; this is the human summary.
   install:
     deploys: [postgresql, postgrest, dagster]
     takes: a few minutes; the data load afterwards is the long part
+    # ⚠️ MOVED HERE FROM A TOP-LEVEL `first_load:` ON 2026-09-13, because that key
+    # was rendered on no UIS surface at all — tor-agent found it while answering a
+    # question I asked about a different key (urb-agents #791).
+    #
+    # It belongs here on its own merits rather than as a workaround. `takes` says
+    # the data load is the long part; this says how long is long. Both answer the
+    # same question — "what is this about to do to my cluster" — asked by someone
+    # deciding whether to install and how much disk to give it. Splitting them
+    # across two keys was the reason one of them could go missing unnoticed.
+    first_load: >-
+      ~4.1M rows across 48 raw and 60 marts tables, from ~41 sources. That is
+      imac's measured 2,906,194 on a clean install (urb-agents #496, #507) plus
+      the 1,173,878-record Enhetsregisteret bulk load added in PLAN-001. The row
+      count is arithmetic on two measured figures; the combined WALL TIME is not
+      measured and is deliberately not stated here.
     note: >-
       Immediately after install the API is live and serves zero endpoints. The
       advertised meta_sources / meta_endpoints / meta_dimensions return 404 until
@@ -302,6 +313,29 @@ operational:
         after its own mart, so the gap is milliseconds per view rather than the
         length of the run.
 
+  # 🔴 KEPT, after being deleted and restored on 2026-09-13 — the reversal is the
+  # useful part of this comment.
+  #
+  # imac was right that this duplicates `first_data.how`, and I deleted it on that
+  # basis. Then I checked WHICH SURFACE each one reaches, from imac's own run of
+  # `_install_summary_operational`:
+  #
+  #   end of install   install.note · first_data.jobs · automation · unscheduled
+  #   uis template info  everything, including first_data.how
+  #
+  # ⚠️ `first_data.how` does NOT print at the end of an install. So deleting this
+  # left the operator who is ABOUT TO RUN THE CHAIN seeing `brreg_bootstrap` in
+  # the job list, absent from `unscheduled`, and nothing anywhere on that surface
+  # saying it is a one-time load. It reads as a job they forgot to schedule.
+  #
+  # The duplicate was real; the conclusion was wrong. Two surfaces, two readers —
+  # the fact belongs where the person about to act on it is looking, and the
+  # reason belongs where someone investigating is looking.
+  #
+  # `unscheduled` means CANNOT run. This means MUST run, once, and then never
+  # again. Collapsing them loses the only instruction an operator cannot skip.
+  manual_only: [brreg_bootstrap]
+
   # No scraper row: SCRAPER_CRON (Sunday 03:30) still exists in cadence.py, but
   # its only consumer was redcross-branches, which is parked in
   # UNSCHEDULED_SOURCES. Nothing carries that condition, so nothing polls at that
@@ -312,13 +346,6 @@ operational:
   # nightly. Nightly would be ~15,000 pointless requests a year against
   # public-sector APIs Atlas depends on staying welcome at.
   external_services: [SSB, FHI, Bufdir, Brønnøysundregistrene]
-
-  # Runs only when a human launches it. Not in `unscheduled` below, because that
-  # list means CANNOT run (frr has no private data on a public deployment;
-  # redcross-branches has no credential) and both are correctly absent from the
-  # first-data sequence. brreg_bootstrap is the opposite: it MUST run once, on
-  # day one, and then be left alone. Different reason, different list.
-  manual_only: [brreg_bootstrap]
 
   # No automation condition, no freshness policy — these never self-trigger.
   # Parked pending a Red Cross API credential.
