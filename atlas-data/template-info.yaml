@@ -192,7 +192,7 @@ operational:
     # UIS surface (imac, urb-agents #793). A figure whose "this is out of date"
     # note is invisible is worse than no figure — the stale number reaches the
     # reader and the correction does not.
-    takes: "~11 minutes for the first four, plus the Brreg bulk load; ~4.1M rows across 48 raw and 64 marts tables. The 11 minutes is imac's measurement on a clean cluster (urb-agents #507: 11.1 min, 2,906,194 rows) and PREDATES brreg_bootstrap — the bulk download alone is 210 MB / 52 s and its database write time is not yet measured. Do not read 11 minutes as the new total."
+    takes: "~11 minutes for the first four, plus the Brreg bulk load; ~4.1M rows across 52 raw BASE TABLEs and 61 marts BASE TABLEs (plus 5 marts views). The 11 minutes is imac's measurement on a clean cluster (urb-agents #507: 11.1 min, 2,906,194 rows) and PREDATES brreg_bootstrap — the bulk download alone is 210 MB / 52 s and its database write time is not yet measured. Do not read 11 minutes as the new total."
 
   # For the "what is this about to do to my cluster" question (#507 item 1).
   # provides.services below is the authoritative list; this is the human summary.
@@ -209,11 +209,25 @@ operational:
     # deciding whether to install and how much disk to give it. Splitting them
     # across two keys was the reason one of them could go missing unnoticed.
     first_load: >-
-      ~4.1M rows across 48 raw and 60 marts tables, from ~41 sources. That is
-      imac's measured 2,906,194 on a clean install (urb-agents #496, #507) plus
-      the 1,173,878-record Enhetsregisteret bulk load added in PLAN-001. The row
-      count is arithmetic on two measured figures; the combined WALL TIME is not
-      measured and is deliberately not stated here.
+      ~4.1M rows across 52 raw BASE TABLEs and 61 marts BASE TABLEs (plus 5
+      marts views), from ~41 sources. That is imac's measured 2,906,194 on a clean install
+      (urb-agents #496, #507) plus the 1,173,878-record Enhetsregisteret bulk
+      load added in PLAN-001. The row count is arithmetic on two measured
+      figures; the combined WALL TIME is not measured and is deliberately not
+      stated here.
+      COUNTING RULE, because two strings in this file used to disagree with each
+      other AND with the database while no method was written down (urb-agents
+      #824): a "table" here is a BASE TABLE, views excluded and counted
+      separately. raw = distinct `create table raw.*` across atlas-data/migrations
+      (52). marts = dbt models materialised table or incremental into schema marts
+      (45) plus seeds, which are always tables (16) = 61; five of those models
+      are materialised as views instead. private_marts is excluded — it is the gated schema, not
+      part of a public install summary. Recompute marts from a dbt manifest:
+      `python3 -c "import json,sys;m=json.load(open('dbt/target/manifest.json'))['nodes'];
+      print(sum(1 for n in m.values() if n['schema']=='marts' and (n['resource_type']=='seed' or
+      n['config']['materialized'] in ('table','incremental'))))"`.
+      All four figures were derived from this repo with no database and match
+      imac's live measurement exactly (61 / 5 / 66 / 52).
     note: >-
       Immediately after install the API is live and serves zero endpoints. The
       advertised meta_sources / meta_endpoints / meta_dimensions return 404 until
