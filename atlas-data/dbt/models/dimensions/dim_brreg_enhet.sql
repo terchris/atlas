@@ -1,3 +1,35 @@
+{#
+  🔴 WHY `last_oppdateringsid` AND `snapshot_loaded_at` ARE INDEXED.
+
+  Both incremental predicates below read `max(...)` from THIS table. Until
+  2026-09-13 neither column was indexed, so each read was an aggregate over a
+  3,971 MB relation with nothing to satisfy it — a sequential scan, twice per
+  run, 48 times a day.
+
+  ⚠️ One of those scans PREDATES the snapshot arm: `max(last_oppdateringsid)` has
+  been unindexed since this model became incremental. The redesign did not
+  introduce the cost, it doubled it — which is why the measured regression
+  (13.18 s → ~31 s, urb-agents #894) is close to "one more full scan of the same
+  table" rather than anything about the snapshot predicate itself.
+
+  🔵 `max(col)` over a btree is planned as an index scan backward with LIMIT 1,
+  so both reads should become effectively constant-time. NULLs are not a problem:
+  `snapshot_loaded_at` is null for feed-only organisations, `max()` ignores nulls,
+  and Postgres rewrites the aggregate to an ordered read that skips them.
+
+  ⚠️ THIS IS A HYPOTHESIS WITH A MECHANISM, NOT A MEASUREMENT. It predicts the
+  model returns to or below its 13.18 s baseline. If it does not, the cost is real
+  and belongs to the design rather than to a missing index, and the decision goes
+  back to accept-or-redesign on the new number.
+
+  ⚠️ dbt creates indexes on an incremental model when the table is CREATED, so
+  these take effect on the next `--full-refresh` and not before.
+
+  🔵 The first attempt at this change put the explanation inside the `config()`
+  call as `#` comments. That is not a comment in Jinja — the list silently did not
+  take, and `dbt parse` still reported four indexes. Caught by reading the
+  compiled manifest rather than the edited file.
+#}
 {{
   config(
     materialized='incremental',
@@ -28,7 +60,9 @@
       {'columns': ['organisasjonsnummer'], 'unique': True},
       {'columns': ['kommune_nr']},
       {'columns': ['registrert_i_frivillighetsregisteret']},
-      {'columns': ['is_active']}
+      {'columns': ['is_active']},
+      {'columns': ['last_oppdateringsid']},
+      {'columns': ['snapshot_loaded_at']}
     ]
   )
 }}
