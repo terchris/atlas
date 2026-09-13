@@ -138,6 +138,33 @@ provides:
 #
 # Nothing in UIS reads this today; it is inert by design and cannot affect an
 # install.
+# 🔴 A DECLARED COMMAND. UIS runs this inside the code location and reports what
+# it said — `uis template check atlas` (tor-agent, urb-agents #921/#929).
+#
+# ⚠️ The verb is `check`, not `status`: `platform status` and `network status`
+# already mean "is this service healthy", and this asks a different question —
+# has the data that went in come out the other side. A third meaning of `status`
+# would have been discovered rather than decided.
+#
+# 🔴 DECLARING NOTHING IS THE DEFECT. tor-agent's design names an application
+# that declares no check: "this application cannot tell you whether its output
+# reflects its input." Atlas declares one because it is the application that
+# proved the point — it served a deleted company over its public API for 7.5
+# hours on 2026-09-13 while five separate signals read green.
+#
+# ⚠️ `run:` is `/app/atlas-status.py` because `WORKDIR /app` and the Dockerfile
+# copies it there — verified against the Dockerfile rather than copied from the
+# proposal's example path, which said `/opt/atlas/`.
+#
+# 🔵 The application owns its dependencies inside its own image. This is Python
+# rather than shell precisely so that is true: `psycopg2` already ships for the
+# api_v1 asset checks, where `psql` does not ship at all.
+commands:
+  check:
+    description: "Does the output reflect the input? Compares what the feed pulled against what the register serves."
+    run: /app/atlas-status.py
+    in: code-location
+
 operational:
   # The single most important line for an operator: installing commits you to
   # nothing that runs.
