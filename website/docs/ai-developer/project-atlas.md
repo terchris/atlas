@@ -101,6 +101,16 @@ apply. Run commands on the host. Do not invent a cage.
   while every fresh install passed. The full account is in
   [`plans/active/PLAN-003-brreg-dim-and-frivillig.md`](plans/active/PLAN-003-brreg-dim-and-frivillig.md)
   under *"The upgrade path is invisible to everyone except imac"*.
+- 🔴 **Measure in the unit the threshold is stated in, and name the unit beside the number.** A
+  question with one obvious answer often has four, and the most authoritative-looking source can be
+  the most wrong. Asked *"how big is `transform_checks`' plan?"* on 2026-09-13, against a limit of
+  **711**: GraphQL's `executionPlanOrError` — the API literally named "execution plan" — returns **1**,
+  because the dbt tests all run inside one op; the repo has **813** tests; **728** of them are
+  asset-check eligible; and the plan actually declares **675** `ASSET_CHECK_EVALUATION_PLANNED`
+  events. ⚠️ Only the last is in the unit `711` is in, and the repo count overstates it by 53. 🔵 **The
+  free, correct method is to read the planned-check events from a run that has ALREADY completed** —
+  the plan declaring what it contained, rather than a construction that collapses it. Same family as
+  the two below: a number is not an answer until it says what it counted.
 - 🔴 **Two objects share every Atlas tag. Label every digest to its image, always, even when only
   one appears.** `ghcr.io/terchris/atlas-data/uis:<tag>` is the **UIS install artifact** — the thing a
   catalogue pin names — and `ghcr.io/terchris/atlas-data:<tag>` is the **code-location image** the
