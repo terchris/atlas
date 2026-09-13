@@ -242,6 +242,26 @@ operational:
   # error and no instruction, on a surface that is currently serving nothing."
   troubleshooting:
     - symptom: >-
+        brreg_bootstrap was re-run to repair the register. It reported success, the
+        transform reported success, and the API still serves the old data.
+      cause: >-
+        Fixed in this build, and recorded because an operator on an older one will
+        meet it. dim_brreg_enhet is incremental and its predicate used to select
+        only organisations the CHANGE FEED had touched. A bootstrap writes the
+        snapshot and produces no feed rows, so it was invisible to the transform by
+        construction — measured on 2026-09-13 as a successful 329-second run that
+        recorded an asset materialisation and wrote zero rows. Every signal an
+        operator has agrees it worked: exit status, materialisation, freshness, row
+        counts, and a 200 from the API.
+      fix: >-
+        On this build or newer, nothing — a bootstrap now reaches the dimension on
+        the next transform, and an asset check fails if it ever does not. On an
+        older build the repair is a bootstrap PLUS a full refresh of the Brreg
+        lineage, run as the atlas database user and not as a superuser. To tell
+        which you are on before trusting a repair, compare max(reconciled_at) in
+        marts.dim_brreg_enhet against the time the transform ran: if it predates
+        the run, the model wrote nothing.
+    - symptom: >-
         A transform run fails with a dbt schema error naming dim_brreg_enhet —
         "the source and target schemas on this incremental model are out of sync".
       cause: >-
