@@ -229,6 +229,19 @@ operational:
       All four figures were derived from this repo with no database and match
       imac's live measurement exactly (61 / 5 / 66 / 52).
     note: >-
+      🔴 UPGRADING AN EXISTING INSTALL? Materialise the `api_v1` asset afterwards.
+      The column descriptions PostgREST publishes as OpenAPI docs live in the
+      DATABASE, not in the image, and only a publish applies them — so the
+      documented contract tracks the last build that ran a publish, not the build
+      that is running. Upgrade to a build that corrects a description and the old
+      text keeps being served, with every signal green, until the next daily
+      publish at 05:00 — up to 24 hours. Measured 2026-09-13; reachable in both
+      directions, so a rollback can leave NEW documentation on an OLD build too.
+      Materialising `api_v1` re-applies every COMMENT and reloads PostgREST's
+      schema cache; it needs no dbt build, so it is far cheaper than a full
+      transform and is the whole of what an upgrade needs. The
+      `descriptions_match_the_running_build` check answers "is my served
+      documentation the one my build ships" without changing anything.
       Immediately after install the API is live and serves zero endpoints. The
       advertised meta_sources / meta_endpoints / meta_dimensions return 404 until
       the first pipeline run. That is correct, not a failed install.
