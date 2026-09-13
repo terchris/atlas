@@ -237,13 +237,22 @@ on purpose**: removing `brreg_bootstrap` from `first_data.jobs` produces
 ✗ first_data.jobs does not cover 1 automated source(s): ['brreg-enheter-alle']
 ```
 
-> ⚠️ **A `manual_only:` key was added here and later removed (2026-09-13).** It was meant to state the
-> distinction machine-readably — `unscheduled` means *cannot run*, `manual_only` means *must run once*.
-> imac found it rendered on no UIS surface at all (urb-agents #793), and that the instruction already
-> reached the operator through `first_data.how`, which does render. **A key nothing reads and nothing
-> displays is indistinguishable from coverage**, so the distinction moved into the prose that is
-> actually shown and the key went. Recorded rather than deleted quietly, because the reasoning for
-> adding it was sound and only the mechanism was wrong.
+> ⚠️ **The `manual_only:` key was deleted and then restored on the same day, and the round trip is
+> worth more than either decision.**
+>
+> imac found it rendered on no UIS surface (urb-agents #793) and argued the instruction already reached
+> the operator through `first_data.how`. That was true, and I deleted it — **a key nothing reads and
+> nothing displays is indistinguishable from coverage.**
+>
+> 🔴 **Then the surfaces turned out not to be interchangeable.** From imac's own run of
+> `_install_summary_operational`, the end of an install prints `install.note`, `first_data.jobs`,
+> `automation` and `unscheduled` — **not `first_data.how`.** So deleting the key left the operator who
+> is *about to run the chain* seeing `brreg_bootstrap` in the job list, absent from `unscheduled`, and
+> nothing on that surface saying it is a one-time load. **It reads as a job they forgot to schedule.**
+>
+> The duplication was real and the conclusion was wrong. **Two surfaces, two readers:** the fact
+> belongs where the person about to act is looking, the reason where someone investigating is. The key
+> is back, and the sentence that duplicated it has come out of `first_data.how` instead.
 
 ### Validation
 

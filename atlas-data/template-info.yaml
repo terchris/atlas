@@ -181,10 +181,6 @@ operational:
       without a watermark.
 
       brreg_bootstrap is the odd one out and the one most likely to be skipped.
-      ⚠️ It is deliberately NOT in the `unscheduled` list further down: that list
-      means CANNOT run — frr has no private data on a public deployment,
-      redcross-branches has no credential — and both are correctly absent from
-      this sequence. This one is the opposite. It MUST run, once, here.
       It has NO schedule and its asset has NO automation condition, on purpose —
       re-running a 1.17M-record bulk load against a populated database is the one
       genuinely destructive operation in this pipeline, so nothing self-triggers
@@ -316,6 +312,29 @@ operational:
         api_v1 views are briefly recreated. Each wrapper is restored immediately
         after its own mart, so the gap is milliseconds per view rather than the
         length of the run.
+
+  # 🔴 KEPT, after being deleted and restored on 2026-09-13 — the reversal is the
+  # useful part of this comment.
+  #
+  # imac was right that this duplicates `first_data.how`, and I deleted it on that
+  # basis. Then I checked WHICH SURFACE each one reaches, from imac's own run of
+  # `_install_summary_operational`:
+  #
+  #   end of install   install.note · first_data.jobs · automation · unscheduled
+  #   uis template info  everything, including first_data.how
+  #
+  # ⚠️ `first_data.how` does NOT print at the end of an install. So deleting this
+  # left the operator who is ABOUT TO RUN THE CHAIN seeing `brreg_bootstrap` in
+  # the job list, absent from `unscheduled`, and nothing anywhere on that surface
+  # saying it is a one-time load. It reads as a job they forgot to schedule.
+  #
+  # The duplicate was real; the conclusion was wrong. Two surfaces, two readers —
+  # the fact belongs where the person about to act on it is looking, and the
+  # reason belongs where someone investigating is looking.
+  #
+  # `unscheduled` means CANNOT run. This means MUST run, once, and then never
+  # again. Collapsing them loses the only instruction an operator cannot skip.
+  manual_only: [brreg_bootstrap]
 
   # No scraper row: SCRAPER_CRON (Sunday 03:30) still exists in cadence.py, but
   # its only consumer was redcross-branches, which is parked in
