@@ -4,15 +4,31 @@
  */
 
 export interface paths {
-    "/": {
+    "/partiregisteret/api/lastned/csv": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** @description Hent alle tjenester */
-        get: operations["listTjenester"];
+        /**
+         * Last ned totalbestand av enheter fra partiregisteret i csv format
+         * @description |Beskrivelser av felter i rekkefølge                  |
+         *     |-----------------------------------------------------|
+         *     | Organisasjonsnummer til enheten                     |
+         *     | Registrert og vernet partinavn                      |
+         *     | Enhetens organisasjonsform                          |
+         *     | Enhetens forretningsadresse                         |
+         *     | Postnummer forretningsadresse                       |
+         *     | Kommunenummer forretningsadresse                    |
+         *     | Kommunenavn forretningsadresse                      |
+         *     | Land forretningsadresse                             |
+         *     | Enhetens postadresse                                |
+         *     | Postnummer postadresse                              |
+         *     | Poststed postadresse                                |
+         *     | Land postadresse                                    |
+         */
+        get: operations["lastnedPartiregisteretCsv"];
         put?: never;
         post?: never;
         delete?: never;
@@ -21,86 +37,18 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/enheter": {
+    "/enhetsregisteret/api": {
         parameters: {
-            query?: {
-                /** @description Antall ønskede treff i response. Default verdi er 20. Max dypde (page*size) er 10 000. */
-                size?: number;
-                /** @description Hvilken side som ønskes av resultatsettet. Default verdi er 0. Max dypde (page*size) er 10 000 */
-                page?: number;
-                /** @description Filtrer på navn. Sammensatt søk på likhet. Resultat sorteres pr default etter score */
-                navn?: string;
-                /** @description Sorter resultatsett på feltnavn. Merk at navn må sorteres på navn.norwegian */
-                sort?: string;
-                /** @description Filtrer på organisasjonsformkode. Kommaseparert liste. */
-                organisasjonsform?: string;
-                /** @description Filtrer på næringskode. Valgfritt nivå. Kommaseparert liste. */
-                naeringskode?: string;
-                /** @description Filtrer på kommunenummer 4 siffer. */
-                kommunenummer?: string;
-                /** @description Organisasjonsnummeret til overordnet enhet */
-                overordnetEnhet?: string;
-                /** @description Filtrer på fra registreringsdato i Enhetsregisteret. */
-                fraRegistreringsdatoEnhetsregisteret?: string;
-                /** @description Filtrer på til registreringsdato i Enhetsregisteret. */
-                tilRegistreringsdatoEnhetsregisteret?: string;
-                /** @description Filtrer på om enheten er registrert i Merverdiregisteret */
-                registrertIMvaregisteret?: boolean;
-                /** @description Filtrer på om enheten er registrert konkurs */
-                konkurs?: boolean;
-                /** @description Filtrer på fra antall ansatte */
-                fraAntallAnsatte?: number;
-                /** @description Filtrer på til antall ansatte */
-                tilAntallAnsatte?: number;
-                /** @description Organisasjonsnummeret til enhetene.  Kommaseparert liste med organisasjonsnummer. */
-                organisasjonsnummer?: string;
-                /** @description Hvorvidt enheten er registrert i Foretaksregisteret */
-                registrertIForetaksregisteret?: boolean;
-                /** @description Hvorvidt enheten er registrert i Stiftelsesregisteret */
-                registrertIStiftelsesregisteret?: boolean;
-                /** @description Hvorvidt enheten er registrert i Frivillighetsregisteret */
-                registrertIFrivillighetsregisteret?: boolean;
-                /** @description Frivillig registrert i Merverdiavgiftsregisteret. Kommaseparert liste med beskrivelser. */
-                frivilligRegistrertIMvaregisteret?: string;
-                /** @description Hvorvidt enheten er registrert som underTvangsavvikling eller tvangsopplosning */
-                underTvangsavviklingEllerTvangsopplosning?: boolean;
-                /** @description Hvorvidt enheten er registrert som underAvvikling */
-                underAvvikling?: boolean;
-                /** @description Tidligste stiftelsesdato for enheten */
-                fraStiftelsesdato?: string;
-                /** @description Seneste stiftelsesdato hos enheten */
-                tilStiftelsesdato?: string;
-                /** @description Enhetens hjemmeside */
-                hjemmeside?: string;
-                /** @description Enhetens institusjonelle sektorkode. Kommaseparert liste med sektorkoder på 4 siffer. */
-                institusjonellSektorkode?: string;
-                /** @description Kommunenummer til enhetens postadresse. Kommaseparert liste med kommunenummer på 4 siffer. */
-                "postadresse.kommunenummer"?: string;
-                /** @description Postnummeret til enhetens postadresse. Kommaseparert liste med postnummer på 4 siffer. */
-                "postadresse.postnummer"?: string;
-                /** @description Poststedet til enhetens postadresse. Fritekst. */
-                "postadresse.poststed"?: string;
-                /** @description Landkode til enhetens postadresse. Kommaseparert liste med landkoder. */
-                "postadresse.landkode"?: string;
-                /** @description Adresse til enhetens postadresse. Kommaseparert liste med adresser. */
-                "postadresse.adresse"?: string;
-                /** @description Postnummer til enhetens forretningsadresse. Kommaseparert liste med postnummer på 4 siffer. */
-                "forretningsadresse.postnummer"?: string;
-                /** @description Poststedet til enhetens forretningsadresse. Fritekst. */
-                "forretningsadresse.poststed"?: string;
-                /** @description Landkode til enhetens forretningsadresse. Kommaseparert liste med landkoder. */
-                "forretningsadresse.landkode"?: string;
-                /** @description Adresse til enhetens forretningsadresse. Kommaseparert liste med adresser. */
-                "forretningsadresse.adresse"?: string;
-                /** @description Årstall for siste innsendte årsregnskap for enheten. Kommaseparert liste med årstall på 4 siffer */
-                sisteInnsendteAarsregnskap?: string;
-            };
+            query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** @description Hent alle enheter */
-        get: operations["listEnheter"];
+        /**
+         * Hent alle tjenester
+         * @description Hent alle tjenester
+         */
+        get: operations["hentTjenester"];
         put?: never;
         post?: never;
         delete?: never;
@@ -109,17 +57,136 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/enheter/{organisasjonsnummer}": {
+    "/enhetsregisteret/api/enheter": {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                /** @description Organisasjonsnummeret til enheten - 9 siffer */
-                organisasjonsnummer: string;
-            };
+            path?: never;
             cookie?: never;
         };
-        /** @description Hent detaljer om enhet */
+        /**
+         * Hent enheter som matcher søke filtere
+         * @description Tjenesten tilbyr et søk på enheter i Enhetsregisteret. Søket kan spesifiseres med søkeparametere angitt som HTTP query-parametere, se under. Søkeresultatet er paginert med en standard sidestørrelse på 20 enheter.
+         *
+         *     Resultatsettet er begrenset til 10 000 enheter per spørring. Se [enheter/lastned](#tag/enheter/operation/lastnedEnheter) for nedlasting av komplett datasett.
+         *
+         *     Det kan forekomme at en hovedenhets overordnede enhet i offentlig sektor er slettet.
+         *
+         *     Hvis dette er relevant informasjon for deg, anbefaler vi at du gjør en ny forespørsel for å hente overordnet enhet. Da kan du sjekke om enheten er slettet ved å sjekke om slettedato er satt. Tips&colon; Self-lenken viser hvor du kan hente overordnet enhet.
+         *
+         *     Resultatet kan sorteres med sort parameteren. For eksempel med `sort=antallAnsatte,ASC`. Følgende parametere kan sorteres på&colon;
+         *
+         *     | Sorterings parametere                        |
+         *     | -------------------------------------------- |
+         *     | navn                                         |
+         *     | organisasjonsnummer                          |
+         *     | overordnetEnhet                              |
+         *     | organisasjonsform.kode                       |
+         *     | antallAnsatte                                |
+         *     | hjemmeside                                   |
+         *     | postadresse.kommune                          |
+         *     | postadresse.kommunenummer                    |
+         *     | registreringsdatoEnhetsregisteret            |
+         *     | registrertIMvaregisteret                     |
+         *     | registrertIForetaksregisteret                |
+         *     | registrertIStiftelsesregisteret              |
+         *     | registrertIFrivillighetsregisteret           |
+         *     | naeringskode1.kode                           |
+         *     | naeringskode2.kode                           |
+         *     | naeringskode3.kode                           |
+         *     | hjelpeenhetskode.kode                        |
+         *     | forretningsadresse.kommune                   |
+         *     | forretningsadresse.kommunenummer             |
+         *     | stiftelsesdato                               |
+         *     | institusjonellSektorkode.kode                |
+         *     | konkurs                                      |
+         *     | underAvvikling                               |
+         *     | underTvangsavviklingEllerTvangsopplosning    |
+         */
+        get: operations["hentEnheter"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/enhetsregisteret/api/enheter/lastned": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Last ned enheter i JSON format
+         * @description Last ned enheter i JSON format. Bruker du ingen filtre/query-parametere får du en fil med alle enheter. Bruker du filtre er får du maks 10000 enheter om gangen.
+         */
+        get: operations["lastnedEnheter"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/enhetsregisteret/api/enheter/lastned/csv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Last ned totalbestand av enheter i csv format
+         * @description Last ned totalbestand av enheter i csv format. Både linjeskift og anførselstegn kan forekomme i celler i denne CSV filen. Derfor er alle celler "escapet" med anførselstegn. Anførselstegn i selve teksten kommer som to anførselstegn på rad. Dette for å unngå at cellen terminerer for tidlig. Du må bruke en CSV parser som kan konfigureres til å handtere dette riktig. I OpenCSV for Java konfigurerer vi "quotechar" og "escapechar". Begge setter vi til anførselstegn (").
+         */
+        get: operations["lastnedEnheterCsv"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/enhetsregisteret/api/enheter/lastned/regneark": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Last ned totalbestand av enheter som regneark
+         * @description Last ned totalbestand av enheter som regneark. Vær obs på at antall enheter overstiger antall rader i excel, så datasettet er fordelt i to arkfaner. Bruker du ingen filtre/query-parametere får du en fil med alle enheter. Bruker du filtre er får du maks 10000 enheter om gangen.
+         */
+        get: operations["lastnedEnheterRegneark"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/enhetsregisteret/api/enheter/{enhetorgnr}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Hent enhet på organisasjonsnummer
+         * @description Hent enhet på organisasjonsnummer.
+         *
+         *     Hvis en enhet er slettet vil responsen få statuskode 200 OK. HTTP Responsen vil da også inneholde færre attributter, som vist i eksempelet.
+         *
+         *     En enhet kan fjernes fra avgivelsen fra Enhetsregisteret for eksempel av juridiske årsaker. Hvis en enhet er fjernet vil denne få statuskode 410 Gone. Dette bør også anses som en forespørsel om at eventuelle kopier/cacher også fjerner den aktuelle enheten.
+         */
         get: operations["hentEnhet"];
         put?: never;
         post?: never;
@@ -129,76 +196,21 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/underenheter": {
+    "/enhetsregisteret/api/enheter/{enhetorgnr}/roller": {
         parameters: {
-            query?: {
-                /** @description Filtrer på navn. Sammensatt søk på likhet. Resultat sorteres pr default etter score */
-                navn?: string;
-                /** @description Organisasjonsnummeret til underenhetene.  Kommaseparert liste med organisasjonsnummer. */
-                organisasjonsnummer?: string;
-                /** @description Organisasjonsnummeret til overordnet enhet */
-                overordnetEnhet?: string;
-                /** @description Filtrer på fra antall ansatte */
-                fraAntallAnsatte?: number;
-                /** @description Filtrer på til antall ansatte */
-                tilAntallAnsatte?: number;
-                /** @description Filtrer på om enheten er registrert i Merverdiregisteret */
-                registrertIMvaregisteret?: boolean;
-                /** @description Filtrer på fra registreringsdato i Enhetsregisteret. */
-                fraRegistreringsdatoEnhetsregisteret?: string;
-                /** @description Filtrer på til registreringsdato i Enhetsregisteret. */
-                tilRegistreringsdatoEnhetsregisteret?: string;
-                /** @description Tidligste oppstartsdato for enheten */
-                fraOppstartsdato?: string;
-                /** @description Seneste oppstartsdato for enheten */
-                tilOppstartsdato?: string;
-                /** @description Tidligste registreringsdato for eierskifte */
-                fraDatoEierskifte?: string;
-                /** @description Seneste registreringsdato for eierskifte */
-                tilDatoEierskifte?: string;
-                /** @description Tidligste nedleggelsesdato for enheten */
-                fraNedleggelsesdato?: string;
-                /** @description Seneste nedleggelsesdato for enheten */
-                tilNedleggelsesdato?: string;
-                /** @description Filtrer på organisasjonsformkode. Kommaseparert liste. */
-                organisasjonsform?: string;
-                /** @description Enhetens hjemmeside */
-                hjemmeside?: string;
-                /** @description Kommunenummer til enhetens postadresse. Kommaseparert liste med kommunenummer på 4 siffer. */
-                "postadresse.kommunenummer"?: string;
-                /** @description Postnummeret til enhetens postadresse. Kommaseparert liste med postnummer på 4 siffer. */
-                "postadresse.postnummer"?: string;
-                /** @description Poststedet til enhetens postadresse. Fritekst. */
-                "postadresse.poststed"?: string;
-                /** @description Landkode til enhetens postadresse. Kommaseparert liste med landkoder. */
-                "postadresse.landkode"?: string;
-                /** @description Adresse til enhetens postadresse. Kommaseparert liste med adresser. */
-                "postadresse.adresse"?: string;
-                /** @description Filtrer på kommunenummer 4 siffer. */
-                kommunenummer?: string;
-                /** @description Postnummeret til enhetens beliggenhetsadresse. Kommaseparert liste med postnummer på 4 siffer. */
-                "beliggenhetsadresse.postnummer"?: string;
-                /** @description Poststedet til enhetens beliggenhetsadresse. Fritekst. */
-                "beliggenhetsadresse.poststed"?: string;
-                /** @description Landkode til enhetens beliggenhetsadresse. Kommaseparert liste med landkoder. */
-                "beliggenhetsadresse.landkode"?: string;
-                /** @description Adresse til enhetens beliggenhetsadresse. Kommaseparert liste med adresser. */
-                "beliggenhetsadresse.adresse"?: string;
-                /** @description Filtrer på næringskode. Valgfritt nivå. Kommaseparert liste. */
-                naeringskode?: string;
-                /** @description Sorter resultatsett på feltnavn. Merk at navn må sorteres på navn.norwegian */
-                sort?: string;
-                /** @description Antall ønskede treff i response. Default verdi er 20. Max dypde (page*size) er 10 000. */
-                size?: number;
-                /** @description Hvilken side som ønskes av resultatsettet. Default verdi er 0. Max dypde (page*size) er 10 000 */
-                page?: number;
-            };
+            query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** @description Hent alle underenheter */
-        get: operations["listUnderenheter"];
+        /**
+         * Hent alle roller for en enhet
+         * @description I dette endepunktet kan du hente alle roller for en enhet gjennom oppslag med organisasjonsnummer.
+         *     <br />
+         *     <br />
+         *     Opplysninger om at en person er registrert med en rolle, som for eksempel styremedlem, er åpne offentlige data. Men ønsker du å sette opp en oversikt over hvilke roller en person har i andre virksomheter, har du kun lov å vise roller knyttet til næringsvirksomhet. Det betyr at personens registrerte rolle i en frivillig organisasjon ikke kan vises med personens roller i for eksempel et aksjeselskap. For aktuelt regelverk se § 9-1 i enhetsregisterloven.
+         */
+        get: operations["hentRoller"];
         put?: never;
         post?: never;
         delete?: never;
@@ -207,17 +219,194 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/underenheter/{organisasjonsnummer}": {
+    "/enhetsregisteret/api/konsernstruktur/{enhetorgnr}": {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                /** @description Organisasjonsnummeret til underenheten - 9 siffer */
-                organisasjonsnummer: string;
-            };
+            path?: never;
             cookie?: never;
         };
-        /** @description Hent detaljer om underenhet */
+        /**
+         * Hent konsernstruktur for en enhet
+         * @description Hent konsernstruktur for en enhet. Konsernstrukturen viser hierarkiet av virksomheter knyttet til den forespurte enheten.
+         */
+        get: operations["hentKonsernstruktur"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/enhetsregisteret/api/konsernstruktur/{enhetorgnr}/csv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Hent konsernstruktur for en enhet som CSV
+         * @description Hent konsernstruktur for en enhet som CSV. Filen inneholder den samme informasjonen som JSON-responsen, men i et flatt format.
+         */
+        get: operations["hentKonsernstrukturCsv"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/enhetsregisteret/autorisert-api/enheter/{enhetorgnr}/roller": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Hent alle roller for en enhet, inkludert fødselsnummer for personer
+         * @description I dette endepunktet kan du hente alle roller for en enhet gjennom oppslag med organisasjonsnummer.
+         *     <br />
+         *     <br />
+         *     Opplysninger om at en person er registrert med en rolle, som for eksempel styremedlem, er åpne offentlige data. Men ønsker du å sette opp en oversikt over hvilke roller en person har i andre virksomheter, har du kun lov å vise roller knyttet til næringsvirksomhet. Det betyr at personens registrerte rolle i en frivillig organisasjon ikke kan vises med personens roller i for eksempel et aksjeselskap. For aktuelt regelverk se § 9-1 i enhetsregisterloven.
+         *     <br />
+         *     <br />
+         *     Endepunktet returnerer fødselsnummer til rolleinnehavere og er derfor sikret mot maskinporten.
+         */
+        get: operations["hentRollerMedFnr"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/enhetsregisteret/api/underenheter": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Hent underenheter som matcher søke filtere
+         * @description Tjenesten tilbyr et søk på underenheter i Enhetsregisteret. Søket kan spesifiseres med søkeparametere angitt som HTTP query-parametere, se beskrivelse. Søkeresultatet er paginert med en standard sidestørrelse på 20 enheter.
+         *
+         *     Resultatsettet er begrenset til 10 000 underenheter per spørring. Se [underenheter/lastned](#tag/underenheter/operation/lastnedUnderenheter) for nedlasting av komplett datasett.
+         *
+         *     Resultatet kan sorteres med sort parameteren. For eksempel med `sort=antallAnsatte,ASC`. Følgende parametere kan sorteres på&colon;
+         *
+         *     | Sorterings parametere                          |
+         *     | ----------------------------------- |
+         *     | navn                                |
+         *     | organisasjonsnummer                 |
+         *     | overordnetEnhet                     |
+         *     | organisasjonsform.kode              |
+         *     | antallAnsatte                       |
+         *     | hjemmeside                          |
+         *     | postadresse.kommune                 |
+         *     | postadresse.kommunenummer           |
+         *     | registreringsdatoEnhetsregisteret   |
+         *     | registrertIMvaregisteret            |
+         *     | naeringskode1.kode                  |
+         *     | naeringskode2.kode                  |
+         *     | naeringskode3.kode                  |
+         *     | hjelpeenhetskode.kode               |
+         *     | oppstartsdato                       |
+         *     | nedleggelsesdato                    |
+         *     | datoEierskifte                      |
+         *     | slettedato                          |
+         *     | beliggenhetsadresse.kommune         |
+         *     | beliggenhetsadresse.kommunenummer   |
+         */
+        get: operations["hentUnderenheter"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/enhetsregisteret/api/underenheter/lastned": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Last ned underenheter i JSON format
+         * @description Last ned underenheter i JSON format. Bruker du ingen filtre/query-parametere får du en fil med alle underenheter. Bruker du filtre er får du maks 10000 underenheter om gangen.
+         */
+        get: operations["lastnedUnderenheter"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/enhetsregisteret/api/underenheter/lastned/csv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Last ned totalbestand av underenheter i csv format
+         * @description Last ned totalbestand av underenheter i csv format. Både linjeskift og anførselstegn kan forekomme i celler i denne CSV filen. Derfor er alle celler "escapet" med anførselstegn. Anførselstegn i selve teksten kommer som to anførselstegn på rad. Dette for å unngå at cellen terminerer for tidlig. Du må bruke en CSV parser som kan konfigureres til å handtere dette riktig. I OpenCSV for Java konfigurerer vi "quotechar" og "escapechar". Begge setter vi til anførselstegn (").
+         */
+        get: operations["lastnedUnderenheterCsv"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/enhetsregisteret/api/underenheter/lastned/regneark": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Last ned totalbestand av underenheter som regneark
+         * @description Last ned totalbestand av underenheter som regneark
+         */
+        get: operations["lastnedUnderenheterRegneark"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/enhetsregisteret/api/underenheter/{underenhetorgnr}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Hent underenhet på organisasjonsnummer
+         * @description Hent underenhet på organisasjonsnummer.
+         *
+         *     Hvis en underenhet er slettet vil responsen få statuskode 200 OK. HTTP Responsen vil da også inneholde færre attributter, som vist i eksempelet.
+         *
+         *     En underenhet kan fjernes fra avgivelsen fra Enhetsregisteret for eksempel av juridiske årsaker. Hvis en underenhet er fjernet vil denne få statuskode 410 Gone. Dette bør også anses som en forespørsel om at eventuelle kopier/cacher også fjerner den aktuelle underenheten.
+         */
         get: operations["hentUnderenhet"];
         put?: never;
         post?: never;
@@ -227,63 +416,18 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/oppdateringer/enheter": {
-        parameters: {
-            query?: {
-                /** @description Tidligste tidsstempel for når enheten ble oppdatert. På format Datetime (ISO-8601): yyyy-MM-dd'T'HH:mm:ss.SSS'Z' */
-                dato?: string;
-                /** @description Minste oppdateringsid for enhet. Større eller lik 1. */
-                oppdateringsid?: number;
-                /** @description Organisasjonsnummeret til enheten. Kommaseparert liste med organisasjonsnummer. */
-                organisasjonsnummer?: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description Hent oppdateringer på enheter */
-        get: operations["listOppdateringerEnhet"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/oppdateringer/underenheter": {
-        parameters: {
-            query?: {
-                /** @description Tidligste tidsstempel for når enheten ble oppdatert. På format Datetime (ISO-8601): yyyy-MM-dd'T'HH:mm:ss.SSS'Z' */
-                dato?: string;
-                /** @description Minste oppdateringsid for enhet. Større eller lik 1. */
-                oppdateringsid?: number;
-                /** @description Organisasjonsnummeret til enheten. Kommaseparert liste med organisasjonsnummer. */
-                organisasjonsnummer?: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description Hent oppdateringer på underenheter */
-        get: operations["listOppdateringerUnderenhet"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/organisasjonsformer": {
+    "/enhetsregisteret/api/kommuner": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** @description Hent alle organisasjonsformer */
-        get: operations["listOrganisasjonsformer"];
+        /**
+         * Hent kommuner
+         * @description Hent kommuner
+         */
+        get: operations["hentKommuner"];
         put?: never;
         post?: never;
         delete?: never;
@@ -292,17 +436,97 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/organisasjonsformer/{orgformKode}": {
+    "/enhetsregisteret/api/kommuner/{kommunenr}": {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                /** @description Kode for organisasjonsform */
-                orgformKode: string;
-            };
+            path?: never;
             cookie?: never;
         };
-        /** @description Hent en enkelt organisasjonsform fra kode */
+        /**
+         * Hent kommune på kommunenummer
+         * @description Hent kommune på kommunenummer
+         */
+        get: operations["hentKommune"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/enhetsregisteret/api/organisasjonsformer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Hent organisasjonsformer
+         * @description Hent organisasjonsformer
+         */
+        get: operations["hentOrganisasjonsformer"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/enhetsregisteret/api/organisasjonsformer/enheter": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Hent organisasjonsformer for enheter
+         * @description Hent organisasjonsformer for enheter
+         */
+        get: operations["hentOrganisasjonsformerForEnheter"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/enhetsregisteret/api/organisasjonsformer/underenheter": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Hent organisasjonsformer for underenheter
+         * @description Hent organisasjonsformer for underenheter
+         */
+        get: operations["hentOrganisasjonsformerForUnderenheter"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/enhetsregisteret/api/organisasjonsformer/{organisasjonskode}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Hent organisasjonsformbeskrivelse på organisasjonskode
+         * @description Hent organisasjonsformbeskrivelse på organisasjonskode
+         */
         get: operations["hentOrganisasjonsform"];
         put?: never;
         post?: never;
@@ -312,15 +536,18 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/organisasjonsformer/enheter": {
+    "/enhetsregisteret/api/matrikkelenhet": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** @description Hent organisasjonsformer for enheter */
-        get: operations["listOrganisasjonsformerEnheter"];
+        /**
+         * Hent matrikkelenheter
+         * @description Hent matrikkelenheter
+         */
+        get: operations["hentMatrikkelenheter"];
         put?: never;
         post?: never;
         delete?: never;
@@ -329,15 +556,387 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/organisasjonsformer/underenheter": {
+    "/enhetsregisteret/api/oppdateringer/roller": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** @description Hent organisasjonsformer for underenheter */
-        get: operations["listOrganisasjonsformerUnderenheter"];
+        /**
+         * Hent alle oppdateringer på roller
+         * @description ### Om size-parameteret
+         *
+         *     Hvis size query-parameter ikke er spesifisert, vil API-et returnere 100 hendelser. Da kan du telle antall hendelser i JSON-responsen og vurdere om du må gjøre flere forespørsler.
+         *
+         *     Hvis antallet hendelser i JSON-responsen tilsvarer det du spesifiserte i size query-parameteret (som default er 100), kan du anta at du ikke har hentet alle hendelsene.
+         *
+         *     Hvis antallet hendelser i responsen er lavere enn antallet som du spesifiserte i size query-parameteret, kan du anta at du har hentet alle hendelsene til nå. Da kan du vente litt og sjekke senere om det har kommet flere hendelser.
+         */
+        get: operations["hentOppdateringerForRoller"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/enhetsregisteret/api/oppdateringer/enheter": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Hent alle oppdateringer på enheter
+         * @description Vi anbefaler følgende bruk&colon; Filtrer på dato for første gangs uthenting, slik at man unngår enheter tidligere enn eventuell siste kopi. Filtrer så på updateid for å hente neste sett av resultater. (Her kan man trygt bruke updateid+1). Page+size kan benyttes for mer presis navigering i en updateid- eller dato-spørring.
+         *
+         *     Endringstyper:
+         *
+         *     | Type     | Beskrivelse                                                                                             |
+         *     |----------|---------------------------------------------------------------------------------------------------------|
+         *     | Ukjent   | Ukjent type endring. Ofte fordi endringen har skjedd før endringstype ble innført.                      |
+         *     | Ny       | Enheten har blitt lagt til i Enhetsregisteret                                                           |
+         *     | Endring  | Enheten har blitt endret i Enhetsregisteret                                                             |
+         *     | Sletting | Enheten har blitt slettet fra Enhetsregisteret                                                          |
+         *     | Fjernet  | Enheten har blitt fjernet fra Åpne Data. Eventuelle kopier skal også fjerne enheten.                    |
+         */
+        get: operations["hentOppdateringerForEnheter"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/enhetsregisteret/api/oppdateringer/underenheter": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Hent alle oppdateringer på underenheter
+         * @description Vi anbefaler følgende bruk&colon; Filtrer på dato for første gangs uthenting, slik at man unngår enheter tidligere enn eventuell siste kopi. Filtrer så på updateid for å hente neste sett av resultater. (Her kan man trygt bruke updateid+1). Page+size kan benyttes for mer presis navigering i en updateid- eller dato-spørring.
+         *
+         *     Endringstyper:
+         *
+         *     | Type     | Beskrivelse                                                                                             |
+         *     |----------|---------------------------------------------------------------------------------------------------------|
+         *     | Ukjent   | Ukjent type endring. Ofte fordi endringen har skjedd før endringstype ble innført.                      |
+         *     | Ny       | Enheten har blitt lagt til i Enhetsregisteret                                                           |
+         *     | Endring  | Enheten har blitt endret i Enhetsregisteret                                                             |
+         *     | Sletting | Enheten har blitt slettet fra Enhetsregisteret                                                          |
+         *     | Fjernet  | Enheten har blitt fjernet fra Åpne Data. Eventuelle kopier skal også fjerne enheten.                    |
+         */
+        get: operations["hentOppdateringerForUnderenheter"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/enhetsregisteret/api/roller/totalbestand": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Last ned totalbestand av roller som zippet json
+         * @description Last ned totalbestand av roller, inklusiv fødselsdato, som zippet json
+         */
+        get: operations["lastnedRollerTotalbestand"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/enhetsregisteret/autorisert-api/roller/totalbestand": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Last ned totalbestand av roller med fødselsnummer som zippet json
+         * @description Last ned totalbestand av roller, inklusiv fødselsnummer, som zippet json. Dette endepunktet er sikret med Maskinporten.
+         */
+        get: operations["lastnedRollerTotalbestandMedPid"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/enhetsregisteret/autorisert-api/personer/rolleutskrift": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Hent rolleutskrift for en person basert på fødselsnummer
+         * @description I dette endepunktet kan du hente en oversikt over alle roller en person har i næringsdrivende virksomheter ved å oppgi personens fødselsnummer. Næringsdrivende virksomheter er virksomheter som er registrert i Foretaksregisteret og alle enkeltpersonforetak. Øvrige roller fra virksomheter som kun står i Enhetsregisteret er ikke med i oversikten.
+         *     <br />
+         *     <br />
+         *     Endepunktet krever autentisering via Maskinporten med scopet brreg:data:enhetsregisteret:roller:person:oppslag:fnr.
+         */
+        post: operations["hentRolleutskriftForPerson"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/enhetsregisteret/api/roller/representanter": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Hent alle rollerepresentanter
+         * @description Hent alle rollerepresentanter
+         */
+        get: operations["hentRolleRepresentanter"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/enhetsregisteret/api/roller/rollegruppetyper": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Hent alle rollegruppetyper
+         * @description Hent alle rollegruppetyper
+         */
+        get: operations["hentRollegruppetyper"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/enhetsregisteret/api/roller/rolletyper": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Hent alle rolletyper
+         * @description Hent alle rolletyper
+         */
+        get: operations["hentRolletyper"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/enhetsregisteret/api/roller/enheter/{enhetorgnr}/juridiskeroller": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Hent alle roller en virksomhet har i andre virksomheter
+         * @description I dette endepunktet kan du hente alle juridiske roller en virksomhet har i andre virksomheter. Ved oppslag på organisasjonsnummer vil du få en oversikt over hvilke knytninger virksomheten har til andre virksomheter, som for eksempel om virksomheten er registrert som deltaker, regnskapsfører eller revisor i andre virksomheter.
+         */
+        get: operations["hentJuridiskeRoller"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/frivillighetsregisteret/api/frivillige-organisasjoner": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Søk i frivillige organisasjoner
+         * @description Dette endepunktet lar deg søke blant alle frivillige organisasjoner.
+         *
+         *     Her kan du hente en totalbestand med alle frivillige organisasjoner ved hjelp av paginering. Historikk eller slettede frivillige organisasjoner er ikke med i totalbestanden.
+         *
+         *     #### Om Paginering:
+         *
+         *     Av dataintegritet- og ytelseshensyn bruker dette endepunktet "searchAfter" fremfor klassisk paginering. Det fungerer slik:
+         *     - Først setter du "size" parameteret til ønsket sidestørrelse.
+         *     - Så gjør du det første API-kallet, dette gir deg den første siden.
+         *     - For å hente neste side, sett "searchAfter" parameteret til det siste/høyeste organisasjonsnummeret du fikk fra den forrige siden.
+         *     - Hent nye sider helt til du mottar færre objekter enn det "size" parameteret tilsier. Da er du på siste side.
+         *
+         *     Du kan også bruke "next" lenken fra API-responsen for å hente neste side. Next lenken er satt så lenge antall organisasjoner i responsen det samme antallet som size-parameteret tilsier.
+         */
+        get: operations["sokFrivilligeOrganisasjoner"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/frivillighetsregisteret/api/frivillige-organisasjoner/{organisasjonsnummer}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Hent én frivillig organisasjon med organisasjonsnummer
+         * @description Hent informasjon om en frivillig organisasjon fra frivillighetsregisteret
+         */
+        get: operations["hentFrivilligOrganisasjon"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/frivillighetsregisteret/api/frivillige-organisasjoner/totalbestand/csv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Last ned CSV totalbestand fra frivillighetsregisteret
+         * @description [Last ned totalbestand av frivillige organisasjoner i csv format.](https://data.brreg.no/frivillighetsregisteret/api/frivillige-organisasjoner/totalbestand/csv)
+         *
+         *     Både linjeskift og anførselstegn kan forekomme i celler i denne CSV filen. Derfor er alle celler "escapet" med anførselstegn.
+         *     Anførselstegn i selve teksten kommer som to anførselstegn på rad. Dette for å unngå at cellen terminerer for tidlig.
+         *     Du må bruke en CSV parser som kan konfigureres til å handtere dette riktig.
+         *     I OpenCSV for Java konfigurerer vi "quotechar" og "escapechar". Begge setter vi til anførselstegn (").
+         *
+         *     |Beskrivelser av felter i rekkefølge                  |
+         *     |-----------------------------------------------------|
+         *     | Organisasjonsnummer til enheten                     |
+         *     | Enhetens navn                                       |
+         *     | Enhetens organisasjonsform                   |
+         *     | Beskrivelse enhetens organisasjonsform           |
+         *     | Land (forretningsadresse)                    |
+         *     | Landkode (forretningsadresse)                      |
+         *     | Postnummer (forretningsadresse)                      |
+         *     | Poststed (forretningsadresse)                      |
+         *     | Adresse (forretningsadresse)                      |
+         *     | Kommune (forretningsadresse)                      |
+         *     | Kommunenummer (forretningsadresse)                      |
+         *     | Land (postadresse)                     |
+         *     | Landkode (postadresse)                      |
+         *     | Postnummer (postadresse)                      |
+         *     | Poststed (postadresse)                      |
+         *     | Adresse (postadresse)                      |
+         *     | Kommune (postadresse)                      |
+         *     | Kommunenummer (postadresse)                      |
+         *     | Telefon                      |
+         *     | Mobil                      |
+         *     | Dato sist innført i Frivillighetsregisteret                      |
+         *     | Dato første gang innført i Frivillighetsregisteret                      |
+         *     | ICNPO-nummer for aktivitet 1                        |
+         *     | Beskrivelse ICNPO-kategori 1                        |
+         *     | ICNPO-nummer for aktivitet 2                        |
+         *     | Beskrivelse ICNPO-kategori 2                        |
+         *     | ICNPO-nummer for aktivitet 3                        |
+         *     | Beskrivelse ICNPO-kategori 3                        |
+         *     | Om den frivillige organisasjonen har registrert vedtekter (plikter å sende oppdaterte vedtekter når disse endres)    |
+         *     | Dato sist vedtekter ble oppdatert     |
+         *     | Om den frivillige organisasjonen påtar seg å innrapportere årsregnskap til regnskapsregisteret |
+         *     | Avslutningsdato for regnskapsperioden. Formatet er: dd.mm |
+         *     | Årstall for sist godkjente frivillig rapportert årsregnskap |
+         *     | Registreringsdato i Regnskapsregisteret for sist innsendte frivillig rapportert årsregnskap |
+         *     | Om den frivillige organisasjonen deltar i grasrotandelen                  |
+         *     | Fra-dato den frivillige organisasjonen er utestengt fra å delta i grasrotandelen               |
+         *     | Til-dato den frivillige organisasjonen er utestengt fra å delta i grasrotandelen               |
+         *     | Kontonummer               |
+         *     | Om den frivillige organisasjonen har påtegninger               |
+         *     | E-postadresse               |
+         */
+        get: operations["frivilligeOrganisasjonerTotalbestandCsv"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/frivillighetsregisteret/api/icnpo-kategorier": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Hent ICNPO kategorier
+         * @description Hent ICNPO kategorier (International Classification of Non-Profit Organisation)
+         */
+        get: operations["hentIcnpoKategorier"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/frivillighetsregisteret/api/informasjonstyper": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Hent informasjonstyper i Frivillighetsregisteret
+         * @description Hent alle informasjonstyper i Frivillighetsregisteret.
+         */
+        get: operations["hentInformasjonstyperIFrivillighetsregisteret"];
         put?: never;
         post?: never;
         delete?: never;
@@ -350,52 +949,2469 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        InternalServerError: {
+            /**
+             * @description Tidspunkter for når feilen oppstod
+             * @example 2024-01-05T07:36:21.523+0000
+             */
+            timestamp: string;
+            /**
+             * @description HTTP status koden
+             * @example 500
+             */
+            status: number;
+            /**
+             * @description Feilmelding
+             * @example Internal Server Error
+             */
+            error: string;
+            /**
+             * @description Utdypende feilmelding
+             * @example Internal Server Error
+             */
+            message: string;
+            /**
+             * @description Url sti som feilet
+             * @example /enhetsregisteret/api/enheter
+             */
+            path: string;
+            /**
+             * @description Send denne koden til oss for at vi skal lettere finne igjen feilen i våre logger
+             * @example b94669c0-425a-4b6c-ab30-504de8d9c127
+             */
+            trace: string;
+        };
+        Root: {
+            _links?: {
+                self: {
+                    /**
+                     * @description Lenke til egen ressurs
+                     * @example https://data.brreg.no/enhetsregisteret/api
+                     */
+                    href?: string;
+                };
+                enheter: {
+                    /**
+                     * @description Lenke til enheter ressurs
+                     * @example https://data.brreg.no/enhetsregisteret/api/enheter
+                     */
+                    href?: string;
+                };
+                underenheter: {
+                    /**
+                     * @description Lenke til underenheter ressurs
+                     * @example https://data.brreg.no/enhetsregisteret/api/underenheter
+                     */
+                    href?: string;
+                };
+                organisasjonsformer: {
+                    /**
+                     * @description Lenke til organisasjonsformer ressurs
+                     * @example https://data.brreg.no/enhetsregisteret/api/organisasjonsformer
+                     */
+                    href?: string;
+                };
+                "oppdateringer/enheter": {
+                    /**
+                     * @description Lenke til enhetsoppdateringer ressurs
+                     * @example https://data.brreg.no/enhetsregisteret/api/oppdateringer/enheter
+                     */
+                    href?: string;
+                };
+                "oppdateringer/underenheter": {
+                    /**
+                     * @description Lenke til underenhetsoppdateringer ressurs
+                     * @example https://data.brreg.no/enhetsregisteret/api/oppdateringer/underenheter
+                     */
+                    href?: string;
+                };
+                kommuner: {
+                    /**
+                     * @description Lenke til kommuner ressurs
+                     * @example https://data.brreg.no/enhetsregisteret/api/kommuner
+                     */
+                    href?: string;
+                };
+            };
+        };
+        /** @description Organisasjonsform */
+        Organisasjonsform: {
+            _links?: {
+                self?: {
+                    /**
+                     * @description Lenke til egen ressurs
+                     * @example https://data.brreg.no/enhetsregisteret/api/organisasjonsformer/AS
+                     */
+                    href: string;
+                };
+            };
+            /**
+             * @description Organisasjonsformen
+             * @example AS
+             */
+            kode: string;
+            /**
+             * @description Dato når organisasjonsformen evt. ble ugyldig
+             * @example 2024-01-04
+             */
+            utgaatt?: string | null;
+            /**
+             * @description Tekstlig beskrivelse av organisasjonsformen
+             * @example Aksjeselskap
+             */
+            beskrivelse: string;
+        };
+        /** @description Historiske navn på virksomheten */
+        HistoriskeNavn: {
+            /**
+             * @description Gjeldene navn på virksomhet i angit tidsperiode
+             * @example BRØNNØYSUNDREGISTRENE
+             */
+            navn: string;
+            /**
+             * @description Startdato for gjeldene navn på virksomhet
+             * @example 1998-01-16 19:22:18
+             */
+            fraDato: string;
+            /**
+             * @description Sluttdato for gjeldene navn på virksomhet
+             * @example 1999-09-10 16:51:43
+             */
+            tilDato: string;
+        }[] | null;
+        EnhetPaategning: {
+            /**
+             * @description Påtegningens infotype
+             * @example NAVN
+             */
+            infotype?: string;
+            /**
+             * @description Påtegningens tekstlig innhold
+             * @example Eksempelpåtegning på navn
+             */
+            tekst?: string;
+            /**
+             * Format: date
+             * @description Dato for når påtegning ble innført
+             * @example 2024-01-04
+             */
+            innfoertDato?: string;
+        };
+        /** @description Foretaksform */
+        Foretaksform: {
+            /**
+             * @description Foretaksformen
+             * @example AB
+             */
+            kode: string;
+            /**
+             * @description Tekstlig beskrivelse av foretaksformen
+             * @example Privat aktiebolag
+             */
+            beskrivelse: string;
+            /**
+             * @description Tekstlig beskrivelse av foretaksformen på bokmål
+             * @example Aksjeselskap
+             */
+            beskrivelseBokmaal: string;
+        };
         Enhet: {
-            organisasjonsnummer?: string;
-            navn?: string;
-            organisasjonsform?: components["schemas"]["Organisasjonsform"];
-            registreringsdatoEnhetsregisteret?: string;
-            registrertIMvaregisteret?: boolean;
-            naeringskode1?: components["schemas"]["Naeringskode"];
-            naeringskode2?: components["schemas"]["Naeringskode"];
-            naeringskode3?: components["schemas"]["Naeringskode"];
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            respons_klasse: "Enhet";
+            /**
+             * @description Organisasjonsnummeret til enheten
+             * @example 509100675
+             */
+            organisasjonsnummer: string;
+            /**
+             * @description Enhetens navn
+             * @example Sesam stasjon
+             */
+            navn: string;
+            organisasjonsform: components["schemas"]["Organisasjonsform"];
+            historiskeNavn?: components["schemas"]["HistoriskeNavn"];
+            /** @description Enhetens postadresse */
+            postadresse?: {
+                /**
+                 * @description Kommunenavn (postadresse)
+                 * @example Oslo
+                 */
+                kommune?: string | null;
+                /**
+                 * @description Landkode (postadresse)
+                 * @example NO
+                 */
+                landkode?: string | null;
+                /**
+                 * @description Postnummer (postadresse)
+                 * @example 0010
+                 */
+                postnummer?: string | null;
+                /**
+                 * @description Adresse (postadresse)
+                 * @example [
+                 *       "Oslo"
+                 *     ]
+                 */
+                adresse?: string[] | null;
+                /**
+                 * @description Landkode (postadresse)
+                 * @example Norge
+                 */
+                land?: string | null;
+                /**
+                 * @description Kommunenummer (postadresse)
+                 * @example 0301
+                 */
+                kommunenummer?: string | null;
+                /**
+                 * @description Poststed (postadresse)
+                 * @example Oslo
+                 */
+                poststed?: string | null;
+            };
+            /** @description Enhetens forretningsadresse */
+            forretningsadresse?: {
+                /**
+                 * @description Kommunenavn (forretningsadresse)
+                 * @example Oslo
+                 */
+                kommune?: string | null;
+                /**
+                 * @description Landkode (forretningsadresse)
+                 * @example NO
+                 */
+                landkode?: string | null;
+                /**
+                 * @description Postnummer (forretningsadresse)
+                 * @example 0010
+                 */
+                postnummer?: string | null;
+                /**
+                 * @description Adresse (forretningsadresse)
+                 * @example [
+                 *       "Oslo"
+                 *     ]
+                 */
+                adresse?: string[] | null;
+                /**
+                 * @description Land (forretningsadresse)
+                 * @example Norge
+                 */
+                land?: string | null;
+                /**
+                 * @description Kommunenummer (forretningsadresse)
+                 * @example 0301
+                 */
+                kommunenummer?: string | null;
+                /**
+                 * @description Poststed (forretningsadresse)
+                 * @example Oslo
+                 */
+                poststed?: string | null;
+            };
+            /**
+             * @description Hvorvidt enheten er registrert i Mva-registeret
+             * @example true
+             */
+            registrertIMvaregisteret: boolean;
+            /**
+             * @description Målform
+             * @example Bokmål
+             */
+            maalform: string;
+            /** @description Næringskode 1 */
+            naeringskode1?: {
+                /**
+                 * @description Næringskoden
+                 * @example 41.109
+                 */
+                kode?: string | null;
+                /**
+                 * @description Tekstlig beskrivelse av næringskoden
+                 * @example Utvikling og salg av egen fast eiendom ellers
+                 */
+                beskrivelse?: string | null;
+            } | null;
+            /** @description Næringskode 2 */
+            naeringskode2?: {
+                /**
+                 * @description Næringskoden
+                 * @example 41.109
+                 */
+                kode?: string | null;
+                /**
+                 * @description Tekstlig beskrivelse av næringskoden
+                 * @example Utvikling og salg av egen fast eiendom ellers
+                 */
+                beskrivelse?: string | null;
+            } | null;
+            /** @description Næringskode 3 */
+            naeringskode3?: {
+                /**
+                 * @description Næringskoden
+                 * @example 41.109
+                 */
+                kode?: string | null;
+                /**
+                 * @description Tekstlig beskrivelse av næringskoden
+                 * @example Utvikling og salg av egen fast eiendom ellers
+                 */
+                beskrivelse?: string | null;
+            } | null;
+            /** @description Hjelpeenhetskode */
+            hjelpeenhetskode?: {
+                /**
+                 * @description Hjelpeenhetskode
+                 * @example 70.100
+                 */
+                kode?: string | null;
+                /**
+                 * @description Tekstlig beskrivelse av hjelpeenhetskode
+                 * @example Hovedkontortjenester
+                 */
+                beskrivelse?: string | null;
+            };
+            /**
+             * @description Hvorvidt enheten er under avvikling
+             * @example true
+             */
+            underAvvikling: boolean;
+            /**
+             * Format: date
+             * @description Dato virksomheten er meldt oppløst. Format: yyyy-MM-dd
+             * @example 2024-01-04
+             */
+            underAvviklingDato?: string;
+            /**
+             * @description Hvorvidt enheten er registrert i Stiftelsesregisteret
+             * @example true
+             */
+            registrertIStiftelsesregisteret: boolean;
+            /**
+             * @description Hvorvidt enheten er konkurs
+             * @example true
+             */
+            konkurs: boolean;
+            /**
+             * Format: date
+             * @description Kjennelsesdato for konkursen. Format: yyyy-MM-dd
+             * @example 2024-01-04
+             */
+            konkursdato?: string;
+            /**
+             * Format: date
+             * @description Dato virksomheten ble tvangsavviklet pga manglende sletting. Format: yyyy-mm-dd
+             * @example 2024-01-04
+             */
+            tvangsavvikletPgaManglendeSlettingDato?: string;
+            /**
+             * Format: date
+             * @description Dato virksomheten ble tvangsoppløst pga manglende daglig leder. Format: yyyy-mm-dd
+             * @example 2024-01-04
+             */
+            tvangsopplostPgaManglendeDagligLederDato?: string;
+            /**
+             * Format: date
+             * @description Dato virksomheten ble tvangsoppløst pga manglende revisor. Format: yyyy-mm-dd
+             * @example 2024-01-04
+             */
+            tvangsopplostPgaManglendeRevisorDato?: string;
+            /**
+             * Format: date
+             * @description Dato virksomheten ble tvangsoppløst pga manglende regnskap. Format: yyyy-mm-dd
+             * @example 2024-01-04
+             */
+            tvangsopplostPgaManglendeRegnskapDato?: string;
+            /**
+             * Format: date
+             * @description Dato virksomheten ble tvangsoppløst pga manglende styre. Format: yyyy-mm-dd
+             * @example 2024-01-04
+             */
+            tvangsopplostPgaMangelfulltStyreDato?: string;
+            /**
+             * Format: date
+             * @description Enhetens vedtektsdato. Format: yyyy-MM-dd
+             * @example 2024-01-04
+             */
+            vedtektsdato?: string;
+            /** @description Enhetens formål */
+            vedtektsfestetFormaal?: string[];
+            /** @description Enhetens aktivitet */
+            aktivitet?: string[];
+            /**
+             * @description Enhetens påtegninger
+             * @example [
+             *       {
+             *         "infotype": "NAVN",
+             *         "tekst": "Påtegning på navn",
+             *         "innfoertDato": "2024-01-01"
+             *       },
+             *       {
+             *         "infotype": "FADR",
+             *         "tekst": "Påtegning på forretningsadresse",
+             *         "innfoertDato": "2024-01-01"
+             *       }
+             *     ]
+             */
+            paategninger: components["schemas"]["EnhetPaategning"][];
+            /**
+             * @description Hvorvidt enheten er registrert i Frivillighetsregisteret
+             * @example true
+             */
+            registrertIFrivillighetsregisteret: boolean;
+            /**
+             * Format: date
+             * @description Enhetens stiftelsesdato
+             * @example 2024-01-04
+             */
+            stiftelsesdato?: string | null;
+            /** @description Enhetens institusjonelle sektorkode */
+            institusjonellSektorkode?: {
+                /**
+                 * @description Sektorkoden
+                 * @example 8200
+                 */
+                kode?: string | null;
+                /**
+                 * @description Tekstlig beskrivelse av sektorkoden
+                 * @example Personlig næringsdrivende
+                 */
+                beskrivelse?: string | null;
+            };
+            /**
+             * @description Hvorvidt enheten er registrert i Foretaksregisteret
+             * @example true
+             */
+            registrertIForetaksregisteret: boolean;
+            /**
+             * Format: date
+             * @description Enhetens registreringsdato i Enhetsregisteret
+             * @example 2024-01-04
+             */
+            registreringsdatoEnhetsregisteret: string;
+            /**
+             * @description Enhetens hjemmeside
+             * @example www.brreg.no
+             */
+            hjemmeside?: string | null;
+            /**
+             * @description Årstall for siste innsendte årsregnskap
+             * @example 2024
+             */
+            sisteInnsendteAarsregnskap?: string | null;
+            /**
+             * @description Enheter som i utgangspunktet ikke er mva-pliktig, kan søke om frivillig registrering i Merverdiavgiftsregisteret.
+             * @example [
+             *       "Utleier av bygg eller anlegg"
+             *     ]
+             */
+            frivilligMvaRegistrertBeskrivelser?: string[] | null;
+            /**
+             * @description Hvorvidt enheten er under tvangsavvikling eller tvangsoppløsning
+             * @example true
+             */
+            underTvangsavviklingEllerTvangsopplosning: boolean;
+            /**
+             * @description Antall ansatte
+             * @example 50
+             */
             antallAnsatte?: number;
-            stiftelsedato?: string;
-            institusjonellSektorkode?: components["schemas"]["Sektorkode"];
-            registrertIForetaksregisteret?: boolean;
-            registrertIStiftelsesregisteret?: boolean;
-            registrertIFrivillighetsregisteret?: boolean;
-            sisteInnsendteAarsregnskap?: string;
-            konkurs?: boolean;
-            underAvvikling?: boolean;
-            underTvangsavviklingEllerTvangsopplosning?: boolean;
-            maalform?: string;
-            _links?: components["schemas"]["Self"];
+            /**
+             * @description Angir om enheten har registrert ansatte
+             * @example true
+             */
+            harRegistrertAntallAnsatte: boolean;
+            /**
+             * @description Organisasjonsnummeret til overordnet enhet i offentlig sektor
+             * @example 376181782
+             */
+            overordnetEnhet?: string | null;
+            /**
+             * @description Registreringsnummeret i hjemlandets register
+             * @example 0000804843
+             */
+            registreringsnummerIHjemlandet?: string | null;
+            /**
+             * Format: date
+             * @description Dato for registrering av antall ansatte i NAV Aa-register
+             * @example 2024-01-04
+             */
+            registreringsdatoAntallAnsatteNAVAaregisteret?: string;
+            /**
+             * Format: date
+             * @description Dato for registrering av antall ansatte i Enhetsregisteret
+             * @example 2024-01-04
+             */
+            registreringsdatoAntallAnsatteEnhetsregisteret?: string;
+            /**
+             * Format: date
+             * @description Dato for registrering i Mva-registeret
+             * @example 2024-01-04
+             */
+            registreringsdatoMerverdiavgiftsregisteret?: string;
+            /**
+             * Format: date
+             * @description Dato for registrering i Mva-registeret i Enhetsregisteret.
+             * @example 2024-01-04
+             */
+            registreringsdatoMerverdiavgiftsregisteretEnhetsregisteret?: string;
+            /**
+             * Format: date
+             * @description Dato for frivillig registrering i Mva-registeret
+             * @example 2024-01-04
+             */
+            registreringsdatoFrivilligMerverdiavgiftsregisteret?: string;
+            /**
+             * Format: date
+             * @description Dato for registrering i Foretaksregisteret
+             * @example 2024-01-04
+             */
+            registreringsdatoForetaksregisteret?: string;
+            /**
+             * Format: date
+             * @description Dato for registrering i Frivillighetsregisteret
+             * @example 2024-01-04
+             */
+            registreringsdatoFrivillighetsregisteret?: string;
+            /**
+             * @description Hvorvidt enheten er registrert i Partiregisteret
+             * @example true
+             */
+            registrertIPartiregisteret?: boolean;
+            /**
+             * Format: date
+             * @description Dato for registrering i Partiregisteret
+             * @example 2024-01-04
+             */
+            registreringsdatoPartiregisteret?: string;
+            /**
+             * @description Enhetens epostadressse
+             * @example epost@epost.com
+             */
+            epostadresse?: string;
+            /**
+             * @description Enhetens telefonnummer
+             * @example 91504800
+             */
+            telefon?: string;
+            /**
+             * @description Enhetens mobilnummer
+             * @example 91504800
+             */
+            mobil?: string;
+            /**
+             * @description Hvorvidt enheten inngår i et konsern
+             * @example true
+             */
+            erIKonsern: boolean;
+            /**
+             * Format: date
+             * @description Dato melding om fravalg av revisjon ble registrert i Foretaksregisteret
+             * @example 2024-01-04
+             */
+            fravalgRevisjonDato?: string;
+            /**
+             * Format: date
+             * @description Dato virksomheten besluttet at selskapets årsregnskap ikke skal revideres
+             * @example 2024-01-04
+             */
+            fravalgRevisjonBeslutningsDato?: string;
+            /**
+             * Format: date
+             * @description Dato virksomheten ble registrert under rekonstruksjonsforhandling
+             * @example 2024-01-04
+             */
+            underRekonstruksjonsforhandlingDato?: string;
+            /**
+             * Format: date
+             * @description Dato virksomheten ble registrert under utenlandsk insolvensbehandling
+             * @example 2024-01-04
+             */
+            underUtenlandskInsolvensbehandlingDato?: string;
+            /** @description Kapital informasjon for virksomhet */
+            kapital?: {
+                /**
+                 * @description Virksomhetens registrerte kapital
+                 * @example 1000000000
+                 */
+                belop: number;
+                /**
+                 * @description Angir antall aksjer i virksomheten
+                 * @example 100000000
+                 */
+                antallAksjer?: number | null;
+                /**
+                 * @description Hvilken kapitaltype virksomheten er registrert med
+                 * @example Aksjekapital
+                 */
+                type: string;
+                /**
+                 * @description Angir hvor mye av kapitalen som er bundet
+                 * @example 10000
+                 */
+                bundet?: number | null;
+                /**
+                 * @description Hvilken valuta kapitalen er registrert i
+                 * @example NOK
+                 */
+                valuta: string;
+                /**
+                 * @description Angir hvor mye av kapitalen som er innbetalt
+                 * @example 1000000000
+                 */
+                innbetalt?: number | null;
+                /**
+                 * @description Angir om hele kapitalen er innbetalt
+                 * @example true
+                 */
+                fulltInnbetalt?: boolean | null;
+                /**
+                 * Format: date
+                 * @description Dato kapitalen ble registrert
+                 * @example 2024-01-04
+                 */
+                innfortDato: string;
+            };
+            foretaksformIHjemlandet?: components["schemas"]["Foretaksform"];
+            /**
+             * @description Navnet på utenlandsk register enheten er registrert i
+             * @example Danish Business Register
+             */
+            utenlandskRegisterNavn?: string;
+            /** @description Adressen til utenlandsk register enheten er registrert i */
+            utenlandskRegisterAdresse?: {
+                /**
+                 * @description Adresse
+                 * @example [
+                 *       "Oslo"
+                 *     ]
+                 */
+                adresse?: string[] | null;
+                /**
+                 * @description Land
+                 * @example Norge
+                 */
+                land?: string | null;
+                /**
+                 * @description Poststed og postnummer
+                 * @example Oslo
+                 */
+                poststed?: string | null;
+            };
+            /**
+             * @description Landet enheten er underlagt lovgivning i
+             * @example Danmark
+             */
+            underlagtLovgivningLand?: string;
+            /**
+             * @description Landkode for land enheten er underlagt lovgivning i
+             * @example DK
+             */
+            underlagtLovgivningLandKode?: string;
+            _links?: {
+                overordnetEnhet?: {
+                    /**
+                     * @description Lenke til enhetens overordnede enhet i offentlig sektor
+                     * @example https://data.brreg.no/enhetsregisteret/api/enheter/509100675
+                     */
+                    href?: string | null;
+                };
+                self?: {
+                    /**
+                     * @description Lenke til egen ressurs
+                     * @example https://data.brreg.no/enhetsregisteret/api/enheter/509100675
+                     */
+                    href: string;
+                };
+            };
         };
-        Naeringskode: {
+        /** @description Side */
+        Page: {
+            /**
+             * @description Nummer på gjeldende side
+             * @example 1
+             */
+            number: number;
+            /**
+             * @description Sidestørrelse på resultatet
+             * @example 20
+             */
+            size: number;
+            /**
+             * @description Totalt antall sider i resultatet
+             * @example 20
+             */
+            totalPages: number;
+            /**
+             * @description Totalt antall elementer i resultatet
+             * @example 100
+             */
+            totalElements: number;
+        };
+        Enheter: {
+            _links: {
+                next?: {
+                    /**
+                     * @description Lenke til neste side med resultater
+                     * @example https://data.brreg.no/enhetsregisteret/api/enheter?page=1&size=20
+                     */
+                    href?: string | null;
+                };
+                last?: {
+                    /**
+                     * @description Lenke til siste side med resultater
+                     * @example https://data.brreg.no/enhetsregisteret/api/enheter?page=54469&size=20
+                     */
+                    href?: string | null;
+                };
+                prev?: {
+                    /**
+                     * @description Lenke til forrige side med resultater
+                     * @example https://data.brreg.no/enhetsregisteret/api/enheter?page=0&size=20
+                     */
+                    href?: string | null;
+                };
+                self?: {
+                    /**
+                     * @description Lenke til egen ressurs
+                     * @example https://data.brreg.no/enhetsregisteret/api/enheter
+                     */
+                    href: string;
+                };
+                first?: {
+                    /**
+                     * @description Lenke til første side med resultater
+                     * @example https://data.brreg.no/enhetsregisteret/api/enheter?page=0&size=20
+                     */
+                    href?: string | null;
+                };
+            };
+            _embedded?: {
+                /** @description En liste av enheter som finnes i Enhetsregisteret */
+                enheter?: components["schemas"]["Enhet"][];
+            };
+            page: components["schemas"]["Page"];
+        };
+        ValideringsFeil: {
+            /**
+             * @description Current value
+             * @example [INC]
+             */
+            feilaktigVerdi?: string | null;
+            /**
+             * @description Error message for current validation error
+             * @example INC er ikke en gyldig organisasjonsform
+             */
+            feilmelding: string;
+            /**
+             * @description Current parameters
+             * @example [
+             *       "organisasjonsform"
+             *     ]
+             */
+            parametere: string[];
+        };
+        BadRequest: {
+            /**
+             * @description Number of errors
+             * @example 4
+             */
+            antallFeil: number;
+            /**
+             * @description The validation errors
+             * @example [
+             *       {
+             *         "feilmelding": "VYuW94MNgw",
+             *         "feilaktigVerdi": "TNpG8ziEFi",
+             *         "parametere": [
+             *           "beNB4EGRsf"
+             *         ]
+             *       }
+             *     ]
+             */
+            valideringsfeil: components["schemas"]["ValideringsFeil"][];
+            /**
+             * @description The path to the endpoint that failed
+             * @example cfQRiNgGtG
+             */
+            sti: string;
+            /**
+             * @description Error message
+             * @example GqDEbwc71f
+             */
+            feilmelding: string;
+            /**
+             * @description Timestamp for when the error occurred
+             * @example 1704366191
+             */
+            tidsstempel: number;
+            /**
+             * @description HTTP status code
+             * @example 500
+             */
+            status: number;
+        };
+        /** Format: binary */
+        EnheterLastned: string;
+        SlettetEnhet: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            respons_klasse: "SlettetEnhet";
+            /**
+             * @description Organisasjonsnummeret til enheten
+             * @example 509100675
+             */
+            organisasjonsnummer: string;
+            /**
+             * @description Enhetens navn
+             * @example Sesam stasjon
+             */
+            navn: string;
+            organisasjonsform: components["schemas"]["Organisasjonsform"];
+            historiskeNavn?: components["schemas"]["HistoriskeNavn"];
+            /**
+             * @description Dato enheten ble slettet
+             * @example 2024-03-09
+             */
+            slettedato: string;
+            _links?: {
+                self?: {
+                    /**
+                     * @description Lenke til egen ressurs
+                     * @example https://data.brreg.no/enhetsregisteret/api/enheter/509100675
+                     */
+                    href: string;
+                };
+            };
+        };
+        GoneEnhet: {
+            /**
+             * @description Organisasjonsnummeret til enheten
+             * @example 509100675
+             */
+            organisasjonsnummer: string;
+            /**
+             * @description Dato enheten ble slettet
+             * @example 2024-03-09
+             */
+            slettedato: string;
+            _links?: {
+                self?: {
+                    /**
+                     * @description Lenke til egen ressurs
+                     * @example https://data.brreg.no/enhetsregisteret/api/enheter/509100675
+                     */
+                    href: string;
+                };
+            };
+        };
+        /** @description Rollegruppetype */
+        RolleRollegruppetype: {
+            /**
+             * @description Koden
+             * @example ADOS
+             */
+            kode: string;
+            /**
+             * @description Beskrivelsen
+             * @example Administrativ enhet - offentlig sektor
+             */
+            beskrivelse: string;
+            _links?: {
+                self?: {
+                    /**
+                     * @description Lenke til egen ressurs
+                     * @example https://data.brreg.no/enhetsregisteret/api/roller/rollegruppetyper/ADOS
+                     */
+                    href: string;
+                };
+            };
+        };
+        /** @description Rolletype */
+        RolleRolletype: {
+            /**
+             * @description Koden
+             * @example ADOS
+             */
+            kode: string;
+            /**
+             * @description Beskrivelsen
+             * @example Administrativ enhet - offentlig sektor
+             */
+            beskrivelse: string;
+            _links?: {
+                self?: {
+                    /**
+                     * @description Lenke til egen ressurs
+                     * @example https://data.brreg.no/enhetsregisteret/api/roller/rolletyper/ADOS
+                     */
+                    href: string;
+                };
+            };
+        };
+        /** @description Rolle person */
+        RollePerson: {
+            /** @description Personens navn */
+            navn: {
+                /**
+                 * @description Personens fornavn
+                 * @example fornavn
+                 */
+                fornavn: string;
+                /**
+                 * @description Personens mellomnavn
+                 * @example mellomnavn
+                 */
+                mellomnavn?: string;
+                /**
+                 * @description Personens etternavn
+                 * @example etternavn
+                 */
+                etternavn: string;
+            };
+            /**
+             * @description Personens fødselsdato
+             * @example 1979-01-01
+             */
+            fodselsdato: string;
+            /**
+             * @description Er personen død
+             * @example false
+             */
+            erDoed: boolean;
+        };
+        /** @description Rolle enhet */
+        RolleEnhet: {
+            /**
+             * @description Organisasjonsnummeret til enheten
+             * @example 154020209
+             */
+            organisasjonsnummer: string;
+            organisasjonsform: components["schemas"]["Organisasjonsform"];
+            /**
+             * @description Enhetens navn
+             * @example [
+             *       "Sesam",
+             *       "Stasjon"
+             *     ]
+             */
+            navn: string[];
+            /**
+             * @description Godkjenningsstatus for regnskap- og revisjonsforetak
+             * @example Godkjent regnskapsforetak
+             */
+            godkjenningsstatus?: string;
+            /**
+             * @description Er slettet
+             * @example false
+             */
+            erSlettet: boolean;
+            _links?: {
+                self?: {
+                    /**
+                     * @description Lenke til egen ressurs
+                     * @example https://data.brreg.no/enhetsregisteret/api/enheter/154020209
+                     */
+                    href: string;
+                };
+            };
+        };
+        /** @description Bostyrer */
+        RolleBostyrer: {
+            /**
+             * @description Bostyrers navn
+             * @example adv. Ola Nordmann
+             */
+            navn?: string;
+            /**
+             * @description Er bostyrer død
+             * @example false
+             */
+            erDoed?: boolean;
+            /** @description Bostyrers postadresse */
+            postadresse?: {
+                /**
+                 * @description Landkode (postadresse)
+                 * @example NO
+                 */
+                landkode?: string | null;
+                /**
+                 * @description Postnummer (postadresse)
+                 * @example 0010
+                 */
+                postnummer?: string | null;
+                /**
+                 * @description Poststed (postadresse)
+                 * @example Oslo
+                 */
+                poststed?: string | null;
+                /**
+                 * @description Adresse (postadresse)
+                 * @example [
+                 *       "Bostyrerveien 1337"
+                 *     ]
+                 */
+                adresse?: string[] | null;
+            } | null;
+        };
+        /** @description Kode og beskrivelse av hvem rollen representerer (ikke innehaver) */
+        RolleValgtAv: {
+            /**
+             * @description Koden
+             * @example A-AK
+             */
             kode?: string;
+            /**
+             * @description Beskrivelse tilknyttet koden
+             * @example Representant for A-aksjonærene
+             */
+            beskrivelse?: string;
+            _links?: {
+                self?: {
+                    /**
+                     * @description Lenke til egen ressurs
+                     * @example https://data.brreg.no/enhetsregisteret/api/roller/representanter/A-AK
+                     */
+                    href: string;
+                };
+            };
+        };
+        Rolle: {
+            type?: components["schemas"]["RolleRolletype"];
+            person?: components["schemas"]["RollePerson"];
+            enhet?: components["schemas"]["RolleEnhet"];
+            bostyrer?: components["schemas"]["RolleBostyrer"];
+            /**
+             * @description Er avregistrert
+             * @example false
+             */
+            avregistrert?: boolean;
+            /**
+             * @description Rekkefølge
+             * @example 1
+             */
+            rekkefolge?: number;
+            /**
+             * @description Rollens ansvarsandel for selskapets forpliktelser, i brøk eller prosent
+             * @example 50%
+             */
+            ansvarsandel?: string;
+            valgtAv?: components["schemas"]["RolleValgtAv"];
+            /**
+             * @description Stadfestet fremtidsfullmakt
+             * @example false
+             */
+            stadfestetFremtidsfullmakt?: boolean;
+            /**
+             * @description Begrenset rettslig handleevne
+             * @example false
+             */
+            begrensetRettsligHandleevne?: boolean;
+        };
+        Roller: {
+            /** @description Liste av rollegrupper */
+            rollegrupper?: {
+                type?: components["schemas"]["RolleRollegruppetype"];
+                /**
+                 * @description Sist endret
+                 * @example 2019-06-19
+                 */
+                sistEndret?: string;
+                /** @description Liste av roller */
+                roller?: components["schemas"]["Rolle"][];
+            }[];
+            _links?: {
+                self?: {
+                    /**
+                     * @description Lenke til egen ressurs
+                     * @example https://data.brreg.no/enhetsregisteret/enheter/123456789/roller
+                     */
+                    href: string;
+                };
+                enhet?: {
+                    /**
+                     * @description Lenke til enheter ressurs
+                     * @example https://data.brreg.no/enhetsregisteret/enheter/123456789
+                     */
+                    href: string;
+                };
+            };
+        };
+        /** @description Organisasjonsform */
+        OrganisasjonsformKonsern: {
+            /**
+             * @description Organisasjonsformen
+             * @example AS
+             */
+            kode: string;
+            /**
+             * @description Tekstlig beskrivelse av organisasjonsformen
+             * @example Aksjeselskap
+             */
+            beskrivelse: string;
+        };
+        /** @description Informasjon om tilknytningsformen i konsernet */
+        Konsernknytningsform: {
+            /**
+             * @description Kode for tilknytningsformen (f.eks. KMOR, KDAT)
+             * @example KDAT
+             * @enum {string}
+             */
+            kode: "KKKK" | "KMOR" | "KGRL" | "KDAT";
+            /**
+             * @description Tekstlig beskrivelse av tilknytningsformen
+             * @example Konsern datter
+             * @enum {string}
+             */
+            beskrivelse: "Øverste mor" | "Konsern mor" | "Konsern grunnlag" | "Konsern datter";
+        };
+        /** @description En enhet i konsernstrukturen */
+        KonsernChild: {
+            /**
+             * @description Nivået i konsernhierarkiet
+             * @example 1
+             */
+            nivaa: number;
+            /** @description Tilknytningsform til mor-enheten */
+            knytningsform: components["schemas"]["Konsernknytningsform"];
+            /**
+             * @description Navnet på enheten
+             * @example DATTER AS
+             */
+            navn: string;
+            /**
+             * @description Organisasjonsnummeret til enheten
+             * @example 987654321
+             */
+            organisasjonsnummer: string;
+            /**
+             * @description Navnet på mor-enheten
+             * @example MOR AS
+             */
+            parentNavn: string;
+            /**
+             * @description Organisasjonsnummeret til mor-enheten
+             * @example 123456789
+             */
+            parentOrganisasjonsnummer: string;
+            /**
+             * @description Grunnlaget for konsernforholdet
+             * @example 100%
+             */
+            grunnlag?: string;
+            /**
+             * @description Dato for når informasjonen ble registrert eller sist oppdatert
+             * @example 2026-05-05
+             */
+            dato: string;
+            /** @description Organisasjonsformen til enheten */
+            organisasjonsform: components["schemas"]["OrganisasjonsformKonsern"];
+            /** @description Liste over datterenheter eller tilknyttede enheter */
+            children?: components["schemas"]["KonsernChild"][] | null;
+        };
+        /** @description Hierarkisk konsernstruktur for en enhet */
+        Konsernstruktur: {
+            /**
+             * @description Organisasjonsnummeret til enheten
+             * @example 123456789
+             */
+            organisasjonsnummer: string;
+            /**
+             * @description Navnet på enheten
+             * @example MOR AS
+             */
+            navn: string;
+            /** @description Organisasjonsformen til enheten */
+            organisasjonsform: components["schemas"]["OrganisasjonsformKonsern"];
+            /** @description Liste over datterenheter eller tilknyttede enheter i konsernstrukturen */
+            children?: components["schemas"]["KonsernChild"][] | null;
+        };
+        /** @description Rolle person */
+        "Sikret.RollePerson": {
+            /** @description Personens navn */
+            navn: {
+                /**
+                 * @description Personens fornavn
+                 * @example fornavn
+                 */
+                fornavn: string;
+                /**
+                 * @description Personens mellomnavn
+                 * @example mellomnavn
+                 */
+                mellomnavn?: string;
+                /**
+                 * @description Personens etternavn
+                 * @example etternavn
+                 */
+                etternavn: string;
+            };
+            /**
+             * @description Personens fødselsdato
+             * @example 1979-01-01
+             */
+            fodselsdato: string;
+            /**
+             * @description Personens fødselsnummer
+             * @example 30070626612
+             */
+            fodselsnummer: string;
+            /**
+             * @description Er personen død
+             * @example false
+             */
+            erDoed: boolean;
+        };
+        /** @description Kode og beskrivelse av hvem rollen representerer (ikke innehaver) */
+        RolleValgtAvMinimal: {
+            /**
+             * @description Koden
+             * @example A-AK
+             */
+            kode?: string;
+            /**
+             * @description Beskrivelse tilknyttet koden
+             * @example Representant for A-aksjonærene
+             */
             beskrivelse?: string;
         };
-        Sektorkode: {
-            kode?: string;
-            beskrivelse?: string;
+        "Sikret.Rolle": {
+            type?: components["schemas"]["RolleRolletype"];
+            person?: components["schemas"]["Sikret.RollePerson"];
+            enhet?: components["schemas"]["RolleEnhet"];
+            bostyrer?: components["schemas"]["RolleBostyrer"];
+            /**
+             * @description Er avregistrert
+             * @example false
+             */
+            avregistrert?: boolean;
+            /**
+             * @description Rekkefølge
+             * @example 1
+             */
+            rekkefolge?: number;
+            /**
+             * @description Rollens ansvarsandel for selskapets forpliktelser, i brøk eller prosent
+             * @example 50%
+             */
+            ansvarsandel?: string;
+            valgtAv?: components["schemas"]["RolleValgtAvMinimal"];
+            /**
+             * @description Stadfestet fremtidsfullmakt
+             * @example false
+             */
+            stadfestetFremtidsfullmakt?: boolean;
+            /**
+             * @description Begrenset rettslig handleevne
+             * @example false
+             */
+            begrensetRettsligHandleevne?: boolean;
         };
-        _Organisasjonsformer: {
-            embedded?: components["schemas"]["Organisasjonsformer"];
+        "Sikret.Roller": {
+            /** @description Liste av rollegrupper */
+            rollegrupper?: {
+                type?: components["schemas"]["RolleRollegruppetype"];
+                /**
+                 * @description Sist endret
+                 * @example 2019-06-19
+                 */
+                sistEndret?: string;
+                /** @description Liste av roller */
+                roller?: components["schemas"]["Sikret.Rolle"][];
+            }[];
+            _links?: {
+                self?: {
+                    /**
+                     * @description Lenke til egen ressurs
+                     * @example https://data.brreg.no/enhetsregisteret/enheter/123456789/roller
+                     */
+                    href: string;
+                };
+                enhet?: {
+                    /**
+                     * @description Lenke til enheter ressurs
+                     * @example https://data.brreg.no/enhetsregisteret/enheter/123456789
+                     */
+                    href: string;
+                };
+            };
+        };
+        Underenhet: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            respons_klasse: "Underenhet";
+            /**
+             * @description Underenhetens organisasjonsnummer
+             * @example 509100675
+             */
+            organisasjonsnummer: string;
+            /**
+             * @description Underenhetens navn
+             * @example Sesam stasjon
+             */
+            navn: string;
+            historiskeNavn?: components["schemas"]["HistoriskeNavn"];
+            /** @description Underenhetens organisasjonsform */
+            organisasjonsform: {
+                _links?: {
+                    self?: {
+                        /**
+                         * @description Lenke til egen ressurs
+                         * @example https://data.brreg.no/enhetsregisteret/api/organisasjonsformer/BEDR
+                         */
+                        href: string;
+                    };
+                };
+                /**
+                 * @description Organisasjonsformen
+                 * @example BEDR
+                 */
+                kode: string;
+                /**
+                 * @description Dato når organisasjonsformen evt. ble ugyldig
+                 * @example 2024-01-04
+                 */
+                utgaatt?: string;
+                /**
+                 * @description Tekstlig beskrivelse av organisasjonsformen
+                 * @example Underenhet til næringsdrivende og offentlig forvaltning
+                 */
+                beskrivelse: string;
+            };
+            /** @description Underenhetens postadresse */
+            postadresse?: {
+                /**
+                 * @description Kommunenavn (postadresse)
+                 * @example Oslo
+                 */
+                kommune?: string | null;
+                /**
+                 * @description Landkode (postadresse)
+                 * @example NO
+                 */
+                landkode?: string | null;
+                /**
+                 * @description Postnummer (postadresse)
+                 * @example 0010
+                 */
+                postnummer?: string | null;
+                /**
+                 * @description Adresse (postadresse)
+                 * @example [
+                 *       "Oslo"
+                 *     ]
+                 */
+                adresse?: string[] | null;
+                /**
+                 * @description Land (postadresse)
+                 * @example Norge
+                 */
+                land?: string | null;
+                /**
+                 * @description Kommunenummer (postadresse)
+                 * @example 0301
+                 */
+                kommunenummer?: string | null;
+                /**
+                 * @description Poststed (postadresse)
+                 * @example Oslo
+                 */
+                poststed?: string | null;
+            };
+            /** @description Underenhetens beliggenhetsadresse */
+            beliggenhetsadresse?: {
+                /**
+                 * @description Kommunenavn (beliggenhetsadresse)
+                 * @example Oslo
+                 */
+                kommune?: string | null;
+                /**
+                 * @description Landkode (beliggenhetsadresse)
+                 * @example NO
+                 */
+                landkode?: string | null;
+                /**
+                 * @description Postnummer (beliggenhetsadresse)
+                 * @example 0010
+                 */
+                postnummer?: string | null;
+                /**
+                 * @description Adresse (beliggenhetsadresse)
+                 * @example [
+                 *       "Oslo"
+                 *     ]
+                 */
+                adresse?: string[] | null;
+                /**
+                 * @description Land (beliggenhetsadresse)
+                 * @example Norge
+                 */
+                land?: string | null;
+                /**
+                 * @description Kommunenummer (beliggenhetsadresse)
+                 * @example 0301
+                 */
+                kommunenummer?: string | null;
+                /**
+                 * @description Poststed (beliggenhetsadresse)
+                 * @example Oslo
+                 */
+                poststed?: string | null;
+            };
+            /**
+             * @description Er underenheten registrert i MVA-registeret
+             * @example true
+             */
+            registrertIMvaregisteret: boolean;
+            /** @description Næringskode 1 */
+            naeringskode1?: {
+                /**
+                 * @description Næringskoden
+                 * @example 41.109
+                 */
+                kode?: string | null;
+                /**
+                 * @description Tekstlig beskrivelse av næringskoden
+                 * @example Utvikling og salg av egen fast eiendom ellers
+                 */
+                beskrivelse?: string | null;
+            } | null;
+            /** @description Næringskode 2 */
+            naeringskode2?: {
+                /**
+                 * @description Næringskoden
+                 * @example 41.109
+                 */
+                kode?: string | null;
+                /**
+                 * @description Tekstlig beskrivelse av næringskoden
+                 * @example Utvikling og salg av egen fast eiendom ellers
+                 */
+                beskrivelse?: string | null;
+            } | null;
+            /** @description Næringskode 3 */
+            naeringskode3?: {
+                /**
+                 * @description Næringskoden
+                 * @example 41.109
+                 */
+                kode?: string | null;
+                /**
+                 * @description Tekstlig beskrivelse av næringskoden
+                 * @example Utvikling og salg av egen fast eiendom ellers
+                 */
+                beskrivelse?: string | null;
+            } | null;
+            /** @description Hjelpeenhetskode */
+            hjelpeenhetskode?: {
+                /**
+                 * @description Hjelpeenhetskode
+                 * @example 70.100
+                 */
+                kode?: string | null;
+                /**
+                 * @description Tekstlig beskrivelse av hjelpeenhetskode
+                 * @example Hovedkontortjenester
+                 */
+                beskrivelse?: string | null;
+            };
+            /**
+             * Format: date
+             * @description Underenhetens registreringsdato i Enhetsregisteret
+             * @example 2024-01-04
+             */
+            registreringsdatoEnhetsregisteret: string;
+            /**
+             * @description Underenhetens hjemmeside
+             * @example www.brreg.no
+             */
+            hjemmeside?: string | null;
+            /**
+             * @description De virksomheter som i utgangspunktet ikke er MVA-pliktig, kan søke om frivillig registrering i Merverdiavgiftsregisteret.
+             * @example [
+             *       "Utleier av bygg eller anlegg"
+             *     ]
+             */
+            frivilligMvaRegistrertBeskrivelser?: string[] | null;
+            /**
+             * @description Antall ansatte
+             * @example 50
+             */
+            antallAnsatte?: number;
+            /**
+             * @description Angir om underenheten har registrert ansatte
+             * @example true
+             */
+            harRegistrertAntallAnsatte: boolean;
+            /**
+             * @description Overordnet hovedenhet
+             * @example 376181782
+             */
+            overordnetEnhet?: string | null;
+            /**
+             * Format: date
+             * @description Underenhetens oppstartsdato
+             * @example 2024-01-04
+             */
+            oppstartsdato?: string | null;
+            /**
+             * Format: date
+             * @description Dato for underenhetens  eierskifte
+             * @example 2024-01-04
+             */
+            datoEierskifte?: string | null;
+            /**
+             * Format: date
+             * @description Underenhetens nedleggelsesdato
+             * @example 2024-01-04
+             */
+            nedleggelsesdato?: string | null;
+            /**
+             * Format: date
+             * @description Dato for registrering av antall ansatte i NAV Aa-register
+             * @example 2024-01-04
+             */
+            registreringsdatoAntallAnsatteNAVAaregisteret?: string;
+            /**
+             * Format: date
+             * @description Dato for registrering av antall ansatte i Enhetsregisteret
+             * @example 2024-01-04
+             */
+            registreringsdatoAntallAnsatteEnhetsregisteret?: string;
+            /**
+             * Format: date
+             * @description Dato for registrering i MVA-registeret
+             * @example 2024-01-04
+             */
+            registreringsdatoMerverdiavgiftsregisteret?: string;
+            /**
+             * Format: date
+             * @description Dato for registrering i MVA-registeret i Enhetsregisteret.
+             * @example 2024-01-04
+             */
+            registreringsdatoMerverdiavgiftsregisteretEnhetsregisteret?: string;
+            /**
+             * Format: date
+             * @description Dato for frivillig registrering i Mva-registeret
+             * @example 2024-01-04
+             */
+            registreringsdatoFrivilligMerverdiavgiftsregisteret?: string;
+            /**
+             * @description Underenhetens epostadressse
+             * @example epost@epost.com
+             */
+            epostadresse?: string;
+            /**
+             * @description Underenhetens telefonnummer
+             * @example 91504800
+             */
+            telefon?: string;
+            /**
+             * @description Underenhetens mobilnummer
+             * @example 91504800
+             */
+            mobil?: string;
+            _links?: {
+                overordnetEnhet?: {
+                    /**
+                     * @description Lenke til enhetens overordnede enhet i offentlig sektor
+                     * @example https://data.brreg.no/enhetsregisteret/api/enheter/376181782
+                     */
+                    href?: string | null;
+                };
+                self?: {
+                    /**
+                     * @description Lenke til egen ressurs
+                     * @example https://data.brreg.no/enhetsregisteret/api/underenheter/509100675
+                     */
+                    href: string;
+                };
+            };
+        };
+        Underenheter: {
+            _links: {
+                next?: {
+                    /**
+                     * @description Lenke til neste side med resultater
+                     * @example https://data.brreg.no/enhetsregisteret/api/enheter?page=1&size=20
+                     */
+                    href?: string | null;
+                };
+                last?: {
+                    /**
+                     * @description Lenke til siste side med resultater
+                     * @example https://data.brreg.no/enhetsregisteret/api/enheter?page=54469&size=20
+                     */
+                    href?: string | null;
+                };
+                prev?: {
+                    /**
+                     * @description Lenke til forrige side med resultater
+                     * @example https://data.brreg.no/enhetsregisteret/api/enheter?page=0&size=20
+                     */
+                    href?: string | null;
+                };
+                self?: {
+                    /**
+                     * @description Lenke til egen ressurs
+                     * @example https://data.brreg.no/enhetsregisteret/api/enheter
+                     */
+                    href: string;
+                };
+                first?: {
+                    /**
+                     * @description Lenke til første side med resultater
+                     * @example https://data.brreg.no/enhetsregisteret/api/enheter?page=0&size=20
+                     */
+                    href?: string | null;
+                };
+            };
+            _embedded?: {
+                /** @description En liste av underenheter som finnes i Enhetsregisteret */
+                underenheter?: components["schemas"]["Underenhet"][];
+            };
+            page: components["schemas"]["Page"];
+        };
+        /** Format: binary */
+        UnderenheterLastned: string;
+        SlettetUnderEnhet: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            respons_klasse: "SlettetUnderEnhet";
+            /**
+             * @description Underenhetens organisasjonsnummer
+             * @example 509100675
+             */
+            organisasjonsnummer: string;
+            /**
+             * @description Underenhetens navn
+             * @example Sesam stasjon
+             */
+            navn: string;
+            /** @description Underenhetens organisasjonsform */
+            organisasjonsform: components["schemas"]["Organisasjonsform"];
+            historiskeNavn?: components["schemas"]["HistoriskeNavn"];
+            /**
+             * @description Dato underenheten ble slettet
+             * @example 2024-03-09
+             */
+            slettedato: string;
+            _links?: {
+                self?: {
+                    /**
+                     * @description Lenke til egen ressurs
+                     * @example https://data.brreg.no/enhetsregisteret/api/underenheter/509100675
+                     */
+                    href: string;
+                };
+            };
+        };
+        GoneUnderenhet: {
+            /**
+             * @description Organisasjonsnummeret til enheten
+             * @example 509100675
+             */
+            organisasjonsnummer: string;
+            /**
+             * @description Dato enheten ble slettet
+             * @example 2024-03-09
+             */
+            slettedato: string;
+            _links?: {
+                self?: {
+                    /**
+                     * @description Lenke til egen ressurs
+                     * @example https://data.brreg.no/enhetsregisteret/api/underenheter/509100675
+                     */
+                    href: string;
+                };
+            };
+        };
+        /** @description Kommune */
+        Kommune: {
+            _links?: {
+                self?: {
+                    /**
+                     * @description Lenke til egen ressurs
+                     * @example https://data.brreg.no/enhetsregisteret/api/kommuner/0301
+                     */
+                    href: string;
+                };
+            };
+            /**
+             * @description Kommunenummeret
+             * @example 0301
+             */
+            nummer: string;
+            /**
+             * @description Kommunenavnet
+             * @example OSLO
+             */
+            navn: string;
+        };
+        Kommuner: {
+            _links?: {
+                next?: {
+                    /**
+                     * @description Lenke til neste side med resultater
+                     * @example https://data.brreg.no/enhetsregisteret/api/kommuner?page=1&size=20
+                     */
+                    href?: string | null;
+                };
+                last?: {
+                    /**
+                     * @description Lenke til siste side med resultater
+                     * @example https://data.brreg.no/enhetsregisteret/api/kommuner?page=54469&size=20
+                     */
+                    href?: string | null;
+                };
+                prev?: {
+                    /**
+                     * @description Lenke til forrige side med resultater
+                     * @example https://data.brreg.no/enhetsregisteret/api/kommuner?page=0&size=20
+                     */
+                    href?: string | null;
+                };
+                self?: {
+                    /**
+                     * @description Lenke til egen ressurs
+                     * @example https://data.brreg.no/enhetsregisteret/api/kommuner
+                     */
+                    href: string;
+                };
+                first?: {
+                    /**
+                     * @description Lenke til første side med resultater
+                     * @example https://data.brreg.no/enhetsregisteret/api/kommuner?page=0&size=20
+                     */
+                    href?: string | null;
+                };
+            };
+            _embedded?: {
+                /** @description En liste av kommuner som finnes i Enhetsregisteret */
+                kommuner: components["schemas"]["Kommune"][];
+            };
+            page?: components["schemas"]["Page"];
         };
         Organisasjonsformer: {
-            organisasjonsformer?: components["schemas"]["Organisasjonsform"][];
+            /** @description Links to resources */
+            _links?: {
+                enheter?: {
+                    /**
+                     * @description Lenke til enheter ressurs
+                     * @example https://data.brreg.no/enhetsregisteret/api/organisasjonsformer/enheter
+                     */
+                    href?: string | null;
+                };
+                underenheter?: {
+                    /**
+                     * @description Lenke til underenheter ressurs
+                     * @example https://data.brreg.no/enhetsregisteret/api/organisasjonsformer/underenheter
+                     */
+                    href?: string | null;
+                };
+                self?: {
+                    /**
+                     * @description Lenke til egen ressurs
+                     * @example https://data.brreg.no/enhetsregisteret/api/organisasjonsformer
+                     */
+                    href: string;
+                };
+            };
+            _embedded?: {
+                /** @description En liste av organisasjonsformer som finnes i Enhetsregisteret */
+                organisasjonsformer: components["schemas"]["Organisasjonsform"][];
+            };
+            page?: components["schemas"]["Page"];
         };
-        Organisasjonsform: {
-            kode?: string;
-            beskrivelse?: string;
-            _links?: components["schemas"]["Self"];
+        OrganisasjonsformerEnheter: {
+            _links?: {
+                self?: {
+                    /**
+                     * @description Lenke til egen ressurs
+                     * @example https://data.brreg.no/enhetsregisteret/api/organisasjonsformer
+                     */
+                    href: string;
+                };
+            };
+            _embedded?: {
+                /** @description En liste av organisasjonsformer som finnes i Enhetsregisteret */
+                organisasjonsformer: components["schemas"]["Organisasjonsform"][];
+            };
+            page?: components["schemas"]["Page"];
         };
-        Self: {
-            self?: components["schemas"]["Href"];
+        OrganisasjonsformerUnderenheter: {
+            _links?: {
+                self?: {
+                    /**
+                     * @description Lenke til egen ressurs
+                     * @example https://data.brreg.no/enhetsregisteret/api/organisasjonsformer
+                     */
+                    href: string;
+                };
+            };
+            _embedded?: {
+                /** @description En liste av organisasjonsformer som finnes i Enhetsregisteret */
+                organisasjonsformer: components["schemas"]["Organisasjonsform"][];
+            };
+            page?: components["schemas"]["Page"];
         };
-        Href: {
+        /** @description Matrikkelenhet */
+        Matrikkelenhet: {
+            /**
+             * @description Organisasjonsnummer
+             * @example 987654321
+             */
+            orgnr: string;
+            /**
+             * @description Kommunenummer
+             * @example 1234
+             */
+            kommnr: string;
+            /**
+             * @description Gårdsnummer
+             * @example 77665
+             */
+            gaardsnr: string;
+            /**
+             * @description Bruksnummer
+             * @example 55677
+             */
+            bruksnr: string;
+            /**
+             * @description Festenummer
+             * @example 5434
+             */
+            festenr: string;
+            /**
+             * @description Informasjonsløs identifikator for en matrikkelenhet
+             * @example 1010101
+             */
+            matrikkelenhetid: string;
+            /**
+             * @description Rekkefølge på organisasjonsnummer
+             * @example 1
+             */
+            rekkefolge: string;
+        };
+        /** @description En liste av matrikkelenheter */
+        Matrikkelenheter: components["schemas"]["Matrikkelenhet"][];
+        /** @description Rolleoppdatering */
+        RolleOppdatering: {
+            /**
+             * @description Versjon for CloudEvent spesifikasjon
+             * @example 1
+             */
+            specversion: string;
+            /**
+             * @description ID for hendelsen
+             * @example 1
+             */
+            id: string;
+            /**
+             * @description Kilden til hendelsen
+             * @example https://data.brreg.no/enhetsregisteret/api/enheter/974760673/roller
+             */
+            source: string;
+            /**
+             * @description Type for hendelsen
+             * @example no.brreg.enhetsregisteret.rolle.oppdatert
+             */
+            type: string;
+            /**
+             * @description Dato for hendelsen
+             * @example 2020-11-30T00:00:00.000Z
+             */
+            time: string;
+            /** @description Rolle data */
+            data: {
+                /**
+                 * @description Unik id-nummer tilhørende hendelsen
+                 * @example 974760673
+                 */
+                organisasjonsnummer?: string;
+            };
+        };
+        /** @description En liste av rolleoppdateringer */
+        RolleOppdateringer: components["schemas"]["RolleOppdatering"][];
+        /** @description Oppdatert enhet */
+        OppdateringerEnhet: {
+            /**
+             * @description Sekvensiell oppdateringsid for enhet.
+             * @example 1
+             */
+            oppdateringsid: number;
+            /**
+             * @description Tidsstempel for når endringen på enheten ble offentliggjort i dette APIet (ISO-8601)
+             * @example 2018-04-23T06:03:29.443Z
+             */
+            dato: string;
+            /**
+             * @description Enhetens organisasjonsnummer.
+             * @example 913189892
+             */
+            organisasjonsnummer: string;
+            /**
+             * @description Type endring som ble gjennomført
+             * @example Ukjent
+             */
+            endringstype: string;
+            /**
+             * @description Inneholder et JSON Patch-objekt for endrede felt i enheter
+             * @example [
+             *       {
+             *         "op": "add",
+             *         "path": "/naeringskode1",
+             *         "value": "123456789"
+             *       }
+             *     ]
+             */
+            endringer?: Record<string, never>[];
+            _links?: {
+                enhet?: {
+                    /**
+                     * @description Lenke til egen ressurs
+                     * @example https://data.brreg.no/enhetsregisteret/api/enheter/913189892
+                     */
+                    href: string;
+                };
+            };
+        };
+        OppdateringerEnheter: {
+            _links?: {
+                next?: {
+                    /**
+                     * @description Lenke til neste side med resultater
+                     * @example https://data.brreg.no/enhetsregisteret/api/oppdateringer/enheter?page=1&size=20
+                     */
+                    href?: string | null;
+                };
+                last?: {
+                    /**
+                     * @description Lenke til siste side med resultater
+                     * @example https://data.brreg.no/enhetsregisteret/api/oppdateringer/enheter?page=54469&size=20
+                     */
+                    href?: string | null;
+                };
+                prev?: {
+                    /**
+                     * @description Lenke til forrige side med resultater
+                     * @example https://data.brreg.no/enhetsregisteret/api/oppdateringer/enheter?page=0&size=20
+                     */
+                    href?: string | null;
+                };
+                self?: {
+                    /**
+                     * @description Lenke til egen ressurs
+                     * @example https://data.brreg.no/enhetsregisteret/api/oppdateringer/enheter
+                     */
+                    href: string;
+                };
+                first?: {
+                    /**
+                     * @description Lenke til første side med resultater
+                     * @example https://data.brreg.no/enhetsregisteret/api/oppdateringer/enheter?page=0&size=20
+                     */
+                    href?: string | null;
+                };
+            };
+            _embedded?: {
+                /** @description En liste av oppdaterte enheter */
+                oppdaterteEnheter: components["schemas"]["OppdateringerEnhet"][];
+            };
+            page?: components["schemas"]["Page"];
+        };
+        /** @description Oppdatert underenhet */
+        OppdateringerUnderenhet: {
+            /**
+             * @description Sekvensiell oppdateringsid for enhet.
+             * @example 1
+             */
+            oppdateringsid: number;
+            /**
+             * @description Tidsstempel for når endringen på enheten ble offentliggjort i dette APIet (ISO-8601)
+             * @example 2018-04-23T06:03:29.443Z
+             */
+            dato: string;
+            /**
+             * @description Enhetens organisasjonsnummer.
+             * @example 913189892
+             */
+            organisasjonsnummer: string;
+            /**
+             * @description Type endring som ble gjennomført
+             * @example Ukjent
+             */
+            endringstype: string;
+            /**
+             * @description Inneholder et JSON Patch-objekt for endrede felt i underenheter
+             * @example [
+             *       {
+             *         "op": "add",
+             *         "path": "/naeringskode1",
+             *         "value": "123456789"
+             *       }
+             *     ]
+             */
+            endringer?: Record<string, never>[];
+            _links?: {
+                underenhet?: {
+                    /**
+                     * @description Lenke til egen ressurs
+                     * @example https://data.brreg.no/enhetsregisteret/api/undereenheter/913189892
+                     */
+                    href: string;
+                };
+            };
+        };
+        OppdateringerUnderenheter: {
+            _links?: {
+                next?: {
+                    /**
+                     * @description Lenke til neste side med resultater
+                     * @example https://data.brreg.no/enhetsregisteret/api/oppdateringer/underenheter?page=1&size=20
+                     */
+                    href?: string | null;
+                };
+                last?: {
+                    /**
+                     * @description Lenke til siste side med resultater
+                     * @example https://data.brreg.no/enhetsregisteret/api/oppdateringer/underenheter?page=54469&size=20
+                     */
+                    href?: string | null;
+                };
+                prev?: {
+                    /**
+                     * @description Lenke til forrige side med resultater
+                     * @example https://data.brreg.no/enhetsregisteret/api/oppdateringer/underenheter?page=0&size=20
+                     */
+                    href?: string | null;
+                };
+                self?: {
+                    /**
+                     * @description Lenke til egen ressurs
+                     * @example https://data.brreg.no/enhetsregisteret/api/oppdateringer/underenheter
+                     */
+                    href: string;
+                };
+                first?: {
+                    /**
+                     * @description Lenke til første side med resultater
+                     * @example https://data.brreg.no/enhetsregisteret/api/oppdateringer/underenheter?page=0&size=20
+                     */
+                    href?: string | null;
+                };
+            };
+            _embedded?: {
+                /** @description En liste av oppdaterte underenheter */
+                oppdaterteUnderenheter: components["schemas"]["OppdateringerUnderenhet"][];
+            };
+            page?: components["schemas"]["Page"];
+        };
+        /** Format: binary */
+        RollerTotalbestand: string;
+        RolleJuridiskrolle: {
+            /**
+             * @description Er avregistrert
+             * @example false
+             */
+            avregistrert?: boolean;
+            /**
+             * @description Rekkefølge
+             * @example 0
+             */
+            rekkefolge?: number;
+            type?: components["schemas"]["RolleRolletype"];
+        };
+        RolleJuridiskrolleEnhet: {
+            /**
+             * @description Organisasjonsnummeret til enheten
+             * @example 154020209
+             */
+            organisasjonsnummer?: string;
+            /**
+             * @description Enhetens navn
+             * @example Sesam stasjon
+             */
+            navn?: string;
+            /** @description Liste av roller */
+            roller?: components["schemas"]["RolleJuridiskrolle"][];
+            _links?: {
+                enhet?: {
+                    /**
+                     * @description Lenke til enheten
+                     * @example https://data.brreg.no/enhetsregisteret/api/enheter/123456789
+                     */
+                    href: string;
+                };
+                roller?: {
+                    /**
+                     * @description Lenke til enhetens roller
+                     * @example https://data.brreg.no/enhetsregisteret/api/enheter/123456789/roller
+                     */
+                    href: string;
+                };
+            };
+        };
+        "Sikret.PersonRolleutskrift": {
+            /** @description Personens navn */
+            navn: {
+                /**
+                 * @description Personens fornavn
+                 * @example fornavn
+                 */
+                fornavn: string;
+                /**
+                 * @description Personens mellomnavn
+                 * @example mellomnavn
+                 */
+                mellomnavn?: string;
+                /**
+                 * @description Personens etternavn
+                 * @example etternavn
+                 */
+                etternavn: string;
+            };
+            /**
+             * @description Personens fødselsdato
+             * @example 1979-01-01
+             */
+            fodselsdato: string;
+            /**
+             * @description Er personen død
+             * @example false
+             */
+            erDoed: boolean;
+            /** @description Liste av enheter */
+            enheter: components["schemas"]["RolleJuridiskrolleEnhet"][];
+        };
+        /** @description Rollerepresentant */
+        RolleRepresentant: {
+            /**
+             * @description Koden
+             * @example A-AK
+             */
+            kode: string;
+            /**
+             * @description Beskrivelsen
+             * @example Representant for A-aksjonærene
+             */
+            beskrivelse: string;
+            _links?: {
+                self?: {
+                    /**
+                     * @description Lenke til egen ressurs
+                     * @example https://data.brreg.no/enhetsregisteret/api/roller/representanter/A-AK
+                     */
+                    href: string;
+                };
+            };
+        };
+        RolleRepresentanter: {
+            _embedded?: {
+                /** @description En liste av rolle representanter */
+                representanter: components["schemas"]["RolleRepresentant"][];
+            };
+            _links?: {
+                self?: {
+                    /**
+                     * @description Lenke til egen ressurs
+                     * @example https://data.brreg.no/enhetsregisteret/api/roller/representanter
+                     */
+                    href: string;
+                };
+            };
+        };
+        RolleRollegruppetyper: {
+            _embedded?: {
+                /** @description En liste av rollegruppetyper */
+                rollegruppetyper: components["schemas"]["RolleRollegruppetype"][];
+            };
+            _links?: {
+                self?: {
+                    /**
+                     * @description Lenke til egen ressurs
+                     * @example https://data.brreg.no/enhetsregisteret/api/roller/rollegruppetyper
+                     */
+                    href: string;
+                };
+            };
+        };
+        RolleRolletyper: {
+            _embedded?: {
+                /** @description En liste av rolletyper */
+                rolletyper: components["schemas"]["RolleRolletype"][];
+            };
+            _links?: {
+                self?: {
+                    /**
+                     * @description Lenke til egen ressurs
+                     * @example https://data.brreg.no/enhetsregisteret/api/roller/rolletyper
+                     */
+                    href: string;
+                };
+            };
+        };
+        RolleJuridiskeroller: {
+            /**
+             * @description Organisasjonsnummeret til enheten
+             * @example 123456789
+             */
+            organisasjonsnummer?: string;
+            /** @description Liste av enheter */
+            enheter?: components["schemas"]["RolleJuridiskrolleEnhet"][];
+            /**
+             * @description Er slettet
+             * @example false
+             */
+            erSlettet?: boolean;
+        };
+        /** @description Perioden den frivillige organisasjonen er utestengt fra å delta i grasrotandelen */
+        FrivilligOrganisasjonUtestengelsesperiode: {
+            /**
+             * Format: date
+             * @description Utestengt fra dato
+             * @example 2001-01-01
+             */
+            fraDato: string;
+            /**
+             * Format: date
+             * @description Utestengt til dato. Kan være utestengt på ubestemt tid, da er tilDato null.
+             * @example 2001-03-01
+             */
+            tilDato?: string | null;
+        } | null;
+        FrivilligOrganisasjonGrasrotandel: {
+            /**
+             * @description Om den frivillige organisasjonen deltar i grasrotandelen
+             * @example true
+             */
+            deltarI: boolean;
+            utestengelsesperiode?: components["schemas"]["FrivilligOrganisasjonUtestengelsesperiode"];
+        };
+        FrivilligOrganisasjonSistInnsendteAarsregnskap: {
+            /**
+             * Format: int32
+             * @description Årstall for sist godkjente frivillig rapportert årsregnskap
+             * @example 2024
+             */
+            regnskapsaar: number;
+            /**
+             * Format: date
+             * @description Registreringsdato i Regnskapsregisteret for sist innsendte frivillig rapportert årsregnskap
+             * @example 2001-03-01
+             */
+            registreringsdato: string;
+        } | null;
+        FrivilligOrganisasjonRegnskapsrapportering: {
+            /**
+             * @description Om den frivillige organisasjonen påtar seg å innrapportere årsregnskap til regnskapsregisteret
+             * @example true
+             */
+            harPaatattSegRapporteringsplikt: boolean;
+            /**
+             * @description Avslutningsdato for regnskapsperioden. Formatet er: dd.mm
+             * @example 24.12
+             */
+            avslutningsdatoForRegnskapsperiode?: string | null;
+            sistInnsendteAarsregnskap?: components["schemas"]["FrivilligOrganisasjonSistInnsendteAarsregnskap"];
+        } | null;
+        FrivilligOrganisasjonVedtekter: {
+            /**
+             * @description Om den frivillige organisasjonen har registrert vedtekter (plikter å sende oppdaterte vedtekter når disse endres)
+             * @example true
+             */
+            frivilligRegistrerteVedtekter: boolean;
+            /**
+             * Format: date
+             * @description Dato sist vedtekter ble oppdatert
+             * @example 2001-01-01
+             */
+            sistOppdaterteVedtekter?: string | null;
+        } | null;
+        Link: {
             href?: string;
+        };
+        Links: {
+            [key: string]: components["schemas"]["Link"];
+        };
+        FrivilligOrganisasjonIcnpoKategori: {
+            /**
+             * @description Entydig intern identifikator for ICNPO-Kategori, brukes ved oppretting og redigering av frivillig organisasjon i Brønnøyusundregistrene
+             * @example ICNPOKategori.kunstOgKultur
+             */
+            kategori: string;
+            /**
+             * @description Entydig identifikator for ICNPO-Kategori (International Classification of Non-Profit Organisation)
+             * @example 1100
+             */
+            icnpoNummer: string;
+            /**
+             * @description Tekstlig beskrivelse av ICNPO-kategorien. Kun satt dersom du sender med query-parameteret 'spraak', ellers null.
+             * @example Kunst og kultur
+             */
+            navn?: string | null;
+            /**
+             * Format: int32
+             * @description Rekkefølge for ICNPO-kategori
+             * @example 1
+             */
+            rekkefoelge: number;
+            _links?: components["schemas"]["Links"];
+        };
+        FrivilligOrganisasjonPaategning: {
+            /**
+             * @description Informasjonstypen påtegningen gjelder
+             * @example informasjonstype.organisasjonsnummer
+             */
+            identifikatorInformasjonstype?: string;
+            /**
+             * @description Beskrivelse av informasjonstypen påtegningen gjelder
+             * @example Organisasjonsnummer
+             */
+            navn?: string | null;
+            /**
+             * @description JSONPath uttrykk til feltet påtegningen gjelder. Uttrykket antar du starter fra FrivilligOrganisasjon objektet, selv hvis objektet er embedded i et array.
+             * @example $.organisasjonsnummer
+             */
+            sti?: string;
+            /**
+             * @description Påtegningen
+             * @example Eksempel på påtegning på frivillig organisasjon AS
+             */
+            paategning?: string;
+            _links?: components["schemas"]["Links"];
+        };
+        FrivilligOrganisasjonInnfoert: {
+            /**
+             * @description Organisasjonsnummeret til den frivillige organisasjonen
+             * @example 388348542
+             */
+            organisasjonsnummer: string;
+            /**
+             * @description Intern organisasjonsstatus, brukes av Brønnøysundregistrene
+             * @example frivilligOrganisasjonsstatus.innfoert
+             */
+            frivilligOrganisasjonsstatus: string;
+            /**
+             * @description Kontonummer
+             * @example 123456789
+             */
+            kontonummer?: string | null;
+            /**
+             * Format: date
+             * @description Dato den frivillige organisasjonen sist ble innført i Frivillighetsregisteret
+             * @example 2001-01-01
+             */
+            innfoertDato: string;
+            /**
+             * Format: date
+             * @description Dato den frivillige organisasjonen første gang ble innført i Frivillighetsregisteret
+             * @example 2001-01-01
+             */
+            foersteGangInnfoert: string;
+            grasrotandel: components["schemas"]["FrivilligOrganisasjonGrasrotandel"];
+            regnskapsrapportering?: components["schemas"]["FrivilligOrganisasjonRegnskapsrapportering"];
+            vedtekter?: components["schemas"]["FrivilligOrganisasjonVedtekter"];
+            icnpoKategorier: components["schemas"]["FrivilligOrganisasjonIcnpoKategori"][];
+            /**
+             * @example [
+             *       {
+             *         "identifikatorInformasjonstype": "informasjonstype.organisasjonsnummer",
+             *         "paategning": "Eksempel på påtegning på frivillig organisasjon AS"
+             *       },
+             *       {
+             *         "identifikatorInformasjonstype": "informasjonstype.icnpokategori",
+             *         "paategning": "Eksempel på påtegning på kategori"
+             *       }
+             *     ]
+             */
+            paategninger: components["schemas"]["FrivilligOrganisasjonPaategning"][];
+            _links: components["schemas"]["Links"];
+        };
+        FrivilligeOrganisasjoner: {
+            _embedded?: {
+                frivilligeOrganisasjoner: components["schemas"]["FrivilligOrganisasjonInnfoert"][];
+            } | null;
+            _links?: components["schemas"]["Links"];
+        };
+        FrivilligOrganisasjonSlettet: {
+            /**
+             * @description Organisasjonsnummeret til den frivillige organisasjonen
+             * @example 388348542
+             */
+            organisasjonsnummer: string;
+            /**
+             * @description Intern organisasjonsstatus, brukes av Brønnøysundregistrene
+             * @example frivilligOrganisasjonsstatus.innfoert
+             */
+            frivilligOrganisasjonsstatus: string;
+            /**
+             * Format: date
+             * @description Dato den frivillige organisasjonen ble slettet i frivillighetsregisteret. Kun satt hvis organisasjonen er slettet, ellers null.
+             * @example 2025-02-18
+             */
+            slettetDato: string;
+            _links: components["schemas"]["Links"];
+        };
+        FrivilligOrganisasjon: components["schemas"]["FrivilligOrganisasjonInnfoert"] | components["schemas"]["FrivilligOrganisasjonSlettet"];
+        IcnpoKategori: {
+            /**
+             * @description Entydig identifikator for ICNPO-Kategori (International Classification of Non-Profit Organisation)
+             * @example 1100
+             */
+            icnpoNummer: string;
+            /**
+             * @description Beskrivelse av ICNPO-kategorien
+             * @example Kunst og kultur
+             */
+            navn: string;
+            /**
+             * @description Språkkode
+             * @example NOB
+             */
+            spraakkode: string;
+            _links?: components["schemas"]["Links"];
+        };
+        IcnpoKategorier: {
+            _embedded?: {
+                icnpoKategorier: components["schemas"]["IcnpoKategori"][];
+            } | null;
+            _links?: components["schemas"]["Links"];
+        };
+        InformasjonstypeFrivillighetsregisteret: {
+            /**
+             * @description Entydig identifikator for informasjonstype (felt)
+             * @example informasjonstype.kontonummer
+             */
+            identifikator: string;
+            /**
+             * @description Beskrivelse av informasjonstypen (feltet)
+             * @example Kontonummer
+             */
+            navn: string;
+            /**
+             * @description Språkkode
+             * @example NOB
+             */
+            spraakkode: string;
+            _links?: components["schemas"]["Links"];
+        };
+        InformasjonstyperFrivillighetsregisteret: {
+            _embedded?: {
+                informasjonstyper: components["schemas"]["InformasjonstypeFrivillighetsregisteret"][];
+            } | null;
+            _links?: components["schemas"]["Links"];
         };
     };
     responses: never;
@@ -406,7 +3422,7 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
-    listTjenester: {
+    lastnedPartiregisteretCsv: {
         parameters: {
             query?: never;
             header?: never;
@@ -415,17 +3431,51 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Tjenester mot åpne data fra Enhetsregisteret */
+            /** @description 200 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 404 */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 500 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InternalServerError"];
+                };
+            };
+        };
+    };
+    hentTjenester: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 200 */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": string;
+                    "application/json": components["schemas"]["Root"];
                 };
             };
-            /** @description Udefinert feil */
-            default: {
+            /** @description Usupportert media type */
+            415: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -433,79 +3483,103 @@ export interface operations {
             };
         };
     };
-    listEnheter: {
+    hentEnheter: {
         parameters: {
             query?: {
-                /** @description Antall ønskede treff i response. Default verdi er 20. Max dypde (page*size) er 10 000. */
-                size?: number;
-                /** @description Hvilken side som ønskes av resultatsettet. Default verdi er 0. Max dypde (page*size) er 10 000 */
-                page?: number;
-                /** @description Filtrer på navn. Sammensatt søk på likhet. Resultat sorteres pr default etter score */
+                /** @description Enhetens navn. Fritekst på 1 til 180 tegn */
                 navn?: string;
-                /** @description Sorter resultatsett på feltnavn. Merk at navn må sorteres på navn.norwegian */
-                sort?: string;
-                /** @description Filtrer på organisasjonsformkode. Kommaseparert liste. */
-                organisasjonsform?: string;
-                /** @description Filtrer på næringskode. Valgfritt nivå. Kommaseparert liste. */
-                naeringskode?: string;
-                /** @description Filtrer på kommunenummer 4 siffer. */
-                kommunenummer?: string;
-                /** @description Organisasjonsnummeret til overordnet enhet */
+                /** @description Søkemetode for navn-parameteren. Den eneste støttede verdien er FORTLOEPENDE. Eksempel på bruk: navn=sesam stasjon&navnMetodeForSoek=FORTLOEPENDE */
+                navnMetodeForSoek?: string;
+                /** @description Kommaseparert liste med organisasjonsnummer, 9 siffer */
+                organisasjonsnummer?: string[];
+                /** @description Organisasjonsnummeret til overordnet enhet i offentlig sektor. Streng med 9 siffer */
                 overordnetEnhet?: string;
-                /** @description Filtrer på fra registreringsdato i Enhetsregisteret. */
-                fraRegistreringsdatoEnhetsregisteret?: string;
-                /** @description Filtrer på til registreringsdato i Enhetsregisteret. */
-                tilRegistreringsdatoEnhetsregisteret?: string;
-                /** @description Filtrer på om enheten er registrert i Merverdiregisteret */
-                registrertIMvaregisteret?: boolean;
-                /** @description Filtrer på om enheten er registrert konkurs */
+                /** @description Minste antall ansatte. Må være 0, 1 eller større enn 4 */
+                fraAntallAnsatte?: string;
+                /** @description Største antall. Må være 0, 4, eller over 4 */
+                tilAntallAnsatte?: string;
+                /** @description Hvorvidt enheten er konkurs. */
                 konkurs?: boolean;
-                /** @description Filtrer på fra antall ansatte */
-                fraAntallAnsatte?: number;
-                /** @description Filtrer på til antall ansatte */
-                tilAntallAnsatte?: number;
-                /** @description Organisasjonsnummeret til enhetene.  Kommaseparert liste med organisasjonsnummer. */
-                organisasjonsnummer?: string;
-                /** @description Hvorvidt enheten er registrert i Foretaksregisteret */
+                /** @description Hvorvidt enheten er registrert i Mva-registeret */
+                registrertIMvaregisteret?: boolean;
+                /** @description Hvorvidt enheten er registrert i Foretaksregisteret. */
                 registrertIForetaksregisteret?: boolean;
-                /** @description Hvorvidt enheten er registrert i Stiftelsesregisteret */
+                /** @description Hvorvidt enheten er registrert i Stiftelsesregisteret. */
                 registrertIStiftelsesregisteret?: boolean;
-                /** @description Hvorvidt enheten er registrert i Frivillighetsregisteret */
+                /** @description Hvorvidt enheten er registrert i Frivillighetsregisteret. */
                 registrertIFrivillighetsregisteret?: boolean;
-                /** @description Frivillig registrert i Merverdiavgiftsregisteret. Kommaseparert liste med beskrivelser. */
-                frivilligRegistrertIMvaregisteret?: string;
-                /** @description Hvorvidt enheten er registrert som underTvangsavvikling eller tvangsopplosning */
+                /** @description Frivillig registrert i Merverdiavgiftsregisteret. */
+                frivilligRegistrertIMvaregisteret?: string[];
+                /** @description Hvorvidt enheten er under tvangsavvikling eller tvangsoppløsning */
                 underTvangsavviklingEllerTvangsopplosning?: boolean;
-                /** @description Hvorvidt enheten er registrert som underAvvikling */
+                /** @description Hvorvidt enheten er under avvikling */
                 underAvvikling?: boolean;
-                /** @description Tidligste stiftelsesdato for enheten */
+                /** @description Hvorvidt enheten er konkurs, under tvangsavvikling eller tvangsoppløsning */
+                underKonkursbehandling?: boolean;
+                /** @description Tidligste registreringsdato i Enhetsregisteret (ISO-8601 yyyy-MM-dd) */
+                fraRegistreringsdatoEnhetsregisteret?: string;
+                /** @description Seneste registreringsdato i Enhetsregisteret (ISO-8601 yyyy-MM-dd) */
+                tilRegistreringsdatoEnhetsregisteret?: string;
+                /** @description Tidligste stiftelsesdato (ISO-8601 yyyy-MM-dd) */
                 fraStiftelsesdato?: string;
-                /** @description Seneste stiftelsesdato hos enheten */
+                /** @description Seneste stiftelsesdato (ISO-8601 yyyy-MM-dd) */
                 tilStiftelsesdato?: string;
+                /** @description Tidligste registreringsdato i Merverdiavgiftsregisteret. */
+                fraRegistreringsdatoMerverdiavgiftsregisteret?: string;
+                /** @description Seneste registreringsdato i Merverdiavgiftsregisteret. */
+                tilRegistreringsdatoMerverdiavgiftsregisteret?: string;
+                /** @description Tidligste registreringsdato i Foretaksregisteret. */
+                fraRegistreringsdatoForetaksregisteret?: string;
+                /** @description Seneste registreringsdato i Foretaksregisteret. */
+                tilRegistreringsdatoForetaksregisteret?: string;
+                /** @description Tidligste registreringsdato i Frivillighetsregisteret. */
+                fraRegistreringsdatoFrivillighetsregisteret?: string;
+                /** @description Seneste registreringsdato i Frivillighetsregisteret. */
+                tilRegistreringsdatoFrivillighetsregisteret?: string;
+                /** @description Tidligste registreringsdato i Partiregisteret. */
+                fraRegistreringsdatoPartiregisteret?: string;
+                /** @description Seneste registreringsdato i Partiregisteret. */
+                tilRegistreringsdatoPartiregisteret?: string;
+                /** @description Hvorvidt enheten er registrert i Partiregisteret. */
+                registrertIPartiregisteret?: boolean;
+                /** @description Kommaseparert liste med organisasjonsform */
+                organisasjonsform?: string[];
                 /** @description Enhetens hjemmeside */
                 hjemmeside?: string;
-                /** @description Enhetens institusjonelle sektorkode. Kommaseparert liste med sektorkoder på 4 siffer. */
-                institusjonellSektorkode?: string;
-                /** @description Kommunenummer til enhetens postadresse. Kommaseparert liste med kommunenummer på 4 siffer. */
-                "postadresse.kommunenummer"?: string;
-                /** @description Postnummeret til enhetens postadresse. Kommaseparert liste med postnummer på 4 siffer. */
-                "postadresse.postnummer"?: string;
-                /** @description Poststedet til enhetens postadresse. Fritekst. */
+                /** @description Kommaseparert liste med sektorkoder, 4 siffer */
+                institusjonellSektorkode?: string[];
+                /** @description Kommaseparert liste med Adresse (postadresse) */
+                "postadresse.adresse"?: string[];
+                /** @description Kommaseparert liste med Kommunenummer (postadresse), 4 siffer */
+                "postadresse.kommunenummer"?: string[];
+                /** @description Kommaseparert liste med Landkode (postadresse) */
+                "postadresse.landkode"?: string[];
+                /** @description Kommaseparert liste med Postnummer (postadresse), 4 siffer */
+                "postadresse.postnummer"?: string[];
+                /** @description Poststed (postadresse). Fritekst */
                 "postadresse.poststed"?: string;
-                /** @description Landkode til enhetens postadresse. Kommaseparert liste med landkoder. */
-                "postadresse.landkode"?: string;
-                /** @description Adresse til enhetens postadresse. Kommaseparert liste med adresser. */
-                "postadresse.adresse"?: string;
-                /** @description Postnummer til enhetens forretningsadresse. Kommaseparert liste med postnummer på 4 siffer. */
-                "forretningsadresse.postnummer"?: string;
-                /** @description Poststedet til enhetens forretningsadresse. Fritekst. */
+                /** @description Kommaseparert liste med kommunenummer, 4 siffer. Filtrerer på forretningsadresse eller postadresse */
+                kommunenummer?: string[];
+                /** @description Kommaseparert liste med kommunenummer (forretningsadresse), 4 siffer */
+                "forretningsadresse.kommunenummer"?: string[];
+                /** @description Kommaseparert liste med postnummer (forretningsadresse), 4 siffer */
+                "forretningsadresse.postnummer"?: string[];
+                /** @description Poststed (forretningsadresse). Fritekst */
                 "forretningsadresse.poststed"?: string;
-                /** @description Landkode til enhetens forretningsadresse. Kommaseparert liste med landkoder. */
-                "forretningsadresse.landkode"?: string;
-                /** @description Adresse til enhetens forretningsadresse. Kommaseparert liste med adresser. */
-                "forretningsadresse.adresse"?: string;
-                /** @description Årstall for siste innsendte årsregnskap for enheten. Kommaseparert liste med årstall på 4 siffer */
-                sisteInnsendteAarsregnskap?: string;
+                /** @description Kommaseparert liste med landkode (forretningsadresse) */
+                "forretningsadresse.landkode"?: string[];
+                /** @description Kommaseparert liste med adresse (forretningsadresse) */
+                "forretningsadresse.adresse"?: string[];
+                /** @description Kommaseparert liste med næringskoder */
+                naeringskode?: string[];
+                /** @description Kommaseparert liste med årstall, 4 siffer. */
+                sisteInnsendteAarsregnskap?: string[];
+                /** @description Felt som det skal sorteres på og sorteringsrekkefølge. For eks: organisasjonsnummer,ASC eller organisasjonsnummer,DESC */
+                sort?: string;
+                /** @description Sidestørrelse */
+                size?: number;
+                /** @description Sidenummer */
+                page?: number;
             };
             header?: never;
             path?: never;
@@ -513,28 +3587,327 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Enheter fra Enhetsregisteret */
+            /** @description 200 */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": string;
+                    "application/vnd.brreg.enhetsregisteret.enhet.v2+json": components["schemas"]["Enheter"];
+                    "application/json": components["schemas"]["Enheter"];
                 };
             };
-            /** @description Ugyldig forespørsel */
+            /** @description 400 */
             400: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["BadRequest"];
+                };
             };
-            /** @description Udefinert feil */
-            default: {
+            /** @description 500 */
+            500: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["InternalServerError"];
+                };
+            };
+        };
+    };
+    lastnedEnheter: {
+        parameters: {
+            query?: {
+                /** @description Enhetens navn. Fritekst på 1 til 180 tegn */
+                navn?: string;
+                /** @description Kommaseparert liste med organisasjonsnummer, 9 siffer */
+                organisasjonsnummer?: string[];
+                /** @description Organisasjonsnummeret til overordnet enhet i offentlig sektor. Streng med 9 siffer */
+                overordnetEnhet?: string;
+                /** @description Minste antall ansatte. Må være 0, 1 eller større enn 4 */
+                fraAntallAnsatte?: string;
+                /** @description Største antall. Må være 0, 4, eller over 4 */
+                tilAntallAnsatte?: string;
+                /** @description Hvorvidt enheten er konkurs. */
+                konkurs?: boolean;
+                /** @description Hvorvidt enheten er registrert i Mva-registeret */
+                registrertIMvaregisteret?: boolean;
+                /** @description Hvorvidt enheten er registrert i Foretaksregisteret. */
+                registrertIForetaksregisteret?: boolean;
+                /** @description Hvorvidt enheten er registrert i Stiftelsesregisteret. */
+                registrertIStiftelsesregisteret?: boolean;
+                /** @description Hvorvidt enheten er registrert i Frivillighetsregisteret. */
+                registrertIFrivillighetsregisteret?: boolean;
+                /** @description Frivillig registrert i Merverdiavgiftsregisteret. */
+                frivilligRegistrertIMvaregisteret?: string[];
+                /** @description Hvorvidt enheten er under tvangsavvikling eller tvangsoppløsning */
+                underTvangsavviklingEllerTvangsopplosning?: boolean;
+                /** @description Hvorvidt enheten er under avvikling */
+                underAvvikling?: boolean;
+                /** @description Hvorvidt enheten er konkurs, under tvangsavvikling eller tvangsoppløsning */
+                underKonkursbehandling?: boolean;
+                /** @description Tidligste registreringsdato i Enhetsregisteret (ISO-8601 yyyy-MM-dd) */
+                fraRegistreringsdatoEnhetsregisteret?: string;
+                /** @description Seneste registreringsdato i Enhetsregisteret (ISO-8601 yyyy-MM-dd) */
+                tilRegistreringsdatoEnhetsregisteret?: string;
+                /** @description Tidligste stiftelsesdato (ISO-8601 yyyy-MM-dd) */
+                fraStiftelsesdato?: string;
+                /** @description Seneste stiftelsesdato (ISO-8601 yyyy-MM-dd) */
+                tilStiftelsesdato?: string;
+                /** @description Kommaseparert liste med organisasjonsform */
+                organisasjonsform?: string[];
+                /** @description Enhetens hjemmeside */
+                hjemmeside?: string;
+                /** @description Kommaseparert liste med sektorkoder, 4 siffer */
+                institusjonellSektorkode?: string[];
+                /** @description Kommaseparert liste med Adresse (postadresse) */
+                "postadresse.adresse"?: string[];
+                /** @description Kommaseparert liste med Kommunenummer (postadresse), 4 siffer */
+                "postadresse.kommunenummer"?: string[];
+                /** @description Kommaseparert liste med Landkode (postadresse) */
+                "postadresse.landkode"?: string[];
+                /** @description Kommaseparert liste med Postnummer (postadresse), 4 siffer */
+                "postadresse.postnummer"?: string[];
+                /** @description Poststed (postadresse). Fritekst */
+                "postadresse.poststed"?: string;
+                /** @description Kommaseparert liste med kommunenummer (forretningsadresse), 4 siffer */
+                kommunenummer?: string[];
+                /** @description Kommaseparert liste med kommunenummer (forretningsadresse), 4 siffer */
+                "forretningsadresse.kommunenummer"?: string[];
+                /** @description Kommaseparert liste med postnummer (forretningsadresse), 4 siffer */
+                "forretningsadresse.postnummer"?: string[];
+                /** @description Poststed (forretningsadresse). Fritekst */
+                "forretningsadresse.poststed"?: string;
+                /** @description Kommaseparert liste med landkode (forretningsadresse) */
+                "forretningsadresse.landkode"?: string[];
+                /** @description Kommaseparert liste med adresse (forretningsadresse) */
+                "forretningsadresse.adresse"?: string[];
+                /** @description Kommaseparert liste med næringskoder */
+                naeringskode?: string[];
+                /** @description Kommaseparert liste med årstall, 4 siffer. */
+                sisteInnsendteAarsregnskap?: string[];
+                /** @description Felt som det skal sorteres på og sorteringsrekkefølge. For eks: organisasjonsnummer,ASC eller organisasjonsnummer,DESC */
+                sort?: string;
+                /** @description Sidestørrelse */
+                size?: string;
+                /** @description Sidenummer */
+                page?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 200 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/vnd.brreg.enhetsregisteret.enhet.v2+gzip": components["schemas"]["EnheterLastned"];
+                    "application/gzip": components["schemas"]["EnheterLastned"];
+                };
+            };
+            /** @description 400 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BadRequest"];
+                };
+            };
+            /** @description 500 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InternalServerError"];
+                };
+            };
+            /** @description Timeout */
+            504: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InternalServerError"];
+                };
+            };
+        };
+    };
+    lastnedEnheterCsv: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 200 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/vnd.brreg.enhetsregisteret.enhet.v2+gzip": components["schemas"]["EnheterLastned"];
+                    "application/gzip": components["schemas"]["EnheterLastned"];
+                };
+            };
+            /** @description 400 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BadRequest"];
+                };
+            };
+            /** @description 500 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InternalServerError"];
+                };
+            };
+            /** @description Timeout */
+            504: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InternalServerError"];
+                };
+            };
+        };
+    };
+    lastnedEnheterRegneark: {
+        parameters: {
+            query?: {
+                /** @description Enhetens navn. Fritekst på 1 til 180 tegn */
+                navn?: string;
+                /** @description Kommaseparert liste med organisasjonsnummer, 9 siffer */
+                organisasjonsnummer?: string[];
+                /** @description Organisasjonsnummeret til overordnet enhet i offentlig sektor. Streng med 9 siffer */
+                overordnetEnhet?: string;
+                /** @description Minste antall ansatte. Må være 0, 1 eller større enn 4 */
+                fraAntallAnsatte?: string;
+                /** @description Største antall. Må være 0, 4, eller over 4 */
+                tilAntallAnsatte?: string;
+                /** @description Hvorvidt enheten er konkurs. */
+                konkurs?: boolean;
+                /** @description Hvorvidt enheten er registrert i Mva-registeret */
+                registrertIMvaregisteret?: boolean;
+                /** @description Hvorvidt enheten er registrert i Foretaksregisteret. */
+                registrertIForetaksregisteret?: boolean;
+                /** @description Hvorvidt enheten er registrert i Stiftelsesregisteret. */
+                registrertIStiftelsesregisteret?: boolean;
+                /** @description Hvorvidt enheten er registrert i Frivillighetsregisteret. */
+                registrertIFrivillighetsregisteret?: boolean;
+                /** @description Frivillig registrert i Merverdiavgiftsregisteret. */
+                frivilligRegistrertIMvaregisteret?: string[];
+                /** @description Hvorvidt enheten er under tvangsavvikling eller tvangsoppløsning */
+                underTvangsavviklingEllerTvangsopplosning?: boolean;
+                /** @description Hvorvidt enheten er under avvikling */
+                underAvvikling?: boolean;
+                /** @description Hvorvidt enheten er konkurs, under tvangsavvikling eller tvangsoppløsning */
+                underKonkursbehandling?: boolean;
+                /** @description Tidligste registreringsdato i Enhetsregisteret (ISO-8601 yyyy-MM-dd) */
+                fraRegistreringsdatoEnhetsregisteret?: string;
+                /** @description Seneste registreringsdato i Enhetsregisteret (ISO-8601 yyyy-MM-dd) */
+                tilRegistreringsdatoEnhetsregisteret?: string;
+                /** @description Tidligste stiftelsesdato (ISO-8601 yyyy-MM-dd) */
+                fraStiftelsesdato?: string;
+                /** @description Seneste stiftelsesdato (ISO-8601 yyyy-MM-dd) */
+                tilStiftelsesdato?: string;
+                /** @description Kommaseparert liste med organisasjonsform */
+                organisasjonsform?: string[];
+                /** @description Enhetens hjemmeside */
+                hjemmeside?: string;
+                /** @description Kommaseparert liste med sektorkoder, 4 siffer */
+                institusjonellSektorkode?: string[];
+                /** @description Kommaseparert liste med Adresse (postadresse) */
+                "postadresse.adresse"?: string[];
+                /** @description Kommaseparert liste med Kommunenummer (postadresse), 4 siffer */
+                "postadresse.kommunenummer"?: string[];
+                /** @description Kommaseparert liste med Landkode (postadresse) */
+                "postadresse.landkode"?: string[];
+                /** @description Kommaseparert liste med Postnummer (postadresse), 4 siffer */
+                "postadresse.postnummer"?: string[];
+                /** @description Poststed (postadresse). Fritekst */
+                "postadresse.poststed"?: string;
+                /** @description Kommaseparert liste med kommunenummer (forretningsadresse), 4 siffer */
+                kommunenummer?: string[];
+                /** @description Kommaseparert liste med kommunenummer (forretningsadresse), 4 siffer */
+                "forretningsadresse.kommunenummer"?: string[];
+                /** @description Kommaseparert liste med postnummer (forretningsadresse), 4 siffer */
+                "forretningsadresse.postnummer"?: string[];
+                /** @description Poststed (forretningsadresse). Fritekst */
+                "forretningsadresse.poststed"?: string;
+                /** @description Kommaseparert liste med landkode (forretningsadresse) */
+                "forretningsadresse.landkode"?: string[];
+                /** @description Kommaseparert liste med adresse (forretningsadresse) */
+                "forretningsadresse.adresse"?: string[];
+                /** @description Kommaseparert liste med næringskoder */
+                naeringskode?: string[];
+                /** @description Kommaseparert liste med årstall, 4 siffer. */
+                sisteInnsendteAarsregnskap?: string[];
+                /** @description Felt som det skal sorteres på og sorteringsrekkefølge. For eks: organisasjonsnummer,ASC eller organisasjonsnummer,DESC */
+                sort?: string;
+                /** @description Sidestørrelse */
+                size?: string;
+                /** @description Sidenummer */
+                page?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 200 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/vnd.brreg.enhetsregisteret.enhet.v2+vnd.openxmlformats-officedocument.spreadsheetml.sheet": components["schemas"]["EnheterLastned"];
+                    "application/gzip": components["schemas"]["EnheterLastned"];
+                };
+            };
+            /** @description 400 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BadRequest"];
+                };
+            };
+            /** @description 500 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InternalServerError"];
+                };
+            };
+            /** @description Timeout */
+            504: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InternalServerError"];
+                };
             };
         };
     };
@@ -543,39 +3916,82 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                /** @description Organisasjonsnummeret til enheten - 9 siffer */
-                organisasjonsnummer: string;
+                /** @description Organisasjonsnummeret til enheten */
+                enhetorgnr: string;
             };
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description Enhet fra Enhetsregisteret */
+            /** @description 200 */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Enhet"];
-                    "application/vnd.enhetsregisteret.enhet.v1+json": components["schemas"]["Enhet"];
+                    "application/vnd.brreg.enhetsregisteret.enhet.v2+json": components["schemas"]["Enhet"] | components["schemas"]["SlettetEnhet"];
+                    "application/json": components["schemas"]["Enhet"] | components["schemas"]["SlettetEnhet"];
                 };
             };
-            /** @description Enheten finnes ikke */
+            /** @description 400 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BadRequest"];
+                };
+            };
+            /** @description Ikke funnet */
             404: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content?: never;
             };
-            /** @description Enheten er fjernet */
+            /** @description Fjernet av juridiske årsaker */
             410: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["GoneEnhet"];
+                };
             };
-            /** @description Udefinert feil */
-            default: {
+            /** @description 500 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InternalServerError"];
+                };
+            };
+        };
+    };
+    hentRoller: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Organisasjonsnummeret til enheten */
+                enhetorgnr: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Alle roller */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Roller"];
+                };
+            };
+            /** @description Usupportert media type */
+            415: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -583,68 +3999,209 @@ export interface operations {
             };
         };
     };
-    listUnderenheter: {
+    hentKonsernstruktur: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Organisasjonsnummeret til enheten */
+                enhetorgnr: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Konsernstruktur"];
+                };
+            };
+            /** @description Ugyldig forespørsel */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BadRequest"];
+                };
+            };
+            /** @description Ikke funnet */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InternalServerError"];
+                };
+            };
+        };
+    };
+    hentKonsernstrukturCsv: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Organisasjonsnummeret til enheten */
+                enhetorgnr: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": string;
+                };
+            };
+            /** @description Ugyldig forespørsel */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BadRequest"];
+                };
+            };
+            /** @description Ikke funnet */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InternalServerError"];
+                };
+            };
+        };
+    };
+    hentRollerMedFnr: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Organisasjonsnummeret til enheten */
+                enhetorgnr: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Alle roller */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Sikret.Roller"];
+                };
+            };
+            /** @description Forespørsel ikke tillatt */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Usupportert media type */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    hentUnderenheter: {
         parameters: {
             query?: {
-                /** @description Filtrer på navn. Sammensatt søk på likhet. Resultat sorteres pr default etter score */
+                /** @description Underenhetens navn. Fritekst på 1 til 180 tegn */
                 navn?: string;
-                /** @description Organisasjonsnummeret til underenhetene.  Kommaseparert liste med organisasjonsnummer. */
-                organisasjonsnummer?: string;
-                /** @description Organisasjonsnummeret til overordnet enhet */
+                /** @description Søkemetode for navn-parameteren. Den eneste støttede verdien er FORTLOEPENDE. Eksempel på bruk: navn=sesam stasjon&navnMetodeForSoek=FORTLOEPENDE */
+                navnMetodeForSoek?: string;
+                /** @description Kommaseparert liste med organisasjonsnummer, 9 siffer */
+                organisasjonsnummer?: string[];
+                /** @description Underhetens overordnede hovedenhet */
                 overordnetEnhet?: string;
-                /** @description Filtrer på fra antall ansatte */
-                fraAntallAnsatte?: number;
-                /** @description Filtrer på til antall ansatte */
-                tilAntallAnsatte?: number;
-                /** @description Filtrer på om enheten er registrert i Merverdiregisteret */
-                registrertIMvaregisteret?: boolean;
-                /** @description Filtrer på fra registreringsdato i Enhetsregisteret. */
+                /** @description Minste antall ansatte. Må være 0, 1 eller større enn 4 */
+                fraAntallAnsatte?: string;
+                /** @description Største antall. Må være 0, 4, eller over 4 */
+                tilAntallAnsatte?: string;
+                /** @description Hvorvidt underenheten er registrert i Mva-registeret */
+                registrertIMvaregisteret?: string;
+                /** @description Tidligste registreringsdato i Enhetsregisteret (ISO-8601 yyyy-MM-dd) */
                 fraRegistreringsdatoEnhetsregisteret?: string;
-                /** @description Filtrer på til registreringsdato i Enhetsregisteret. */
+                /** @description Seneste registreringsdato i Enhetsregisteret (ISO-8601 yyyy-MM-dd) */
                 tilRegistreringsdatoEnhetsregisteret?: string;
-                /** @description Tidligste oppstartsdato for enheten */
+                /** @description Tidligste dato for oppstart (ISO-8601 yyyy-MM-dd) */
                 fraOppstartsdato?: string;
-                /** @description Seneste oppstartsdato for enheten */
+                /** @description Seneste dato for oppstart (ISO-8601 yyyy-MM-dd) */
                 tilOppstartsdato?: string;
-                /** @description Tidligste registreringsdato for eierskifte */
+                /** @description Tidligste dato for eierskifte (ISO-8601 yyyy-MM-dd) */
                 fraDatoEierskifte?: string;
-                /** @description Seneste registreringsdato for eierskifte */
+                /** @description Seneste dato for eierskifte (ISO-8601 yyyy-MM-dd) */
                 tilDatoEierskifte?: string;
-                /** @description Tidligste nedleggelsesdato for enheten */
+                /** @description Tidligste dato for nedleggelse (ISO-8601 yyyy-MM-dd) */
                 fraNedleggelsesdato?: string;
-                /** @description Seneste nedleggelsesdato for enheten */
+                /** @description Seneste dato for nedleggelse (ISO-8601 yyyy-MM-dd) */
                 tilNedleggelsesdato?: string;
-                /** @description Filtrer på organisasjonsformkode. Kommaseparert liste. */
-                organisasjonsform?: string;
-                /** @description Enhetens hjemmeside */
+                /** @description Tidligste registreringsdato i Merverdiavgiftsregisteret. */
+                fraRegistreringsdatoMerverdiavgiftsregisteret?: string;
+                /** @description Seneste registreringsdato i Merverdiavgiftsregisteret. */
+                tilRegistreringsdatoMerverdiavgiftsregisteret?: string;
+                /** @description Kommaseparert liste med organisasjonsform */
+                organisasjonsform?: string[];
+                /** @description Underenhetens hjemmeside */
                 hjemmeside?: string;
-                /** @description Kommunenummer til enhetens postadresse. Kommaseparert liste med kommunenummer på 4 siffer. */
-                "postadresse.kommunenummer"?: string;
-                /** @description Postnummeret til enhetens postadresse. Kommaseparert liste med postnummer på 4 siffer. */
-                "postadresse.postnummer"?: string;
-                /** @description Poststedet til enhetens postadresse. Fritekst. */
+                /** @description Kommaseparert liste med kommunenummer (postadresse), 4 siffer */
+                "postadresse.kommunenummer"?: string[];
+                /** @description Kommaseparert liste med postnummer (postadresse), 4 siffer */
+                "postadresse.postnummer"?: string[];
+                /** @description Kommaseparert liste med poststed (postadresse) */
                 "postadresse.poststed"?: string;
-                /** @description Landkode til enhetens postadresse. Kommaseparert liste med landkoder. */
-                "postadresse.landkode"?: string;
-                /** @description Adresse til enhetens postadresse. Kommaseparert liste med adresser. */
-                "postadresse.adresse"?: string;
-                /** @description Filtrer på kommunenummer 4 siffer. */
-                kommunenummer?: string;
-                /** @description Postnummeret til enhetens beliggenhetsadresse. Kommaseparert liste med postnummer på 4 siffer. */
-                "beliggenhetsadresse.postnummer"?: string;
-                /** @description Poststedet til enhetens beliggenhetsadresse. Fritekst. */
+                /** @description Kommaseparert liste med landkode (postadresse) */
+                "postadresse.landkode"?: string[];
+                /** @description Kommaseparert liste med adresse (postadresse) */
+                "postadresse.adresse"?: string[];
+                /** @description Kommaseparert liste med kommunenummer, 4 siffer. Filtrerer på beliggenhetsadresse eller postadresse */
+                kommunenummer?: string[];
+                /** @description Kommaseparert liste med kommunenummer (beliggenhetsadresse), 4 siffer */
+                "beliggenhetsadresse.kommunenummer"?: string[];
+                /** @description Kommaseparert liste med postnummer (beliggenhetsadresse), 4 siffer */
+                "beliggenhetsadresse.postnummer"?: string[];
+                /** @description Poststed (beliggenhetsadresse) */
                 "beliggenhetsadresse.poststed"?: string;
-                /** @description Landkode til enhetens beliggenhetsadresse. Kommaseparert liste med landkoder. */
-                "beliggenhetsadresse.landkode"?: string;
-                /** @description Adresse til enhetens beliggenhetsadresse. Kommaseparert liste med adresser. */
-                "beliggenhetsadresse.adresse"?: string;
-                /** @description Filtrer på næringskode. Valgfritt nivå. Kommaseparert liste. */
-                naeringskode?: string;
-                /** @description Sorter resultatsett på feltnavn. Merk at navn må sorteres på navn.norwegian */
+                /** @description Kommaseparert liste med landkode (beliggenhetsadresse) */
+                "beliggenhetsadresse.landkode"?: string[];
+                /** @description Kommaseparert liste med adresse (beliggenhetsadresse) */
+                "beliggenhetsadresse.adresse"?: string[];
+                /** @description Kommaseparert liste med næringskoder */
+                naeringskode?: string[];
+                /** @description Felt som det skal sorteres på og sorteringsrekkefølge. For eks: organisasjonsnummer,ASC eller organisasjonsnummer,DESC */
                 sort?: string;
-                /** @description Antall ønskede treff i response. Default verdi er 20. Max dypde (page*size) er 10 000. */
+                /** @description Sidestørrelse */
                 size?: number;
-                /** @description Hvilken side som ønskes av resultatsettet. Default verdi er 0. Max dypde (page*size) er 10 000 */
+                /** @description Sidenummer */
                 page?: number;
             };
             header?: never;
@@ -653,21 +4210,211 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Underenheter fra Enhetsregisteret */
+            /** @description 200 */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": string;
+                    "application/vnd.brreg.enhetsregisteret.underenhet.v2+json": components["schemas"]["Underenheter"];
+                    "application/json": components["schemas"]["Underenheter"];
                 };
             };
-            /** @description Udefinert feil */
-            default: {
+            /** @description 400 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BadRequest"];
+                };
+            };
+            /** @description 500 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InternalServerError"];
+                };
+            };
+        };
+    };
+    lastnedUnderenheter: {
+        parameters: {
+            query?: {
+                /** @description Underenhetens navn. Fritekst på 1 til 180 tegn */
+                navn?: string;
+                /** @description Kommaseparert liste med organisasjonsnummer, 9 siffer */
+                organisasjonsnummer?: string[];
+                /** @description Underhetens overordnede hovedenhet */
+                overordnetEnhet?: string;
+                /** @description Minste antall ansatte. Må være 0, 1 eller større enn 4 */
+                fraAntallAnsatte?: string;
+                /** @description Største antall. Må være 0, 4, eller over 4 */
+                tilAntallAnsatte?: string;
+                /** @description Hvorvidt underenheten er registrert i Mva-registeret */
+                registrertIMvaregisteret?: string;
+                /** @description Tidligste registreringsdato i Enhetsregisteret (ISO-8601 yyyy-MM-dd) */
+                fraRegistreringsdatoEnhetsregisteret?: string;
+                /** @description Seneste registreringsdato i Enhetsregisteret (ISO-8601 yyyy-MM-dd) */
+                tilRegistreringsdatoEnhetsregisteret?: string;
+                /** @description Tidligste dato for oppstart (ISO-8601 yyyy-MM-dd) */
+                fraOppstartsdato?: string;
+                /** @description Seneste dato for oppstart (ISO-8601 yyyy-MM-dd) */
+                tilOppstartsdato?: string;
+                /** @description Tidligste dato for eierskifte (ISO-8601 yyyy-MM-dd) */
+                fraDatoEierskifte?: string;
+                /** @description Seneste dato for eierskifte (ISO-8601 yyyy-MM-dd) */
+                tilDatoEierskifte?: string;
+                /** @description Tidligste dato for nedleggelse (ISO-8601 yyyy-MM-dd) */
+                fraNedleggelsesdato?: string;
+                /** @description Seneste dato for nedleggelse (ISO-8601 yyyy-MM-dd) */
+                tilNedleggelsesdato?: string;
+                /** @description Kommaseparert liste med organisasjonsform */
+                organisasjonsform?: string[];
+                /** @description Underenhetens hjemmeside */
+                hjemmeside?: string;
+                /** @description Kommaseparert liste med kommunenummer (postadresse), 4 siffer */
+                "postadresse.kommunenummer"?: string[];
+                /** @description Kommaseparert liste med postnummer (postadresse), 4 siffer */
+                "postadresse.postnummer"?: string[];
+                /** @description Kommaseparert liste med poststed (postadresse) */
+                "postadresse.poststed"?: string;
+                /** @description Kommaseparert liste med landkode (postadresse) */
+                "postadresse.landkode"?: string[];
+                /** @description Kommaseparert liste med adresse (postadresse) */
+                "postadresse.adresse"?: string[];
+                /** @description Kommaseparert liste med kommunenummer (beliggenhetsadresse), 4 siffer */
+                kommunenummer?: string[];
+                /** @description Kommaseparert liste med kommunenummer (beliggenhetsadresse), 4 siffer */
+                "beliggenhetsadresse.kommunenummer"?: string[];
+                /** @description Kommaseparert liste med postnummer (beliggenhetsadresse), 4 siffer */
+                "beliggenhetsadresse.postnummer"?: string[];
+                /** @description Poststed (beliggenhetsadresse) */
+                "beliggenhetsadresse.poststed"?: string;
+                /** @description Kommaseparert liste med landkode (beliggenhetsadresse) */
+                "beliggenhetsadresse.landkode"?: string[];
+                /** @description Kommaseparert liste med adresse (beliggenhetsadresse) */
+                "beliggenhetsadresse.adresse"?: string[];
+                /** @description Kommaseparert liste med næringskoder */
+                naeringskode?: string[];
+                /** @description Felt som det skal sorteres på og sorteringsrekkefølge. For eks: organisasjonsnummer,ASC eller organisasjonsnummer,DESC */
+                sort?: string;
+                /** @description Sidestørrelse */
+                size?: string;
+                /** @description Sidenummer */
+                page?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 200 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/vnd.brreg.enhetsregisteret.underenhet.v2+gzip": components["schemas"]["UnderenheterLastned"];
+                    "application/gzip": components["schemas"]["UnderenheterLastned"];
+                };
+            };
+            /** @description 400 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BadRequest"];
+                };
+            };
+            /** @description 500 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InternalServerError"];
+                };
+            };
+        };
+    };
+    lastnedUnderenheterCsv: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 200 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/vnd.brreg.enhetsregisteret.underenhet.v2+gzip": components["schemas"]["UnderenheterLastned"];
+                    "application/gzip": components["schemas"]["UnderenheterLastned"];
+                };
+            };
+            /** @description 400 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BadRequest"];
+                };
+            };
+            /** @description 500 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InternalServerError"];
+                };
+            };
+        };
+    };
+    lastnedUnderenheterRegneark: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 200 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/vnd.brreg.enhetsregisteret.underenhet.v2+vnd.openxmlformats-officedocument.spreadsheetml.sheet": components["schemas"]["UnderenheterLastned"];
+                    "application/gzip": components["schemas"]["UnderenheterLastned"];
+                };
+            };
+            /** @description Usupportert media type */
+            415: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description 500 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InternalServerError"];
+                };
             };
         };
     };
@@ -676,54 +4423,68 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                /** @description Organisasjonsnummeret til underenheten - 9 siffer */
-                organisasjonsnummer: string;
+                /** @description Organisasjonsnummeret til enheten */
+                underenhetorgnr: string;
             };
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description Underenhet fra Enhetsregisteret */
+            /** @description 200 */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": string;
+                    "application/vnd.brreg.enhetsregisteret.underenhet.v2+json": components["schemas"]["Underenhet"] | components["schemas"]["SlettetUnderEnhet"];
+                    "application/json": components["schemas"]["Underenhet"] | components["schemas"]["SlettetUnderEnhet"];
                 };
             };
-            /** @description Underenhet finnes ikke */
+            /** @description 400 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BadRequest"];
+                };
+            };
+            /** @description Ikke funnet */
             404: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content?: never;
             };
-            /** @description Underenhet er fjernet */
+            /** @description Fjernet av juridiske årsaker */
             410: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["GoneUnderenhet"];
+                };
             };
-            /** @description Udefinert feil */
-            default: {
+            /** @description 500 */
+            500: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["InternalServerError"];
+                };
             };
         };
     };
-    listOppdateringerEnhet: {
+    hentKommuner: {
         parameters: {
             query?: {
-                /** @description Tidligste tidsstempel for når enheten ble oppdatert. På format Datetime (ISO-8601): yyyy-MM-dd'T'HH:mm:ss.SSS'Z' */
-                dato?: string;
-                /** @description Minste oppdateringsid for enhet. Større eller lik 1. */
-                oppdateringsid?: number;
-                /** @description Organisasjonsnummeret til enheten. Kommaseparert liste med organisasjonsnummer. */
-                organisasjonsnummer?: string;
+                /** @description Sortering av resultatsett */
+                sort?: string;
+                /** @description Sidestørrelse */
+                size?: string;
+                /** @description Sidenummer */
+                page?: string;
             };
             header?: never;
             path?: never;
@@ -731,83 +4492,215 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Oppdateringer på enheter fra Enhetsregisteret */
+            /** @description 200 */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": string;
+                    "application/json": components["schemas"]["Kommuner"];
                 };
             };
-            /** @description Udefinert feil */
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    listOppdateringerUnderenhet: {
-        parameters: {
-            query?: {
-                /** @description Tidligste tidsstempel for når enheten ble oppdatert. På format Datetime (ISO-8601): yyyy-MM-dd'T'HH:mm:ss.SSS'Z' */
-                dato?: string;
-                /** @description Minste oppdateringsid for enhet. Større eller lik 1. */
-                oppdateringsid?: number;
-                /** @description Organisasjonsnummeret til enheten. Kommaseparert liste med organisasjonsnummer. */
-                organisasjonsnummer?: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Oppdateringer på underenheter fra Enhetsregisteret */
-            200: {
+            /** @description 400 */
+            400: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": string;
+                    "application/json": components["schemas"]["BadRequest"];
                 };
             };
-            /** @description Udefinert feil */
-            default: {
+            /** @description 500 */
+            500: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["InternalServerError"];
+                };
             };
         };
     };
-    listOrganisasjonsformer: {
+    hentKommune: {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                /** @description Kommunenummeret */
+                kommunenr: string;
+            };
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description Organisasjonsformer fra Enhetsregisteret */
+            /** @description 200 */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["_Organisasjonsformer"];
-                    "application/vnd.enhetsregisteret.organisasjonsform.v1+json": components["schemas"]["_Organisasjonsformer"];
+                    "application/json": components["schemas"]["Kommune"];
                 };
             };
-            /** @description Udefinert feil */
-            default: {
+            /** @description 400 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BadRequest"];
+                };
+            };
+            /** @description Ikke funnet */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description 500 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InternalServerError"];
+                };
+            };
+        };
+    };
+    hentOrganisasjonsformer: {
+        parameters: {
+            query?: {
+                /** @description Sortering av resultatsett */
+                sort?: string;
+                /** @description Sidestørrelse */
+                size?: string;
+                /** @description Sidenummer */
+                page?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 200 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Organisasjonsformer"];
+                };
+            };
+            /** @description 400 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BadRequest"];
+                };
+            };
+            /** @description 500 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InternalServerError"];
+                };
+            };
+        };
+    };
+    hentOrganisasjonsformerForEnheter: {
+        parameters: {
+            query?: {
+                /** @description Sortering av resultatsett */
+                sort?: string;
+                /** @description Sidestørrelse */
+                size?: string;
+                /** @description Sidenummer */
+                page?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 200 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrganisasjonsformerEnheter"];
+                };
+            };
+            /** @description 400 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BadRequest"];
+                };
+            };
+            /** @description 500 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InternalServerError"];
+                };
+            };
+        };
+    };
+    hentOrganisasjonsformerForUnderenheter: {
+        parameters: {
+            query?: {
+                /** @description Sortering av resultatsett */
+                sort?: string;
+                /** @description Sidestørrelse */
+                size?: string;
+                /** @description Sidenummer */
+                page?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 200 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrganisasjonsformerUnderenheter"];
+                };
+            };
+            /** @description 400 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BadRequest"];
+                };
+            };
+            /** @description 500 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InternalServerError"];
+                };
             };
         };
     };
@@ -816,32 +4709,88 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                /** @description Kode for organisasjonsform */
-                orgformKode: string;
+                /** @description Organisasjonsformen */
+                organisasjonskode: string;
             };
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description Organisasjonsform fra Enhetsregisteret */
+            /** @description 200 */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
                     "application/json": components["schemas"]["Organisasjonsform"];
-                    "application/vnd.enhetsregisteret.organisasjonsform.v1+json": components["schemas"]["Organisasjonsform"];
                 };
             };
-            /** @description Organisasjonsformen eksisterer ikke */
+            /** @description 400 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BadRequest"];
+                };
+            };
+            /** @description Ikke funnet */
             404: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content?: never;
             };
-            /** @description Udefinert feil */
-            default: {
+            /** @description 500 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InternalServerError"];
+                };
+            };
+        };
+    };
+    hentMatrikkelenheter: {
+        parameters: {
+            query?: {
+                /** @description Filtrer på matrikkelenhetid */
+                matrikkelenhetid?: string;
+                /** @description Filtrer på matrikkelnummer */
+                matrikkelnummer?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Alle matrikkelenheter */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Matrikkelenheter"];
+                };
+            };
+            /** @description Feilaktige eller manglende query parametere */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Usupportert media type */
+            415: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -849,7 +4798,131 @@ export interface operations {
             };
         };
     };
-    listOrganisasjonsformerEnheter: {
+    hentOppdateringerForRoller: {
+        parameters: {
+            query?: {
+                /** @description Hent heldelser som har oppstått etter angitt tidspunkt. Datetime (ISO-8601): yyyy-MM-dd'T'HH:mm:ss.SSS'Z' */
+                afterTime?: string;
+                /** @description Hent hendelser som har oppstått etter angitt ID. Større eller lik 1 */
+                afterId?: number;
+                /** @description Filtrer hendelser på organisasjonsnummeret til enheten. Kommaseparert liste med organisasjonsnummer */
+                organisasjonsnummer?: string[];
+                /** @description Hent et spesifisert antall hendelser. Større eller lik 1 og mindre eller lik 10000. Standardverdi er 100. */
+                size?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Alle oppdateringer på roller */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RolleOppdateringer"];
+                };
+            };
+            /** @description Usupportert media type */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    hentOppdateringerForEnheter: {
+        parameters: {
+            query?: {
+                /** @description Vis oppdateringer fra og med dette tidsstempelet. Tidsstempelet indikerer når oppdateringen ble offentliggjort i dette APIet. Datetime (ISO-8601): yyyy-MM-dd'T'HH:mm:ss.SSS'Z' */
+                dato?: string;
+                /** @description Vis oppdateringer til og med dette tidsstempelet. Tidsstempelet indikerer når oppdateringen ble offentliggjort i dette APIet. Datetime (ISO-8601): yyyy-MM-dd'T'HH:mm:ss.SSS'Z' */
+                updatedBefore?: string;
+                /** @description Vis bare oppdateringer fra og med oppdateringsid. Større eller lik 1 */
+                oppdateringsid?: string;
+                /** @description Vis bare oppdateringer på gitte organisasjonsnummer. Kommaseparert liste med organisasjonsnummer */
+                organisasjonsnummer?: string[];
+                /** @description Inkluder endringene som er bakgrunnen for at oppdateringen ble publisert */
+                includeChanges?: boolean;
+                /** @description Sidenummer */
+                page?: string;
+                /** @description Hent et spesifisert antall hendelser. Større eller lik 1 og mindre eller lik 10000. Standardverdi er 20. */
+                size?: string;
+                /** @description Felt som det skal sorteres på og sorteringsrekkefølge. For eks: id,ASC eller id,DESC. Kun id er støttet. */
+                sort?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Alle oppdateringer på enheter */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OppdateringerEnheter"];
+                };
+            };
+            /** @description Usupportert media type */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    hentOppdateringerForUnderenheter: {
+        parameters: {
+            query?: {
+                /** @description Vis oppdateringer fra og med dette tidsstempelet. Tidsstempelet indikerer når oppdateringen ble offentliggjort i dette APIet. Datetime (ISO-8601): yyyy-MM-dd'T'HH:mm:ss.SSS'Z' */
+                dato?: string;
+                /** @description Vis oppdateringer til og med dette tidsstempelet. Tidsstempelet indikerer når oppdateringen ble offentliggjort i dette APIet. Datetime (ISO-8601): yyyy-MM-dd'T'HH:mm:ss.SSS'Z' */
+                updatedBefore?: string;
+                /** @description Vis bare oppdateringer fra og med oppdateringsid. Større eller lik 1 */
+                oppdateringsid?: string;
+                /** @description Vis bare oppdateringer på gitte organisasjonsnummer. Kommaseparert liste med organisasjonsnummer */
+                organisasjonsnummer?: string[];
+                /** @description Inkluder endringene som er bakgrunnen for at oppdateringen ble publisert */
+                includeChanges?: boolean;
+                /** @description Sidenummer */
+                page?: string;
+                /** @description Hent et spesifisert antall hendelser. Større eller lik 1 og mindre eller lik 10000. Standardverdi er 20. */
+                size?: string;
+                /** @description Felt som det skal sorteres på og sorteringsrekkefølge. For eks: id,ASC eller id,DESC. Kun id er støttet. */
+                sort?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Alle oppdateringer på underenheter */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OppdateringerUnderenheter"];
+                };
+            };
+            /** @description Usupportert media type */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    lastnedRollerTotalbestand: {
         parameters: {
             query?: never;
             header?: never;
@@ -858,17 +4931,24 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Liste over mulige organisasjonsformer for enheter */
+            /** @description 200 */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": string;
+                    "application/gzip": components["schemas"]["RollerTotalbestand"];
                 };
             };
-            /** @description Udefinert feil */
-            default: {
+            /** @description Usupportert media type */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 500 */
+            500: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -876,7 +4956,7 @@ export interface operations {
             };
         };
     };
-    listOrganisasjonsformerUnderenheter: {
+    lastnedRollerTotalbestandMedPid: {
         parameters: {
             query?: never;
             header?: never;
@@ -885,17 +4965,371 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Liste over mulige organisasjonsformer for underenheter */
+            /** @description 200 */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": string;
+                    "application/gzip": components["schemas"]["RollerTotalbestand"];
                 };
             };
-            /** @description Udefinert feil */
-            default: {
+            /** @description Forespørsel ikke tillatt */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Usupportert media type */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 500 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    hentRolleutskriftForPerson: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Personens fødselsnummer */
+        requestBody: {
+            content: {
+                "text/plain": string;
+            };
+        };
+        responses: {
+            /** @description Alle roller */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Sikret.PersonRolleutskrift"];
+                };
+            };
+            /** @description Forespørsel ikke tillatt */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Usupportert media type */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    hentRolleRepresentanter: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Alle rollerepresentanter */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RolleRepresentanter"];
+                };
+            };
+            /** @description Usupportert media type */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    hentRollegruppetyper: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Alle rollegruppetyper */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RolleRollegruppetyper"];
+                };
+            };
+            /** @description Usupportert media type */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    hentRolletyper: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Alle rolletyper */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RolleRolletyper"];
+                };
+            };
+            /** @description Usupportert media type */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    hentJuridiskeRoller: {
+        parameters: {
+            query?: {
+                /** @description Hent neste bolk med enheter. Sett denne til den siste verdien du fikk fra forrige bolk. Verdien som skal sette avhenger av hva du sorterer på. */
+                searchAfter?: string;
+                /** @description Hent spesifisert antall enheter i enhets listen. */
+                size?: string;
+            };
+            header?: never;
+            path: {
+                /** @description Organisasjonsnummeret til enheten */
+                enhetorgnr: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 200 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RolleJuridiskeroller"];
+                };
+            };
+            /** @description Akseptabel format ikke funnet */
+            406: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    sokFrivilligeOrganisasjoner: {
+        parameters: {
+            query?: {
+                /** @description Henter neste bolk med frivillige organisasjoner. Sett denne til den siste verdien du fikk fra forrige bolk. Verdien som du skal sette avhenger av hva du sorterer på. Den eneste sorteringen som vi støtter nå er 'organisasjonsnummer' */
+                searchAfter?: string | null;
+                /** @description Begrenser maks antall frivillige organisasjoner i responsen */
+                size?: number | null;
+                /**
+                 * @description Velger språk for kodeverk-beskrivelser. APIet legger til kodeverk-beskrivelser i responsen, men bare hvis du setter dette parameteret.
+                 *
+                 *     Kjente verdier:
+                 *     - NOB (Norsk bokmål)
+                 */
+                spraak?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 200 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FrivilligeOrganisasjoner"];
+                    "application/hal+json": components["schemas"]["FrivilligeOrganisasjoner"];
+                };
+            };
+            /** @description 400 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    hentFrivilligOrganisasjon: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Velger språk for kodeverk-beskrivelser. APIet legger til kodeverk-beskrivelser i responsen, men bare hvis du setter dette parameteret.
+                 *
+                 *     Kjente verdier:
+                 *     - NOB (Norsk bokmål)
+                 */
+                spraak?: string | null;
+            };
+            header?: never;
+            path: {
+                /** @description Organisasjonsnummeret til den frivillige organisasjonen */
+                organisasjonsnummer: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 200 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FrivilligOrganisasjon"];
+                    "application/hal+json": components["schemas"]["FrivilligOrganisasjon"];
+                };
+            };
+            /** @description Ikke funnet */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    frivilligeOrganisasjonerTotalbestandCsv: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 200 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 404 */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description 500 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InternalServerError"];
+                };
+            };
+        };
+    };
+    hentIcnpoKategorier: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Velger språk for kodeverk-beskrivelser.
+                 *
+                 *     Kjente verdier:
+                 *     - NOB (Norsk bokmål)
+                 */
+                spraak?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 200 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IcnpoKategorier"];
+                    "application/hal+json": components["schemas"]["IcnpoKategorier"];
+                };
+            };
+            /** @description 400 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    hentInformasjonstyperIFrivillighetsregisteret: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Velger språk for kodeverk-beskrivelser.
+                 *
+                 *     Kjente verdier:
+                 *     - NOB (Norsk bokmål)
+                 */
+                spraak?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description 200 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InformasjonstyperFrivillighetsregisteret"];
+                    "application/hal+json": components["schemas"]["InformasjonstyperFrivillighetsregisteret"];
+                };
+            };
+            /** @description 400 */
+            400: {
                 headers: {
                     [name: string]: unknown;
                 };

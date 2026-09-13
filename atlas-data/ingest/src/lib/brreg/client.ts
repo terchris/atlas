@@ -12,7 +12,23 @@
 import createClient from "openapi-fetch";
 import type { paths, components } from "./schema.js";
 
-const BASE_URL = "https://data.brreg.no/enhetsregisteret/api";
+// 🔴 THE BASE URL AND THE PATH KEYS MOVED TOGETHER, and they must stay in step.
+//
+// The stale spec declared `servers: https://data.brreg.no/enhetsregisteret/api`
+// and keyed its paths relatively (`/enheter`). The live spec declares
+// `servers: https://data.brreg.no` and keys them absolutely
+// (`/enhetsregisteret/api/enheter`). Same URL, split differently.
+//
+// ⚠️ So regenerating the client is NOT a drop-in: every `.GET()` path key gains
+// the prefix and the base URL loses it. Change one without the other and every
+// request goes to a URL that is either missing the prefix or carrying it twice.
+// TypeScript catches the path-key half — it did, at this call site — but it
+// cannot catch a base URL that is merely wrong, so they are commented together.
+//
+// Path parameters were renamed too: `{organisasjonsnummer}` became
+// `{enhetorgnr}` on the entity path. Nothing here uses it yet; it will matter
+// the first time a typed fetch-by-orgnr is added (PLAN-871 phase 2).
+const BASE_URL = "https://data.brreg.no";
 
 export const brregClient = createClient<paths>({ baseUrl: BASE_URL });
 
@@ -63,15 +79,23 @@ export async function* paginate<T>(
 }
 
 /**
- * Convenience: typed `GET /enheter` that returns the raw HAL body. The query
+ * Convenience: typed `GET /enhetsregisteret/api/enheter` that returns the raw HAL body. The query
  * params are type-checked against the OpenAPI spec; the response is cast
  * because the spec doesn't describe the envelope. Non-2xx responses → undefined
  * (caller decides how to handle).
  */
 export async function fetchEnheter(
-  query: NonNullable<paths["/enheter"]["parameters"]["query"]>,
+    // ⚠️ `["get"]["parameters"]`, not `["parameters"]`. The live spec declares the
+  // 47 search parameters on the OPERATION; the path item itself declares
+  // `query?: never`. The stale spec declared them at the path-item level — and
+  // declared none on the operation — so this type used to resolve through the
+  // path item and this file's header could claim the query side was "fully
+  // typed". It was typed against a spec that described no parameters at all.
+  query: NonNullable<
+    paths["/enhetsregisteret/api/enheter"]["get"]["parameters"]["query"]
+  >,
 ): Promise<HalResponse<Enhet> | undefined> {
-  const { data, response } = await brregClient.GET("/enheter", { params: { query } });
+  const { data, response } = await brregClient.GET("/enhetsregisteret/api/enheter", { params: { query } });
   if (!response.ok) return undefined;
   // The spec types `data` as string; the actual body is a HAL JSON object.
   return data as unknown as HalResponse<Enhet>;
