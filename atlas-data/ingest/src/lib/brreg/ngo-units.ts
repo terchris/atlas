@@ -70,7 +70,12 @@ export async function fetchNgoUnits(
   let fuzzyNoiseFiltered = 0;
 
   for await (const batch of paginate<Enhet>(
-    (page) => fetchEnheter({ navn, organisasjonsform, size, page }),
+    // ⚠️ `organisasjonsform` is an ARRAY in the live spec, and was a bare string
+    // in the stale one. Brreg accepts several organisation forms in a single
+    // search; the old spec could not express that, so this reads as a rename but
+    // is a capability the client could not previously describe. Wrapped rather
+    // than changing the caller's contract — one form is still one form.
+    (page) => fetchEnheter({ navn, organisasjonsform: [organisasjonsform], size, page }),
     "enheter",
   )) {
     pages += 1;
