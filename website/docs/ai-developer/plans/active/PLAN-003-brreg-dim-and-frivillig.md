@@ -11,7 +11,7 @@ Turns the raw register and its change feed into a current-state marts dimension,
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Active — phases 1-3 built, phase 4 held on an editorial decision
+## Status: Active — phases 1-3 built, 4.1 and 4.3 closed as already-satisfied, 4.5 outstanding
 
 Phases 1, 2 and 3 are implemented and running on the half-hourly cadence. Phase 4 is **deliberately
 incomplete**, and on re-reading the code against this plan on 2026-09-13, **not for the reason it
@@ -310,7 +310,7 @@ it. It is a monthly ingest job and a freshness clock maintaining a table nothing
 constraint 4.2 invents does not exist, and the retirement is now its own task (4.5) that can ship
 without 4.1.
 
-### The decision 4.1 has to take, with its measured cost
+### ✅ The decision 4.1 had to take — settled 2026-09-13, reading 2 (see 4.1)
 
 *"Derived rather than curated"* (Terje, 2026-09-11) is a statement about the **NGO population**. It
 does not say which relation holds it, and the two readings cost different things. `dim_ngo` today
@@ -343,18 +343,36 @@ editorial (what `api_v1.ngo_index` is *for*), so it belongs to ops-dev or Terje,
 
 ### Tasks
 
-- [ ] 4.1 ⬜ **Blocked on the A/B decision above, not on a database.** Rebuild the NGO population from
-      `dim_brreg_enhet` filtered to `registrert_i_frivillighetsregisteret`, retaining the curated
-      editorial fields for the 11 that have them via a left join on `orgnr`.
+- [x] 4.1 ✅ **CLOSED as already-satisfied — nothing to build.** ops-dev ruled **reading 2** on
+      urb-agents #815 after their own A/B ruling turned out to be internally inconsistent, in their
+      words: *"I rejected A for a property B-as-built shares, then asserted B did not have it."*
 
-      `mart_ngo_index` already carries `has_supply` and `chapter_count` — 🔵 **the discriminator a
-      wider population needs already exists and needs no new column.** A consumer wanting today's
-      eleven asks for `has_supply = true`.
+      🔴 **The reason it is satisfied rather than abandoned.** The opening question asked how Atlas
+      could hold every organisation in Brønnøysundregistrene. It does — `api_v1.brreg_enhet` publishes
+      all ~1.17M with `registrert_i_frivillighetsregisteret`, `icnpo_kategori`, `kommune_nr` and
+      `is_active`, reconciled every half hour. **The NGO population IS derived; it is derived into its
+      own endpoint rather than into this one.** Terje's stated gain — *"the NGO population becomes
+      derived rather than curated"* — is delivered by the surface that carries it, not by making the
+      curated index stop being curated.
 
-      ⚠️ **Previously recorded here as *"deliberately not built yet … that proof needs a database this
-      agent does not have."*** Half of that stands: 4.3 still needs imac. The other half was wrong —
-      what actually blocks 4.1 is that nobody has chosen A or B, and this agent should not choose,
-      because the question is what the published view is for.
+      ⚠️ **Pointing `mart_ngo_index` at the same ~72,798 rows adds no capability.** It moves mechanical
+      rows into the endpoint whose entire distinguishing feature is the editorial columns they would be
+      null in. The ICNPO measurement is the argument and not a preference: 46 categories over ~72,798
+      organisations is ~1,580 per category at the mean — a fine instrument for *"which sector"*, a
+      blunt one for *"works on child poverty"*. Population problem solved mechanically; classification
+      problem stays editorial; two surfaces, not one wide one.
+
+      🔵 **A — widening `dim_ngo` itself — remains available to Terje as a product decision.** It is
+      **not pending** and nobody is waiting on it. Its cost is the table in the section above.
+
+      ✅ **What survives the closure, because it was right independently of the decision:** the two
+      things found while building B are recorded in `mart_ngo_index.sql`'s header, where anyone
+      proposing the widening again will read them before they start — that `has_supply` is an ingest
+      outcome and not the curated/derived discriminator, and that a derived population here would sit
+      up to 24 hours behind the half-hourly register. Neither is live today; both are exact.
+
+      ⚠️ **What did NOT survive, and should not:** the built implementation (PR #266, closed unmerged),
+      `is_curated`, and the `dim_brreg_enhet` dependency. They existed only to serve the widening.
 - [x] 4.2 🔴 **The two-table problem, resolved in writing: `raw.brreg_enheter` is subsumed, not kept.**
 
       The two tables hold Brreg data with different populations — the 122-row curated landing from a
@@ -370,14 +388,16 @@ editorial (what `api_v1.ngo_index` is *for*), so it belongs to ops-dev or Terje,
       `dim_ngo` reads it today. … Whoever does 4.1 does both."* **`dim_ngo` does not read it, and no
       dbt model does** (finding ③ above). The decision to retire stands; the claimed dependency on
       4.1 does not, and the work moves to **4.5**, which can ship on its own.
-- [ ] 4.3 ⬜ **imac — the gate on 4.1.** Verify the three real `dim_ngo` consumers, not the four this
-      task used to name (finding ② above): `api_v1.ngo_index` and `api_v1.ngo_overview` grow to the
-      voluntary population with the eleven still present and `has_supply = true`;
-      `api_v1.kommune_local_chapters` returns **byte-identical rows before and after**, because its
-      inner join makes any change there a defect rather than an improvement.
+- [x] 4.3 ✅ **Nothing left to gate — closed with 4.1.** This was the gate on a widening that is not
+      happening: with `dim_ngo` unchanged, `mart_ngo_index`, `mart_ngo_overview` and
+      `mart_kommune_local_chapters` are byte-identical to what they were, so there is no before/after
+      to compare and no imac round to run.
 
-      🔴 **That third check is the one worth running.** The first two confirm an intended change; only
-      the unchanged view can reveal an unintended one.
+      🔵 **The finding that produced it outlives it.** As written, this task gated on four `api_v1`
+      views, two of which reference `dim_ngo` nowhere, while the one real consumer that joins it
+      **inner** — `kommune_local_chapters` — was not named. If the widening is ever revisited, that is
+      the check to run and the other two are noise: *the view that must not change is the only one that
+      can fail informatively.* Recorded here rather than in a closed task's memory.
 - [x] 4.4 ⚠️ **SUPERSEDED — Terje reversed this on 2026-09-12 and a new `api_v1` view now exists.**
 
       This task used to read, and was correct when written: *"No new `api_v1` view and no `schemas:`
@@ -442,16 +462,21 @@ editorial (what `api_v1.ngo_index` is *for*), so it belongs to ops-dev or Terje,
 
 ### Validation
 
-`api_v1.ngo_index` and `api_v1.ngo_overview` return the voluntary population with the eleven curated
-NGOs present and `has_supply = true`; `api_v1.kommune_local_chapters` returns byte-identical rows to
-the run before; the other ten `api_v1` views still return 200 with unchanged column contracts;
-`schemas: api_v1` unchanged in `template-info.yaml`; and after 4.5, `dbt build` passes with
-`raw.brreg_enheter` gone from `sources.yml`.
+With 4.1 closed as already-satisfied, what remains to validate is **4.5 only**: `dbt build` passes
+with `raw.brreg_enheter` gone from `sources.yml`, the superset count returns 0 before the table is
+dropped, `schemas: api_v1` unchanged in `template-info.yaml`, and the catalogue regenerates cleanly
+with the source removed.
 
-⚠️ The previous validation line read *"`ngo_overview` returns more than 11 NGOs"*. Kept in substance,
-but *"more than 11"* passes at 12 and at 72,798 alike — the row count is not the assertion worth
-making. The assertion is that the eleven survive the widening **and** that the view which must not
-change did not.
+🔵 **The thirteen `api_v1` views are not in this list, and that is the point of reading 2.** Nothing
+in phase 4 changes them — `ngo_index`, `ngo_overview` and `kommune_local_chapters` are byte-identical
+to what they were before this plan started. A phase that ends with no published view altered is the
+outcome the decision chose, not a phase that failed to deliver.
+
+⚠️ **Two earlier validation lines are superseded and left here as the record.** The first read
+*"`ngo_overview` returns more than 11 NGOs"* — which passes at 12 and at 72,798 alike, so the row
+count was never the assertion worth making. The second replaced it with the widened expectation (the
+eleven surviving, `kommune_local_chapters` byte-identical). Both described a widening that reading 2
+declined. The `kommune_local_chapters` check is preserved in 4.3 for whoever revisits it.
 
 ---
 

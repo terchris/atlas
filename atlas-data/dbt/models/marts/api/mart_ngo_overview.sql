@@ -1,3 +1,12 @@
+{#
+  Per-NGO supply counts: chapters by level, kommuner reached, activities.
+
+  🔵 This view's population follows `mart_ngo_index` — both read `dim_ngo`, and
+  any proposal to widen one applies to both. The reasons widening was considered
+  and declined, and the two things that bite silently if it is revisited, are
+  recorded once in `mart_ngo_index.sql` rather than duplicated here.
+#}
+
 with chapter_stats as (
   select
     ngo_orgnr                                                              as orgnr,
