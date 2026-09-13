@@ -178,6 +178,50 @@ changed as (
   where oppdateringsid > (
     select coalesce(max(last_oppdateringsid), 0) from {{ this }}
   )
+
+  union
+
+  -- 🔴 THE SECOND WRITER. Everything above selects organisations the FEED has
+  -- touched. The system has two writers into `raw` and this model had one input
+  -- path, so a BOOTSTRAP was invisible to it by construction.
+  --
+  -- ⚠️ Measured by imac on 2026-09-13 (urb-agents #835), and every surface said
+  -- it worked: `brreg_bootstrap` rewrote all 1,174,007 snapshot rows,
+  -- `transform_and_publish` succeeded in 329 s, Dagster recorded an
+  -- ASSET_MATERIALIZATION for `marts/dim_brreg_enhet` — and the model wrote ZERO
+  -- rows. `max(reconciled_at)` still predated the run. A bootstrap produces no
+  -- `brreg_enheter_versions` rows, so `changed` was empty and the snapshot never
+  -- reached published data.
+  --
+  -- 🔴 That matters because re-running the bootstrap is exactly what an operator
+  -- would do to REPAIR the register, and a green materialisation of a model that
+  -- wrote nothing is indistinguishable from one that wrote everything.
+  --
+  -- PER-ORGANISATION, NOT AGAINST A GLOBAL MAXIMUM, and that is the whole design:
+  --
+  --   • `max(last_seen_at)` over the dimension would be contaminated by the feed.
+  --     `last_seen_at` is `greatest(fetched_at, loaded_at)`, so one recent feed
+  --     change lifts it above every snapshot row and the predicate would skip
+  --     them — it would LEAD, and the header above is about exactly that: lagging
+  --     costs work, leading loses data.
+  --   • A `snapshot_loaded_at` column would give an uncontaminated watermark, and
+  --     is rejected because adding a column to this model is a SCHEMA change
+  --     under `on_schema_change='fail'` — it would demand `--full-refresh` on
+  --     every existing install, which is the upgrade-path defect class that took
+  --     `api_v1` to zero views on 2026-09-12. A fix for a silent-no-op should not
+  --     ship a loud one.
+  --
+  -- Comparing each organisation to its OWN reconciled state cannot lead: a row
+  -- is selected iff the snapshot knows something the dimension has not applied.
+  --
+  -- 🔵 It is also correct when the feed is AHEAD for a given organisation:
+  -- `s.loaded_at > d.last_seen_at` is false there, the row is skipped, and that
+  -- is right — the dimension already holds the newer document.
+  select s.organisasjonsnummer
+  from {{ source('raw', 'brreg_enheter_snapshot') }} s
+  left join {{ this }} d on d.organisasjonsnummer = s.organisasjonsnummer
+  where d.organisasjonsnummer is null
+     or s.loaded_at > d.last_seen_at
 ),
 {% endif %}
 
@@ -218,7 +262,30 @@ latest_change as (
 combined as (
   select
     coalesce(s.organisasjonsnummer, c.organisasjonsnummer) as organisasjonsnummer,
-    -- The changed document wins when there is one. ⚠️ For a tombstone this is
+    -- The changed document wins when there is one.
+    --
+    -- 🔵 STILL CORRECT NOW THAT A BOOTSTRAP CAN SELECT ROWS, and it is worth
+    -- saying why, because the widened predicate above makes the case reachable
+    -- for the first time: an organisation can now be rebuilt because its
+    -- SNAPSHOT moved while an older feed change also exists for it, and the feed
+    -- document wins anyway.
+    --
+    -- That is right, on one assumption that is worth naming rather than
+    -- assuming: **the feed is lossless**. Every change reflected in a newer bulk
+    -- file also travelled through `/oppdateringer`, by construction — the bulk
+    -- file is a periodic rendering of the same register the feed streams. So a
+    -- feed document is never older in register terms than a snapshot document,
+    -- only fetched at a different moment. And a tombstone MUST win regardless:
+    -- the snapshot cannot express a deletion at all.
+    --
+    -- ⚠️ If the feed were lossy this precedence would preserve a stale document
+    -- over a fresher file — which is a far more serious defect than any
+    -- ordering rule, and is the thing to test rather than to reason about. The
+    -- test is a read, not an argument: sample organisations whose snapshot row
+    -- differs from this dimension on something other than `snapshot_file_date`
+    -- or `reconciled_at`. ~0 means the feed is doing its job.
+    --
+    -- ⚠️ For a tombstone this is
     -- Brreg's six-key deletion stub, NOT a full record — a deleted organisation
     -- still answers HTTP 200. Such rows are excluded from current state below,
     -- so the stub never reaches a consumer expecting an Enhet.
