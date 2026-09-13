@@ -309,15 +309,26 @@ models:
           docs/research/ngo-landscape.md. v1 includes Tier A only.
         data_tests:
           - not_null
+      # ⚠️ CORRECTED 2026-09-13 (urb-agents #815). This description previously
+      # read "Values: 'distrikt+local' (Red Cross), 'flat' (single-tier), 'none'
+      # (no chapters)". None of those three are accepted values of the column —
+      # seeds/schema.yml has constrained it to the four below since the seed was
+      # written. PostgREST publishes these descriptions as the OpenAPI field
+      # docs, so api_v1.ngo_index documented three values the data can never
+      # hold; website/static/openapi.json, captured from the live API, carries
+      # the wrong text and is the proof it was SERVED rather than merely stored.
+      #
+      # 🔴 The correction lives in this comment and NOT in the description, on
+      # purpose. A description is the published contract — PostgREST serves it to
+      # every consumer — and a consumer needs the four values, not the history of
+      # an error they never saw. The audit trail belongs in the repo, which is
+      # what this comment is. An earlier draft of this very fix put the note in
+      # the description and would have published it.
       - name: chapter_data_shape
         description: |
-          How this NGO models its chapters. Values: 'distrikt+local'
-          (Red Cross), 'flat' (single-tier), 'none' (no chapters).
-          Drives which supply staging model the NGO uses.
-        data_tests:
-          - not_null
-      - name: has_chapters
-        description: True when the NGO has any chapters at all (regardless of activity).
+          How this NGO's per-chapter activity data is shaped — drives
+          which ingest pattern it uses. Values: 'api_canonical',
+          'cms_bins', 'programme_only', 'no_structure'.
         data_tests:
           - not_null
       - name: primary_focus

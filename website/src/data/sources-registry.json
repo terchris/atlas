@@ -7602,11 +7602,7 @@
         },
         {
           "name": "chapter_data_shape",
-          "description": "How this NGO models its chapters. Values: 'distrikt+local' (Red Cross), 'flat' (single-tier), 'none' (no chapters). Drives which supply staging model the NGO uses."
-        },
-        {
-          "name": "has_chapters",
-          "description": "True when the NGO has any chapters at all (regardless of activity)."
+          "description": "How this NGO's per-chapter activity data is shaped — drives which ingest pattern it uses. Values: 'api_canonical', 'cms_bins', 'programme_only', 'no_structure'."
         },
         {
           "name": "primary_focus",

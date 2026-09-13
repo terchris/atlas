@@ -478,10 +478,9 @@ the legal name.';
 COMMENT ON COLUMN api_v1.ngo_index.website_url IS 'NGO''s primary website. Used as the outbound link from the index page.';
 COMMENT ON COLUMN api_v1.ngo_index.tier IS 'Structural-fit tier (A / B / C) from
 docs/research/ngo-landscape.md. v1 includes Tier A only.';
-COMMENT ON COLUMN api_v1.ngo_index.chapter_data_shape IS 'How this NGO models its chapters. Values: ''distrikt+local''
-(Red Cross), ''flat'' (single-tier), ''none'' (no chapters).
-Drives which supply staging model the NGO uses.';
-COMMENT ON COLUMN api_v1.ngo_index.has_chapters IS 'True when the NGO has any chapters at all (regardless of activity).';
+COMMENT ON COLUMN api_v1.ngo_index.chapter_data_shape IS 'How this NGO''s per-chapter activity data is shaped — drives
+which ingest pattern it uses. Values: ''api_canonical'',
+''cms_bins'', ''programme_only'', ''no_structure''.';
 COMMENT ON COLUMN api_v1.ngo_index.primary_focus IS 'One-line description of the NGO''s main mission area.';
 COMMENT ON COLUMN api_v1.ngo_index.icnpo_code_1 IS 'ICNPO classification code (primary). See ref_icnpo. NULL when
 unclassified.';
