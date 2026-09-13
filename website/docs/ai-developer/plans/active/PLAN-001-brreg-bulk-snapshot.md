@@ -230,13 +230,20 @@ alone.
 
 Parking it would have kept the coverage gate quiet and left a new user with an empty organisation
 register and nothing saying why. So it stays out of `UNSCHEDULED_SOURCES` and gets a named job
-instead, and `template-info.yaml` grows a `manual_only:` row so the artifact states the difference
-rather than implying it. **The gate was made to fail on purpose**: removing `brreg_bootstrap` from
-`first_data.jobs` produces
+instead, and the artifact states the difference rather than implying it. **The gate was made to fail
+on purpose**: removing `brreg_bootstrap` from `first_data.jobs` produces
 
 ```
 ✗ first_data.jobs does not cover 1 automated source(s): ['brreg-enheter-alle']
 ```
+
+> ⚠️ **A `manual_only:` key was added here and later removed (2026-09-13).** It was meant to state the
+> distinction machine-readably — `unscheduled` means *cannot run*, `manual_only` means *must run once*.
+> imac found it rendered on no UIS surface at all (urb-agents #793), and that the instruction already
+> reached the operator through `first_data.how`, which does render. **A key nothing reads and nothing
+> displays is indistinguishable from coverage**, so the distinction moved into the prose that is
+> actually shown and the key went. Recorded rather than deleted quietly, because the reasoning for
+> adding it was sound and only the mechanism was wrong.
 
 ### Validation
 

@@ -181,6 +181,10 @@ operational:
       without a watermark.
 
       brreg_bootstrap is the odd one out and the one most likely to be skipped.
+      ⚠️ It is deliberately NOT in the `unscheduled` list further down: that list
+      means CANNOT run — frr has no private data on a public deployment,
+      redcross-branches has no credential — and both are correctly absent from
+      this sequence. This one is the opposite. It MUST run, once, here.
       It has NO schedule and its asset has NO automation condition, on purpose —
       re-running a 1.17M-record bulk load against a populated database is the one
       genuinely destructive operation in this pipeline, so nothing self-triggers
@@ -188,8 +192,11 @@ operational:
       with nothing saying why; running it twice is safe (upsert, never truncate)
       but pointless.
     jobs: [annual_sources_refresh, klass_refresh, seed_sources_refresh, brreg_bootstrap, brreg_change_feed, transform_and_publish]
-    takes: "~11 minutes for the first four, plus the Brreg bulk load; ~4.1M rows across 48 raw and 64 marts tables"
-    measured: "imac, clean cluster, urb-agents #507 — 11.1 min, 2,906,194 rows. That figure PREDATES brreg_bootstrap and does not include it: the download alone is 210 MB / 52 s and the database write time is not yet measured. Do not read 11 minutes as the new total."
+    # ⚠️ The caveat is INSIDE `takes` because `first_data.measured` renders on no
+    # UIS surface (imac, urb-agents #793). A figure whose "this is out of date"
+    # note is invisible is worse than no figure — the stale number reaches the
+    # reader and the correction does not.
+    takes: "~11 minutes for the first four, plus the Brreg bulk load; ~4.1M rows across 48 raw and 64 marts tables. The 11 minutes is imac's measurement on a clean cluster (urb-agents #507: 11.1 min, 2,906,194 rows) and PREDATES brreg_bootstrap — the bulk download alone is 210 MB / 52 s and its database write time is not yet measured. Do not read 11 minutes as the new total."
 
   # For the "what is this about to do to my cluster" question (#507 item 1).
   # provides.services below is the authoritative list; this is the human summary.
@@ -320,13 +327,6 @@ operational:
   # nightly. Nightly would be ~15,000 pointless requests a year against
   # public-sector APIs Atlas depends on staying welcome at.
   external_services: [SSB, FHI, Bufdir, Brønnøysundregistrene]
-
-  # Runs only when a human launches it. Not in `unscheduled` below, because that
-  # list means CANNOT run (frr has no private data on a public deployment;
-  # redcross-branches has no credential) and both are correctly absent from the
-  # first-data sequence. brreg_bootstrap is the opposite: it MUST run once, on
-  # day one, and then be left alone. Different reason, different list.
-  manual_only: [brreg_bootstrap]
 
   # No automation condition, no freshness policy — these never self-trigger.
   # Parked pending a Red Cross API credential.
