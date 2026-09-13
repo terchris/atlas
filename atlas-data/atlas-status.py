@@ -94,7 +94,17 @@ OK, WARN, CANNOT = 0, 1, 2
 
 
 def worst(*states: int) -> int:
-    """CANNOT dominates WARN dominates OK. Not-asked is OK; asked-and-unanswerable is CANNOT."""
+    """
+    CANNOT dominates WARN dominates OK. Not-asked is OK; asked-and-unanswerable is CANNOT.
+
+    ⚠️ Validates rather than trusting. A block that returned a display string
+    instead of a state once turned `max()` into a TypeError that surfaced as
+    "cannot answer" — a bug wearing a connectivity failure's clothes. Naming the
+    offending value makes the next one unmistakable in one line.
+    """
+    for st in states:
+        if st not in (OK, WARN, CANNOT):
+            raise TypeError(f"not a status state: {st!r} — a block returned the wrong type")
     return max(states)
 
 
@@ -265,14 +275,39 @@ def ingest_block(cur, limit: int = 12) -> int:
         print("  no ingest runs in the last 24 h   ⚠️")
         return WARN
     state = OK
+    # 🔴 `label` AND `state` ARE TWO THINGS AND USED TO BE ONE NAME.
+    #
+    # This loop wrote the display string into `state` — the same name as the
+    # block's return value — so on a healthy host every row left `state = "ok"`,
+    # the function returned a str, and `worst()` did `max(("ok", 0))`:
+    #
+    #     TypeError: '>' not supported between instances of 'str' and 'int'
+    #
+    # ⚠️ Caught by main's handler and reported as exit 2, "cannot answer". So the
+    # tool built because green signals lied said "I could not look" at a register
+    # that was completely fine (imac, urb-agents #918).
+    #
+    # 🔴 It failed ONLY when everything was healthy. Rows sort failures-first, so
+    # the last row printed is an `ok` one unless something is broken — the bug
+    # was invisible on exactly the hosts that had a problem, and fired on exactly
+    # the hosts that did not.
+    #
+    # ⚠️ And the second half nobody saw: on a FAILING row `state` was then
+    # overwritten with the int WARN and printed, so the line read `1` instead of
+    # `FAILED (1)`. The collision corrupted the output as well as the return.
+    #
+    # 🔵 Introduced by me in the tri-state refactor: I renamed `healthy` to
+    # `state` throughout and did not notice this function already had a local
+    # `state`. A mechanical rename into a scope that already uses the name.
+    #
     # Cosmetic, imac: the full list pushed the register block off a short
     # terminal. Failures sort first and the tail is summarised rather than shown.
     for slug, code, started, notes in rows[:limit]:
-        state = "ok" if code == 0 else (f"FAILED ({code})" if code is not None else "running")
+        label = "ok" if code == 0 else (f"FAILED ({code})" if code is not None else "running")
         if code not in (0, None):
-            state = WARN
+            state = worst(state, WARN)
         note = f"   {notes[:58]}" if notes and code not in (0, None) else ""
-        print(f"  {slug:<26}{state:<14}{started:%Y-%m-%d %H:%M}{note}")
+        print(f"  {slug:<26}{label:<14}{started:%Y-%m-%d %H:%M}{note}")
     if len(rows) > limit:
         print(f"  … and {len(rows) - limit} more, all ok")
     return state
@@ -540,7 +575,11 @@ def main(argv: list[str]) -> int:
         # ⚠️ An unexpected error is "cannot look" (2), never "looked and it is
         # fine" (0). The old script printed a header with blank values and
         # carried on when psql was missing.
-        print(f"✗ cannot answer: {exc}", file=sys.stderr)
+        # ⚠️ The exception CLASS is printed, not only its message. "cannot
+        # answer: TypeError: …" reads as a bug in this tool; "cannot answer:
+        # OperationalError: …" reads as the database being unreachable. Both exit
+        # 2 — never 0 — but an operator should not have to guess which they have.
+        print(f"✗ cannot answer: {type(exc).__name__}: {exc}", file=sys.stderr)
         return 2
 
     state = worst(state, jobs_block())
