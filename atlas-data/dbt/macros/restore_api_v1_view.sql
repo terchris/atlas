@@ -34,10 +34,30 @@
   this hook. Closing it entirely means PostgREST reading from something that is
   never dropped — a larger design change, deliberately not attempted here.
 
-  ⚠️ The COMMENT is not restored by this hook, so between here and
-  `apply-api-v1.sh` the view serves correct data without its documentation.
+  ⚠️ The COMMENT is not restored by this hook, so a view recreated here serves
+  correct data without its documentation until `apply-api-v1.sh` puts it back.
   PostgREST sources the OpenAPI descriptions from those comments, so the docs —
-  not the data — are briefly thinner. The apply step restores them.
+  not the data — go thin.
+
+  🔴 "BRIEFLY" IS WRONG AND THIS NOTE USED TO SAY IT. On a SUCCESSFUL run the gap
+  closes at the apply step, which is the case this paragraph was written for. On a
+  FAILED run there is no apply step, so the comments stay missing until the next
+  successful one — open-ended, not sub-second. imac measured exactly that on
+  urb-agents #788: after a failed run all 14 views had lost their comments and the
+  OpenAPI descriptions were empty.
+
+  🔵 The guarantee is therefore **"a successful transform lands comments"**, not
+  "comments are always current" (imac's phrasing, urb-agents #825). Thin is a
+  better failure than stale — an empty description is visibly missing where wrong
+  text reads as authoritative — but the distinction only helps someone who knows
+  it is empty rather than believing it is brief.
+
+  ✅ What #825 also established, since it is the neighbouring worry: the apply path
+  DOES reach the served document. `generate_api_v1.py` emits
+  `NOTIFY pgrst, 'reload schema'` as its last statement, and after a successful
+  transform a corrected comment is present in `pg_description` AND in the served
+  OpenAPI, with no stale copy anywhere. PostgREST's schema cache does not swallow
+  a comment change on this path.
 
   Guarded on the schema existing, so a build against a database where migration
   050 has not yet run degrades to a no-op rather than failing the model. The same
