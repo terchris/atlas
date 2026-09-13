@@ -21,6 +21,7 @@ DROP IF EXISTS throughout), so re-running is a no-op.
 """
 
 import json
+import re
 import os
 from pathlib import Path
 
@@ -191,6 +192,147 @@ def api_v1_rowcount_matches_marts():
         metadata={
             "views_checked": checked,
             "mismatches": ", ".join(mismatches) if mismatches else "none",
+        },
+    )
+
+
+@asset_check(
+    asset=api_v1_surface,
+    name="descriptions_match_the_running_build",
+    blocking=False,
+    description=(
+        "The COMMENTs served as OpenAPI descriptions match the ones in the image "
+        "that is running. They can differ for up to a day after an upgrade, in "
+        "either direction, and nothing else notices."
+    ),
+)
+def api_v1_descriptions_match_the_running_build():
+    """
+    🔴 THE DOCUMENTED CONTRACT TRACKS THE LAST PUBLISH, NOT THE RUNNING BUILD.
+
+    `COMMENT`s live in the database, not the image. Only `transform_and_publish`
+    applies them — `brreg_transform` runs 48 times a day and applies none of it.
+    So an operator can install a build that fixes a published contract and keep
+    serving the broken documentation until the next daily publish, with every
+    signal green: exit status, `verify dagster`, and a 200 from the endpoint.
+
+    ⚠️ imac measured all four states on 2026-09-13 (urb-agents #865), and every
+    one is reachable by ordinary install and rollback:
+
+        02:30  d78141a installed       CORRECTED   build had the fix
+        02:40  rolled back to eba547e  SURVIVED    NEW docs on an OLD build
+        03:00  transform on eba547e    REVERTED    old build overwrote the fix
+        08:09  restored to e0ef430     still OLD   OLD docs on a NEW build  <- the operator case
+        08:2x  transform on e0ef430    CORRECTED   agreement restored
+
+    🔴 `e0ef430` was pinned specifically to correct `chapter_data_shape`. An
+    operator installing it serves three values the column rejects for up to ~24
+    hours, depending when they install relative to 05:00.
+
+    It is the same class as the bootstrap blind spot, one layer out: no status
+    signal answers "did the output reflect the input". There the gap was raw →
+    marts; here it is image → public API.
+
+    WHY THIS IS A CHECK AND NOT A FIX
+
+    A per-run NOTIFY was falsified by imac — 14 reloads mid-run against
+    half-torn-down state. Making `brreg_transform` apply comments pays the publish
+    cost 48 times a day for something that changes on upgrade. The remedy is a
+    one-time application at the moment it matters, and the operator-facing half of
+    that is in `operational.install.note`.
+
+    ⚠️ WARN, NOT ERROR, AND DELIBERATELY. The mismatch is a normal transient
+    between an upgrade and the next publish, and it is fixed by a documented
+    action. Failing the publish gate would make every upgrade look broken, and a
+    gate that cries wolf on a healthy state is how a gate gets muted.
+
+    🔵 It is useful precisely because `api_v1_checks` can run WITHOUT
+    materialising the asset — so an operator who has just upgraded can ask "is my
+    served documentation the one my build ships?" and get an answer without
+    running a publish, which would destroy the evidence by fixing it.
+    """
+    import psycopg2
+
+    database_url = os.environ.get("ATLAS_DATABASE_URL") or os.environ.get(
+        "DATABASE_URL"
+    )
+    if not database_url:
+        raise RuntimeError(
+            "ATLAS_DATABASE_URL (or DATABASE_URL) must be set to check the "
+            "api_v1 surface."
+        )
+
+    # Expected state = what the RUNNING IMAGE ships. api_v1_generated.sql is
+    # regenerated from the dbt manifest and committed, so it is the build's own
+    # statement of what the documentation should say.
+    #
+    # ⚠️ Parsed rather than executed. Executing it would APPLY the comments,
+    # which is the repair, not the check — and would make the drift unobservable
+    # by fixing it. A check that cannot observe the state it reports on is the
+    # failure this whole finding is about.
+    expected: "dict[tuple[str, str], str]" = {}
+    # A proper SQL string literal, not a non-greedy `(.*?)';`. Both parse today's
+    # 124 statements identically and round-trip, but they differ on a comment
+    # whose text contains `';` — escaped as `'';` — where the non-greedy form
+    # stops at the first `'` and truncates the body silently.
+    #
+    # ⚠️ That would not fail. It would report the column as DRIFTED against a
+    # database that is perfectly correct, and a check that invents drift is worse
+    # than no check: it teaches the reader to disbelieve it. Tested against the
+    # adversarial case rather than assumed.
+    pattern = re.compile(
+        r"COMMENT ON COLUMN api_v1\.(\w+)\.(\w+) IS '((?:[^']|'')*)';",
+        re.DOTALL,
+    )
+    for view, column, body in pattern.findall(API_V1_SQL_PATH.read_text()):
+        expected[(view, column)] = body.replace("''", "'")
+
+    if not expected:
+        raise RuntimeError(
+            f"no COMMENT ON COLUMN statements parsed from {API_V1_SQL_PATH} — "
+            "the check cannot pass vacuously, so it fails instead. Regenerate "
+            "with ./regenerate-api-v1.sh, or fix this parser if the emitted "
+            "shape changed."
+        )
+
+    with psycopg2.connect(database_url) as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                select c.table_name,
+                       c.column_name,
+                       col_description(pgc.oid, c.ordinal_position)
+                from information_schema.columns c
+                join pg_class pgc on pgc.relname = c.table_name
+                join pg_namespace pgn
+                  on pgn.oid = pgc.relnamespace and pgn.nspname = 'api_v1'
+                where c.table_schema = 'api_v1'
+                """
+            )
+            actual = {(v, col): body for v, col, body in cur.fetchall()}
+
+    drifted = [
+        f"{v}.{c}"
+        for (v, c), want in sorted(expected.items())
+        if (v, c) in actual and actual[(v, c)] != want
+    ]
+    # Columns the image expects that the database has not got at all are the
+    # `descriptions_complete` check's subject, not this one's. Two questions,
+    # two checks — reporting both here would make each harder to act on.
+
+    return AssetCheckResult(
+        passed=not drifted,
+        severity=AssetCheckSeverity.WARN,
+        metadata={
+            "columns_compared": len(expected),
+            "drifted": ", ".join(drifted[:20]) if drifted else "none",
+            "drifted_count": len(drifted),
+            "remedy": (
+                "Materialise the api_v1 asset. It re-applies every COMMENT and "
+                "emits NOTIFY pgrst, 'reload schema' — no dbt build required, so "
+                "it is far cheaper than transform_and_publish and is the whole "
+                "of what an upgrade needs."
+            ),
         },
     )
 
