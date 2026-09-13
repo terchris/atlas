@@ -244,7 +244,9 @@ skips changes. Leaving it alone is the only option that cannot lose anything.
 ### Validation
 
 A watermark row exists after PLAN-001's bootstrap and names a plausible id (~25M as of 2026-09).
-⬜ Needs a database — imac.
+✅ **Satisfied** — imac reported `raw.brreg_feed_watermark` holding `25190771` on 2026-09-13
+(urb-agents #832), which is the shape and magnitude predicted. Closed on a measurement taken for
+another purpose rather than on a run commissioned for this line.
 
 ---
 
@@ -324,7 +326,13 @@ validation exists to catch, and it is not the one the original tasks would have 
   `on_cron(0 4 * * *, Europe/Oslo)` and the 3-day/7-day freshness policy — read off the loaded spec,
   not asserted from the source.
 - ✅ The render gate passes with four crons; `first_data` covers all **42** automated sources.
-- ⬜ A manual run advancing the watermark and appending versions — imac.
+- ✅ **A run advancing the watermark and appending versions — satisfied, and by something better than
+  the manual run this asked for.** The scheduled feed has been polling on cadence since 2026-09-12, and
+  the evidence is second-hand from three directions: the watermark sits at `25190771`, PLAN-003 phase 1
+  measured 13,611 changes over seven days out of `raw.brreg_enheter_versions`, and imac's exhaustive
+  comparison on #839 found 94 organisations differing from the snapshot **all explained by feed
+  changes**. ⚠️ A single manual run would have proven less: repeated automated runs prove the watermark
+  advances *and* does not skip.
 
 ---
 
