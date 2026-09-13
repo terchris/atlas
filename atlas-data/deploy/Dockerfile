@@ -67,6 +67,22 @@ COPY dbt/scripts ./dbt/scripts
 COPY dbt/tests ./dbt/tests
 COPY migrations ./migrations
 
+# 🔴 THE STATUS TOOL, AND IT WAS MISSING FOR THE SAME REASON dbt/tests WAS.
+#
+# `atlas-status.sh` was written, reviewed and merged on 2026-09-13 and was NOT in
+# the image — imac found it by looking for it inside the code-location pod and
+# finding /app/{dagster,dbt,ingest,migrations} and nothing else. Built, merged,
+# and unreachable from the only place it is useful.
+#
+# ⚠️ That is the third instance of one shape in two days: a dbt test absent from
+# the manifest, an asset check absent from definitions.py, and a script absent
+# from the image. Written, correct, and never wired to anything that runs it.
+#
+# 🔵 It is Python rather than shell precisely so this line is enough: `psql` is
+# not installed here and adding postgresql-client would grow the image for one
+# tool, while psycopg2 is already present for the api_v1 asset checks.
+COPY atlas-status.py ./atlas-status.py
+
 # --- Install the Dagster code-location package after source is in place -----
 # Non-editable install — the source is already inside the image, no need for
 # the .pth-file dance. Reinstalls when pyproject.toml OR atlas_data/ changes,
