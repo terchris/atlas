@@ -45,8 +45,36 @@ remedy is time*, on the observation alone rather than on a mechanism.
 
 🔵 A partial load is safe to leave in place meanwhile: the loader upserts on `organisasjonsnummer`,
 deletes nothing (both measured across 866,000 conflicting keys, #839), and the change feed keeps the
-register current. ⚠️ But it leaves `raw` carrying two `snapshot_file_date` values at once — not a
-fault in itself, and a hazard for whoever next runs a full refresh for an unrelated reason.
+register current. It leaves `raw` carrying two `snapshot_file_date` values at once.
+
+⚠️ **CORRECTION 2026-09-13: the full-refresh hazard was overstated, and the overstatement is mine.**
+This paragraph used to end *"a hazard for whoever next runs a full refresh for an unrelated reason"*,
+and I repeated it more strongly elsewhere as *"a full refresh would bake in a half-and-half
+register"*. **Read against the model, it would not.**
+
+On `--full-refresh`, `is_incremental()` is false, so **both** `changed` filters disappear:
+`snapshot` reads every row and `latest_change` reads `distinct on (organisasjonsnummer) … order by
+oppdateringsid desc` over the **entire** versions history rather than a window. Document precedence
+is `coalesce(changed_doc, snapshot_doc)`, so:
+
+- every organisation the feed has **ever** touched takes the feed's newest document — current;
+- every organisation the feed has **never** touched has, by definition, **not changed**, so its
+  09-11 document and its 09-12 document are the *same document*.
+
+🔵 **The split is a difference in PROVENANCE, not in content.** `snapshot_file_date` would end up
+mixed, and that column exists precisely to record which file a row came from — it would be
+**accurate**, not corrupt. "Half-and-half register" was the wrong mental model of the hazard.
+
+🔴 **What would falsify this, stated because it is the real bound:** a feed that is lossy for one of
+the ~308,239 organisations still on the older file. imac's exhaustive losslessness check covered the
+866,000 carrying the **newer** file date; the older rows were not testable, because their snapshot row
+*is* the file the dimension was built from. Nothing suggests selective lossiness and zero adjacent
+pairs across 161 million argues against it — but the check does not cover them, and that is a
+different statement from "they were checked and passed."
+
+✅ So finishing the load is still worth doing, for provenance and for coverage of that bound — but it
+is **not** a precondition for a full refresh, and treating it as one was blocking a legitimate
+operation on a hazard that does not exist.
 
 ## What would settle it
 
