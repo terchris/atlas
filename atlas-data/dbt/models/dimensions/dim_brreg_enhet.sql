@@ -182,46 +182,52 @@ changed as (
   union
 
   -- 🔴 THE SECOND WRITER. Everything above selects organisations the FEED has
-  -- touched. The system has two writers into `raw` and this model had one input
-  -- path, so a BOOTSTRAP was invisible to it by construction.
+  -- touched. `raw` has two writers — the half-hourly feed and the manual bulk
+  -- loader — and this model had one input path, so a BOOTSTRAP was invisible to
+  -- it by construction.
   --
   -- ⚠️ Measured by imac on 2026-09-13 (urb-agents #835), and every surface said
   -- it worked: `brreg_bootstrap` rewrote all 1,174,007 snapshot rows,
   -- `transform_and_publish` succeeded in 329 s, Dagster recorded an
   -- ASSET_MATERIALIZATION for `marts/dim_brreg_enhet` — and the model wrote ZERO
-  -- rows. `max(reconciled_at)` still predated the run. A bootstrap produces no
-  -- `brreg_enheter_versions` rows, so `changed` was empty and the snapshot never
-  -- reached published data.
+  -- rows. A green materialisation of a model that wrote nothing is
+  -- indistinguishable from one that wrote everything, which matters most because
+  -- re-running the bootstrap is how an operator REPAIRS the register.
   --
-  -- 🔴 That matters because re-running the bootstrap is exactly what an operator
-  -- would do to REPAIR the register, and a green materialisation of a model that
-  -- wrote nothing is indistinguishable from one that wrote everything.
+  -- 🔴 THE WATERMARK IS `snapshot_loaded_at`, A SNAPSHOT-ONLY COLUMN, AND THAT IS
+  -- THE WHOLE DESIGN. `last_seen_at` is `greatest(fetched_at, loaded_at)`, so a
+  -- single recent feed change lifts it above every snapshot row and a predicate
+  -- reading it would skip them — it would LEAD, and the note above is about
+  -- exactly that: lagging costs work, leading loses data. A column only the bulk
+  -- loader can move cannot be contaminated by the feed.
   --
-  -- PER-ORGANISATION, NOT AGAINST A GLOBAL MAXIMUM, and that is the whole design:
+  -- It lags safely: organisations the final filter excludes (tombstoned, or with
+  -- a null document) never enter the dimension, so their `loaded_at` is not
+  -- counted and the maximum sits at the newest SURVIVING row. Lagging means a few
+  -- organisations get re-processed, and every write here is a delete-then-insert
+  -- keyed on organisasjonsnummer, so re-processing is a no-op.
   --
-  --   • `max(last_seen_at)` over the dimension would be contaminated by the feed.
-  --     `last_seen_at` is `greatest(fetched_at, loaded_at)`, so one recent feed
-  --     change lifts it above every snapshot row and the predicate would skip
-  --     them — it would LEAD, and the header above is about exactly that: lagging
-  --     costs work, leading loses data.
-  --   • A `snapshot_loaded_at` column would give an uncontaminated watermark, and
-  --     is rejected because adding a column to this model is a SCHEMA change
-  --     under `on_schema_change='fail'` — it would demand `--full-refresh` on
-  --     every existing install, which is the upgrade-path defect class that took
-  --     `api_v1` to zero views on 2026-09-12. A fix for a silent-no-op should not
-  --     ship a loud one.
+  -- ⚠️ THE FIRST VERSION OF THIS DID IT WITH A JOIN AND IT WAS THE WRONG TRADE.
+  -- `527455e` compared each snapshot row to its own dimension row — correct, and
+  -- immune to the contamination above without needing a new column. imac measured
+  -- it: 3,311 MB joined against 3,971 MB on every run, **+42 s per run, ~34 extra
+  -- minutes of database work per day**, to serve a path taken about once a year
+  -- (#837). "Cannot lead" is a correctness argument and it was doing duty as a
+  -- performance one.
   --
-  -- Comparing each organisation to its OWN reconciled state cannot lead: a row
-  -- is selected iff the snapshot knows something the dimension has not applied.
+  -- 🔵 The column costs a `--full-refresh` on upgrade, which is why it was
+  -- rejected the first time — on an assumption that was never measured. imac has
+  -- now measured it three times: **256 s, once**. 256 seconds once against 34
+  -- minutes a day is not a close call.
   --
-  -- 🔵 It is also correct when the feed is AHEAD for a given organisation:
-  -- `s.loaded_at > d.last_seen_at` is false there, the row is skipped, and that
-  -- is right — the dimension already holds the newer document.
-  select s.organisasjonsnummer
-  from {{ source('raw', 'brreg_enheter_snapshot') }} s
-  left join {{ this }} d on d.organisasjonsnummer = s.organisasjonsnummer
-  where d.organisasjonsnummer is null
-     or s.loaded_at > d.last_seen_at
+  -- Served by `brreg_enheter_snapshot_loaded_at_idx` (migration 055): an index
+  -- range scan returning zero rows on an ordinary run, rather than a sequential
+  -- scan of 3,311 MB to learn the same thing.
+  select organisasjonsnummer
+  from {{ source('raw', 'brreg_enheter_snapshot') }}
+  where loaded_at > (
+    select coalesce(max(snapshot_loaded_at), '-infinity'::timestamptz) from {{ this }}
+  )
 ),
 {% endif %}
 
@@ -316,6 +322,12 @@ combined as (
     c.endringstype,
     c.oppdateringsid,
     s.snapshot_file_date,
+    -- 🔴 The bulk loader's write time, carried through UNCHANGED and never
+    -- combined with the feed's. `last_seen_at` below deliberately mixes both;
+    -- this one must not, because the incremental predicate reads its maximum to
+    -- decide what the bulk loader has written since. Mixing them would let a feed
+    -- change advance the snapshot watermark and skip real snapshot rows.
+    s.loaded_at as snapshot_loaded_at,
     greatest(coalesce(c.fetched_at, s.loaded_at), coalesce(s.loaded_at, c.fetched_at)) as last_seen_at
   from snapshot s
   full outer join latest_change c
@@ -372,6 +384,7 @@ typed as (
     endringstype,
     oppdateringsid,
     snapshot_file_date,
+    snapshot_loaded_at,
     last_seen_at,
     doc
   from combined
@@ -405,6 +418,7 @@ select
   endringstype as last_endringstype,
   oppdateringsid as last_oppdateringsid,
   snapshot_file_date,
+  snapshot_loaded_at,
   last_seen_at,
   -- 🔴 THE SECOND CLOCK. `last_seen_at` says when the INGEST last wrote this
   -- organisation into raw; this says when the TRANSFORM last reconciled it into
