@@ -101,6 +101,23 @@ apply. Run commands on the host. Do not invent a cage.
   while every fresh install passed. The full account is in
   [`plans/active/PLAN-003-brreg-dim-and-frivillig.md`](plans/active/PLAN-003-brreg-dim-and-frivillig.md)
   under *"The upgrade path is invisible to everyone except imac"*.
+- 🔴 **An idempotence check on an already-converged system proves the weaker half. It needs a FRESH
+  substrate.** This is the mirror of the rule above and the two are easy to confuse: a *shape* change
+  needs a cluster that already holds data, and a *convergence* check needs one that does not. On
+  2026-09-13 this agent asked imac to diff `pg_dump --schema-only` across repeated migration runs and
+  argued that their populated cluster was the stronger test, *"because it proves convergence against
+  the state that actually exists."* **That was wrong.** `051` exists because run 1 differed from run
+  2 — comments set unconditionally by `006`/`007`, shape changed behind a guard by `008` — and a
+  cluster already at n=k is past the point where that can appear at all; it measures the steady state
+  n → n+1. imac ran both rather than taking the framing, and only the fresh run answered the question.
+  **If this is ever automated it wants a throwaway database: pointed at production it keeps passing
+  right up to and including the day someone introduces the next `008`.** Full account in
+  [`plans/active/PLAN-001-brreg-bulk-snapshot.md`](plans/active/PLAN-001-brreg-bulk-snapshot.md).
+- **A test that cannot fail is not evidence. Say what made it non-vacuous.** A diff of two empty
+  schemas is also an empty diff, and a gate whose first run passes has demonstrated nothing yet. The
+  convention here is to prove the instrument alongside the result — imac reported 134 `COMMENT ON`
+  statements and 91 brreg-mentioning objects present in the database that produced the empty diff;
+  gates in this repo are proven by being made to fail on purpose before they are trusted.
 - **Absence-guards are a pattern here. Look for the existing ones before inventing a third.**
   Sometimes what makes code correct is that a statement is *not* there, and no ordinary test covers an
   absence — the code passes every test right up until someone adds the line. The answer is a test that

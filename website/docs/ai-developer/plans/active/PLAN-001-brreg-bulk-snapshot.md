@@ -11,18 +11,59 @@ Loads all 1,174,098 Norwegian organisations from Brønnøysundregistrene into `r
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Active — all three phases built, cluster verification outstanding
+## Status: Active — two of three falsifiables closed on a cluster, one still open
 
-Every task in phases 1-3 is done and merged. The plan stays **Active** rather than moving to
-`completed/` because three things can only be falsified where there is a database, and this agent has
-neither Postgres nor a container runtime:
+Every task in phases 1-3 is done and merged. The plan stayed **Active** because three things can only
+be falsified where there is a database, and this agent has neither Postgres nor a container runtime:
 
-1. the full load, and `count(*)` against `/enheter?size=1` on the same day;
-2. the second run on a populated table — the one genuinely destructive operation here;
-3. migration convergence, as a `pg_dump --schema-only` diff rather than as reasoning.
+| | falsifiable | state |
+|---|---|---|
+| 1 | the full load, and `count(*)` against `/enheter?size=1` | ✅ **closed** — imac, stage 4 on UIS 1.6.70: install from the catalogue, exit 0 in 2m51s, **1,174,007 organisations**, all endpoints 200 |
+| 2 | the second run on a populated table — the one genuinely destructive operation here | ⬜ **open** — see below |
+| 3 | migration convergence, as a `pg_dump --schema-only` diff rather than as reasoning | ✅ **closed** — imac, urb-agents #809, three empty diffs |
 
-It moves to `completed/` when imac reports on those, not before. Declaring it done on my own say-so
-is exactly the thing the declare / apply / verify split exists to prevent.
+⚠️ **2 is open because I cannot find a report of it, not because anyone said it failed.** imac's #809
+note reads *"if it passes, PLAN-001 moves to `completed/` and all three falsifiables are closed"* — and
+the convergence run did pass. But convergence is about **migrations** re-applying, and falsifiable 2
+is about the **loader** re-running over a populated `raw.brreg_enheter_snapshot`. Those are different
+operations and only one of them has been run twice.
+
+🔵 The design says it is safe — the writer upserts on `organisasjonsnummer` (`index.ts`, `conflictKeys:
+["organisasjonsnummer"]`), there is an absence-guard test asserting no `DELETE` or `TRUNCATE` in the
+module source, and the watermark insert is `on conflict (id) do nothing` so a re-run cannot drag a
+feed watermark backwards. **That is three pieces of reasoning and no measurement**, which is the exact
+distinction this plan's phase 1 was written to enforce. It moves to `completed/` when a second
+`brreg_bootstrap` over the populated cluster leaves the row count unchanged, not before.
+
+## 🔴 What imac's convergence run proved about the METHOD, which outlives this plan
+
+imac ran it **both** ways rather than choosing, and the reason is worth more than the result:
+
+```
+populated cluster,  run n  vs run n+1     EMPTY DIFF
+fresh database,     run 1  vs run 2       EMPTY DIFF   <- the scar case
+fresh database,     run 2  vs run 3       EMPTY DIFF
+```
+
+⚠️ **I offered imac the choice and framed it wrongly.** I wrote that a throwaway proves convergence
+while their cluster proves it *"against the state that actually exists, which is the stronger claim."*
+**It is the weaker claim for this defect class, and imac did not take my framing.**
+
+`051` exists because run 1 differed from run 2: `006`/`007` set comments unconditionally, `008`
+changed the shape behind a guard, and the divergence appeared *the second time*. **A cluster already
+at n=k is past the point where that can show at all** — it measures the steady state n → n+1. The
+populated run answers *"is it converged now"*; only the fresh run answers *"does it converge"*, which
+is the question `052` had never been asked.
+
+🔵 **Generalised, because it will apply to the next idempotence check and not only to migrations: a
+convergence test on an already-converged system proves the weaker half.** If this is ever automated
+it wants a **fresh** database — pointed at production it will keep passing right up to and including
+the day someone introduces the next `008`.
+
+**Proof the test was not vacuous** (a diff of two empty schemas is also an empty diff): the fresh
+database carried 134 `COMMENT ON` statements, 91 brreg-mentioning objects, the 5 tables from
+`052`/`053`/`054`, and the `053` index comment — the statement that took the whole file down when it
+was unqualified — resolving and stable across three applications.
 
 
 **Goal**: a complete, point-in-time copy of Enhetsregisteret in `raw`, loadable on a fresh install and re-runnable without corrupting an existing one.
@@ -192,12 +233,17 @@ and the README rather than left as an implicit property of "upsert".
   `npm run build` for the site all pass.
 - ✅ Live against the real service: HTTP 200, `snapshot_file_date` parsed as `2026-09-11`, real
   records framed and parsed (`npm run ingest:brreg-enheter-alle -- --sample 3`).
-- ⬜ **Not verified here, and cannot be from this agent:** the full load, the row count against
-  `/enheter?size=1`, and the second-run-on-a-populated-table case. There is no Postgres and no
-  container runtime on this machine — this agent declares, another applies, a third verifies. The
-  migration converges trivially (one guarded `create table`, comments re-asserted unconditionally to
-  the same text, and nothing later alters it), but that is reasoning, not a `pg_dump` diff.
-  **imac: please run the double-apply diff and the re-run case on a throwaway database.**
+- ✅ **The full load, verified by imac on a cluster:** 1,174,007 organisations, stage 4 on UIS 1.6.70,
+  exit 0 in 2m51s.
+- ✅ **Migration convergence, verified by imac (urb-agents #809):** three empty `pg_dump --schema-only`
+  diffs, ignoring only `pg_dump`'s randomised `\restrict` / `\unrestrict` lines — which were the
+  entire raw diff, 8 lines, exactly as the README warns. ⚠️ **The reasoning this bullet used to offer
+  in place of a diff** — *"one guarded `create table`, comments re-asserted unconditionally to the same
+  text, and nothing later alters it"* — turned out to be correct, which is not the same as having been
+  sufficient. `051` exists because exactly that kind of reasoning was wrong once.
+- ⬜ **Still not verified:** the second-run-on-a-populated-table case. This agent declares, another
+  applies, a third verifies. **imac: a second `brreg_bootstrap` over the populated cluster, checking
+  the row count is unchanged, is the last thing holding this plan open.**
 
 ---
 
@@ -261,9 +307,9 @@ on purpose**: removing `brreg_bootstrap` from `first_data.jobs` produces
 - ✅ `render-template-info.sh` passes every gate, and coverage went from 40 to **41** automated
   sources with the same two parked.
 - ✅ The coverage gate proven to fail on purpose.
-- ⬜ **Not verified here:** imac running `brreg_bootstrap` on a clean install and reaching the phase 2
-  row count. `uis template info atlas` showing the new first-data sequence needs a publish, which
-  happens on the next tag.
+- ✅ **Verified by imac:** `brreg_bootstrap` on a clean install from the catalogue reached the phase 2
+  row count — 1,174,007 organisations, exit 0 in 2m51s on UIS 1.6.70, all endpoints 200 and automation
+  running. `uis template info atlas` renders the first-data sequence from `v20260913-e0ef430` onward.
 
 ---
 
