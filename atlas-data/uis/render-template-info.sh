@@ -106,6 +106,80 @@ for mutable in latest main master head; do
   fi
 done
 
+# ── Table counts must agree with each other and with the migrations ──────────
+#
+# urb-agents #824. This file carried the row/table summary TWICE — once in
+# `first_data.takes`, once in `install.first_load` — and the two disagreed:
+# "48 raw and 60 marts tables" against "48 raw and 64 marts tables", twelve
+# lines apart on the same `uis template info` screen. Both `marts` figures were
+# wrong, and the `raw` figure was wrong in BOTH, out by four in a number nobody
+# had looked at in three threads.
+#
+# 🔴 The defect was not a stale number. imac's framing, which is the reason this
+# check exists at all: "two strings in one artifact disagree with each other AND
+# both disagree with the database, and the method that reconciles them is not
+# written down anywhere." An unstated counting rule makes every figure in the
+# sentence uncheckable — including by the agent writing it.
+#
+# ⚠️ It only became operator-visible when UIS 1.6.69 started rendering
+# `install.first_load`. Before that, one of the two contradicting numbers reached
+# nobody. The renderer did not cause the defect; it stopped hiding it.
+#
+# What is checked here, and what deliberately is not:
+#   - every `N raw` figure in the file is the SAME N, and equals the number of
+#     distinct `create table raw.*` statements in atlas-data/migrations
+#   - every `M marts` figure is the SAME M
+#   - the counting rule is present in prose
+#
+# ⚠️ The marts figure is NOT recomputed here, and that is a limit rather than an
+# oversight: it needs dbt's manifest, which is built from a database connection
+# and does not exist on the CI path that runs this script. Checking agreement and
+# provenance is what can be done without one; template-info.yaml carries the
+# one-line command to recompute it where a manifest does exist.
+MIG_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../migrations" && pwd)"
+RAW_ACTUAL=$(grep -rhoiE 'create table (if not exists )?raw\.[a-z0-9_]+' "$MIG_DIR"/*.sql \
+             | grep -oiE 'raw\.[a-z0-9_]+' | tr 'A-Z' 'a-z' | sort -u | wc -l | tr -d ' ')
+
+# The claim has ONE canonical spelling so it can be matched exactly: "<N> raw
+# BASE TABLEs" and "<M> marts BASE TABLEs". Views are stated separately and are
+# deliberately not matched here — an earlier draft of this check used the looser
+# `[0-9]+ marts` and tripped on its own "(plus 5 marts views)", reporting a
+# disagreement between a table count and a view count. A pattern loose enough to
+# match two different quantities cannot tell you they disagree.
+RAW_CLAIMS=$(grep -oE '[0-9]+ raw BASE TABLEs' "$TMP" | grep -oE '^[0-9]+' | sort -u)
+MARTS_CLAIMS=$(grep -oE '[0-9]+ marts BASE TABLEs' "$TMP" | grep -oE '^[0-9]+' | sort -u)
+
+if [[ -z "$RAW_CLAIMS" || -z "$MARTS_CLAIMS" ]]; then
+  echo "✗ no 'N raw' / 'M marts' table counts found in the rendered artifact" >&2
+  echo "  Both install.first_load and first_data.takes are expected to state them." >&2
+  exit 1
+fi
+
+if [[ $(wc -l <<< "$RAW_CLAIMS") -ne 1 ]]; then
+  echo "✗ the artifact states more than one 'raw' table count: $(tr '\n' ' ' <<< "$RAW_CLAIMS")" >&2
+  echo "  Two strings on one screen disagreeing is the #824 defect. Make them agree." >&2
+  exit 1
+fi
+
+if [[ $(wc -l <<< "$MARTS_CLAIMS") -ne 1 ]]; then
+  echo "✗ the artifact states more than one 'marts' table count: $(tr '\n' ' ' <<< "$MARTS_CLAIMS")" >&2
+  echo "  Two strings on one screen disagreeing is the #824 defect. Make them agree." >&2
+  exit 1
+fi
+
+if [[ "$RAW_CLAIMS" != "$RAW_ACTUAL" ]]; then
+  echo "✗ the artifact claims ${RAW_CLAIMS} raw tables; atlas-data/migrations creates ${RAW_ACTUAL}" >&2
+  echo "  Counting rule: distinct 'create table raw.<name>' across migrations/*.sql." >&2
+  exit 1
+fi
+
+if ! grep -q 'COUNTING RULE' "$TMP"; then
+  echo "✗ the table counts are stated without the counting rule beside them" >&2
+  echo "  A figure whose method is unwritten cannot be checked by anyone. See #824." >&2
+  exit 1
+fi
+echo "  ✓ table counts agree (${RAW_CLAIMS} raw = migrations, ${MARTS_CLAIMS} marts stated once) and the rule is stated"
+
 cp "$TMP" "$OUT"
 
 # Parse it if we can. Never silently skip — say which happened.
