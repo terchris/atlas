@@ -232,7 +232,7 @@ redcross_branches_job = define_asset_job(
 
 # ── The transform split ──────────────────────────────────────────────────────
 #
-# transform_and_publish used to carry the dbt build, all 644 dbt checks and the
+# transform_and_publish used to carry the dbt build, all the dbt checks and the
 # api_v1 publish in one run: a 711-event plan, 90.5% of it checks. Dagster
 # constructs that plan over gRPC BEFORE the run pod exists, and it did not finish
 # inside start_timeout_seconds — the run died having created no pod, which is how
@@ -257,7 +257,7 @@ transform_job = define_asset_job(
         "dbt models + the api_v1 public surface, WITHOUT their checks — see the "
         "note above. Daily, even though the raw "
         "sources refresh weekly: this run is also Atlas's in-pipeline "
-        "data-quality gate (644 dbt tests as asset checks) and the step that "
+        "data-quality gate (813 dbt tests, 728 of them asset checks) and the step that "
         "republishes api_v1 and reloads PostgREST's schema cache. A daily green "
         "run is the signal that the public API is still serving what it should; "
         "waiting a week to find out is too long."
@@ -270,8 +270,8 @@ transform_job = define_asset_job(
 # marts it wraps?" It answers a question about the thing external consumers see,
 # it belongs immediately after the publish, and it is one event.
 #
-# The 644 dbt tests are DATA QUALITY: "is the data itself sound?" Different
-# question, different audience, and — being 644 events — a materially different
+# The dbt tests are DATA QUALITY: "is the data itself sound?" Different
+# question, different audience, and — being hundreds of events — a materially different
 # risk of hitting the same start-timeout that caused this split. Keeping them
 # apart means a publish-gate failure is never hidden behind, or blocked by, the
 # bulk test suite.
@@ -334,6 +334,22 @@ brreg_transform_job = define_asset_job(
     ),
 )
 
+# 🔴 HOW THE CHECK COUNTS IN THIS FILE ARE DERIVED, because one of them went
+# stale by 26% and the reasoning above still rested on it (urb-agents #817).
+#
+#   813  dbt tests in the project
+#   728  of those have exactly ONE dbt parent, so they become asset checks
+#    85  have two or more parents and cannot
+#
+# Recompute from the manifest rather than trusting these lines:
+#
+#   python3 -c "import json,collections;n=json.load(open('../dbt/target/manifest.json'))['nodes'];
+#   t=[x for x in n.values() if x['resource_type']=='test'];
+#   print(len(t), sum(1 for x in t if len(x['depends_on']['nodes'])==1))"
+#
+# ⚠️ `_API_V1_CHECKS` selects checks on the api_v1_surface asset, which is NOT a
+# dbt asset — so the dbt checks all land in transform_checks and the subtraction
+# below removes a different population rather than a slice of the 728.
 _API_V1_CHECKS = AssetSelection.checks_for_assets(api_v1.api_v1_surface)
 
 api_v1_checks_job = define_asset_job(
@@ -352,11 +368,13 @@ transform_checks_job = define_asset_job(
     description=(
         "The dbt data-quality suite — every dbt test as a Dagster asset check. "
         "Split out of transform_and_publish because the checks were 90.5% of a "
-        "711-event plan the run pod could not start. ⚠️ This job is still ~644 "
-        "events and carries the same startability risk; bounding it durably is "
-        "the subject of INVESTIGATE-transform-job-decomposition. Triggered by the "
-        "build succeeding rather than by a clock, since a fixed offset would "
-        "encode a guess about how long the build takes."
+        "711-event plan the run pod could not start. 🔴 This job now carries 728 "
+        "dbt asset checks — counted from the manifest on 2026-09-13, not the ~644 "
+        "this line used to state — so the number the startability warning rests "
+        "on has grown past the 711 that caused the original failure. Bounding it "
+        "durably is the subject of INVESTIGATE-transform-job-decomposition. "
+        "Triggered by the build succeeding rather than by a clock, since a fixed "
+        "offset would encode a guess about how long the build takes."
     ),
 )
 
