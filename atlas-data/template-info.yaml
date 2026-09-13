@@ -224,22 +224,31 @@ operational:
         incrementally. The existing table cannot gain it in place, and Atlas
         refuses to continue rather than silently building into the old shape.
       fix: >-
-        Rebuild that model once, AS THE atlas DATABASE USER, not as a superuser
-        — a full refresh drops and recreates, so the tables take the running
-        user's ownership and a superuser leaves the next run with "permission
-        denied". From the dbt project - "dbt build --full-refresh --select
-        dim_brreg_enhet+". It takes about four minutes for 1.17M rows.
+        Two steps, and the second is the one people miss. FIRST rebuild that
+        model once, AS THE atlas DATABASE USER and not as a superuser — a full
+        refresh drops and recreates, so the tables take the running user's
+        ownership and a superuser leaves the next run with "permission denied".
+        From the dbt project - "dbt build --full-refresh --select
+        dim_brreg_enhet+". About four minutes for 1.17M rows. THEN materialise
+        the api_v1 asset, or run transform_and_publish. Rebuilding the view is
+        NOT enough on its own - PostgREST answers from a cached schema, and if
+        that cache was last loaded while the view was missing it keeps returning
+        404 over a view that exists and has correct grants. The api_v1 asset is
+        what issues the reload.
     - symptom: >-
-        The public API returns 404 for every endpoint, and stays that way.
+        The public API returns 404 - including straight after you repaired the
+        database and confirmed the view exists with rows and grants.
       cause: >-
-        api_v1 views are rebuilt by each transform run. A run that FAILS partway
-        leaves the views it had already replaced missing, and nothing restores
-        them until a run succeeds. A successful run repairs this by itself within
-        seconds, so a persistent 404 means the last run failed.
+        PostgREST serves from a cached schema rather than reading the catalogue
+        per request. Recreating a view is invisible to it until something issues
+        NOTIFY pgrst 'reload schema'. Only the api_v1 asset does that, at the end
+        of a transform. So a manual repair fixes the database and leaves the
+        endpoint exactly as it was.
       fix: >-
-        Look at the last transform run rather than at PostgREST — the API is
-        reporting a failed transform, not a fault of its own. Fix the run and the
-        endpoints return. Nothing needs reinstalling.
+        Materialise the api_v1 asset, or run transform_and_publish. It takes
+        seconds and the endpoints return immediately. Nothing needs reinstalling,
+        and this is NOT a PostgREST fault - it is serving the last schema it was
+        told about.
 
   # ⚠️ EVERY ROW NAMES THE JOB THAT OWNS IT, and that is not decoration.
   #
