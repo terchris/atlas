@@ -242,7 +242,12 @@ def deletion_block(cur) -> int:
 def ingest_block(cur, limit: int = 12) -> int:
     """Per-source ingest health. Failures first, so a short terminal shows the problem."""
     print()
-    print("Ingest runs (last 24 h)")
+    # ⚠️ A WINDOW, NOT A THRESHOLD. A source absent from this list has not run in
+    # 24 h, which is normal for anything weekly or monthly and says nothing on its
+    # own. Whether a source is overdue against its DECLARED cadence is the dbt
+    # check `raw_sources_were_refreshed_recently`, which owns that comparison and
+    # has one number per cadence rather than one number for all of them.
+    print("Ingest runs (last 24 h — a window, not a freshness verdict)")
     cur.execute(
         """
         select source_slug, exit_code, started_at, notes
@@ -375,19 +380,37 @@ def jobs_block() -> int:
                         streak += 1
                     else:
                         break
-                # ⚠️ CRITERION C also asks for "a job that hasn't run". A job absent
-                # from `runs` entirely cannot be seen from here at all — stated
-                # below rather than silently omitted.
-                age_h = _hours_since(started)
-                stale = age_h is not None and age_h > 24
-                flags = []
-                if streak > 1:
-                    flags.append(f"{streak} consecutive")
-                if stale:
-                    flags.append(f"no run in {age_h:.0f} h")
-                flag = ("   " + ", ".join(flags) + "   ⚠️") if flags else ""
+                # 🔴 NO STALENESS FLAG HERE, AND ITS REMOVAL IS THE POINT.
+                #
+                # A fixed 24 h flagged four jobs out of four on a clean host (imac,
+                # urb-agents #931) — and worse, the report contradicted itself:
+                #
+                #     Ingest runs   brreg-oppdateringer   ok   22:01      <- 24 min ago
+                #     Jobs          brreg_change_feed     no run in 29 h ⚠️
+                #
+                # Both lines describe the same data and the first one is right.
+                # `brreg_change_feed` is driven by an AutomationCondition, so its work
+                # lands under `__ASSET_JOB`; the NAMED job genuinely had not been
+                # launched, and that is correct and harmless.
+                #
+                # 🔴 Reading job-run history to answer "is this data flowing" is the
+                # wrong instrument for anything automation materialises rather than a
+                # job. That is this tool's own principle — does the output reflect the
+                # input — with the Jobs block answering "did a job run" instead.
+                #
+                # ⚠️ And it could not be fixed by tuning the number: the jobs declare
+                # half-hourly, daily, weekly and monthly cadences, so one threshold is
+                # wrong for three of them. Cadence-aware freshness ALREADY EXISTS as the
+                # dbt check `raw_sources_were_refreshed_recently` — one number per
+                # cadence, in one place, failing at compile time if a cadence is added
+                # without one. Recomputing it here would be a second place that must
+                # agree, which is the failure this project keeps meeting.
+                #
+                # 🔵 So this block answers only what job history can answer: did jobs
+                # FAIL, how many times in a row, and with what error.
+                flag = f"   {streak} consecutive   ⚠️" if streak > 1 else ""
                 print(f"  {name:<26}{status:<10}{started:%Y-%m-%d %H:%M}{flag}")
-                if flags:
+                if streak > 1:
                     state = worst(state, WARN)
                 # 🔴 The error's own text, criterion C. Printing "FAILURE" turns into
                 # a support round-trip; printing the message turns into a fix — the
@@ -396,8 +419,12 @@ def jobs_block() -> int:
                     msg = _last_error(cur, name)
                     if msg:
                         print(f"      last error: {msg}")
-        print("  ⚠️ a job that has never run at all does not appear here — Dagster's")
-        print("     `runs` table has no row for it. Compare against schedules.py.")
+        print("  ⚠️ This block answers 'did a job fail', not 'is data flowing'. Assets that")
+        print("     automation materialises land under __ASSET_JOB, so a named job sitting")
+        print("     idle is normal and not a finding. Data freshness is the register block")
+        print("     above, and cadence-aware source freshness belongs to the dbt check")
+        print("     raw_sources_were_refreshed_recently, which owns that comparison.")
+        print("     A job that has NEVER run has no row in Dagster's `runs` and is invisible here.")
     except Exception as exc:  # noqa: BLE001 — a schema and a role this tool does not own
         print(f"  not available — {exc}")
         return CANNOT
