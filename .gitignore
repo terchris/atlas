@@ -38,3 +38,7 @@ yarn-error.log*
 .vscode/
 .idea/
 *.swp
+
+# Python bytecode — a test harness run from atlas-data/ created one and it was committed.
+__pycache__/
+*.pyc
