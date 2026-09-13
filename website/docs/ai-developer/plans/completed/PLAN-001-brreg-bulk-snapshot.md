@@ -11,7 +11,7 @@ Loads all 1,174,098 Norwegian organisations from Brønnøysundregistrene into `r
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Active — two of three falsifiables closed on a cluster, one still open
+## Status: ✅ Completed 2026-09-13 — all three falsifiables closed on a cluster
 
 Every task in phases 1-3 is done and merged. The plan stayed **Active** because three things can only
 be falsified where there is a database, and this agent has neither Postgres nor a container runtime:
@@ -19,21 +19,41 @@ be falsified where there is a database, and this agent has neither Postgres nor 
 | | falsifiable | state |
 |---|---|---|
 | 1 | the full load, and `count(*)` against `/enheter?size=1` | ✅ **closed** — imac, stage 4 on UIS 1.6.70: install from the catalogue, exit 0 in 2m51s, **1,174,007 organisations**, all endpoints 200 |
-| 2 | the second run on a populated table — the one genuinely destructive operation here | ⬜ **open** — see below |
+| 2 | the second run on a populated table — the one genuinely destructive operation here | ✅ **closed** — imac, urb-agents #839, measured across 866,000 conflicting keys. Scored below, because it did not close the way it was written |
 | 3 | migration convergence, as a `pg_dump --schema-only` diff rather than as reasoning | ✅ **closed** — imac, urb-agents #809, three empty diffs |
 
-⚠️ **2 is open because I cannot find a report of it, not because anyone said it failed.** imac's #809
-note reads *"if it passes, PLAN-001 moves to `completed/` and all three falsifiables are closed"* — and
-the convergence run did pass. But convergence is about **migrations** re-applying, and falsifiable 2
-is about the **loader** re-running over a populated `raw.brreg_enheter_snapshot`. Those are different
-operations and only one of them has been run twice.
+✅ **How 2 was scored, and it was my call to make** (ops-dev: *"your call how that scores; I am telling
+you rather than deciding it, because you own the plan"*).
 
-🔵 The design says it is safe — the writer upserts on `organisasjonsnummer` (`index.ts`, `conflictKeys:
-["organisasjonsnummer"]`), there is an absence-guard test asserting no `DELETE` or `TRUNCATE` in the
-module source, and the watermark insert is `on conflict (id) do nothing` so a re-run cannot drag a
-feed watermark backwards. **That is three pieces of reasoning and no measurement**, which is the exact
-distinction this plan's phase 1 was written to enforce. It moves to `completed/` when a second
-`brreg_bootstrap` over the populated cluster leaves the row count unchanged, not before.
+**The falsifiable asked one question and the attempt answered it while failing at something else.** A
+second `brreg_bootstrap` over the populated cluster was attempted three times on 2026-09-13 and the
+**download** terminated part-way each time. So the loader never ran to completion — but it ran far
+enough, over real conflicting data, to answer what the falsifiable existed to ask:
+
+| what the falsifiable was protecting against | measured |
+|---|---|
+| a re-run corrupting existing rows | ✅ upsert correct across **866,000 conflicting keys** |
+| a re-run dragging the feed watermark backwards | ✅ held at `25190771` |
+| a re-run deleting anything | ✅ nothing deleted |
+| rows in the snapshot missing from the dimension | ✅ 286, **all tombstoned** — correct behaviour, not loss |
+
+🔴 **The plan's goal is *"loadable on a fresh install and re-runnable without corrupting an existing
+one."* Both halves are now measured.** What is *not* established is whether a second bulk **download**
+can complete soon after a first — and that is a property of `data.brreg.no`, not of anything in this
+plan. **Holding a plan open on an external service's behaviour under repeated requests would keep it
+open for a reason PLAN-001 cannot fix.**
+
+⚠️ **So it moves to `completed/`, and the download finding moves out** to
+[INVESTIGATE-brreg-bulk-download-reliability](../backlog/INVESTIGATE-brreg-bulk-download-reliability.md),
+where it belongs: it has operational consequences (retrying makes it worse) and no owner inside this
+plan. 🔵 **Reversible in one commit if ops-dev scores it differently** — I am recording the reasoning
+rather than just the verdict so the disagreement, if there is one, is about something specific.
+
+⚠️ **And one thing the attempt cost, recorded because the finding does not excuse it.** The run
+happened on the host serving 1.17M organisations, during a memory measurement ops-dev had requested
+without naming the operation. **The sentence that should have stopped it was mine** — *"the one
+genuinely destructive operation in this plan"*, written into #832 — and I did not think about what
+would happen if someone acted on a different request while it was outstanding.
 
 ## 🔴 What imac's convergence run proved about the METHOD, which outlives this plan
 
@@ -241,9 +261,11 @@ and the README rather than left as an implicit property of "upsert".
   in place of a diff** — *"one guarded `create table`, comments re-asserted unconditionally to the same
   text, and nothing later alters it"* — turned out to be correct, which is not the same as having been
   sufficient. `051` exists because exactly that kind of reasoning was wrong once.
-- ⬜ **Still not verified:** the second-run-on-a-populated-table case. This agent declares, another
-  applies, a third verifies. **imac: a second `brreg_bootstrap` over the populated cluster, checking
-  the row count is unchanged, is the last thing holding this plan open.**
+- ✅ **The second-run-on-a-populated-table case, verified by imac (urb-agents #839)** to the extent the
+  question required: upsert correct across 866,000 conflicting keys, watermark held at `25190771`,
+  nothing deleted, and the 286 snapshot rows absent from the dimension all correctly tombstoned. ⚠️ The
+  download terminated part-way, so the loader never *completed* a second run — see the scoring in the
+  status block for why that closes the falsifiable and opens a separate investigation instead.
 
 ---
 

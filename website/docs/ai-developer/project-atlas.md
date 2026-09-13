@@ -131,7 +131,7 @@ apply. Run commands on the host. Do not invent a cage.
   n → n+1. imac ran both rather than taking the framing, and only the fresh run answered the question.
   **If this is ever automated it wants a throwaway database: pointed at production it keeps passing
   right up to and including the day someone introduces the next `008`.** Full account in
-  [`plans/active/PLAN-001-brreg-bulk-snapshot.md`](plans/active/PLAN-001-brreg-bulk-snapshot.md).
+  [`plans/completed/PLAN-001-brreg-bulk-snapshot.md`](plans/completed/PLAN-001-brreg-bulk-snapshot.md).
 - **A test that cannot fail is not evidence. Say what made it non-vacuous.** A diff of two empty
   schemas is also an empty diff, and a gate whose first run passes has demonstrated nothing yet. The
   convention here is to prove the instrument alongside the result — imac reported 134 `COMMENT ON`
