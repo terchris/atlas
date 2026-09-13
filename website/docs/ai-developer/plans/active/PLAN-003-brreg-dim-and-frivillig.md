@@ -418,6 +418,28 @@ editorial (what `api_v1.ngo_index` is *for*), so it belongs to ops-dev or Terje,
       the two sources are populated; this makes it a measurement. A table with no readers is safe to
       stop *maintaining* today and safe to *drop* only once that returns zero.
 
+      🔴 **Two surfaces this task did not name when it was written, one of them CI-enforced.** A
+      full-repo sweep — not a grep of `models/` — finds the source reaches the **public website** as
+      well as the pipeline:
+
+      - `website/src/data/sources-registry.json` and the generated pages under `website/docs/datasets/`.
+        `.github/workflows/check-manifests.yml` regenerates both and **fails on any diff**, so removing
+        the `sources.yml` entry without regenerating breaks CI rather than silently drifting. 🔵 That is
+        the good case: the gate catches it.
+      - `website/static/lineage/index.html`, generated via `docusaurus.config.ts`.
+
+      ⚠️ And the consequence that is not a build artefact: a dataset disappears from the public
+      catalogue at `/data`. Retiring a source is a **published-surface change**, not only an internal
+      cleanup, so it carries the same "wait for a human" weight as adding one. `installing-on-uis.md`
+      mentions the table too and is hand-written, so it does not regenerate.
+
+      ⚠️ The Dagster surface is smaller than it looks: `assets/dbt.py`, `schedules.py` and
+      `raw_seeds.py` mention `brreg_enheter` mostly in **prose** — module docstrings explaining why the
+      asset exists — and those explain a decision that stops being true here. Delete the wiring; read
+      the comments before deleting them, because `raw_seeds.py` records that this was the first seed
+      source wrapped in `recordIngestRun()` and that note applies to every future seed promotion, not
+      to this table.
+
 ### Validation
 
 `api_v1.ngo_index` and `api_v1.ngo_overview` return the voluntary population with the eleven curated
