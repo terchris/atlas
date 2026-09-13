@@ -72,10 +72,43 @@ class CannotAnswer(Exception):
     """Raised when the tool cannot look, as distinct from looking and finding fault."""
 
 
-def _conn(url: str):
-    import psycopg2
+# 🔴 THE THREE STATES, AS DATA RATHER THAN AS TWO BOOLEANS.
+#
+# The exit scheme was stated from the first version — 0 healthy, 1 warned,
+# 2 cannot-answer — and the code carried it in a single `healthy` boolean, which
+# cannot express the third. imac found the consequence (urb-agents #918):
+#
+#     ATLAS_POSTGREST_URL dead    -> "unreachable"       exit 1
+#     ATLAS_POSTGREST_URL unset   -> "cannot check"      exit 0   <- D1 in its purest form
+#     DAGSTER_DATABASE_URL unauth -> unhandled traceback exit 1
+#
+# ⚠️ "I could not look" was being reported as healthy, in the tool written to
+# stop exactly that. A script doing `atlas-status.py && deploy` would have
+# proceeded.
+#
+# 🔵 imac asked whether the dead-API case should stay 1. It should not: I
+# specified 1 before the three-way scheme existed, and "the API did not answer"
+# is not "the API answered wrongly". The property imac verified — never a false
+# pass — is preserved and sharpened.
+OK, WARN, CANNOT = 0, 1, 2
 
+
+def worst(*states: int) -> int:
+    """CANNOT dominates WARN dominates OK. Not-asked is OK; asked-and-unanswerable is CANNOT."""
+    return max(states)
+
+
+def _conn(url: str):
+    # ⚠️ The import is INSIDE the try. It was outside, and a missing psycopg2
+    # crashed with a traceback instead of reporting "cannot look" — found by
+    # running the exit-code paths on a machine without it. The same shape imac
+    # reported for an unauthorised Dagster role: a dependency problem must
+    # degrade, not crash, or the tool fails in exactly the way it exists to
+    # detect. psycopg2 ships in the atlas-data image; this path is for everywhere
+    # else the script is run.
     try:
+        import psycopg2
+
         return psycopg2.connect(url)
     except Exception as exc:  # noqa: BLE001 — any failure here means "cannot look"
         raise CannotAnswer(f"cannot connect: {exc}") from exc
@@ -95,9 +128,9 @@ def _hours_since(ts) -> float | None:
     return (datetime.now(timezone.utc) - ts).total_seconds() / 3600.0
 
 
-def register_block(cur) -> bool:
+def register_block(cur) -> int:
     """The four lines. Everything else in this tool is elaboration. Returns True if healthy."""
-    healthy = True
+    state = OK
     print("Brreg register")
 
     pulled_row = _one(cur, "select last_oppdateringsid, updated_at from raw.brreg_feed_watermark limit 1")
@@ -135,20 +168,20 @@ def register_block(cur) -> bool:
         flag = "   ⚠️" if pending_is_symptom else ""
         print(f"  pending                     {pending:<10} ({detail}){flag}")
     if pending_is_symptom:
-        healthy = False
+        state = WARN
 
     if age is None:
         print("  last reconciled             never   ⚠️")
-        healthy = False
+        state = WARN
     else:
         flag = "   ⚠️" if age > RECONCILE_WARN_HOURS else ""
         print(f"  last reconciled             {age:.1f} h ago{flag}")
         if age > RECONCILE_WARN_HOURS:
-            healthy = False
-    return healthy
+            state = WARN
+    return state
 
 
-def deletion_block(cur) -> bool:
+def deletion_block(cur) -> int:
     """
     🔴 D1 — THIS MUST BE AN HTTP REQUEST, NOT A QUERY.
 
@@ -174,7 +207,7 @@ def deletion_block(cur) -> bool:
     )
     if not row:
         print("  no deletion in the feed yet — nothing to assert")
-        return True
+        return OK
     orgnr = row[0]
 
     base = os.environ.get("ATLAS_POSTGREST_URL") or os.environ.get("POSTGREST_URL")
@@ -182,8 +215,11 @@ def deletion_block(cur) -> bool:
         # ⚠️ A DISTINCT OUTCOME, not a pass. Without a URL this tool cannot make
         # the assertion, and saying "absent, correct" here would be the exact
         # lie the check exists to prevent.
+        # ⚠️ CANNOT, not OK. PostgREST is a service Atlas declares in
+        # `provides.services`, so its absence is not "this check is optional" —
+        # it is the tool being unable to answer its headline question.
         print(f"  most recent deletion        {orgnr}   ⚠️ cannot check — set ATLAS_POSTGREST_URL")
-        return True  # not unhealthy; unanswerable. See --strict below.
+        return CANNOT
     url = f"{base.rstrip('/')}/brreg_enhet?organisasjonsnummer=eq.{orgnr}&select=organisasjonsnummer"
     try:
         with urllib.request.urlopen(url, timeout=15) as resp:
@@ -191,19 +227,19 @@ def deletion_block(cur) -> bool:
             code = resp.status
     except urllib.error.HTTPError as exc:
         print(f"  most recent deletion        {orgnr}   ⚠️ API returned HTTP {exc.code}")
-        return False
+        return CANNOT
     except Exception as exc:  # noqa: BLE001
         print(f"  most recent deletion        {orgnr}   ⚠️ API unreachable: {exc}")
-        return False
+        return CANNOT
 
     if code == 200 and body == []:
         print(f"  most recent deletion        {orgnr}   absent from the API ✓")
-        return True
+        return OK
     print(f"  most recent deletion        {orgnr}   STILL SERVED by the API ⚠️")
-    return False
+    return WARN
 
 
-def ingest_block(cur, limit: int = 12) -> bool:
+def ingest_block(cur, limit: int = 12) -> int:
     """Per-source ingest health. Failures first, so a short terminal shows the problem."""
     print()
     print("Ingest runs (last 24 h)")
@@ -222,19 +258,19 @@ def ingest_block(cur, limit: int = 12) -> bool:
     rows = cur.fetchall()
     if not rows:
         print("  no ingest runs in the last 24 h   ⚠️")
-        return False
-    healthy = True
+        return WARN
+    state = OK
     # Cosmetic, imac: the full list pushed the register block off a short
     # terminal. Failures sort first and the tail is summarised rather than shown.
     for slug, code, started, notes in rows[:limit]:
         state = "ok" if code == 0 else (f"FAILED ({code})" if code is not None else "running")
         if code not in (0, None):
-            healthy = False
+            state = WARN
         note = f"   {notes[:58]}" if notes and code not in (0, None) else ""
         print(f"  {slug:<26}{state:<14}{started:%Y-%m-%d %H:%M}{note}")
     if len(rows) > limit:
         print(f"  … and {len(rows) - limit} more, all ok")
-    return healthy
+    return state
 
 
 def _last_error(cur, job: str) -> str | None:
@@ -273,7 +309,7 @@ def _last_error(cur, job: str) -> str | None:
     return " ".join(m.group(1).split())[:160] if m else None
 
 
-def jobs_block() -> bool:
+def jobs_block() -> int:
     """
     Item 3 — job-level history, which the first version could not reach.
 
@@ -290,61 +326,82 @@ def jobs_block() -> bool:
     print()
     print("Jobs")
     if not url:
+        # 🔵 NOT ASKED, so OK. A host can legitimately run Atlas without Dagster,
+        # and the Jobs block is diagnostic context — it explains WHY the register
+        # is behind, not WHETHER it is. Its absence cannot hide the headline.
         print("  not available — set DAGSTER_DATABASE_URL for job history")
-        return True
+        return OK
+    # 🔴 ASKED AND COULD NOT LOOK, so CANNOT. imac hit this with a traceback:
+    # `permission denied for table runs`.
+    #
+    # ⚠️ Their own advice caused it and they corrected it — "the same host and
+    # credentials with the database name swapped" is wrong. The host is the same;
+    # the ROLE is not. `runs` and `event_logs` are owned by the `dagster` role and
+    # Atlas has no SELECT on them, so a URL built from Atlas's string connects and
+    # then fails on the first query. On this cluster the credentials live in
+    # `dagster-postgresql-secret`.
+    #
+    # 🔵 That makes wrong credentials likelier in the field than absent ones — a
+    # copied env file, a rotated password, a role without the grant — so the
+    # unauthorised path must degrade exactly as the unset path does rather than
+    # crash. One more exception class, as they said.
+    state = OK
     try:
         conn = _conn(url)
     except CannotAnswer as exc:
         print(f"  not available — {exc}")
-        return True
-    healthy = True
-    with conn, conn.cursor() as cur:
-        cur.execute(
-            """
-            select pipeline_name, status, to_timestamp(start_time)
-            from runs
-            where start_time is not null
-            order by start_time desc
-            limit 200
-            """
-        )
-        seen: dict[str, list] = {}
-        for name, status, started in cur.fetchall():
-            seen.setdefault(name, []).append((status, started))
-        for name, runs in sorted(seen.items()):
-            status, started = runs[0]
-            # 🔴 A single failure is noise; a run of them is a system that has
-            # stopped. Sixteen identical failures were what nothing aggregated.
-            streak = 0
-            for s, _ in runs:
-                if s == "FAILURE":
-                    streak += 1
-                else:
-                    break
-            # ⚠️ CRITERION C also asks for "a job that hasn't run". A job absent
-            # from `runs` entirely cannot be seen from here at all — stated
-            # below rather than silently omitted.
-            age_h = _hours_since(started)
-            stale = age_h is not None and age_h > 24
-            flags = []
-            if streak > 1:
-                flags.append(f"{streak} consecutive")
-            if stale:
-                flags.append(f"no run in {age_h:.0f} h")
-            flag = ("   " + ", ".join(flags) + "   ⚠️") if flags else ""
-            print(f"  {name:<26}{status:<10}{started:%Y-%m-%d %H:%M}{flag}")
-            if flags:
-                healthy = False
-            # 🔴 The error's own text, criterion C. Printing "FAILURE" turns into
-            # a support round-trip; printing the message turns into a fix — the
-            # 7.5-hour outage was one line that named the problem exactly.
-            if status == "FAILURE":
-                msg = _last_error(cur, name)
-                if msg:
-                    print(f"      last error: {msg}")
+        return CANNOT
+    try:
+        with conn, conn.cursor() as cur:
+            cur.execute(
+                """
+                select pipeline_name, status, to_timestamp(start_time)
+                from runs
+                where start_time is not null
+                order by start_time desc
+                limit 200
+                """
+            )
+            seen: dict[str, list] = {}
+            for name, status, started in cur.fetchall():
+                seen.setdefault(name, []).append((status, started))
+            for name, runs in sorted(seen.items()):
+                status, started = runs[0]
+                # 🔴 A single failure is noise; a run of them is a system that has
+                # stopped. Sixteen identical failures were what nothing aggregated.
+                streak = 0
+                for s, _ in runs:
+                    if s == "FAILURE":
+                        streak += 1
+                    else:
+                        break
+                # ⚠️ CRITERION C also asks for "a job that hasn't run". A job absent
+                # from `runs` entirely cannot be seen from here at all — stated
+                # below rather than silently omitted.
+                age_h = _hours_since(started)
+                stale = age_h is not None and age_h > 24
+                flags = []
+                if streak > 1:
+                    flags.append(f"{streak} consecutive")
+                if stale:
+                    flags.append(f"no run in {age_h:.0f} h")
+                flag = ("   " + ", ".join(flags) + "   ⚠️") if flags else ""
+                print(f"  {name:<26}{status:<10}{started:%Y-%m-%d %H:%M}{flag}")
+                if flags:
+                    state = worst(state, WARN)
+                # 🔴 The error's own text, criterion C. Printing "FAILURE" turns into
+                # a support round-trip; printing the message turns into a fix — the
+                # 7.5-hour outage was one line that named the problem exactly.
+                if status == "FAILURE":
+                    msg = _last_error(cur, name)
+                    if msg:
+                        print(f"      last error: {msg}")
         print("  ⚠️ a job that has never run at all does not appear here — Dagster's")
         print("     `runs` table has no row for it. Compare against schedules.py.")
-    return healthy
+    except Exception as exc:  # noqa: BLE001 — a schema and a role this tool does not own
+        print(f"  not available — {exc}")
+        return CANNOT
+    return state
 
 
 def _api_orgnrs(orgnrs: list[str]) -> tuple[set[str] | None, str]:
@@ -379,7 +436,7 @@ def _api_orgnrs(orgnrs: list[str]) -> tuple[set[str] | None, str]:
         return None, f"API unreachable: {exc}"
 
 
-def last_changes(cur, n: int) -> bool:
+def last_changes(cur, n: int) -> int:
     """Terje's suggestion: for each recent change, what it was and whether it landed."""
     print()
     print(f"Last {n} changes")
@@ -394,13 +451,13 @@ def last_changes(cur, n: int) -> bool:
     rows = cur.fetchall()
     if not rows:
         print("  no changes in the feed yet")
-        return True
+        return OK
 
     served, why = _api_orgnrs([r[1] for r in rows])
     if served is None:
         print(f"  ⚠️ cannot verify over the API — {why}")
 
-    healthy = True
+    state = CANNOT if served is None else OK
     for oid, orgnr, kind, fetched in rows:
         if served is None:
             verdict = "unknown   (API not asked)"
@@ -408,15 +465,15 @@ def last_changes(cur, n: int) -> bool:
             # The most informative line in the block: a deletion that failed to
             # propagate looks identical to one that succeeded unless you look.
             if orgnr in served:
-                verdict, healthy = "STILL SERVED ⚠️", False
+                verdict, state = "STILL SERVED ⚠️", worst(state, WARN)
             else:
                 verdict = "removed   (absent, correct)"
         elif orgnr in served:
             verdict = "ok        served by the API"
         else:
-            verdict, healthy = "MISSING from the API ⚠️", False
+            verdict, state = "MISSING from the API ⚠️", worst(state, WARN)
         print(f"  {oid:<11}{orgnr:<12}{kind:<11}{fetched:%H:%M}   {verdict}")
-    return healthy
+    return state
 
 
 def main(argv: list[str]) -> int:
@@ -441,14 +498,14 @@ def main(argv: list[str]) -> int:
         print(f"✗ {exc}", file=sys.stderr)
         return 2
 
-    healthy = True
+    state = OK
     try:
         with conn, conn.cursor() as cur:
-            healthy &= register_block(cur)
-            healthy &= deletion_block(cur)
-            healthy &= ingest_block(cur)
+            state = worst(state, register_block(cur))
+            state = worst(state, deletion_block(cur))
+            state = worst(state, ingest_block(cur))
             if n:
-                healthy &= last_changes(cur, n)
+                state = worst(state, last_changes(cur, n))
     except CannotAnswer as exc:
         print(f"✗ {exc}", file=sys.stderr)
         return 2
@@ -459,8 +516,12 @@ def main(argv: list[str]) -> int:
         print(f"✗ cannot answer: {exc}", file=sys.stderr)
         return 2
 
-    healthy &= jobs_block()
-    return 0 if healthy else 1
+    state = worst(state, jobs_block())
+    # 0 healthy · 1 looked and found fault · 2 could not look.
+    # ⚠️ CANNOT dominates WARN on purpose: if any part of the picture is missing,
+    # the parts that are present do not add up to "healthy", and a caller doing
+    # `atlas-status.py && deploy` must not proceed on a partial view.
+    return state
 
 
 if __name__ == "__main__":
