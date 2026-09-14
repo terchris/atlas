@@ -319,25 +319,16 @@ def test_pending_with_a_stopped_transform_is_a_symptom_without_waiting(mod):
     """
     now = datetime.datetime.now(datetime.timezone.utc)
 
-    class _RegisterCursor:
-        """Answers register_block: watermark, dimension, then the pending group-by."""
-
-        def __init__(self):
-            self._i = -1
-
-        def execute(self, sql, *_a, **_k):
-            self._i += 1
-
-        def fetchone(self):
-            return [(200, now), (100, now)][self._i]
-
-        def fetchall(self):
-            return [("Endring", 5)]
-
     def run(running):
         buf = io.StringIO()
         with contextlib.redirect_stdout(buf):
-            state = mod.register_block(_RegisterCursor(), running)
+            # reconciled just now on purpose: this test is about the STOPPED
+            # arm, so the age arm must not also fire and mask which one warned.
+            state = mod.register_block(
+                _RegisterCursor(now, pending=[("Endring", 5)], feed_ago_hours=0.1,
+                                reconciled_ago_hours=0.0),
+                running,
+            )
         return state, buf.getvalue()
 
     state, out = run(set())
@@ -695,6 +686,119 @@ def test_runs_that_never_started_cannot_reach_the_jobs_block(mod):
         "never submitted a run render as consecutive job failures. Got: "
         f"{runs_query}"
     )
+
+
+class _RegisterCursor:
+    """
+    Answers register_block's queries BY READING THEM, not by counting them.
+
+    🔴 The previous version answered positionally, and adding one query to the
+    block shifted every answer by one. A stub that does not read the SQL is also
+    the stub that cannot notice a clause going missing — the _DeletionCursor
+    lesson, applied before it bit rather than after.
+    """
+
+    def __init__(self, now, pending=None, feed_ago_hours=0.1, reconciled_ago_hours=2.2):
+        self._now = now
+        self._pending = pending or []
+        self._feed_ago = feed_ago_hours
+        self._reconciled = now - datetime.timedelta(hours=reconciled_ago_hours)
+        self._mode = None
+
+    def execute(self, sql, *_a, **_k):
+        flat = " ".join(str(sql).split())
+        if "brreg_feed_watermark" in flat:
+            self._mode = "watermark"
+        elif "dim_brreg_enhet" in flat:
+            self._mode = "dimension"
+        elif "ingest_runs" in flat:
+            assert "exit_code = 0" in flat, (
+                "the feed probe must require a SUCCESSFUL poll; a failed or "
+                f"in-flight run is not evidence the feed is alive. Got: {flat}"
+            )
+            self._mode = "feed"
+        elif "brreg_enheter_versions" in flat:
+            self._mode = "pending"
+        else:  # pragma: no cover
+            raise AssertionError(f"unexpected query: {flat}")
+
+    def fetchone(self):
+        if self._mode == "watermark":
+            return (200, self._now)
+        if self._mode == "dimension":
+            return (100, self._reconciled)
+        if self._mode == "feed":
+            if self._feed_ago is None:
+                return (None,)
+            return (self._now - datetime.timedelta(hours=self._feed_ago),)
+        raise AssertionError(f"fetchone in mode {self._mode}")  # pragma: no cover
+
+    def fetchall(self):
+        return self._pending
+
+
+def _register(mod, **kw):
+    now = datetime.datetime.now(datetime.timezone.utc)
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        state = mod.register_block(_RegisterCursor(now, **kw), {mod.TRANSFORM_SCHEDULE})
+    return state, buf.getvalue()
+
+
+def test_a_quiet_register_is_idle_not_stale(mod):
+    """
+    🔴 #1081, AND IT FIRED EVERY NIGHT. Measured at 20:24Z on a clean install:
+    every change Brreg published was applied within nine minutes, pending 0, all
+    five instigators running — and `last reconciled 2.2 h ago ⚠️` took the command
+    to exit 1. Brreg had published nothing since 18:01, which overnight on a
+    public register is normal.
+
+    ⚠️ A check that cries wolf every night teaches its reader to ignore it, and
+    the 7.5-hour incident needed a human to ask.
+    """
+    state, out = _register(mod, pending=[], feed_ago_hours=0.07, reconciled_ago_hours=2.2)
+    assert state == mod.OK, f"a current register with nothing to do must not warn, got {state!r}"
+    assert "⚠️" not in out, out
+    assert "idle, not stale" in out, out
+
+
+def test_a_dead_feed_still_warns_though_nothing_is_pending(mod):
+    """
+    🔴 THE CONTROL THAT MATTERS. `pending == 0` is also what a DEAD feed looks
+    like: nothing is recorded, so nothing is outstanding. The exemption is
+    therefore granted only on positive evidence that the feed is alive.
+    """
+    state, out = _register(mod, pending=[], feed_ago_hours=5.0, reconciled_ago_hours=2.2)
+    assert state == mod.WARN, f"a stale register behind a silent feed must warn, got {state!r}"
+    assert "⚠️" in out, out
+    assert mod.FEED_SOURCE in out, f"the output must name what is silent: {out}"
+    assert "idle" not in out, out
+
+
+def test_a_feed_that_never_polled_is_not_idle(mod):
+    """Absence of evidence is not evidence of health — the tool's whole subject."""
+    state, out = _register(mod, pending=[], feed_ago_hours=None, reconciled_ago_hours=2.2)
+    assert state == mod.WARN, f"no successful poll on record must warn, got {state!r}"
+    assert "no successful poll on record" in out, out
+
+
+def test_a_fresh_reconcile_never_reaches_the_idle_wording(mod):
+    """Under the threshold there is nothing to explain, so nothing is explained."""
+    state, out = _register(mod, pending=[], feed_ago_hours=0.1, reconciled_ago_hours=0.3)
+    assert state == mod.OK, state
+    assert "idle, not stale" not in out, out
+    assert "⚠️" not in out, out
+
+
+def test_pending_work_still_warns_even_with_a_live_feed(mod):
+    """
+    The exemption is for an idle register, not a backed-up one. Work outstanding
+    past the stale window is a symptom however healthy the feed looks.
+    """
+    state, out = _register(mod, pending=[("Endring", 5)], feed_ago_hours=0.1,
+                           reconciled_ago_hours=2.2)
+    assert state == mod.WARN, f"5 pending for 2.2 h must warn, got {state!r}"
+    assert "idle, not stale" not in out, out
 
 
 def main() -> int:
