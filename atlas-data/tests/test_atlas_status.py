@@ -500,6 +500,132 @@ def test_the_named_schedule_is_the_one_that_exists(mod):
     )
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# urb-agents #1039 — the freshness verdict never reached the operator.
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+class _FreshnessCursor:
+    """
+    Stands in for `marts.mart_source_freshness`, and INSPECTS how it is asked.
+
+    🔴 THE EXISTENCE PROBE MUST BE `to_regclass`, NOT A QUERY IN A TRY. In
+    psycopg2 a failed query aborts the whole transaction, so a bare
+    `select ... from marts.mart_source_freshness` against a host where the
+    transform has never run would take out every later block on the same
+    connection — and they would report faults belonging to this one. Verified
+    against a real Postgres: after the bare query, the very next `select 1`
+    raises InFailedSqlTransaction.
+    """
+
+    def __init__(self, exists=True, counts=None, rows=None):
+        self._exists = exists
+        self._counts = counts or {}
+        self._rows = rows or []
+        self._sql = []
+        self._mode = None
+
+    def execute(self, sql, *_a, **_k):
+        flat = " ".join(str(sql).split())
+        self._sql.append(flat)
+        if "to_regclass" in flat:
+            self._mode = "exists"
+        elif "group by" in flat:
+            self._mode = "counts"
+        else:
+            assert "freshness_status not in" in flat, f"unexpected query: {flat}"
+            self._mode = "rows"
+
+    def fetchone(self):
+        assert self._mode == "exists", "fetchone is only for the existence probe"
+        return ("marts.mart_source_freshness",) if self._exists else (None,)
+
+    def fetchall(self):
+        return list(self._counts.items()) if self._mode == "counts" else self._rows
+
+
+def _freshness(mod, cur):
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        state = mod.freshness_block(cur)
+    return state, buf.getvalue()
+
+
+def test_the_view_is_probed_not_queried_blind(mod):
+    cur = _FreshnessCursor(exists=True, counts={"ok": 29, "not_bounded": 5})
+    _freshness(mod, cur)
+    assert any("to_regclass" in s for s in cur._sql), (
+        "the block must probe with to_regclass; a bare query on a missing view "
+        f"aborts the transaction for every later block. Queries ran: {cur._sql}"
+    )
+
+
+def test_a_missing_view_cannot_answer_and_does_not_pass(mod):
+    """
+    🔴 ABSENCE MUST NOT RENDER AS GREEN. The view is built by the transform, so
+    its absence means no transform has ever run here. Returning OK would be the
+    exact defect this tool exists to catch, one level up.
+    """
+    state, out = _freshness(mod, _FreshnessCursor(exists=False))
+    assert state == mod.CANNOT, f"a missing surface is 'cannot look', got {state!r}"
+    assert "does not exist yet" in out, out
+    assert "within cadence" not in out, f"it must not report a verdict it does not have: {out}"
+
+
+def test_a_fresh_project_names_both_denominators(mod):
+    """
+    ⚠️ "41 of 43 sources" was proposed for this line and both numbers are wrong:
+    43 counts ingest SLUGS in raw.ingest_runs, this surface counts raw TABLES
+    declaring a loaded_at_field. Measured against the real declarations it is 29
+    bounded and 5 silenced — and the block must read them from the view rather
+    than carry either number as a literal.
+    """
+    cur = _FreshnessCursor(exists=True, counts={"ok": 29, "not_bounded": 5})
+    state, out = _freshness(mod, cur)
+    assert state == mod.OK, state
+    assert "29 bounded sources, 29 within cadence" in out, out
+    assert "5 silenced" in out, out
+    assert "⚠️" not in out, out
+
+
+def test_silenced_sources_are_counted_not_hidden(mod):
+    """
+    A row that vanishes from a freshness surface is indistinguishable from a
+    source nobody ever added, so the silenced ones are reported as a count.
+    """
+    _, out = _freshness(mod, _FreshnessCursor(exists=True, counts={"ok": 3, "not_bounded": 5}))
+    assert "3 bounded sources" in out and "5 silenced" in out, out
+
+
+def test_an_overdue_source_warns_and_is_named(mod):
+    cur = _FreshnessCursor(
+        exists=True,
+        counts={"ok": 27, "overdue": 1, "never_loaded": 1, "not_bounded": 5},
+        rows=[("ssb_08484", "weekly", 9.0, 8, "overdue"),
+              ("ssb_08487", "weekly", None, 8, "never_loaded")],
+    )
+    state, out = _freshness(mod, cur)
+    assert state == mod.WARN, f"an overdue source must warn, got {state!r}"
+    assert "29 bounded sources, 27 within cadence, 2 NOT" in out, out
+    assert "ssb_08484" in out and "9.0 d" in out, out
+    assert "never loaded" in out, "an empty table is not a blank age, it is a finding: " + out
+
+
+def test_never_loaded_is_not_silently_formatted_as_zero(mod):
+    """
+    ⚠️ `age_days` is NULL for a table with no rows. Formatting that as 0.0 would
+    print the freshest possible value for the emptiest possible table.
+    """
+    cur = _FreshnessCursor(
+        exists=True,
+        counts={"ok": 0, "never_loaded": 1},
+        rows=[("ssb_08487", "weekly", None, 8, "never_loaded")],
+    )
+    _, out = _freshness(mod, cur)
+    assert "0.0 d" not in out, out
+    assert "never loaded" in out, out
+
+
 def main() -> int:
     mod = load_tool()
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
