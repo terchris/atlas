@@ -256,7 +256,7 @@ operational:
       All four figures were derived from this repo with no database and match
       imac's live measurement exactly (61 / 5 / 66 / 52).
     note: >-
-      🔴 UPGRADING AN EXISTING INSTALL? Materialise the `api_v1` asset afterwards.
+      🔴 UPGRADING AN EXISTING INSTALL? Run `uis dagster run publish_api_v1` afterwards.
       The column descriptions PostgREST publishes as OpenAPI docs live in the
       DATABASE, not in the image, and only a publish applies them — so the
       documented contract tracks the last build that ran a publish, not the build
@@ -264,8 +264,7 @@ operational:
       text keeps being served, with every signal green, until the next daily
       publish at 05:00 — up to 24 hours. Measured 2026-09-13; reachable in both
       directions, so a rollback can leave NEW documentation on an OLD build too.
-      Materialising `api_v1` re-applies every COMMENT and reloads PostgREST's
-      schema cache; it needs no dbt build, so it is far cheaper than a full
+      That job re-applies every COMMENT and reloads PostgREST's schema cache; it needs no dbt build, so it is far cheaper than a full
       transform and is the whole of what an upgrade needs. The
       `descriptions_match_the_running_build` check answers "is my served
       documentation the one my build ships" without changing anything.
@@ -362,7 +361,7 @@ operational:
         of a transform. So a manual repair fixes the database and leaves the
         endpoint exactly as it was.
       fix: >-
-        Materialise the api_v1 asset, or run transform_and_publish. It takes
+        Run `uis dagster run publish_api_v1`, or transform_and_publish if you also need a rebuild. It takes
         seconds and the endpoints return immediately. Nothing needs reinstalling,
         and this is NOT a PostgREST fault - it is serving the last schema it was
         told about.

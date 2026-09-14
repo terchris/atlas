@@ -370,6 +370,35 @@ brreg_transform_job = define_asset_job(
 # ⚠️ `_API_V1_CHECKS` selects checks on the api_v1_surface asset, which is NOT a
 # dbt asset — so the dbt checks all land in transform_checks and the subtraction
 # below removes a different population rather than a slice of the 675.
+# 🔴 THE REMEDY HAD NO WAY TO BE RUN. `operational.troubleshooting` tells an
+# operator to "materialise the api_v1 asset — it needs no dbt build, so it is far
+# cheaper than transform_and_publish and is the whole of what an upgrade needs",
+# and imac found that sentence unreachable from a host (urb-agents #947):
+#
+#     uis dagster run api_v1  ->  No job named 'api_v1'
+#
+# ⚠️ `uis dagster run` takes JOBS. The asset existed, the advice was right, and the
+# only thing an operator could actually launch was `transform_and_publish` — the
+# expensive option the advice steers them away from.
+#
+# 🔵 That is imac's H2 one layer out: a remedy an operator cannot reach from where
+# they are. The fix is not more documentation, it is a job with a name.
+#
+# ⚠️ Deliberately NOT scheduled. It exists to be run by hand after an upgrade, or
+# after a failed transform leaves api_v1 views missing. The scheduled path already
+# publishes as part of transform_and_publish.
+api_v1_publish_job = define_asset_job(
+    name="publish_api_v1",
+    selection=AssetSelection.assets(api_v1.api_v1_surface),
+    description=(
+        "Re-create the api_v1 views, re-apply their column COMMENTs and reload "
+        "PostgREST's schema cache. No dbt build: this is the cheap half of a "
+        "publish, and the whole of what an upgrade needs when only the served "
+        "documentation has changed. Measured at 38.7 s against "
+        "transform_and_publish's 184.7 s."
+    ),
+)
+
 _API_V1_CHECKS = AssetSelection.checks_for_assets(api_v1.api_v1_surface)
 
 api_v1_checks_job = define_asset_job(
@@ -491,6 +520,7 @@ jobs = [
     redcross_branches_job,
     transform_job,
     api_v1_checks_job,
+    api_v1_publish_job,
     transform_checks_job,
 ]
 
