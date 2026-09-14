@@ -138,6 +138,47 @@ def _hours_since(ts) -> float | None:
     return (datetime.now(timezone.utc) - ts).total_seconds() / 3600.0
 
 
+def build_block() -> None:
+    """
+    🔴 WHICH BUILD ACTUALLY RAN THIS. imac, urb-agents #940:
+
+        "`check` reads the REGISTRY's pinned definition, not the host's installed
+         pin. They coincide today. When they diverge, the command reports on a
+         definition the host is not running."
+
+    ⚠️ That is the artifact-versus-installed gap, and it has cost this fleet
+    twice: a host serving corrected documentation from a build that did not
+    contain it, and a nomination carrying the wrong digest because two objects
+    share one tag.
+
+    🔵 UIS can only report the definition it pinned. This tool is the only thing
+    in the loop that knows what actually executed — the image bakes
+    ATLAS_GIT_SHA at build time and asserts it was passed, so the answer is
+    always available where it matters. Printing it makes a divergence visible in
+    the same output rather than requiring someone to suspect it.
+
+    Not a health signal: it never warns and never changes the exit code. An
+    operator comparing it against the pinned definition is the check; this line
+    only makes the comparison possible.
+    """
+    sha = os.environ.get("ATLAS_GIT_SHA", "")
+    print("Build")
+    if sha and sha != "unknown":
+        print(f"  this output came from    {sha[:7]}")
+    else:
+        # ⚠️ Absence is reported, not glossed. Running outside the image is
+        # legitimate — it is how this tool is developed — but an operator must
+        # not read a missing answer as agreement with the pin.
+        print("  this output came from    unknown — ATLAS_GIT_SHA unset (not running from the image)")
+    print("  ⚠️ `uis template check` reports the REGISTRY's pinned definition. If that")
+    print("     pin and the line above disagree, the host is not running what was pinned.")
+    print()
+    # ⚠️ stdout is block-buffered when piped; stderr is not. Without this flush a
+    # `✗ cannot answer` line lands ABOVE the build it came from, and the operator
+    # reads the error as belonging to nothing.
+    sys.stdout.flush()
+
+
 def register_block(cur) -> int:
     """The four lines. Everything else in this tool is elaboration. Returns True if healthy."""
     state = OK
@@ -548,6 +589,13 @@ def main(argv: list[str]) -> int:
     elif len(argv) > 1:
         print("usage: atlas-status.py [--last N]", file=sys.stderr)
         return 2
+
+    # ⚠️ BEFORE the connection check, deliberately. An operator staring at
+    # "cannot answer" most needs to know WHICH BUILD said so — provenance is not
+    # a finding and must not be gated behind the tool being able to answer.
+    # After argument parsing, though: a usage error should print usage, not a
+    # report.
+    build_block()
 
     db = os.environ.get("ATLAS_DATABASE_URL") or os.environ.get("DATABASE_URL")
     if not db:
