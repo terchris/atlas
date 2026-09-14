@@ -58,7 +58,42 @@
 -- raw.brreg_enheter_versions is created by migration 053 and its name is fixed
 -- there.
 
-with latest_version as (
+-- 🔴 ASSERT ONLY ABOUT TOMBSTONES THE TRANSFORM HAS ALREADY APPLIED.
+--
+-- The feed polls at :00/:30 and `brreg_transform` reconciles at :10/:40 — a
+-- deliberate ten-minute offset. So for roughly eleven minutes in every thirty
+-- there is a `Sletting` the feed has recorded and the transform has not yet
+-- applied, and the organisation is CORRECTLY still in the dimension. Without the
+-- bound below this test calls that a violation: a blocking ERROR, on a healthy
+-- system, about a third of the time.
+--
+-- ⚠️ THIS IS THE SAME DEFECT `atlas-status.py` HAD, IN A DIFFERENT FILE. Its
+-- deletion block took the newest deletion regardless of the watermark and
+-- reported a healthy Atlas as unhealthy for ~37% of wall-clock time (imac,
+-- urb-agents #983). Worse than the noise was that the noise and the real thing
+-- rendered identically — 119 unapplied changes after an 8.4-hour outage, and 40
+-- pending changes 0.2 h into a normal cycle, both exit 1. The fix there was not
+-- a threshold but the exact question, and it is the same question here.
+--
+-- 🔵 `max(last_oppdateringsid)` is the dimension's own account of how far the
+-- transform has got. A tombstone at or below it has been processed, so the
+-- organisation's presence is a real fault at any age. A tombstone above it is
+-- the system working as designed.
+--
+-- ⚠️ THE BOUND LAGS, AND THAT DIRECTION IS THE SAFE ONE. A tombstoned
+-- organisation is absent from the dimension, so its id never becomes the
+-- watermark — the watermark sits at the newest SURVIVING change. In a quiet
+-- spell whose last changes are all deletions, those deletions stay unasserted
+-- until an ordinary change lifts the watermark past them. That is lost coverage,
+-- not a false pass: this test never claims a deletion was applied, only that an
+-- applied one did not survive. The model's own header takes the same trade for
+-- the same reason — lagging costs work, leading loses data.
+with applied as (
+  select coalesce(max(last_oppdateringsid), 0) as watermark
+  from {{ ref('dim_brreg_enhet') }}
+),
+
+latest_version as (
   select distinct on (organisasjonsnummer)
     organisasjonsnummer,
     oppdateringsid,
@@ -68,9 +103,10 @@ with latest_version as (
 ),
 
 tombstoned as (
-  select organisasjonsnummer, oppdateringsid, endringstype
-  from latest_version
-  where endringstype in ('Sletting', 'Fjernet')
+  select lv.organisasjonsnummer, lv.oppdateringsid, lv.endringstype
+  from latest_version lv, applied a
+  where lv.endringstype in ('Sletting', 'Fjernet')
+    and lv.oppdateringsid <= a.watermark
 )
 
 select
