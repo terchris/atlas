@@ -6,7 +6,7 @@
 exactly the same numbers as the night before. What signal should have gone red, where should it
 live, and how do we build it without alarming on the sources that have no cadence *by design*?
 
-**Last Updated**: 2026-08-30
+**Last Updated**: 2026-09-14 — the surface is built; see the 2026-09-14 section below for what is answered and what remains.
 
 **Priority**: **High** — this is the finding with teeth from the 2026-08-30 tick. The retry and
 API-version items are about *preventing* a missed refresh; this one is about *noticing* it. We
@@ -93,6 +93,57 @@ is missing is a reader for it that works from outside the cluster. Whether that 
 surface, an external probe, or something pushed outward on a timer is exactly what this
 investigation now has to decide — and it should not settle on a mechanism that only an agent with
 cluster access can read, because at present no such agent exists.
+
+## ✅ 2026-09-14: the surface exists, and it is readable without the pipeline having run
+
+`marts.mart_source_freshness` (a **view**) and the `Source freshness` block in
+`atlas-status.py`, reached by `uis template check atlas`. Raised by ops-dev on urb-agents #1039
+after Terje asked the obvious question of the status output — *"i see that you listed the brreg
+info. but what about all the other data that is ingested"*.
+
+**What was actually wrong** was not that the check was missing. It existed —
+`raw_sources_were_refreshed_recently`, written after the incident above. Its **verdict** was
+unreadable: it lands in dbt's run results and in Dagster's event log, and `atlas-status.py` can
+read neither (the event log is owned by the `dagster` role, which Atlas has no SELECT on). So the
+operator-facing command reported a **24-hour window** instead — honest about being a window, and
+structurally unable to see a weekly or monthly source go stale, because a day after they run they
+drop out of it. 23 of the 29 bounded sources are weekly and 3 are monthly.
+
+| question above | answer as built |
+|---|---|
+| 1. what is the assertion | `max(<loaded_at_field>)` within the bound its declared `meta.ingest_cadence` allows |
+| 2. sources with no cadence | `manual` and `none`, each requiring a written `cadence_note`; **emitted as `not_bounded` rather than filtered out**, so a reader says "29 bounded, 5 silenced" instead of quietly reporting a smaller universe |
+| 3. where does it run | **both, from one computation.** The view is the surface, the dbt test is the gate and selects its failures from the view. They cannot disagree. |
+| 5. "did not run" ≠ "nothing found" | a missing view is `CANNOT` (exit 2), never a pass — absence must not render as green |
+| 6. the weekly blind window | gone: the bound is per cadence, so a weekly source is overdue at 8 days and a monthly one at 35 |
+
+🔵 **The 2026-09-05 constraint is partly lifted.** The design note said the signal *"must be
+readable from somewhere that does not depend on the pipeline having run"*. A view satisfies that
+literally — it is evaluated when queried, so it is current whether or not the transform, the suite
+or the daemon ran. A table would have carried the staleness it was meant to report.
+
+⚠️ **What is still open, and it is the smaller half.** The reader is `uis template check atlas`,
+which runs *inside* the cluster and only when somebody runs it. So the original stalled-daemon
+case — nothing fires, nothing checks, nobody looks — is still not self-reporting. What has changed
+is that the answer is now one command away instead of absent, and the command does not need the
+pipeline to have run. An external prober or a pushed heartbeat remains the open design question;
+it no longer blocks knowing whether the data is fresh.
+
+### Falsification: performed, not promised
+
+Run against a throwaway Postgres with all 34 declared source tables created and loaded
+(2026-09-14):
+
+| case | result |
+|---|---|
+| all sources fresh (**known-good control**) | 29 `ok`, 5 `not_bounded`; test PASS |
+| a weekly source aged to 9 days | `overdue`; test fails with 1 row |
+| a **monthly** source aged to 9 days | still `ok` — the ~23-red-days-in-31 cry-wolf does not return |
+| the same monthly source at 36 days | `overdue` |
+| a source table emptied | `never_loaded`, not a blank age; test fails |
+| the view present but holding no bounded rows | test fails with `no-bounded-sources-in-view` — it cannot pass vacuously |
+| a declared source missing from the view | test fails with `absent_from_view` |
+| the view absent entirely | status tool reports CANNOT (exit 2), not OK |
 
 ## Questions to resolve
 
