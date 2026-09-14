@@ -71,6 +71,29 @@ from datetime import datetime, timezone
 STALE_WARN_HOURS = 1.0   # pending is a symptom only once it is also this old
 RECONCILE_WARN_HOURS = 2.0
 
+# 🔴 AN IDLE REGISTER IS NOT A STALE ONE, AND THE CLOCK ALONE CANNOT TELL.
+#
+# `last reconciled 2.2 h ago ⚠️` fired on a completely current register at 20:24Z
+# (ops-dev, urb-agents #1080/#1081): every change Brreg published was applied
+# within nine minutes, `pending` was 0, all five instigators were running — and
+# the command exited 1. Brreg had simply published nothing since 18:01, which
+# overnight on a public register is the NORMAL state. So this fired EVERY NIGHT.
+#
+# ⚠️ Elapsed time since the last reconcile measures how long since there was
+# anything TO DO, not whether anything is wrong. The bound has to come from what
+# actually happened: nothing pending, and the feed still polling successfully.
+#
+# 🔵 THE EXEMPTION IS GRANTED ONLY ON POSITIVE EVIDENCE. No successful poll on
+# record — a dead feed, a feed that has never run, or an unreadable
+# `raw.ingest_runs` — is NOT idle and still warns. "I could not establish that
+# the feed is alive" must never render as "the feed is alive", which is the
+# mistake this whole tool exists to catch.
+FEED_SOURCE = "brreg-oppdateringer"
+# The feed polls at :00/:30, so an hour is two missed polls: long enough not to
+# fire on one slow run, short enough that a dead feed surfaces inside a single
+# reconcile window.
+FEED_SILENT_WARN_HOURS = 1.0
+
 # 🔴 THE PROMISE AND THE EVIDENCE FOR IT MUST SIT IN THE SAME PROCESS.
 #
 # This tool printed "N deletion(s) awaiting the next transform (:10/:40) — not a
@@ -269,13 +292,55 @@ def register_block(cur, running: set[str] | None) -> int:
 
     if age is None:
         print("  last reconciled             never   ⚠️")
+        return WARN
+
+    # 🔴 #1081. `age` alone cannot separate "we have not reconciled because we
+    # are broken" from "we have not reconciled because nothing arrived". With
+    # nothing pending AND the feed still polling successfully, the second is
+    # proven and the register is current with respect to everything the feed has
+    # recorded — which is the only currency this tool can claim.
+    feed_hours = _feed_last_success(cur)
+    idle = pending == 0 and feed_hours is not None and feed_hours <= FEED_SILENT_WARN_HOURS
+
+    stale_is_symptom = age > RECONCILE_WARN_HOURS and not idle
+    flag = "   ⚠️" if stale_is_symptom else ""
+    print(f"  last reconciled             {age:.1f} h ago{flag}")
+
+    if idle and age > RECONCILE_WARN_HOURS:
+        mins = feed_hours * 60
+        print(f"  {'':<28}idle, not stale — 0 pending and the feed polled {mins:.0f} min ago")
+    elif stale_is_symptom:
+        # Say WHICH of the two reasons it is, because they need different fixes.
+        if feed_hours is None:
+            print(f"  {'':<28}and {FEED_SOURCE} has no successful poll on record")
+        elif feed_hours > FEED_SILENT_WARN_HOURS:
+            print(f"  {'':<28}and {FEED_SOURCE} last polled successfully {feed_hours:.1f} h ago")
+
+    if stale_is_symptom:
         state = WARN
-    else:
-        flag = "   ⚠️" if age > RECONCILE_WARN_HOURS else ""
-        print(f"  last reconciled             {age:.1f} h ago{flag}")
-        if age > RECONCILE_WARN_HOURS:
-            state = WARN
     return state
+
+
+def _feed_last_success(cur) -> float | None:
+    """
+    Hours since the change feed last polled SUCCESSFULLY, or None if it never has.
+
+    ⚠️ `exit_code = 0` and not merely "a row exists". A run still in flight has a
+    null exit code and a failed one is non-zero; neither is evidence the feed is
+    alive, and this value is used to SUPPRESS a warning, so a generous reading of
+    it would suppress a real one.
+
+    🔵 A poll that finds nothing is still a successful poll. That is the whole
+    point: `types={}` six times in three hours is the feed working against a
+    quiet register, and it is what tells an idle register apart from a dead one.
+    """
+    row = _one(
+        cur,
+        "select max(started_at) from raw.ingest_runs "
+        "where source_slug = %s and exit_code = 0",
+        (FEED_SOURCE,),
+    )
+    return _hours_since(row[0]) if row and row[0] else None
 
 
 def _instigator_name(body) -> str | None:
