@@ -201,3 +201,77 @@ Per ops: add a fake source and count files touched outside its own additions —
 
 - The 41-source live ingest run — **approval still open with Terje; do not run it.**
 - The platform's `start_timeout_seconds` bump and the webserver connection-pool observation — both routed to assist.
+
+## ✅ 2026-09-14: the mechanism, from Dagster's source — and 711 was never a cap
+
+Terje, via ops-dev on urb-agents #1083: *"the owner of the data jobs that dont run. that challenge
+belongs to atlas. atlas shoul use dagster doc to figure it out."*
+
+### 🔴 What 711 actually was
+
+A plan size that **did not finish building inside `start_timeout_seconds: 300`**. A time budget,
+not a count limit. There is no 711 in Dagster. Every later sentence that spoke of "the margin to
+711" — including one in `schedules.py`, now corrected — was arithmetic against a boundary that does
+not exist.
+
+### ✅ Where the cost actually is, measured
+
+| | api_v1_checks | transform_checks |
+|---|---|---|
+| asset checks in the job | 4 | 675 |
+| `create_execution_plan` | 0.01 s | **0.01 s** |
+| steps in the plan | 4 | **1** |
+
+**Plan construction is not the cost.** The dbt tests all run inside one op, so the plan is one step
+either way.
+
+The cost falls at **run creation**, before any pod exists. `_log_asset_planned_events`
+(`dagster/_core/instance/runs/run_domain.py`) emits one `ASSET_CHECK_EVALUATION_PLANNED` per check.
+That type IS listed in `BATCH_WRITABLE_EVENTS` — but `dagster_postgres`'s `store_event_batch` takes
+its fast path only when the event types are exactly `{ASSET_MATERIALIZATION}` or
+`{ASSET_OBSERVATION}`; **everything else falls through to `super().store_event_batch()`, which is**
+
+```python
+for event in events:
+    self.store_event(event)
+```
+
+and each `store_event` takes **two** connection checkouts and two inserts — `event_logs`, then
+`asset_check_executions` via a separate `index_connection()`.
+
+```
+675 checks -> ~1350 sequential round trips     4 checks -> 8
+```
+
+Measured over localhost with no network: **0.02 s for 4, 3.50 s for 675** — a 175× ratio against a
+169× check ratio, i.e. cleanly linear.
+
+⚠️ **That linearity does not by itself account for 300 s.** Extrapolating the cluster's own 0.5 s
+launch for `api_v1_checks` gives ~84 s at 675 checks — already past a 60 s client budget, and in the
+region where a 300 s timeout is reachable, but the observed failure is worse than the extrapolation.
+Either the per-operation cost on the cluster is higher than the local ratio suggests, or there is a
+second term. **Stated as an open gap rather than closed by a plausible mechanism.**
+
+### 🔵 Reconciling the two readings that were in play
+
+- ops-dev was right that **the database is not at a limit** — `max_connections=100`, 15 in use.
+- imac was right that it is **expensive in DB terms**. Both hold: it is ~1350 *serialised round
+  trips*, not saturation. Nothing is exhausted; it is simply done one at a time.
+
+### ⚠️ What Dagster documents as a remedy: nothing specific
+
+Searched the docs and the issue tracker. The closest is
+[#26194](https://github.com/dagster-io/dagster/issues/26194), "Long delay between RUN_STARTING and
+RUN_START" — reports 3–6 s, **closed as not planned, no root cause documented**; and
+[#22523](https://github.com/dagster-io/dagster/issues/22523), which is about
+`UnresolvedAssetJobDefinition.resolve` at code-location load, not run launch (and resolution
+measures 0.06 s here).
+
+🔵 **So `all_asset_checks() - X` is a supported shape and not documented as an antipattern — but its
+launch cost is linear in the number of checks selected, and nothing in Dagster bounds it.** The
+remedy has to come from our side: fewer checks per run.
+
+### What that implies for this investigation
+
+Decomposition is no longer a tidy-up with a margin to defend. It is the only lever, and the unit to
+decompose by is **asset checks per run**, because that is the term the cost is linear in.
