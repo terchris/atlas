@@ -6,9 +6,20 @@ See _factory.make_raw_ingest_asset. Currently:
 - bufdir-barnefattigdom: zip download from Bufdir's child poverty surface.
 - redcross-branches: Crawlee-based scraper of Red Cross chapter pages.
   Heavier resource profile (per UIS Dagster INVESTIGATE — headless browser
-  state, ~512MiB working set). Per-asset resource override via
-  `dagster-k8s/config` tag is future work, after the first materialisation
-  in production reveals what's actually needed.
+  state, ~512MiB working set).
+
+  ⚠️ This used to say a per-asset `dagster-k8s/config` override was "future
+  work, after the first materialisation in production reveals what's actually
+  needed". The materialisations have happened (imac, urb-agents #1011) and they
+  revealed that the override is the wrong instrument: the ingest run pod peaked
+  at 590 MiB and 551 MiB, and that figure belongs to `ATLAS_MAX_CONCURRENT_INGESTS`
+  — up to four ingests in their own subprocesses at once — rather than to any
+  single asset. See the note on `_ingest_executor` in schedules.py.
+
+  🔵 A per-asset override would still be the right tool for an asset that is an
+  outlier ON ITS OWN. This one is not measured to be: `redcross-branches` is in
+  UNSCHEDULED_SOURCES and did not run in any of those samples, so its ~512MiB is
+  still an estimate from the investigation and not an observation.
 - frr: Felles Ressursregister, read from the gitignored
   atlas-private-data-repo/. That directory is deliberately NOT in the
   polyglot image, so **on a public deployment this asset materialises zero
