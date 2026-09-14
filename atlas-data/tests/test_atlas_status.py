@@ -130,6 +130,29 @@ def test_no_runs_is_a_warning_not_silence(mod):
     assert "no ingest runs" in out
 
 
+def test_host_facing_url_is_named_only_inside_a_pod(mod):
+    """
+    🔴 The hint must not fire on a developer machine, where `.localhost` is
+    exactly right. One name, two correct answers — and the hint is only correct
+    for one of the two audiences.
+    """
+    import os
+
+    had = os.environ.get("KUBERNETES_SERVICE_HOST")
+    try:
+        os.environ["KUBERNETES_SERVICE_HOST"] = "10.0.0.1"
+        assert "HOST-facing" in mod._address_hint("http://api-atlas.localhost")
+        assert mod._address_hint("http://atlas-postgrest.postgrest.svc.cluster.local") == ""
+        os.environ.pop("KUBERNETES_SERVICE_HOST")
+        # ⚠️ Outside a pod the same URL is correct and must stay silent.
+        assert mod._address_hint("http://api-atlas.localhost") == ""
+    finally:
+        if had is None:
+            os.environ.pop("KUBERNETES_SERVICE_HOST", None)
+        else:
+            os.environ["KUBERNETES_SERVICE_HOST"] = had
+
+
 def test_worst_orders_and_rejects_non_states(mod):
     assert mod.worst(mod.OK, mod.WARN) == mod.WARN
     assert mod.worst(mod.WARN, mod.CANNOT) == mod.CANNOT, "CANNOT must dominate WARN"

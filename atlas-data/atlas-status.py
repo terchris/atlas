@@ -232,6 +232,40 @@ def register_block(cur) -> int:
     return state
 
 
+def _address_hint(url: str) -> str:
+    """
+    🔴 ONE NAME, TWO CORRECT ANSWERS, AND THE CONSUMER CANNOT TELL WHICH IT GOT.
+
+    `exports.api-url` is `http://api-<app>.localhost` — the address a developer
+    types into a browser on the machine running the cluster. `env_from_exports`
+    delivers it into a POD, which is a different network namespace, and
+    `.localhost` is loopback by definition (RFC 6761). So the check was pointed
+    at itself and reported the public API unreachable while it was serving fine
+    (imac, urb-agents #958).
+
+    ⚠️ It is NOT a missing ingress, and saying so matters because that is the
+    first thing anyone reaches for: imac measured `curl` exit 7 — resolved,
+    connection refused — not exit 6, could not resolve. A cluster WITH the
+    ingress behaves identically, because the pod is calling its own loopback
+    rather than the proxy on the host.
+
+    🔵 This does not fix it. It makes one round of confusion unnecessary: the
+    failure names the likely cause instead of leaving an operator to discover
+    that a working URL is the wrong URL for where it is being used.
+    """
+    host = url.split("//", 1)[-1].split("/", 1)[0].split(":", 1)[0]
+    in_cluster = bool(os.environ.get("KUBERNETES_SERVICE_HOST"))
+    if host.endswith(".localhost") and in_cluster:
+        return (
+            "\n      ⚠️ that address is HOST-facing and this is running in a pod. "
+            "`.localhost` is\n"
+            "         loopback (RFC 6761), so the request went to this pod, not to "
+            "the API.\n"
+            "         Not a missing ingress — an in-cluster address is needed here."
+        )
+    return ""
+
+
 def deletion_block(cur) -> int:
     """
     🔴 D1 — THIS MUST BE AN HTTP REQUEST, NOT A QUERY.
@@ -280,7 +314,8 @@ def deletion_block(cur) -> int:
         print(f"  most recent deletion        {orgnr}   ⚠️ API returned HTTP {exc.code}")
         return CANNOT
     except Exception as exc:  # noqa: BLE001
-        print(f"  most recent deletion        {orgnr}   ⚠️ API unreachable: {exc}")
+        print(f"  most recent deletion        {orgnr}   ⚠️ API unreachable: {exc}"
+              f"{_address_hint(url)}")
         return CANNOT
 
     if code == 200 and body == []:
@@ -536,7 +571,7 @@ def _api_orgnrs(orgnrs: list[str]) -> tuple[set[str] | None, str]:
             rows = json.loads(resp.read().decode() or "[]")
         return {r["organisasjonsnummer"] for r in rows}, ""
     except Exception as exc:  # noqa: BLE001
-        return None, f"API unreachable: {exc}"
+        return None, f"API unreachable: {exc}{_address_hint(url)}"
 
 
 def last_changes(cur, n: int) -> int:
