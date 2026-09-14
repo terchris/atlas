@@ -203,25 +203,35 @@ def test_a_deletion_the_transform_has_not_applied_is_not_a_fault(mod):
     ⚠️ No HTTP happens on this path — the block returns before asking the API,
     which is what makes the case testable without a network.
     """
-    state, out = _run(mod, _DeletionCursor(applied=100, applied_deletion=None, pending=3))
+    state, out = _run(mod, _DeletionCursor(applied=100, applied_deletion=None, pending=3),
+                      running={mod.TRANSFORM_SCHEDULE})
     assert state == mod.OK, f"a pending deletion must not warn, got {state!r}"
     assert "awaiting the next transform" in out, out
     assert "⚠️" not in out.replace("awaiting", ""), out
 
 
 def test_no_deletions_at_all_is_silent_but_stated(mod):
-    state, out = _run(mod, _DeletionCursor(applied=100, applied_deletion=None, pending=0))
-    assert state == mod.OK
+    state, out = _run(mod, _DeletionCursor(applied=100, applied_deletion=None, pending=0),
+                      running=set())
+    assert state == mod.OK, "no deletions at all is not a fault even with nothing running"
     assert "no deletion in the feed yet" in out
 
 
-def _run(mod, cur):
+def _run(mod, cur, running=None):
+    """
+    🔴 `running` HAS NO USEFUL DEFAULT AND THE TESTS ALL PASS IT.
+
+    Defaulting it to "the transform is running" would make every existing test
+    exercise the reassuring branch and none the others — the shape that let the
+    promise ship unchecked in the first place. None is the honest default
+    (nothing was asked) and each test states the world it is testing.
+    """
     import contextlib
     import io
 
     buf = io.StringIO()
     with contextlib.redirect_stdout(buf):
-        state = mod.deletion_block(cur)
+        state = mod.deletion_block(cur, running)
     return state, buf.getvalue()
 
 
@@ -235,6 +245,259 @@ def test_worst_orders_and_rejects_non_states(mod):
         assert "not a status state" in str(exc)
     else:  # pragma: no cover
         raise AssertionError("worst() accepted a display string")
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# urb-agents #1035 — the tool said a transform was coming without looking.
+#
+# 🔴 EVERY ONE OF THESE IS UNREACHABLE ON A HEALTHY CLUSTER, which is the same
+# reason this file exists at all. imac's observation applies exactly: a tester
+# who only ever runs the command against a running Atlas sees the reassuring
+# branch every time, and the reassuring branch was the broken one.
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+def test_a_stopped_transform_is_never_called_awaiting(mod):
+    """
+    🔴 THE DEFECT ITSELF. Deletions pulled, nothing scheduled to apply them, and
+    the tool printed "awaiting the next transform (:10/:40) — not a fault" over
+    exit 0. There is no next transform; the word is a promise and the promise was
+    unbacked.
+    """
+    state, out = _run(mod, _DeletionCursor(applied=100, applied_deletion=None, pending=3),
+                      running=set())
+    assert state == mod.WARN, f"nothing scheduled to apply 3 deletions must warn, got {state!r}"
+    assert "awaiting" not in out, f"a stopped transform is not something to await: {out}"
+    assert mod.TRANSFORM_SCHEDULE in out, f"the stopped instigator must be named: {out}"
+    assert "⚠️" in out, out
+
+
+def test_a_stopped_transform_warns_even_when_the_api_assertion_passes(mod):
+    """
+    ⚠️ The applied deletion IS correctly absent from the API — the assertion this
+    block leads with passes. That must not swallow the finding that newer
+    deletions have nowhere to go. Two true facts, and the weaker one used to win
+    by being the one with a return statement.
+    """
+    cur = _DeletionCursor(applied=100, applied_deletion=("987654321", 90), pending=4)
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        state = mod.deletion_block(cur, running=set())
+    out = buf.getvalue()
+    # No PostgREST URL in the environment, so the block stops at CANNOT before
+    # the HTTP call — the point here is the pending line above it.
+    assert "nothing will apply them" in out, out
+    assert state in (mod.WARN, mod.CANNOT), state
+
+
+def test_unknown_automation_promises_nothing_in_either_direction(mod):
+    """
+    🔵 The third answer. Without DAGSTER_DATABASE_URL the tool cannot say a
+    transform is coming — and equally cannot say one is not. Saying either would
+    be the same class of defect with the sign flipped.
+    """
+    state, out = _run(mod, _DeletionCursor(applied=100, applied_deletion=None, pending=3),
+                      running=None)
+    assert state == mod.OK, f"not knowing is not a fault, got {state!r}"
+    assert "awaiting the next transform" not in out, out
+    assert "nothing will apply" not in out, out
+    assert "unknown" in out, f"the tool must say it does not know: {out}"
+
+
+def test_the_three_answers_are_three(mod):
+    assert mod.transform_is({mod.TRANSFORM_SCHEDULE}) == "running"
+    assert mod.transform_is({"something_else"}) == "stopped"
+    assert mod.transform_is(set()) == "stopped"
+    assert mod.transform_is(None) == "unknown", "None must not collapse into stopped"
+
+
+def test_pending_with_a_stopped_transform_is_a_symptom_without_waiting(mod):
+    """
+    The register block's own arm. Age says "a cycle has had time to run" and
+    assumes there is a cycle; with the schedule stopped, pending work is stuck
+    from the first minute and no threshold applies.
+    """
+    now = datetime.datetime.now(datetime.timezone.utc)
+
+    class _RegisterCursor:
+        """Answers register_block: watermark, dimension, then the pending group-by."""
+
+        def __init__(self):
+            self._i = -1
+
+        def execute(self, sql, *_a, **_k):
+            self._i += 1
+
+        def fetchone(self):
+            return [(200, now), (100, now)][self._i]
+
+        def fetchall(self):
+            return [("Endring", 5)]
+
+    def run(running):
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            state = mod.register_block(_RegisterCursor(), running)
+        return state, buf.getvalue()
+
+    state, out = run(set())
+    assert state == mod.WARN, f"5 pending and nothing scheduled must warn, got {state!r}"
+    assert "nothing is scheduled to apply these" in out, out
+
+    state, out = run({mod.TRANSFORM_SCHEDULE})
+    assert state == mod.OK, f"5 pending mid-cycle is normal, got {state!r}: {out}"
+    assert "nothing is scheduled" not in out, out
+
+
+def test_automation_block_reports_but_does_not_warn(mod):
+    """
+    🔴 A DELIBERATELY STOPPED INSTALL IS NOT A FAULT, and this is the decision
+    recorded as a test so it is argued with rather than drifted out of. The
+    install guide leaves an operator here between loading first data and going
+    live; exiting 1 on the documented path would teach them that 1 means nothing.
+    """
+    for running in (set(), {mod.TRANSFORM_SCHEDULE}, None):
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            state = mod.automation_block(running)
+        assert state == mod.OK, f"automation_block must only report, got {state!r} for {running!r}"
+
+
+def test_a_stopped_install_says_so_loudly(mod):
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        mod.automation_block(set())
+    out = buf.getvalue()
+    assert "STOPPED" in out and "will not change" in out, out
+    # ⚠️ The command must exist. ops-dev's proposed wording was
+    # `uis dagster automation --start`; installing-on-uis.md says that command
+    # "reports and asserts state but cannot set it". Printing a flag that does
+    # not exist would send an operator into a support round-trip.
+    assert "--start" not in out, f"no such flag; do not print it: {out}"
+
+
+def test_an_unreadable_body_makes_the_answer_unknown_not_empty(mod):
+    """
+    🔴 None IS NOT AN EMPTY SET. A row says something is RUNNING and its body
+    does not parse: the honest answer is "I cannot tell what is running", never
+    "nothing relevant is running" — which would be a false alarm assembled out of
+    a parse failure.
+    """
+    rows = [("RUNNING", "{not json"), ("STOPPED", '{"origin": {"job_name": "x"}}')]
+    assert _drive_instigators(mod, rows) is None, "an unparseable RUNNING row must yield None"
+
+    rows = [("STOPPED", "{not json")]
+    assert _drive_instigators(mod, rows) == set(), (
+        "a STOPPED row's body is never parsed, so it cannot make the answer unknown"
+    )
+
+
+def test_both_spellings_of_the_name_are_read(mod):
+    """Dagster serialises the origin as `job_name` on 1.13.4, from before
+    instigators stopped being called jobs. A rename must not silently mean
+    'nothing is running'."""
+    assert mod._instigator_name('{"origin": {"job_name": "a"}}') == "a"
+    assert mod._instigator_name('{"origin": {"instigator_name": "b"}}') == "b"
+    assert mod._instigator_name('{"origin": {}}') is None
+    assert mod._instigator_name("") is None
+
+
+def test_a_declared_in_code_row_counts_as_running(mod):
+    """`default_status=RUNNING` is persisted as DECLARED_IN_CODE (and as
+    AUTOMATICALLY_RUNNING in rows written before Dagster renamed it). Reading
+    only 'RUNNING' would report a running schedule as stopped."""
+    for status in ("RUNNING", "DECLARED_IN_CODE", "AUTOMATICALLY_RUNNING"):
+        rows = [(status, '{"origin": {"job_name": "brreg_transform_half_hourly"}}')]
+        assert _drive_instigators(mod, rows) == {"brreg_transform_half_hourly"}, status
+
+
+def test_no_connection_string_is_unknown_not_stopped(mod):
+    import os
+
+    saved = os.environ.pop("DAGSTER_DATABASE_URL", None)
+    try:
+        assert mod.running_instigators() is None
+    finally:
+        if saved is not None:
+            os.environ["DAGSTER_DATABASE_URL"] = saved
+
+
+def _drive_instigators(mod, rows):
+    """Run running_instigators() against a fake `instigators` table."""
+    import os
+
+    class _Cur:
+        def execute(self, sql, *_a, **_k):
+            assert "instigators" in sql, sql
+            assert "status" in sql, sql
+
+        def fetchall(self):
+            return rows
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_a):
+            return False
+
+    class _Conn:
+        def cursor(self):
+            return _Cur()
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_a):
+            return False
+
+    saved_conn = mod._conn
+    saved_url = os.environ.get("DAGSTER_DATABASE_URL")
+    os.environ["DAGSTER_DATABASE_URL"] = "postgresql://fake/fake"
+    mod._conn = lambda url: _Conn()
+    try:
+        return mod.running_instigators()
+    finally:
+        mod._conn = saved_conn
+        if saved_url is None:
+            os.environ.pop("DAGSTER_DATABASE_URL", None)
+        else:
+            os.environ["DAGSTER_DATABASE_URL"] = saved_url
+
+
+def test_nothing_declares_itself_running(mod):
+    """
+    🔴 AN ABSENCE-GUARD FOR THE ASSUMPTION UNDER `running_instigators`: no row in
+    `instigators` means STOPPED only because nothing in this code location
+    declares `default_status=RUNNING`. If that changes, absence stops meaning
+    stoppedness — and the tool's answer would be wrong only in the window before
+    the daemon's first tick writes the row, which is exactly the kind of defect
+    nobody finds.
+
+    ⚠️ Swept over the whole package, not over the two modules that declare
+    schedules today. Matching the spelling I remember instead of the pattern is
+    how a fix landed in three places out of four once already.
+    """
+    pkg = HERE.parent / "dagster" / "atlas_data"
+    assert pkg.is_dir(), f"cannot find the definitions package at {pkg}"
+    offenders = [f.name for f in sorted(pkg.rglob("*.py")) if "default_status" in f.read_text()]
+    assert not offenders, (
+        f"{offenders} set default_status; running_instigators() assumes no instigator "
+        "declares itself RUNNING, so absence of a row means stopped. Either revert, "
+        "or make that function read the declarations too."
+    )
+
+
+def test_the_named_schedule_is_the_one_that_exists(mod):
+    """
+    The tool asserts about a schedule BY NAME across a process boundary, so the
+    name is a contract with schedules.py. Renamed there and not here, the tool
+    reports a running transform as stopped — a false alarm on every healthy host.
+    """
+    src = (HERE.parent / "dagster" / "atlas_data" / "schedules.py").read_text()
+    assert f'name="{mod.TRANSFORM_SCHEDULE}"' in src, (
+        f"atlas-status.py watches {mod.TRANSFORM_SCHEDULE!r}, which schedules.py "
+        "no longer declares under that name"
+    )
 
 
 def main() -> int:

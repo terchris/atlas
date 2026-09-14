@@ -201,9 +201,26 @@ provides:
 # 🔵 The application owns its dependencies inside its own image. This is Python
 # rather than shell precisely so that is true: `psycopg2` already ships for the
 # api_v1 asset checks, where `psql` does not ship at all.
+#
+# 🔴 THE CHECK READS AUTOMATION STATE ITSELF, AND THAT BOUNDARY WAS A DECISION
+# (ops-dev, urb-agents #1035). It used to report "N deletion(s) awaiting the next
+# transform" over exit 0 on a host where every schedule was stopped — the state
+# every fresh install is in, and one the documented happy path walks through.
+#
+# ⚠️ UIS could have folded automation state in around this command's answer.
+# It should not: a wrapper can add a line but it cannot unsay one, and the false
+# sentence is this application's. It also already holds the credential — the same
+# DAGSTER_DATABASE_URL the Jobs block uses — so folding it in outside would make
+# two outputs that must agree about one fact.
+#
+# 🔵 EXIT 1 NOW ALSO MEANS "changes are waiting and nothing is scheduled to apply
+# them". It does NOT mean stopped automation on its own: a deliberately stopped
+# install is reported loudly and still exits 0, because the install guide leaves
+# an operator exactly there between loading first data and going live, and a
+# check that exits 1 on the documented path teaches its reader that 1 is normal.
 commands:
   check:
-    description: "Does the output reflect the input? Compares what the feed pulled against what the register serves."
+    description: "Does the output reflect the input? Compares what the feed pulled against what the register serves, and says whether anything is scheduled to keep it current."
     run: /app/atlas-status.py
     in: code-location
 
