@@ -481,6 +481,15 @@ docs/research/ngo-landscape.md. v1 includes Tier A only.';
 COMMENT ON COLUMN api_v1.ngo_index.chapter_data_shape IS 'How this NGO''s per-chapter activity data is shaped — drives
 which ingest pattern it uses. Values: ''api_canonical'',
 ''cms_bins'', ''programme_only'', ''no_structure''.';
+COMMENT ON COLUMN api_v1.ngo_index.has_chapters IS 'Whether this NGO DECLARES that it has chapters — an editorial fact
+from dim_ngo, recorded when the organisation is curated.
+
+Not the same question as has_supply, which is chapter_count > 0 and
+therefore an ingest OUTCOME: does Atlas hold chapter rows for this
+organisation yet. They agree today only because all curated NGOs
+declare has_chapters true and all have been ingested. The first NGO
+curated before its chapters land makes them disagree, and a consumer
+filtering on the wrong one loses it without an error.';
 COMMENT ON COLUMN api_v1.ngo_index.primary_focus IS 'One-line description of the NGO''s main mission area.';
 COMMENT ON COLUMN api_v1.ngo_index.icnpo_code_1 IS 'ICNPO classification code (primary). See ref_icnpo. NULL when
 unclassified.';
