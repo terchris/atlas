@@ -116,6 +116,28 @@ def _ingest_executor():
     # four of these at once". Sizing one asset does not bound a pod that may be
     # running four others beside it.
     #
+    # 🔴 AND IT IS COUPLED TO RUN DURATION, WHICH IS COUPLED TO THE STACKING
+    # HAZARD. This is the coupling that actually decides the setting.
+    #
+    # Measured (imac, urb-agents #1015): api_v1_checks at max_concurrent=1 peaked
+    # at 372 MiB against 887 at 4 — the per-subprocess reading holds, roughly
+    # 199 MiB parent plus ~172 MiB per additional concurrent step. ⚠️ But the same
+    # run went 34.1 s -> 73.0 s. Halving memory roughly doubles duration.
+    #
+    # 🔴 `brreg_transform` runs every 30 minutes and was ~140 s; in the
+    # low-concurrency window it was 247 s. A run that exceeds its interval does
+    # not skip — it STACKS, and two runs then race on delete+insert against
+    # dim_brreg_enhet. That is filed and unfixed:
+    # website/docs/ai-developer/plans/backlog/INVESTIGATE-transform-run-stacking.md
+    #
+    # ⚠️ So lowering this to save memory spends margin against a known,
+    # unfixed concurrency hazard to buy headroom that `1Gi` already provides.
+    # The memory is covered; the margin is not replaceable.
+    #
+    # 🔵 RAISING it is the direction that needs the measurement, not lowering:
+    # it shortens runs and widens the stacking margin, and invalidates the pod
+    # sizing in the direction that OOMs rather than the direction that wastes.
+    #
     # ⚠️ Whoever changes this must say what the run pod's memory request became.
     # The request lives in UIS, not here — which is exactly why the coupling is
     # easy to break: the two numbers are in different repositories owned by
