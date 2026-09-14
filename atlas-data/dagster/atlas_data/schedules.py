@@ -66,7 +66,15 @@ TIMEZONE = "Europe/Oslo"
 
 def _ingest_executor():
     """
-    Bounds simultaneous ingest steps inside a single run.
+    Bounds simultaneous steps inside a single run — of EVERY job, not just ingest.
+
+    ⚠️ THE NAME UNDERSTATES THE SCOPE, and the name is mine. This is passed to
+    `Definitions(executor=...)`, so it is the code location's global executor:
+    `api_v1_checks`, `transform_checks`, `transform_and_publish` and the ingest
+    asset job all run their steps through it. A platform operator retuning what
+    reads as "ingest concurrency" changes the memory footprint of the checks jobs
+    too. Renaming it is a breaking change to a declared env var, so the name
+    stays and this paragraph exists instead.
 
     Without this, a 38-asset job opens as many concurrent Postgres writers as the
     run pod has CPUs — and every Atlas ingest writes to the *shared* instance that
@@ -81,12 +89,24 @@ def _ingest_executor():
     # ENFORCES THE COUPLING.
     #
     # `multiprocess_executor` runs each step in its own SUBPROCESS, so the pod's
-    # footprint is the parent plus up to `max_concurrent` ingests at once —
-    # additive, not shared. imac measured the ingest run pod at 590 MiB and
-    # 551 MiB on two runs (urb-agents #1011), against a 384Mi request.
+    # footprint is the parent plus up to `max_concurrent` STEPS at once —
+    # additive, not shared, and each subprocess re-imports this code location.
     #
-    # ⚠️ So that peak is a property of THIS SETTING, not of any one asset. The 7%
-    # spread between the two samples is which four assets happened to coincide.
+    # ⚠️ CORRECTED: an earlier version of this note said "four ingests at once".
+    # It is four steps of ANY job, because this is the global executor (see the
+    # docstring). That matters for the ceiling: `api_v1_checks` peaked at 887 MiB
+    # (urb-agents #1013) — higher than the ingest job and higher than the 728-test
+    # `transform_checks` — while its own queries are all `count(*)` and metadata
+    # reads that hold nothing client-side. A job whose WORK is trivial peaking
+    # highest is what a per-subprocess baseline looks like, not a per-query cost.
+    #
+    # 🔵 Hypothesis, not measurement: the driver is `max_concurrent` copies of the
+    # interpreter plus dagster plus the dbt manifest, not anything the checks do.
+    # Cheap test if anyone wants it: run `api_v1_checks` at max_concurrent=1 and
+    # compare the peak. Ruled out locally already — the manifest is 2.9 MB and
+    # +14 MiB parsed, `api_v1_generated.sql` is 40 KB, so neither is the 887.
+    #
+    # ⚠️ So that peak is a property of THIS SETTING, not of any one asset.
     # Raising this to 8 roughly doubles the concurrent half of the footprint and
     # silently invalidates whatever the pod was sized for; lowering it shrinks the
     # pod and lengthens the run.
