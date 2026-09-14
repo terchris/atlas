@@ -327,26 +327,41 @@ operational:
         touched has not changed, so its two file dates carry the same document.
         Finish the load for provenance and completeness, not as a precondition.
     - symptom: >-
-        A transform run fails with a dbt schema error naming dim_brreg_enhet —
-        "the source and target schemas on this incremental model are out of sync".
+        A transform run fails naming dim_brreg_enhet — Database Error, 'column
+        "snapshot_loaded_at" does not exist', pointing at LINE 209 and
+        "select coalesce(max(snapshot_loaded_at), '-infinity'".
       cause: >-
         An Atlas upgrade added a column to a model that is materialised
-        incrementally. The existing table cannot gain it in place, and Atlas
-        refuses to continue rather than silently building into the old shape.
+        incrementally. The existing table cannot gain it in place.
+        This entry used to quote dbt's own message, "the source and target
+        schemas on this incremental model are out of sync". dbt never emits it
+        for THIS model, and an operator searching the real text found nothing -
+        which is the outcome the quoted text existed to prevent. The reason is
+        the model's own shape: its incremental predicate reads
+        max(snapshot_loaded_at) FROM ITSELF, so the compiled SELECT touches the
+        missing column and Postgres raises before dbt's schema-change handling
+        gets a chance to compare anything. Measured by imac, which ran the
+        incremental first rather than assuming a refresh was needed.
         Expected on the upgrade that added dim_brreg_enhet.snapshot_loaded_at:
         that column is what lets the dimension notice a bulk reload without
         joining two multi-gigabyte tables on every half-hourly run, and it was
-        chosen over the join once the one-time refresh was measured at 256
-        seconds against the join's 42 seconds on every run. A planned cost, not a
-        fault.
+        chosen over the join once the refresh cost was measured. A planned cost,
+        not a fault.
       fix: >-
         Two steps, and the second is the one people miss. FIRST rebuild that
         model once, AS THE atlas DATABASE USER and not as a superuser — a full
         refresh drops and recreates, so the tables take the running user's
         ownership and a superuser leaves the next run with "permission denied".
         From the dbt project - "dbt build --full-refresh --select
-        dim_brreg_enhet+". About four minutes for 1.17M rows. THEN materialise
-        the api_v1 asset, or run transform_and_publish. Rebuilding the view is
+        dim_brreg_enhet+". The trailing + is DESCENDANTS and is deliberate: it
+        rebuilds what depends on the changed table. A leading +dim_brreg_enhet
+        selects ancestors and is the wrong direction - both spellings have been
+        circulated and this is the correct one. Measured at 528-536 s wall for
+        that selector, which is 1.17M rows plus 29 data tests and a view model;
+        an earlier 256 s figure was the model ALONE and reads as a regression
+        beside a + selector when someone times it. THEN run
+        "uis dagster run publish_api_v1", or transform_and_publish if you also
+        need a rebuild. Rebuilding the view is
         NOT enough on its own - PostgREST answers from a cached schema, and if
         that cache was last loaded while the view was missing it keeps returning
         404 over a view that exists and has correct grants. The api_v1 asset is
