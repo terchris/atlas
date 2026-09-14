@@ -328,6 +328,25 @@ for svc in d["provides"]["services"]:
             "that is not a declared property and has moved before."
         )
     mapped += len(from_exports) + len(from_services)
+# 🔴 A "not measured" caveat must not outlive the measurement.
+#
+# `install.first_load` said "the combined WALL TIME is not measured and is
+# deliberately not stated here" for as long as that was true. It stopped being
+# true on 2026-09-14 and the sentence did not notice — while `first_data.takes`
+# in the same file had just gained the figure.
+#
+# ⚠️ The table-count check above would NOT have caught it: two strings
+# disagreeing about a NUMBER is the #824 defect; this is two strings disagreeing
+# about whether a number EXISTS. Same shape, different field.
+takes_txt = op["first_data"]["takes"]
+first_load_txt = op["install"]["first_load"]
+_states_wall = any(w in takes_txt for w in ("minutes", "minute", "wall"))
+_denies_wall = "WALL TIME is not" in first_load_txt or "wall time is not" in first_load_txt
+assert not (_states_wall and _denies_wall), (
+    "first_data.takes states a wall time while install.first_load says it is not "
+    "measured. One of them is stale."
+)
+print("  ✓ no stale not-measured caveat")
 print(f"  ✓ env_from_* resolves ({mapped} mapped, none doubly-set)")
 print(f"  ✓ first_data jobs exist ({len(declared_jobs)}), install.deploys matches provides.services")
 # Existence is not coverage — see check-first-data-coverage.py. Hand the job
