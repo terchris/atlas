@@ -626,6 +626,77 @@ def test_never_loaded_is_not_silently_formatted_as_zero(mod):
     assert "never loaded" in out, out
 
 
+def test_runs_that_never_started_cannot_reach_the_jobs_block(mod):
+    """
+    🔴 A FAILED LAUNCH MUST NOT RENDER AS A FAILING JOB (ops-dev, urb-agents #1076).
+
+    `uis dagster run transform_checks` currently fails before submitting, leaving
+    a NOT_STARTED run that Dagster's monitoring daemon later reaps to FAILURE.
+    Three of them exist on imac's host. They executed nothing.
+
+    ⚠️ `jobs_block` is protected from them only by `where start_time is not null`
+    — a clause written so `to_timestamp()` had something to format, not because
+    anyone reasoned about orphaned runs. Measured against a real runs table:
+    swapping it for `coalesce(start_time, end_time)` to show a timestamp on every
+    row turns three never-executed runs into "transform_checks 3 consecutive ⚠️".
+
+    🔵 So the guard is on the SQL, not on the output: a fake cursor answers
+    whatever it is given regardless of the WHERE clause, and a test that does not
+    read the query cannot notice the clause going missing. Same lesson as
+    _DeletionCursor.
+    """
+    import os
+
+    seen = []
+
+    class _Cur:
+        def execute(self, sql, *_a, **_k):
+            seen.append(" ".join(str(sql).split()))
+
+        def fetchall(self):
+            return []
+
+        def fetchone(self):
+            return None
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_a):
+            return False
+
+    class _Conn:
+        def cursor(self):
+            return _Cur()
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_a):
+            return False
+
+    saved_conn, saved_url = mod._conn, os.environ.get("DAGSTER_DATABASE_URL")
+    os.environ["DAGSTER_DATABASE_URL"] = "postgresql://fake/fake"
+    mod._conn = lambda url: _Conn()
+    try:
+        with contextlib.redirect_stdout(io.StringIO()):
+            mod.jobs_block()
+    finally:
+        mod._conn = saved_conn
+        if saved_url is None:
+            os.environ.pop("DAGSTER_DATABASE_URL", None)
+        else:
+            os.environ["DAGSTER_DATABASE_URL"] = saved_url
+
+    runs_query = next((s for s in seen if " from runs " in f" {s} "), None)
+    assert runs_query, f"no query against `runs` was issued; saw: {seen}"
+    assert "start_time is not null" in runs_query, (
+        "the runs query must exclude rows with no start_time, or launches that "
+        "never submitted a run render as consecutive job failures. Got: "
+        f"{runs_query}"
+    )
+
+
 def main() -> int:
     mod = load_tool()
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
