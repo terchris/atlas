@@ -116,6 +116,36 @@ def _ingest_executor():
     # four of these at once". Sizing one asset does not bound a pod that may be
     # running four others beside it.
     #
+    # ⚠️ "WRONG LEVER" IS ABOUT THIS PEAK AND NOTHING ELSE. Read as a general
+    # verdict on per-job overrides it is now false, because tor-agent retracted
+    # the other half on urb-agents #1045: there is NO separate run-pod memory
+    # floor to set. The chart shares one container context, so a single platform
+    # number sized for the cold-install outlier — `annual_sources_refresh` at
+    # 2083 MiB — would also reserve that for a long-lived pod that peaks around
+    # 300 MiB. tor-agent's words: "I was wrong about the mechanism and the
+    # conclusion moves with it."
+    #
+    # 🔴 TWO PEAKS, TWO ANSWERS, AND THEY POINT OPPOSITE WAYS:
+    #
+    #     the CONCURRENCY peak     belongs to the RUN  -> a per-asset tag cannot
+    #                                                     bound it (this block)
+    #     one job's OUTLIER        belongs to the JOB  -> the per-job
+    #                                                     `dagster-k8s/config` tag
+    #                                                     is the ONLY mechanism
+    #
+    # 🔴 AND A TRAP NOT TO REACH FOR, recorded here because this is where someone
+    # weighing platform-number-versus-per-job config will be standing.
+    # `includeConfigInLaunchedRuns: false` looks like the way to let a platform
+    # number win. It is not. The same setting carries `env_config_maps`,
+    # `env_secrets` and `env` to run pods, so turning it off stops the code
+    # location's environment reaching them — which is urb-agents #957 exactly,
+    # `ATLAS_POSTGREST_URL` never arriving. A fix that breaks the thing the
+    # argument was in service of.
+    #
+    # 🔵 Still no number here, and that is deliberate: sizing waits for a window
+    # covering the whole first-data cascade rather than one job, and the memory
+    # LIMIT waits for someone to produce an OOM on purpose and watch it.
+    #
     # 🔴 AND IT IS COUPLED TO RUN DURATION, WHICH IS COUPLED TO THE STACKING
     # HAZARD. This is the coupling that actually decides the setting.
     #
