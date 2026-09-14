@@ -77,6 +77,30 @@ def _ingest_executor():
     Read from the environment so the platform can retune it without an Atlas
     rebuild — os.getenv with a default, never os.environ[...].
     """
+    # 🔴 THIS NUMBER AND THE RUN POD'S MEMORY REQUEST ARE COUPLED, AND NOTHING
+    # ENFORCES THE COUPLING.
+    #
+    # `multiprocess_executor` runs each step in its own SUBPROCESS, so the pod's
+    # footprint is the parent plus up to `max_concurrent` ingests at once —
+    # additive, not shared. imac measured the ingest run pod at 590 MiB and
+    # 551 MiB on two runs (urb-agents #1011), against a 384Mi request.
+    #
+    # ⚠️ So that peak is a property of THIS SETTING, not of any one asset. The 7%
+    # spread between the two samples is which four assets happened to coincide.
+    # Raising this to 8 roughly doubles the concurrent half of the footprint and
+    # silently invalidates whatever the pod was sized for; lowering it shrinks the
+    # pod and lengthens the run.
+    #
+    # 🔵 Which also means a per-asset `dagster-k8s/config` override is the WRONG
+    # lever for this peak. The pod is sized for the RUN, and the run is "up to
+    # four of these at once". Sizing one asset does not bound a pod that may be
+    # running four others beside it.
+    #
+    # ⚠️ Whoever changes this must say what the run pod's memory request became.
+    # The request lives in UIS, not here — which is exactly why the coupling is
+    # easy to break: the two numbers are in different repositories owned by
+    # different agents, and neither file mentions the other. This comment is the
+    # only place they are named together.
     raw = os.getenv("ATLAS_MAX_CONCURRENT_INGESTS", "4")
     try:
         max_concurrent = max(1, int(raw))
