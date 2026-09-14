@@ -221,9 +221,21 @@ operational:
   automation: >-
     Ships stopped. No data is fetched and no external service is contacted until
     an operator enables both the schedules and the sensors; that is a go-live
-    decision, not a side effect of installing. Enabling them starts the NEXT
-    scheduled run — it does not backfill, so a fresh install stays empty until
-    the first-data jobs are launched by hand.
+    decision, not a side effect of installing. Enabling them does not backfill:
+    no history is replayed, ever. But the TIMING differs between the two halves
+    and only one of them waits. The two SCHEDULES (transform_daily at 05:00,
+    brreg_transform at :10 and :40) do nothing until their next scheduled time.
+    The AUTOMATION SENSOR, which drives all ~40 ingest sources, evaluates on its
+    own tick rather than on those crons: an asset becomes eligible when its cron
+    tick has passed AND its dependencies updated since that tick, so on a fresh
+    install - where every cron tick is already in the past and nothing has run -
+    it can begin fetching within about a minute of being enabled. Enabling at
+    16:55 on a Friday starts work at 16:55, not at the next cron. Concurrency is
+    bounded by ATLAS_MAX_CONCURRENT_INGESTS, so it is a bounded start and not 40
+    simultaneous writers. And enabling BEFORE the first-data sequence means the
+    sensor, not the operator, decides the order: the change feed will start, find
+    no watermark and fail loudly until brreg_bootstrap has run - by design, not a
+    fault, but noise nobody needs. Launch the first-data jobs first.
 
   timezone: Europe/Oslo
 
