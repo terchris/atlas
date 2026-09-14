@@ -122,35 +122,47 @@ provides:
           # pod silently without the variable.
           env_secrets: "{{ params.app_name }}-database-db"
 
-          # 🔴 THE CHECK COULD NOT REACH THE API IT CHECKS.
+          # 🔴 THE CHECK COULD NOT REACH THE API IT CHECKS, AND THE FIRST FIX
+          # DELIVERED THE WRONG ADDRESS.
           #
           # `commands.check` runs atlas-status.py in this pod, and its strongest
-          # single assertion is an HTTP request to PostgREST — the deletion
-          # propagation check. ⚠️ On a stock install `ATLAS_POSTGREST_URL` was
-          # unset, so the tool correctly reported "I could not look", UIS mapped
-          # that to UNHEALTHY, and a completely healthy register read as broken
-          # (imac, urb-agents #947).
+          # single assertion is an HTTP request to PostgREST. ⚠️ On a stock
+          # install `ATLAS_POSTGREST_URL` was unset, so the tool correctly said
+          # "I could not look", UIS mapped that to UNHEALTHY, and a healthy
+          # register read as broken.
           #
-          # 🔵 The value was never unknown. This artifact ALREADY exports it —
-          # `api-url` under `exports:` — and the installer prints it to the
-          # operator. It was computed, displayed, and then not passed to the pod
-          # that needed it.
+          # ⚠️ The first fix used `env_from_exports: api-url`. That export is
+          # `http://api-<app>.localhost` — the address a developer types into a
+          # browser ON THE HOST. Delivered into a pod it is loopback (RFC 6761),
+          # so the check dialled itself. imac measured it from inside the pod:
+          # curl exit 7, RESOLVED and refused, not exit 6. 🔴 A cluster WITH the
+          # ingress behaves identically, so it was never a missing ingress.
           #
-          # NAME → EXPORT KEY, never a literal. The URL is stated once, in the
-          # export, and this maps a variable onto it. ⚠️ Writing the URL here
-          # instead would be a second place that must agree, which is the failure
-          # this project keeps meeting.
+          # 🔵 ONE NAME, TWO CORRECT ANSWERS. An export cannot say which network
+          # namespace its value is valid in, and the consumer cannot tell which
+          # it received — the same structure as artifact-versus-image and
+          # run-versus-image, both of which cost a round this week.
           #
-          # 🔴 A named export that does not exist REFUSES the install, and that
-          # is the right severity: an env var set to empty is not the same as
-          # unset and is worse — the check would run, reach nothing, and have to
-          # guess why.
+          # 🔴 SO THIS NAMES THE SERVICE, NOT AN ADDRESS. UIS composes
+          # <scheme>://<name>.<namespace>.svc.cluster.local:<port> from its own
+          # services.json. A service address is in-cluster by construction, so
+          # there is no second correct answer to confuse it with.
           #
-          # ⚠️ `api-url` was confirmed against this file's own `exports:` block
-          # rather than copied from the request. A wrong string relayed from a
-          # nomination has already cost a round today, and it was mine.
-          env_from_exports:
-            ATLAS_POSTGREST_URL: api-url
+          # ⚠️ Deliberately NOT the alternative of declaring the in-cluster URL
+          # here. `namespace` is not a declared property of the UIS service
+          # schema, it moved once this year (gravitee, 2d0570d), and PLAN-012 is
+          # a recorded outage of exactly that class. Encoding the platform's
+          # topology in a tenant artifact is the mirror of putting a tenant's
+          # name in the platform's CLI, which tor-agent refused for the same
+          # reason. The day UIS moves a namespace it moves it in services.json
+          # and this file keeps working unchanged.
+          #
+          # 🔴 REPLACES `env_from_exports`, it does not sit beside it. UIS 1.6.85
+          # refuses a variable set by both and says so in the refusal. The export
+          # `api-url` stays exactly what it is — host-facing — and stops being
+          # asked to be two things.
+          env_from_services:
+            ATLAS_POSTGREST_URL: postgrest
 
 # ─────────────────────────────────────────────────────────────────────────────
 # What this application DOES once installed, as opposed to what it creates.

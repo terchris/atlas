@@ -281,23 +281,35 @@ assert not missing_jobs, f"first_data names jobs not defined in schedules.py: {s
 declared_services = {x["service"] for x in d["provides"]["services"]}
 assert set(op["install"]["deploys"]) == declared_services, (op["install"]["deploys"], declared_services)
 
-# 🔴 Every `env_from_exports` value must name an export this artifact declares.
+# 🔴 env_from_* must resolve, and a variable must not be set by both.
 #
-# The mapping is NAME -> EXPORT KEY, so a typo in the key produces a variable
-# that resolves to nothing. UIS refuses the install in that case, which is the
-# right severity — but finding it here costs a render and finding it there costs
-# a publish, a nomination and an operator's install.
+# The mapping is NAME -> KEY, so a typo produces a variable that resolves to
+# nothing. UIS refuses at install, which is the right severity — but finding it
+# here costs a render, and finding it there costs a publish, a nomination and an
+# operator's time.
 #
-# ⚠️ The failure it guards is specific: `commands.check` runs a tool whose
-# strongest assertion is an HTTP request, and on a stock install the variable
-# carrying that URL was simply absent. The tool said "I could not look", UIS
-# mapped it to UNHEALTHY, and a healthy register read as broken. An empty
-# variable would be worse than an absent one — the check would run, reach
-# nothing, and have to guess why.
+# ⚠️ `env_from_exports` values name an EXPORT this artifact declares.
+# ⚠️ `env_from_services` values name a SERVICE this artifact declares — never an
+#    address. UIS composes the in-cluster URL from its own services.json, which
+#    is why a tenant must not write one: `namespace` is not a declared property
+#    of the service schema and it moved once this year.
+# 🔴 The same variable set by BOTH is refused, mirroring UIS 1.6.85's own
+#    refusal. It is a replace, not an add — the first attempt at this delivered
+#    a host-facing `.localhost` into a pod, where it is loopback.
 exports = d.get("exports") or {}
+declared_service_ids = {x["service"] for x in d["provides"]["services"]}
+mapped = 0
 for svc in d["provides"]["services"]:
     cl = (svc.get("config") or {}).get("code_location") or {}
-    for var, key in (cl.get("env_from_exports") or {}).items():
+    from_exports = cl.get("env_from_exports") or {}
+    from_services = cl.get("env_from_services") or {}
+
+    both = set(from_exports) & set(from_services)
+    assert not both, (
+        f"{sorted(both)} set by BOTH env_from_exports and env_from_services. "
+        "Replace the env_from_exports entry, do not add beside it."
+    )
+    for var, key in from_exports.items():
         assert key in exports, (
             f"env_from_exports maps {var} to export '{key}', which this artifact "
             f"does not declare. Exports are: {sorted(exports)}"
@@ -305,7 +317,18 @@ for svc in d["provides"]["services"]:
         assert not str(key).startswith(("http://", "https://")), (
             f"env_from_exports must name an EXPORT KEY, not a value: {var} -> {key!r}"
         )
-print(f"  ✓ env_from_exports resolves ({sum(len((s.get('config') or {}).get('code_location', {}).get('env_from_exports', {}) or {}) for s in d['provides']['services'])} mapped)")
+    for var, sid in from_services.items():
+        assert sid in declared_service_ids, (
+            f"env_from_services maps {var} to service '{sid}', which this artifact "
+            f"does not declare. Services are: {sorted(declared_service_ids)}"
+        )
+        assert "." not in str(sid) and "://" not in str(sid), (
+            f"env_from_services must name a SERVICE ID, not an address: {var} -> {sid!r}. "
+            "UIS composes the in-cluster URL; a tenant writing one encodes a namespace "
+            "that is not a declared property and has moved before."
+        )
+    mapped += len(from_exports) + len(from_services)
+print(f"  ✓ env_from_* resolves ({mapped} mapped, none doubly-set)")
 print(f"  ✓ first_data jobs exist ({len(declared_jobs)}), install.deploys matches provides.services")
 # Existence is not coverage — see check-first-data-coverage.py. Hand the job
 # list to the coverage checker rather than duplicating its logic here.
