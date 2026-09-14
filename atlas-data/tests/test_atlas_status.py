@@ -153,6 +153,78 @@ def test_host_facing_url_is_named_only_inside_a_pod(mod):
             os.environ["KUBERNETES_SERVICE_HOST"] = had
 
 
+class _DeletionCursor:
+    """
+    Cursor that answers deletion_block's three queries in order — and INSPECTS
+    them.
+
+    🔴 The first version of this only answered positionally, so the tests passed
+    with the fix reverted: removing `and oppdateringsid <= %s` changes what the
+    DATABASE returns, and a stub that never reads the SQL cannot notice. A test
+    that passes without the fix is not a guard, it is decoration.
+
+    ⚠️ So it asserts the shape of the query it is standing in for: the
+    applied-deletion lookup must constrain by the watermark, and the pending
+    count must look the other way. That is the part a fake cursor CAN check.
+    """
+
+    def __init__(self, applied, applied_deletion, pending):
+        self._answers = [(applied,), applied_deletion, (pending,)]
+        self._sql = []
+        self._i = -1
+
+    def execute(self, sql, *_a, **_k):
+        self._i += 1
+        self._sql.append(" ".join(str(sql).split()))
+        if self._i == 1:
+            assert "oppdateringsid <= %s" in self._sql[-1], (
+                "the applied-deletion query must constrain by the dimension's "
+                f"watermark, got: {self._sql[-1]}"
+            )
+        if self._i == 2:
+            assert "oppdateringsid > %s" in self._sql[-1], (
+                f"the pending count must look past the watermark, got: {self._sql[-1]}"
+            )
+
+    def fetchone(self):
+        return self._answers[self._i]
+
+    def fetchall(self):
+        return []
+
+
+def test_a_deletion_the_transform_has_not_applied_is_not_a_fault(mod):
+    """
+    🔴 The feed polls at :00/:30 and reconciliation runs at :10/:40, so for ~11
+    minutes in 30 there is a deletion the API correctly still serves. Reporting
+    that as UNHEALTHY made a healthy atlas fail ~37% of the time and rendered
+    identically to an 8.4-hour outage.
+
+    ⚠️ No HTTP happens on this path — the block returns before asking the API,
+    which is what makes the case testable without a network.
+    """
+    state, out = _run(mod, _DeletionCursor(applied=100, applied_deletion=None, pending=3))
+    assert state == mod.OK, f"a pending deletion must not warn, got {state!r}"
+    assert "awaiting the next transform" in out, out
+    assert "⚠️" not in out.replace("awaiting", ""), out
+
+
+def test_no_deletions_at_all_is_silent_but_stated(mod):
+    state, out = _run(mod, _DeletionCursor(applied=100, applied_deletion=None, pending=0))
+    assert state == mod.OK
+    assert "no deletion in the feed yet" in out
+
+
+def _run(mod, cur):
+    import contextlib
+    import io
+
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        state = mod.deletion_block(cur)
+    return state, buf.getvalue()
+
+
 def test_worst_orders_and_rejects_non_states(mod):
     assert mod.worst(mod.OK, mod.WARN) == mod.WARN
     assert mod.worst(mod.WARN, mod.CANNOT) == mod.CANNOT, "CANNOT must dominate WARN"

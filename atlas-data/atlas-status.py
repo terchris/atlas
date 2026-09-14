@@ -285,15 +285,63 @@ def deletion_block(cur) -> int:
     """
     print()
     print("Deletion propagation")
+    # 🔴 ASSERT AGAINST A DELETION THE TRANSFORM HAS ALREADY APPLIED.
+    #
+    # The feed polls at :00/:30 and reconciliation runs at :10/:40 — a deliberate
+    # ten-minute offset. So for roughly 11 minutes in every 30 there is a
+    # deletion the feed has recorded and the transform has not yet applied, and
+    # the API is CORRECTLY still serving it.
+    #
+    # ⚠️ This block used to take the newest deletion regardless, so a healthy
+    # atlas reported UNHEALTHY for ~37% of wall-clock time (imac, urb-agents
+    # #983) — and worse, it was indistinguishable from the real thing:
+    #
+    #     the incident   119 unapplied, 22 deletions served, 8.4 h stale  -> exit 1
+    #     normal          40 pending,    7 deletions served, 0.2 h behind -> exit 1
+    #
+    # 🔴 Two orders of magnitude apart, identical verdict. A check that cries
+    # wolf on a third of runs gets ignored, and then the 8.4-hour incident
+    # renders the same as the noise. That is the failure this command exists to
+    # prevent, committed by the command.
+    #
+    # 🔵 The fix is not a threshold. It is the exact question: has the transform
+    # applied THIS deletion yet? Comparing the deletion's own oppdateringsid
+    # against the dimension's watermark answers it with no tuning and no clock —
+    # a pending deletion is the system working as designed, and an APPLIED one
+    # that is still served is a real fault at any age.
+    #
+    # ⚠️ D2 was this same mistake in the `pending` line, fixed there and left
+    # here. Cycle-awareness applied to one block and not its neighbour.
+    applied_row = _one(cur, "select coalesce(max(last_oppdateringsid), 0) from marts.dim_brreg_enhet")
+    applied = (applied_row or (0,))[0] or 0
+
     row = _one(
         cur,
-        "select organisasjonsnummer from raw.brreg_enheter_versions "
-        "where endringstype in ('Sletting','Fjernet') order by oppdateringsid desc limit 1",
+        "select organisasjonsnummer, oppdateringsid from raw.brreg_enheter_versions "
+        "where endringstype in ('Sletting','Fjernet') and oppdateringsid <= %s "
+        "order by oppdateringsid desc limit 1",
+        (applied,),
     )
+    pending_row = _one(
+        cur,
+        "select count(*) from raw.brreg_enheter_versions "
+        "where endringstype in ('Sletting','Fjernet') and oppdateringsid > %s",
+        (applied,),
+    )
+    pending_deletions = (pending_row or (0,))[0] or 0
+
     if not row:
-        print("  no deletion in the feed yet — nothing to assert")
+        if pending_deletions:
+            # Not a fault and not an assertion: the only deletions the feed has
+            # are newer than the transform. Reported so the block is never
+            # silently empty.
+            print(f"  {pending_deletions} deletion(s) awaiting the next transform — nothing applied yet to assert")
+        else:
+            print("  no deletion in the feed yet — nothing to assert")
         return OK
-    orgnr = row[0]
+    orgnr, _oid = row
+    if pending_deletions:
+        print(f"  {pending_deletions} newer deletion(s) awaiting the next transform (:10/:40) — not a fault")
 
     base = os.environ.get("ATLAS_POSTGREST_URL") or os.environ.get("POSTGREST_URL")
     if not base:
@@ -319,9 +367,10 @@ def deletion_block(cur) -> int:
         return CANNOT
 
     if code == 200 and body == []:
-        print(f"  most recent deletion        {orgnr}   absent from the API ✓")
+        print(f"  most recent applied deletion {orgnr}  absent from the API ✓")
         return OK
-    print(f"  most recent deletion        {orgnr}   STILL SERVED by the API ⚠️")
+    # Applied by the transform and still served: a real fault at any age.
+    print(f"  most recent APPLIED deletion {orgnr}  STILL SERVED by the API ⚠️")
     return WARN
 
 
