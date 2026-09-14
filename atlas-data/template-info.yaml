@@ -218,9 +218,23 @@ provides:
 # install is reported loudly and still exits 0, because the install guide leaves
 # an operator exactly there between loading first data and going live, and a
 # check that exits 1 on the documented path teaches its reader that 1 is normal.
+#
+# 🔴 AND IT COVERS EVERY SOURCE, NOT ONLY BRREG (ops-dev, urb-agents #1039).
+# The command used to answer the register properly and give the other 41 sources
+# a 24-HOUR WINDOW — which cannot see a weekly or monthly source go stale at all,
+# because a day after they run they drop out of it. 23 of the 29 bounded sources
+# are weekly. The cadence comparison already existed as a dbt test; its verdict
+# was unreadable here, living in dbt run results and Dagster's event log, whose
+# tables Atlas has no SELECT on. It is now the view `marts.mart_source_freshness`
+# — evaluated when queried, so it is current whether or not the transform, the
+# suite or the daemon has run — and the dbt test gates on the same rows.
+#
+# ⚠️ A host whose transform has never run has no view, and the command reports
+# CANNOT (exit 2) rather than "fresh". Absence rendering as green is the defect
+# this command exists to catch.
 commands:
   check:
-    description: "Does the output reflect the input? Compares what the feed pulled against what the register serves, and says whether anything is scheduled to keep it current."
+    description: "Does the output reflect the input? Compares what the feed pulled against what the register serves, whether every source is inside its declared cadence, and whether anything is scheduled to keep it current."
     run: /app/atlas-status.py
     in: code-location
 
@@ -309,7 +323,7 @@ operational:
     # UIS surface (imac, urb-agents #793). A figure whose "this is out of date"
     # note is invisible is worse than no figure — the stale number reaches the
     # reader and the correction does not.
-    takes: "~30 minutes on a COLD install: six first-data jobs, 1772 s wall, measured end to end by imac on a factory-reset cluster (urb-agents #1027). The Brreg bulk load is 501 s of that and is no longer the unmeasured part. ~4.1M rows across 52 raw BASE TABLEs and 61 marts BASE TABLEs (plus 5 marts views). An earlier figure of ~11 minutes is still in circulation and understates a cold install by nearly 3x: it was imac's measurement of the first FOUR jobs (#507: 11.1 min, 2,906,194 rows) and it predates brreg_bootstrap entirely. The individual jobs vary far more than the total suggests - annual_sources_refresh alone is 474 s and transform_and_publish 484 s - so a run that looks stalled at 8 minutes may be normal. If you need to tell slow from stuck, run the check command rather than waiting: it reports what has been pulled against what has been applied."
+    takes: "~30 minutes on a COLD install: six first-data jobs, 1772 s wall, measured end to end by imac on a factory-reset cluster (urb-agents #1027). The Brreg bulk load is 501 s of that and is no longer the unmeasured part. ~4.1M rows across 52 raw BASE TABLEs and 61 marts BASE TABLEs (plus 6 marts views). An earlier figure of ~11 minutes is still in circulation and understates a cold install by nearly 3x: it was imac's measurement of the first FOUR jobs (#507: 11.1 min, 2,906,194 rows) and it predates brreg_bootstrap entirely. The individual jobs vary far more than the total suggests - annual_sources_refresh alone is 474 s and transform_and_publish 484 s - so a run that looks stalled at 8 minutes may be normal. If you need to tell slow from stuck, run the check command rather than waiting: it reports what has been pulled against what has been applied."
 
   # For the "what is this about to do to my cluster" question (#507 item 1).
   # provides.services below is the authoritative list; this is the human summary.
@@ -326,7 +340,7 @@ operational:
     # deciding whether to install and how much disk to give it. Splitting them
     # across two keys was the reason one of them could go missing unnoticed.
     first_load: >-
-      ~4.1M rows across 52 raw BASE TABLEs and 61 marts BASE TABLEs (plus 5
+      ~4.1M rows across 52 raw BASE TABLEs and 61 marts BASE TABLEs (plus 6
       marts views), from ~41 sources. That is imac's measured 2,906,194 on a clean install
       (urb-agents #496, #507) plus the 1,173,878-record Enhetsregisteret bulk
       load added in PLAN-001. The row count is arithmetic on two measured

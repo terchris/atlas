@@ -158,55 +158,38 @@
 -- assertion), and it caught this test on its first CI run — which is the guard
 -- doing precisely the job it was written for.
 --
--- The `depends_on` hint below creates that edge without putting the model into
--- the query. dbt's own compiler suggests this form, and it is honest rather
--- than a formality: the fact table is only trustworthy if the raw inputs behind
--- it are current, which is exactly this test's claim.
---
--- ⚠️ Remove the hint and this test silently stops running. That is the failure
--- mode it was written to prevent, so it would be a bad one to reintroduce.
-
--- depends_on: {{ ref('fact_kommune_indicators') }}
+-- ✅ That edge used to be a bare `-- depends_on:` hint pointing at
+-- `fact_kommune_indicators`, a model this test did not read. It was honest —
+-- the fact table is only trustworthy if the raw inputs behind it are current —
+-- but it was a hint, and a hint is exactly the kind of line someone tidies away.
+-- The test now SELECTS from `mart_source_freshness`, so the edge is a real
+-- dependency that cannot be removed without breaking the query. Reachability
+-- stopped being a convention and became the thing the test is made of.
 
 {#-
-  Cadence -> maximum tolerated age, in days. Mostly the polling interval plus
-  enough slack to absorb one late tick without crying wolf, and no more:
-    weekly        7 + 1
-    monthly      31 + 4   (a 31-day month, then four days to notice a missed tick)
-    daily         1 + 1
+  🔴 THE COMPARISON MOVED; THE GATE DID NOT.
 
-  🔴 half_hourly IS NOT DERIVED FROM ITS INTERVAL, AND THAT IS DELIBERATE.
+  This test used to compute max(loaded_at) over every source itself. That
+  computation now lives in `mart_source_freshness`, a VIEW — because the verdict
+  needed to be readable by `atlas-status.py`, which cannot see dbt run results or
+  Dagster's event log, and so reported a 24-hour window that could not see a
+  weekly source go stale at all (ops-dev, urb-agents #1039).
 
-  A half-hourly poll with a half-hourly bound would be wrong, because this test
-  measures the wrong thing for that source. It reads max(loaded_at_field) on the
-  TABLE, and the Brreg change feed only writes rows when changes actually arrive
-  — a run that finds nothing writes nothing. So for those tables this is a
-  measure of UPSTREAM ACTIVITY, not of pipeline health.
+  ⚠️ What stayed here is everything that makes this a GATE rather than a
+  surface: the declaration validation below, which refuses to compile on a
+  missing, unargued or invented cadence. That refusal is load-bearing — it is
+  why the 2026-09-12 mis-declaration was findable — and it belongs on the check
+  job, where a bad declaration stops the suite, rather than on a model, where it
+  would stop the publish.
 
-  Measured against Brreg's quietest days (2026-09-12), the gap the bound has to
-  tolerate is real:
-
-    2026-09-06 Sun   298 changes   longest quiet gap 4.2h
-    2026-08-30 Sun   335 changes   longest quiet gap 4.1h   (and a 4.1h lead)
-    2026-08-16 Sun   163 changes   longest quiet gap 4.2h
-
-  A Saturday tail running into a Sunday lead bridges ~6h, and a public holiday
-  would be longer. So the bound is one day: tight enough to catch a dead feed
-  within a day, loose enough never to fire on a genuinely quiet weekend.
-
-  ⚠️ The TIGHT signal for those sources is Dagster's FreshnessPolicy
-  (cadence.BRREG_FRESHNESS, 2h warn / 6h fail), which measures materialisation —
-  did the pipeline RUN — and is the right instrument for that question. Two
-  systems, two questions. Do not tighten this one to match that one; it would
-  fire every quiet Sunday and teach people to ignore it.
+  🔵 One computation, two readers, and the reader cannot disagree with the gate
+  because it is the same rows. The bounds are `vars` in dbt_project.yml with NO
+  default here: a second default is a second number that must agree, which is
+  the failure this project keeps meeting.
 -#}
-{% set cadence_max_age = var(
-    'ingest_cadence_max_age_days',
-    {'half_hourly': 1, 'daily': 2, 'weekly': 8, 'monthly': 35}
-) %}
+{% set cadence_max_age = var('ingest_cadence_max_age_days') %}
 
 {% if execute %}
-    {% set checked = [] %}
     {% set errors = [] %}
 
     {% for node in graph.sources.values() | sort(attribute='name') %}
@@ -260,11 +243,9 @@
                 {% do errors.append(
                     node.name ~ ": unknown meta.ingest_cadence '" ~ cadence ~ "'."
                     " Known: " ~ (cadence_max_age.keys() | list | join(', ')) ~ ", manual, none."
-                    " Add it to ingest_cadence_max_age_days with a bound before using it."
+                    " Add it to vars.ingest_cadence_max_age_days in dbt_project.yml"
+                    " with a bound before using it."
                 ) %}
-
-            {% else %}
-                {% do checked.append({'node': node, 'max_age': cadence_max_age[cadence]}) %}
             {% endif %}
         {% endif %}
     {% endfor %}
@@ -276,42 +257,73 @@
             "\nSee the header of dbt/tests/raw_sources_were_refreshed_recently.sql."
         ) }}
     {% endif %}
-{% else %}
-    {% set checked = [] %}
 {% endif %}
 
-{% if checked | length == 0 %}
-
--- No source declares a loaded_at_field, or we are in parse. Fail loudly rather
--- than pass vacuously: a freshness test that checks nothing must not look green.
-select
-    'no-sources-checked' as source_table,
-    cast(null as timestamptz) as last_loaded_at,
-    cast(null as numeric) as age_days,
-    cast(null as integer) as max_age_days
-where 1 = 1
-
-{% else %}
-
-with per_source as (
-{% for c in checked %}
-    select
-        '{{ c.node.name }}' as source_table,
-        max({{ c.node.loaded_at_field }}) as last_loaded_at,
-        {{ c.max_age }} as max_age_days
-    from {{ source(c.node.source_name, c.node.name) }}
-    {% if not loop.last %}union all{% endif %}
-{% endfor %}
-)
-
+-- The failing rows: anything the view says is late, empty, or carrying a cadence
+-- nobody has bounded.
+--
+-- ⚠️ `unknown_cadence` and `undeclared` cannot normally reach here, because the
+-- validation above refuses to compile on them. They are selected anyway, and
+-- that is not decoration: the view builds and reports in exactly the state where
+-- this test cannot compile, and if the validation is ever loosened the gate must
+-- not quietly narrow with it.
 select
     source_table,
     last_loaded_at,
-    round(extract(epoch from (current_timestamp - last_loaded_at)) / 86400.0, 2) as age_days,
-    max_age_days
-from per_source
-where last_loaded_at is null
-   or last_loaded_at < current_timestamp - make_interval(days => max_age_days)
-order by last_loaded_at nulls first
+    age_days,
+    max_age_days,
+    freshness_status
+from {{ ref('mart_source_freshness') }}
+where freshness_status in ('overdue', 'never_loaded', 'undeclared', 'unknown_cadence')
 
-{% endif %}
+union all
+
+-- 🔴 FAIL LOUDLY RATHER THAN PASS VACUOUSLY. A freshness test that checks
+-- nothing must not look green, and "the view came back empty" is the shape that
+-- reads as a clean bill of health. The old version could only make this claim at
+-- compile time, from `graph.sources`; asking the view itself also catches an
+-- empty build, a wrong schema, or a view that exists and selects nothing.
+select
+    'no-bounded-sources-in-view' as source_table,
+    cast(null as timestamptz)   as last_loaded_at,
+    cast(null as numeric)       as age_days,
+    cast(null as integer)       as max_age_days,
+    'empty'                     as freshness_status
+where not exists (
+    select 1 from {{ ref('mart_source_freshness') }}
+    where freshness_status <> 'not_bounded'
+)
+
+union all
+
+-- 🔴 DRIFT BETWEEN THE DECLARATIONS AND THE VIEW.
+--
+-- `mart_source_freshness` builds its row set from `graph.sources` at execute
+-- time, which means the view holds whatever the declarations said WHEN IT WAS
+-- LAST BUILT. Nothing forces a rebuild when a source is added: the model
+-- registers no dependencies in the DAG at all, because its source() calls sit
+-- inside an execute-only guard, which dbt's parser never enters (the model's
+-- header explains why, and why it cannot be fixed).
+--
+-- ⚠️ So a newly declared source would be missing from the surface and from this
+-- gate at the same time, and a freshness check that silently stops covering a
+-- source is the 2026-08-30 failure with extra steps. This arm is compiled fresh
+-- on every run from the same declarations, so it sees the new source even while
+-- the view does not.
+select
+    d.source_table,
+    cast(null as timestamptz) as last_loaded_at,
+    cast(null as numeric)     as age_days,
+    cast(null as integer)     as max_age_days,
+    'absent_from_view'        as freshness_status
+from (
+    select unnest(array[
+        {%- for node in graph.sources.values() | sort(attribute='name') %}
+        {%- if node.loaded_at_field %}
+        '{{ node.name }}'{% if not loop.last %},{% endif %}
+        {%- endif %}
+        {%- endfor %}
+    ]) as source_table
+) d
+left join {{ ref('mart_source_freshness') }} v on v.source_table = d.source_table
+where v.source_table is null

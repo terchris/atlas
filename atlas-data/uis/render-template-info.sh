@@ -143,9 +143,17 @@ RAW_ACTUAL=$(grep -rhoiE 'create table (if not exists )?raw\.[a-z0-9_]+' "$MIG_D
 # The claim has ONE canonical spelling so it can be matched exactly: "<N> raw
 # BASE TABLEs" and "<M> marts BASE TABLEs". Views are stated separately and are
 # deliberately not matched here — an earlier draft of this check used the looser
-# `[0-9]+ marts` and tripped on its own "(plus 5 marts views)", reporting a
+# `[0-9]+ marts` and tripped on its own "(plus N marts views)", reporting a
 # disagreement between a table count and a view count. A pattern loose enough to
 # match two different quantities cannot tell you they disagree.
+#
+# ⚠️ THE VIEW COUNT IS THEREFORE UNGATED, and it has now drifted once: adding
+# mart_source_freshness took it from 5 to 6 and nothing here would have said so
+# (urb-agents #1039). Deriving it statically is not cheap — `+materialized: view`
+# is the project default and three model directories override it to table, so the
+# honest count comes from the dbt manifest, which does not exist at this point in
+# the build. Stated here so the next person changing a materialisation knows this
+# number is theirs to keep true.
 RAW_CLAIMS=$(grep -oE '[0-9]+ raw BASE TABLEs' "$TMP" | grep -oE '^[0-9]+' | sort -u)
 MARTS_CLAIMS=$(grep -oE '[0-9]+ marts BASE TABLEs' "$TMP" | grep -oE '^[0-9]+' | sort -u)
 

@@ -571,15 +571,108 @@ def deletion_block(cur, running: set[str] | None) -> int:
     return WARN
 
 
+def freshness_block(cur) -> int:
+    """
+    Is every raw source within the window its own declared cadence allows?
+
+    🔴 THE BLOCK BELOW THIS ONE IS A 24-HOUR WINDOW AND CANNOT ANSWER THIS.
+    Twenty-three of the bounded sources are weekly and three are monthly, so a
+    day after they run they simply drop out of that window and it has nothing
+    left to say about them. SSB, FHI and Bufdir could all go stale, the dbt check
+    would fail, and this command would still exit 0 — the same false all-clear as
+    #1035, one field over (ops-dev, urb-agents #1039).
+
+    ⚠️ THE COMPARISON IS NOT MADE HERE. `marts.mart_source_freshness` makes it,
+    and the dbt test `raw_sources_were_refreshed_recently` gates on the same rows.
+    This block only counts and prints them. A second implementation of the
+    cadence rule living in this file is precisely what the Jobs block below
+    refuses to do, and for the same reason: two places that must agree about one
+    number is the failure this project keeps meeting.
+
+    🔵 It is a VIEW, so it is evaluated when asked. That is what makes it
+    readable here at all — the test's verdict lives in dbt's run results and in
+    Dagster's event log, and this tool can read neither; the event log is owned
+    by the `dagster` role, which Atlas has no SELECT on.
+    """
+    print()
+    print("Source freshness (declared cadence)")
+
+    # ⚠️ ASKED WITH `to_regclass`, NOT BY QUERYING AND CATCHING. A missing
+    # relation raises, and in psycopg2 a raised query aborts the whole
+    # transaction — every later block on this connection would then fail with
+    # InFailedSqlTransaction and report a fault that belongs to this line.
+    exists = _one(cur, "select to_regclass('marts.mart_source_freshness')")
+    if not exists or exists[0] is None:
+        # 🔴 CANNOT, not OK. The view is built by the transform, so its absence
+        # means no transform has ever run here — which is a real state and not a
+        # clean one. Reporting "fresh" because the surface is missing would be
+        # absence rendering as green, which is the defect this whole tool exists
+        # to catch.
+        print("  cannot check — marts.mart_source_freshness does not exist yet")
+        print("  (built by the transform; run `uis dagster run transform_and_publish`)")
+        return CANNOT
+
+    cur.execute(
+        """
+        select freshness_status, count(*)
+        from marts.mart_source_freshness
+        group by 1
+        """
+    )
+    counts = {status: n for status, n in cur.fetchall()}
+    bounded = sum(n for s, n in counts.items() if s != "not_bounded")
+    silenced = counts.get("not_bounded", 0)
+    ok = counts.get("ok", 0)
+    bad = bounded - ok
+
+    # 🔴 NAME THE DENOMINATOR, AND MEASURE IT RATHER THAN REMEMBERING IT.
+    # "41 of 43 sources" was proposed for this line; both numbers are wrong here.
+    # 43 is the count of ingest SLUGS that have ever written to raw.ingest_runs,
+    # and this surface counts raw TABLES that declare a loaded_at_field — one
+    # slug can write several tables, and the register's tables arrive by a
+    # different path. Measured on the declarations: 29 bounded, 5 silenced. The
+    # numbers are read from the view every run so they cannot go stale here.
+    flag = "   ⚠️" if bad else ""
+    print(f"  {bounded} bounded sources, {ok} within cadence"
+          + (f", {bad} NOT" if bad else "") + flag)
+    if silenced:
+        print(f"  {silenced} silenced by declaration (manual or none, each with a written reason)")
+
+    if not bad:
+        return OK
+
+    cur.execute(
+        """
+        select source_table, ingest_cadence, age_days, max_age_days, freshness_status
+        from marts.mart_source_freshness
+        where freshness_status not in ('ok', 'not_bounded')
+        order by freshness_status, source_table
+        """
+    )
+    for table, cadence, age, bound, status in cur.fetchall():
+        age_s = f"{age:.1f} d" if age is not None else "never loaded"
+        bound_s = f"/ {bound} d" if bound is not None else ""
+        print(f"  {table:<28}{cadence:<13}{age_s:<14}{bound_s:<8}{status}")
+    return WARN
+
+
 def ingest_block(cur, limit: int = 12) -> int:
     """Per-source ingest health. Failures first, so a short terminal shows the problem."""
     print()
     # ⚠️ A WINDOW, NOT A THRESHOLD. A source absent from this list has not run in
     # 24 h, which is normal for anything weekly or monthly and says nothing on its
-    # own. Whether a source is overdue against its DECLARED cadence is the dbt
-    # check `raw_sources_were_refreshed_recently`, which owns that comparison and
-    # has one number per cadence rather than one number for all of them.
-    print("Ingest runs (last 24 h — a window, not a freshness verdict)")
+    # own. The freshness VERDICT is the block above, read from
+    # `marts.mart_source_freshness`.
+    #
+    # 🔵 THIS BLOCK IS KEPT, and the argument for removing it was good enough to
+    # answer rather than ignore: it "answers a question nobody asked" (ops-dev,
+    # #1039). What it answers that the freshness block cannot is whether a run
+    # FAILED and with what message — `loaded_at` only moves on success, so a
+    # source that has failed every attempt for six hours is still inside its
+    # weekly bound and still reports `ok` up there. Recent failures and declared
+    # staleness are two questions; the defect was that only one of them was
+    # printed, not that this one is worthless.
+    print("Ingest runs (last 24 h — recent run outcomes, not a freshness verdict)")
     cur.execute(
         """
         select source_slug, exit_code, started_at, notes
@@ -902,6 +995,7 @@ def main(argv: list[str]) -> int:
             state = worst(state, register_block(cur, running))
             state = worst(state, automation_block(running))
             state = worst(state, deletion_block(cur, running))
+            state = worst(state, freshness_block(cur))
             state = worst(state, ingest_block(cur))
             if n:
                 state = worst(state, last_changes(cur, n))

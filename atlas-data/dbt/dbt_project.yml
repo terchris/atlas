@@ -16,6 +16,37 @@ clean-targets:
   - "target"
   - "dbt_packages"
 
+# ── Ingest cadence -> maximum tolerated age, in days ──────────────────────────
+#
+# 🔴 ONE LITERAL, TWO READERS. `mart_source_freshness` computes the comparison
+# and `tests/raw_sources_were_refreshed_recently.sql` gates on it. The map used
+# to live inline as the default of a `var()` call in the test; a second reader
+# would have meant a second default, and two numbers that must agree is the
+# failure this project keeps meeting. Neither reader supplies a default now, so
+# deleting this block breaks both loudly rather than silently halving a bound.
+#
+# Mostly the polling interval plus enough slack to absorb one late tick, and no
+# more:
+#     weekly     7 + 1
+#     monthly   31 + 4   (a 31-day month, then four days to notice a missed tick)
+#     daily      1 + 1
+#
+# 🔴 half_hourly IS NOT DERIVED FROM ITS INTERVAL, AND THAT IS DELIBERATE. The
+# Brreg change feed writes rows only when changes arrive, so for those tables
+# max(loaded_at) measures UPSTREAM ACTIVITY, not pipeline health. Measured
+# against Brreg's quietest days the longest quiet gap is ~4.2 h, and a Saturday
+# tail into a Sunday lead bridges ~6 h. One day is tight enough to catch a dead
+# feed within a day and loose enough never to fire on a quiet weekend. The tight
+# signal for those sources is Dagster's FreshnessPolicy (cadence.BRREG_FRESHNESS,
+# 2 h warn / 6 h fail), which measures materialisation. Two systems, two
+# questions — do not tighten this one to match that one.
+vars:
+  ingest_cadence_max_age_days:
+    half_hourly: 1
+    daily: 2
+    weekly: 8
+    monthly: 35
+
 models:
   atlas:
     # Default materialisation for any model we don't override.
