@@ -280,6 +280,32 @@ assert not missing_jobs, f"first_data names jobs not defined in schedules.py: {s
 # or the summary promises a different cluster than the deploy performs.
 declared_services = {x["service"] for x in d["provides"]["services"]}
 assert set(op["install"]["deploys"]) == declared_services, (op["install"]["deploys"], declared_services)
+
+# 🔴 Every `env_from_exports` value must name an export this artifact declares.
+#
+# The mapping is NAME -> EXPORT KEY, so a typo in the key produces a variable
+# that resolves to nothing. UIS refuses the install in that case, which is the
+# right severity — but finding it here costs a render and finding it there costs
+# a publish, a nomination and an operator's install.
+#
+# ⚠️ The failure it guards is specific: `commands.check` runs a tool whose
+# strongest assertion is an HTTP request, and on a stock install the variable
+# carrying that URL was simply absent. The tool said "I could not look", UIS
+# mapped it to UNHEALTHY, and a healthy register read as broken. An empty
+# variable would be worse than an absent one — the check would run, reach
+# nothing, and have to guess why.
+exports = d.get("exports") or {}
+for svc in d["provides"]["services"]:
+    cl = (svc.get("config") or {}).get("code_location") or {}
+    for var, key in (cl.get("env_from_exports") or {}).items():
+        assert key in exports, (
+            f"env_from_exports maps {var} to export '{key}', which this artifact "
+            f"does not declare. Exports are: {sorted(exports)}"
+        )
+        assert not str(key).startswith(("http://", "https://")), (
+            f"env_from_exports must name an EXPORT KEY, not a value: {var} -> {key!r}"
+        )
+print(f"  ✓ env_from_exports resolves ({sum(len((s.get('config') or {}).get('code_location', {}).get('env_from_exports', {}) or {}) for s in d['provides']['services'])} mapped)")
 print(f"  ✓ first_data jobs exist ({len(declared_jobs)}), install.deploys matches provides.services")
 # Existence is not coverage — see check-first-data-coverage.py. Hand the job
 # list to the coverage checker rather than duplicating its logic here.

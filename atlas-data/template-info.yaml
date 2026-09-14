@@ -122,6 +122,36 @@ provides:
           # pod silently without the variable.
           env_secrets: "{{ params.app_name }}-database-db"
 
+          # 🔴 THE CHECK COULD NOT REACH THE API IT CHECKS.
+          #
+          # `commands.check` runs atlas-status.py in this pod, and its strongest
+          # single assertion is an HTTP request to PostgREST — the deletion
+          # propagation check. ⚠️ On a stock install `ATLAS_POSTGREST_URL` was
+          # unset, so the tool correctly reported "I could not look", UIS mapped
+          # that to UNHEALTHY, and a completely healthy register read as broken
+          # (imac, urb-agents #947).
+          #
+          # 🔵 The value was never unknown. This artifact ALREADY exports it —
+          # `api-url` under `exports:` — and the installer prints it to the
+          # operator. It was computed, displayed, and then not passed to the pod
+          # that needed it.
+          #
+          # NAME → EXPORT KEY, never a literal. The URL is stated once, in the
+          # export, and this maps a variable onto it. ⚠️ Writing the URL here
+          # instead would be a second place that must agree, which is the failure
+          # this project keeps meeting.
+          #
+          # 🔴 A named export that does not exist REFUSES the install, and that
+          # is the right severity: an env var set to empty is not the same as
+          # unset and is worse — the check would run, reach nothing, and have to
+          # guess why.
+          #
+          # ⚠️ `api-url` was confirmed against this file's own `exports:` block
+          # rather than copied from the request. A wrong string relayed from a
+          # nomination has already cost a round today, and it was mine.
+          env_from_exports:
+            ATLAS_POSTGREST_URL: api-url
+
 # ─────────────────────────────────────────────────────────────────────────────
 # What this application DOES once installed, as opposed to what it creates.
 #
