@@ -459,9 +459,13 @@ brreg_transform_job = define_asset_job(
 #   t=[x for x in n.values() if x['resource_type']=='test'];
 #   print(len(t), sum(1 for x in t if len(x['depends_on']['nodes'])==1))"
 #
-# 🔴 Treat this as a MONITOR, not as hygiene on a stale figure. The margin to 711
-# is 36 and shrinking: the comment said 644 while the plan was 675, so thirty-one
-# checks arrived without anyone noticing.
+# 🔴 Treat this as a MONITOR, not as hygiene on a stale figure: the comment said
+# 644 while the plan was 675, so thirty-one checks arrived without anyone
+# noticing.
+#
+# ⚠️ BUT DO NOT READ IT AS A MARGIN TO 711. This file used to say "the margin to
+# 711 is 36 and shrinking", and 711 IS NOT A LIMIT — see the correction on the
+# job description below. There is no count cap in Dagster to have a margin to.
 #
 # ⚠️ `_API_V1_CHECKS` selects checks on the api_v1_surface asset, which is NOT a
 # dbt asset — so the dbt checks all land in transform_checks and the subtraction
@@ -513,13 +517,22 @@ transform_checks_job = define_asset_job(
     description=(
         "The dbt data-quality suite — every dbt test as a Dagster asset check. "
         "Split out of transform_and_publish because the checks were 90.5% of a "
-        "711-event plan the run pod could not start. 🔴 THE SPLIT IS LOAD-BEARING "
-        "TODAY, not a past tidy-up: measured on 2026-09-13, this job plans 675 "
-        "asset checks, transform_and_publish 67 and api_v1_checks 3 — so "
-        "recombining them gives 742, past the 711 that produced the original "
-        "failure. It is the only reason the job starts. This line said '~644 "
-        "events' and read as 67 events of headroom; the real margin is 36 and has "
-        "been shrinking since the sentence was written. Bounding it durably is "
+        "711-event plan that did not finish building inside start_timeout_seconds: "
+        "300. 🔴 711 IS NOT A CAP, AND THIS DESCRIPTION USED TO SAY IT WAS. It was "
+        "the size of one plan that exceeded a TIME budget; there is no count limit "
+        "in Dagster to have a margin to, and 'the real margin is 36' was a number "
+        "about nothing (urb-agents #1083). 🔴 AND THE SPLIT IS NO LONGER "
+        "SUFFICIENT: at 675 checks THIS job does not launch either. The cost is "
+        "linear in asset checks and falls at run CREATION, before any pod: Dagster "
+        "emits one ASSET_CHECK_EVALUATION_PLANNED per check, and although that "
+        "event type is listed BATCH_WRITABLE, dagster-postgres batches only "
+        "ASSET_MATERIALIZATION and ASSET_OBSERVATION — every other type falls to "
+        "the base loop, one store_event per event, each taking two connection "
+        "checkouts and two inserts (event_logs, then asset_check_executions). So "
+        "675 checks is ~1350 sequential round trips against 8 for api_v1_checks. "
+        "Measured here: plan construction is 0.01 s and ONE step, so planning is "
+        "not the cost; the write pattern over localhost is 0.02 s for 4 checks and "
+        "3.50 s for 675. Bounding it durably is "
         "the subject of INVESTIGATE-transform-job-decomposition. Triggered by the "
         "build succeeding rather than by a clock, since a fixed offset would "
         "encode a guess about how long the build takes."
