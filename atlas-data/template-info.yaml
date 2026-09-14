@@ -268,6 +268,25 @@ operational:
       it. Run it once, here. Skipping it leaves the organisation register empty
       with nothing saying why; running it twice is safe (upsert, never truncate)
       but pointless.
+
+      WHEN THESE SIX HAVE FINISHED THE INSTALL IS LOADED BUT NOT VALIDATED, and
+      nothing else says so. Atlas defines 679 asset checks - 675 from dbt and 4
+      on the api_v1 surface - and on a fresh install none of them has run. They
+      are reached only through a chain of three instigators that all ship
+      stopped: transform_daily, then the sensor to api_v1_checks, then the sensor
+      to transform_checks. So the suite does not first run at 05:00 the next
+      morning; it first runs after the next transform_daily FOLLOWING go-live,
+      and if automation is never enabled it never runs at all.
+
+      Four of the 679 can be run on demand today: `uis dagster run api_v1_checks`
+      launches in about half a second and takes ~27 s. They are the four that
+      cover the PUBLIC API - row counts against the marts they wrap, column
+      COMMENTs, and the anonymous role's grants - which is the part worth
+      checking before anyone reads the data. The other 675 cannot be launched
+      this way yet: the call does not return within 300 s, exceeds the client's
+      60 s budget, and leaves an unsubmitted run behind, so do not retry it
+      (imac, urb-agents #1064). Until that is fixed, on-demand validation covers
+      the public surface and not the dbt suite.
     jobs: [annual_sources_refresh, klass_refresh, seed_sources_refresh, brreg_bootstrap, brreg_change_feed, transform_and_publish]
     # ⚠️ The caveat is INSIDE `takes` because `first_data.measured` renders on no
     # UIS surface (imac, urb-agents #793). A figure whose "this is out of date"
