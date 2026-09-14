@@ -179,6 +179,31 @@ uis dagster verify                        # A/B/C PASS, code location LOADED
 uis dagster automation --expect running   # verify alone passes whether or not schedules are on
 ```
 
+:::warning A loaded install is not a validated one
+
+Everything above checks that the data is **there**. Atlas also defines **679 asset checks** — 675
+from dbt, 4 on the `api_v1` surface — and on a fresh install **none of them has run**.
+
+They are reached only through a chain of three instigators that all ship stopped:
+`transform_daily` → the sensor to `api_v1_checks` → the sensor to `transform_checks`. So the suite
+does not first run at 05:00 tomorrow. It first runs after the next `transform_daily` **following
+go-live**, and if you never enable automation it never runs at all.
+
+**Four of them you can run now:**
+
+```sh
+uis dagster run api_v1_checks    # launches in ~0.5 s, runs in ~27 s
+```
+
+Those four cover the public API — row counts against the marts they wrap, column COMMENTs, and the
+anonymous role's grants — which is the part worth checking before anyone reads the data.
+
+**The other 675 cannot be launched on demand yet.** `uis dagster run transform_checks` does not
+return within 300 s, exceeds the client's 60 s budget, and leaves an unsubmitted run behind —
+**do not retry it** (urb-agents #1064). Until that is fixed, on-demand validation covers the public
+surface and not the dbt suite.
+:::
+
 ## See your data
 
 The install is not finished until you have read a row out of it. Every endpoint below is live once
