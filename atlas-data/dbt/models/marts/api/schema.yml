@@ -331,6 +331,17 @@ models:
           'cms_bins', 'programme_only', 'no_structure'.
         data_tests:
           - not_null
+      - name: has_chapters
+        description: |
+          Whether this NGO DECLARES that it has chapters — an editorial fact
+          from dim_ngo, recorded when the organisation is curated.
+
+          Not the same question as has_supply, which is chapter_count > 0 and
+          therefore an ingest OUTCOME: does Atlas hold chapter rows for this
+          organisation yet. They agree today only because all curated NGOs
+          declare has_chapters true and all have been ingested. The first NGO
+          curated before its chapters land makes them disagree, and a consumer
+          filtering on the wrong one loses it without an error.
       - name: primary_focus
         description: One-line description of the NGO's main mission area.
       - name: icnpo_code_1
