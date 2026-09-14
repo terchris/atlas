@@ -44,6 +44,66 @@
 -- becomes an asset check on that asset rather than a free-floating test. Same
 -- reason and same shape as `tombstoned_organisations_leave_the_dimension.sql`.
 
+-- ══════════════════════════════════════════════════════════════════════════
+-- 🔴 DO NOT BOUND THIS BY A WATERMARK THE WAY THE TOMBSTONE CHECK IS BOUNDED
+-- ══════════════════════════════════════════════════════════════════════════
+--
+-- `tombstoned_organisations_leave_the_dimension` was failing on a healthy system
+-- about a third of the time because it asserted about deletions the transform had
+-- not yet applied. imac measured it with zero contention (urb-agents #1060/#1062)
+-- and generalised the lesson:
+--
+--     "Any assertion that depends on 'the transform will catch up' must be
+--      bounded by the applied watermark."
+--
+-- ⚠️ THE RULE IS RIGHT AND IT DOES NOT APPLY HERE. This test makes the same
+-- SHAPE of claim, so the analogy is inviting, and following it would put a false
+-- pass on the exact defect this test exists to catch.
+--
+-- 🔴 THE BENIGN WINDOW AND THE DEFECT ARE THE SAME DATABASE STATE. Measured, not
+-- reasoned — both rows below are byte-identical:
+--
+--     A. bootstrap rewrote the snapshot at 12:00; no transform has run yet
+--        (benign: the dimension is simply behind)
+--     B. bootstrap rewrote the snapshot at 12:00; a transform ran at 13:00 and
+--        wrote ZERO rows (the urb-agents #835 defect, and the reason this test
+--        was written)
+--
+--     snapshot.loaded_at      2026-09-14 12:00      2026-09-14 12:00
+--     dim.last_seen_at        2026-09-13 05:00      2026-09-13 05:00
+--     dim.reconciled_at       2026-09-13 05:00      2026-09-13 05:00
+--     dim.snapshot_loaded_at  2026-09-13 05:00      2026-09-13 05:00
+--
+-- ⚠️ Every candidate watermark — `snapshot_loaded_at`, `reconciled_at`,
+-- `last_seen_at` — is written BY THE MODEL, PER ROW. When the model writes
+-- nothing, none of them advance. So a bound built from any of them suppresses A
+-- and B together: the check goes quiet in the benign window and stays quiet
+-- through the regression. There is no bound computable from this database that
+-- separates them, because the thing that differs is an EVENT that left no trace
+-- in it.
+--
+-- 🔵 WHAT MAKES THIS TEST SOUND IS WHEN IT RUNS, NOT WHAT IT QUERIES.
+--
+--     transform_and_publish  SUCCESS
+--       -> run_api_v1_checks_after_transform  -> api_v1_checks
+--       -> run_dbt_checks_after_api_v1        -> transform_checks  (this test)
+--
+-- In that chain a full transform has just completed, so "the snapshot should have
+-- reached the dimension" is a legitimate claim and needs no bound.
+--
+-- 🔴 IT IS NOT SOUND WHEN THE SUITE IS RUN ON DEMAND. `uis dagster run
+-- transform_checks` after a repair bootstrap, with no transform in between, is
+-- state A — and this test then fails across every row in the snapshot, ~1.17M of
+-- them. That is the mode imac used at 14:02 on #1060, and it is the mode proposed
+-- for the install sequence, so it is getting more likely rather than less.
+--
+-- ✅ If that becomes a real operator path, the fix is a PRECONDITION, not a
+-- predicate: re-run the transform first, or have the suite refuse to run this
+-- check when no transform has completed since the snapshot was loaded. That
+-- needs a record of transform runs from outside the dimension — Dagster has one
+-- and dbt cannot reach it, which is the same wall `raw_sources_were_refreshed_
+-- recently` hits in its closing note.
+
 select
   s.organisasjonsnummer,
   s.loaded_at   as snapshot_loaded_at,
