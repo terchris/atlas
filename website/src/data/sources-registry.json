@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-13",
+  "generated_at": "2026-09-16",
   "manifest_schema_id": "https://atlas.sovereignsky.no/schemas/manifest.schema.json",
   "atlas_base_url": "https://atlas.sovereignsky.no",
   "postgrest_base_url": "https://api-atlas.sovereignsky.no",
@@ -7603,6 +7603,10 @@
         {
           "name": "chapter_data_shape",
           "description": "How this NGO's per-chapter activity data is shaped — drives which ingest pattern it uses. Values: 'api_canonical', 'cms_bins', 'programme_only', 'no_structure'."
+        },
+        {
+          "name": "has_chapters",
+          "description": "Whether this NGO DECLARES that it has chapters — an editorial fact from dim_ngo, recorded when the organisation is curated. Not the same question as has_supply, which is chapter_count > 0 and therefore an ingest OUTCOME: does Atlas hold chapter rows for this organisation yet. They agree today only because all curated NGOs declare has_chapters true and all have been ingested. The first NGO curated before its chapters land makes them disagree, and a consumer filtering on the wrong one loses it without an error."
         },
         {
           "name": "primary_focus",

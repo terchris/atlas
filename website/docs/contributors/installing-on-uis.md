@@ -16,9 +16,19 @@ and is not** — that section has cost more time than every real defect combined
 **Installing starts nothing.** The schedules ship stopped. No data is fetched and no external service
 is contacted until you turn them on. That is a deliberate go-live decision.
 
-**Loading the data and going live currently need GraphQL.** UIS has no `uis dagster run` verb yet, so
-steps 3 and 4 below are copy-paste mutations rather than commands. The requests for those verbs are
-filed; until they land, this guide gives you the exact calls.
+**Both verbs exist now — this box said they did not.** It claimed *"loading the data and going live
+currently need GraphQL; UIS has no `uis dagster run` verb yet"*. Both halves are false:
+
+- **Going live:** `uis dagster automation --start` shipped in UIS **1.6.90** and is verified on
+  1.6.106 (imac, urb-agents #1005, #1043, #1149). Step 4 is a command, not a mutation.
+- **Loading data:** `uis dagster run <job>` works — imac measured `api_v1_checks` at ~27 s. One
+  exception: `transform_checks` takes **6–15 minutes to start** — slow, not broken (urb-agents
+  #1160). Why it is slow is platform-side and tracked in urb-agents #1147.
+
+⚠️ This sentence was corrected further down the page on 2026-09-16 and **survived here**, at the top,
+where a first-time reader meets it before any of the corrected steps. Recorded rather than quietly
+deleted: a stale claim in a summary outlives the same claim in the body, because the body is what
+gets edited when someone checks a fact.
 :::
 
 ## Step 0 — see the plan without installing anything
@@ -79,25 +89,65 @@ on the first pipeline run, which you start next.
 
 ## Step 3 — load the data
 
-Four jobs, **in this order**:
+**Six jobs, in this order:**
 
 ```
-annual_sources_refresh  →  klass_refresh  →  seed_sources_refresh  →  transform_and_publish
+annual_sources_refresh  →  klass_refresh  →  seed_sources_refresh
+  →  brreg_bootstrap  →  brreg_change_feed  →  transform_and_publish
 ```
 
-:::warning The order is not arbitrary — run them serially
+:::danger This step said FOUR jobs and ~11 minutes until 2026-09-16
 
-**`seed_sources_refresh` contains `raw/_migrations`**, and it runs third. The migrations are
-idempotent, so applying them after two source jobs have already written is safe — but it is not what
-anyone would design, and reordering these has not been tested. Run them in the order above, one at a
-time, waiting for each to succeed.
+Both were wrong, and the omissions are the expensive half.
+
+**`brreg_bootstrap` and `brreg_change_feed` were missing from the list.** `brreg_bootstrap` has
+**no schedule and no automation condition, on purpose** — re-running a 1.17M-record bulk load
+against a populated database is the one genuinely destructive operation in this pipeline, so nothing
+self-triggers it. **It runs exactly once, here.** Skipping it leaves the organisation register empty
+with nothing saying why, and because nothing will ever launch it for you, an install that missed it
+stays wrong until somebody notices.
+
+**~11 minutes / 2.9M rows was a measurement of the first FOUR jobs** (urb-agents #507) taken before
+`brreg_bootstrap` existed. `atlas-data/template-info.yaml` has warned since that *"an earlier figure
+of ~11 minutes is still in circulation and understates a cold install by nearly 3x"* — **this page
+was where it was circulating.**
 :::
 
-Takes about 11 minutes and loads roughly 2.9M rows.
+**Takes ~30 minutes on a cold install:** 1772 s wall, measured end to end by imac on a factory-reset
+cluster (urb-agents #1027), loading ~4.1M rows. The Brreg bulk load is 501 s of that. Individual
+jobs vary far more than the total suggests — `annual_sources_refresh` alone is 474 s and
+`transform_and_publish` 484 s — **so a run that looks stalled at 8 minutes may be normal.** To tell
+slow from stuck, run `uis template check atlas` rather than waiting: it reports what has been pulled
+against what has been applied.
+
+### Why this order
+
+**`seed_sources_refresh` contains `raw/_migrations`** and runs third. The migrations are idempotent,
+so applying them after two source jobs have already written is safe — but it is not what anyone
+would design, and reordering has not been tested (urb-agents #627).
+
+**`brreg_change_feed` runs immediately after `brreg_bootstrap`** because the bootstrap seeds the
+feed's watermark from the snapshot's own date. The feed has nothing to start from until it has run,
+and it refuses to start without a watermark rather than silently walking history.
 
 ### Running a job
 
-Until `uis dagster run` exists, launch each job with a GraphQL mutation against the Dagster instance:
+```sh
+uis dagster run annual_sources_refresh
+```
+
+One at a time, waiting for each to succeed before starting the next.
+
+:::warning One job is slow to start — do not mistake it for stuck
+
+**`transform_checks` takes 6–15 minutes to start.** It returns exit 0 and then sits `NOT_STARTED`
+before running — imac measured 364 s and 885 s (urb-agents #1160). **Slow, not broken:** re-launching
+because it looks hung gives you duplicate runs. It is not one of the six above, and it also runs in
+the sensor chain once automation is on. Why the start is slow is platform-side (urb-agents #1147).
+:::
+
+<details>
+<summary>Fallback: the raw mutation, if your UIS predates <code>uis dagster run</code></summary>
 
 ```graphql
 mutation {
@@ -116,8 +166,10 @@ mutation {
 }
 ```
 
-Change `jobName` for each of the four. Poll `runOrError(runId:)` until the status is `SUCCESS` before
-starting the next one.
+Change `jobName` for each of the six. Poll `runOrError(runId:)` until the status is `SUCCESS` before
+starting the next.
+
+</details>
 
 The Dagster UI can do the same through a browser, but it is internal-only with no authentication, so
 reaching it is a decision about your own cluster rather than something this guide can prescribe.
@@ -215,10 +267,19 @@ uis dagster run api_v1_checks    # launches in ~0.5 s, runs in ~27 s
 Those four cover the public API — row counts against the marts they wrap, column COMMENTs, and the
 anonymous role's grants — which is the part worth checking before anyone reads the data.
 
-**The other 675 cannot be launched on demand yet.** `uis dagster run transform_checks` does not
-return within 300 s, exceeds the client's 60 s budget, and leaves an unsubmitted run behind —
-**do not retry it** (urb-agents #1064). Until that is fixed, on-demand validation covers the public
-surface and not the dbt suite.
+**The other 681 can be launched too — budget 6–15 minutes.** `uis dagster run transform_checks`
+returns exit 0; imac measured two launches at **364 s and 885 s to start**, the first landing 681
+checks SUCCEEDED (urb-agents #1160). The run sits `NOT_STARTED` for that whole time and then runs.
+
+:::danger This paragraph told you not to try it
+
+It said the call "does not return within 300 s, exceeds the client's 60 s budget, and leaves an
+unsubmitted run behind — **do not retry it**". True when written (#1064); **false on this build**.
+The 60 s budget went in UIS 1.6.104 and the deadline is now 900 s.
+
+**It is slow, not broken.** Re-launching because it looks hung is how you get duplicate runs — which
+is the actual hazard, and the opposite of the one the old warning described.
+:::
 :::
 
 ## See your data
@@ -420,6 +481,6 @@ fails loudly with that instruction if it is missing. You are not expected to kno
 | gap | status |
 |---|---|
 | ~~No `uis dagster automation --start`~~ | **CLOSED — it shipped and this table did not notice.** Verified working on UIS 1.6.106 (imac, urb-agents #1149). Listed as a gap long after it stopped being one, which is why `atlas-status.py` was still printing GraphQL instructions. |
-| `uis dagster run <job>` | Works for `api_v1_checks` (~27 s). `transform_checks` still fails on demand — platform-side, with tor-agent (urb-agents #1147). Originally tracked in `PLAN-cli-load-and-report-on-application-data`. |
+| `uis dagster run <job>` | Works. `api_v1_checks` ~27 s; `transform_checks` 6–15 min to start, exit 0 (imac, urb-agents #1160). Why the start is slow is platform-side, with tor-agent (urb-agents #1147). |
 | Job order is documented, not enforced | see step 3 |
 | `transform_checks` start latency | tracked in `INVESTIGATE-transform-job-decomposition` |
