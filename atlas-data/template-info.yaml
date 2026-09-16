@@ -360,12 +360,22 @@ operational:
       automation is never enabled it never runs at all. Enable automation with
       `uis dagster automation --start`.
 
-      Four of the 685 can be run on demand: `uis dagster run api_v1_checks` takes
-      ~27 s and covers the PUBLIC API - row counts against the marts they wrap,
-      column COMMENTs, and the anonymous role's grants. The other 681 cannot be
-      launched on demand yet (urb-agents #1064, #1147) but they DO run in the
-      sensor chain once automation is on: imac measured 681 SUCCEEDED that way on
-      e439668. A green transform_checks is not proof they all passed - see
+      All 685 can be run on demand. `uis dagster run api_v1_checks` takes ~27 s
+      and covers the PUBLIC API - row counts against the marts they wrap, column
+      COMMENTs, and the anonymous role's grants. `uis dagster run
+      transform_checks` also works, but BUDGET 6-15 MINUTES: imac measured two
+      launches at 364 s and 885 s to start, both exit 0, the first landing 681
+      SUCCEEDED (urb-agents #1160). The run sits NOT_STARTED for that whole time
+      and then runs - that is slow, not stuck, and re-launching because it looks
+      hung is how you get duplicate runs.
+
+      ⚠️ This paragraph said until 2026-09-16 that the other 681 "cannot be
+      launched on demand" and that the call "leaves an unsubmitted run behind, so
+      do not retry it". That was true when written and is not true on this build.
+      Telling an operator not to attempt something that works is a worse failure
+      than the slowness it was warning about.
+
+      A green transform_checks is still not proof they all passed - see
       troubleshooting.
 
       The order is not arbitrary: seed_sources_refresh contains raw/_migrations

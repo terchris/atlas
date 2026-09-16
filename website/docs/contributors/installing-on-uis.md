@@ -22,8 +22,8 @@ currently need GraphQL; UIS has no `uis dagster run` verb yet"*. Both halves are
 - **Going live:** `uis dagster automation --start` shipped in UIS **1.6.90** and is verified on
   1.6.106 (imac, urb-agents #1005, #1043, #1149). Step 4 is a command, not a mutation.
 - **Loading data:** `uis dagster run <job>` works — imac measured `api_v1_checks` at ~27 s. One
-  exception: `transform_checks` still fails on demand, which is platform-side and tracked in
-  urb-agents #1147.
+  exception: `transform_checks` takes **6–15 minutes to start** — slow, not broken (urb-agents
+  #1160). Why it is slow is platform-side and tracked in urb-agents #1147.
 
 ⚠️ This sentence was corrected further down the page on 2026-09-16 and **survived here**, at the top,
 where a first-time reader meets it before any of the corrected steps. Recorded rather than quietly
@@ -138,12 +138,12 @@ uis dagster run annual_sources_refresh
 
 One at a time, waiting for each to succeed before starting the next.
 
-:::warning One job cannot be launched this way yet
+:::warning One job is slow to start — do not mistake it for stuck
 
-**`transform_checks` fails on demand** — the call does not return, and it leaves an unsubmitted run
-behind, so do not retry it. That is platform-side and tracked in urb-agents #1147. It is not one of
-the six above, and it runs normally in the sensor chain once automation is on: imac measured 681
-checks succeeding that way.
+**`transform_checks` takes 6–15 minutes to start.** It returns exit 0 and then sits `NOT_STARTED`
+before running — imac measured 364 s and 885 s (urb-agents #1160). **Slow, not broken:** re-launching
+because it looks hung gives you duplicate runs. It is not one of the six above, and it also runs in
+the sensor chain once automation is on. Why the start is slow is platform-side (urb-agents #1147).
 :::
 
 <details>
@@ -267,10 +267,19 @@ uis dagster run api_v1_checks    # launches in ~0.5 s, runs in ~27 s
 Those four cover the public API — row counts against the marts they wrap, column COMMENTs, and the
 anonymous role's grants — which is the part worth checking before anyone reads the data.
 
-**The other 675 cannot be launched on demand yet.** `uis dagster run transform_checks` does not
-return within 300 s, exceeds the client's 60 s budget, and leaves an unsubmitted run behind —
-**do not retry it** (urb-agents #1064). Until that is fixed, on-demand validation covers the public
-surface and not the dbt suite.
+**The other 681 can be launched too — budget 6–15 minutes.** `uis dagster run transform_checks`
+returns exit 0; imac measured two launches at **364 s and 885 s to start**, the first landing 681
+checks SUCCEEDED (urb-agents #1160). The run sits `NOT_STARTED` for that whole time and then runs.
+
+:::danger This paragraph told you not to try it
+
+It said the call "does not return within 300 s, exceeds the client's 60 s budget, and leaves an
+unsubmitted run behind — **do not retry it**". True when written (#1064); **false on this build**.
+The 60 s budget went in UIS 1.6.104 and the deadline is now 900 s.
+
+**It is slow, not broken.** Re-launching because it looks hung is how you get duplicate runs — which
+is the actual hazard, and the opposite of the one the old warning described.
+:::
 :::
 
 ## See your data
@@ -472,6 +481,6 @@ fails loudly with that instruction if it is missing. You are not expected to kno
 | gap | status |
 |---|---|
 | ~~No `uis dagster automation --start`~~ | **CLOSED — it shipped and this table did not notice.** Verified working on UIS 1.6.106 (imac, urb-agents #1149). Listed as a gap long after it stopped being one, which is why `atlas-status.py` was still printing GraphQL instructions. |
-| `uis dagster run <job>` | Works for `api_v1_checks` (~27 s). `transform_checks` still fails on demand — platform-side, with tor-agent (urb-agents #1147). Originally tracked in `PLAN-cli-load-and-report-on-application-data`. |
+| `uis dagster run <job>` | Works. `api_v1_checks` ~27 s; `transform_checks` 6–15 min to start, exit 0 (imac, urb-agents #1160). Why the start is slow is platform-side, with tor-agent (urb-agents #1147). |
 | Job order is documented, not enforced | see step 3 |
 | `transform_checks` start latency | tracked in `INVESTIGATE-transform-job-decomposition` |
