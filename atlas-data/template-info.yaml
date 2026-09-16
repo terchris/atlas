@@ -240,8 +240,10 @@ provides:
 # ⚠️ UIS could have folded automation state in around this command's answer.
 # It should not: a wrapper can add a line but it cannot unsay one, and the false
 # sentence is this application's. It also already holds the credential — the same
-# DAGSTER_DATABASE_URL the Jobs block uses — so folding it in outside would make
-# two outputs that must agree about one fact.
+# Dagster access the Jobs block uses — so folding it in outside would make two
+# outputs that must agree about one fact. (That access is now the GraphQL API
+# rather than a database role; the argument about one fact with two outputs is
+# unchanged by which door it comes through.)
 #
 # 🔵 EXIT 1 NOW ALSO MEANS "changes are waiting and nothing is scheduled to apply
 # them". It does NOT mean stopped automation on its own: a deliberately stopped
@@ -485,32 +487,26 @@ operational:
         is "did this build break anything", and 18-that-were-already-18 answers it
         where a red/green light does not.
     - symptom: >-
-        The check says to set DAGSTER_DATABASE_URL. You set it and nothing changes -
-        the Jobs block still says it cannot tell.
+        Older notes and older builds tell you to set DAGSTER_DATABASE_URL so the
+        Automation and Jobs blocks work. Setting it does nothing.
       cause: >-
-        `uis template check atlas` runs atlas-status.py INSIDE the code location.
-        A variable exported in your own shell never reaches that pod, so the
-        remedy as printed could not work and said nothing about why (imac, via
-        ops-dev, urb-agents #1149). The check now prints the real constraint
-        instead of an instruction that cannot be followed.
+        Two separate things, and the advice was wrong even before it became
+        obsolete. `uis template check atlas` runs atlas-status.py INSIDE the code
+        location, so a variable exported in your own shell never reaches that pod
+        - the remedy could not be followed and said nothing about why (imac, via
+        ops-dev, urb-agents #1149). And injecting it was then REFUSED outright
+        (tor-agent, urb-agents #1150): a code location's environment is copied
+        into every run pod it launches, so it would hand the `dagster` role -
+        owner of runs, event_logs and schedules for EVERY code location on the
+        installation - to arbitrary tenant asset code.
       fix: >-
-        The ANSWER for the Automation block is that it no longer needs this
-        variable at all: as of this build it asks Dagster's GraphQL API, which
-        needs no database role, and UIS supplies the address automatically via
-        `env_from_services: DAGSTER_GRAPHQL_URL`. If that block still says it
-        cannot tell, it now prints WHY - unset, query rejected, or unreachable -
-        and that reason is the thing to act on.
-
-        The JOBS block has not moved yet and still wants DAGSTER_DATABASE_URL,
-        because run history also parses event_logs for failure messages and that
-        has no one-line equivalent. Injecting that credential was REFUSED and
-        will not happen (urb-agents #1150): a code location's environment is
-        copied into every run pod it launches, so it would hand the `dagster`
-        role - owner of runs, event_logs and schedules for every code location on
-        the installation - to arbitrary tenant asset code. So on a stock UIS
-        install the Jobs block is diagnostic context that stays dark, the
-        Automation block works, and the headline answer - is an applied deletion
-        still served? - never depended on either.
+        Nothing to do on this build or newer. Both blocks now read Dagster's
+        GraphQL API, which needs no database role at all, and UIS supplies the
+        address automatically via `env_from_services: DAGSTER_GRAPHQL_URL`. The
+        variable is not read anywhere and can be deleted wherever you have set
+        it. If either block still says it cannot tell, it now prints WHY -
+        unset, query rejected, or unreachable-reason-indeterminate - and that
+        reason is the thing to act on rather than a credential.
     - symptom: >-
         brreg_bootstrap was re-run to repair the register. It reported success, the
         transform reported success, and the API still serves the old data.

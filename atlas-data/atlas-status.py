@@ -47,11 +47,19 @@ ENVIRONMENT
     ATLAS_DATABASE_URL / DATABASE_URL   required
     ATLAS_POSTGREST_URL / POSTGREST_URL optional — without it the deletion check
                                         cannot be made over HTTP and says so
-    DAGSTER_DATABASE_URL                optional — job history AND automation
-                                        state; a host may legitimately run Atlas
-                                        without Dagster, and without this the
-                                        tool must not claim a transform is
-                                        coming (urb-agents #1035)
+    DAGSTER_GRAPHQL_URL                 optional — job history AND automation
+                                        state, over Dagster's public API. Needs
+                                        NO database role. UIS supplies it via
+                                        `env_from_services`. A host may
+                                        legitimately run Atlas without Dagster,
+                                        and without this the tool must not claim
+                                        a transform is coming (urb-agents #1035).
+
+    ⚠️ DAGSTER_DATABASE_URL is GONE and is not read anywhere. It was refused
+    rather than deprecated: a code location's environment is copied into every
+    run pod it launches, so injecting it would have handed the `dagster` role —
+    owner of runs, event_logs and schedules for every code location on the
+    installation — to arbitrary tenant asset code (tor-agent, urb-agents #1150).
 """
 
 from __future__ import annotations
@@ -626,42 +634,6 @@ def _dagster_graphql_remedy() -> None:
     print("  Dagster's webserver base URL — this appends /graphql.")
 
 
-def _dagster_url_remedy() -> None:
-    """
-    🔴 "set DAGSTER_DATABASE_URL" IS NOT AN INSTRUCTION AN OPERATOR CAN FOLLOW,
-    AND IT WAS THE ONLY THING THIS TOOL SAID (imac via ops-dev, urb-agents #1149).
-
-    ⚠️ STILL USED BY THE JOBS BLOCK ONLY. The Automation block moved to the
-    GraphQL API (urb-agents #1150/#1151); Jobs has not, because run history also
-    parses `event_logs.event` for failure messages and that has no one-line
-    equivalent. So this text stays true for the block that still needs it, and
-    the credential it describes is no longer required to answer "what is
-    running".
-
-    This script runs INSIDE the code location, invoked by `uis template check`.
-    A variable exported in the operator's shell does not travel there, so the
-    documented remedy changed nothing and the operator had no way to tell why.
-    imac confirmed the mechanism is sound by running this same script in-pod
-    with the credential: the Automation and Jobs blocks then appear in full.
-
-    ⚠️ So the fix is not a better sentence about exporting it — it is saying
-    WHERE it has to be set, and that it is a different ROLE's credential.
-    `runs` and `event_logs` are owned by the `dagster` role; a URL built from
-    Atlas's own string connects and then fails on `permission denied for table
-    runs`, which is the trap imac already fell into once.
-
-    🔵 The durable fix is UIS injecting it the way `env_from_services` supplies
-    ATLAS_POSTGREST_URL — that is a platform decision about handing a tenant the
-    Dagster database credential, so it is asked, not assumed (urb-agents #1150).
-    Until then this prints the truth instead of an instruction that cannot work.
-    """
-    print("  ⚠️ exporting it in your shell will NOT work: this check runs inside")
-    print("     the code location, so the variable has to be on that deployment.")
-    print("     It also needs the `dagster` role's credential, not Atlas's —")
-    print("     Atlas has no SELECT on `runs` / `event_logs`.")
-    print("     Nothing in UIS declares it yet; see urb-agents #1150.")
-
-
 def _address_hint(url: str) -> str:
     """
     🔴 ONE NAME, TWO CORRECT ANSWERS, AND THE CONSUMER CANNOT TELL WHICH IT GOT.
@@ -995,183 +967,217 @@ def ingest_block(cur, limit: int = 12) -> int:
     return state
 
 
-def _last_error(cur, job: str) -> str | None:
-    """
-    The most recent STEP_FAILURE message for a job, from Dagster's event log.
+# Dagster strips nothing on the way out: the dbt error text arrives with the
+# colour codes dbt printed, and unstripped they break alignment for anyone not
+# on a colour terminal (imac, urb-agents #1161).
+_ANSI = re.compile(r"\x1b\[[0-9;]*m")
 
-    ⚠️ `event_logs.event` is a serialised JSON blob whose shape is Dagster's, not
-    ours, and it changes between versions. Parsed defensively: JSON first, a
-    bounded regex second, and None rather than a guess if neither works — an
-    absent message is better than an invented one.
+# The dbt diagnosis starts here. Everything before it is the invocation — for a
+# transform_checks run that is ~1.5 k characters listing all 681 test names, so
+# printing the HEAD of the message gives an operator the command and not the
+# cause.
+_DBT_ERROR_MARKER = "Errors parsed from dbt logs"
+
+# 2065 events in five round trips at this size, 1.5 s wall, measured on a failed
+# transform_checks run. The failure event is at the END of the stream — a run
+# that plans 681 checks emits 675 planning events first — so a small limit reads
+# nothing but planning and concludes there is no message.
+_EVENT_PAGE = 500
+_EVENT_PAGES_MAX = 12
+
+
+def _run_events(run_id: str) -> tuple[list[dict] | None, str | None]:
     """
-    try:
-        cur.execute(
-            """
-            select event from event_logs
-            where dagster_event_type = 'STEP_FAILURE'
-              and event like %s
-            order by id desc limit 1
-            """,
-            (f"%{job}%",),
-        )
-        row = cur.fetchone()
-    except Exception:  # noqa: BLE001 — a schema this tool does not own
+    Every event for one run, paged. (events, why_not) — exactly one is None.
+
+    🔴 BRANCH ON `__typename`, NOT ON THE HTTP STATUS. An unknown or reaped run
+    comes back as `{"__typename": "RunNotFoundError"}` with HTTP 200 and no
+    exception (imac, urb-agents #1161, found by accident with a truncated runId).
+    Same rule as _dagster_graphql's 400-with-a-body, one level in: the transport
+    succeeded and the API answered, so the answer has to be read.
+    """
+    events: list[dict] = []
+    cursor = None
+    for _ in range(_EVENT_PAGES_MAX):
+        after = f', afterCursor: "{cursor}"' if cursor else ""
+        query = (
+            "{ runOrError(runId: \"%s\") { __typename ... on Run { "
+            "eventConnection(limit: %d%s) { cursor hasMore events { __typename "
+            "... on ExecutionStepFailureEvent { error { message } } "
+            "... on RunFailureEvent { message } } } } } }"
+        ) % (run_id, _EVENT_PAGE, after)
+        data, why = _dagster_graphql(query)
+        if data is None:
+            return None, why
+        run = data.get("runOrError") or {}
+        if run.get("__typename") != "Run":
+            return None, f"run {run_id[:8]} is not readable ({run.get('__typename')})"
+        conn = run.get("eventConnection") or {}
+        events.extend(conn.get("events") or [])
+        if not conn.get("hasMore"):
+            break
+        cursor = conn.get("cursor")
+        if not cursor:
+            break
+    return events, None
+
+
+def _never_started(events: list[dict]) -> bool:
+    """
+    Did this run execute anything at all?
+
+    🔴 IMMUNE BY CONSTRUCTION, WHERE THE OLD FILTER WAS IMMUNE BY ACCIDENT. The
+    SQL version excluded these with `start_time is not null`, which worked
+    because Dagster writes start_time only on PIPELINE_START. **The API does not
+    expose that null**: for a never-started run it returns
+    `startTime == endTime ==` the database's end_time, the REAP moment (imac
+    measured three of them, urb-agents #1161).
+
+    ⚠️ So the obvious port — `if startTime is not None` — matches every orphan,
+    computes a 0.0 s duration, and brings back the false streak alarm this block
+    already removed once: three runs that never executed a step rendering as
+    `transform_checks  3 consecutive  ⚠️`.
+
+    The observation that actually means "nothing ran" is the absence of any step
+    start. Measured: an orphan has 676 events — 675 AssetCheckEvaluationPlanned
+    plus one RunFailure — and ZERO step starts, against 1 on a healthy run.
+    """
+    return not any(e.get("__typename") == "ExecutionStepStartEvent" for e in events)
+
+
+def _failure_text(events: list[dict]) -> str | None:
+    """
+    The useful sentence from a failed run, or None.
+
+    🔴 THE TWO FAILURE EVENTS PUT IT IN DIFFERENT FIELDS, AND READING ONE FIELD
+    ACROSS BOTH RETURNS "" — which looks like "the API has no message" rather
+    than "wrong field" (imac, urb-agents #1161):
+
+        ExecutionStepFailureEvent   error.message   the 48 k dbt diagnosis
+                                    message         a stub naming the step
+        RunFailureEvent             message         "Run timed out due to taking
+                                                     longer than 900 seconds to start"
+                                    error           EMPTY — className None, message ""
+
+    🔵 The RunFailureEvent half is why launch failures are explicable here at
+    all: it names the 900 s start timeout that reaps the orphans, which the
+    database blob did not give in one place.
+    """
+    text = None
+    for e in events:
+        kind = e.get("__typename")
+        if kind == "ExecutionStepFailureEvent":
+            text = ((e.get("error") or {}).get("message")) or text
+        elif kind == "RunFailureEvent" and not text:
+            text = e.get("message") or text
+    if not text:
         return None
-    if not row or not row[0]:
-        return None
-    blob = row[0]
-    try:
-        d = json.loads(blob)
-        msg = (d.get("event_specific_data") or {}).get("error", {}).get("message")
-        if msg:
-            return " ".join(msg.split())[:160]
-    except Exception:  # noqa: BLE001
-        pass
-    m = re.search(r'"message"\s*:\s*"([^"]{10,400})"', blob)
-    return " ".join(m.group(1).split())[:160] if m else None
+    text = _ANSI.sub("", text)
+    if _DBT_ERROR_MARKER in text:
+        text = text[text.index(_DBT_ERROR_MARKER):]
+    return " ".join(text.split())[:240]
 
 
 def jobs_block() -> int:
     """
-    Item 3 — job-level history, which the first version could not reach.
+    Item 3 — job-level history, over Dagster's GraphQL API.
 
-    imac located it: same PostgreSQL instance, different database. Run history is
-    `runs` in the `dagster` database, not in `atlas`.
+    🔵 This used to read `runs` and `event_logs` in the `dagster` database, which
+    needs the `dagster` role. That credential was refused and will not be granted
+    (tor-agent, urb-agents #1150): a code location's environment is copied into
+    every run pod it launches, so it would hand the owner of runs, event_logs and
+    schedules FOR EVERY CODE LOCATION to arbitrary tenant asset code.
 
-    ⚠️ Degrades to "not available" rather than failing when DAGSTER_DATABASE_URL
-    is unset, because a host can legitimately run Atlas without Dagster. Not
-    derived by string-munging ATLAS_DATABASE_URL: guessing another service's
-    connection string from this one's is how a tool ends up confidently querying
-    the wrong database.
+    ⚠️ imac priced what the block buys before it was worth porting: it is how the
+    in-chain transform_checks FAILURE was found, with its dbt error text, and how
+    a transform_checks SUCCESS carrying 18 failed checks was noticed. It answers
+    WHY rather than THAT, which is the half an operator cannot reconstruct.
     """
-    url = os.environ.get("DAGSTER_DATABASE_URL")
     print()
     print("Jobs")
-    if not url:
-        # 🔵 NOT ASKED, so OK. A host can legitimately run Atlas without Dagster,
-        # and the Jobs block is diagnostic context — it explains WHY the register
-        # is behind, not WHETHER it is. Its absence cannot hide the headline.
-        print("  not available — DAGSTER_DATABASE_URL is not set here")
-        _dagster_url_remedy()
+    query = (
+        "{ runsOrError(limit: 200) { __typename ... on Runs { results { "
+        "runId jobName status startTime endTime } } } }"
+    )
+    data, why = _dagster_graphql(query)
+    if data is None:
+        # 🔵 NOT ASKED or could not look — OK either way, and the reason is
+        # printed. A host can legitimately run Atlas without Dagster, and this
+        # block is diagnostic context: it explains WHY the register is behind,
+        # not WHETHER it is. Its absence cannot hide the headline.
+        print(f"  not available — {why}")
         return OK
-    # 🔴 ASKED AND COULD NOT LOOK, so CANNOT. imac hit this with a traceback:
-    # `permission denied for table runs`.
-    #
-    # ⚠️ Their own advice caused it and they corrected it — "the same host and
-    # credentials with the database name swapped" is wrong. The host is the same;
-    # the ROLE is not. `runs` and `event_logs` are owned by the `dagster` role and
-    # Atlas has no SELECT on them, so a URL built from Atlas's string connects and
-    # then fails on the first query. On this cluster the credentials live in
-    # `dagster-postgresql-secret`.
-    #
-    # 🔵 That makes wrong credentials likelier in the field than absent ones — a
-    # copied env file, a rotated password, a role without the grant — so the
-    # unauthorised path must degrade exactly as the unset path does rather than
-    # crash. One more exception class, as they said.
+    runs_or_error = data.get("runsOrError") or {}
+    if runs_or_error.get("__typename") != "Runs":
+        print(f"  not available — Dagster returned {runs_or_error.get('__typename')}")
+        return OK
+
     state = OK
-    try:
-        conn = _conn(url)
-    except CannotAnswer as exc:
-        print(f"  not available — {exc}")
-        return CANNOT
-    try:
-        with conn, conn.cursor() as cur:
-            # 🔴 `start_time is not null` IS LOAD-BEARING, AND IT WAS NOT PUT
-            # THERE FOR THIS REASON. It was written so `to_timestamp()` had
-            # something to format. It also happens to be the only thing keeping
-            # runs that NEVER EXECUTED out of this block, so do not "improve" it
-            # into `coalesce(start_time, end_time)` to show a timestamp for every
-            # row (ops-dev, urb-agents #1076).
-            #
-            # A launch that fails before submitting leaves a NOT_STARTED run, and
-            # Dagster's monitoring daemon later reaps it to FAILURE. `start_time`
-            # is written ONLY on PIPELINE_START, which such a run never emits; the
-            # reap writes `end_time`. So the row is a FAILURE with a null
-            # start_time and no steps behind it.
-            #
-            # ⚠️ Measured rather than reasoned — three orphans plus one real
-            # failure in a runs table:
-            #     with this filter      brreg_transform FAILURE            (1 row)
-            #     with coalesce         transform_checks x3 + the real one (4 rows)
-            # The second renders as "transform_checks  3 consecutive  ⚠️", which is
-            # exactly the streak signal below, produced by three runs that never
-            # executed a single step. A false alarm assembled out of a failed
-            # launch.
-            #
-            # 🔵 This is also why the Checks block, when it is built, must read
-            # `asset_check_executions` rather than run history: a run that never
-            # started executed no checks, so it leaves no rows there at all.
-            # Immune by construction instead of by a filter someone might edit.
-            cur.execute(
-                """
-                select pipeline_name, status, to_timestamp(start_time)
-                from runs
-                where start_time is not null
-                order by start_time desc
-                limit 200
-                """
-            )
-            seen: dict[str, list] = {}
-            for name, status, started in cur.fetchall():
-                seen.setdefault(name, []).append((status, started))
-            for name, runs in sorted(seen.items()):
-                status, started = runs[0]
-                # 🔴 A single failure is noise; a run of them is a system that has
-                # stopped. Sixteen identical failures were what nothing aggregated.
-                streak = 0
-                for s, _ in runs:
-                    if s == "FAILURE":
-                        streak += 1
-                    else:
-                        break
-                # 🔴 NO STALENESS FLAG HERE, AND ITS REMOVAL IS THE POINT.
-                #
-                # A fixed 24 h flagged four jobs out of four on a clean host (imac,
-                # urb-agents #931) — and worse, the report contradicted itself:
-                #
-                #     Ingest runs   brreg-oppdateringer   ok   22:01      <- 24 min ago
-                #     Jobs          brreg_change_feed     no run in 29 h ⚠️
-                #
-                # Both lines describe the same data and the first one is right.
-                # `brreg_change_feed` is driven by an AutomationCondition, so its work
-                # lands under `__ASSET_JOB`; the NAMED job genuinely had not been
-                # launched, and that is correct and harmless.
-                #
-                # 🔴 Reading job-run history to answer "is this data flowing" is the
-                # wrong instrument for anything automation materialises rather than a
-                # job. That is this tool's own principle — does the output reflect the
-                # input — with the Jobs block answering "did a job run" instead.
-                #
-                # ⚠️ And it could not be fixed by tuning the number: the jobs declare
-                # half-hourly, daily, weekly and monthly cadences, so one threshold is
-                # wrong for three of them. Cadence-aware freshness ALREADY EXISTS as the
-                # dbt check `raw_sources_were_refreshed_recently` — one number per
-                # cadence, in one place, failing at compile time if a cadence is added
-                # without one. Recomputing it here would be a second place that must
-                # agree, which is the failure this project keeps meeting.
-                #
-                # 🔵 So this block answers only what job history can answer: did jobs
-                # FAIL, how many times in a row, and with what error.
-                flag = f"   {streak} consecutive   ⚠️" if streak > 1 else ""
-                print(f"  {name:<26}{status:<10}{started:%Y-%m-%d %H:%M}{flag}")
-                if streak > 1:
-                    state = worst(state, WARN)
-                # 🔴 The error's own text, criterion C. Printing "FAILURE" turns into
-                # a support round-trip; printing the message turns into a fix — the
-                # 7.5-hour outage was one line that named the problem exactly.
-                if status == "FAILURE":
-                    msg = _last_error(cur, name)
-                    if msg:
-                        print(f"      last error: {msg}")
-        print("  ⚠️ This block answers 'did a job fail', not 'is data flowing'. Assets that")
-        print("     automation materialises land under __ASSET_JOB, so a named job sitting")
-        print("     idle is normal and not a finding. Data freshness is the register block")
-        print("     above, and cadence-aware source freshness belongs to the dbt check")
-        print("     raw_sources_were_refreshed_recently, which owns that comparison.")
-        print("     A job that has NEVER run has no row in Dagster's `runs` and is invisible here.")
-    except Exception as exc:  # noqa: BLE001 — a schema and a role this tool does not own
-        print(f"  not available — {exc}")
-        return CANNOT
+    seen: dict[str, list] = {}
+    orphans = 0
+    for r in runs_or_error.get("results") or []:
+        started, ended = r.get("startTime"), r.get("endTime")
+        # ⚠️ CHEAP PRE-FILTER, CONFIRMED LATER — see _never_started. A run that
+        # never executed reports startTime == endTime exactly, because both are
+        # the reap moment. That is imac's corroborating signal doing the bulk
+        # work so this block does not page events for all 200 runs; the
+        # authoritative check runs on the ones that reach the failure path.
+        if started is not None and ended is not None and started == ended:
+            orphans += 1
+            continue
+        if started is None:
+            continue
+        seen.setdefault(r.get("jobName") or "?", []).append(
+            (r.get("status"), started, r.get("runId"))
+        )
+
+    for name, runs in sorted(seen.items()):
+        status, started, run_id = runs[0]
+        # 🔴 A single failure is noise; a run of them is a system that has
+        # stopped. Sixteen identical failures were what nothing aggregated.
+        streak = 0
+        for s, _t, _i in runs:
+            if s == "FAILURE":
+                streak += 1
+            else:
+                break
+        # 🔴 NO STALENESS FLAG HERE, AND ITS REMOVAL IS THE POINT. A fixed 24 h
+        # flagged four jobs out of four on a clean host (imac, urb-agents #931),
+        # and contradicted the register block one line above it. Assets that
+        # automation materialises land under __ASSET_JOB, so a NAMED job sitting
+        # idle is correct and harmless. Cadence-aware freshness already exists as
+        # the dbt check raw_sources_were_refreshed_recently; recomputing it here
+        # would be a second place that must agree.
+        flag = f"   {streak} consecutive   ⚠️" if streak > 1 else ""
+        stamp = datetime.fromtimestamp(started, timezone.utc)
+        print(f"  {name:<26}{status:<10}{stamp:%Y-%m-%d %H:%M}{flag}")
+        if streak > 1:
+            state = worst(state, WARN)
+        # 🔴 The error's own text, criterion C. Printing "FAILURE" turns into a
+        # support round-trip; printing the message turns into a fix — the
+        # 7.5-hour outage was one line that named the problem exactly.
+        if status == "FAILURE" and run_id:
+            events, ev_why = _run_events(run_id)
+            if events is None:
+                print(f"      last error: could not read the run's events — {ev_why}")
+            elif _never_started(events):
+                # Authoritative confirmation of the pre-filter above, on the only
+                # rows where it matters. A run that executed nothing is a LAUNCH
+                # failure, not a job failure, and saying so is the difference
+                # between looking at dbt and looking at the platform.
+                print("      never executed a step — this is a launch failure, not a job failure")
+            else:
+                msg = _failure_text(events)
+                if msg:
+                    print(f"      last error: {msg}")
+    if orphans:
+        print(f"  {orphans} run(s) reaped before executing a step, not counted above")
+    print("  ⚠️ This block answers 'did a job fail', not 'is data flowing'. Assets that")
+    print("     automation materialises land under __ASSET_JOB, so a named job sitting")
+    print("     idle is normal and not a finding. Data freshness is the register block")
+    print("     above, and cadence-aware source freshness belongs to the dbt check")
+    print("     raw_sources_were_refreshed_recently, which owns that comparison.")
+    print("     A job that has NEVER run has no run history and is invisible here.")
     return state
 
 
