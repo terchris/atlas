@@ -33,6 +33,7 @@ import importlib.util
 import io
 import json
 import pathlib
+import re
 import sys
 
 HERE = pathlib.Path(__file__).resolve().parent
@@ -303,6 +304,34 @@ def test_unknown_automation_promises_nothing_in_either_direction(mod):
     assert "awaiting the next transform" not in out, out
     assert "nothing will apply" not in out, out
     assert "unknown" in out, f"the tool must say it does not know: {out}"
+
+
+def test_a_dark_automation_block_tells_a_gating_caller_the_contract_changed(mod):
+    """
+    🔴 A REQUIREMENT FROM ops-dev (urb-agents #1163), TESTED SO IT CANNOT BE
+    QUIETLY DELETED.
+
+    Accepting exit 0 for a dark Automation block changed a contract in the
+    PERMISSIVE direction: before 2026-09-16 this path returned CANNOT and
+    stopped a caller doing `atlas-status.py && deploy`; it now returns OK and
+    that caller proceeds with the block unread.
+
+    ⚠️ ops-dev's objection was not to the trade — imac's reasoning carried that —
+    but that resolving the inconsistency by deleting the old promise leaves the
+    people holding it unwarned. "You changed a contract. Say so to the people
+    holding it."
+
+    🔵 So the tool says it where it happens, and names the supported way to
+    tighten the gate. A requirement with no test is a decoration waiting to be
+    removed by someone tidying output.
+    """
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        mod.automation_block(None, None, "DAGSTER_GRAPHQL_URL is not set here")
+    out = buf.getvalue()
+    assert "does NOT affect the exit code" in out, f"say it where it happens: {out}"
+    assert "PROCEED" in out, out
+    assert "grep" in out, f"name the supported way to gate on it: {out}"
 
 
 def test_a_dark_automation_block_does_not_make_the_whole_check_cannot(mod):
@@ -787,75 +816,142 @@ def test_never_loaded_is_not_silently_formatted_as_zero(mod):
     assert "never loaded" in out, out
 
 
-def test_runs_that_never_started_cannot_reach_the_jobs_block(mod):
-    """
-    🔴 A FAILED LAUNCH MUST NOT RENDER AS A FAILING JOB (ops-dev, urb-agents #1076).
+def _drive_jobs(mod, runs, events_by_run=None):
+    """Run jobs_block() against canned GraphQL replies. Returns the output."""
+    events_by_run = events_by_run or {}
 
-    `uis dagster run transform_checks` currently fails before submitting, leaving
-    a NOT_STARTED run that Dagster's monitoring daemon later reaps to FAILURE.
-    Three of them exist on imac's host. They executed nothing.
+    def fake(query):
+        if "runsOrError" in query:
+            return {"runsOrError": {"__typename": "Runs", "results": runs}}, None
+        m = re.search(r'runId: "([^"]+)"', query)
+        rid = m.group(1) if m else ""
+        return (
+            {"runOrError": {"__typename": "Run",
+                            "eventConnection": {"cursor": None, "hasMore": False,
+                                                "events": events_by_run.get(rid, [])}}},
+            None,
+        )
 
-    ⚠️ `jobs_block` is protected from them only by `where start_time is not null`
-    — a clause written so `to_timestamp()` had something to format, not because
-    anyone reasoned about orphaned runs. Measured against a real runs table:
-    swapping it for `coalesce(start_time, end_time)` to show a timestamp on every
-    row turns three never-executed runs into "transform_checks 3 consecutive ⚠️".
-
-    🔵 So the guard is on the SQL, not on the output: a fake cursor answers
-    whatever it is given regardless of the WHERE clause, and a test that does not
-    read the query cannot notice the clause going missing. Same lesson as
-    _DeletionCursor.
-    """
-    import os
-
-    seen = []
-
-    class _Cur:
-        def execute(self, sql, *_a, **_k):
-            seen.append(" ".join(str(sql).split()))
-
-        def fetchall(self):
-            return []
-
-        def fetchone(self):
-            return None
-
-        def __enter__(self):
-            return self
-
-        def __exit__(self, *_a):
-            return False
-
-    class _Conn:
-        def cursor(self):
-            return _Cur()
-
-        def __enter__(self):
-            return self
-
-        def __exit__(self, *_a):
-            return False
-
-    saved_conn, saved_url = mod._conn, os.environ.get("DAGSTER_DATABASE_URL")
-    os.environ["DAGSTER_DATABASE_URL"] = "postgresql://fake/fake"
-    mod._conn = lambda url: _Conn()
+    saved = mod._dagster_graphql
+    mod._dagster_graphql = fake
+    buf = io.StringIO()
     try:
-        with contextlib.redirect_stdout(io.StringIO()):
+        with contextlib.redirect_stdout(buf):
             mod.jobs_block()
     finally:
-        mod._conn = saved_conn
-        if saved_url is None:
-            os.environ.pop("DAGSTER_DATABASE_URL", None)
-        else:
-            os.environ["DAGSTER_DATABASE_URL"] = saved_url
+        mod._dagster_graphql = saved
+    return buf.getvalue()
 
-    runs_query = next((s for s in seen if " from runs " in f" {s} "), None)
-    assert runs_query, f"no query against `runs` was issued; saw: {seen}"
-    assert "start_time is not null" in runs_query, (
-        "the runs query must exclude rows with no start_time, or launches that "
-        "never submitted a run render as consecutive job failures. Got: "
-        f"{runs_query}"
+
+def test_reaped_launches_cannot_render_as_a_failing_job(mod):
+    """
+    🔴 A FAILED LAUNCH MUST NOT RENDER AS A FAILING JOB (ops-dev, urb-agents
+    #1076) — and the guard that used to do it CANNOT BE PORTED.
+
+    The SQL version excluded these with `where start_time is not null`, a clause
+    originally written so `to_timestamp()` had something to format. Measured
+    then: swapping it for `coalesce(start_time, end_time)` turned three
+    never-executed runs into `transform_checks 3 consecutive ⚠️`.
+
+    ⚠️ The API does not expose that null. imac measured three orphans
+    (urb-agents #1161): `startTime == endTime ==` the database's end_time, the
+    REAP moment. So the obvious port — "is startTime present?" — matches every
+    orphan and brings the false streak straight back.
+
+    This drives exactly that shape: three reaped transform_checks runs plus one
+    real brreg_transform failure.
+    """
+    reaped = [{"runId": f"orphan{i}", "jobName": "transform_checks", "status": "FAILURE",
+               "startTime": 1789409148.072161, "endTime": 1789409148.072161} for i in range(3)]
+    real = [{"runId": "real1", "jobName": "brreg_transform", "status": "FAILURE",
+             "startTime": 1789567435.829595, "endTime": 1789568408.82523}]
+    out = _drive_jobs(mod, reaped + real,
+                      {"real1": [{"__typename": "ExecutionStepStartEvent"},
+                                 {"__typename": "ExecutionStepFailureEvent",
+                                  "error": {"message": "boom"}}]})
+
+    assert "3 consecutive" not in out, f"reaped launches must not form a streak: {out}"
+    assert "transform_checks" not in out, f"a run that executed nothing is not a job failure: {out}"
+    assert "brreg_transform" in out, f"the real failure must still appear: {out}"
+    assert "3 run(s) reaped before executing a step" in out, (
+        f"the orphans must be counted, not silently dropped: {out}"
     )
+
+
+def test_a_never_started_run_is_named_a_launch_failure_not_a_job_failure(mod):
+    """
+    🔵 The authoritative check, on the rows where it matters. `_never_started`
+    keys on the ABSENCE OF ANY STEP START rather than on a nullable column —
+    imac measured an orphan as 676 events (675 AssetCheckEvaluationPlanned + 1
+    RunFailure) with ZERO step starts, against 1 on a healthy run.
+
+    Saying "launch failure" rather than "job failure" is the difference between
+    an operator looking at dbt and looking at the platform.
+    """
+    assert mod._never_started([{"__typename": "AssetCheckEvaluationPlannedEvent"},
+                               {"__typename": "RunFailureEvent", "message": "timed out"}])
+    assert not mod._never_started([{"__typename": "ExecutionStepStartEvent"}])
+
+    run = [{"runId": "r", "jobName": "transform_checks", "status": "FAILURE",
+            "startTime": 100.0, "endTime": 200.0}]
+    out = _drive_jobs(mod, run, {"r": [{"__typename": "RunFailureEvent",
+                                        "message": "Run timed out after 900 seconds"}]})
+    assert "launch failure, not a job failure" in out, out
+
+
+def test_the_two_failure_events_are_read_from_different_fields(mod):
+    """
+    🔴 READING ONE FIELD ACROSS BOTH TYPES RETURNS "", WHICH LOOKS LIKE "THE API
+    HAS NO MESSAGE" RATHER THAN "WRONG FIELD" (imac, urb-agents #1161):
+
+        ExecutionStepFailureEvent   error.message   the dbt diagnosis
+                                    message         a stub naming the step
+        RunFailureEvent             message         the timeout text
+                                    error           EMPTY
+    """
+    step = [{"__typename": "ExecutionStepFailureEvent",
+             "message": 'Execution of step "atlas_dbt_models" failed.',
+             "error": {"message": "relation does not exist"}}]
+    assert mod._failure_text(step) == "relation does not exist"
+
+    run = [{"__typename": "RunFailureEvent",
+            "message": "Run timed out due to taking longer than 900 seconds to start.",
+            "error": {"className": None, "message": ""}}]
+    assert "900 seconds" in mod._failure_text(run)
+
+
+def test_the_dbt_diagnosis_is_sliced_and_stripped(mod):
+    """
+    ⚠️ The first ~1.5 k characters of a transform_checks failure are the dbt
+    invocation with all 681 test names in it, so printing the head gives an
+    operator the command and not the cause. And the text arrives with dbt's ANSI
+    colour codes embedded, which break alignment off a colour terminal.
+    """
+    raw = ("dbt run --select " + "x " * 400
+           + "\nErrors parsed from dbt logs:\n\n\x1b[31mERROR\x1b[0m relation "
+             '"marts.mart_source_freshness" does not exist')
+    got = mod._failure_text([{"__typename": "ExecutionStepFailureEvent",
+                              "error": {"message": raw}}])
+    assert got.startswith("Errors parsed from dbt logs"), got
+    assert "\x1b" not in got and "[31m" not in got, got
+    assert "dbt run --select" not in got, f"the invocation must not crowd out the cause: {got}"
+
+
+def test_an_unreadable_run_is_not_an_exception(mod):
+    """
+    🔴 `runOrError` SIGNALS AN UNKNOWN RUN BY `__typename`, NOT BY HTTP STATUS —
+    HTTP 200, typed error, no exception (imac found it by accident with a
+    truncated runId, urb-agents #1161). Same rule as the non-200 branch in
+    _dagster_graphql, one level in.
+    """
+    saved = mod._dagster_graphql
+    mod._dagster_graphql = lambda q: ({"runOrError": {"__typename": "RunNotFoundError"}}, None)
+    try:
+        events, why = mod._run_events("nope")
+    finally:
+        mod._dagster_graphql = saved
+    assert events is None, "a typed error is not a list of events"
+    assert "RunNotFoundError" in why, why
 
 
 class _RegisterCursor:
