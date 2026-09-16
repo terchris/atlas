@@ -11,7 +11,7 @@
     "api:types": "swagger2openapi http://api-atlas.localhost/ -o /tmp/atlas-openapi.json && openapi-typescript /tmp/atlas-openapi.json -o src/lib/api-types.ts"
   },
   "dependencies": {
-    "next": "16.2.4",
+    "next": "16.2.11",
     "react": "19.2.4",
     "react-dom": "19.2.4"
   },
