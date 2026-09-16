@@ -50,7 +50,12 @@ on a change, not on a timer.
   identifiers. A Docusaurus `exclude` hides a page from the site, never from github.com.
 - **`api_v1` is a published contract.** Adding to it is public exposure and waits for a human.
 - **Never commit to `main`** — feature branch, PR, squash-merge.
-- **Every marts column is documented**; the `check-osmosis.sh` gate enforces it repo-wide.
+- **Every marts column is documented.** ⚠️ Nothing enforces this automatically — `check-osmosis.sh`
+  is a script you run, not a gate: it is wired into no workflow and no image build. It also needs a
+  **reachable database holding the marts.\* relations**, because dbt-osmosis learns a model's columns
+  by introspecting the warehouse. Without one it discovers zero columns and, until 2026-09-16,
+  reported `✓ all columns documented` on the strength of having checked nothing (urb-agents #1039).
+  It now refuses instead (exit 2). This line previously claimed the gate "enforces it repo-wide".
 - **This agent has no cluster access.** It declares; another agent applies; a third verifies.
 
 ⚠️ **Unverified**: `website/docusaurus.config.ts` and the generated sources registry both give the
