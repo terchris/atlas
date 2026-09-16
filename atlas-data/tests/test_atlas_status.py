@@ -306,6 +306,34 @@ def test_unknown_automation_promises_nothing_in_either_direction(mod):
     assert "unknown" in out, f"the tool must say it does not know: {out}"
 
 
+def test_a_dark_automation_block_tells_a_gating_caller_the_contract_changed(mod):
+    """
+    🔴 A REQUIREMENT FROM ops-dev (urb-agents #1163), TESTED SO IT CANNOT BE
+    QUIETLY DELETED.
+
+    Accepting exit 0 for a dark Automation block changed a contract in the
+    PERMISSIVE direction: before 2026-09-16 this path returned CANNOT and
+    stopped a caller doing `atlas-status.py && deploy`; it now returns OK and
+    that caller proceeds with the block unread.
+
+    ⚠️ ops-dev's objection was not to the trade — imac's reasoning carried that —
+    but that resolving the inconsistency by deleting the old promise leaves the
+    people holding it unwarned. "You changed a contract. Say so to the people
+    holding it."
+
+    🔵 So the tool says it where it happens, and names the supported way to
+    tighten the gate. A requirement with no test is a decoration waiting to be
+    removed by someone tidying output.
+    """
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        mod.automation_block(None, None, "DAGSTER_GRAPHQL_URL is not set here")
+    out = buf.getvalue()
+    assert "does NOT affect the exit code" in out, f"say it where it happens: {out}"
+    assert "PROCEED" in out, out
+    assert "grep" in out, f"name the supported way to gate on it: {out}"
+
+
 def test_a_dark_automation_block_does_not_make_the_whole_check_cannot(mod):
     """
     🔴 PINS A TRADE, NOT AN ACCIDENT — and the wording around it was wrong first.

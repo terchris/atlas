@@ -43,6 +43,29 @@ EXIT CODES — `status` goes in a script, so exit must reflect health (D3)
 look" are different answers, and collapsing them is how a broken check reads as
 a finding.
 
+🔴 IF YOU GATE ON THIS — `atlas-status.py && deploy` — READ THIS PARAGRAPH.
+THE CONTRACT CHANGED ON 2026-09-16 AND IT CHANGED IN THE PERMISSIVE DIRECTION.
+
+Until then, a block that could not look returned 2, so any missing piece stopped
+a gating caller. It no longer does. A block whose answer the HEADLINE does not
+depend on now returns 0 when it cannot look, and says so in its output. The
+Automation block is one: on a host with no Dagster wiring, `&& deploy` PROCEEDS
+with "what is scheduled" unread, where it used to stop.
+
+The reason is that the alternative is worse — returning 2 on every host without
+Dagster wiring makes the exit status report THIS TOOL'S OWN CONFIGURATION rather
+than Atlas's health, and a gate that fails on its own wiring teaches its operator
+to ignore it.
+
+⚠️ SO: exit 0 means "the headline question was answered and nothing is wrong with
+it". It does NOT mean every block answered. If your gate needs the second, grep
+the output — every block that cannot look prints a line saying so and why:
+
+    atlas-status.py | grep -q "cannot tell what is running" && exit 1
+
+That is the supported way to tighten it. Do not ask for the exit code to be
+widened; that trade is argued at automation_block and was made deliberately.
+
 ENVIRONMENT
     ATLAS_DATABASE_URL / DATABASE_URL   required
     ATLAS_POSTGREST_URL / POSTGREST_URL optional — without it the deletion check
@@ -586,6 +609,15 @@ def automation_block(
         # operator's only handle on which of those it is.
         print("  cannot tell what is running")
         print(f"  {why_not or 'no reason was recorded, which is itself a defect'}")
+        # 🔴 SAID OUT LOUD BECAUSE IT IS A CONTRACT CHANGE, NOT A DETAIL
+        # (ops-dev, urb-agents #1163). Before 2026-09-16 this path returned
+        # CANNOT and stopped a caller doing `atlas-status.py && deploy`. It now
+        # returns OK, so that caller proceeds with this block unread. Whoever
+        # was relying on the old behaviour is entitled to hear it from the tool
+        # rather than discover it from a deploy that should not have happened.
+        print("  ⚠️ this does NOT affect the exit code: a gating caller such as")
+        print("     `atlas-status.py && deploy` will PROCEED with this block unread.")
+        print("     To gate on it, grep for this line.")
         _dagster_graphql_remedy()
         return OK
     if state == "running":
