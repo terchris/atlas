@@ -467,8 +467,8 @@ def automation_block(running: set[str] | None) -> int:
         # question (is an applied deletion still served?) does not need this, and
         # returning 2 on every host without Dagster wiring would make the exit
         # code report the tool's own configuration instead of Atlas's health.
-        print("  cannot tell what is running — set DAGSTER_DATABASE_URL")
-        print("  (the same credential the Jobs block uses; see its note on the role)")
+        print("  cannot tell what is running — DAGSTER_DATABASE_URL is not set here")
+        _dagster_url_remedy()
         return OK
     if state == "running":
         others = len(running) - 1
@@ -479,9 +479,48 @@ def automation_block(running: set[str] | None) -> int:
     print(f"  {'other instigators running':<30}{len(running)}")
     print("  Nothing is scheduled to reconcile the register: it holds whatever was")
     print("  last loaded, and will not change. Enabling automation is step 4 of the")
-    print("  install guide — `uis dagster automation` reports and asserts state but")
-    print("  cannot set it; that needs startSchedule / startSensor mutations.")
+    print("  install guide — `uis dagster automation --start` sets it.")
+    # 🔴 THIS LINE USED TO SEND OPERATORS TO RAW GraphQL FOR A CAPABILITY THEIR
+    # TOOL ALREADY HAD. It said `uis dagster automation` "reports and asserts
+    # state but cannot set it; that needs startSchedule / startSensor mutations".
+    # imac used `--start` / `--stop` on UIS 1.6.106 and they set it correctly
+    # (ops-dev, urb-agents #1149).
+    #
+    # ⚠️ A tenant artifact asserting what the PLATFORM's CLI cannot do is a claim
+    # about someone else's surface, on their release cadence, with nothing here
+    # that fails when it stops being true. It was right when written and rotted
+    # silently. Verified on 1.6.106; if it needs a floor stated, state the
+    # version rather than re-deriving the capability.
     return OK
+
+
+def _dagster_url_remedy() -> None:
+    """
+    🔴 "set DAGSTER_DATABASE_URL" IS NOT AN INSTRUCTION AN OPERATOR CAN FOLLOW,
+    AND IT WAS THE ONLY THING THIS TOOL SAID (imac via ops-dev, urb-agents #1149).
+
+    This script runs INSIDE the code location, invoked by `uis template check`.
+    A variable exported in the operator's shell does not travel there, so the
+    documented remedy changed nothing and the operator had no way to tell why.
+    imac confirmed the mechanism is sound by running this same script in-pod
+    with the credential: the Automation and Jobs blocks then appear in full.
+
+    ⚠️ So the fix is not a better sentence about exporting it — it is saying
+    WHERE it has to be set, and that it is a different ROLE's credential.
+    `runs` and `event_logs` are owned by the `dagster` role; a URL built from
+    Atlas's own string connects and then fails on `permission denied for table
+    runs`, which is the trap imac already fell into once.
+
+    🔵 The durable fix is UIS injecting it the way `env_from_services` supplies
+    ATLAS_POSTGREST_URL — that is a platform decision about handing a tenant the
+    Dagster database credential, so it is asked, not assumed (urb-agents #1150).
+    Until then this prints the truth instead of an instruction that cannot work.
+    """
+    print("  ⚠️ exporting it in your shell will NOT work: this check runs inside")
+    print("     the code location, so the variable has to be on that deployment.")
+    print("     It also needs the `dagster` role's credential, not Atlas's —")
+    print("     Atlas has no SELECT on `runs` / `event_logs`.")
+    print("     Nothing in UIS declares it yet; see urb-agents #1150.")
 
 
 def _address_hint(url: str) -> str:
@@ -668,12 +707,36 @@ def freshness_block(cur) -> int:
     # InFailedSqlTransaction and report a fault that belongs to this line.
     exists = _one(cur, "select to_regclass('marts.mart_source_freshness')")
     if not exists or exists[0] is None:
-        # 🔴 CANNOT, not OK. The view is built by the transform, so its absence
-        # means no transform has ever run here — which is a real state and not a
-        # clean one. Reporting "fresh" because the surface is missing would be
-        # absence rendering as green, which is the defect this whole tool exists
-        # to catch.
-        print("  cannot check — marts.mart_source_freshness does not exist yet")
+        # 🔴 "ITS ABSENCE MEANS NO TRANSFORM HAS EVER RUN HERE" WAS FALSE, AND IT
+        # WAS MY OWN COMMENT (imac via ops-dev, urb-agents #1149).
+        #
+        # The view is NEW in this build. On an UPGRADE the transform has run for
+        # days and the view is missing only because it has not run SINCE — which
+        # is a different state with a different remedy and a different severity.
+        # imac measured the consequence: b7e513f exit 0, install e439668 exit 2
+        # "NOTHING WAS CHECKED", one transform later exit 0 again. Exit 2 is what
+        # an upgrader sees at the exact moment they are asking "did my upgrade
+        # work", and CANNOT dominates every other block, so a complete and
+        # healthy picture was reported as no picture at all.
+        #
+        # ⚠️ The two cases are told apart by a relation that long predates this
+        # one. If marts has been built before, this is an upgrade waiting on a
+        # transform; if it has not, nothing has ever run here.
+        built_before = _one(cur, "select to_regclass('marts.dim_brreg_enhet')")
+        if built_before and built_before[0] is not None:
+            # ⚠️ WARN, not CANNOT. "I looked and something needs doing" is true:
+            # the upgrade is incomplete until a transform builds the new model.
+            # CANNOT would claim nothing was checked, which is false — every
+            # other block on this connection answered.
+            print("  pending — this view is new in this build and the transform")
+            print("  has not run since the upgrade. It self-heals on the next one.")
+            print("  (run `uis dagster run transform_and_publish` to close it now)")
+            return WARN
+        # 🔴 CANNOT is right here and only here: marts has never been built, so
+        # there is nothing to compare and nothing else to infer from. Reporting
+        # "fresh" because the surface is missing would be absence rendering as
+        # green, which is the defect this whole tool exists to catch.
+        print("  cannot check — no transform has ever run here")
         print("  (built by the transform; run `uis dagster run transform_and_publish`)")
         return CANNOT
 
@@ -849,7 +912,8 @@ def jobs_block() -> int:
         # 🔵 NOT ASKED, so OK. A host can legitimately run Atlas without Dagster,
         # and the Jobs block is diagnostic context — it explains WHY the register
         # is behind, not WHETHER it is. Its absence cannot hide the headline.
-        print("  not available — set DAGSTER_DATABASE_URL for job history")
+        print("  not available — DAGSTER_DATABASE_URL is not set here")
+        _dagster_url_remedy()
         return OK
     # 🔴 ASKED AND COULD NOT LOOK, so CANNOT. imac hit this with a traceback:
     # `permission denied for table runs`.
