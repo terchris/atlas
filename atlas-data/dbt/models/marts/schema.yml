@@ -213,3 +213,72 @@ models:
     data_tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns: [chapter_id, kommune_nr]
+
+  - name: mart_source_freshness
+    description: |
+      One row per raw source table that declares a `loaded_at_field`, saying
+      whether it is inside the window its own declared cadence allows.
+
+      This is the operator-readable half of the ingest-freshness signal. The
+      comparison used to live only inside the dbt test
+      `raw_sources_were_refreshed_recently`, whose verdict exists only while the
+      suite is running — it lands in dbt's run results and Dagster's event log,
+      and `atlas-status.py` can read neither. So `uis template check atlas`
+      reported a 24-hour window instead, which cannot see a weekly or monthly
+      source go stale at all (urb-agents #1039).
+
+      It is a VIEW on purpose: evaluated when queried, so it is current whether
+      or not the transform, the check suite or the Dagster daemon has run. A
+      table would carry the very staleness it is meant to report.
+
+      The test now selects its failing rows from here rather than recomputing
+      them, so the gate and the surface cannot disagree. Cadence bounds are
+      `vars.ingest_cadence_max_age_days` in dbt_project.yml, read by both and
+      defaulted by neither.
+    columns:
+      - name: source_name
+        description: The dbt source collection the table belongs to. 'raw' for every row today.
+        data_tests:
+          - not_null
+      - name: source_table
+        description: Raw table name, e.g. 'ssb_08484'. Unique across the view.
+        data_tests:
+          - not_null
+          - unique
+      - name: ingest_cadence
+        description: |
+          The cadence declared on the source in sources.yml
+          (`meta.ingest_cadence`): half_hourly, daily, weekly, monthly, or the
+          two silencing values manual and none, each of which requires a written
+          `meta.cadence_note`. 'undeclared' appears only when a source declares
+          a loaded_at_field and no cadence — a state the dbt test refuses to
+          compile on, which this view still reports.
+        data_tests:
+          - not_null
+      - name: max_age_days
+        description: |
+          Tolerated age for this cadence, from vars.ingest_cadence_max_age_days.
+          Null for manual, none, and any cadence with no bound declared.
+      - name: last_loaded_at
+        description: |
+          Newest value of the source's own `loaded_at_field`. Null when the table
+          has no rows at all, which is a failure rather than a separate kind of
+          healthy: "never loaded" and "loaded long ago" are the same defect to a
+          consumer.
+      - name: age_days
+        description: Age of last_loaded_at in days, to two decimals. Null when the table is empty.
+      - name: freshness_status
+        description: |
+          ok · overdue · never_loaded · not_bounded · undeclared · unknown_cadence.
+
+          `not_bounded` rows are emitted rather than filtered out, so a reader
+          can say "29 bounded, 5 silenced" instead of quietly reporting a smaller
+          universe than exists — a row that vanishes from a freshness surface is
+          indistinguishable from a source nobody ever added. `undeclared` and
+          `unknown_cadence` are kept apart: one is a source nobody finished
+          adding, the other a cadence somebody invented, and they need different
+          fixes.
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: [ok, overdue, never_loaded, not_bounded, undeclared, unknown_cadence]
