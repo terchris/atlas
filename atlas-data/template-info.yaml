@@ -309,20 +309,45 @@ operational:
     why: >-
       Enabling the schedules does not backfill. The crons above are the next
       fire, not a catch-up, so a fresh install stays empty until one comes round.
-    # 🔴 THE MOST IMPORTANT SENTENCE IN THIS FIELD IS FIRST BECAUSE UIS TRUNCATES.
+    # 🔴 RETRACTED 2026-09-16: "UIS TRUNCATES THIS FIELD" WAS FALSE, AND SO WAS
+    # THE GENERAL RULE I WROTE FROM IT (ops-dev, urb-agents #1157).
     #
-    # It used to be the fourth paragraph. imac measured what that meant: this
-    # field parses to 2300 characters and UIS renders 1114, cutting immediately
-    # before it — so PR #314, whose entire stated purpose was to say the install
-    # is not validated, reached no operator on any surface (urb-agents #1149).
-    # install, --dry-run, template progress and template check never emit `how`
-    # at all; template info emits it and cuts it off.
+    # This comment previously said the field parses to 2300 characters, that UIS
+    # renders 1114, and therefore that "a long field has a silent cliff in it".
+    # **There is no cliff. There never was.** That was a false claim about
+    # another team's software, shipped in this artifact.
     #
-    # ⚠️ This is the SAME trap as first_data.measured on #793, noted two lines
-    # below on `takes`, and I walked into it again from the other end: there the
-    # field rendered nowhere, here it renders by half. A long field is a field
-    # with a silent cliff in it. **Put what must be read in the first paragraph
-    # and keep it short** — do not assume the rest arrives.
+    # What actually happened: `uis template info` renders the CATALOGUE's pinned
+    # definition, not the one installed on the host. During the measurement the
+    # catalogue still pinned the PREVIOUS build while the host ran this one, so
+    # two different versions of this field were compared. **1114 is simply where
+    # the older version ended** — the paragraph below was appended to it, and the
+    # newline at that offset is an artefact of appending, not a boundary anything
+    # cut at. The older field rendered completely and correctly.
+    #
+    # ⚠️ tor-agent found this by REFUSING TO FIX WHAT WAS REPORTED: it built a
+    # fixture with our numbers, found no budget and no line cap on that path, and
+    # named the one check that would settle it instead of shipping a truncation
+    # notice for a truncation that does not exist.
+    #
+    # 🔴 THE REAL REASON #314 REACHED NOBODY, which is simpler and worse: the
+    # installer does not render `how` AT ANY LENGTH. tor-agent's read of
+    # `_install_summary_operational` — it whitelists `note`, `jobs`, `takes`,
+    # `automation`, `manual_only`, `unscheduled`, `troubleshooting`. `how` is not
+    # in it. So `how` reaches an installing operator at ZERO characters, in any
+    # position, however short. Putting the sentence first here did not deliver
+    # it, and neither would trimming the field.
+    #
+    # ✅ THE STATEMENT THEREFORE LIVES IN `install.note`, which is whitelisted.
+    # It is kept here too, because this field IS rendered by `uis template info`
+    # — a real reader, just not the one #314 was written for.
+    #
+    # ⚠️ The lesson that survives is not about length. It is that **this file has
+    # no idea which of its fields anyone reads**, and every guess so far has been
+    # wrong in a different way: `first_data.measured` (#793) rendered nowhere, a
+    # top-level `first_load` (#791) rendered nowhere, and `how` renders on one
+    # surface that is not the installer's. Do not reason about it — ask which
+    # surface consumes the key, and have someone confirm the words appeared.
     how: >-
       WHEN THESE SIX HAVE FINISHED THE INSTALL IS LOADED BUT NOT VALIDATED, and
       nothing else says so. Launch them from the Dagster UI, serially, in exactly
@@ -420,6 +445,17 @@ operational:
       Immediately after install the API is live and serves zero endpoints. The
       advertised meta_sources / meta_endpoints / meta_dimensions return 404 until
       the first pipeline run. That is correct, not a failed install.
+
+      🔴 AND WHEN THE SIX FIRST-DATA JOBS HAVE FINISHED, THE INSTALL IS LOADED
+      BUT NOT VALIDATED — nothing else says so. Atlas defines 685 asset checks
+      (681 dbt + 4 api_v1, measured on build e439668) and on a fresh install NONE
+      of them has run: they are reached only through three instigators that all
+      ship stopped — transform_daily, then the sensor to api_v1_checks, then the
+      sensor to transform_checks. So the suite does not first run at 05:00 the
+      next morning; it first runs after the next transform_daily FOLLOWING
+      go-live, and if automation is never enabled it never runs at all. Enable it
+      with `uis dagster automation --start`. Four of the 685 can be run on demand
+      now: `uis dagster run api_v1_checks` takes ~27 s and covers the public API.
 
   # ⚠️ Rendered at install by UIS 1.6.65 alongside `automation`, so this reaches
   # the operator rather than only the catalogue. Written for someone who has just
