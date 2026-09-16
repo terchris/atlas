@@ -35,7 +35,8 @@ adding one, and lets the PostgREST check (D1) and the Dagster run history
 EXIT CODES — `status` goes in a script, so exit must reflect health (D3)
     0   healthy
     1   a warning was printed: the register is behind, a deletion is still
-        served, or an ingest source failed
+        served, an ingest source failed, or changes are waiting and nothing is
+        scheduled to apply them
     2   cannot answer — no connection string, bad argument, database unreachable
 
 ⚠️ 2 is deliberately distinct from 1. "I looked and it is wrong" and "I could not
@@ -46,8 +47,11 @@ ENVIRONMENT
     ATLAS_DATABASE_URL / DATABASE_URL   required
     ATLAS_POSTGREST_URL / POSTGREST_URL optional — without it the deletion check
                                         cannot be made over HTTP and says so
-    DAGSTER_DATABASE_URL                optional — job history; a host may
-                                        legitimately run Atlas without Dagster
+    DAGSTER_DATABASE_URL                optional — job history AND automation
+                                        state; a host may legitimately run Atlas
+                                        without Dagster, and without this the
+                                        tool must not claim a transform is
+                                        coming (urb-agents #1035)
 """
 
 from __future__ import annotations
@@ -66,6 +70,32 @@ from datetime import datetime, timezone
 # of every half hour — which is why it must not warn by itself (D2).
 STALE_WARN_HOURS = 1.0   # pending is a symptom only once it is also this old
 RECONCILE_WARN_HOURS = 2.0
+
+# 🔴 THE PROMISE AND THE EVIDENCE FOR IT MUST SIT IN THE SAME PROCESS.
+#
+# This tool printed "N deletion(s) awaiting the next transform (:10/:40) — not a
+# fault" and exited 0 whether or not a transform was coming (ops-dev, urb-agents
+# #1035). Everything in this code location ships STOPPED — two schedules, two
+# sensors and Dagster's default automation-condition sensor, none of them
+# declaring a default status — so on a fresh install there IS no next transform.
+#
+# ⚠️ That is the first state every operator is in, and the documented happy path
+# walks straight through it: install, load first data, skip the go-live step, run
+# this command, read green. A false alarm wastes attention; a false all-clear
+# spends it.
+#
+# 🔵 THE RULE, AND IT BINDS WHOEVER WRITES THE SENTENCE: do not say a scheduled
+# event is coming without having checked that something is scheduled. A wrapper
+# around this command can add a line but it cannot unsay one, which is why this
+# is fixed here and not in UIS.
+TRANSFORM_SCHEDULE = "brreg_transform_half_hourly"
+
+# RUNNING is a human having started it. DECLARED_IN_CODE — AUTOMATICALLY_RUNNING
+# before Dagster renamed it, and both spellings still appear in stored rows — is
+# `default_status=RUNNING` in the definitions, which the daemon persists as a row
+# on its first tick. Both mean ticks are coming; STOPPED does not, and neither
+# does no row at all.
+RUNNING_STATUSES = frozenset({"RUNNING", "DECLARED_IN_CODE", "AUTOMATICALLY_RUNNING"})
 
 
 class CannotAnswer(Exception):
@@ -179,8 +209,14 @@ def build_block() -> None:
     sys.stdout.flush()
 
 
-def register_block(cur) -> int:
-    """The four lines. Everything else in this tool is elaboration. Returns True if healthy."""
+def register_block(cur, running: set[str] | None) -> int:
+    """
+    The four lines. Everything else in this tool is elaboration.
+
+    Returns one of OK/WARN/CANNOT — the docstring said "returns True if healthy"
+    long after the boolean it described was replaced by the three-state scheme,
+    which is the same species of stale claim as the one #1035 found in the output.
+    """
     state = OK
     print("Brreg register")
 
@@ -211,13 +247,23 @@ def register_block(cur) -> int:
     # showed `pending 2 ⚠️` on a completely healthy register. The prose in the
     # old script already said "normal for minutes, a symptom for hours"; the code
     # did not. A gate that cries wolf on a healthy state is how a gate gets muted.
-    pending_is_symptom = pending > 0 and age is not None and age > STALE_WARN_HOURS
+    #
+    # ⚠️ AGE IS NOT THE ONLY WAY PENDING BECOMES A SYMPTOM, which is what #1035
+    # found. Age says "the cycle has had time to run"; it assumes a cycle. With
+    # the transform STOPPED there is no cycle, and pending work is stuck from the
+    # first minute — no waiting required, and no threshold to tune.
+    scheduled = transform_is(running)
+    pending_is_symptom = pending > 0 and (
+        (age is not None and age > STALE_WARN_HOURS) or scheduled == "stopped"
+    )
     if pending == 0:
         print("  pending                     0")
     else:
         detail = ", ".join(f"{n} {t}" for t, n in rows)
         flag = "   ⚠️" if pending_is_symptom else ""
         print(f"  pending                     {pending:<10} ({detail}){flag}")
+        if scheduled == "stopped":
+            print(f"  {'':<28}nothing is scheduled to apply these — see Automation below")
     if pending_is_symptom:
         state = WARN
 
@@ -230,6 +276,147 @@ def register_block(cur) -> int:
         if age > RECONCILE_WARN_HOURS:
             state = WARN
     return state
+
+
+def _instigator_name(body) -> str | None:
+    """
+    The schedule or sensor a stored row is about, or None if this shape is not
+    one we recognise.
+
+    ⚠️ `instigators.status` is a column this tool can read without knowing
+    anything about Dagster's internals. The NAME is only in `instigator_body`, a
+    serialised blob whose field spellings are Dagster's business and have already
+    been renamed once: the origin still serialises as `job_name` on 1.13.4, from
+    before instigators stopped being called jobs. Both spellings are tried and an
+    unrecognised shape returns None rather than a guess.
+    """
+    try:
+        origin = json.loads(body)["origin"]
+    except Exception:  # noqa: BLE001 — any unreadable body is simply unrecognised
+        return None
+    for key in ("instigator_name", "job_name"):
+        value = origin.get(key)
+        if isinstance(value, str) and value:
+            return value
+    return None
+
+
+def running_instigators() -> set[str] | None:
+    """
+    Which schedules and sensors are running, by name — or None when that cannot
+    be read.
+
+    🔴 None IS NOT AN EMPTY SET, and that distinction is this whole change. "No
+    automation is running" and "I could not ask what is running" are opposite
+    findings: the first makes a pending change a fault, the second makes it
+    unknown. Collapsing them to a falsy value would recreate the bug one level
+    down — `_api_orgnrs` already carries the same rule for the same reason.
+
+    ⚠️ NO ROW MEANS STOPPED ONLY BECAUSE NOTHING HERE DECLARES ITSELF RUNNING.
+    Dagster writes a row when a human toggles an instigator, and one more on the
+    daemon's first tick for anything declaring `default_status=RUNNING`. Atlas
+    declares no default status anywhere, so absence is stoppedness — an
+    assumption held by `test_nothing_declares_itself_running`, which fails the day
+    it stops being true and names this function.
+
+    🔵 Same database and same credential as the Jobs block, and the same
+    degradation: unset, unreachable and unauthorised all end here as None. The
+    `instigators` table is not a public contract, so every failure is caught.
+    """
+    url = os.environ.get("DAGSTER_DATABASE_URL")
+    if not url:
+        return None
+    try:
+        conn = _conn(url)
+        with conn, conn.cursor() as cur:
+            cur.execute("select status, instigator_body from instigators")
+            rows = cur.fetchall()
+    except Exception:  # noqa: BLE001 — a schema and a role this tool does not own
+        return None
+
+    running: set[str] = set()
+    for status, body in rows:
+        if status not in RUNNING_STATUSES:
+            continue
+        name = _instigator_name(body)
+        if name is None:
+            # ⚠️ Something IS running and this tool cannot say what. Reporting
+            # the rest as "nothing relevant is running" would be a false alarm
+            # built out of a parse failure, so the whole answer becomes unknown.
+            return None
+        running.add(name)
+    return running
+
+
+def transform_is(running: set[str] | None) -> str:
+    """
+    'running' | 'stopped' | 'unknown' — three answers, deliberately not a bool.
+
+    ⚠️ The same lesson as the exit scheme twenty lines up: a single boolean
+    cannot hold three states, and the state it silently drops is the one about
+    not knowing.
+    """
+    if running is None:
+        return "unknown"
+    return "running" if TRANSFORM_SCHEDULE in running else "stopped"
+
+
+def _awaiting(scheduled: str) -> str:
+    """
+    The clause that follows a count of unapplied changes — one per answer.
+
+    🔴 There is no default arm. A wording chosen by falling through is how the
+    old sentence came to promise a transform on a host that had none.
+    """
+    if scheduled == "running":
+        return " — awaiting the next transform (:10/:40), not a fault"
+    if scheduled == "stopped":
+        return f" — {TRANSFORM_SCHEDULE} is STOPPED, nothing will apply them   ⚠️"
+    return " — whether anything is scheduled to apply them is unknown (see Automation)"
+
+
+def automation_block(running: set[str] | None) -> int:
+    """
+    What is scheduled — printed because the numbers above are only meaningful
+    alongside whether anything will ever change them.
+
+    🔴 THIS BLOCK NEVER WARNS ON ITS OWN, AND THAT IS A DECISION, NOT AN
+    OVERSIGHT. A deliberately stopped install is a legitimate state — it is the
+    state the install guide leaves you in, between loading first data and going
+    live — and a check that exits 1 there teaches its operator that 1 is normal.
+    The documented verification step would have to expect 1, and a real fault
+    would then be indistinguishable from the expected one. That is precisely how
+    the `pending > 0` line cried wolf before D2.
+
+    🔵 So stoppedness is reported loudly and costs nothing until something is
+    waiting on it. The blocks that have work in hand — the register's `pending`
+    count and the deletion assertion — are the ones that turn it into a warning,
+    because they are the ones that can tell whether anything is actually stuck.
+    """
+    print()
+    print("Automation")
+    state = transform_is(running)
+    if state == "unknown":
+        # 🔵 NOT ASKED or could not look — either way this tool says so and makes
+        # no claim in the blocks that depend on it. Not CANNOT: the headline
+        # question (is an applied deletion still served?) does not need this, and
+        # returning 2 on every host without Dagster wiring would make the exit
+        # code report the tool's own configuration instead of Atlas's health.
+        print("  cannot tell what is running — set DAGSTER_DATABASE_URL")
+        print("  (the same credential the Jobs block uses; see its note on the role)")
+        return OK
+    if state == "running":
+        others = len(running) - 1
+        print(f"  {TRANSFORM_SCHEDULE:<30}RUNNING")
+        print(f"  {'other instigators running':<30}{others}")
+        return OK
+    print(f"  {TRANSFORM_SCHEDULE:<30}STOPPED")
+    print(f"  {'other instigators running':<30}{len(running)}")
+    print("  Nothing is scheduled to reconcile the register: it holds whatever was")
+    print("  last loaded, and will not change. Enabling automation is step 4 of the")
+    print("  install guide — `uis dagster automation` reports and asserts state but")
+    print("  cannot set it; that needs startSchedule / startSensor mutations.")
+    return OK
 
 
 def _address_hint(url: str) -> str:
@@ -266,7 +453,7 @@ def _address_hint(url: str) -> str:
     return ""
 
 
-def deletion_block(cur) -> int:
+def deletion_block(cur, running: set[str] | None) -> int:
     """
     🔴 D1 — THIS MUST BE AN HTTP REQUEST, NOT A QUERY.
 
@@ -330,18 +517,25 @@ def deletion_block(cur) -> int:
     )
     pending_deletions = (pending_row or (0,))[0] or 0
 
+    # 🔴 #1035 — THE SENTENCE BELOW USED TO PROMISE A TRANSFORM IT HAD NOT
+    # CHECKED FOR. "Awaiting the next transform (:10/:40) — not a fault" is true
+    # when the schedule is running and a lie when it is stopped, and it printed
+    # the same either way, over exit 0. The three wordings are the three answers
+    # `transform_is` returns; there is no fourth and no default.
+    scheduled = transform_is(running)
+
     if not row:
         if pending_deletions:
-            # Not a fault and not an assertion: the only deletions the feed has
-            # are newer than the transform. Reported so the block is never
-            # silently empty.
-            print(f"  {pending_deletions} deletion(s) awaiting the next transform — nothing applied yet to assert")
+            # Not an assertion either way: the only deletions the feed has are
+            # newer than the dimension's watermark. Reported so the block is
+            # never silently empty.
+            print(f"  {pending_deletions} deletion(s) not yet applied{_awaiting(scheduled)}")
         else:
             print("  no deletion in the feed yet — nothing to assert")
-        return OK
+        return WARN if (pending_deletions and scheduled == "stopped") else OK
     orgnr, _oid = row
     if pending_deletions:
-        print(f"  {pending_deletions} newer deletion(s) awaiting the next transform (:10/:40) — not a fault")
+        print(f"  {pending_deletions} newer deletion(s) not yet applied{_awaiting(scheduled)}")
 
     base = os.environ.get("ATLAS_POSTGREST_URL") or os.environ.get("POSTGREST_URL")
     if not base:
@@ -368,7 +562,10 @@ def deletion_block(cur) -> int:
 
     if code == 200 and body == []:
         print(f"  most recent applied deletion {orgnr}  absent from the API ✓")
-        return OK
+        # ⚠️ The assertion passed and there is still a finding: deletions the
+        # register has pulled are going nowhere. Both facts are true and the
+        # weaker one must not swallow the stronger.
+        return WARN if (pending_deletions and scheduled == "stopped") else OK
     # Applied by the transform and still served: a real fault at any age.
     print(f"  most recent APPLIED deletion {orgnr}  STILL SERVED by the API ⚠️")
     return WARN
@@ -693,10 +890,18 @@ def main(argv: list[str]) -> int:
         return 2
 
     state = OK
+    # 🔴 READ ONCE, BEFORE ANYTHING THAT DEPENDS ON IT, AND PASS IT DOWN.
+    # Two blocks need the same answer and a single report must not contain two of
+    # them: a register line saying work is stuck and a deletion line saying it is
+    # merely waiting would be this tool disagreeing with itself, which is the
+    # failure it was built to catch in the pipeline.
+    running = running_instigators()
+
     try:
         with conn, conn.cursor() as cur:
-            state = worst(state, register_block(cur))
-            state = worst(state, deletion_block(cur))
+            state = worst(state, register_block(cur, running))
+            state = worst(state, automation_block(running))
+            state = worst(state, deletion_block(cur, running))
             state = worst(state, ingest_block(cur))
             if n:
                 state = worst(state, last_changes(cur, n))
