@@ -343,73 +343,173 @@ def _feed_last_success(cur) -> float | None:
     return _hours_since(row[0]) if row and row[0] else None
 
 
-def _instigator_name(body) -> str | None:
-    """
-    The schedule or sensor a stored row is about, or None if this shape is not
-    one we recognise.
+# 🔵 Dagster's PUBLIC API, replacing a read of its private tables.
+#
+# This used to be `select status, instigator_body from instigators` against the
+# `dagster` database — a table this tool does not own, reached with a credential
+# it should never have been given. The name lived only inside `instigator_body`,
+# a serialised blob whose field spelling Dagster had ALREADY renamed once under
+# us (`job_name` -> `instigator_name`), so the old code tried both and returned
+# "unknown" for any third spelling.
+#
+# tor-agent refused the credential and was right to (urb-agents #1150): the code
+# location's environment is copied into EVERY run pod it launches
+# (`includeConfigInLaunchedRuns` defaults true), so "a credential for a status
+# script" would have been the `dagster` role — owner of runs, event_logs and
+# schedules for every code location on the installation — delivered into
+# arbitrary tenant asset code. The API needs no role at all.
+#
+# ⚠️ NO repositorySelector ON PURPOSE. The selector needs the code location's
+# name, which UIS parameterises from `params.app_name`, so hard-coding
+# "atlas-data" would break any install that renamed it. This asks for every
+# repository and the block PRINTS the location it answered from, so an answer
+# coming from somewhere unexpected is visible rather than silent.
+_INSTIGATOR_QUERY = """
+{
+  repositoriesOrError {
+    ... on RepositoryConnection {
+      nodes {
+        name
+        location { name }
+        schedules { name scheduleState { status } }
+        sensors { name sensorState { status } }
+      }
+    }
+  }
+}
+"""
 
-    ⚠️ `instigators.status` is a column this tool can read without knowing
-    anything about Dagster's internals. The NAME is only in `instigator_body`, a
-    serialised blob whose field spellings are Dagster's business and have already
-    been renamed once: the origin still serialises as `job_name` on 1.13.4, from
-    before instigators stopped being called jobs. Both spellings are tried and an
-    unrecognised shape returns None rather than a guess.
+# imac measured 200 in 32 ms from inside the code-location pod. Ten seconds is
+# not a latency budget, it is the point at which "not answering" is the answer.
+GRAPHQL_TIMEOUT_S = 10
+
+
+def _dagster_graphql(query: str) -> tuple[object | None, str | None]:
     """
+    Ask Dagster's GraphQL API. Returns (data, why_not) — exactly one is None.
+
+    🔴 DO NOT BRANCH ON `status != 200`. imac measured this from inside the pod
+    (urb-agents #1151): a MALFORMED QUERY returns 400 with a JSON `errors` body,
+    and so does an unauthenticated GET. Treating not-200 as "cannot reach
+    Dagster" would render a fault in THIS FILE as a network failure — the same
+    defect this whole change exists to fix, one layer up, and `!= 200` is the
+    obvious branch to write.
+
+    🔴 A REFUSAL IS NOT DISTINGUISHABLE FROM A TIMEOUT HERE, so this must not
+    claim one. imac's table, `-m 5` from inside the pod:
+
+        real endpoint         200   exit 0
+        DNS does not resolve  000   exit 6    <- the only distinguishable failure
+        port with no listener 000   exit 28
+        unroutable address    000   exit 28
+
+    Nothing returns curl's 7, because traffic to a ClusterIP port with no
+    listener is DROPPED rather than refused. So a wrong port and a NetworkPolicy
+    are the same observation, and the honest wording is "reason indeterminate".
+    Naming a cause we have not established is worse than naming none.
+
+    ⚠️ Reachability was proven on a cluster with no NetworkPolicy in `dagster`.
+    If one ever appears this becomes the indeterminate branch, which is why that
+    branch says what to check instead of what happened.
+    """
+    url = os.environ.get("DAGSTER_GRAPHQL_URL")
+    if not url:
+        return None, "DAGSTER_GRAPHQL_URL is not set here"
+    endpoint = url.rstrip("/") + "/graphql"
+    req = urllib.request.Request(
+        endpoint,
+        data=json.dumps({"query": query}).encode(),
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
     try:
-        origin = json.loads(body)["origin"]
-    except Exception:  # noqa: BLE001 — any unreadable body is simply unrecognised
-        return None
-    for key in ("instigator_name", "job_name"):
-        value = origin.get(key)
-        if isinstance(value, str) and value:
-            return value
-    return None
+        with urllib.request.urlopen(req, timeout=GRAPHQL_TIMEOUT_S) as resp:
+            raw = resp.read()
+    except urllib.error.HTTPError as exc:
+        # 🔵 A response WITH a body is Dagster answering, not the network
+        # failing. Say so, and quote it — this is almost always our own query.
+        detail = None
+        try:
+            detail = json.loads(exc.read().decode()).get("errors")
+        except Exception:  # noqa: BLE001 — a body we cannot parse is still a body
+            pass
+        if detail:
+            return None, f"Dagster rejected the query (HTTP {exc.code}): {str(detail)[:200]}"
+        return None, f"Dagster answered HTTP {exc.code} with no error body"
+    # 🔴 NOT `except Exception`. A bare catch here reports a NameError or an
+    # AttributeError in THIS FILE as "could not reach Dagster" — blaming the
+    # network for our own bug, which is the exact trap imac named one paragraph
+    # up, arrived at from the other side. Caught while writing the tests: a typo
+    # in the test harness surfaced as a reachability failure, exactly as a real
+    # one would have. Transport errors are named; a programming error belongs to
+    # main()'s handler, which says "cannot answer: <class>" and exits 2.
+    except (urllib.error.URLError, TimeoutError, OSError, ValueError) as exc:
+        return None, (
+            f"could not reach {endpoint} — reason indeterminate "
+            f"({type(exc).__name__}). Check the service is up and that no "
+            f"NetworkPolicy in the dagster namespace blocks this pod."
+        )
+    try:
+        payload = json.loads(raw.decode())
+    except (ValueError, UnicodeDecodeError):
+        # Dagster answered with something that is not JSON. That is an answer,
+        # not a reachability failure, and must not be worded as one.
+        return None, f"Dagster's reply from {endpoint} was not JSON"
+    # ⚠️ A 200 can still carry `errors` instead of `data`. Same rule: that is
+    # Dagster answering us, not a reachability problem.
+    if isinstance(payload, dict) and payload.get("errors"):
+        return None, f"Dagster returned errors: {str(payload['errors'])[:200]}"
+    if not isinstance(payload, dict) or payload.get("data") is None:
+        return None, "Dagster returned no data and no errors"
+    return payload["data"], None
+
+
+def instigator_states() -> tuple[set[str] | None, str | None, str | None]:
+    """
+    (running names, the location they came from, why_not) — `why_not` is set
+    exactly when the names are None.
+
+    🔴 None IS NOT AN EMPTY SET, and that distinction is why this function
+    exists. "No automation is running" and "I could not ask what is running" are
+    opposite findings: the first makes a pending change a fault, the second makes
+    it unknown. Collapsing them to a falsy value would recreate the bug one level
+    down — `_api_orgnrs` carries the same rule for the same reason.
+
+    ⚠️ NO ENTRY MEANS STOPPED ONLY BECAUSE NOTHING HERE DECLARES ITSELF RUNNING.
+    Atlas declares no `default_status` anywhere, so absence is stoppedness — an
+    assumption held by `test_nothing_declares_itself_running`, which fails the
+    day it stops being true and names this function.
+    """
+    data, why_not = _dagster_graphql(_INSTIGATOR_QUERY)
+    if data is None:
+        return None, None, why_not
+    try:
+        nodes = data["repositoriesOrError"]["nodes"]
+    except Exception:  # noqa: BLE001 — a shape we do not recognise is not an answer
+        return None, None, "Dagster's reply did not contain a repository list"
+
+    running: set[str] = set()
+    locations: set[str] = set()
+    for node in nodes:
+        location = ((node.get("location") or {}).get("name")) or "?"
+        locations.add(location)
+        for key, state_key in (("schedules", "scheduleState"), ("sensors", "sensorState")):
+            for item in node.get(key) or []:
+                status = ((item.get(state_key) or {}).get("status"))
+                if status in RUNNING_STATUSES:
+                    name = item.get("name")
+                    if not name:
+                        # Something IS running and this tool cannot say what.
+                        # Reporting the rest as "nothing relevant is running"
+                        # would be a false alarm built out of a parse failure.
+                        return None, None, "Dagster reported a running instigator with no name"
+                    running.add(name)
+    return running, ", ".join(sorted(locations)), None
 
 
 def running_instigators() -> set[str] | None:
-    """
-    Which schedules and sensors are running, by name — or None when that cannot
-    be read.
-
-    🔴 None IS NOT AN EMPTY SET, and that distinction is this whole change. "No
-    automation is running" and "I could not ask what is running" are opposite
-    findings: the first makes a pending change a fault, the second makes it
-    unknown. Collapsing them to a falsy value would recreate the bug one level
-    down — `_api_orgnrs` already carries the same rule for the same reason.
-
-    ⚠️ NO ROW MEANS STOPPED ONLY BECAUSE NOTHING HERE DECLARES ITSELF RUNNING.
-    Dagster writes a row when a human toggles an instigator, and one more on the
-    daemon's first tick for anything declaring `default_status=RUNNING`. Atlas
-    declares no default status anywhere, so absence is stoppedness — an
-    assumption held by `test_nothing_declares_itself_running`, which fails the day
-    it stops being true and names this function.
-
-    🔵 Same database and same credential as the Jobs block, and the same
-    degradation: unset, unreachable and unauthorised all end here as None. The
-    `instigators` table is not a public contract, so every failure is caught.
-    """
-    url = os.environ.get("DAGSTER_DATABASE_URL")
-    if not url:
-        return None
-    try:
-        conn = _conn(url)
-        with conn, conn.cursor() as cur:
-            cur.execute("select status, instigator_body from instigators")
-            rows = cur.fetchall()
-    except Exception:  # noqa: BLE001 — a schema and a role this tool does not own
-        return None
-
-    running: set[str] = set()
-    for status, body in rows:
-        if status not in RUNNING_STATUSES:
-            continue
-        name = _instigator_name(body)
-        if name is None:
-            # ⚠️ Something IS running and this tool cannot say what. Reporting
-            # the rest as "nothing relevant is running" would be a false alarm
-            # built out of a parse failure, so the whole answer becomes unknown.
-            return None
-        running.add(name)
+    """Names only — the shape every caller downstream already expects."""
+    running, _location, _why = instigator_states()
     return running
 
 
@@ -440,7 +540,11 @@ def _awaiting(scheduled: str) -> str:
     return " — whether anything is scheduled to apply them is unknown (see Automation)"
 
 
-def automation_block(running: set[str] | None) -> int:
+def automation_block(
+    running: set[str] | None,
+    location: str | None = None,
+    why_not: str | None = None,
+) -> int:
     """
     What is scheduled — printed because the numbers above are only meaningful
     alongside whether anything will ever change them.
@@ -467,13 +571,25 @@ def automation_block(running: set[str] | None) -> int:
         # question (is an applied deletion still served?) does not need this, and
         # returning 2 on every host without Dagster wiring would make the exit
         # code report the tool's own configuration instead of Atlas's health.
-        print("  cannot tell what is running — DAGSTER_DATABASE_URL is not set here")
-        _dagster_url_remedy()
+        # ⚠️ THE REASON IS PRINTED, NOT SUMMARISED. "cannot tell" with no cause
+        # is what sent an operator to export a variable that could never reach
+        # this pod (urb-agents #1149). Whatever `_dagster_graphql` established —
+        # unset, rejected query, or unreachable-reason-indeterminate — is the
+        # operator's only handle on which of those it is.
+        print("  cannot tell what is running")
+        print(f"  {why_not or 'no reason was recorded, which is itself a defect'}")
+        _dagster_graphql_remedy()
         return OK
     if state == "running":
         others = len(running) - 1
         print(f"  {TRANSFORM_SCHEDULE:<30}RUNNING")
         print(f"  {'other instigators running':<30}{others}")
+        # 🔵 WHICH code location answered. No repositorySelector is sent (see
+        # _INSTIGATOR_QUERY), so on an installation with several code locations
+        # a name could in principle come from a neighbour. Printing the source
+        # makes that visible instead of silently wrong.
+        if location:
+            print(f"  {'answered by code location':<30}{location}")
         return OK
     print(f"  {TRANSFORM_SCHEDULE:<30}STOPPED")
     print(f"  {'other instigators running':<30}{len(running)}")
@@ -494,10 +610,33 @@ def automation_block(running: set[str] | None) -> int:
     return OK
 
 
+def _dagster_graphql_remedy() -> None:
+    """
+    The Automation block's remedy, which needs no credential at all.
+
+    🔵 `DAGSTER_GRAPHQL_URL` is declared in template-info.yaml via
+    `env_from_services`, so on a UIS install it is set for you and this remedy
+    should never print. It printing means the declaration did not bind, or the
+    endpoint did not answer — both of which are worth a sentence rather than a
+    shrug.
+    """
+    print("  This build asks Dagster's GraphQL API, which needs no database role.")
+    print("  On UIS the address arrives from `env_from_services: DAGSTER_GRAPHQL_URL`;")
+    print("  if it is missing the declaration did not bind. Elsewhere, set it to")
+    print("  Dagster's webserver base URL — this appends /graphql.")
+
+
 def _dagster_url_remedy() -> None:
     """
     🔴 "set DAGSTER_DATABASE_URL" IS NOT AN INSTRUCTION AN OPERATOR CAN FOLLOW,
     AND IT WAS THE ONLY THING THIS TOOL SAID (imac via ops-dev, urb-agents #1149).
+
+    ⚠️ STILL USED BY THE JOBS BLOCK ONLY. The Automation block moved to the
+    GraphQL API (urb-agents #1150/#1151); Jobs has not, because run history also
+    parses `event_logs.event` for failure messages and that has no one-line
+    equivalent. So this text stays true for the block that still needs it, and
+    the credential it describes is no longer required to answer "what is
+    running".
 
     This script runs INSIDE the code location, invoked by `uis template check`.
     A variable exported in the operator's shell does not travel there, so the
@@ -1143,12 +1282,15 @@ def main(argv: list[str]) -> int:
     # them: a register line saying work is stuck and a deletion line saying it is
     # merely waiting would be this tool disagreeing with itself, which is the
     # failure it was built to catch in the pipeline.
-    running = running_instigators()
+    # One ask, three consumers. `location` and `why_not` exist so the Automation
+    # block can print WHICH location answered and WHY it could not — the rest of
+    # the file only ever wanted the names.
+    running, location, why_not = instigator_states()
 
     try:
         with conn, conn.cursor() as cur:
             state = worst(state, register_block(cur, running))
-            state = worst(state, automation_block(running))
+            state = worst(state, automation_block(running, location, why_not))
             state = worst(state, deletion_block(cur, running))
             state = worst(state, freshness_block(cur))
             state = worst(state, ingest_block(cur))

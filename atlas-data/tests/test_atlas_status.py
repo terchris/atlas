@@ -31,6 +31,7 @@ import contextlib
 import datetime
 import importlib.util
 import io
+import json
 import pathlib
 import sys
 
@@ -376,63 +377,148 @@ def test_a_stopped_install_says_so_loudly(mod):
     assert "startSchedule" not in out, f"do not send operators to raw GraphQL: {out}"
 
 
-def test_an_unreadable_body_makes_the_answer_unknown_not_empty(mod):
+def test_a_running_instigator_with_no_name_makes_the_answer_unknown_not_partial(mod):
     """
-    🔴 None IS NOT AN EMPTY SET. A row says something is RUNNING and its body
-    does not parse: the honest answer is "I cannot tell what is running", never
-    "nothing relevant is running" — which would be a false alarm assembled out of
-    a parse failure.
+    🔴 None IS NOT AN EMPTY SET, AND IT IS NOT A PARTIAL SET EITHER. Something is
+    RUNNING and this tool cannot say what: the honest answer is "I cannot tell",
+    never a set with the nameless one quietly dropped — that would be a false
+    all-clear assembled out of a parse failure.
     """
-    rows = [("RUNNING", "{not json"), ("STOPPED", '{"origin": {"job_name": "x"}}')]
-    assert _drive_instigators(mod, rows) is None, "an unparseable RUNNING row must yield None"
+    payload = _repos([
+        {"name": "x", "scheduleState": {"status": "RUNNING"}},
+        {"name": None, "scheduleState": {"status": "RUNNING"}},
+    ])
+    running, _loc, why = _drive_instigators(mod, payload)
+    assert running is None, "a nameless running instigator must yield None"
+    assert why and "no name" in why, why
 
-    rows = [("STOPPED", "{not json")]
-    assert _drive_instigators(mod, rows) == set(), (
-        "a STOPPED row's body is never parsed, so it cannot make the answer unknown"
+
+def test_a_stopped_instigator_with_no_name_is_simply_not_running(mod):
+    """A stopped entry is never inspected beyond its status, so it cannot make
+    the answer unknown. Only a RUNNING one this tool cannot name is a problem."""
+    payload = _repos([{"name": None, "scheduleState": {"status": "STOPPED"}}])
+    running, _loc, why = _drive_instigators(mod, payload)
+    assert running == set(), running
+    assert why is None, why
+
+
+def test_the_private_instigator_blob_is_no_longer_read(mod):
+    """
+    🔵 REPLACES test_both_spellings_of_the_name_are_read, AND THE REASON IT
+    EXISTED IS THE POINT.
+
+    The name used to live only in `instigators.instigator_body`, a serialised
+    blob whose field spelling Dagster had already renamed under us once
+    (`job_name` -> `instigator_name`), so the old code tried both and returned
+    "unknown" for any third spelling. That test defended a guess about someone
+    else's private schema; it could not have caught the next rename, only
+    recorded the last one.
+
+    The API names the field. This asserts the dependency is gone rather than that
+    the workaround still works.
+    """
+    assert not hasattr(mod, "_instigator_name"), (
+        "the blob parser is gone; nothing should reintroduce a private-schema read"
     )
+    assert "instigator_body" not in mod._INSTIGATOR_QUERY
+    assert "instigators" not in mod._INSTIGATOR_QUERY.lower(), mod._INSTIGATOR_QUERY
 
 
-def test_both_spellings_of_the_name_are_read(mod):
-    """Dagster serialises the origin as `job_name` on 1.13.4, from before
-    instigators stopped being called jobs. A rename must not silently mean
-    'nothing is running'."""
-    assert mod._instigator_name('{"origin": {"job_name": "a"}}') == "a"
-    assert mod._instigator_name('{"origin": {"instigator_name": "b"}}') == "b"
-    assert mod._instigator_name('{"origin": {}}') is None
-    assert mod._instigator_name("") is None
-
-
-def test_a_declared_in_code_row_counts_as_running(mod):
-    """`default_status=RUNNING` is persisted as DECLARED_IN_CODE (and as
-    AUTOMATICALLY_RUNNING in rows written before Dagster renamed it). Reading
-    only 'RUNNING' would report a running schedule as stopped."""
+def test_declared_in_code_counts_as_running(mod):
+    """`default_status=RUNNING` is reported as DECLARED_IN_CODE (and as
+    AUTOMATICALLY_RUNNING by older Dagster). Reading only 'RUNNING' would report
+    a running schedule as stopped."""
     for status in ("RUNNING", "DECLARED_IN_CODE", "AUTOMATICALLY_RUNNING"):
-        rows = [(status, '{"origin": {"job_name": "brreg_transform_half_hourly"}}')]
-        assert _drive_instigators(mod, rows) == {"brreg_transform_half_hourly"}, status
+        payload = _repos([{"name": "brreg_transform_half_hourly",
+                           "scheduleState": {"status": status}}])
+        running, _loc, _why = _drive_instigators(mod, payload)
+        assert running == {"brreg_transform_half_hourly"}, status
 
 
-def test_no_connection_string_is_unknown_not_stopped(mod):
+def test_sensors_count_too_not_only_schedules(mod):
+    """Three of the five instigators are sensors, and the chain that reaches the
+    dbt suite is entirely sensors. Reading schedules alone would report the
+    check chain as absent."""
+    payload = {"repositoriesOrError": {"nodes": [{
+        "name": "__repository__", "location": {"name": "atlas-data"},
+        "schedules": [{"name": "transform_daily", "scheduleState": {"status": "RUNNING"}}],
+        "sensors": [{"name": "run_api_v1_checks_after_transform",
+                     "sensorState": {"status": "RUNNING"}}],
+    }]}}
+    running, loc, _why = _drive_instigators(mod, payload)
+    assert running == {"transform_daily", "run_api_v1_checks_after_transform"}, running
+    assert loc == "atlas-data", loc
+
+
+def test_a_rejected_query_is_not_reported_as_unreachable(mod):
+    """
+    🔴 THE TRAP imac NAMED (urb-agents #1151), AND `!= 200` IS THE OBVIOUS BRANCH
+    TO WRITE. A malformed query returns HTTP 400 with a JSON `errors` body, and
+    so does an unauthenticated GET. Rendering that as "cannot reach Dagster"
+    would blame the network for a fault in this file — the same defect this whole
+    change exists to fix, one layer up.
+    """
+    import urllib.error, io, os
+
+    def _raise(_req, timeout=None):
+        raise urllib.error.HTTPError(
+            "u", 400, "Bad Request", {},
+            io.BytesIO(json.dumps({"errors": [{"message": "Field 'x' is required"}]}).encode()),
+        )
+
+    why = _drive_graphql_failure(mod, _raise)
+    assert "rejected the query" in why, why
+    assert "could not reach" not in why, f"a 400 with a body is not a reachability failure: {why}"
+    assert "NetworkPolicy" not in why, why
+
+
+def test_an_unreachable_endpoint_does_not_assert_a_cause(mod):
+    """
+    🔴 A REFUSAL IS NOT DISTINGUISHABLE FROM A TIMEOUT HERE. imac measured it
+    from inside the pod: a port with no listener and an unroutable address BOTH
+    give curl exit 28, because traffic to a ClusterIP port with nothing behind it
+    is dropped rather than refused. So this must say "reason indeterminate" and
+    what to check — naming a cause it has not established is worse than naming
+    none.
+    """
+    import urllib.error
+
+    def _raise(_req, timeout=None):
+        raise urllib.error.URLError("timed out")
+
+    why = _drive_graphql_failure(mod, _raise)
+    assert "reason indeterminate" in why, why
+    assert "Check" in why, f"say what to check: {why}"
+
+
+def test_no_graphql_url_is_unknown_not_stopped(mod):
     import os
 
-    saved = os.environ.pop("DAGSTER_DATABASE_URL", None)
+    saved = os.environ.pop("DAGSTER_GRAPHQL_URL", None)
     try:
-        assert mod.running_instigators() is None
+        running, _loc, why = mod.instigator_states()
+        assert running is None, "unset must be unknown, never an empty set"
+        assert why and "not set" in why, why
     finally:
         if saved is not None:
-            os.environ["DAGSTER_DATABASE_URL"] = saved
+            os.environ["DAGSTER_GRAPHQL_URL"] = saved
 
 
-def _drive_instigators(mod, rows):
-    """Run running_instigators() against a fake `instigators` table."""
+def _repos(entries, location="atlas-data"):
+    """One repository whose schedules are `entries` and which has no sensors."""
+    return {"repositoriesOrError": {"nodes": [
+        {"name": "__repository__", "location": {"name": location},
+         "schedules": entries, "sensors": []}
+    ]}}
+
+
+def _drive_instigators(mod, payload):
+    """Run instigator_states() against a canned GraphQL reply."""
     import os
 
-    class _Cur:
-        def execute(self, sql, *_a, **_k):
-            assert "instigators" in sql, sql
-            assert "status" in sql, sql
-
-        def fetchall(self):
-            return rows
+    class _Resp:
+        def read(self):
+            return json.dumps({"data": payload}).encode()
 
         def __enter__(self):
             return self
@@ -440,28 +526,39 @@ def _drive_instigators(mod, rows):
         def __exit__(self, *_a):
             return False
 
-    class _Conn:
-        def cursor(self):
-            return _Cur()
-
-        def __enter__(self):
-            return self
-
-        def __exit__(self, *_a):
-            return False
-
-    saved_conn = mod._conn
-    saved_url = os.environ.get("DAGSTER_DATABASE_URL")
-    os.environ["DAGSTER_DATABASE_URL"] = "postgresql://fake/fake"
-    mod._conn = lambda url: _Conn()
+    saved_open = mod.urllib.request.urlopen
+    saved_url = os.environ.get("DAGSTER_GRAPHQL_URL")
+    os.environ["DAGSTER_GRAPHQL_URL"] = "http://dagster.invalid"
+    mod.urllib.request.urlopen = lambda *_a, **_k: _Resp()
     try:
-        return mod.running_instigators()
+        return mod.instigator_states()
     finally:
-        mod._conn = saved_conn
+        mod.urllib.request.urlopen = saved_open
         if saved_url is None:
-            os.environ.pop("DAGSTER_DATABASE_URL", None)
+            os.environ.pop("DAGSTER_GRAPHQL_URL", None)
         else:
-            os.environ["DAGSTER_DATABASE_URL"] = saved_url
+            os.environ["DAGSTER_GRAPHQL_URL"] = saved_url
+
+
+def _drive_graphql_failure(mod, raiser):
+    """Run _dagster_graphql() against a urlopen that fails, and return why_not."""
+    import os
+
+    saved_open = mod.urllib.request.urlopen
+    saved_url = os.environ.get("DAGSTER_GRAPHQL_URL")
+    os.environ["DAGSTER_GRAPHQL_URL"] = "http://dagster.invalid"
+    mod.urllib.request.urlopen = raiser
+    try:
+        data, why = mod._dagster_graphql("{__typename}")
+        assert data is None, "a failure must not return data"
+        return why
+    finally:
+        mod.urllib.request.urlopen = saved_open
+        if saved_url is None:
+            os.environ.pop("DAGSTER_GRAPHQL_URL", None)
+        else:
+            os.environ["DAGSTER_GRAPHQL_URL"] = saved_url
+
 
 
 def test_nothing_declares_itself_running(mod):

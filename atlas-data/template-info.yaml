@@ -164,6 +164,36 @@ provides:
           env_from_services:
             ATLAS_POSTGREST_URL: postgrest
 
+            # 🔵 SO THE CHECK CAN ASK WHAT IS RUNNING WITHOUT A DATABASE ROLE.
+            #
+            # The Automation block used to read `instigators` in the `dagster`
+            # database, which needs the `dagster` role. tor-agent refused to
+            # inject that credential and was right (urb-agents #1150): the code
+            # location's environment is copied into EVERY run pod it launches
+            # (`includeConfigInLaunchedRuns` defaults true), so it would have put
+            # the owner of runs, event_logs and schedules FOR EVERY CODE LOCATION
+            # ON THE INSTALLATION into arbitrary tenant asset code. Dagster's
+            # GraphQL API answers the same question with no role at all.
+            #
+            # ⚠️ The value is a SERVICE ID, not an address — UIS composes the
+            # in-cluster URL from its own services.json, and the script appends
+            # /graphql. Same reasoning as ATLAS_POSTGREST_URL above: a service
+            # address is in-cluster by construction, so there is no second
+            # correct answer to confuse it with.
+            #
+            # ✅ Reachability from THIS pod is measured, not assumed. imac ran it
+            # with `kubectl exec` into the code location on e439668 — HTTP 200,
+            # no auth, and 200 in 32 ms from Python rather than only curl
+            # (urb-agents #1151). UIS's own proof came from a probe pod in the
+            # `dagster` namespace, which is a neighbour of this pod and not this
+            # pod; that distinction is why it was worth measuring.
+            #
+            # ⚠️ Proven on a cluster with NO NetworkPolicy in `dagster`. If one
+            # ever appears the check reports "could not reach, reason
+            # indeterminate" and says what to look at, because a dropped packet
+            # and a wrong port are the same observation from in here.
+            DAGSTER_GRAPHQL_URL: dagster
+
 # ─────────────────────────────────────────────────────────────────────────────
 # What this application DOES once installed, as opposed to what it creates.
 #
@@ -420,23 +450,31 @@ operational:
         where a red/green light does not.
     - symptom: >-
         The check says to set DAGSTER_DATABASE_URL. You set it and nothing changes -
-        the Automation and Jobs blocks still say they cannot tell.
+        the Jobs block still says it cannot tell.
       cause: >-
         `uis template check atlas` runs atlas-status.py INSIDE the code location.
         A variable exported in your own shell never reaches that pod, so the
         remedy as printed could not work and said nothing about why (imac, via
-        ops-dev, urb-agents #1149). The build that introduced this entry prints
-        the real constraint instead. The mechanism itself is sound: imac ran the
-        same script in-pod with the credential and both blocks appear in full.
+        ops-dev, urb-agents #1149). The check now prints the real constraint
+        instead of an instruction that cannot be followed.
       fix: >-
-        It has to be set on the code-location deployment, not in your shell, and
-        it needs the `dagster` role's credential rather than Atlas's - `runs` and
-        `event_logs` are owned by `dagster` and Atlas has no SELECT on them, so a
-        URL built from Atlas's own connection string connects and then fails with
-        `permission denied for table runs`. Nothing in UIS declares this variable
-        yet; that is asked as urb-agents #1150. Until it lands, the Automation and
-        Jobs blocks degrade to "cannot tell" and the headline answer - is an
-        applied deletion still served? - does not depend on them.
+        The ANSWER for the Automation block is that it no longer needs this
+        variable at all: as of this build it asks Dagster's GraphQL API, which
+        needs no database role, and UIS supplies the address automatically via
+        `env_from_services: DAGSTER_GRAPHQL_URL`. If that block still says it
+        cannot tell, it now prints WHY - unset, query rejected, or unreachable -
+        and that reason is the thing to act on.
+
+        The JOBS block has not moved yet and still wants DAGSTER_DATABASE_URL,
+        because run history also parses event_logs for failure messages and that
+        has no one-line equivalent. Injecting that credential was REFUSED and
+        will not happen (urb-agents #1150): a code location's environment is
+        copied into every run pod it launches, so it would hand the `dagster`
+        role - owner of runs, event_logs and schedules for every code location on
+        the installation - to arbitrary tenant asset code. So on a stock UIS
+        install the Jobs block is diagnostic context that stays dark, the
+        Automation block works, and the headline answer - is an applied deletion
+        still served? - never depended on either.
     - symptom: >-
         brreg_bootstrap was re-run to repair the register. It reported success, the
         transform reported success, and the API still serves the old data.
