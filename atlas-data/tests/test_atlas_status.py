@@ -305,6 +305,32 @@ def test_unknown_automation_promises_nothing_in_either_direction(mod):
     assert "unknown" in out, f"the tool must say it does not know: {out}"
 
 
+def test_a_dark_automation_block_does_not_make_the_whole_check_cannot(mod):
+    """
+    🔴 PINS A TRADE, NOT AN ACCIDENT — and the wording around it was wrong first.
+
+    A block that could not look normally returns CANNOT, which dominates and
+    makes the whole run exit 2. The Automation block deliberately does NOT: the
+    headline question (is an applied deletion still served?) does not depend on
+    it, and returning 2 on every host without Dagster wiring would make the exit
+    status report this tool's own configuration instead of Atlas's health.
+
+    ⚠️ imac measured the consequence and found the file arguing both sides
+    (urb-agents #1155): the exit-code note promised that `atlas-status.py &&
+    deploy` "must not proceed on a partial view", while this block lets it. The
+    note was corrected, because the behaviour is the better of the two.
+
+    🔵 This test exists so the next person reconciles it the same way round. If
+    it fails, someone has made a dark Automation block fail the whole check —
+    which is a defensible idea and NOT the one that was decided. Change the
+    decision deliberately, not by making the comment true.
+    """
+    assert mod.automation_block(None, None, "DAGSTER_GRAPHQL_URL is not set here") == mod.OK, (
+        "an unreadable Automation block must not turn the whole check into "
+        "'could not look' — see the exit-code note in main()"
+    )
+
+
 def test_the_three_answers_are_three(mod):
     assert mod.transform_is({mod.TRANSFORM_SCHEDULE}) == "running"
     assert mod.transform_is({"something_else"}) == "stopped"

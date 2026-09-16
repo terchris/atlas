@@ -1312,9 +1312,33 @@ def main(argv: list[str]) -> int:
 
     state = worst(state, jobs_block())
     # 0 healthy · 1 looked and found fault · 2 could not look.
-    # ⚠️ CANNOT dominates WARN on purpose: if any part of the picture is missing,
-    # the parts that are present do not add up to "healthy", and a caller doing
-    # `atlas-status.py && deploy` must not proceed on a partial view.
+    # ⚠️ CANNOT dominates WARN on purpose: a block that ASKED AND COULD NOT LOOK
+    # makes the parts that did answer add up to less than "healthy".
+    #
+    # 🔴 BUT EXIT 0 DOES NOT MEAN EVERY BLOCK ANSWERED, and this comment used to
+    # say it did — "a caller doing `atlas-status.py && deploy` must not proceed
+    # on a partial view" (imac, urb-agents #1155). That overstated the guarantee
+    # and contradicted a decision made twenty lines into automation_block: a
+    # block whose answer the HEADLINE does not depend on returns OK when it
+    # could not look, rather than failing every host that does not wire it up.
+    # The Automation block does exactly that, so such a caller does proceed with
+    # automation unknown.
+    #
+    # ✅ Both are right; together they told a script author two different things.
+    # What the exit code actually promises, stated once:
+    #
+    #   0  the headline question was answered and nothing is wrong with it.
+    #      Some diagnostic block may have been unable to look and said so.
+    #   1  something was looked at and found wrong.
+    #   2  a block the answer DEPENDS ON could not be reached.
+    #
+    # 🔵 So `atlas-status.py && deploy` is a gate on "is the register healthy",
+    # NOT on "is everything known". A caller who needs the second must read the
+    # output — every block that cannot look prints why, and that is the surface
+    # for it. Do not widen the exit code to carry it: returning 2 on every host
+    # without Dagster wiring would make the exit status report this tool's own
+    # configuration instead of Atlas's health, which is the trade already made
+    # and argued at automation_block.
     return state
 
 
