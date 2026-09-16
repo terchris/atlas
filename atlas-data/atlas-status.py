@@ -808,6 +808,32 @@ def jobs_block() -> int:
         return CANNOT
     try:
         with conn, conn.cursor() as cur:
+            # 🔴 `start_time is not null` IS LOAD-BEARING, AND IT WAS NOT PUT
+            # THERE FOR THIS REASON. It was written so `to_timestamp()` had
+            # something to format. It also happens to be the only thing keeping
+            # runs that NEVER EXECUTED out of this block, so do not "improve" it
+            # into `coalesce(start_time, end_time)` to show a timestamp for every
+            # row (ops-dev, urb-agents #1076).
+            #
+            # A launch that fails before submitting leaves a NOT_STARTED run, and
+            # Dagster's monitoring daemon later reaps it to FAILURE. `start_time`
+            # is written ONLY on PIPELINE_START, which such a run never emits; the
+            # reap writes `end_time`. So the row is a FAILURE with a null
+            # start_time and no steps behind it.
+            #
+            # ⚠️ Measured rather than reasoned — three orphans plus one real
+            # failure in a runs table:
+            #     with this filter      brreg_transform FAILURE            (1 row)
+            #     with coalesce         transform_checks x3 + the real one (4 rows)
+            # The second renders as "transform_checks  3 consecutive  ⚠️", which is
+            # exactly the streak signal below, produced by three runs that never
+            # executed a single step. A false alarm assembled out of a failed
+            # launch.
+            #
+            # 🔵 This is also why the Checks block, when it is built, must read
+            # `asset_check_executions` rather than run history: a run that never
+            # started executed no checks, so it leaves no rows there at all.
+            # Immune by construction instead of by a filter someone might edit.
             cur.execute(
                 """
                 select pipeline_name, status, to_timestamp(start_time)
