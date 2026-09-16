@@ -279,8 +279,40 @@ operational:
     why: >-
       Enabling the schedules does not backfill. The crons above are the next
       fire, not a catch-up, so a fresh install stays empty until one comes round.
+    # 🔴 THE MOST IMPORTANT SENTENCE IN THIS FIELD IS FIRST BECAUSE UIS TRUNCATES.
+    #
+    # It used to be the fourth paragraph. imac measured what that meant: this
+    # field parses to 2300 characters and UIS renders 1114, cutting immediately
+    # before it — so PR #314, whose entire stated purpose was to say the install
+    # is not validated, reached no operator on any surface (urb-agents #1149).
+    # install, --dry-run, template progress and template check never emit `how`
+    # at all; template info emits it and cuts it off.
+    #
+    # ⚠️ This is the SAME trap as first_data.measured on #793, noted two lines
+    # below on `takes`, and I walked into it again from the other end: there the
+    # field rendered nowhere, here it renders by half. A long field is a field
+    # with a silent cliff in it. **Put what must be read in the first paragraph
+    # and keep it short** — do not assume the rest arrives.
     how: >-
-      Launch these jobs from the Dagster UI, serially, in exactly this order.
+      WHEN THESE SIX HAVE FINISHED THE INSTALL IS LOADED BUT NOT VALIDATED, and
+      nothing else says so. Launch them from the Dagster UI, serially, in exactly
+      this order. Atlas defines 685 asset checks - 681 dbt + 4 api_v1, measured by
+      imac on build e439668 - and on a fresh install NONE of them has run. They
+      are reached only through three instigators that all ship stopped:
+      transform_daily, then the sensor to api_v1_checks, then the sensor to
+      transform_checks. So the suite does not first run at 05:00 the next morning;
+      it first runs after the next transform_daily FOLLOWING go-live, and if
+      automation is never enabled it never runs at all. Enable automation with
+      `uis dagster automation --start`.
+
+      Four of the 685 can be run on demand: `uis dagster run api_v1_checks` takes
+      ~27 s and covers the PUBLIC API - row counts against the marts they wrap,
+      column COMMENTs, and the anonymous role's grants. The other 681 cannot be
+      launched on demand yet (urb-agents #1064, #1147) but they DO run in the
+      sensor chain once automation is on: imac measured 681 SUCCEEDED that way on
+      e439668. A green transform_checks is not proof they all passed - see
+      troubleshooting.
+
       The order is not arbitrary: seed_sources_refresh contains raw/_migrations
       and runs third, so the migrations apply after two source jobs have already
       written. That is safe because they are idempotent, but reordering these has
@@ -300,24 +332,6 @@ operational:
       with nothing saying why; running it twice is safe (upsert, never truncate)
       but pointless.
 
-      WHEN THESE SIX HAVE FINISHED THE INSTALL IS LOADED BUT NOT VALIDATED, and
-      nothing else says so. Atlas defines 679 asset checks - 675 from dbt and 4
-      on the api_v1 surface - and on a fresh install none of them has run. They
-      are reached only through a chain of three instigators that all ship
-      stopped: transform_daily, then the sensor to api_v1_checks, then the sensor
-      to transform_checks. So the suite does not first run at 05:00 the next
-      morning; it first runs after the next transform_daily FOLLOWING go-live,
-      and if automation is never enabled it never runs at all.
-
-      Four of the 679 can be run on demand today: `uis dagster run api_v1_checks`
-      launches in about half a second and takes ~27 s. They are the four that
-      cover the PUBLIC API - row counts against the marts they wrap, column
-      COMMENTs, and the anonymous role's grants - which is the part worth
-      checking before anyone reads the data. The other 675 cannot be launched
-      this way yet: the call does not return within 300 s, exceeds the client's
-      60 s budget, and leaves an unsubmitted run behind, so do not retry it
-      (imac, urb-agents #1064). Until that is fixed, on-demand validation covers
-      the public surface and not the dbt suite.
     jobs: [annual_sources_refresh, klass_refresh, seed_sources_refresh, brreg_bootstrap, brreg_change_feed, transform_and_publish]
     # ⚠️ The caveat is INSIDE `takes` because `first_data.measured` renders on no
     # UIS surface (imac, urb-agents #793). A figure whose "this is out of date"
@@ -385,6 +399,44 @@ operational:
   # the image (urb-agents #786): "whoever hits this at 02:00 gets a dbt schema
   # error and no instruction, on a surface that is currently serving nothing."
   troubleshooting:
+    - symptom: >-
+        transform_checks reports SUCCESS, so the data is validated.
+      cause: >-
+        It is not. A transform_checks run reports SUCCESS if the JOB completed,
+        not if the checks passed. imac measured a run on 2026-09-16 that reported
+        SUCCESS while carrying 663 SUCCEEDED and 18 FAILED checks (urb-agents
+        #1149). Those particular 18 are pre-existing kommune_nr / fylke_nr
+        referential-integrity failures, present identically on the previous build
+        - 0 new, 0 fixed - so they are not a regression. The point is the
+        instrument, not the 18: a green transform_checks cannot be told apart
+        from "everything passed", and it is the signal most likely to be trusted
+        precisely because it is green.
+      fix: >-
+        Do not read the job status as a verdict. Read the per-check results in the
+        Dagster UI under the job run, or query the asset-check evaluations
+        directly. If you want one number, compare the failed count against the
+        previous run rather than against zero - the useful question on an upgrade
+        is "did this build break anything", and 18-that-were-already-18 answers it
+        where a red/green light does not.
+    - symptom: >-
+        The check says to set DAGSTER_DATABASE_URL. You set it and nothing changes -
+        the Automation and Jobs blocks still say they cannot tell.
+      cause: >-
+        `uis template check atlas` runs atlas-status.py INSIDE the code location.
+        A variable exported in your own shell never reaches that pod, so the
+        remedy as printed could not work and said nothing about why (imac, via
+        ops-dev, urb-agents #1149). The build that introduced this entry prints
+        the real constraint instead. The mechanism itself is sound: imac ran the
+        same script in-pod with the credential and both blocks appear in full.
+      fix: >-
+        It has to be set on the code-location deployment, not in your shell, and
+        it needs the `dagster` role's credential rather than Atlas's - `runs` and
+        `event_logs` are owned by `dagster` and Atlas has no SELECT on them, so a
+        URL built from Atlas's own connection string connects and then fails with
+        `permission denied for table runs`. Nothing in UIS declares this variable
+        yet; that is asked as urb-agents #1150. Until it lands, the Automation and
+        Jobs blocks degrade to "cannot tell" and the headline answer - is an
+        applied deletion still served? - does not depend on them.
     - symptom: >-
         brreg_bootstrap was re-run to repair the register. It reported success, the
         transform reported success, and the API still serves the old data.

@@ -133,9 +133,26 @@ Every automation condition is `on_cron`, which means **next fire**, not catch-up
 Thursday means the first automatic raw refresh is Sunday 02:00. That is why step 3 exists.
 :::
 
-`uis dagster automation` reports and asserts state but **cannot set it** — use `startSchedule` and
-`startSensor` mutations. Note the return types differ: `startSchedule` returns `ScheduleStateResult`,
-`startSensor` returns `Sensor`. Using the wrong one gives a bare HTTP 400.
+:::danger This page said the opposite until 2026-09-16
+
+It said `uis dagster automation` **cannot set** state and sent you to raw `startSchedule` /
+`startSensor` GraphQL. **That is wrong.** imac used `uis dagster automation --start` and `--stop`
+on **UIS 1.6.106** and they set it correctly (urb-agents #1149). The sentence was also copied into
+`atlas-status.py`, which printed it to operators, and into a unit test that asserted the flag must
+never be mentioned — so a claim about somebody else's CLI became unfalsifiable from inside this
+repo. All three are corrected together.
+:::
+
+**Use `uis dagster automation --start`** (and `--stop`). Verified on UIS 1.6.106; if you are on an
+older UIS and it does not work, the raw GraphQL below is the fallback rather than the instruction.
+
+<details>
+<summary>Fallback: the raw mutations</summary>
+
+Note the return types differ: `startSchedule` returns `ScheduleStateResult`, `startSensor` returns
+`Sensor`. Using the wrong one gives a bare HTTP 400.
+
+</details>
 
 Once enabled, Atlas polls on this cadence (Europe/Oslo):
 
@@ -402,7 +419,7 @@ fails loudly with that instruction if it is missing. You are not expected to kno
 
 | gap | status |
 |---|---|
-| No `uis dagster run <job>` — loading data needs GraphQL | in `PLAN-cli-load-and-report-on-application-data`; both verbs are new CLI surface and wait on a decision, not on implementation |
-| No `uis dagster automation --start` — going live needs GraphQL | as above |
+| ~~No `uis dagster automation --start`~~ | **CLOSED — it shipped and this table did not notice.** Verified working on UIS 1.6.106 (imac, urb-agents #1149). Listed as a gap long after it stopped being one, which is why `atlas-status.py` was still printing GraphQL instructions. |
+| `uis dagster run <job>` | Works for `api_v1_checks` (~27 s). `transform_checks` still fails on demand — platform-side, with tor-agent (urb-agents #1147). Originally tracked in `PLAN-cli-load-and-report-on-application-data`. |
 | Job order is documented, not enforced | see step 3 |
 | `transform_checks` start latency | tracked in `INVESTIGATE-transform-job-decomposition` |

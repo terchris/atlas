@@ -360,11 +360,20 @@ def test_a_stopped_install_says_so_loudly(mod):
         mod.automation_block(set())
     out = buf.getvalue()
     assert "STOPPED" in out and "will not change" in out, out
-    # ⚠️ The command must exist. ops-dev's proposed wording was
-    # `uis dagster automation --start`; installing-on-uis.md says that command
-    # "reports and asserts state but cannot set it". Printing a flag that does
-    # not exist would send an operator into a support round-trip.
-    assert "--start" not in out, f"no such flag; do not print it: {out}"
+    # 🔴 THIS ASSERTION USED TO BE ITS OWN INVERSE, AND IT WAS WRONG.
+    #
+    # It required that `--start` NOT be printed, on the strength of a sentence in
+    # installing-on-uis.md saying `uis dagster automation` "reports and asserts
+    # state but cannot set it". imac then used `--start` / `--stop` on UIS
+    # 1.6.106 and they set it correctly (ops-dev, urb-agents #1149), so the tool
+    # had been sending operators to raw startSchedule / startSensor GraphQL for a
+    # capability their CLI already had — and this test was holding it there.
+    #
+    # ⚠️ A test can only defend a belief, never verify one about another team's
+    # CLI. This one made a doc sentence unfalsifiable from inside this repo.
+    # Verified on 1.6.106; the doc is corrected in the same change.
+    assert "--start" in out, f"the CLI can set it; say so: {out}"
+    assert "startSchedule" not in out, f"do not send operators to raw GraphQL: {out}"
 
 
 def test_an_unreadable_body_makes_the_answer_unknown_not_empty(mod):
@@ -509,18 +518,27 @@ class _FreshnessCursor:
     raises InFailedSqlTransaction.
     """
 
-    def __init__(self, exists=True, counts=None, rows=None):
+    def __init__(self, exists=True, counts=None, rows=None, built_before=False):
         self._exists = exists
+        # ⚠️ Whether marts has EVER been built, probed via marts.dim_brreg_enhet.
+        # The block asks two to_regclass questions and they have different
+        # answers: a missing view on a host that has built marts before is an
+        # upgrade waiting on a transform, not a host that has never run one.
+        # A fixture that answered both alike could not express the difference
+        # the block now turns on.
+        self._built_before = built_before
         self._counts = counts or {}
         self._rows = rows or []
         self._sql = []
         self._mode = None
+        self._probed = None
 
     def execute(self, sql, *_a, **_k):
         flat = " ".join(str(sql).split())
         self._sql.append(flat)
         if "to_regclass" in flat:
             self._mode = "exists"
+            self._probed = "view" if "mart_source_freshness" in flat else "marts"
         elif "group by" in flat:
             self._mode = "counts"
         else:
@@ -529,6 +547,8 @@ class _FreshnessCursor:
 
     def fetchone(self):
         assert self._mode == "exists", "fetchone is only for the existence probe"
+        if self._probed == "marts":
+            return ("marts.dim_brreg_enhet",) if self._built_before else (None,)
         return ("marts.mart_source_freshness",) if self._exists else (None,)
 
     def fetchall(self):
@@ -551,15 +571,42 @@ def test_the_view_is_probed_not_queried_blind(mod):
     )
 
 
-def test_a_missing_view_cannot_answer_and_does_not_pass(mod):
+def test_a_missing_view_on_a_virgin_host_cannot_answer_and_does_not_pass(mod):
     """
-    🔴 ABSENCE MUST NOT RENDER AS GREEN. The view is built by the transform, so
-    its absence means no transform has ever run here. Returning OK would be the
-    exact defect this tool exists to catch, one level up.
+    🔴 ABSENCE MUST NOT RENDER AS GREEN. Nothing has been built here, so there is
+    nothing to compare. Returning OK would be the exact defect this tool exists
+    to catch, one level up.
+
+    ⚠️ Note what this test now REQUIRES in order to mean that: marts must be
+    absent too. The view alone being missing no longer implies a virgin host —
+    see the upgrade test below, which is the case this one used to swallow.
     """
-    state, out = _freshness(mod, _FreshnessCursor(exists=False))
+    cur = _FreshnessCursor(exists=False, built_before=False)
+    state, out = _freshness(mod, cur)
     assert state == mod.CANNOT, f"a missing surface is 'cannot look', got {state!r}"
-    assert "does not exist yet" in out, out
+    assert "no transform has ever run here" in out, out
+    assert "within cadence" not in out, f"it must not report a verdict it does not have: {out}"
+
+
+def test_a_missing_view_on_an_upgraded_host_warns_rather_than_blanking_the_report(mod):
+    """
+    🔴 THE OLD CODE CALLED THIS "no transform has ever run here" AND IT WAS FALSE.
+
+    The view is new in this build, so on an upgrade it is missing while the
+    transform has been running for days. imac measured what that cost: b7e513f
+    exit 0, install e439668 exit 2 "NOTHING WAS CHECKED", one transform later
+    exit 0 again (ops-dev, urb-agents #1149).
+
+    ⚠️ CANNOT dominates every other block, so one pending model reported a
+    complete and healthy picture as no picture at all — at the exact moment an
+    upgrader is asking "did my upgrade work". WARN is the honest answer: the
+    tool looked, and something needs doing.
+    """
+    cur = _FreshnessCursor(exists=False, built_before=True)
+    state, out = _freshness(mod, cur)
+    assert state == mod.WARN, f"an upgrade pending a transform is WARN, got {state!r}"
+    assert "pending" in out, out
+    assert "no transform has ever run here" not in out, f"false on an upgrade: {out}"
     assert "within cadence" not in out, f"it must not report a verdict it does not have: {out}"
 
 
