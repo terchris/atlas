@@ -202,9 +202,49 @@
         "bibtex": "@misc{atlas_brreg_enheter_alle,\n  author = {Brønnøysundregistrene},\n  title  = {Enhetsregisteret — alle registrerte enheter},\n  year   = {n.d.},\n  url    = {https://data.brreg.no/enhetsregisteret/api/dokumentasjon},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/brreg-enheter-alle}\n}"
       },
       "feedback_url": "https://www.brreg.no/om-oss/kontakt-oss/",
-      "consuming_marts": [],
-      "consuming_models": [],
-      "joined_with": [],
+      "consuming_marts": [
+        {
+          "mart_name": "mart_brreg_enhet",
+          "api_v1_name": "brreg_enhet",
+          "title": null,
+          "description_short": "Every organisation registered in Norway — the whole of Brønnøysundregistrene's Enhetsregisteret, around 1.17 million rows, current as of the last change-feed run.",
+          "description_full": "Every organisation registered in Norway — the whole of Brønnøysundregistrene's\nEnhetsregisteret, around 1.17 million rows, current as of the last change-feed run.\nCompanies, foundations, associations, public bodies and sole proprietorships.\n\nKilde: Brønnøysundregistrene. Inneholder data under norsk lisens for offentlige data\n(NLOD) tilgjengeliggjort av Brønnøysundregistrene — https://data.norge.no/nlod/no/2.0.\nRe-users must carry this attribution onward; it is a condition of the licence, not a\ncourtesy.\n\nDeleted organisations are excluded. Brreg reports deletions through its change feed and\nAtlas applies them, so an organisation removed upstream disappears from here — but the\nversion history is kept, so what it looked like before removal remains answerable.\n\nCompleteness caveat: this reflects deletions Brreg REPORTS. A row Atlas holds that Brreg\nnever had would not be removed by any automatic path, because no change event would ever\nmention it.",
+          "sample_query": "https://api-atlas.urbalurba.com/brreg_enhet?limit=5"
+        },
+        {
+          "mart_name": "mart_kommune_ngo_summary",
+          "api_v1_name": "kommune_ngo_summary",
+          "title": "Voluntary organisations per kommune",
+          "description_short": "Active voluntary organisations per kommune and ICNPO category — the number a consumer previously had to download the whole register to compute.",
+          "description_full": "Active voluntary organisations per kommune and ICNPO category —\nthe number a consumer previously had to download the whole\nregister to compute. Published as api_v1.kommune_ngo_summary.\n\nPostgREST has aggregates disabled, so `?select=count()` returns\n400 and the only alternatives were ~15 minutes of per-kommune\nprobes or a 2.8 MB CSV on every page load. One consumer shipped\nthe download (urb-agents #1250, finding 1); this replaces it with\n~12 000 rows.\n\n⚠️ Counts here will NOT match a count over brreg_enhet. 7 488 of\n72 792 active voluntary units (10.3 %) carry no kommune_nr — that\nis what Brreg publishes — and cannot be attributed to a\nmunicipality. A handful more sit on codes outside the 357 active\nkommuner and are dropped by the join.\n\nA (kommune, category) pair absent from this view has zero\norganisations; rows are not emitted for empty combinations.",
+          "sample_query": "https://api-atlas.urbalurba.com/kommune_ngo_summary?limit=5"
+        }
+      ],
+      "consuming_models": [
+        {
+          "name": "mart_brreg_enhet",
+          "kind": "mart"
+        },
+        {
+          "name": "mart_kommune_ngo_summary",
+          "kind": "mart"
+        }
+      ],
+      "joined_with": [
+        {
+          "source_id": "brreg-frivillige",
+          "shared_models": [
+            "mart_brreg_enhet",
+            "mart_kommune_ngo_summary"
+          ]
+        },
+        {
+          "source_id": "ssb-klass-kommuner",
+          "shared_models": [
+            "mart_kommune_ngo_summary"
+          ]
+        }
+      ],
       "last_ingested_at": null,
       "latest_row_count": null,
       "total_runs": null,
@@ -296,9 +336,49 @@
         "bibtex": "@misc{atlas_brreg_frivillige,\n  author = {Brønnøysundregistrene},\n  title  = {Frivillighetsregisteret — frivillige organisasjoner},\n  year   = {n.d.},\n  url    = {https://www.brreg.no/organisasjon/frivillighetsregisteret/},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/brreg-frivillige}\n}"
       },
       "feedback_url": "https://www.brreg.no/om-oss/kontakt-oss/",
-      "consuming_marts": [],
-      "consuming_models": [],
-      "joined_with": [],
+      "consuming_marts": [
+        {
+          "mart_name": "mart_brreg_enhet",
+          "api_v1_name": "brreg_enhet",
+          "title": null,
+          "description_short": "Every organisation registered in Norway — the whole of Brønnøysundregistrene's Enhetsregisteret, around 1.17 million rows, current as of the last change-feed run.",
+          "description_full": "Every organisation registered in Norway — the whole of Brønnøysundregistrene's\nEnhetsregisteret, around 1.17 million rows, current as of the last change-feed run.\nCompanies, foundations, associations, public bodies and sole proprietorships.\n\nKilde: Brønnøysundregistrene. Inneholder data under norsk lisens for offentlige data\n(NLOD) tilgjengeliggjort av Brønnøysundregistrene — https://data.norge.no/nlod/no/2.0.\nRe-users must carry this attribution onward; it is a condition of the licence, not a\ncourtesy.\n\nDeleted organisations are excluded. Brreg reports deletions through its change feed and\nAtlas applies them, so an organisation removed upstream disappears from here — but the\nversion history is kept, so what it looked like before removal remains answerable.\n\nCompleteness caveat: this reflects deletions Brreg REPORTS. A row Atlas holds that Brreg\nnever had would not be removed by any automatic path, because no change event would ever\nmention it.",
+          "sample_query": "https://api-atlas.urbalurba.com/brreg_enhet?limit=5"
+        },
+        {
+          "mart_name": "mart_kommune_ngo_summary",
+          "api_v1_name": "kommune_ngo_summary",
+          "title": "Voluntary organisations per kommune",
+          "description_short": "Active voluntary organisations per kommune and ICNPO category — the number a consumer previously had to download the whole register to compute.",
+          "description_full": "Active voluntary organisations per kommune and ICNPO category —\nthe number a consumer previously had to download the whole\nregister to compute. Published as api_v1.kommune_ngo_summary.\n\nPostgREST has aggregates disabled, so `?select=count()` returns\n400 and the only alternatives were ~15 minutes of per-kommune\nprobes or a 2.8 MB CSV on every page load. One consumer shipped\nthe download (urb-agents #1250, finding 1); this replaces it with\n~12 000 rows.\n\n⚠️ Counts here will NOT match a count over brreg_enhet. 7 488 of\n72 792 active voluntary units (10.3 %) carry no kommune_nr — that\nis what Brreg publishes — and cannot be attributed to a\nmunicipality. A handful more sit on codes outside the 357 active\nkommuner and are dropped by the join.\n\nA (kommune, category) pair absent from this view has zero\norganisations; rows are not emitted for empty combinations.",
+          "sample_query": "https://api-atlas.urbalurba.com/kommune_ngo_summary?limit=5"
+        }
+      ],
+      "consuming_models": [
+        {
+          "name": "mart_brreg_enhet",
+          "kind": "mart"
+        },
+        {
+          "name": "mart_kommune_ngo_summary",
+          "kind": "mart"
+        }
+      ],
+      "joined_with": [
+        {
+          "source_id": "brreg-enheter-alle",
+          "shared_models": [
+            "mart_brreg_enhet",
+            "mart_kommune_ngo_summary"
+          ]
+        },
+        {
+          "source_id": "ssb-klass-kommuner",
+          "shared_models": [
+            "mart_kommune_ngo_summary"
+          ]
+        }
+      ],
       "last_ingested_at": null,
       "latest_row_count": null,
       "total_runs": null,
@@ -7086,6 +7166,14 @@
           "description_short": "One row per (source_id, contents_code) summarising the latest-year coverage and value range for every indicator in fact_kommune_indicators.",
           "description_full": "One row per (source_id, contents_code) summarising the latest-year\ncoverage and value range for every indicator in\nfact_kommune_indicators. This is the backing dataset for the data\nexplorer index page (atlas-frontend /data) and is the equivalent of\nthe listIndicators() inline query that PostgREST projects as\n/mart_indicator_summary on the public API.\n\nQuery shape: latest-year-per-indicator + group-by + value/null counts\nfiltered to active kommuner only. Inactive kommuner (historical\ncodes retained by upstream) are excluded from the counts so consumers\nsee \"how many of today's kommuner have data?\" not \"how many rows\nexist?\".\n\nRefreshed nightly together with fact_kommune_indicators. The\nupstream_updated column carries the most recent raw load timestamp\nacross the rows that contributed to this summary, so freshness can\nbe inspected per indicator without joining to raw.* sources.",
           "sample_query": "https://api-atlas.urbalurba.com/indicator_summary?limit=5"
+        },
+        {
+          "mart_name": "mart_kommune_ngo_summary",
+          "api_v1_name": "kommune_ngo_summary",
+          "title": "Voluntary organisations per kommune",
+          "description_short": "Active voluntary organisations per kommune and ICNPO category — the number a consumer previously had to download the whole register to compute.",
+          "description_full": "Active voluntary organisations per kommune and ICNPO category —\nthe number a consumer previously had to download the whole\nregister to compute. Published as api_v1.kommune_ngo_summary.\n\nPostgREST has aggregates disabled, so `?select=count()` returns\n400 and the only alternatives were ~15 minutes of per-kommune\nprobes or a 2.8 MB CSV on every page load. One consumer shipped\nthe download (urb-agents #1250, finding 1); this replaces it with\n~12 000 rows.\n\n⚠️ Counts here will NOT match a count over brreg_enhet. 7 488 of\n72 792 active voluntary units (10.3 %) carry no kommune_nr — that\nis what Brreg publishes — and cannot be attributed to a\nmunicipality. A handful more sit on codes outside the 357 active\nkommuner and are dropped by the join.\n\nA (kommune, category) pair absent from this view has zero\norganisations; rows are not emitted for empty combinations.",
+          "sample_query": "https://api-atlas.urbalurba.com/kommune_ngo_summary?limit=5"
         }
       ],
       "consuming_models": [
@@ -7123,6 +7211,10 @@
         },
         {
           "name": "mart_indicator_summary",
+          "kind": "mart"
+        },
+        {
+          "name": "mart_kommune_ngo_summary",
           "kind": "mart"
         }
       ],
@@ -7270,6 +7362,104 @@
       ],
       "sample_query": "https://api-atlas.urbalurba.com/activity_catalog?limit=5",
       "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_activity_catalog"
+    },
+    {
+      "kind": "view",
+      "view_id": "brreg_enhet",
+      "mart_name": "mart_brreg_enhet",
+      "api_v1_name": "brreg_enhet",
+      "title": "api_v1.brreg_enhet",
+      "description_short": "Every organisation registered in Norway — the whole of Brønnøysundregistrene's Enhetsregisteret, around 1.17 million rows, current as of the last change-feed run.",
+      "description_full": "Every organisation registered in Norway — the whole of Brønnøysundregistrene's\nEnhetsregisteret, around 1.17 million rows, current as of the last change-feed run.\nCompanies, foundations, associations, public bodies and sole proprietorships.\n\nKilde: Brønnøysundregistrene. Inneholder data under norsk lisens for offentlige data\n(NLOD) tilgjengeliggjort av Brønnøysundregistrene — https://data.norge.no/nlod/no/2.0.\nRe-users must carry this attribution onward; it is a condition of the licence, not a\ncourtesy.\n\nDeleted organisations are excluded. Brreg reports deletions through its change feed and\nAtlas applies them, so an organisation removed upstream disappears from here — but the\nversion history is kept, so what it looked like before removal remains answerable.\n\nCompleteness caveat: this reflects deletions Brreg REPORTS. A row Atlas holds that Brreg\nnever had would not be removed by any automatic path, because no change event would ever\nmention it.",
+      "columns": [
+        {
+          "name": "organisasjonsnummer",
+          "description": "Nine-digit Norwegian organisation number. Text, never a number — leading zeros are significant. Stable for the life of the organisation, and the join key for organisational data from any Norwegian source."
+        },
+        {
+          "name": "navn",
+          "description": "Registered name, verbatim from Brreg. For an enkeltpersonforetak (organisasjonsform ENK) this is very often the proprietor's own personal name, because that is how the register records them."
+        },
+        {
+          "name": "organisasjonsform_kode",
+          "description": "Legal form code — AS (aksjeselskap), ENK (enkeltpersonforetak), FLI (forening/lag/innretning), STI (stiftelse) and others. The usual filter for separating companies from associations, or for excluding sole proprietorships."
+        },
+        {
+          "name": "organisasjonsform_beskrivelse",
+          "description": "Human-readable Norwegian label for organisasjonsform_kode, as Brreg publishes it."
+        },
+        {
+          "name": "naeringskode1_kode",
+          "description": "Primary NACE industry code (SN2007), e.g. 94.992. Null for roughly 2% of the register."
+        },
+        {
+          "name": "kommune_nr",
+          "description": "Kommune code of the registered business address. For an enkeltpersonforetak the registered business address is commonly the proprietor's home address. Null where no business address is registered (~6%). Some codes are historical or pseudo-regions and will not resolve against a current kommune list."
+        },
+        {
+          "name": "antall_ansatte",
+          "description": "Registered employee count. NULL MEANS \"NOT REPORTED\", NOT ZERO — the field is present on only ~4% of records. Use har_registrert_antall_ansatte to distinguish the two; reading NULL as 0 understates staffed organisations badly."
+        },
+        {
+          "name": "har_registrert_antall_ansatte",
+          "description": "Whether Brreg holds a registered employee count at all. Present on 100% of records, and the only way to tell \"zero employees\" from \"no figure reported\"."
+        },
+        {
+          "name": "konkurs",
+          "description": "Whether the organisation is in bankruptcy proceedings. Straight from Brreg."
+        },
+        {
+          "name": "under_avvikling",
+          "description": "Whether the organisation is being wound up voluntarily. Straight from Brreg."
+        },
+        {
+          "name": "under_tvangsavvikling",
+          "description": "Whether the organisation is under compulsory winding-up or dissolution."
+        },
+        {
+          "name": "is_active",
+          "description": "Convenience boolean — true when none of konkurs, under_avvikling or under_tvangsavvikling is set. Means \"trading\", not \"exists\": all three states are still registered organisations. Ignore this column if you want everything registered."
+        },
+        {
+          "name": "registrert_i_frivillighetsregisteret",
+          "description": "Whether the organisation is in Frivillighetsregisteret, the voluntary-organisation register — true for roughly 72,800 records. This is what makes the Norwegian voluntary sector discoverable as a population rather than a curated list."
+        },
+        {
+          "name": "registrert_dato",
+          "description": "Date the organisation was entered in Enhetsregisteret."
+        },
+        {
+          "name": "icnpo_nummer",
+          "description": "Primary ICNPO code as the organisation classified itself in Frivillighetsregisteret, e.g. \"9100\". Null for organisations not in that register, and for members declaring none. Null does not mean \"not voluntary\" — use registrert_i_frivillighetsregisteret for that."
+        },
+        {
+          "name": "icnpo_kategori",
+          "description": "Primary ICNPO category label paired with icnpo_nummer."
+        },
+        {
+          "name": "grasrotandel_deltar_i",
+          "description": "Whether the organisation participates in Grasrotandelen, Norsk Tipping's grassroots funding scheme. Null for organisations not in Frivillighetsregisteret."
+        },
+        {
+          "name": "frivillig_innfoert_dato",
+          "description": "Date of entry in Frivillighetsregisteret — distinct from registrert_dato, which is the Enhetsregisteret entry. Organisations often exist for years before registering as voluntary."
+        },
+        {
+          "name": "last_seen_at",
+          "description": "When the INGEST last wrote this row into Atlas's raw layer, from either the bulk snapshot or a change-feed run. Tracks Atlas's load, not an upstream event. Read it together with reconciled_at — this is the ingest clock, that is the transform clock."
+        },
+        {
+          "name": "reconciled_at",
+          "description": "When the TRANSFORM last reconciled this row into the served layer. 🔴 Read both clocks: the change feed polls every half hour and this reconciliation follows ten minutes behind it, so the data behind this endpoint can be older than what Atlas has already ingested. Without both, \"current\" means different things depending on which table you read — an install once sat 13.5 hours behind Brreg with every health check green. ⚠️ Only organisations that actually changed are re-stamped, so an old value means \"nothing about this organisation has changed since then\", not \"this endpoint is stale\"."
+        },
+        {
+          "name": "doc",
+          "description": "The complete upstream record as Brreg published it, with nothing dropped or renamed — including postal and business addresses, telephone, mobile, email, website, capital, institutional sector code, articles of association and historical names. Responses are large: a document averages ~1.7 kB, so select the typed columns instead unless you need a field this view does not surface."
+        }
+      ],
+      "built_from": [],
+      "sample_query": "https://api-atlas.urbalurba.com/brreg_enhet?limit=5",
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_brreg_enhet"
     },
     {
       "kind": "view",
@@ -7666,6 +7856,40 @@
       ],
       "sample_query": "https://api-atlas.urbalurba.com/kommune_local_chapters?limit=5",
       "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_kommune_local_chapters"
+    },
+    {
+      "kind": "view",
+      "view_id": "kommune_ngo_summary",
+      "mart_name": "mart_kommune_ngo_summary",
+      "api_v1_name": "kommune_ngo_summary",
+      "title": "Voluntary organisations per kommune",
+      "description_short": "Active voluntary organisations per kommune and ICNPO category — the number a consumer previously had to download the whole register to compute.",
+      "description_full": "Active voluntary organisations per kommune and ICNPO category —\nthe number a consumer previously had to download the whole\nregister to compute. Published as api_v1.kommune_ngo_summary.\n\nPostgREST has aggregates disabled, so `?select=count()` returns\n400 and the only alternatives were ~15 minutes of per-kommune\nprobes or a 2.8 MB CSV on every page load. One consumer shipped\nthe download (urb-agents #1250, finding 1); this replaces it with\n~12 000 rows.\n\n⚠️ Counts here will NOT match a count over brreg_enhet. 7 488 of\n72 792 active voluntary units (10.3 %) carry no kommune_nr — that\nis what Brreg publishes — and cannot be attributed to a\nmunicipality. A handful more sit on codes outside the 357 active\nkommuner and are dropped by the join.\n\nA (kommune, category) pair absent from this view has zero\norganisations; rows are not emitted for empty combinations.",
+      "columns": [
+        {
+          "name": "kommune_nr",
+          "description": "4-digit kommune code. FK to dim_kommune."
+        },
+        {
+          "name": "kommune_name",
+          "description": "Kommune name in bokmål, joined from dim_kommune."
+        },
+        {
+          "name": "icnpo_nummer",
+          "description": "ICNPO category number as Brreg assigns it. NULL where the organisation carries no ICNPO classification."
+        },
+        {
+          "name": "icnpo_kategori",
+          "description": "ICNPO category label. NULL where the organisation carries no ICNPO classification — those rows are counted, not dropped, so a per-kommune total over this view stays correct."
+        },
+        {
+          "name": "active_count",
+          "description": "Count of organisations in this kommune and category that are both is_active and registrert_i_frivillighetsregisteret. Always >= 1; absent combinations mean zero."
+        }
+      ],
+      "built_from": [],
+      "sample_query": "https://api-atlas.urbalurba.com/kommune_ngo_summary?limit=5",
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_kommune_ngo_summary"
     },
     {
       "kind": "view",

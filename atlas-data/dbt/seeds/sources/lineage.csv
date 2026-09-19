@@ -48,6 +48,8 @@ indicators__ssb_12292,ssb-12292
 indicators__ssb_12944,ssb-12944
 indicators__ssb_13995,ssb-13995
 mart_activity_catalog,redcross-branches
+mart_brreg_enhet,brreg-enheter-alle
+mart_brreg_enhet,brreg-frivillige
 mart_coverage_gap_barnefattigdom,fhi-bor-alene
 mart_coverage_gap_barnefattigdom,fhi-mobbing
 mart_coverage_gap_barnefattigdom,fhi-trangbodd
@@ -125,6 +127,9 @@ mart_indicator_summary,ssb-crime-tables
 mart_indicator_summary,ssb-klass-fylker
 mart_indicator_summary,ssb-klass-kommuner
 mart_kommune_local_chapters,redcross-branches
+mart_kommune_ngo_summary,brreg-enheter-alle
+mart_kommune_ngo_summary,brreg-frivillige
+mart_kommune_ngo_summary,ssb-klass-kommuner
 mart_ngo_index,redcross-branches
 mart_ngo_overview,redcross-branches
 supply__redcross_branch_activities,redcross-branches

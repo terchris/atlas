@@ -50,9 +50,10 @@
 --     ⚠️ Not unioned here because Bufdir RENUMBERS indicators (there is an
 --     alias table for the 9 -> 9a/9b split), so the same
 --     (kommune, year, contents_code) could appear twice and silently inflate
---     every published indicator surface. The grain test added alongside this
---     comment makes that a caught failure instead. Union it once that test
---     has been green on the cluster for a cycle.
+--     every published indicator surface. The grain test on this model — which
+--     has been here since it was written, though I briefly claimed otherwise —
+--     makes that a caught failure instead. Union it once that test has been
+--     seen green on the cluster with bufdir included.
 
 with ssb_08764 as (
   select
