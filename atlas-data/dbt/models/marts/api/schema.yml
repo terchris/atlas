@@ -1226,6 +1226,13 @@ models:
 
       A (kommune, category) pair absent from this view has zero
       organisations; rows are not emitted for empty combinations.
+
+      ⚠️ COST: filtered by kommune_nr this is sub-second. UNFILTERED it
+      aggregates the whole register — 25 s cold before the covering
+      index on dim_brreg_enhet, and that index is what makes enumerating
+      all rows viable at all. If it is ever dropped, this relation
+      becomes unusable rather than slow.
+
     data_tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns:
@@ -1278,6 +1285,13 @@ models:
       ⚠️ Counts exclude the 10.3 % of active voluntary units carrying no
       kommune_nr, exactly as kommune_ngo_summary does. Summing this gives
       the placed total, not the register total.
+
+      ⚠️ COST: filtered by kommune_nr this is sub-second. UNFILTERED it
+      aggregates the whole register — 25 s cold before the covering
+      index on dim_brreg_enhet, and that index is what makes enumerating
+      all rows viable at all. If it is ever dropped, this relation
+      becomes unusable rather than slow.
+
     columns:
       - name: kommune_nr
         description: 4-digit kommune code. FK to dim_kommune.
