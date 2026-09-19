@@ -143,8 +143,30 @@ separate query.';
 COMMENT ON COLUMN api_v1.coverage_gap_barnefattigdom.value_pct IS 'EU-skala 60 % share — the percent of children under 18 in
 low-income households (defined as < 60 % of national median
 equivalised income). NULL when upstream suppressed the cell.';
-COMMENT ON COLUMN api_v1.coverage_gap_barnefattigdom.personer IS 'Number of children under 18 in low-income households at the
-same year. NULL when upstream suppressed the cell.';
+COMMENT ON COLUMN api_v1.coverage_gap_barnefattigdom.personer IS 'DENOMINATOR, NOT A COUNT OF POOR CHILDREN. Every person under
+18 in the kommune that year — SSB 08764 ContentsCode
+''Personer'', whose own metadata reads "Persons under 18 years
+of age", unit persons.
+
+The number of children in low-income households is
+personer * value_pct / 100. It is not published as a column;
+derive it.
+
+This description said "number of children under 18 in
+low-income households" until 2026-09-19, which is false by
+roughly ninefold and about child poverty. A consumer building
+on the published API summed the column, got 1,097,107 against
+a national under-18 population of about 1.1 million, and
+caught it (urb-agents #1250, #1251). Derived correctly the
+same sum is 124,670, near the ~11 % national rate.
+
+Nothing in the data contradicted the wrong reading: the
+column is plausible, non-null and internally consistent, and
+only summing it and recognising the total gives it away. The
+view description two entries above was right the whole time,
+so the contract disagreed with itself.
+
+NULL when upstream suppressed the cell.';
 
 -- distrikt_summary  ←  marts.mart_distrikt_summary
 CREATE OR REPLACE VIEW api_v1.distrikt_summary AS SELECT * FROM marts.mart_distrikt_summary;
