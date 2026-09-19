@@ -26,6 +26,17 @@ on:
       - 'atlas-data/ingest/src/sources/check-manifests.sh'
       - 'atlas-data/ingest/package.json'
       - 'atlas-data/ingest/package-lock.json'
+      # dbt-side inputs. 🔴 ADDED 2026-09-19 AFTER A dbt CHANGE BROKE THIS
+      # GENERATOR AND SHIPPED TO main UNNOTICED. generate-sources-registry.mjs
+      # reads five dbt files — two lineage seeds and every models/*/schema.yml —
+      # and none of them was a trigger, so a duplicate YAML key added to
+      # models/marts/schema.yml passed every dbt gate (dbt's loader tolerates
+      # duplicate keys; js-yaml rejects them) and broke the catalogue with no
+      # workflow watching. It only surfaced on the next change that happened to
+      # touch a website path.
+      - 'atlas-data/dbt/models/**/schema.yml'
+      - 'atlas-data/dbt/seeds/sources/lineage.csv'
+      - 'atlas-data/dbt/seeds/sources/lineage_direct.csv'
       # Catalog-side files
       - 'website/scripts/generate-sources-registry.mjs'
       - 'website/src/data/sources-registry.json'
@@ -47,6 +58,9 @@ on:
       - 'atlas-data/ingest/src/sources/check-manifests.sh'
       - 'atlas-data/ingest/package.json'
       - 'atlas-data/ingest/package-lock.json'
+      - 'atlas-data/dbt/models/**/schema.yml'
+      - 'atlas-data/dbt/seeds/sources/lineage.csv'
+      - 'atlas-data/dbt/seeds/sources/lineage_direct.csv'
       - 'website/scripts/generate-sources-registry.mjs'
       - 'website/src/data/sources-registry.json'
       - 'website/docs/datasets/**'

@@ -1191,3 +1191,60 @@ models:
         description: |
           Upstream's own note on the code, typically recording a merger
           or reorganisation. NULL for most rows.
+
+  - name: mart_kommune_ngo_summary
+    meta:
+      title: "Voluntary organisations per kommune"
+    description: |
+      Active voluntary organisations per kommune and ICNPO category —
+      the number a consumer previously had to download the whole
+      register to compute. Published as api_v1.kommune_ngo_summary.
+
+      PostgREST has aggregates disabled, so `?select=count()` returns
+      400 and the only alternatives were ~15 minutes of per-kommune
+      probes or a 2.8 MB CSV on every page load. One consumer shipped
+      the download (urb-agents #1250, finding 1); this replaces it with
+      ~12 000 rows.
+
+      ⚠️ Counts here will NOT match a count over brreg_enhet. 7 488 of
+      72 792 active voluntary units (10.3 %) carry no kommune_nr — that
+      is what Brreg publishes — and cannot be attributed to a
+      municipality. A handful more sit on codes outside the 357 active
+      kommuner and are dropped by the join.
+
+      A (kommune, category) pair absent from this view has zero
+      organisations; rows are not emitted for empty combinations.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - kommune_nr
+            - icnpo_nummer
+    columns:
+      - name: kommune_nr
+        description: 4-digit kommune code. FK to dim_kommune.
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_kommune')
+              field: kommune_nr
+      - name: kommune_name
+        description: Kommune name in bokmål, joined from dim_kommune.
+        data_tests: [not_null]
+      - name: icnpo_nummer
+        description: |
+          ICNPO category number as Brreg assigns it. NULL where the
+          organisation carries no ICNPO classification.
+      - name: icnpo_kategori
+        description: |
+          ICNPO category label. NULL where the organisation carries no
+          ICNPO classification — those rows are counted, not dropped,
+          so a per-kommune total over this view stays correct.
+      - name: active_count
+        description: |
+          Count of organisations in this kommune and category that are
+          both is_active and registrert_i_frivillighetsregisteret.
+          Always >= 1; absent combinations mean zero.
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 1

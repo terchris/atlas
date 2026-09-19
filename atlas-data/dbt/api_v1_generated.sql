@@ -436,6 +436,37 @@ COMMENT ON COLUMN api_v1.kommune_local_chapters.sort_order IS 'Display order fro
 to render service categories in a consistent sequence; carry
 on the row so consumers can sort without a separate query.';
 
+-- kommune_ngo_summary  ←  marts.mart_kommune_ngo_summary
+CREATE OR REPLACE VIEW api_v1.kommune_ngo_summary AS SELECT * FROM marts.mart_kommune_ngo_summary;
+COMMENT ON VIEW api_v1.kommune_ngo_summary IS 'Active voluntary organisations per kommune and ICNPO category —
+the number a consumer previously had to download the whole
+register to compute. Published as api_v1.kommune_ngo_summary.
+
+PostgREST has aggregates disabled, so `?select=count()` returns
+400 and the only alternatives were ~15 minutes of per-kommune
+probes or a 2.8 MB CSV on every page load. One consumer shipped
+the download (urb-agents #1250, finding 1); this replaces it with
+~12 000 rows.
+
+⚠️ Counts here will NOT match a count over brreg_enhet. 7 488 of
+72 792 active voluntary units (10.3 %) carry no kommune_nr — that
+is what Brreg publishes — and cannot be attributed to a
+municipality. A handful more sit on codes outside the 357 active
+kommuner and are dropped by the join.
+
+A (kommune, category) pair absent from this view has zero
+organisations; rows are not emitted for empty combinations.';
+COMMENT ON COLUMN api_v1.kommune_ngo_summary.kommune_nr IS '4-digit kommune code. FK to dim_kommune.';
+COMMENT ON COLUMN api_v1.kommune_ngo_summary.kommune_name IS 'Kommune name in bokmål, joined from dim_kommune.';
+COMMENT ON COLUMN api_v1.kommune_ngo_summary.icnpo_nummer IS 'ICNPO category number as Brreg assigns it. NULL where the
+organisation carries no ICNPO classification.';
+COMMENT ON COLUMN api_v1.kommune_ngo_summary.icnpo_kategori IS 'ICNPO category label. NULL where the organisation carries no
+ICNPO classification — those rows are counted, not dropped,
+so a per-kommune total over this view stays correct.';
+COMMENT ON COLUMN api_v1.kommune_ngo_summary.active_count IS 'Count of organisations in this kommune and category that are
+both is_active and registrert_i_frivillighetsregisteret.
+Always >= 1; absent combinations mean zero.';
+
 -- meta_dimensions  ←  marts.mart_meta_dimensions
 CREATE OR REPLACE VIEW api_v1.meta_dimensions AS SELECT * FROM marts.mart_meta_dimensions;
 COMMENT ON VIEW api_v1.meta_dimensions IS 'Per-source × per-dimension catalogue. Backs the "what does this
