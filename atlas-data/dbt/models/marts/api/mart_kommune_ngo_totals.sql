@@ -18,6 +18,10 @@
 -- output, with one request timing out (ops-dev, urb-agents #1268). The filtered
 -- path — the one I measured the analogue of — really is sub-second.
 --
+-- ✅ After the index: 0.205-0.326 s end-to-end, 0.12 s filtered (urb-agents
+-- #1270). ⚠️ The index only holds while the visibility map does — see
+-- dim_brreg_enhet for why that model's vacuum hook is half of this fix.
+--
 -- ✅ Fixed by a 600 kB partial covering index on dim_brreg_enhet rather than by
 -- materialising: Index Only Scan, Heap Fetches 0, 18 ms against 206-379 ms, on
 -- a synthetic register rebuilt to the REAL payload size (2344 MB). See that
