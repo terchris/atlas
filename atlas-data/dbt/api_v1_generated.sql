@@ -306,6 +306,23 @@ COMMENT ON COLUMN api_v1.indicator_summary.contents_code IS 'Source-specific Con
 natural key of this view.';
 COMMENT ON COLUMN api_v1.indicator_summary.contents_label IS 'Human-readable label for contents_code, verbatim from upstream.
 NULL only if every contributing row had a NULL label (rare).';
+COMMENT ON COLUMN api_v1.indicator_summary.upstream_title IS 'What this series is ABOUT, from the source catalogue. The
+subject was previously unreachable from this view — a
+consumer used 8 of 195 series and missed the ones matching
+its own question, because `contents_label` describes the
+UNIT ("Andel (prosent)") and the subject lived only in an
+opaque slug (urb-agents #1250, #1252). Joined from
+mart_meta_sources; NULL only if a source is absent from the
+catalogue, which `relationships` below asserts cannot happen.';
+COMMENT ON COLUMN api_v1.indicator_summary.publisher IS 'Who publishes the upstream series (SSB, FHI, Bufdir, Brreg).
+Joined from mart_meta_sources.';
+COMMENT ON COLUMN api_v1.indicator_summary.eu_theme IS 'EU high-value-dataset theme. Populated for all 44 sources —
+filter on it to ask "what does Atlas have about X?", which is
+the question this view could not previously answer.';
+COMMENT ON COLUMN api_v1.indicator_summary.tags IS 'Topic vocabulary from the source manifest, e.g.
+[''provider:brreg'', ''topic:ngo-supply'']. Filterable with
+PostgREST''s array contains: ?tags=cs.{topic:ngo-supply}.
+Joined from mart_meta_sources.';
 COMMENT ON COLUMN api_v1.indicator_summary.latest_year IS 'Most recent calendar year for which this (source_id,
 contents_code) has any rows in fact_kommune_indicators. The
 coverage and value-range columns below are computed against
