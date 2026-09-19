@@ -218,8 +218,9 @@ COMMENT ON COLUMN api_v1.dim_kommune.fylke_name IS 'Joined from dim_fylke. NULL 
 dim_fylke — pseudo-regions and Svalbard (21xx) — rather than
 dropping the kommune, so an unresolvable fylke costs a label
 and not a row.';
-COMMENT ON COLUMN api_v1.dim_kommune.is_active IS 'True when the code is current. Atlas has 357 active kommuner;
-everything else is retained history.
+COMMENT ON COLUMN api_v1.dim_kommune.is_active IS 'True when the CODE is current — which is not the same as "this
+is a municipality". 358 rows satisfy it: 357 kommuner plus the
+9999 sentinel. Combine with is_sentinel.
 
 ⚠️ Sentinel codes such as 9999 ''Uoppgitt'' are present in this
 dimension and reach api_v1 views unmarked — whether they
@@ -231,6 +232,19 @@ COMMENT ON COLUMN api_v1.dim_kommune.valid_from IS 'Date the code became valid. 
 COMMENT ON COLUMN api_v1.dim_kommune.valid_to IS 'Date the code became inactive. NULL = still active.';
 COMMENT ON COLUMN api_v1.dim_kommune.notes IS 'Upstream''s own note on the code, typically recording a merger
 or reorganisation. NULL for most rows.';
+COMMENT ON COLUMN api_v1.dim_kommune.is_sentinel IS 'True for SSB''s 9999 ''Uoppgitt'' bucket — a current code that is
+not a municipality.
+
+⚠️ is_active does NOT exclude it. `?is_active=eq.true` returns
+358, not 357, and the extra row is this one (measured on the
+live API, urb-agents #1265). For real municipalities filter
+`?is_sentinel=is.false`.
+
+This is the third sentinel of the same family across three
+published surfaces — 9999 here, 9999 in
+coverage_gap_barnefattigdom, 0 in KOSvedtakaar0000 — and the
+first that can be named in a filter rather than known. Whether
+the other two follow is urb-agents #700.';
 
 -- distrikt_summary  ←  marts.mart_distrikt_summary
 CREATE OR REPLACE VIEW api_v1.distrikt_summary AS SELECT * FROM marts.mart_distrikt_summary;
@@ -464,6 +478,27 @@ so a per-kommune total over this view stays correct.';
 COMMENT ON COLUMN api_v1.kommune_ngo_summary.active_count IS 'Count of organisations in this kommune and category that are
 both is_active and registrert_i_frivillighetsregisteret.
 Always >= 1; absent combinations mean zero.';
+
+-- kommune_ngo_totals  ←  marts.mart_kommune_ngo_totals
+CREATE OR REPLACE VIEW api_v1.kommune_ngo_totals AS SELECT * FROM marts.mart_kommune_ngo_totals;
+COMMENT ON VIEW api_v1.kommune_ngo_totals IS 'One row per kommune: how many active voluntary organisations are
+registered there. 357 rows instead of the ~5 400 in
+kommune_ngo_summary. Published as api_v1.kommune_ngo_totals.
+
+Exists because PostgREST cannot sum — `?select=active_count.sum()`
+returns PGRST123, aggregates are disabled — so a consumer wanting
+one number per kommune otherwise fetches every category row and
+adds them client-side. That was most of a cold page load
+(urb-agents #1265).
+
+⚠️ Counts exclude the 10.3 % of active voluntary units carrying no
+kommune_nr, exactly as kommune_ngo_summary does. Summing this gives
+the placed total, not the register total.';
+COMMENT ON COLUMN api_v1.kommune_ngo_totals.kommune_nr IS '4-digit kommune code. FK to dim_kommune.';
+COMMENT ON COLUMN api_v1.kommune_ngo_totals.kommune_name IS 'Kommune name in bokmål, joined from dim_kommune.';
+COMMENT ON COLUMN api_v1.kommune_ngo_totals.active_count IS 'Total active voluntary organisations in this kommune, summed
+across ICNPO categories. Always >= 1; a kommune with none has
+no row.';
 
 -- meta_dimensions  ←  marts.mart_meta_dimensions
 CREATE OR REPLACE VIEW api_v1.meta_dimensions AS SELECT * FROM marts.mart_meta_dimensions;

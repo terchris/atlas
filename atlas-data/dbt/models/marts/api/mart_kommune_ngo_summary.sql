@@ -1,9 +1,39 @@
 {{
   config(
-    materialized='table',
+    materialized='view',
     schema='marts'
   )
 }}
+
+-- 🔴 A VIEW, AND THAT IS THE WHOLE FIX FOR A DEFECT I SHIPPED AS A TABLE.
+--
+-- schedules.py says, beside the half-hourly brreg_transform job:
+--
+--   "The day any model between the dimension and the API becomes a TABLE,
+--    that stops being true and this job must gain the publish. Nothing
+--    enforces it."
+--
+-- I made exactly that model a table. `brreg_transform` refreshes
+-- dim_brreg_enhet every 30 minutes; a table here is only rebuilt by the daily
+-- transform, so this surface drifted behind api_v1.brreg_enhet all day. A
+-- consumer found it as a ONE-ROW discrepancy at kommune 3411 and correctly
+-- guessed build-time skew (urb-agents #1265) — it would have grown until the
+-- next transform, every day.
+--
+-- ⚠️ Adding this model to the half-hourly job was the other option and is the
+-- worse one: that job already has an unfixed stacking hazard (a run exceeding
+-- its 30-minute interval does not skip, it races on delete+insert against
+-- dim_brreg_enhet — INVESTIGATE-transform-run-stacking), and spending that
+-- margin to keep a cache warm is spending the thing that cannot be replaced.
+--
+-- 🔵 A view removes the skew rather than scheduling around it, and it is
+-- affordable — MEASURED, not assumed. Against a synthetic register of 1.17M
+-- rows with the real ~10.3 % null-kommune and ~6 % voluntary shares, on the
+-- three indexes dim_brreg_enhet already carries: 42-88 ms per execution over
+-- five runs. The API's own baseline latency is ~330 ms.
+--
+-- Precedent: mart_brreg_enhet is a view over the same dimension, for the same
+-- reason, and says so.
 
 -- 🔴 THE VIEW THAT REMOVES A 2.8 MB DOWNLOAD FROM EVERY PAGE LOAD.
 --

@@ -56,7 +56,24 @@ select
   k.is_active,
   k.valid_from,
   k.valid_to,
-  k.notes
+  k.notes,
+  -- 🔴 is_active MEANS "THIS CODE IS CURRENT", NOT "THIS IS A MUNICIPALITY",
+  -- and a consumer cannot tell those apart without this column.
+  --
+  -- `?is_active=eq.true` returns 358, not 357: SSB's 9999 'Uoppgitt' bucket is
+  -- a current code and not a place. Measured by ops-dev on the live API
+  -- (urb-agents #1265). The consumer that found it had its own sentinel filter
+  -- and was unaffected — it flagged it for the NEXT consumer.
+  --
+  -- ⚠️ THIRD SENTINEL IN THE SAME FAMILY, THREE SURFACES, NO SHARED
+  -- CONVENTION: 9999 here, 9999 in coverage_gap_barnefattigdom, and 0 in
+  -- KOSvedtakaar0000. Each was discovered separately by someone reading rows.
+  -- This is the first one to be nameable in a filter rather than tribal
+  -- knowledge; whether the other two follow is #700.
+  --
+  -- 🔵 Appended rather than inserted: api_v1.dim_kommune is CREATE OR REPLACE
+  -- VIEW ... SELECT *, which accepts new columns only at the end.
+  (k.kommune_nr = '9999') as is_sentinel
 from {{ ref('dim_kommune') }} k
 left join {{ ref('dim_fylke') }} f on f.fylke_nr = k.fylke_nr
 order by k.kommune_nr
