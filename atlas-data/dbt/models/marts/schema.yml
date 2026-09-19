@@ -1,6 +1,30 @@
 version: 2
 models:
   - name: fact_kommune_indicators
+    data_tests:
+      # 🔴 THE GRAIN WAS DOCUMENTED AND ASSERTED NOWHERE.
+      #
+      # The model has said "one row per (source_id, kommune_nr, year,
+      # contents_code)" since it was written, and nothing checked it. Every
+      # published indicator surface is built on that promise:
+      # indicator_summary groups by it, indicator_latest_values picks a latest
+      # row per it, and a duplicate would inflate counts and make
+      # "latest value" arbitrary — silently, because both still return rows.
+      #
+      # ⚠️ Found while auditing why 7 built indicator models are not unioned
+      # into this fact (urb-agents #1257). The next union is the risk this
+      # protects against: indicators__bufdir_barnefattigdom fits the shape
+      # exactly, and Bufdir renumbers indicators — there is a whole alias table
+      # for the 9 -> 9a/9b split — so a naive union could duplicate a key.
+      #
+      # 🔵 With this test in place that is a caught failure rather than a
+      # corrupted published surface, which is what makes the union decidable.
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - source_id
+            - kommune_nr
+            - year
+            - contents_code
     description: |
       First cross-source mart. Long-format union of kommune-level indicators
       joined to dim_kommune and dim_fylke. One row per
