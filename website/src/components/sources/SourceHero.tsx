@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import useBaseUrl from '@docusaurus/useBaseUrl';
 import CodeBlock from '@theme/CodeBlock';
 import type { Source } from '../../types/sources';
@@ -29,13 +30,15 @@ export default function SourceHero({ source }: Props) {
   const logoUrl = useBaseUrl(source.publisher.logo);
   const [showPanel, setShowPanel] = useState(false);
   const postgrestBase = usePostgrestBaseUrl();
+  // The site's own URL, from Docusaurus config — never a literal (urb-agents #1245).
+  const siteUrl = useDocusaurusContext().siteConfig.url;
   const liveQuery = rewriteToBase(source.sample_query, postgrestBase);
 
   const upstreamLink = source.upstream_landing_page || source.upstream_url;
   const githubIssueUrl =
     'https://github.com/terchris/atlas/issues/new?' +
     `title=${encodeURIComponent(`Data issue: ${source.source_id}`)}` +
-    `&body=${encodeURIComponent(`Source: \`${source.source_id}\`\nIssue: \n\nPage: https://atlas.sovereignsky.no/datasets/${source.source_id}\n`)}`;
+    `&body=${encodeURIComponent(`Source: \`${source.source_id}\`\nIssue: \n\nPage: ${siteUrl}/datasets/${source.source_id}\n`)}`;
 
   return (
     <div className={styles.hero}>

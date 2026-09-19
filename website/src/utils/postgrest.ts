@@ -1,22 +1,36 @@
 /**
  * Host-aware PostgREST base URL.
  *
- * The catalog's static MDX bakes in the production URL
- * (https://api-atlas.sovereignsky.no/...) — that's the canonical citation
- * target and matches the Schema.org JSON-LD. But a visitor browsing
- * locally at localhost:3000 wants their copy-clickable sample queries to
- * hit the local UIS PostgREST at http://api-atlas.localhost — otherwise
- * curl errors with "Could not resolve host" or hits a different cluster.
+ * The catalog's static MDX bakes in the deployed API URL — that is the canonical
+ * citation target and matches the Schema.org JSON-LD. A visitor browsing locally
+ * wants their copy-clickable sample queries to hit the local UIS PostgREST
+ * instead, or curl errors with "Could not resolve host".
  *
- * The hook returns the production base by default (SSR-safe) and swaps
- * to the local base on client mount when the visitor is on a localhost
- * hostname. A one-frame flash of the production URL is acceptable since
- * the sample queries are informational, not action-blocking.
+ * 🔴 THE PRODUCTION BASE IS READ FROM THE GENERATED REGISTRY, NOT DECLARED HERE.
+ *
+ * It used to be a second literal copy of the generator's POSTGREST_BASE_URL, and
+ * the two had to stay byte-identical for a reason that is easy to miss:
+ * `rewriteToBase` does a STRING REPLACE of this value inside the baked URL. If
+ * they ever drifted, `.replace()` would match nothing, silently return the
+ * production URL unchanged, and a local visitor would be handed a copy-clickable
+ * query pointing at the wrong cluster — no error, no warning, just the wrong host.
+ *
+ * ⚠️ Both copies said `api-atlas.sovereignsky.no`, which has been NXDOMAIN since
+ * the generator was written (urb-agents #1245). They agreed with each other and
+ * were both wrong, which is exactly what a duplicated constant buys you.
+ *
+ * Reading it from the registry means there is one value, produced where the
+ * sample queries are produced, and the rewrite cannot miss.
  */
-
 import { useEffect, useState } from 'react';
 
-export const POSTGREST_PROD_BASE = 'https://api-atlas.sovereignsky.no';
+import registryData from '../data/sources-registry.json';
+
+/** The deployed API base the MDX was generated against. Single source of truth. */
+export const POSTGREST_PROD_BASE: string = registryData.postgrest_base_url;
+
+// A local convention rather than a domain: UIS serves every app at
+// <service>.localhost, so this needs no configuration.
 export const POSTGREST_LOCAL_BASE = 'http://api-atlas.localhost';
 
 function isLocalHost(hostname: string): boolean {

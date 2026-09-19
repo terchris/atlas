@@ -67,7 +67,7 @@ collections:
       evidence base looks like this (PostgREST):
 
       ```bash
-      curl -sS 'https://api-atlas.sovereignsky.no/indicator_summary?kommune_code=eq.3024&select=kommune_name,indicator_id,latest_value,latest_year'
+      curl -sS '{{API_BASE}}/indicator_summary?kommune_code=eq.3024&select=kommune_name,indicator_id,latest_value,latest_year'
       ```
 
       To compare a kommune against its neighbours in the same fylke, swap

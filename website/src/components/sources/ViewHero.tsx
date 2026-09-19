@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import Link from '@docusaurus/Link';
 import CodeBlock from '@theme/CodeBlock';
 import type { View } from '../../types/sources';
@@ -31,12 +32,14 @@ function pythonSnippet(url: string): string {
 export default function ViewHero({ view }: Props) {
   const [showPanel, setShowPanel] = useState(false);
   const postgrestBase = usePostgrestBaseUrl();
+  // The site's own URL, from Docusaurus config — never a literal (urb-agents #1245).
+  const siteUrl = useDocusaurusContext().siteConfig.url;
   const liveQuery = rewriteToBase(view.sample_query, postgrestBase);
 
   const githubIssueUrl =
     'https://github.com/terchris/atlas/issues/new?' +
     `title=${encodeURIComponent(`Data issue: api_v1.${view.api_v1_name}`)}` +
-    `&body=${encodeURIComponent(`Atlas view: \`api_v1.${view.api_v1_name}\`\nIssue: \n\nPage: https://atlas.sovereignsky.no/datasets/${view.api_v1_name}\n`)}`;
+    `&body=${encodeURIComponent(`Atlas view: \`api_v1.${view.api_v1_name}\`\nIssue: \n\nPage: ${siteUrl}/datasets/${view.api_v1_name}\n`)}`;
 
   return (
     <div className={styles.hero}>
