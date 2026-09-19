@@ -147,13 +147,48 @@ RAW_ACTUAL=$(grep -rhoiE 'create table (if not exists )?raw\.[a-z0-9_]+' "$MIG_D
 # disagreement between a table count and a view count. A pattern loose enough to
 # match two different quantities cannot tell you they disagree.
 #
-# ⚠️ THE VIEW COUNT IS THEREFORE UNGATED, and it has now drifted once: adding
-# mart_source_freshness took it from 5 to 6 and nothing here would have said so
-# (urb-agents #1039). Deriving it statically is not cheap — `+materialized: view`
-# is the project default and three model directories override it to table, so the
-# honest count comes from the dbt manifest, which does not exist at this point in
-# the build. Stated here so the next person changing a materialisation knows this
-# number is theirs to keep true.
+# 🔵 THE MARTS COUNTS ARE NOW DERIVED AND CHECKED, like the raw one above.
+#
+# ⚠️ Until 2026-09-19 neither was. `MARTS_CLAIMS` was compared only against
+# ITSELF — "stated once" — so the number could be internally consistent and
+# still wrong, and the view count was matched by nothing at all. I wrote in
+# this very comment that deriving them statically "is not cheap" and left them
+# ungated. Both then drifted: the artifact reached 61 marts BASE TABLEs when
+# there were 63, and said "6 marts views" one line above "five of those models
+# are materialised as views" (tor-agent, urb-agents #1263).
+#
+# 🔴 A field whose own header documents fixing self-contradiction, contradicting
+# itself one line up, is the argument for deriving rather than asserting.
+#
+# It IS cheap, and the earlier claim was wrong. Every model that overrides
+# materialisation also declares its schema explicitly, so the effective schema
+# and materialisation are both readable from the file — no manifest required.
+# Verified against the dbt manifest on 2026-09-19: 6 views, 47 model tables,
+# 16 seeds, 63 BASE TABLEs, by both methods.
+DBT_MODELS="$(cd "$(dirname "${BASH_SOURCE[0]}")/../dbt" && pwd)"
+marts_views=0
+marts_tables=0
+for f in $(find "$DBT_MODELS/models" -name '*.sql'); do
+  # `|| true`: grep exits 1 when a model declares no schema, and this script
+  # runs under `set -e`, so the bare substitution aborted the whole render with
+  # no message — which is exactly how I first shipped this check.
+  sch=$(grep -oE "schema='[a-z_]+'" "$f" | head -1 | cut -d"'" -f2 || true)
+  if [[ -z "$sch" ]]; then
+    case "$f" in
+      */models/indicators/*|*/models/dimensions/*|*/models/marts/*) sch=marts ;;
+      *) sch=other ;;
+    esac
+  fi
+  [[ "$sch" == marts ]] || continue
+  if grep -q "materialized='view'" "$f"; then
+    marts_views=$((marts_views + 1))
+  else
+    marts_tables=$((marts_tables + 1))
+  fi
+done
+MARTS_SEEDS=$(find "$DBT_MODELS/seeds" -name '*.csv' | wc -l | tr -d ' ')
+MARTS_ACTUAL=$((marts_tables + MARTS_SEEDS))
+MARTS_VIEWS_ACTUAL=$marts_views
 RAW_CLAIMS=$(grep -oE '[0-9]+ raw BASE TABLEs' "$TMP" | grep -oE '^[0-9]+' | sort -u)
 MARTS_CLAIMS=$(grep -oE '[0-9]+ marts BASE TABLEs' "$TMP" | grep -oE '^[0-9]+' | sort -u)
 
@@ -172,6 +207,21 @@ fi
 if [[ $(wc -l <<< "$MARTS_CLAIMS") -ne 1 ]]; then
   echo "✗ the artifact states more than one 'marts' table count: $(tr '\n' ' ' <<< "$MARTS_CLAIMS")" >&2
   echo "  Two strings on one screen disagreeing is the #824 defect. Make them agree." >&2
+  exit 1
+fi
+
+MARTS_VIEW_CLAIMS=$(grep -oE '[0-9]+ marts views' "$TMP" | grep -oE '^[0-9]+' | sort -u || true)
+
+if [[ "$MARTS_CLAIMS" != "$MARTS_ACTUAL" ]]; then
+  echo "✗ the artifact claims ${MARTS_CLAIMS} marts BASE TABLEs; the dbt project defines ${MARTS_ACTUAL}" >&2
+  echo "  Counting rule: models landing in schema marts and NOT materialized='view'," >&2
+  echo "  plus every seed (all seeds land in marts). ${marts_tables} models + ${MARTS_SEEDS} seeds." >&2
+  exit 1
+fi
+
+if [[ -n "$MARTS_VIEW_CLAIMS" && "$MARTS_VIEW_CLAIMS" != "$MARTS_VIEWS_ACTUAL" ]]; then
+  echo "✗ the artifact claims ${MARTS_VIEW_CLAIMS} marts views; the dbt project defines ${MARTS_VIEWS_ACTUAL}" >&2
+  echo "  Counting rule: models landing in schema marts WITH materialized='view'." >&2
   exit 1
 fi
 
