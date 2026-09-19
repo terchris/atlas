@@ -208,11 +208,9 @@ missing.';
 COMMENT ON COLUMN api_v1.dim_kommune.kommune_nr IS '4-digit zero-padded kommune code, SSB canonical form
 (''0301'' = Oslo). The join key every other Atlas relation uses.';
 COMMENT ON COLUMN api_v1.dim_kommune.kommune_name IS 'Kommune name in bokmål.';
-COMMENT ON COLUMN api_v1.dim_kommune.kommune_name_alt IS 'Alternative official name where upstream publishes one
-(typically the nynorsk or historical form). NULL when there
-is none.';
-COMMENT ON COLUMN api_v1.dim_kommune.kommune_name_sami IS 'Sámi-language name where SSB publishes one, split out of the
-combined upstream string rather than left embedded in
+COMMENT ON COLUMN api_v1.dim_kommune.kommune_name_alt IS 'The alternative official name where SSB publishes one —
+in practice the Sámi variant, split out of upstream''s
+"Name - Nama" string rather than left embedded in
 kommune_name. NULL for most kommuner.';
 COMMENT ON COLUMN api_v1.dim_kommune.fylke_nr IS '2-digit fylke code, derived from the first two digits of
 kommune_nr per SSB''s long-standing convention.';

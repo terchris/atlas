@@ -15,6 +15,13 @@ models:
         description: Kommune name in bokmål; Sámi variant (if any) is stripped into 
           kommune_name_sami.
         data_tests: [not_null]
+      # ⚠️ dimensions/schema.yml documented a `kommune_name_sami` column here
+      # until 2026-09-19. dim_kommune.sql has never emitted one — the Sámi
+      # variant is what kommune_name_alt carries, split out of upstream's
+      # "Name - Nama" string. A documented column that does not exist is not
+      # inert: I wrote a published api_v1 wrapper against it and Postgres
+      # rejected the model (urb-agents #1255). schema.yml documents; the SQL
+      # defines. Check the SQL.
       - name: kommune_name_alt
         description: |
           Alternative name variant from Klass when distinct from
@@ -44,16 +51,6 @@ models:
           - not_null
           - accepted_values:
               values: [true, false]
-      - name: kommune_name_sami
-        description: >-
-          Sámi variant of the kommune name, when Klass publishes one (e.g. 'Oslove', 'Guovdageaidnu').
-          NULL for kommuner without a Sámi variant.
-    data_tests:
-      - dbt_utils.expression_is_true:
-          expression: length(kommune_nr) = 4
-      - dbt_utils.expression_is_true:
-          expression: length(fylke_nr) = 2
-
   - name: dim_fylke
     description: |
       Canonical fylke dimension. 16 rows: 15 real fylker + residual '99 Uoppgitt'.

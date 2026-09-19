@@ -7529,11 +7529,7 @@
         },
         {
           "name": "kommune_name_alt",
-          "description": "Alternative official name where upstream publishes one (typically the nynorsk or historical form). NULL when there is none."
-        },
-        {
-          "name": "kommune_name_sami",
-          "description": "Sámi-language name where SSB publishes one, split out of the combined upstream string rather than left embedded in kommune_name. NULL for most kommuner."
+          "description": "The alternative official name where SSB publishes one — in practice the Sámi variant, split out of upstream's \"Name - Nama\" string rather than left embedded in kommune_name. NULL for most kommuner."
         },
         {
           "name": "fylke_nr",

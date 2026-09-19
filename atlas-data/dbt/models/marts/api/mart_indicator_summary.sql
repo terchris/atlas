@@ -23,16 +23,26 @@ select
   f.source_id,
   f.contents_code,
   max(f.contents_label) as contents_label,
-  max(m.upstream_title) as upstream_title,
-  max(m.publisher) as publisher,
-  max(m.eu_theme) as eu_theme,
-  max(m.tags) as tags,
   l.latest_year,
   count(*) filter (where f.value is not null and f.kommune_is_active)::int as kommuner_with_value,
   count(*) filter (where f.value is null and f.kommune_is_active)::int as kommuner_with_null,
   min(f.value)::float as min_value,
   max(f.value)::float as max_value,
-  max(f.updated_at) as upstream_updated
+  max(f.updated_at) as upstream_updated,
+  -- 🔴 APPENDED, NOT INSERTED, AND THAT IS LOAD-BEARING.
+  --
+  -- api_v1.indicator_summary is a `CREATE OR REPLACE VIEW ... SELECT *` over
+  -- this table. Postgres will let that add columns AT THE END and refuses any
+  -- rename, reorder or drop. I first put these four after contents_label,
+  -- which reordered everything below them, and the replace was rejected —
+  -- caught by Postgres, not by dbt parse or any gate here (urb-agents #1255).
+  --
+  -- ⚠️ THE RULE FOR EVERY PUBLISHED MART: new columns go last. Reordering one
+  -- is not a cosmetic change, it is a view that can no longer be replaced.
+  max(m.upstream_title) as upstream_title,
+  max(m.publisher) as publisher,
+  max(m.eu_theme) as eu_theme,
+  max(m.tags) as tags
 from {{ ref('fact_kommune_indicators') }} f
 left join {{ ref('mart_meta_sources') }} m on m.source_id = f.source_id
 join latest l on l.source_id = f.source_id
