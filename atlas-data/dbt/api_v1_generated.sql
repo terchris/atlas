@@ -185,6 +185,55 @@ it as SSB''s own figure.
 
 NULL when either input was suppressed upstream.';
 
+-- dim_kommune  ←  marts.mart_dim_kommune
+CREATE OR REPLACE VIEW api_v1.dim_kommune AS SELECT * FROM marts.mart_dim_kommune;
+COMMENT ON VIEW api_v1.dim_kommune IS 'The canonical municipality registry — SSB Klass 131, with fylke
+name joined. Published as api_v1.dim_kommune.
+
+Fourteen references in this file already pointed at dim_kommune —
+five column descriptions saying "FK to dim_kommune" and the rest
+`relationships` tests — while it was not published. A consumer
+building on the API found the gap and called publishing it "the
+single highest-leverage small addition on this list — every
+consumer is currently rebuilding it, and each of us is rebuilding
+it slightly differently" (urb-agents #1250, finding 4).
+
+Historical codes are included with is_active = false, because a
+consumer joining older data needs them to resolve. Filter
+?is_active=is.true for today''s 357.
+
+Population and centroids are deliberately absent — see the model
+for why; both would be wrong in a dimension rather than merely
+missing.';
+COMMENT ON COLUMN api_v1.dim_kommune.kommune_nr IS '4-digit zero-padded kommune code, SSB canonical form
+(''0301'' = Oslo). The join key every other Atlas relation uses.';
+COMMENT ON COLUMN api_v1.dim_kommune.kommune_name IS 'Kommune name in bokmål.';
+COMMENT ON COLUMN api_v1.dim_kommune.kommune_name_alt IS 'Alternative official name where upstream publishes one
+(typically the nynorsk or historical form). NULL when there
+is none.';
+COMMENT ON COLUMN api_v1.dim_kommune.kommune_name_sami IS 'Sámi-language name where SSB publishes one, split out of the
+combined upstream string rather than left embedded in
+kommune_name. NULL for most kommuner.';
+COMMENT ON COLUMN api_v1.dim_kommune.fylke_nr IS '2-digit fylke code, derived from the first two digits of
+kommune_nr per SSB''s long-standing convention.';
+COMMENT ON COLUMN api_v1.dim_kommune.fylke_name IS 'Joined from dim_fylke. NULL where the fylke code is not in
+dim_fylke — pseudo-regions and Svalbard (21xx) — rather than
+dropping the kommune, so an unresolvable fylke costs a label
+and not a row.';
+COMMENT ON COLUMN api_v1.dim_kommune.is_active IS 'True when the code is current. Atlas has 357 active kommuner;
+everything else is retained history.
+
+⚠️ Sentinel codes such as 9999 ''Uoppgitt'' are present in this
+dimension and reach api_v1 views unmarked — whether they
+should be excluded or flagged is an open product question
+(urb-agents #700), raised again by a consumer whose first
+build reported 358 kommuner and carried a null-everything row
+into a chart.';
+COMMENT ON COLUMN api_v1.dim_kommune.valid_from IS 'Date the code became valid. NULL where upstream gives none.';
+COMMENT ON COLUMN api_v1.dim_kommune.valid_to IS 'Date the code became inactive. NULL = still active.';
+COMMENT ON COLUMN api_v1.dim_kommune.notes IS 'Upstream''s own note on the code, typically recording a merger
+or reorganisation. NULL for most rows.';
+
 -- distrikt_summary  ←  marts.mart_distrikt_summary
 CREATE OR REPLACE VIEW api_v1.distrikt_summary AS SELECT * FROM marts.mart_distrikt_summary;
 COMMENT ON VIEW api_v1.distrikt_summary IS 'One row per regional chapter (Red Cross "distrikt" level, and the

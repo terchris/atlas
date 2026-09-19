@@ -6794,6 +6794,14 @@
           "sample_query": "https://api-atlas.urbalurba.com/coverage_gap_barnefattigdom?limit=5"
         },
         {
+          "mart_name": "mart_dim_kommune",
+          "api_v1_name": "dim_kommune",
+          "title": "Kommune dimension",
+          "description_short": "The canonical municipality registry — SSB Klass 131, with fylke name joined.",
+          "description_full": "The canonical municipality registry — SSB Klass 131, with fylke\nname joined. Published as api_v1.dim_kommune.\n\nFourteen references in this file already pointed at dim_kommune —\nfive column descriptions saying \"FK to dim_kommune\" and the rest\n`relationships` tests — while it was not published. A consumer\nbuilding on the API found the gap and called publishing it \"the\nsingle highest-leverage small addition on this list — every\nconsumer is currently rebuilding it, and each of us is rebuilding\nit slightly differently\" (urb-agents #1250, finding 4).\n\nHistorical codes are included with is_active = false, because a\nconsumer joining older data needs them to resolve. Filter\n?is_active=is.true for today's 357.\n\nPopulation and centroids are deliberately absent — see the model\nfor why; both would be wrong in a dimension rather than merely\nmissing.",
+          "sample_query": "https://api-atlas.urbalurba.com/dim_kommune?limit=5"
+        },
+        {
           "mart_name": "mart_indicator_latest_values",
           "api_v1_name": "indicator_latest_values",
           "title": "Latest indicator values per kommune",
@@ -6832,6 +6840,10 @@
           "kind": "mart"
         },
         {
+          "name": "mart_dim_kommune",
+          "kind": "mart"
+        },
+        {
           "name": "mart_indicator_latest_values",
           "kind": "mart"
         },
@@ -6845,6 +6857,17 @@
         }
       ],
       "joined_with": [
+        {
+          "source_id": "ssb-klass-kommuner",
+          "shared_models": [
+            "fact_kommune_indicators",
+            "mart_coverage_gap_barnefattigdom",
+            "mart_dim_kommune",
+            "mart_indicator_latest_values",
+            "mart_indicator_missing_kommuner",
+            "mart_indicator_summary"
+          ]
+        },
         {
           "source_id": "fhi-bor-alene",
           "shared_models": [
@@ -6907,16 +6930,6 @@
         },
         {
           "source_id": "ssb-06944",
-          "shared_models": [
-            "fact_kommune_indicators",
-            "mart_coverage_gap_barnefattigdom",
-            "mart_indicator_latest_values",
-            "mart_indicator_missing_kommuner",
-            "mart_indicator_summary"
-          ]
-        },
-        {
-          "source_id": "ssb-06947",
           "shared_models": [
             "fact_kommune_indicators",
             "mart_coverage_gap_barnefattigdom",
@@ -7035,6 +7048,14 @@
           "sample_query": "https://api-atlas.urbalurba.com/coverage_gap_barnefattigdom?limit=5"
         },
         {
+          "mart_name": "mart_dim_kommune",
+          "api_v1_name": "dim_kommune",
+          "title": "Kommune dimension",
+          "description_short": "The canonical municipality registry — SSB Klass 131, with fylke name joined.",
+          "description_full": "The canonical municipality registry — SSB Klass 131, with fylke\nname joined. Published as api_v1.dim_kommune.\n\nFourteen references in this file already pointed at dim_kommune —\nfive column descriptions saying \"FK to dim_kommune\" and the rest\n`relationships` tests — while it was not published. A consumer\nbuilding on the API found the gap and called publishing it \"the\nsingle highest-leverage small addition on this list — every\nconsumer is currently rebuilding it, and each of us is rebuilding\nit slightly differently\" (urb-agents #1250, finding 4).\n\nHistorical codes are included with is_active = false, because a\nconsumer joining older data needs them to resolve. Filter\n?is_active=is.true for today's 357.\n\nPopulation and centroids are deliberately absent — see the model\nfor why; both would be wrong in a dimension rather than merely\nmissing.",
+          "sample_query": "https://api-atlas.urbalurba.com/dim_kommune?limit=5"
+        },
+        {
           "mart_name": "mart_distrikt_summary",
           "api_v1_name": "distrikt_summary",
           "title": "Distrikt summary",
@@ -7085,6 +7106,10 @@
           "kind": "mart"
         },
         {
+          "name": "mart_dim_kommune",
+          "kind": "mart"
+        },
+        {
           "name": "mart_distrikt_summary",
           "kind": "mart"
         },
@@ -7102,6 +7127,17 @@
         }
       ],
       "joined_with": [
+        {
+          "source_id": "ssb-klass-fylker",
+          "shared_models": [
+            "fact_kommune_indicators",
+            "mart_coverage_gap_barnefattigdom",
+            "mart_dim_kommune",
+            "mart_indicator_latest_values",
+            "mart_indicator_missing_kommuner",
+            "mart_indicator_summary"
+          ]
+        },
         {
           "source_id": "fhi-bor-alene",
           "shared_models": [
@@ -7164,16 +7200,6 @@
         },
         {
           "source_id": "ssb-06944",
-          "shared_models": [
-            "fact_kommune_indicators",
-            "mart_coverage_gap_barnefattigdom",
-            "mart_indicator_latest_values",
-            "mart_indicator_missing_kommuner",
-            "mart_indicator_summary"
-          ]
-        },
-        {
-          "source_id": "ssb-06947",
           "shared_models": [
             "fact_kommune_indicators",
             "mart_coverage_gap_barnefattigdom",
@@ -7293,6 +7319,60 @@
       ],
       "sample_query": "https://api-atlas.urbalurba.com/coverage_gap_barnefattigdom?limit=5",
       "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_coverage_gap_barnefattigdom"
+    },
+    {
+      "kind": "view",
+      "view_id": "dim_kommune",
+      "mart_name": "mart_dim_kommune",
+      "api_v1_name": "dim_kommune",
+      "title": "Kommune dimension",
+      "description_short": "The canonical municipality registry — SSB Klass 131, with fylke name joined.",
+      "description_full": "The canonical municipality registry — SSB Klass 131, with fylke\nname joined. Published as api_v1.dim_kommune.\n\nFourteen references in this file already pointed at dim_kommune —\nfive column descriptions saying \"FK to dim_kommune\" and the rest\n`relationships` tests — while it was not published. A consumer\nbuilding on the API found the gap and called publishing it \"the\nsingle highest-leverage small addition on this list — every\nconsumer is currently rebuilding it, and each of us is rebuilding\nit slightly differently\" (urb-agents #1250, finding 4).\n\nHistorical codes are included with is_active = false, because a\nconsumer joining older data needs them to resolve. Filter\n?is_active=is.true for today's 357.\n\nPopulation and centroids are deliberately absent — see the model\nfor why; both would be wrong in a dimension rather than merely\nmissing.",
+      "columns": [
+        {
+          "name": "kommune_nr",
+          "description": "4-digit zero-padded kommune code, SSB canonical form ('0301' = Oslo). The join key every other Atlas relation uses."
+        },
+        {
+          "name": "kommune_name",
+          "description": "Kommune name in bokmål."
+        },
+        {
+          "name": "kommune_name_alt",
+          "description": "Alternative official name where upstream publishes one (typically the nynorsk or historical form). NULL when there is none."
+        },
+        {
+          "name": "kommune_name_sami",
+          "description": "Sámi-language name where SSB publishes one, split out of the combined upstream string rather than left embedded in kommune_name. NULL for most kommuner."
+        },
+        {
+          "name": "fylke_nr",
+          "description": "2-digit fylke code, derived from the first two digits of kommune_nr per SSB's long-standing convention."
+        },
+        {
+          "name": "fylke_name",
+          "description": "Joined from dim_fylke. NULL where the fylke code is not in dim_fylke — pseudo-regions and Svalbard (21xx) — rather than dropping the kommune, so an unresolvable fylke costs a label and not a row."
+        },
+        {
+          "name": "is_active",
+          "description": "True when the code is current. Atlas has 357 active kommuner; everything else is retained history. ⚠️ Sentinel codes such as 9999 'Uoppgitt' are present in this dimension and reach api_v1 views unmarked — whether they should be excluded or flagged is an open product question (urb-agents #700), raised again by a consumer whose first build reported 358 kommuner and carried a null-everything row into a chart."
+        },
+        {
+          "name": "valid_from",
+          "description": "Date the code became valid. NULL where upstream gives none."
+        },
+        {
+          "name": "valid_to",
+          "description": "Date the code became inactive. NULL = still active."
+        },
+        {
+          "name": "notes",
+          "description": "Upstream's own note on the code, typically recording a merger or reorganisation. NULL for most rows."
+        }
+      ],
+      "built_from": [],
+      "sample_query": "https://api-atlas.urbalurba.com/dim_kommune?limit=5",
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_dim_kommune"
     },
     {
       "kind": "view",
