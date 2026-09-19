@@ -7277,6 +7277,10 @@
         {
           "name": "personer",
           "description": "DENOMINATOR, NOT A COUNT OF POOR CHILDREN. Every person under 18 in the kommune that year — SSB 08764 ContentsCode 'Personer', whose own metadata reads \"Persons under 18 years of age\", unit persons. The number of children in low-income households is personer * value_pct / 100. It is not published as a column; derive it. This description said \"number of children under 18 in low-income households\" until 2026-09-19, which is false by roughly ninefold and about child poverty. A consumer building on the published API summed the column, got 1,097,107 against a national under-18 population of about 1.1 million, and caught it (urb-agents #1250, #1251). Derived correctly the same sum is 124,670, near the ~11 % national rate. Nothing in the data contradicted the wrong reading: the column is plausible, non-null and internally consistent, and only summing it and recognising the total gives it away. The view description two entries above was right the whole time, so the contract disagreed with itself. NULL when upstream suppressed the cell."
+        },
+        {
+          "name": "barn_i_lavinntekt",
+          "description": "Children under 18 in low-income households — the number most consumers come here for. DERIVED as personer * value_pct / 100, rounded. SSB does not publish this. Table 08764 carries the total and the shares only, so every consumer has to compute it, and one got it wrong because the `personer` description claimed to be this column already (urb-agents #1250, #1251). Added on Terje's authorisation rather than renaming `personer`, so the consumer that found the defect keeps working. ESTIMATE, NOT A COUNT. value_pct is published to one decimal, so the true value lies within ±0.05 % of personer: about ±65 children for Oslo, ±4 for a kommune of 7 000. Do not present it as SSB's own figure. NULL when either input was suppressed upstream."
         }
       ],
       "built_from": [
@@ -8437,6 +8441,10 @@
               {
                 "name": "personer",
                 "description": "DENOMINATOR, NOT A COUNT OF POOR CHILDREN. Every person under 18 in the kommune that year — SSB 08764 ContentsCode 'Personer', whose own metadata reads \"Persons under 18 years of age\", unit persons. The number of children in low-income households is personer * value_pct / 100. It is not published as a column; derive it. This description said \"number of children under 18 in low-income households\" until 2026-09-19, which is false by roughly ninefold and about child poverty. A consumer building on the published API summed the column, got 1,097,107 against a national under-18 population of about 1.1 million, and caught it (urb-agents #1250, #1251). Derived correctly the same sum is 124,670, near the ~11 % national rate. Nothing in the data contradicted the wrong reading: the column is plausible, non-null and internally consistent, and only summing it and recognising the total gives it away. The view description two entries above was right the whole time, so the contract disagreed with itself. NULL when upstream suppressed the cell."
+              },
+              {
+                "name": "barn_i_lavinntekt",
+                "description": "Children under 18 in low-income households — the number most consumers come here for. DERIVED as personer * value_pct / 100, rounded. SSB does not publish this. Table 08764 carries the total and the shares only, so every consumer has to compute it, and one got it wrong because the `personer` description claimed to be this column already (urb-agents #1250, #1251). Added on Terje's authorisation rather than renaming `personer`, so the consumer that found the defect keeps working. ESTIMATE, NOT A COUNT. value_pct is published to one decimal, so the true value lies within ±0.05 % of personer: about ±65 children for Oslo, ±4 for a kommune of 7 000. Do not present it as SSB's own figure. NULL when either input was suppressed upstream."
               }
             ],
             "built_from": [

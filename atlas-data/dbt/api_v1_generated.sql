@@ -167,6 +167,23 @@ view description two entries above was right the whole time,
 so the contract disagreed with itself.
 
 NULL when upstream suppressed the cell.';
+COMMENT ON COLUMN api_v1.coverage_gap_barnefattigdom.barn_i_lavinntekt IS 'Children under 18 in low-income households — the number most
+consumers come here for. DERIVED as
+personer * value_pct / 100, rounded.
+
+SSB does not publish this. Table 08764 carries the total and
+the shares only, so every consumer has to compute it, and one
+got it wrong because the `personer` description claimed to be
+this column already (urb-agents #1250, #1251). Added on
+Terje''s authorisation rather than renaming `personer`, so the
+consumer that found the defect keeps working.
+
+ESTIMATE, NOT A COUNT. value_pct is published to one decimal,
+so the true value lies within ±0.05 % of personer: about ±65
+children for Oslo, ±4 for a kommune of 7 000. Do not present
+it as SSB''s own figure.
+
+NULL when either input was suppressed upstream.';
 
 -- distrikt_summary  ←  marts.mart_distrikt_summary
 CREATE OR REPLACE VIEW api_v1.distrikt_summary AS SELECT * FROM marts.mart_distrikt_summary;
