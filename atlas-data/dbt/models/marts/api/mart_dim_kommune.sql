@@ -45,8 +45,12 @@
 select
   k.kommune_nr,
   k.kommune_name,
+  -- ⚠️ kommune_name_alt IS the Sámi variant where there is one — dim_kommune
+  -- splits it out of upstream's "Name - Nama" string. There is no separate
+  -- kommune_name_sami column: dimensions/schema.yml documents one and the
+  -- model has never emitted it, which is how this wrapper came to reference it
+  -- and be rejected by Postgres (urb-agents #1255).
   k.kommune_name_alt,
-  k.kommune_name_sami,
   k.fylke_nr,
   f.fylke_name,
   k.is_active,
