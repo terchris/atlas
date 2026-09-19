@@ -26,9 +26,33 @@
 --   - ssb-06944: filter to household_type='0000' (all households)
 --   - fhi-bor-alene: filter to age_group='16_120' (adults 16+)
 --
--- Sources still excluded (different shape; will need source-specific marts):
---   - ssb-07459: has sex + single-year age; no natural 1-row-per-contents roll-up
+-- Sources still excluded. ⚠️ ALL OF THEM, because a partial list reads as a
+-- complete one — an audit found 7 built indicator models absent from this
+-- union and could only explain 5 of them from what was written here
+-- (urb-agents #1257). A consumer meanwhile built a workaround for data it
+-- concluded Atlas did not hold.
+--
+--   - ssb-07459: has sex + single-year age; no natural 1-row-per-contents
+--     roll-up. A 67+ total is a defensible one and nobody has chosen it.
 --   - ssb-12944: period (not year) and age_group; needs a deliberate mapping
+--   - ssb-08484 / 09405 / 09406: national tables with no kommune dimension —
+--     stated below at the crime CTE, by table number rather than model name,
+--     which is why an audit looking for model names missed it
+--   - ssb-10826: bydel-level, with alphanumeric region codes. The only
+--     sub-municipal geography Atlas holds, and it does not fit a kommune
+--     fact at all — it needs its own mart, not a union
+--   - bufdir-barnefattigdom: 🔴 THE ONE WITH NO REASON. It already produces
+--     exactly this shape, including a synthesised contents_code, and it is
+--     the headline child-poverty indicator most directorates cite — the
+--     subject of Atlas's own flagship collection. It is not unioned and
+--     nothing says why.
+--
+--     ⚠️ Not unioned here because Bufdir RENUMBERS indicators (there is an
+--     alias table for the 9 -> 9a/9b split), so the same
+--     (kommune, year, contents_code) could appear twice and silently inflate
+--     every published indicator surface. The grain test added alongside this
+--     comment makes that a caught failure instead. Union it once that test
+--     has been green on the cluster for a cycle.
 
 with ssb_08764 as (
   select
