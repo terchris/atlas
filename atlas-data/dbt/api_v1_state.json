@@ -5,6 +5,7 @@
     "brreg_enhet",
     "bufdir_indicator_alias",
     "coverage_gap_barnefattigdom",
+    "dim_kommune",
     "distrikt_summary",
     "indicator_latest_values",
     "indicator_missing_kommuner",
