@@ -5,6 +5,8 @@ slug: /datasets/for/grant-officers
 sidebar_label: Grant officers
 ---
 
+import ApiCurl from '@site/src/components/sources/ApiCurl';
+
 import Link from '@docusaurus/Link';
 
 # For grant officers
@@ -41,9 +43,7 @@ When the application asks "why this kommune, not the neighbouring one?", you nee
 
 Pulls the latest values for every Atlas indicator in one kommune (`3024` = Bærum) — the shape most grant applications need first:
 
-```bash
-curl -sS 'https://api-atlas.sovereignsky.no/indicator_summary?kommune_code=eq.3024&select=kommune_name,indicator_id,indicator_label,latest_value,latest_year'
-```
+<ApiCurl query="indicator_summary?kommune_code=eq.3024&select=kommune_name,indicator_id,indicator_label,latest_value,latest_year" />
 
 To compare a kommune against its neighbours, swap `eq.3024` for `like.30*` (the 2-digit fylke prefix).
 

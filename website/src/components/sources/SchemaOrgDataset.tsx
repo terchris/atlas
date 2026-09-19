@@ -1,4 +1,5 @@
 import React from 'react';
+import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import type { Source } from '../../types/sources';
 
 interface Props {
@@ -11,7 +12,9 @@ interface Props {
  * win for SEO + discoverability outside Atlas (per **[Q19]**).
  */
 export default function SchemaOrgDataset({ source }: Props) {
-  const url = `https://atlas.sovereignsky.no/datasets/${source.source_id}`;
+  // The site's own URL, from Docusaurus config — never a literal (urb-agents #1245).
+  const siteUrl = useDocusaurusContext().siteConfig.url;
+  const url = `${siteUrl}/datasets/${source.source_id}`;
 
   const temporalCoverage = source.time_coverage.start && source.time_coverage.end
     ? `${source.time_coverage.start}/${source.time_coverage.end}`
@@ -36,7 +39,7 @@ export default function SchemaOrgDataset({ source }: Props) {
     publisher: {
       '@type': 'Organization',
       name: 'Atlas',
-      url: 'https://atlas.sovereignsky.no',
+      url: siteUrl,
     },
     distribution: {
       '@type': 'DataDownload',

@@ -1,4 +1,5 @@
 import React from 'react';
+import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import CodeBlock from '@theme/CodeBlock';
 import type { Source } from '../../types/sources';
 import styles from './styles.module.css';
@@ -8,7 +9,9 @@ interface Props {
 }
 
 export default function SourceCitation({ source }: Props) {
-  const permalink = `https://atlas.sovereignsky.no/datasets/${source.source_id}`;
+  // The site's own URL, from Docusaurus config — never a literal (urb-agents #1245).
+  const siteUrl = useDocusaurusContext().siteConfig.url;
+  const permalink = `${siteUrl}/datasets/${source.source_id}`;
   return (
     <div className={styles.citation}>
       <div className={styles.citationLabel}>Recommended citation</div>

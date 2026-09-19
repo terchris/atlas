@@ -2,6 +2,8 @@ import { themes as prismThemes } from 'prism-react-renderer';
 import type { Config } from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 
+import { ATLAS_SITE_BASE_URL, ATLAS_API_BASE_URL } from './hosts.mjs';
+
 const GITHUB_ORG = process.env.GITHUB_ORG || 'terchris';
 const GITHUB_REPO = process.env.GITHUB_REPO || 'atlas';
 
@@ -10,8 +12,14 @@ const config: Config = {
   tagline: "An open atlas of Norway's civil-society sector — humanitarian needs and the NGOs that respond.",
   favicon: 'img/favicon.svg',
 
-  url: 'https://atlas.sovereignsky.no',
+  // Hostnames live in website/hosts.mjs — see there for why they are not here.
+  url: ATLAS_SITE_BASE_URL,
   baseUrl: '/',
+
+  customFields: {
+    // So a component can render the deployed API name without a literal.
+    atlasApiBaseUrl: ATLAS_API_BASE_URL,
+  },
 
   organizationName: GITHUB_ORG,
   projectName: GITHUB_REPO,
@@ -87,7 +95,7 @@ const config: Config = {
           // Same-origin snapshot of the PostgREST OpenAPI spec. Refresh with
           // `npm run api:snapshot` (in website/) when the api_v1 surface changes.
           //
-          // We can't fetch live from api-atlas.helpers.no in the browser
+          // We can't fetch live from the API in the browser
           // because PostgREST 14 sends Access-Control-Allow-Origin only on
           // OPTIONS preflight, not on GET responses — see INVESTIGATE-
           // deployment-pipeline.md Q21. Until UIS fixes that, "Try it out"
