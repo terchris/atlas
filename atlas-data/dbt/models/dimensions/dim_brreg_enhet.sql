@@ -101,7 +101,23 @@
       create index if not exists dim_brreg_enhet_voluntary_active_idx
         on {{ this }} (kommune_nr, icnpo_nummer, icnpo_kategori)
         where registrert_i_frivillighetsregisteret and is_active
+      """,
       """
+      comment on index {{ this.schema }}.dim_brreg_enhet_voluntary_active_idx is
+        'LOAD-BEARING. api_v1.kommune_ngo_summary and kommune_ngo_totals are '
+        'index-only scans over this index. Dropping it does not make them '
+        'slower, it makes them unusable: 25 s for a 24 kB response, and one '
+        'request timed out (urb-agents #1268). It costs 872 kB. Declared in '
+        'dbt models/dimensions/dim_brreg_enhet.sql - a DROP here is undone by '
+        'the next run, and the outage lasts until then.'
+      """,
+      """
+      alter table {{ this }} set (autovacuum_vacuum_scale_factor = 0.02)
+      """,
+      {
+        "sql": "vacuum (analyze) {{ this }}",
+        "transaction": False
+      }
     ],
     indexes=[
       {'columns': ['organisasjonsnummer'], 'unique': True},
@@ -118,6 +134,78 @@
 -- given its own `post_hook=` argument — two of those in one config() is a
 -- compilation error. And no `#` comments inside that jinja expression: also a
 -- compilation error. Both are how I first wrote it.
+--
+-- 🔴 THE INDEX ALONE MADE IT WORSE. AN INDEX-ONLY SCAN IS ONLY INDEX-ONLY IF
+-- THE VISIBILITY MAP SAYS SO.
+--
+-- `864fb52` deployed the index above and was a 2-7x REGRESSION for its first
+-- ten minutes, because this table had never been vacuumed (imac, urb-agents
+-- #1270). A page that is not marked all-visible forces the scan to check the
+-- heap anyway, so it does the index work AND the heap work:
+--
+--     before the index                Index Scan          —          3,410 ms
+--     index created, NOT vacuumed     Index Only Scan   15,915   6,859-22,858 ms
+--     index + VACUUM (ANALYZE)        Index Only Scan        0     286-  390 ms
+--
+-- ⚠️ AND IT COMES BACK, CONTINUOUSLY, WITH NO DEPLOY TO BLAME. brreg_transform
+-- updates this table every 30 minutes; every update un-marks a page. Measured
+-- locally on the 2345 MB fixture, autovacuum disabled, warm cache:
+--
+--     dead tuples        0     5 000    23 000    56 000   235 000
+--     heap fetches       0       508     2 492     5 871    24 671
+--     execution        8.8 ms   9.8 ms   12.7 ms   72.1 ms  352.2 ms
+--
+-- 🔴 Decay is LINEAR — about 0.105 heap fetches per dead tuple — so there is no
+-- threshold that keeps it at zero. Default autovacuum would not fire until
+-- ~235 000 dead rows, the right-hand column: intermittent API slowness that
+-- correlates with nothing and gets blamed on the network.
+--
+-- ✅ TWO HOOKS, TWO DIFFERENT JOBS. They are not alternatives:
+--
+--   `vacuum (analyze)` REBUILDS THE VISIBILITY MAP at the moment the damage is
+--   made, by the thing that makes it. Live, imac measured 15 915 heap fetches
+--   -> 0. In the fixture it went 24 671 -> 277, and 277 is where it stayed
+--   across three more vacuums — 1 250 of 351 250 pages stay un-marked for a
+--   reason I could not establish, with no other backend holding a snapshot.
+--   ⚠️ I am recording that rather than rounding it to zero: the live number is
+--   imac's, the residue is mine, and no claim here rests on the residue.
+--
+--   Cost on 2345 MB: 5.1 s after 235 k dead rows, 1.4 s in steady state,
+--   against a run that already takes ~21 s. (imac's 49.8 s was the FIRST vacuum
+--   of a table that had never had one — there was no visibility map yet, so
+--   nothing could be skipped. Subsequent vacuums skip all-visible pages, which
+--   is why the recurring cost is seconds and not a minute.)
+--
+--   `autovacuum_vacuum_scale_factor = 0.02` BOUNDS the decay when this model
+--   does NOT run. A post-hook cleans up only on a run; if the pipeline is
+--   paused or failing, the default threshold lets it degrade all the way to the
+--   24 671-heap-fetch column. This caps it around 23 000 dead / 2 492 fetches.
+--   It takes only a ShareUpdateExclusiveLock (verified), so it never blocks a
+--   reader, and setting it HERE rather than in someone's psql history is what
+--   makes it survive `--full-refresh`, which drops reloptions with the table.
+--
+-- 🔴 VACUUM MUST USE THE DICT HOOK FORM. dbt-postgres wraps a model and its
+-- hooks in one transaction, and the obvious spelling fails:
+--
+--     post_hook="vacuum (analyze) {{ this }}"
+--        -> Database Error: VACUUM cannot run inside a transaction block
+--     post_hook={"sql": "vacuum (analyze) {{ this }}", "transaction": False}
+--        -> OK
+--
+-- Both were run, not reasoned about; the failing one is what I would have
+-- written. ⚠️ Being outside the transaction also means this runs AFTER the
+-- model commits — a failure here leaves the data correct and the visibility map
+-- stale, which is the right way round.
+--
+-- 🔵 The project-level `+post-hook: analyze_if_table()` still runs, and runs
+-- FIRST — before the deletes below, so its statistics are taken from a state
+-- that no longer exists by the time the run ends. The `(analyze)` here is what
+-- actually leaves this model with correct stats. Left in place because it is a
+-- project-wide hook and other models depend on it.
+--
+-- 🔵 COMMENT ON INDEX is imac's suggestion, and it is a good one: a note that
+-- must survive a maintenance window belongs where the person holding the DROP
+-- will read it, which is the catalogue, not this file.
 --
 -- 🔴 WHY THAT PARTIAL COVERING INDEX EXISTS, AND WHY dbt's `indexes:` COULD NOT
 -- DECLARE IT.
@@ -146,6 +234,23 @@
 --     without   206-379 ms warm   Index Scan + 68 460 heap fetches
 --     with       18.3-18.5 ms     Index Only Scan, Heap Fetches: 0
 --     index size 600 kB
+--
+-- ⚠️ BOTH OF THOSE FIXTURE NUMBERS WERE OPTIMISTIC, MEASURED LIVE AFTER DEPLOY
+-- (urb-agents #1270):
+--
+--     in-db, post-vacuum     286-390 ms      ~16-20x the 18 ms predicted here
+--     end-to-end via the API 0.205-0.326 s   5 consecutive runs, all 357 rows
+--     filtered               0.120 s
+--     index size             872 kB          45 % over the 600 kB predicted
+--
+-- 🔵 25 s to a quarter-second is still the honest headline. `Heap Fetches: 0`
+-- is the claim that held; every absolute number I predicted from a fixture did
+-- not. Three fixtures, three wrong numbers, the mechanism right each time:
+-- the first matched row COUNT and not row SIZE, so heap fetches were invisible;
+-- the second was freshly built and therefore vacuum-clean, so the visibility
+-- map was invisible; the third under-sized the index by 45 %. A synthetic
+-- benchmark reproduces only the dimensions you thought to reproduce, and
+-- reports a confident number for the ones you didn't.
 --
 -- ⚠️ `indexes:` in dbt-postgres takes columns / unique / type and cannot express
 -- a WHERE predicate, which is the whole point of this one — a plain index on the
