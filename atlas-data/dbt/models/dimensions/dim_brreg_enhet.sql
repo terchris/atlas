@@ -96,6 +96,11 @@
       """,
       """
       delete from {{ this }} where doc is null
+      """,
+      """
+      create index if not exists dim_brreg_enhet_voluntary_active_idx
+        on {{ this }} (kommune_nr, icnpo_nummer, icnpo_kategori)
+        where registrert_i_frivillighetsregisteret and is_active
       """
     ],
     indexes=[
@@ -108,6 +113,49 @@
     ]
   )
 }}
+
+-- ⚠️ The index statement is APPENDED TO THE EXISTING post_hook LIST above, not
+-- given its own `post_hook=` argument — two of those in one config() is a
+-- compilation error. And no `#` comments inside that jinja expression: also a
+-- compilation error. Both are how I first wrote it.
+--
+-- 🔴 WHY THAT PARTIAL COVERING INDEX EXISTS, AND WHY dbt's `indexes:` COULD NOT
+-- DECLARE IT.
+--
+-- api_v1.kommune_ngo_summary and api_v1.kommune_ngo_totals are views over this
+-- table. Unfiltered — which is how anyone consumes a 357-row national rollup —
+-- the aggregate cannot be pushed below the LIMIT, so it is a full pass.
+--
+-- ⚠️ MEASURED ON THE LIVE API (ops-dev, urb-agents #1268):
+--
+--     ?kommune_nr=eq.3411   filtered      0.65 s
+--     all 357 rows          unfiltered   25.3 s cold, ~3.9 s warm, for 24 kB
+--
+-- The plan was an Index Scan on `registrert_i_frivillighetsregisteret` followed
+-- by ~68 000 heap fetches scattered across a 2.3 GB table. Warm that is
+-- tolerable; cold it is 68 000 random reads and one request TIMED OUT.
+--
+-- ✅ This index carries the filter as a predicate and the group-by keys as its
+-- columns, so the aggregate becomes an INDEX-ONLY SCAN with Heap Fetches: 0 —
+-- the 2.3 GB table is never touched.
+--
+-- MEASURED on a local Postgres 15 against a synthetic register matched to the
+-- real one on row count, payload size (~1.7 kB, 2344 MB total) and the real
+-- ~10.3 % null-kommune / ~6 % voluntary shares:
+--
+--     without   206-379 ms warm   Index Scan + 68 460 heap fetches
+--     with       18.3-18.5 ms     Index Only Scan, Heap Fetches: 0
+--     index size 600 kB
+--
+-- ⚠️ `indexes:` in dbt-postgres takes columns / unique / type and cannot express
+-- a WHERE predicate, which is the whole point of this one — a plain index on the
+-- same columns would still fetch heap rows. Hence the post-hook, which is
+-- idempotent and survives incremental runs because this model is not dropped.
+--
+-- 🔵 The alternative was materialising the rollups and refreshing them on
+-- dim_brreg_enhet's cadence. That is the drift defect removed in #1265, bought
+-- back deliberately. An index fixes the access pattern without reintroducing a
+-- staleness window.
 
 -- 🔴 INCREMENTAL, AND `delete+insert` IS THE PART THAT MAKES DELETIONS WORK.
 --

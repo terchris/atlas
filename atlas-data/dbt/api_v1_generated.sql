@@ -467,7 +467,13 @@ municipality. A handful more sit on codes outside the 357 active
 kommuner and are dropped by the join.
 
 A (kommune, category) pair absent from this view has zero
-organisations; rows are not emitted for empty combinations.';
+organisations; rows are not emitted for empty combinations.
+
+⚠️ COST: filtered by kommune_nr this is sub-second. UNFILTERED it
+aggregates the whole register — 25 s cold before the covering
+index on dim_brreg_enhet, and that index is what makes enumerating
+all rows viable at all. If it is ever dropped, this relation
+becomes unusable rather than slow.';
 COMMENT ON COLUMN api_v1.kommune_ngo_summary.kommune_nr IS '4-digit kommune code. FK to dim_kommune.';
 COMMENT ON COLUMN api_v1.kommune_ngo_summary.kommune_name IS 'Kommune name in bokmål, joined from dim_kommune.';
 COMMENT ON COLUMN api_v1.kommune_ngo_summary.icnpo_nummer IS 'ICNPO category number as Brreg assigns it. NULL where the
@@ -493,7 +499,13 @@ adds them client-side. That was most of a cold page load
 
 ⚠️ Counts exclude the 10.3 % of active voluntary units carrying no
 kommune_nr, exactly as kommune_ngo_summary does. Summing this gives
-the placed total, not the register total.';
+the placed total, not the register total.
+
+⚠️ COST: filtered by kommune_nr this is sub-second. UNFILTERED it
+aggregates the whole register — 25 s cold before the covering
+index on dim_brreg_enhet, and that index is what makes enumerating
+all rows viable at all. If it is ever dropped, this relation
+becomes unusable rather than slow.';
 COMMENT ON COLUMN api_v1.kommune_ngo_totals.kommune_nr IS '4-digit kommune code. FK to dim_kommune.';
 COMMENT ON COLUMN api_v1.kommune_ngo_totals.kommune_name IS 'Kommune name in bokmål, joined from dim_kommune.';
 COMMENT ON COLUMN api_v1.kommune_ngo_totals.active_count IS 'Total active voluntary organisations in this kommune, summed
