@@ -65,6 +65,39 @@ models:
     +persist_docs:
       relation: true
       columns: true
+    # See the block below, and macros/analyze_if_table.sql for why it is a
+    # macro rather than a literal `analyze {{ this }}`.
+    +post-hook: "{{ analyze_if_table() }}"
+    # 🔴 EVERY TABLE IS ANALYSED AFTER IT IS BUILT, AND WITHOUT THIS THE PUBLIC
+    # API HANDS CONSUMERS FICTION.
+    #
+    # dbt rebuilds these tables on every transform, which resets their planner
+    # statistics to nothing. Autovacuum never catches up before the next
+    # rebuild, so Postgres estimates row counts from raw page counts — and
+    # PostgREST's `Prefer: count=estimated`, the cheap way a consumer sizes a
+    # relation before fetching it, reports those estimates verbatim.
+    #
+    # ⚠️ Measured on the published API, 2026-09-19, by an outside consumer
+    # building a real app (urb-agents #1250) and reproduced here:
+    #
+    #     activity_catalog        estimated=420   exact=0
+    #     distrikt_summary        estimated=410   exact=0
+    #     kommune_local_chapters  estimated=280   exact=0
+    #     ngo_index               estimated=210   exact=11
+    #     meta_sources            estimated=170   exact=44
+    #
+    # Three relations claimed hundreds of rows while returning none. A consumer
+    # following the obvious discovery pattern — count cheaply, then fetch —
+    # built a dashboard whose headline number was not true.
+    #
+    # 🔵 `raw.brreg_enhet` estimated sensibly throughout, which is the control:
+    # it is written by the ingest rather than rebuilt by dbt, so autovacuum gets
+    # to analyse it. The difference between the two is this hook.
+    #
+    # ⚠️ Hooks are ADDITIVE in dbt, so `marts.api` keeps restore_api_v1_view()
+    # below and gains this as well. Do not move this onto the top-level
+    # `atlas:` key — that also covers view-materialised models, and `ANALYZE`
+    # on a view is a warning on every run, which is how a log stops being read.
     # Per-source indicator passthroughs live in models/indicators/ and are
     # materialised as tables in the marts schema.
     indicators:
@@ -107,6 +140,9 @@ seeds:
     +persist_docs:
       relation: true
       columns: true
+    # See the block below, and macros/analyze_if_table.sql for why it is a
+    # macro rather than a literal `analyze {{ this }}`.
+    +post-hook: "{{ analyze_if_table() }}"
     # Pin types so dbt's CSV sniffing doesn't strip leading zeros from
     # codes that look numeric (e.g. ICNPO "1100", postnummer "0150").
     # A column type listed here is only applied if the CSV has that column;
