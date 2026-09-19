@@ -1169,8 +1169,9 @@ models:
           and not a row.
       - name: is_active
         description: |
-          True when the code is current. Atlas has 357 active kommuner;
-          everything else is retained history.
+          True when the CODE is current — which is not the same as "this
+          is a municipality". 358 rows satisfy it: 357 kommuner plus the
+          9999 sentinel. Combine with is_sentinel.
 
           ⚠️ Sentinel codes such as 9999 'Uoppgitt' are present in this
           dimension and reach api_v1 views unmarked — whether they
@@ -1187,6 +1188,21 @@ models:
         description: |
           Upstream's own note on the code, typically recording a merger
           or reorganisation. NULL for most rows.
+      - name: is_sentinel
+        description: |
+          True for SSB's 9999 'Uoppgitt' bucket — a current code that is
+          not a municipality.
+
+          ⚠️ is_active does NOT exclude it. `?is_active=eq.true` returns
+          358, not 357, and the extra row is this one (measured on the
+          live API, urb-agents #1265). For real municipalities filter
+          `?is_sentinel=is.false`.
+
+          This is the third sentinel of the same family across three
+          published surfaces — 9999 here, 9999 in
+          coverage_gap_barnefattigdom, 0 in KOSvedtakaar0000 — and the
+          first that can be named in a filter rather than known. Whether
+          the other two follow is urb-agents #700.
 
   - name: mart_kommune_ngo_summary
     meta:
@@ -1240,6 +1256,45 @@ models:
           Count of organisations in this kommune and category that are
           both is_active and registrert_i_frivillighetsregisteret.
           Always >= 1; absent combinations mean zero.
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 1
+
+  - name: mart_kommune_ngo_totals
+    meta:
+      title: "Voluntary organisations per kommune, total"
+    description: |
+      One row per kommune: how many active voluntary organisations are
+      registered there. 357 rows instead of the ~5 400 in
+      kommune_ngo_summary. Published as api_v1.kommune_ngo_totals.
+
+      Exists because PostgREST cannot sum — `?select=active_count.sum()`
+      returns PGRST123, aggregates are disabled — so a consumer wanting
+      one number per kommune otherwise fetches every category row and
+      adds them client-side. That was most of a cold page load
+      (urb-agents #1265).
+
+      ⚠️ Counts exclude the 10.3 % of active voluntary units carrying no
+      kommune_nr, exactly as kommune_ngo_summary does. Summing this gives
+      the placed total, not the register total.
+    columns:
+      - name: kommune_nr
+        description: 4-digit kommune code. FK to dim_kommune.
+        data_tests:
+          - not_null
+          - unique
+          - relationships:
+              to: ref('dim_kommune')
+              field: kommune_nr
+      - name: kommune_name
+        description: Kommune name in bokmål, joined from dim_kommune.
+        data_tests: [not_null]
+      - name: active_count
+        description: |
+          Total active voluntary organisations in this kommune, summed
+          across ICNPO categories. Always >= 1; a kommune with none has
+          no row.
         data_tests:
           - not_null
           - dbt_utils.accepted_range:

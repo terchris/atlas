@@ -130,6 +130,9 @@ mart_kommune_local_chapters,redcross-branches
 mart_kommune_ngo_summary,brreg-enheter-alle
 mart_kommune_ngo_summary,brreg-frivillige
 mart_kommune_ngo_summary,ssb-klass-kommuner
+mart_kommune_ngo_totals,brreg-enheter-alle
+mart_kommune_ngo_totals,brreg-frivillige
+mart_kommune_ngo_totals,ssb-klass-kommuner
 mart_ngo_index,redcross-branches
 mart_ngo_overview,redcross-branches
 supply__redcross_branch_activities,redcross-branches
