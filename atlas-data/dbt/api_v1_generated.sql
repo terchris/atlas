@@ -580,23 +580,45 @@ surfaces that are queryable but not version-guaranteed.';
 COMMENT ON COLUMN api_v1.meta_endpoints.table_type IS '`BASE TABLE` for tables (most `marts.*`, all `raw.*`) and
 `VIEW` for views (all `api_v1.*` wrappers).
 
-🔴 IT ALSO TELLS YOU WHETHER `Prefer: count=estimated` CAN BE
-TRUSTED, AND FOR MOST ENDPOINTS IT CANNOT. A view has no
-`reltuples`, so the planner estimates from the underlying
-query. Measured on the live API, 2026-09-20:
+⚠️ IN `api_v1` IT IS ALWAYS `VIEW` AND THEREFORE TELLS YOU
+NOTHING ON ITS OWN. All 17 public relations are views over a
+`marts.mart_*` relation; this column distinguishes them from
+`marts.*` and `raw.*`, not from each other.
 
-    kommune_ngo_summary   exact 5 435   estimated 69 462   12.8x
-    kommune_ngo_totals    exact   357   estimated  6 946   19.5x
+🔴 IT DOES NOT PREDICT WHETHER `Prefer: count=estimated` CAN BE
+TRUSTED. Three cases, and the deciding property is whether the
+aggregation happened BEFORE the planner saw it:
 
-⚠️ AND `estimated = 1` DOES NOT MEAN ONE ROW. It is the
-planner''s floor, so an EMPTY relation reports 1 — measured on
-activity_catalog, distrikt_summary and kommune_local_chapters,
-all of which hold zero rows. A consumer asking "is there any
-data here?" cheaply gets yes.
+1. the mart is a TABLE — 14 of 17. Its rows were counted by
+   ANALYZE when it was built, whatever its query did, so the
+   estimate is accurate. `indicator_summary` aggregates heavily
+   and estimates fine, because the aggregating happened at
+   build time.
+2. the mart is a PLAIN VIEW — `brreg_enhet`. Row count
+   propagates from the base table. Accurate.
+3. the mart is an AGGREGATING VIEW — `kommune_ngo_summary` and
+   `kommune_ngo_totals`, and only these. The planner must guess
+   how many groups a GROUP BY will produce, and measured on the
+   live API 2026-09-20 it guessed badly:
 
-✅ Use `Prefer: count=exact`. On this API the largest published
-relation is ~72 000 rows and an exact count is cheap; the
-estimate saves nothing worth being wrong about.';
+       kommune_ngo_summary   exact 5 435   estimated 69 462   12.8x
+       kommune_ngo_totals    exact   357   estimated  6 946   19.5x
+
+⚠️ AND SEPARATELY, `estimated = 1` DOES NOT MEAN ONE ROW. It is
+the planner''s floor, so an EMPTY relation reports 1 — measured
+on activity_catalog, distrikt_summary and kommune_local_chapters,
+all of which hold zero rows and all of which are case 1. A
+consumer asking "is there any data here?" cheaply gets yes.
+
+✅ Use `Prefer: count=exact`. The largest published relation is
+~72 000 rows and an exact count is cheap; the estimate saves
+nothing worth being wrong about.
+
+🔵 An earlier version of this description said the split was
+tables versus views. There are no tables in api_v1, so that
+rule was unusable — a consumer checking dim_kommune, a view
+that estimates exactly, would have concluded the documentation
+was wrong (urb-agents #1288).';
 
 -- meta_sources  ←  marts.mart_meta_sources
 CREATE OR REPLACE VIEW api_v1.meta_sources AS SELECT * FROM marts.mart_meta_sources;

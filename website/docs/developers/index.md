@@ -93,24 +93,31 @@ curl -sI -H "Prefer: count=exact" http://api-atlas.localhost/indicator_summary?l
 
 :::danger Use `count=exact`, not `count=estimated`
 
-`count=estimated` is unreliable on this API and wrong in two different ways.
+`count=estimated` is accurate on most endpoints and badly wrong on a few, and
+**you cannot tell which from the API.** Every `api_v1` relation is a view, so
+"is it a view?" does not distinguish them.
 
-**On views it is wildly over.** A view has no `reltuples`, so the planner
-estimates from the underlying query. Measured 2026-09-20:
+**Two relations are wildly over.** `kommune_ngo_summary` and `kommune_ngo_totals`
+are views that `GROUP BY`, so the planner has to guess how many groups the query
+will produce. Measured 2026-09-20:
 
 | endpoint | exact | estimated | |
 |---|---|---|---|
 | `kommune_ngo_summary` | 5,435 | 69,462 | 12.8× |
 | `kommune_ngo_totals` | 357 | 6,946 | 19.5× |
 
-**`estimated = 1` does not mean one row.** It is the planner's floor, so an
-**empty** relation reports 1. Three endpoints currently hold zero rows and all
-three report `estimated = 1` — so "is there any data here?" asked cheaply
+Every other endpoint reads from a pre-built table, so its rows were counted when
+it was built and the estimate is accurate — including heavily aggregated ones
+like `indicator_summary`, because that aggregating happened before the planner
+saw it.
+
+**Separately, `estimated = 1` does not mean one row.** It is the planner's floor,
+so an **empty** relation reports 1. Three endpoints currently hold zero rows and
+all three report `estimated = 1` — so "is there any data here?" asked cheaply
 answers yes when the answer is no.
 
-`meta_endpoints.table_type` tells you which endpoints are views. But the largest
-published relation here is ~72,000 rows and an exact count is cheap, so the
-estimate saves nothing worth being wrong about.
+The largest published relation here is ~72,000 rows and an exact count is cheap,
+so the estimate saves nothing worth being wrong about.
 
 :::
 

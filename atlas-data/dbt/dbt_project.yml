@@ -94,22 +94,34 @@ models:
     # it is written by the ingest rather than rebuilt by dbt, so autovacuum gets
     # to analyse it. The difference between the two is this hook.
     #
-    # 🔴 THIS FIXES TABLES. IT CANNOT FIX VIEWS, AND READING IT AS "ESTIMATES ARE
-    # SANE NOW" IS HOW A CONSUMER GETS BURNED.
+    # 🔵 THIS HOOK IS WHY MOST api_v1 ESTIMATES ARE ACCURATE — every public
+    # relation is a view, and 14 of the 17 sit on a mart TABLE that this
+    # analyses. The view inherits the base table's reltuples.
     #
-    # A view has no `reltuples` for ANALYZE to populate — the planner estimates
-    # from the underlying query instead. So the two rollups that became views to
-    # fix a drift defect (#1265, #337) re-broke their own estimates, measured
-    # 2026-09-20: kommune_ngo_summary 12.8x over, kommune_ngo_totals 19.5x over.
+    # 🔴 IT CANNOT HELP WHERE THE AGGREGATION IS IN FRONT OF THE PLANNER RATHER
+    # THAN BEHIND IT. A mart materialised as a TABLE has already done its
+    # GROUP BY by the time ANALYZE counts the result, so indicator_summary
+    # aggregates heavily and estimates fine. A mart materialised as a VIEW makes
+    # the planner guess the group count at query time — and for the two rollups
+    # that became views to fix a drift defect (#1265, #337) it guesses badly:
+    # kommune_ngo_summary 12.8x over, kommune_ngo_totals 19.5x over, measured
+    # 2026-09-20. mart_brreg_enhet is also a view and estimates fine, because it
+    # does not aggregate: row count propagates.
     #
-    # ⚠️ That is not a reason to materialise them back. Correct data with a bad
-    # row estimate beats stale data with a good one, and the consumer that found
-    # it said so first. The remedy is that `count=estimated` is documented as
-    # unreliable on views, on meta_endpoints.table_type where a consumer looks.
+    # ⚠️ That is not a reason to materialise the rollups back. Correct data with
+    # a bad row estimate beats stale data with a good one, and the consumer that
+    # found it said so first. The remedy is documentation, on
+    # meta_endpoints.table_type where a consumer looks.
     #
-    # ⚠️ ANALYZE also cannot help an EMPTY table: the planner floors its estimate
-    # at 1, so three relations holding zero rows report `estimated = 1`. "Is
-    # there any data here?" answered cheaply returns yes.
+    # ⚠️ And ANALYZE cannot help an EMPTY relation either: the planner floors its
+    # estimate at 1, so three relations holding zero rows report
+    # `estimated = 1`. "Is there any data here?" answered cheaply returns yes.
+    # That is a separate defect from the group-count one and it hits case 1.
+    #
+    # 🔵 An earlier version of this note said ANALYZE fixes tables and cannot fix
+    # views. There are no tables in api_v1, so that reading made this hook look
+    # useless to the public surface when it is most of why it works
+    # (urb-agents #1288).
     #
     # ⚠️ Hooks are ADDITIVE in dbt, so `marts.api` keeps restore_api_v1_view()
     # below and gains this as well. Do not move this onto the top-level
