@@ -130,6 +130,37 @@ apply. Run commands on the host. Do not invent a cage.
   used to check a fix living in `template-info.yaml`, two tree-identical commits that were identical
   as *images* and different as *artifacts*, and this. **"Two objects share a tag and the claim does not
   say which" is the shape; naming the object is the whole fix.**
+- 🔴 **Every nomination states which Dagster job LANDS the change. Derive it, do not recall it:**
+  `atlas-data/uis/lands-with.sh <range>`, and paste the output beside the digests.
+
+  ```
+  LANDS WITH:
+    uis dagster run transform_and_publish
+               (dbt build changed marts, and the publish re-creates the
+                api_v1 views over them — a publish alone would wrap the old tables)
+  ```
+
+  ⚠️ **The rule this replaces failed three times in eight days, read each time by someone who had
+  read it** (urb-agents #1253, #1267, #1271): a description change is a `COMMENT`, `COMMENT`s live
+  in the database and not in the image, and only `publish_api_v1` applies them — so installing the
+  image leaves the public API serving the previous text with every signal green. 🔵 ops-dev's
+  diagnosis is the one to keep: **a rule three readers fail to apply is not a knowledge problem, it
+  is a missing field.** A field *this* agent has to remember to fill in is the same rule wearing a
+  different hat, which is why it is a script and not a checklist item.
+
+  The mapping it encodes, and the one row that surprises:
+
+  | changed | lands with |
+  |---|---|
+  | `models/**.sql`, `seeds/`, `macros/`, `dbt_project.yml` | `transform_and_publish` |
+  | `schema.yml` or `api_v1_generated.sql` **only** | `publish_api_v1` |
+  | `dagster/`, `ingest/` | nothing — installing the image is the deploy |
+  | an `indexes=[…]` config on an incremental model | 🔴 **no scheduled job at all** |
+
+  That last row is why the covering index on `dim_brreg_enhet` is a post-hook: dbt-postgres creates
+  a model's `indexes:` when the **table** is created, so on an incremental model they arrive on the
+  next `--full-refresh` and never on a scheduled run. The script flags it rather than prescribing a
+  job that would not work.
 - 🔴 **An idempotence check on an already-converged system proves the weaker half. It needs a FRESH
   substrate.** This is the mirror of the rule above and the two are easy to confuse: a *shape* change
   needs a cluster that already holds data, and a *convergence* check needs one that does not. On

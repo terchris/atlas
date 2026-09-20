@@ -284,8 +284,39 @@ def api_v1_descriptions_match_the_running_build():
         r"COMMENT ON COLUMN api_v1\.(\w+)\.(\w+) IS '((?:[^']|'')*)';",
         re.DOTALL,
     )
-    for view, column, body in pattern.findall(API_V1_SQL_PATH.read_text()):
+    generated_sql = API_V1_SQL_PATH.read_text()
+    for view, column, body in pattern.findall(generated_sql):
         expected[(view, column)] = body.replace("''", "'")
+
+    # 🔴 AND THE VIEW-LEVEL DESCRIPTIONS, WHICH THIS CHECK USED TO IGNORE.
+    #
+    # Until 2026-09-20 the parser above was the whole of it: 148 COMMENT ON
+    # COLUMN statements compared, and the file's 17 COMMENT ON VIEW statements
+    # read by nothing. A view description could drift arbitrarily far from the
+    # running image and this check reported `drifted: none`.
+    #
+    # ⚠️ That is not hypothetical, and it is not old. urb-agents #1271 was
+    # exactly this: 864fb52 and 646b68c changed ONLY view descriptions — both
+    # diff hunks land inside COMMENT ON VIEW api_v1.kommune_ngo_summary and
+    # _totals — the API served the previous text until imac noticed by hand,
+    # and this check was green throughout. It is the third occurrence in eight
+    # days of an operator not knowing a publish was needed (#1253, #1267,
+    # #1271), and the machine meant to make knowing unnecessary was blind to
+    # the half of the surface that changed.
+    #
+    # 🔵 PostgREST renders obj_description as the OpenAPI *tag* description —
+    # the paragraph a consumer reads before any column — so this half is not a
+    # lesser one. It is the first thing anyone reads.
+    #
+    # `None` as the column half of the key: views and columns share one
+    # namespace here, so one comparison covers both and the label reads
+    # `view kommune_ngo_totals` rather than `kommune_ngo_totals.None`.
+    view_pattern = re.compile(
+        r"COMMENT ON VIEW api_v1\.(\w+) IS '((?:[^']|'')*)';",
+        re.DOTALL,
+    )
+    for view, body in view_pattern.findall(generated_sql):
+        expected[(view, None)] = body.replace("''", "'")
 
     if not expected:
         raise RuntimeError(
@@ -293,6 +324,12 @@ def api_v1_descriptions_match_the_running_build():
             "the check cannot pass vacuously, so it fails instead. Regenerate "
             "with ./regenerate-api-v1.sh, or fix this parser if the emitted "
             "shape changed."
+        )
+    if not any(col is None for _, col in expected):
+        raise RuntimeError(
+            f"no COMMENT ON VIEW statements parsed from {API_V1_SQL_PATH} — "
+            "the view half of this check would pass vacuously, which is the "
+            "defect it was added to fix (urb-agents #1273). Same remedy."
         )
 
     with psycopg2.connect(database_url) as conn:
@@ -310,10 +347,21 @@ def api_v1_descriptions_match_the_running_build():
                 """
             )
             actual = {(v, col): body for v, col, body in cur.fetchall()}
+            cur.execute(
+                """
+                select pgc.relname, obj_description(pgc.oid, 'pg_class')
+                from pg_class pgc
+                join pg_namespace pgn on pgn.oid = pgc.relnamespace
+                where pgn.nspname = 'api_v1' and pgc.relkind = 'v'
+                """
+            )
+            actual.update({(v, None): body for v, body in cur.fetchall()})
 
     drifted = [
-        f"{v}.{c}"
-        for (v, c), want in sorted(expected.items())
+        f"view {v}" if c is None else f"{v}.{c}"
+        for (v, c), want in sorted(
+            expected.items(), key=lambda kv: (kv[0][0], kv[0][1] or "")
+        )
         if (v, c) in actual and actual[(v, c)] != want
     ]
     # Columns the image expects that the database has not got at all are the
@@ -324,7 +372,8 @@ def api_v1_descriptions_match_the_running_build():
         passed=not drifted,
         severity=AssetCheckSeverity.WARN,
         metadata={
-            "columns_compared": len(expected),
+            "columns_compared": sum(1 for _, c in expected if c is not None),
+            "views_compared": sum(1 for _, c in expected if c is None),
             "drifted": ", ".join(drifted[:20]) if drifted else "none",
             "drifted_count": len(drifted),
             "remedy": (
@@ -341,9 +390,10 @@ def api_v1_descriptions_match_the_running_build():
     asset=api_v1_surface,
     name="descriptions_complete",
     description=(
-        "Every column in api_v1.* carries a Postgres COMMENT. PostgREST sources "
-        "the OpenAPI spec's column descriptions from pg_description, so an "
-        "undescribed column becomes an empty entry in the public API docs."
+        "Every column AND every view in api_v1.* carries a Postgres COMMENT. "
+        "PostgREST sources the OpenAPI spec's descriptions from pg_description, "
+        "so an undescribed column or view becomes an empty entry in the public "
+        "API docs."
     ),
 )
 def api_v1_descriptions_complete():
@@ -394,12 +444,33 @@ def api_v1_descriptions_complete():
                 "where table_schema = 'api_v1'"
             )
             total_columns = cur.fetchone()[0]
+            # The views themselves, for the same reason as above: PostgREST
+            # renders obj_description as the OpenAPI tag description, and it was
+            # outside every check until urb-agents #1273.
+            cur.execute(
+                """
+                select pgc.relname
+                from pg_class pgc
+                join pg_namespace pgn on pgn.oid = pgc.relnamespace
+                where pgn.nspname = 'api_v1' and pgc.relkind = 'v'
+                  and obj_description(pgc.oid, 'pg_class') is null
+                order by pgc.relname
+                """
+            )
+            undocumented += [f"view {v}" for (v,) in cur.fetchall()]
+            cur.execute(
+                "select count(*) from pg_class pgc "
+                "join pg_namespace pgn on pgn.oid = pgc.relnamespace "
+                "where pgn.nspname = 'api_v1' and pgc.relkind = 'v'"
+            )
+            total_views = cur.fetchone()[0]
 
     return AssetCheckResult(
         passed=not undocumented,
         severity=AssetCheckSeverity.ERROR,
         metadata={
             "columns_checked": total_columns,
+            "views_checked": total_views,
             "undocumented": ", ".join(undocumented) if undocumented else "none",
         },
     )
