@@ -476,6 +476,98 @@ def api_v1_descriptions_complete():
     )
 
 
+@asset_check(
+    asset=api_v1_surface,
+    name="embedding_fk_is_registered",
+    description=(
+        "The foreign key PostgREST derives resource embedding from is present. "
+        "Without it ?select=...,meta_sources(...) returns PGRST200 and the "
+        "schema map a consumer renders has no edges."
+    ),
+)
+def api_v1_embedding_fk_is_registered():
+    """
+    🔴 THE CONSTRAINT IS DROPPED BY AN ORDINARY REBUILD, SO ITS PRESENCE IS A
+    FACT TO CHECK AND NOT A FACT TO ASSUME.
+
+    dbt's table materialization renames the old table aside and drops it
+    `cascade`, which takes any FK pointing at it. `register_source_id_fk()` is
+    a post-hook on BOTH sides for that reason — but a partial run
+    (`dbt run --select mart_meta_sources`) rebuilds one side and not the other,
+    so the constraint goes and nothing puts it back until the next full build.
+
+    ⚠️ The failure is invisible from every other signal. Rows are correct, the
+    endpoints answer 200, the transform is green; only an embedded select
+    returns PGRST200, and only a consumer trying to use it finds out. That is
+    the same shape as urb-agents #1271 — a change that reaches the public API
+    through a path no gate watched.
+
+    🔵 The macro also swallows two DDL failures by design (an orphan source_id,
+    a non-unique target) so that a referential defect degrades embedding rather
+    than killing the nightly transform. That deliberate softness is exactly why
+    this check has to exist: a warning in a run log is not a signal anyone
+    reads, and "the macro warned and continued" and "the macro never ran" look
+    identical from outside.
+
+    ERROR rather than WARN. Unlike the description drift, this has no healthy
+    transient state: a full transform either leaves the FK registered or it has
+    hit a defect worth stopping for.
+    """
+    import psycopg2
+
+    database_url = os.environ.get("ATLAS_DATABASE_URL") or os.environ.get(
+        "DATABASE_URL"
+    )
+    if not database_url:
+        raise RuntimeError(
+            "ATLAS_DATABASE_URL (or DATABASE_URL) must be set to check the "
+            "api_v1 surface."
+        )
+
+    with psycopg2.connect(database_url) as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                select c.conname,
+                       c.conrelid::regclass::text,
+                       c.confrelid::regclass::text
+                from pg_constraint c
+                where c.contype = 'f'
+                  and c.conrelid = to_regclass('marts.mart_indicator_summary')
+                  and c.confrelid = to_regclass('marts.mart_meta_sources')
+                """
+            )
+            fks = cur.fetchall()
+            # The orphans that would have stopped it being registered, so the
+            # check reports the cause rather than only the symptom.
+            cur.execute(
+                """
+                select count(distinct s.source_id)
+                from marts.mart_indicator_summary s
+                left join marts.mart_meta_sources m on m.source_id = s.source_id
+                where m.source_id is null
+                """
+            )
+            orphans = cur.fetchone()[0]
+
+    return AssetCheckResult(
+        passed=bool(fks),
+        severity=AssetCheckSeverity.ERROR,
+        metadata={
+            "constraint": fks[0][0] if fks else "MISSING",
+            "orphan_source_ids": orphans,
+            "remedy": (
+                "If orphan_source_ids is 0, the constraint was dropped by a "
+                "partial rebuild — run transform_and_publish, or materialise "
+                "mart_indicator_summary, and register_source_id_fk() puts it "
+                "back. If it is not 0, those source_ids are in "
+                "indicator_summary and not in meta_sources; fix that first, "
+                "because the constraint cannot be created while they exist."
+            ),
+        },
+    )
+
+
 # The PostgREST anonymous role, by UIS convention `<app>_web_anon`. Overridable
 # because the convention is the platform's, not Atlas's, and a rename should not
 # require an Atlas rebuild.

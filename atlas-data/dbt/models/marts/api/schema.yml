@@ -29,20 +29,23 @@ models:
           in indicators/sources.yml.
         data_tests:
           - not_null
-          # 🔵 STEP ONE OF REGISTERING A REAL FOREIGN KEY, and deliberately
-          # only step one. PostgREST cannot embed api_v1.indicator_summary
-          # into meta_sources without an actual FK constraint — registering
-          # one would close the consumer's finding 5 (embedding unavailable,
-          # schema map renders zero edges) and the discoverability gap
-          # together, because they are the same defect seen from two sides
-          # (urb-agents #1252).
+          # ✅ STEP TWO IS DONE: the real foreign key is registered, by
+          # macros/register_source_id_fk.sql as a post-hook on this model
+          # AND on mart_meta_sources. PostgREST derives resource embedding
+          # from pg_constraint, so until 2026-09-20
+          # ?select=...,meta_sources(license) returned PGRST200 and the
+          # schema map a consumer renders had no edges (urb-agents #1252).
+          # Terje authorised it with the build-failure risk in front of him.
           #
-          # ⚠️ An enforced FK fails the TRANSFORM, not a test. This asserts
-          # the same integrity in the place where a violation warns instead
-          # of stopping the nightly build. Measured green against the live
-          # API on 2026-09-19 — 15 distinct source_id, all present in
-          # meta_sources, zero orphans — so the constraint is safe to add
-          # once this has been green on the cluster for a cycle.
+          # ⚠️ THIS TEST IS NOT REDUNDANT NOW. The constraint is dropped by
+          # an ordinary rebuild — dbt renames the old table aside and drops
+          # it cascade — and the macro deliberately WARNS rather than
+          # failing the transform when it cannot be re-created. So a
+          # referential violation shows up here, loudly, in transform_checks,
+          # while the public API keeps serving. The FK's own presence is
+          # checked separately by the embedding_fk_is_registered asset
+          # check, because "warned and continued" and "never ran" look the
+          # same from outside.
           - relationships:
               to: ref('mart_meta_sources')
               field: source_id

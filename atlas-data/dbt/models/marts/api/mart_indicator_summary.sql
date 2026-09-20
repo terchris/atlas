@@ -1,3 +1,14 @@
+{{
+  config(
+    post_hook="{{ register_source_id_fk() }}"
+  )
+}}
+
+-- 🔵 The only config here is the hook: materialization and schema come from
+-- dbt_project.yml (marts.api -> table, schema marts) and stay there.
+-- register_source_id_fk() runs on both this model and mart_meta_sources,
+-- because a rebuild of EITHER drops the constraint between them.
+
 with latest as (
   select source_id, contents_code, max(year) as latest_year
   from {{ ref('fact_kommune_indicators') }}

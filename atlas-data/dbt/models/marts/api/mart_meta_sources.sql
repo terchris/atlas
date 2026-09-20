@@ -1,9 +1,21 @@
 {{
   config(
     materialized='table',
-    schema='marts'
+    schema='marts',
+    post_hook="{{ register_source_id_fk() }}"
   )
 }}
+
+-- ⚠️ NO `--` COMMENTS INSIDE THAT config() CALL. It is a Jinja expression, where
+-- `--` is subtraction, not a comment, and the model fails to compile. The same
+-- trap is recorded in dim_brreg_enhet for `#`; this is the second spelling of it
+-- and I walked into it anyway.
+--
+-- This model is the FK TARGET for PostgREST embedding. register_source_id_fk()
+-- runs here AND on mart_indicator_summary, because a rebuild of either drops
+-- the constraint between them — see macros/register_source_id_fk.sql. The hook
+-- is additive: the project-level restore_api_v1_view() and analyze_if_table()
+-- still run.
 
 -- mart_meta_sources — per-source catalogue row. One per ingest source in
 -- marts._sources_manifest, joined to raw.ingest_runs aggregates so consumers
