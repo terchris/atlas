@@ -121,16 +121,26 @@ so the estimate saves nothing worth being wrong about.
 
 :::
 
-:::warning The spec advertises `post`, `patch` and `delete`. They do not work.
+:::warning The spec advertises `post`, `patch` and `delete`. They do not work, and this will not change.
 
 15 of 17 relations list write methods in the OpenAPI document. **Every one of
 them is refused by the database** — the anonymous role is granted `SELECT` and
 nothing else, so a write returns `401 / 42501 permission denied`.
 
-This is a defect in what the spec advertises, not in what the API permits. If
-you generate a client from the spec, delete the write methods; if you are
-reviewing Atlas, the API is read-only and the grant is in
-`atlas-data/dbt/api_v1_generated.sql`.
+**The API is read-only.** The grant is one statement, in
+`atlas-data/dbt/api_v1_generated.sql`, and it says `GRANT SELECT`.
+
+**Why the document says otherwise.** PostgREST advertises write methods for any
+view Postgres considers *auto-updatable*, independently of who may actually
+write it. The only two relations that do **not** advertise writes —
+`kommune_ngo_summary` and `kommune_ngo_totals` — are the only two that
+`GROUP BY`, which is what makes a view non-auto-updatable. It is the same
+structural line that decides whether `count=estimated` is accurate.
+
+This is a property of PostgREST v14.10, not a misconfiguration, and it is not
+going to be fixed here. **Treat the method list as a claim about the document,
+not about the database.** If you generate a client from the spec, delete the
+write methods.
 
 :::
 

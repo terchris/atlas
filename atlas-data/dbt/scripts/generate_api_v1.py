@@ -159,6 +159,44 @@ def render_sql(wrappers: list[WrapperView], removed_views: list[str]) -> str:
                 )
         out.append("")
 
+    # 🔴 THIS GRANT IS SELECT-ONLY AND THE OpenAPI DOCUMENT WILL CONTRADICT IT.
+    # DO NOT TRY TO FIX THAT HERE, AND ESPECIALLY NOT WITH openapi-mode.
+    #
+    # PostgREST advertises post/patch/delete on 15 of the 17 api_v1 relations.
+    # Every one is refused by Postgres — 42501, probed live by ops-dev on
+    # 2026-09-20 (urb-agents #1284). Nothing is exposed; the document is wrong.
+    #
+    # The dead ends, so nobody re-walks them (tor-agent, #1296):
+    #
+    #   openapi-mode = follow-privileges   ALREADY the default, and UIS sets no
+    #                                      PGRST_OPENAPI_MODE at all. Setting it
+    #                                      explicitly is a no-op.
+    #   openapi-mode = ignore-privileges   ⚠️ The only value that changes
+    #                                      anything, and it advertises every
+    #                                      method REGARDLESS of grants by
+    #                                      design. It would make the defect
+    #                                      permanent while looking like a fix.
+    #   a stale privilege cache            Falsified. publish_api_v1 ends with
+    #                                      NOTIFY pgrst, 'reload schema'; the
+    #                                      10:07 run on 2026-09-20 provably
+    #                                      reloaded (new comment text went live)
+    #                                      and the method counts were unchanged.
+    #   adding REVOKE statements here      Revoking what was never granted is a
+    #                                      no-op on both the grant and the spec.
+    #
+    # ✅ It is structural: PostgREST v14.10 advertises writes for any
+    # AUTO-UPDATABLE view, independently of who may write it. The only two
+    # relations that do not advertise are kommune_ngo_summary and
+    # kommune_ngo_totals — the only two that GROUP BY. Same structural line that
+    # decides whether count=estimated is accurate.
+    #
+    # 🔵 So documentation is the layer, permanently, not as a stopgap. I called
+    # it "the wrong layer, pending a platform fix"; there is no platform fix
+    # short of an upstream PostgREST change. An external consumer had already
+    # encoded the advertisement as a structural fact — it derived
+    # table-versus-view from the write verbs and mislabelled 15 relations since
+    # its first commit — which is why this is worth a comment and not a shrug.
+    #
     # Guarded grants. UIS's ./uis configure postgrest creates atlas_web_anon
     # (per their INVESTIGATE-postgrest.md) but isn't yet implemented. The DO
     # block lets this migration apply both before and after UIS runs configure
