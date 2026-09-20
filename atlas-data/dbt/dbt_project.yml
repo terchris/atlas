@@ -94,6 +94,23 @@ models:
     # it is written by the ingest rather than rebuilt by dbt, so autovacuum gets
     # to analyse it. The difference between the two is this hook.
     #
+    # 🔴 THIS FIXES TABLES. IT CANNOT FIX VIEWS, AND READING IT AS "ESTIMATES ARE
+    # SANE NOW" IS HOW A CONSUMER GETS BURNED.
+    #
+    # A view has no `reltuples` for ANALYZE to populate — the planner estimates
+    # from the underlying query instead. So the two rollups that became views to
+    # fix a drift defect (#1265, #337) re-broke their own estimates, measured
+    # 2026-09-20: kommune_ngo_summary 12.8x over, kommune_ngo_totals 19.5x over.
+    #
+    # ⚠️ That is not a reason to materialise them back. Correct data with a bad
+    # row estimate beats stale data with a good one, and the consumer that found
+    # it said so first. The remedy is that `count=estimated` is documented as
+    # unreliable on views, on meta_endpoints.table_type where a consumer looks.
+    #
+    # ⚠️ ANALYZE also cannot help an EMPTY table: the planner floors its estimate
+    # at 1, so three relations holding zero rows report `estimated = 1`. "Is
+    # there any data here?" answered cheaply returns yes.
+    #
     # ⚠️ Hooks are ADDITIVE in dbt, so `marts.api` keeps restore_api_v1_view()
     # below and gains this as well. Do not move this onto the top-level
     # `atlas:` key — that also covers view-materialised models, and `ANALYZE`

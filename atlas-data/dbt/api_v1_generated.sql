@@ -578,8 +578,25 @@ COMMENT ON COLUMN api_v1.meta_endpoints.is_public_api IS '`true` when `schema_na
 stable-contract endpoints from the broader `marts.*` / `raw.*`
 surfaces that are queryable but not version-guaranteed.';
 COMMENT ON COLUMN api_v1.meta_endpoints.table_type IS '`BASE TABLE` for tables (most `marts.*`, all `raw.*`) and
-`VIEW` for views (all `api_v1.*` wrappers). Useful for
-distinguishing materialised marts from auto-wrapped views.';
+`VIEW` for views (all `api_v1.*` wrappers).
+
+🔴 IT ALSO TELLS YOU WHETHER `Prefer: count=estimated` CAN BE
+TRUSTED, AND FOR MOST ENDPOINTS IT CANNOT. A view has no
+`reltuples`, so the planner estimates from the underlying
+query. Measured on the live API, 2026-09-20:
+
+    kommune_ngo_summary   exact 5 435   estimated 69 462   12.8x
+    kommune_ngo_totals    exact   357   estimated  6 946   19.5x
+
+⚠️ AND `estimated = 1` DOES NOT MEAN ONE ROW. It is the
+planner''s floor, so an EMPTY relation reports 1 — measured on
+activity_catalog, distrikt_summary and kommune_local_chapters,
+all of which hold zero rows. A consumer asking "is there any
+data here?" cheaply gets yes.
+
+✅ Use `Prefer: count=exact`. On this API the largest published
+relation is ~72 000 rows and an exact count is cheap; the
+estimate saves nothing worth being wrong about.';
 
 -- meta_sources  ←  marts.mart_meta_sources
 CREATE OR REPLACE VIEW api_v1.meta_sources AS SELECT * FROM marts.mart_meta_sources;

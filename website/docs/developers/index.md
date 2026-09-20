@@ -91,6 +91,61 @@ curl -sI -H "Prefer: count=exact" http://api-atlas.localhost/indicator_summary?l
 # → Content-Range: */163
 ```
 
+:::danger Use `count=exact`, not `count=estimated`
+
+`count=estimated` is unreliable on this API and wrong in two different ways.
+
+**On views it is wildly over.** A view has no `reltuples`, so the planner
+estimates from the underlying query. Measured 2026-09-20:
+
+| endpoint | exact | estimated | |
+|---|---|---|---|
+| `kommune_ngo_summary` | 5,435 | 69,462 | 12.8× |
+| `kommune_ngo_totals` | 357 | 6,946 | 19.5× |
+
+**`estimated = 1` does not mean one row.** It is the planner's floor, so an
+**empty** relation reports 1. Three endpoints currently hold zero rows and all
+three report `estimated = 1` — so "is there any data here?" asked cheaply
+answers yes when the answer is no.
+
+`meta_endpoints.table_type` tells you which endpoints are views. But the largest
+published relation here is ~72,000 rows and an exact count is cheap, so the
+estimate saves nothing worth being wrong about.
+
+:::
+
+:::warning The spec advertises `post`, `patch` and `delete`. They do not work.
+
+15 of 17 relations list write methods in the OpenAPI document. **Every one of
+them is refused by the database** — the anonymous role is granted `SELECT` and
+nothing else, so a write returns `401 / 42501 permission denied`.
+
+This is a defect in what the spec advertises, not in what the API permits. If
+you generate a client from the spec, delete the write methods; if you are
+reviewing Atlas, the API is read-only and the grant is in
+`atlas-data/dbt/api_v1_generated.sql`.
+
+:::
+
+### Request-size ceiling
+
+Long `or=()` filters run into a **48 KiB URL limit**, binary-searched against the
+live API:
+
+```
+48.91 KiB  → 200
+49.89 KiB  → 400 Bad Request     (3 runs each side, no flapping)
+~78 KiB+   → connection refused before any HTTP response
+```
+
+Consistent with a 49,152-byte buffer. For scale: a 44-series `or=()` filter is
+about 1,000 characters, so there is roughly 48× headroom. Past the ceiling,
+split the request or filter server-side with `in.()`.
+
+⚠️ Not attributable from outside whether the limit is the CDN's, a proxy's or
+PostgREST's, so treat 48 KiB as observed behaviour rather than a guaranteed
+contract.
+
 ### 2. Fork the customer app as a starting template
 
 [`atlas-frontend/`](https://github.com/terchris/atlas/tree/main/atlas-frontend) is Atlas's public-facing Next.js app, deployed at `atlas.helpers.no`. It's also positioned as a **forkable reference implementation** — clone the folder, change `NEXT_PUBLIC_API_URL`, and you have a working starting point for your own UI on Atlas's API. Its README has the fork-me walkthrough.
