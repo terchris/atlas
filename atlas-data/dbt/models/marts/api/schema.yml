@@ -654,22 +654,52 @@ models:
       should distinct on chapter_id (or aggregate service categories
       into an array client-side).
 
+      GRAIN: one row per (kommune_nr, chapter_id,
+      service_category_code), asserted by a test rather than only
+      described here. It is neither one row per chapter nor one row per
+      chapter-kommune coverage relation — a consumer told us those were
+      the two shapes it would guess between (urb-agents #1289).
+
       PostgREST consumers filter via ?kommune_nr=eq.X. Inactive
       chapters, non-local chapters (regional, national), and chapters
-      with NULL kommune_nr are excluded. Svalbard (kommune_nr 2100,
-      Longyearbyen Røde Kors) is included even though 2100 isn't in
-      dim_kommune — the FK relationships test is `warn`-severity to
-      keep this row visible.
+      with NULL kommune_nr are excluded. ⚠️ Excluding regional chapters
+      means the kommuner a regional chapter serves do NOT appear here;
+      see kommune_nr for why that gap is not closed elsewhere either.
+      Svalbard (Longyearbyen Røde Kors) is included even though no 21xx
+      code is in dim_kommune — the FK relationships test is
+      `warn`-severity to keep this row visible.
     columns:
       - name: kommune_nr
         description: |
-          4-digit kommune code where the local chapter operates. FK to
-          dim_kommune. The primary filter dimension for this view.
-          Chapters with NULL kommune_nr are excluded by the view (this
-          isn't "local chapters in a kommune" if there's no kommune).
-          The relationships test is `warn`-severity because Svalbard
-          (2100) is a real Red Cross local chapter location whose
-          kommune code isn't in dim_kommune.
+          🔴 WHERE THE CHAPTER IS REGISTERED, NOT WHERE IT WORKS. This
+          description said "where the local chapter operates" until
+          2026-09-20 and that was a stronger claim than the data
+          supports: the value is a dim_postnummer lookup on the
+          chapter's POSTAL ADDRESS (see supply__redcross_branches).
+
+          ⚠️ So a chapter serving three neighbouring kommuner appears in
+          one of them, and a chapter with a PO box in the next kommune
+          appears in the wrong one. A consumer asking "is Røde Kors
+          here?" gets "is Røde Kors registered here?" — which is the
+          same limitation as searching the Enhetsregisteret by name, and
+          this relation does not remove it (urb-agents #1289).
+
+          Declared service areas are not modelled for Red Cross at all.
+          `marts.chapter_kommune_coverage` holds one row per
+          (regional chapter, kommune), but its rows are INFERRED from
+          where the regional chapter's local children are registered —
+          so it inherits this same defect rather than fixing it, and it
+          is not published to api_v1.
+
+          FK to dim_kommune, the primary filter dimension for this view.
+          Chapters with NULL kommune_nr are excluded (this isn't "local
+          chapters in a kommune" if there's no kommune).
+
+          ⚠️ The relationships test is `warn`-severity because
+          Longyearbyen Røde Kors is a real chapter whose Svalbard code
+          is not in dim_kommune — SSB Klass 131 contains no 21xx code.
+          So this relation is built to publish a Svalbard row that no
+          dimension can describe. See urb-agents #700.
         data_tests:
           - not_null
           - relationships:
@@ -727,6 +757,22 @@ models:
         data_tests:
           - not_null
     data_tests:
+      # 🔵 THE GRAIN, AND IT WAS ALREADY ASSERTED HERE. A consumer asked
+      # whether the shape is one row per chapter or one row per
+      # chapter-kommune coverage, saying it would otherwise "find out by
+      # getting it wrong" (urb-agents #1289). It is neither: one row per
+      # (chapter, service category), and a chapter's kommune_nr comes along
+      # for the ride because a local chapter has exactly one.
+      #
+      # ⚠️ I nearly added a second copy of this, keyed on
+      # (kommune_nr, chapter_id, service_category_code) — redundant, WEAKER
+      # than what is here, and a duplicate YAML key. dbt tolerates those and
+      # js-yaml does not, which is how I broke the website generator on main
+      # for an hour on 2026-09-19. The website build caught it this time.
+      #
+      # ⚠️ IT PASSES VACUOUSLY TODAY: the relation holds zero rows until the
+      # Red Cross ingest is unblocked (#699). It is here so the first run WITH
+      # data is what checks the grain, rather than a consumer.
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns: [chapter_id, service_category_code]
 
