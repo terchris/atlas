@@ -381,9 +381,19 @@ COMMENT ON COLUMN api_v1.indicator_summary.eu_theme IS 'EU high-value-dataset th
 filter on it to ask "what does Atlas have about X?", which is
 the question this view could not previously answer.';
 COMMENT ON COLUMN api_v1.indicator_summary.tags IS 'Topic vocabulary from the source manifest, e.g.
-[''provider:brreg'', ''topic:ngo-supply'']. Filterable with
-PostgREST''s array contains: ?tags=cs.{topic:ngo-supply}.
-Joined from mart_meta_sources.';
+[''provider:brreg'', ''topic:ngo-supply'']. Joined from
+mart_meta_sources.
+
+🔴 QUOTE THE VALUE. A tag contains a colon, and unquoted it is
+rejected: `?tags=cs.{topic:ngo-supply}` returns 22P02 malformed
+array literal. The working form is
+`?tags=cs.{"topic:ngo-supply"}`.
+
+⚠️ The unquoted spelling was published HERE, in this description,
+until 2026-09-20 — so a consumer following the documentation got
+an error and had to work the quoting out for itself (urb-agents
+#1281). Same class as the `personer` description: the contract
+said something a consumer acted on and it was wrong.';
 COMMENT ON COLUMN api_v1.indicator_summary.latest_year IS 'Most recent calendar year for which this (source_id,
 contents_code) has any rows in fact_kommune_indicators. The
 coverage and value-range columns below are computed against
@@ -401,6 +411,65 @@ of whether the kommune is active. NULL if no row had a value.';
 COMMENT ON COLUMN api_v1.indicator_summary.upstream_updated IS 'Most recent fact_kommune_indicators.updated_at across the rows
 that contributed to this summary. Useful for staleness checks
 per indicator without joining to raw.*.';
+
+-- kommune_befolkning_alder  ←  marts.mart_kommune_befolkning_alder
+CREATE OR REPLACE VIEW api_v1.kommune_befolkning_alder AS SELECT * FROM marts.mart_kommune_befolkning_alder;
+COMMENT ON VIEW api_v1.kommune_befolkning_alder IS 'Population by kommune, year and age band — the denominator layer.
+Published as api_v1.kommune_befolkning_alder.
+
+Built from SSB table 07459 (age and sex distribution), which Atlas
+has ingested and refreshed nightly for months while serving it to
+nobody: nothing downstream of raw read it, so `GET /ssb-07459`
+returned 404. A consumer built its elderly-care view around care
+USERS rather than elderly RESIDENTS and wrote a README section
+apologising for it, noting the substitution flatters a kommune with
+a high threshold for granting services (urb-agents #1281).
+
+⚠️ SIX BANDS SUM TO befolkning_total. TWO DO NOT — they are
+roll-ups of the six, provided because PostgREST has aggregates
+disabled and a consumer would otherwise add them client-side:
+
+    sum to the total:  0_5 · 6_15 · 16_17 · 18_66 · 67_79 · 80_plus
+    roll-ups:          0_17     = 0_5 + 6_15 + 16_17
+                       67_plus  = 67_79 + 80_plus
+
+Bands rather than a single "elderly" threshold on purpose. 67 is
+defensible and it is still an editorial claim; publishing the bands
+leaves that claim with whoever makes it, and the same rows serve as
+the denominator for child poverty and working-age dependency.
+
+⚠️ Counts are residents, not care recipients, and they are SSB''s
+register population at the start of the year — not an average over
+it. Historical kommune codes are excluded: only kommuner active
+today get rows, so a 1990 row exists for today''s kommune, not for
+the one that held that code in 1990.';
+COMMENT ON COLUMN api_v1.kommune_befolkning_alder.kommune_nr IS '4-digit kommune code. FK to dim_kommune.';
+COMMENT ON COLUMN api_v1.kommune_befolkning_alder.kommune_name IS 'Kommune name in bokmål, joined from dim_kommune.';
+COMMENT ON COLUMN api_v1.kommune_befolkning_alder.fylke_nr IS '2-digit fylke code, derived from kommune_nr in dim_kommune.';
+COMMENT ON COLUMN api_v1.kommune_befolkning_alder.fylke_name IS 'Joined from dim_fylke. NULL for kommune codes whose fylke has no row there — Svalbard-style 21xx codes. A LEFT join on purpose: an inner one would drop those kommuner from the denominator entirely, which is worse than a missing label.';
+COMMENT ON COLUMN api_v1.kommune_befolkning_alder.year IS 'Calendar year. SSB 07459 covers 1986 onwards.';
+COMMENT ON COLUMN api_v1.kommune_befolkning_alder.alder_0_5 IS 'Residents aged 0-5 (pre-school). Disjoint band.';
+COMMENT ON COLUMN api_v1.kommune_befolkning_alder.alder_6_15 IS 'Residents aged 6-15 (grunnskole age). Disjoint band.';
+COMMENT ON COLUMN api_v1.kommune_befolkning_alder.alder_16_17 IS 'Residents aged 16-17. Disjoint band, and the one that completes 0_17.';
+COMMENT ON COLUMN api_v1.kommune_befolkning_alder.alder_18_66 IS 'Residents aged 18-66 (working age, to the 67 pension threshold). Disjoint band.';
+COMMENT ON COLUMN api_v1.kommune_befolkning_alder.alder_67_79 IS 'Residents aged 67-79. Disjoint band.';
+COMMENT ON COLUMN api_v1.kommune_befolkning_alder.alder_80_plus IS 'Residents aged 80 and over, including SSB''s open-ended ''105+'' bucket. Disjoint band. Built from age_min, not age_int — age_int is NULL for ''105+'', so banding on it would silently drop those residents.';
+COMMENT ON COLUMN api_v1.kommune_befolkning_alder.alder_0_17 IS 'Residents aged 0-17. ⚠️ A ROLL-UP of 0_5 + 6_15 + 16_17, NOT a
+seventh band — adding it to the disjoint bands double-counts.
+The child-poverty denominator, so that coverage_gap_barnefattigdom''s
+share can be read against a population rather than against itself.';
+COMMENT ON COLUMN api_v1.kommune_befolkning_alder.alder_67_plus IS 'Residents aged 67 and over. ⚠️ A ROLL-UP of 67_79 + 80_plus, NOT a
+band. This is the elderly denominator the consumer in #1281 did not
+have; 67 is Norway''s pension age and the choice of threshold is the
+reader''s, which is why the two bands are published beside it.';
+COMMENT ON COLUMN api_v1.kommune_befolkning_alder.befolkning_total IS 'All residents of the kommune in that year. Equals the six disjoint
+bands summed.
+
+🔴 Sexes are FILTERED, not summed: SSB''s Kjonn dimension codes ''0'' as
+ALL, so summing every sex row would double the population of every
+kommune in Norway. The model selects male and female explicitly, and
+the singular test bands_sum_to_the_population_total is what would
+catch it if that ever stopped being true.';
 
 -- kommune_local_chapters  ←  marts.mart_kommune_local_chapters
 CREATE OR REPLACE VIEW api_v1.kommune_local_chapters AS SELECT * FROM marts.mart_kommune_local_chapters;
@@ -592,7 +661,8 @@ frontend (PLAN-007 phase 4).
 Tags column is a Postgres `text[]` carrying the four declared
 namespaces (`provider:`, `topic:`, `geo:`, `cadence:`) plus the
 `eu_theme:` namespace. The customer frontend renders each as a
-filter pill; PostgREST consumers filter via `?tags=cs.{provider:ssb}`.
+filter pill; PostgREST consumers filter via `?tags=cs.{"provider:ssb"}`
+— the quotes are required, because the value contains a colon.
 
 `last_ingested_at` and `last_upstream_update_at` come from
 `raw.ingest_runs` aggregated over successful (`exit_code = 0`)
@@ -623,8 +693,10 @@ COMMENT ON COLUMN api_v1.meta_sources.attribution IS 'Citation string for academ
 "Kilde: Statistisk sentralbyrå, tabell 08764").';
 COMMENT ON COLUMN api_v1.meta_sources.tags IS '`text[]` of namespaced tags: `provider:<X>`, `topic:<X>`,
 `geo:<X>`, `cadence:<X>`, `eu_theme:<X>`. Filter via PostgREST''s
-`?tags=cs.{...}` array-contains operator. Always 5 entries (one
-per declared namespace).';
+array-contains operator, QUOTING the value because it contains a
+colon: `?tags=cs.{"topic:ngo-supply"}`. Unquoted it returns 22P02
+malformed array literal. Always 5 entries (one per declared
+namespace).';
 COMMENT ON COLUMN api_v1.meta_sources.last_ingested_at IS '`MAX(finished_at)` from `raw.ingest_runs` filtered to
 successful runs (`exit_code = 0`). NULL until the source has
 at least one successful run on the current cluster.';

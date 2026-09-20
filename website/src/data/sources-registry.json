@@ -4741,14 +4741,40 @@
         "bibtex": "@misc{atlas_ssb_07459,\n  author = {Statistisk sentralbyrå},\n  title  = {07459: Alders- og kjønnsfordeling i kommuner, fylker og hele landets befolkning (K) 1986-2025},\n  year   = {2026},\n  url    = {https://www.ssb.no/statbank/table/07459},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/ssb-07459}\n}"
       },
       "feedback_url": "https://www.ssb.no/omssb/kontakt-oss",
-      "consuming_marts": [],
+      "consuming_marts": [
+        {
+          "mart_name": "mart_kommune_befolkning_alder",
+          "api_v1_name": "kommune_befolkning_alder",
+          "title": null,
+          "description_short": "Population by kommune, year and age band — the denominator layer.",
+          "description_full": "Population by kommune, year and age band — the denominator layer.\nPublished as api_v1.kommune_befolkning_alder.\n\nBuilt from SSB table 07459 (age and sex distribution), which Atlas\nhas ingested and refreshed nightly for months while serving it to\nnobody: nothing downstream of raw read it, so `GET /ssb-07459`\nreturned 404. A consumer built its elderly-care view around care\nUSERS rather than elderly RESIDENTS and wrote a README section\napologising for it, noting the substitution flatters a kommune with\na high threshold for granting services (urb-agents #1281).\n\n⚠️ SIX BANDS SUM TO befolkning_total. TWO DO NOT — they are\nroll-ups of the six, provided because PostgREST has aggregates\ndisabled and a consumer would otherwise add them client-side:\n\n    sum to the total:  0_5 · 6_15 · 16_17 · 18_66 · 67_79 · 80_plus\n    roll-ups:          0_17     = 0_5 + 6_15 + 16_17\n                       67_plus  = 67_79 + 80_plus\n\nBands rather than a single \"elderly\" threshold on purpose. 67 is\ndefensible and it is still an editorial claim; publishing the bands\nleaves that claim with whoever makes it, and the same rows serve as\nthe denominator for child poverty and working-age dependency.\n\n⚠️ Counts are residents, not care recipients, and they are SSB's\nregister population at the start of the year — not an average over\nit. Historical kommune codes are excluded: only kommuner active\ntoday get rows, so a 1990 row exists for today's kommune, not for\nthe one that held that code in 1990.",
+          "sample_query": "https://api-atlas.urbalurba.com/kommune_befolkning_alder?limit=5"
+        }
+      ],
       "consuming_models": [
         {
           "name": "indicators__ssb_07459",
           "kind": "indicators"
+        },
+        {
+          "name": "mart_kommune_befolkning_alder",
+          "kind": "mart"
         }
       ],
-      "joined_with": [],
+      "joined_with": [
+        {
+          "source_id": "ssb-klass-fylker",
+          "shared_models": [
+            "mart_kommune_befolkning_alder"
+          ]
+        },
+        {
+          "source_id": "ssb-klass-kommuner",
+          "shared_models": [
+            "mart_kommune_befolkning_alder"
+          ]
+        }
+      ],
       "last_ingested_at": "2026-05-06T14:37:12.883351+00:00",
       "latest_row_count": 210728,
       "total_runs": 1,
@@ -6932,6 +6958,14 @@
           "description_short": "One row per (source_id, contents_code) summarising the latest-year coverage and value range for every indicator in fact_kommune_indicators.",
           "description_full": "One row per (source_id, contents_code) summarising the latest-year\ncoverage and value range for every indicator in\nfact_kommune_indicators. This is the backing dataset for the data\nexplorer index page (atlas-frontend /data) and is the equivalent of\nthe listIndicators() inline query that PostgREST projects as\n/mart_indicator_summary on the public API.\n\nQuery shape: latest-year-per-indicator + group-by + value/null counts\nfiltered to active kommuner only. Inactive kommuner (historical\ncodes retained by upstream) are excluded from the counts so consumers\nsee \"how many of today's kommuner have data?\" not \"how many rows\nexist?\".\n\nRefreshed nightly together with fact_kommune_indicators. The\nupstream_updated column carries the most recent raw load timestamp\nacross the rows that contributed to this summary, so freshness can\nbe inspected per indicator without joining to raw.* sources.",
           "sample_query": "https://api-atlas.urbalurba.com/indicator_summary?limit=5"
+        },
+        {
+          "mart_name": "mart_kommune_befolkning_alder",
+          "api_v1_name": "kommune_befolkning_alder",
+          "title": null,
+          "description_short": "Population by kommune, year and age band — the denominator layer.",
+          "description_full": "Population by kommune, year and age band — the denominator layer.\nPublished as api_v1.kommune_befolkning_alder.\n\nBuilt from SSB table 07459 (age and sex distribution), which Atlas\nhas ingested and refreshed nightly for months while serving it to\nnobody: nothing downstream of raw read it, so `GET /ssb-07459`\nreturned 404. A consumer built its elderly-care view around care\nUSERS rather than elderly RESIDENTS and wrote a README section\napologising for it, noting the substitution flatters a kommune with\na high threshold for granting services (urb-agents #1281).\n\n⚠️ SIX BANDS SUM TO befolkning_total. TWO DO NOT — they are\nroll-ups of the six, provided because PostgREST has aggregates\ndisabled and a consumer would otherwise add them client-side:\n\n    sum to the total:  0_5 · 6_15 · 16_17 · 18_66 · 67_79 · 80_plus\n    roll-ups:          0_17     = 0_5 + 6_15 + 16_17\n                       67_plus  = 67_79 + 80_plus\n\nBands rather than a single \"elderly\" threshold on purpose. 67 is\ndefensible and it is still an editorial claim; publishing the bands\nleaves that claim with whoever makes it, and the same rows serve as\nthe denominator for child poverty and working-age dependency.\n\n⚠️ Counts are residents, not care recipients, and they are SSB's\nregister population at the start of the year — not an average over\nit. Historical kommune codes are excluded: only kommuner active\ntoday get rows, so a 1990 row exists for today's kommune, not for\nthe one that held that code in 1990.",
+          "sample_query": "https://api-atlas.urbalurba.com/kommune_befolkning_alder?limit=5"
         }
       ],
       "consuming_models": [
@@ -6962,6 +6996,10 @@
         {
           "name": "mart_indicator_summary",
           "kind": "mart"
+        },
+        {
+          "name": "mart_kommune_befolkning_alder",
+          "kind": "mart"
         }
       ],
       "joined_with": [
@@ -6973,7 +7011,8 @@
             "mart_dim_kommune",
             "mart_indicator_latest_values",
             "mart_indicator_missing_kommuner",
-            "mart_indicator_summary"
+            "mart_indicator_summary",
+            "mart_kommune_befolkning_alder"
           ]
         },
         {
@@ -7196,6 +7235,14 @@
           "sample_query": "https://api-atlas.urbalurba.com/indicator_summary?limit=5"
         },
         {
+          "mart_name": "mart_kommune_befolkning_alder",
+          "api_v1_name": "kommune_befolkning_alder",
+          "title": null,
+          "description_short": "Population by kommune, year and age band — the denominator layer.",
+          "description_full": "Population by kommune, year and age band — the denominator layer.\nPublished as api_v1.kommune_befolkning_alder.\n\nBuilt from SSB table 07459 (age and sex distribution), which Atlas\nhas ingested and refreshed nightly for months while serving it to\nnobody: nothing downstream of raw read it, so `GET /ssb-07459`\nreturned 404. A consumer built its elderly-care view around care\nUSERS rather than elderly RESIDENTS and wrote a README section\napologising for it, noting the substitution flatters a kommune with\na high threshold for granting services (urb-agents #1281).\n\n⚠️ SIX BANDS SUM TO befolkning_total. TWO DO NOT — they are\nroll-ups of the six, provided because PostgREST has aggregates\ndisabled and a consumer would otherwise add them client-side:\n\n    sum to the total:  0_5 · 6_15 · 16_17 · 18_66 · 67_79 · 80_plus\n    roll-ups:          0_17     = 0_5 + 6_15 + 16_17\n                       67_plus  = 67_79 + 80_plus\n\nBands rather than a single \"elderly\" threshold on purpose. 67 is\ndefensible and it is still an editorial claim; publishing the bands\nleaves that claim with whoever makes it, and the same rows serve as\nthe denominator for child poverty and working-age dependency.\n\n⚠️ Counts are residents, not care recipients, and they are SSB's\nregister population at the start of the year — not an average over\nit. Historical kommune codes are excluded: only kommuner active\ntoday get rows, so a 1990 row exists for today's kommune, not for\nthe one that held that code in 1990.",
+          "sample_query": "https://api-atlas.urbalurba.com/kommune_befolkning_alder?limit=5"
+        },
+        {
           "mart_name": "mart_kommune_ngo_summary",
           "api_v1_name": "kommune_ngo_summary",
           "title": "Voluntary organisations per kommune",
@@ -7250,6 +7297,10 @@
           "kind": "mart"
         },
         {
+          "name": "mart_kommune_befolkning_alder",
+          "kind": "mart"
+        },
+        {
           "name": "mart_kommune_ngo_summary",
           "kind": "mart"
         },
@@ -7267,7 +7318,8 @@
             "mart_dim_kommune",
             "mart_indicator_latest_values",
             "mart_indicator_missing_kommuner",
-            "mart_indicator_summary"
+            "mart_indicator_summary",
+            "mart_kommune_befolkning_alder"
           ]
         },
         {
@@ -7790,7 +7842,7 @@
         },
         {
           "name": "tags",
-          "description": "Topic vocabulary from the source manifest, e.g. ['provider:brreg', 'topic:ngo-supply']. Filterable with PostgREST's array contains: ?tags=cs.{topic:ngo-supply}. Joined from mart_meta_sources."
+          "description": "Topic vocabulary from the source manifest, e.g. ['provider:brreg', 'topic:ngo-supply']. Joined from mart_meta_sources. 🔴 QUOTE THE VALUE. A tag contains a colon, and unquoted it is rejected: `?tags=cs.{topic:ngo-supply}` returns 22P02 malformed array literal. The working form is `?tags=cs.{\"topic:ngo-supply\"}`. ⚠️ The unquoted spelling was published HERE, in this description, until 2026-09-20 — so a consumer following the documentation got an error and had to work the quoting out for itself (urb-agents #1281). Same class as the `personer` description: the contract said something a consumer acted on and it was wrong."
         },
         {
           "name": "latest_year",
@@ -7827,6 +7879,95 @@
       ],
       "sample_query": "https://api-atlas.urbalurba.com/indicator_summary?limit=5",
       "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicator_summary"
+    },
+    {
+      "kind": "view",
+      "view_id": "kommune_befolkning_alder",
+      "mart_name": "mart_kommune_befolkning_alder",
+      "api_v1_name": "kommune_befolkning_alder",
+      "title": "api_v1.kommune_befolkning_alder",
+      "description_short": "Population by kommune, year and age band — the denominator layer.",
+      "description_full": "Population by kommune, year and age band — the denominator layer.\nPublished as api_v1.kommune_befolkning_alder.\n\nBuilt from SSB table 07459 (age and sex distribution), which Atlas\nhas ingested and refreshed nightly for months while serving it to\nnobody: nothing downstream of raw read it, so `GET /ssb-07459`\nreturned 404. A consumer built its elderly-care view around care\nUSERS rather than elderly RESIDENTS and wrote a README section\napologising for it, noting the substitution flatters a kommune with\na high threshold for granting services (urb-agents #1281).\n\n⚠️ SIX BANDS SUM TO befolkning_total. TWO DO NOT — they are\nroll-ups of the six, provided because PostgREST has aggregates\ndisabled and a consumer would otherwise add them client-side:\n\n    sum to the total:  0_5 · 6_15 · 16_17 · 18_66 · 67_79 · 80_plus\n    roll-ups:          0_17     = 0_5 + 6_15 + 16_17\n                       67_plus  = 67_79 + 80_plus\n\nBands rather than a single \"elderly\" threshold on purpose. 67 is\ndefensible and it is still an editorial claim; publishing the bands\nleaves that claim with whoever makes it, and the same rows serve as\nthe denominator for child poverty and working-age dependency.\n\n⚠️ Counts are residents, not care recipients, and they are SSB's\nregister population at the start of the year — not an average over\nit. Historical kommune codes are excluded: only kommuner active\ntoday get rows, so a 1990 row exists for today's kommune, not for\nthe one that held that code in 1990.",
+      "columns": [
+        {
+          "name": "kommune_nr",
+          "description": "4-digit kommune code. FK to dim_kommune."
+        },
+        {
+          "name": "kommune_name",
+          "description": "Kommune name in bokmål, joined from dim_kommune."
+        },
+        {
+          "name": "fylke_nr",
+          "description": "2-digit fylke code, derived from kommune_nr in dim_kommune."
+        },
+        {
+          "name": "fylke_name",
+          "description": "Joined from dim_fylke. NULL for kommune codes whose fylke has no row there — Svalbard-style 21xx codes. A LEFT join on purpose: an inner one would drop those kommuner from the denominator entirely, which is worse than a missing label."
+        },
+        {
+          "name": "year",
+          "description": "Calendar year. SSB 07459 covers 1986 onwards."
+        },
+        {
+          "name": "alder_0_5",
+          "description": "Residents aged 0-5 (pre-school). Disjoint band."
+        },
+        {
+          "name": "alder_6_15",
+          "description": "Residents aged 6-15 (grunnskole age). Disjoint band."
+        },
+        {
+          "name": "alder_16_17",
+          "description": "Residents aged 16-17. Disjoint band, and the one that completes 0_17."
+        },
+        {
+          "name": "alder_18_66",
+          "description": "Residents aged 18-66 (working age, to the 67 pension threshold). Disjoint band."
+        },
+        {
+          "name": "alder_67_79",
+          "description": "Residents aged 67-79. Disjoint band."
+        },
+        {
+          "name": "alder_80_plus",
+          "description": "Residents aged 80 and over, including SSB's open-ended '105+' bucket. Disjoint band. Built from age_min, not age_int — age_int is NULL for '105+', so banding on it would silently drop those residents."
+        },
+        {
+          "name": "alder_0_17",
+          "description": "Residents aged 0-17. ⚠️ A ROLL-UP of 0_5 + 6_15 + 16_17, NOT a seventh band — adding it to the disjoint bands double-counts. The child-poverty denominator, so that coverage_gap_barnefattigdom's share can be read against a population rather than against itself."
+        },
+        {
+          "name": "alder_67_plus",
+          "description": "Residents aged 67 and over. ⚠️ A ROLL-UP of 67_79 + 80_plus, NOT a band. This is the elderly denominator the consumer in #1281 did not have; 67 is Norway's pension age and the choice of threshold is the reader's, which is why the two bands are published beside it."
+        },
+        {
+          "name": "befolkning_total",
+          "description": "All residents of the kommune in that year. Equals the six disjoint bands summed. 🔴 Sexes are FILTERED, not summed: SSB's Kjonn dimension codes '0' as ALL, so summing every sex row would double the population of every kommune in Norway. The model selects male and female explicitly, and the singular test bands_sum_to_the_population_total is what would catch it if that ever stopped being true."
+        }
+      ],
+      "built_from": [
+        {
+          "parent_kind": "model",
+          "model_name": "dim_fylke",
+          "title": null,
+          "description_short": "Canonical fylke dimension."
+        },
+        {
+          "parent_kind": "model",
+          "model_name": "dim_kommune",
+          "title": null,
+          "description_short": "Canonical kommune dimension."
+        },
+        {
+          "parent_kind": "model",
+          "model_name": "indicators__ssb_07459",
+          "title": null,
+          "description_short": "Per-source indicator passthrough for SSB 07459 (population by region, sex, and single-year age)."
+        }
+      ],
+      "sample_query": "https://api-atlas.urbalurba.com/kommune_befolkning_alder?limit=5",
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_kommune_befolkning_alder"
     },
     {
       "kind": "view",

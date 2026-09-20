@@ -126,6 +126,9 @@ mart_indicator_summary,ssb-13995
 mart_indicator_summary,ssb-crime-tables
 mart_indicator_summary,ssb-klass-fylker
 mart_indicator_summary,ssb-klass-kommuner
+mart_kommune_befolkning_alder,ssb-07459
+mart_kommune_befolkning_alder,ssb-klass-fylker
+mart_kommune_befolkning_alder,ssb-klass-kommuner
 mart_kommune_local_chapters,redcross-branches
 mart_kommune_ngo_summary,brreg-enheter-alle
 mart_kommune_ngo_summary,brreg-frivillige
