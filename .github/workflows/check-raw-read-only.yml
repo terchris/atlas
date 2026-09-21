@@ -60,6 +60,11 @@ jobs:
           dbt parse
       - name: Every published per-kommune relation excludes the 9999 sentinel
         run: atlas-data/dbt/check-kommune-marts-exclude-sentinels.sh
+      # Regenerates the lineage seeds and diffs them; needs the manifest the
+      # step above already produced. A stale seed makes a SERVED source report
+      # as unserved, which is indistinguishable from the real thing.
+      - name: The lineage seeds match the dbt manifest
+        run: atlas-data/dbt/check-lineage-is-current.sh
 
   models-compile:
     runs-on: ubuntu-latest
