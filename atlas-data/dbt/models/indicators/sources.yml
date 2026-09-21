@@ -542,6 +542,375 @@ sources:
           - name: loaded_at
             description: Timestamp when the ingest module loaded the row into raw.ssb_10826.
             data_type: timestamp with time zone
+      - name: fhi_alkohol
+        description: "FHI 332 — Ungdata: share reporting alcohol use one or more times in the past year."
+        loaded_at_field: loaded_at
+        meta:
+          ingest_cadence: weekly
+        freshness:
+          warn_after: {count: 400, period: day}
+          error_after: {count: 800, period: day}
+        columns:
+          - name: geo_code
+            description: FHI GEO — mixed kommune / fylke / bydel / nasjon code.
+            data_tests: [not_null]
+          - name: aar_code
+            description: FHI AAR — "YYYY_YYYY" range string.
+            data_tests: [not_null]
+          - name: kjonn_code
+            description: FHI KJONN — '0' both, '1' men, '2' women.
+            data_type: text
+          - name: alder_code
+            description: >-
+              FHI ALDER — always "1_6". ⚠️ An Ungdata survey-cohort identifier, NOT ages 1 to 6.
+              Unverified against Ungdata methodology.
+            data_type: text
+          - name: antall_ganger_code
+            description: The degenerate topic slice this table reports; see the indicator model.
+            data_type: text
+          - name: soes_code
+            description: FHI SOES — socioeconomic status.
+            data_type: text
+          - name: measure_type
+            description: >-
+              SMR (standardised ratio, 100 = national) or MEIS (FHI smoothed estimate). ⚠️ No TELLER
+              and no RATE — Ungdata is a survey, so there is no count to publish.
+            data_tests: [not_null]
+          - name: value
+            description: The measured value. NULL where FHI suppressed the cell.
+          - name: status
+            description: FHI suppression marker.
+          - name: loaded_at
+            description: When the ingest wrote the row.
+            data_tests: [not_null]
+      - name: fhi_depresjon
+        description: "FHI 339 — Ungdata: share reporting depressive symptoms. ⚠️ The ingest pulls only the most recent 4 years."
+        loaded_at_field: loaded_at
+        meta:
+          ingest_cadence: weekly
+        freshness:
+          warn_after: {count: 400, period: day}
+          error_after: {count: 800, period: day}
+        columns:
+          - name: geo_code
+            description: FHI GEO — mixed kommune / fylke / bydel / nasjon code.
+            data_tests: [not_null]
+          - name: aar_code
+            description: FHI AAR — "YYYY_YYYY" range string.
+            data_tests: [not_null]
+          - name: kjonn_code
+            description: FHI KJONN — '0' both, '1' men, '2' women.
+            data_type: text
+          - name: alder_code
+            description: >-
+              FHI ALDER — always "1_6". ⚠️ An Ungdata survey-cohort identifier, NOT ages 1 to 6.
+              Unverified against Ungdata methodology.
+            data_type: text
+          - name: depresjon_code
+            description: The degenerate topic slice this table reports; see the indicator model.
+            data_type: text
+          - name: soes_code
+            description: FHI SOES — socioeconomic status.
+            data_type: text
+          - name: measure_type
+            description: >-
+              SMR (standardised ratio, 100 = national) or MEIS (FHI smoothed estimate). ⚠️ No TELLER
+              and no RATE — Ungdata is a survey, so there is no count to publish.
+            data_tests: [not_null]
+          - name: value
+            description: The measured value. NULL where FHI suppressed the cell.
+          - name: status
+            description: FHI suppression marker.
+          - name: loaded_at
+            description: When the ingest wrote the row.
+            data_tests: [not_null]
+      - name: fhi_fortrolig_venn
+        description: "FHI 354 — Ungdata: share reporting a close confiding friend."
+        loaded_at_field: loaded_at
+        meta:
+          ingest_cadence: weekly
+        freshness:
+          warn_after: {count: 400, period: day}
+          error_after: {count: 800, period: day}
+        columns:
+          - name: geo_code
+            description: FHI GEO — mixed kommune / fylke / bydel / nasjon code.
+            data_tests: [not_null]
+          - name: aar_code
+            description: FHI AAR — "YYYY_YYYY" range string.
+            data_tests: [not_null]
+          - name: kjonn_code
+            description: FHI KJONN — '0' both, '1' men, '2' women.
+            data_type: text
+          - name: alder_code
+            description: >-
+              FHI ALDER — always "1_6". ⚠️ An Ungdata survey-cohort identifier, NOT ages 1 to 6.
+              Unverified against Ungdata methodology.
+            data_type: text
+          - name: harvenn_code
+            description: The degenerate topic slice this table reports; see the indicator model.
+            data_type: text
+          - name: soes_code
+            description: FHI SOES — socioeconomic status.
+            data_type: text
+          - name: measure_type
+            description: >-
+              SMR (standardised ratio, 100 = national) or MEIS (FHI smoothed estimate). ⚠️ No TELLER
+              and no RATE — Ungdata is a survey, so there is no count to publish.
+            data_tests: [not_null]
+          - name: value
+            description: The measured value. NULL where FHI suppressed the cell.
+          - name: status
+            description: FHI suppression marker.
+          - name: loaded_at
+            description: When the ingest wrote the row.
+            data_tests: [not_null]
+      - name: fhi_hasj
+        description: "FHI 363 — Ungdata: share reporting cannabis use one or more times in the past year."
+        loaded_at_field: loaded_at
+        meta:
+          ingest_cadence: weekly
+        freshness:
+          warn_after: {count: 400, period: day}
+          error_after: {count: 800, period: day}
+        columns:
+          - name: geo_code
+            description: FHI GEO — mixed kommune / fylke / bydel / nasjon code.
+            data_tests: [not_null]
+          - name: aar_code
+            description: FHI AAR — "YYYY_YYYY" range string.
+            data_tests: [not_null]
+          - name: kjonn_code
+            description: FHI KJONN — '0' both, '1' men, '2' women.
+            data_type: text
+          - name: alder_code
+            description: >-
+              FHI ALDER — always "1_6". ⚠️ An Ungdata survey-cohort identifier, NOT ages 1 to 6.
+              Unverified against Ungdata methodology.
+            data_type: text
+          - name: antall_ganger_code
+            description: The degenerate topic slice this table reports; see the indicator model.
+            data_type: text
+          - name: soes_code
+            description: FHI SOES — socioeconomic status.
+            data_type: text
+          - name: measure_type
+            description: >-
+              SMR (standardised ratio, 100 = national) or MEIS (FHI smoothed estimate). ⚠️ No TELLER
+              and no RATE — Ungdata is a survey, so there is no count to publish.
+            data_tests: [not_null]
+          - name: value
+            description: The measured value. NULL where FHI suppressed the cell.
+          - name: status
+            description: FHI suppression marker.
+          - name: loaded_at
+            description: When the ingest wrote the row.
+            data_tests: [not_null]
+      - name: fhi_livskvalitet
+        description: "FHI 373 — Ungdata: share reporting high quality of life (8-10 on a 0-10 scale)."
+        loaded_at_field: loaded_at
+        meta:
+          ingest_cadence: weekly
+        freshness:
+          warn_after: {count: 400, period: day}
+          error_after: {count: 800, period: day}
+        columns:
+          - name: geo_code
+            description: FHI GEO — mixed kommune / fylke / bydel / nasjon code.
+            data_tests: [not_null]
+          - name: aar_code
+            description: FHI AAR — "YYYY_YYYY" range string.
+            data_tests: [not_null]
+          - name: kjonn_code
+            description: FHI KJONN — '0' both, '1' men, '2' women.
+            data_type: text
+          - name: alder_code
+            description: >-
+              FHI ALDER — always "1_6". ⚠️ An Ungdata survey-cohort identifier, NOT ages 1 to 6.
+              Unverified against Ungdata methodology.
+            data_type: text
+          - name: livskvalitet_code
+            description: The degenerate topic slice this table reports; see the indicator model.
+            data_type: text
+          - name: soes_code
+            description: FHI SOES — socioeconomic status.
+            data_type: text
+          - name: measure_type
+            description: >-
+              SMR (standardised ratio, 100 = national) or MEIS (FHI smoothed estimate). ⚠️ No TELLER
+              and no RATE — Ungdata is a survey, so there is no count to publish.
+            data_tests: [not_null]
+          - name: value
+            description: The measured value. NULL where FHI suppressed the cell.
+          - name: status
+            description: FHI suppression marker.
+          - name: loaded_at
+            description: When the ingest wrote the row.
+            data_tests: [not_null]
+      - name: fhi_mediebruk_some
+        description: "FHI 602 — Ungdata: share on social media more than 3 hours per day."
+        loaded_at_field: loaded_at
+        meta:
+          ingest_cadence: weekly
+        freshness:
+          warn_after: {count: 400, period: day}
+          error_after: {count: 800, period: day}
+        columns:
+          - name: geo_code
+            description: FHI GEO — mixed kommune / fylke / bydel / nasjon code.
+            data_tests: [not_null]
+          - name: aar_code
+            description: FHI AAR — "YYYY_YYYY" range string.
+            data_tests: [not_null]
+          - name: kjonn_code
+            description: FHI KJONN — '0' both, '1' men, '2' women.
+            data_type: text
+          - name: alder_code
+            description: >-
+              FHI ALDER — always "1_6". ⚠️ An Ungdata survey-cohort identifier, NOT ages 1 to 6.
+              Unverified against Ungdata methodology.
+            data_type: text
+          - name: mediebruk_code
+            description: The degenerate topic slice this table reports; see the indicator model.
+            data_type: text
+          - name: soes_code
+            description: FHI SOES — socioeconomic status.
+            data_type: text
+          - name: measure_type
+            description: >-
+              SMR (standardised ratio, 100 = national) or MEIS (FHI smoothed estimate). ⚠️ No TELLER
+              and no RATE — Ungdata is a survey, so there is no count to publish.
+            data_tests: [not_null]
+          - name: value
+            description: The measured value. NULL where FHI suppressed the cell.
+          - name: status
+            description: FHI suppression marker.
+          - name: loaded_at
+            description: When the ingest wrote the row.
+            data_tests: [not_null]
+      - name: fhi_mediebruk_spill
+        description: "FHI 601 — Ungdata: share gaming / TV more than 3 hours per day."
+        loaded_at_field: loaded_at
+        meta:
+          ingest_cadence: weekly
+        freshness:
+          warn_after: {count: 400, period: day}
+          error_after: {count: 800, period: day}
+        columns:
+          - name: geo_code
+            description: FHI GEO — mixed kommune / fylke / bydel / nasjon code.
+            data_tests: [not_null]
+          - name: aar_code
+            description: FHI AAR — "YYYY_YYYY" range string.
+            data_tests: [not_null]
+          - name: kjonn_code
+            description: FHI KJONN — '0' both, '1' men, '2' women.
+            data_type: text
+          - name: alder_code
+            description: >-
+              FHI ALDER — always "1_6". ⚠️ An Ungdata survey-cohort identifier, NOT ages 1 to 6.
+              Unverified against Ungdata methodology.
+            data_type: text
+          - name: mediebruk_code
+            description: The degenerate topic slice this table reports; see the indicator model.
+            data_type: text
+          - name: soes_code
+            description: FHI SOES — socioeconomic status.
+            data_type: text
+          - name: measure_type
+            description: >-
+              SMR (standardised ratio, 100 = national) or MEIS (FHI smoothed estimate). ⚠️ No TELLER
+              and no RATE — Ungdata is a survey, so there is no count to publish.
+            data_tests: [not_null]
+          - name: value
+            description: The measured value. NULL where FHI suppressed the cell.
+          - name: status
+            description: FHI suppression marker.
+          - name: loaded_at
+            description: When the ingest wrote the row.
+            data_tests: [not_null]
+      - name: fhi_mediebruk_underhold
+        description: "FHI 667 — Ungdata: share on streaming / entertainment more than 3 hours per day."
+        loaded_at_field: loaded_at
+        meta:
+          ingest_cadence: weekly
+        freshness:
+          warn_after: {count: 400, period: day}
+          error_after: {count: 800, period: day}
+        columns:
+          - name: geo_code
+            description: FHI GEO — mixed kommune / fylke / bydel / nasjon code.
+            data_tests: [not_null]
+          - name: aar_code
+            description: FHI AAR — "YYYY_YYYY" range string.
+            data_tests: [not_null]
+          - name: kjonn_code
+            description: FHI KJONN — '0' both, '1' men, '2' women.
+            data_type: text
+          - name: alder_code
+            description: >-
+              FHI ALDER — always "1_6". ⚠️ An Ungdata survey-cohort identifier, NOT ages 1 to 6.
+              Unverified against Ungdata methodology.
+            data_type: text
+          - name: mediebruk_code
+            description: The degenerate topic slice this table reports; see the indicator model.
+            data_type: text
+          - name: soes_code
+            description: FHI SOES — socioeconomic status.
+            data_type: text
+          - name: measure_type
+            description: >-
+              SMR (standardised ratio, 100 = national) or MEIS (FHI smoothed estimate). ⚠️ No TELLER
+              and no RATE — Ungdata is a survey, so there is no count to publish.
+            data_tests: [not_null]
+          - name: value
+            description: The measured value. NULL where FHI suppressed the cell.
+          - name: status
+            description: FHI suppression marker.
+          - name: loaded_at
+            description: When the ingest wrote the row.
+            data_tests: [not_null]
+      - name: fhi_smertestillende
+        description: "FHI 390 — Ungdata: share using painkillers at least weekly."
+        loaded_at_field: loaded_at
+        meta:
+          ingest_cadence: weekly
+        freshness:
+          warn_after: {count: 400, period: day}
+          error_after: {count: 800, period: day}
+        columns:
+          - name: geo_code
+            description: FHI GEO — mixed kommune / fylke / bydel / nasjon code.
+            data_tests: [not_null]
+          - name: aar_code
+            description: FHI AAR — "YYYY_YYYY" range string.
+            data_tests: [not_null]
+          - name: kjonn_code
+            description: FHI KJONN — '0' both, '1' men, '2' women.
+            data_type: text
+          - name: alder_code
+            description: >-
+              FHI ALDER — always "1_6". ⚠️ An Ungdata survey-cohort identifier, NOT ages 1 to 6.
+              Unverified against Ungdata methodology.
+            data_type: text
+          - name: status_code
+            description: The degenerate topic slice this table reports; see the indicator model.
+            data_type: text
+          - name: soes_code
+            description: FHI SOES — socioeconomic status.
+            data_type: text
+          - name: measure_type
+            description: >-
+              SMR (standardised ratio, 100 = national) or MEIS (FHI smoothed estimate). ⚠️ No TELLER
+              and no RATE — Ungdata is a survey, so there is no count to publish.
+            data_tests: [not_null]
+          - name: value
+            description: The measured value. NULL where FHI suppressed the cell.
+          - name: status
+            description: FHI suppression marker.
+          - name: loaded_at
+            description: When the ingest wrote the row.
+            data_tests: [not_null]
       - name: fhi_mobbing
         description: FHI 377 — bullying share 7./10. klasse, 3-year averages.
         loaded_at_field: loaded_at

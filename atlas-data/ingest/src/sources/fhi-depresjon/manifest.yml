@@ -52,8 +52,13 @@ dimensions:
     notes: "SMR (standardised ratio vs national), MEIS (FHI mean / smoothed indicator). No TELLER / RATE — Ungdata is sample-based."
 
 lifecycle: stable
+# ⚠️ WHAT ATLAS HOLDS, NOT WHAT FHI PUBLISHES. Table 339 goes back to 2012;
+# this ingest requests AAR=bottom(4) because the full cartesian product is
+# 137,424 cells and FHI caps a request at 50,000. Advertising 2012 here would
+# tell a catalogue reader they can get fourteen years from Atlas when they can
+# get four. Older years need a sibling backfill source, noted in index.ts.
 time_coverage:
-  start: 2012
+  start: 2022
   end: 2025
 keywords:
   - depression
