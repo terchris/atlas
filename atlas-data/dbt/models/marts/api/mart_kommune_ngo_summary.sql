@@ -112,5 +112,8 @@ join {{ ref('dim_kommune') }} k
   on k.kommune_nr = e.kommune_nr
 where e.registrert_i_frivillighetsregisteret
   and e.is_active
+  -- Not the 9999 sentinel. kommune_ngo_totals reads this view, so excluding it
+  -- here fixes both (urb-agents #1301).
+  and not k.is_sentinel
 group by k.kommune_nr, k.kommune_name, e.icnpo_nummer, e.icnpo_kategori
 order by k.kommune_nr, e.icnpo_nummer

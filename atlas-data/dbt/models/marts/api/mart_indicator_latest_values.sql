@@ -17,4 +17,7 @@ join latest l on l.source_id = f.source_id
               and l.contents_code = f.contents_code
               and f.year = l.latest_year
 where f.kommune_is_active
+  -- Not the 9999 sentinel; see coverage_gap_barnefattigdom for why
+  -- kommune_is_active is not enough (urb-agents #1301).
+  and not f.kommune_is_sentinel
 order by f.source_id, f.contents_code, f.kommune_nr

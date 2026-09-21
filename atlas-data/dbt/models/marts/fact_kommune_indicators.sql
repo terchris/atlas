@@ -266,6 +266,10 @@ select
   i.value,
   i.status,
   k.is_active         as kommune_is_active,
+  -- Carried alongside kommune_is_active so the marts downstream can exclude
+  -- SSB's 9999 'Uoppgitt' without each one re-deriving what a sentinel is.
+  -- dim_kommune keeps the row (Klass 131 publishes it); these marts do not.
+  k.is_sentinel       as kommune_is_sentinel,
   i.updated_at
 from all_indicators i
 join {{ ref('dim_kommune') }} k using (kommune_nr)

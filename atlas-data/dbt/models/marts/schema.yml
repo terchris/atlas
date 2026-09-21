@@ -64,7 +64,27 @@ models:
       - name: kommune_is_active
         description: >-
           Whether the kommune is active today. False for historical kommune codes that only appear because
-          the upstream retained them.
+          the upstream retained them. ⚠️ TRUE for SSB's 9999 'Uoppgitt' — it is a current code. Use
+          kommune_is_sentinel as well; see below.
+        data_tests:
+          - not_null
+      - name: kommune_is_sentinel
+        description: |
+          True for a code that is current but is not a municipality — SSB's
+          9999 'Uoppgitt'. Carried from dim_kommune so downstream marts can
+          exclude it without re-deriving what a sentinel is.
+
+          🔴 `kommune_is_active` alone is not enough, and that gap was live.
+          Every mart meaning "the municipalities" filtered on is_active and
+          therefore included a non-place: coverage_gap_barnefattigdom emitted a
+          row for it, indicator_summary counted it in its coverage figures, and
+          indicator_missing_kommuner asserted once per series that it was
+          missing data it could never have (urb-agents #1301).
+
+          🔵 dim_kommune still carries the row. Klass 131 publishes 9999 and
+          Atlas does not drop what SSB publishes — the dimension mirrors the
+          source, the marts are Atlas's own constructs and Atlas defines their
+          grain.
         data_tests:
           - not_null
       - name: updated_at

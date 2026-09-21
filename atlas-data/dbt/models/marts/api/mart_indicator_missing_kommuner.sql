@@ -14,7 +14,10 @@ have_value as (
 active_kommuner as (
   select kommune_nr, kommune_name
   from {{ ref('dim_kommune') }}
-  where is_active
+  -- 🔵 Not the 9999 sentinel. Without this the view emitted one
+  -- "9999 has no data for this indicator" row PER SERIES — ~195 rows asserting
+  -- that a non-place is missing data it could never have (urb-agents #1301).
+  where is_active and not is_sentinel
 ),
 all_pairs as (
   select distinct source_id, contents_code from latest

@@ -34,5 +34,13 @@ join latest l on f.year = l.year
 where f.source_id = 'ssb-08764'
   and f.contents_code in ('EUskala60', 'Personer')
   and f.kommune_is_active
+  -- 🔴 AND NOT THE SENTINEL. kommune_is_active does NOT exclude SSB's 9999
+  -- 'Uoppgitt': it is a current code, so is_active is true, and this view has
+  -- been emitting a row for a place that does not exist. Anyone summing
+  -- barn_i_lavinntekt across kommuner was adding a non-place to the total.
+  -- dim_kommune still carries 9999 — Klass 131 publishes it and Atlas does not
+  -- drop what SSB publishes — and the value now lives in unattributed_totals.
+  -- urb-agents #1301, Terje 2026-09-21, option B.
+  and not f.kommune_is_sentinel
 group by f.kommune_nr, f.kommune_name, f.fylke_name, f.year
 order by f.kommune_nr

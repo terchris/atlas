@@ -35,8 +35,14 @@ select
   f.contents_code,
   max(f.contents_label) as contents_label,
   l.latest_year,
-  count(*) filter (where f.value is not null and f.kommune_is_active)::int as kommuner_with_value,
-  count(*) filter (where f.value is null and f.kommune_is_active)::int as kommuner_with_null,
+  -- 🔵 `and not f.kommune_is_sentinel` on both: this view has one row per
+  -- (source, contents_code), so the 9999 sentinel never was a ROW here — it was
+  -- counted INSIDE these two numbers. A coverage figure that includes a
+  -- non-place overstates coverage by one kommune, silently (urb-agents #1301).
+  count(*) filter (where f.value is not null and f.kommune_is_active
+                     and not f.kommune_is_sentinel)::int as kommuner_with_value,
+  count(*) filter (where f.value is null and f.kommune_is_active
+                     and not f.kommune_is_sentinel)::int as kommuner_with_null,
   min(f.value)::float as min_value,
   max(f.value)::float as max_value,
   max(f.updated_at) as upstream_updated,

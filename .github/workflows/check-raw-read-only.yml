@@ -1,4 +1,4 @@
-name: Sources are read-only
+name: Data-fidelity gates
 
 # 🔴 NO PATH FILTER, DELIBERATELY.
 #
@@ -24,3 +24,24 @@ jobs:
       - uses: actions/checkout@v4
       - name: No dbt object may write to a source relation
         run: atlas-data/dbt/check-raw-is-read-only.sh
+
+  kommune-marts-exclude-sentinels:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      # The gate reads target/manifest.json, so the project has to be parsed.
+      # dbt parse needs no database connection; the env vars only satisfy the
+      # profile's env_var() calls.
+      - name: Install dbt
+        run: pip install --quiet dbt-core==1.8.10 dbt-postgres==1.8.2
+      - name: Parse the dbt project
+        working-directory: atlas-data/dbt
+        env: {PGHOST: localhost, PGPORT: '5432', PGUSER: x, PGPASSWORD: x, PGDATABASE: x}
+        run: |
+          mkdir -p .venv/bin && ln -sf "$(command -v python)" .venv/bin/python
+          dbt deps   # packages.yml declares dbt_utils; parse fails without it
+          dbt parse
+      - name: Every published per-kommune relation excludes the 9999 sentinel
+        run: atlas-data/dbt/check-kommune-marts-exclude-sentinels.sh
