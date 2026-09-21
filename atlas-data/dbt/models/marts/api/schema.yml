@@ -109,6 +109,15 @@ models:
           to 2026 with `kommuner_with_value` 0 and both value bounds null
           — a live series whose summary read as empty (urb-agents #1351).
 
+          ⚠️ IT IS THE LATEST YEAR AN ACTIVE, NON-SENTINEL KOMMUNE HAS A
+          VALUE — the same subject the coverage below is counted over. A
+          first version filtered only on `value is not null` and was
+          defeated by SSB zero-filling retired kommune codes: 0101 Halden
+          (-2019) and 0801 Kragerø (-1959) carry a literal 0 for every
+          year forever, so the year looked populated while every active
+          kommune was null there. `latest_year` and `kommuners_with_value`
+          disagreed about which rows count (urb-agents #1354).
+
           ⚠️ A series with no value in ANY year keeps the newest year it
           has rows for, rather than going null. Disappearing from the
           catalogue is the worse failure: "0 of 357" invites a question,

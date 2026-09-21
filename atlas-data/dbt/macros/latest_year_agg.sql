@@ -26,6 +26,38 @@
   not the others would have made them disagree about what "latest" means,
   which is how `classify_region_code` came to exist for region codes.
 -#}
-{% macro latest_year_agg() -%}
-  coalesce(max(year) filter (where value is not null), max(year))
+{#-
+  🔴 THE `subject` ARGUMENT EXISTS BECAUSE THE FIRST VERSION OF THIS MACRO WAS
+  A PARTIAL FIX, AND THE REASON IS SSB ZERO-FILLS RETIRED KOMMUNE CODES.
+
+  `filter (where value is not null)` alone was defeated by a literal 0.
+  Measured against SSB on 2026-09-21, table 06913:
+
+    0301 Oslo         (active)  Dode 2025 = 4033   Dode 2026 = NULL
+    0101 Halden      (-2019)    Dode 2025 = 0      Dode 2026 = 0
+    0801 Kragerø     (-1959)    Dode 2025 = 0      Dode 2026 = 0
+
+  A retired kommune carries a non-null zero for every year forever, so the
+  null-filter kept 2026 while every ACTIVE kommune was null there — and
+  `kommuner_with_value`, which counts active kommuner only, still found none.
+  `latest_year` and the coverage computed at it disagreed about which rows
+  count.
+
+  ⚠️ ops-dev's words for it: "the same instrument failure one layer down,
+  inside the fix written for a different version of it" (urb-agents #1354).
+  That is accurate. The first version fixed the sources whose unreleased
+  years are NULL — the crime legacy codes — and missed every source whose
+  unreleased years are zero-filled.
+
+  🔵 SO THE SUBJECT MUST MATCH THE RELATION'S OWN FILTER. If a relation
+  reports over active non-sentinel kommuner, its latest_year must be the
+  latest year THOSE rows have a value. Passing anything else reintroduces the
+  disagreement in a new place.
+
+  ⚠️ NOT "exclude zeros". A zero is data — a kommune with no deaths that year
+  reports 0 and must keep it. What is excluded is a row whose SUBJECT is not
+  part of the relation, which is a different thing and the only honest one.
+-#}
+{% macro latest_year_agg(subject='true') -%}
+  coalesce(max(year) filter (where value is not null and ({{ subject }})), max(year))
 {%- endmacro %}
