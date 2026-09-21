@@ -27,4 +27,5 @@ uv run python scripts/generate_api_v1.py \
   --manifest target/manifest.json \
   --models-dir-prefix models/marts/api/ \
   --state api_v1_state.json \
-  --out api_v1_generated.sql
+  --out api_v1_generated.sql \
+  --relations-seed seeds/sources/api_v1_relations.csv
