@@ -46,7 +46,11 @@ if [ -n "$hits" ]; then
 fi
 
 # Not a vacuous pass: prove the pattern can still fire.
-probe="$(mktemp -t rawprobe)"
+# ⚠️ `mktemp -t rawprobe` works on BSD/macOS and fails on GNU/Linux with "too
+# few X's in template". This gate's FIRST CI run died on that line — the check
+# was correct and the scaffolding around it was not. An explicit template is
+# portable to both.
+probe="$(mktemp "${TMPDIR:-/tmp}/rawprobe.XXXXXX")"
 printf 'delete from raw.ssb_07459 where value is null;\n' > "$probe"
 if ! grep -qniE "${DML}[^;]*${TARGET}" "$probe"; then
   echo "✗ CANNOT CHECK: the detector no longer matches a known-bad statement."
