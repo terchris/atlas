@@ -1594,6 +1594,24 @@ models:
       this emits 0 rather than omitting the row: "we checked, none" and
       "nobody checked" are different answers, and a missing row cannot
       tell them apart.
+
+      ✅ THE ARITHMETIC CLOSES, AND A TEST SAYS SO. Summing a per-kommune
+      relation and adding every `unattributed_value` for it must equal
+      `total_value`:
+
+          kommune_ngo_totals   65 270
+          no_kommune_nr         7 489
+          kommune_nr_not_current   43
+          ---------------------------
+          total_value          72 802
+
+      ⚠️ It did not close on the day this shipped. It named 7 489 of
+      7 532 and the 43 Svalbard organisations were counted by neither
+      relation — silent, self-consistent, and visible only by doing the
+      subtraction this view exists to support. The singular test
+      `the_remainder_closes_the_total` now asserts the decomposition
+      rather than the parts, which is the thing that was missing: every
+      part had a test and the relationship between them had none.
     columns:
       - name: relation
         description: >-
@@ -1612,13 +1630,23 @@ models:
           voluntary units and is what Brreg itself publishes; it is not
           an Atlas defect.
 
+          `kommune_nr_not_current` — the record HAS a kommune_nr and it
+          is not one of the current municipalities. 🔴 Today these are
+          all Svalbard (2100): a real code, absent from SSB's Klass 131,
+          so `kommune_ngo_totals` emits no row for it. Without this
+          reason the relation named 7 489 of 7 532 and the obvious
+          reconciliation came out 43 short with no error anywhere
+          (urb-agents #1318). Historical kommune codes would land here
+          too if Brreg ever used one.
+
           `sentinel_9999` — upstream attributes the value to its own
           'Uoppgitt' bucket. ⚠️ Note this is the same 9999 that
           `classify_region_code` calls `unspecified_national` and that
           `dim_kommune.is_active` still returns as a municipality.
         data_tests:
           - not_null
-          - accepted_values: {values: [no_kommune_nr, sentinel_9999]}
+          - accepted_values:
+              values: [no_kommune_nr, kommune_nr_not_current, sentinel_9999]
       - name: source_id
         description: The upstream source the quantity comes from.
         data_tests: [not_null]

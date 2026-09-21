@@ -568,6 +568,102 @@ def api_v1_embedding_fk_is_registered():
     )
 
 
+@asset_check(
+    asset=api_v1_surface,
+    name="the_remainder_closes_the_total",
+    description=(
+        "Placed + remainder equals the total. Summing kommune_ngo_totals and "
+        "adding every unattributed_value for it must equal total_value."
+    ),
+)
+def api_v1_remainder_closes_the_total():
+    """
+    🔴 ASSERT THE DECOMPOSITION, NOT THE PARTS.
+
+    `unattributed_totals` shipped on 2026-09-21 naming 7 489 of 7 532
+    unattributable organisations. The missing 43 carry kommune_nr = 2100 —
+    Svalbard — a real kommune_nr that is not one of the 357 current ones, so
+    `kommune_ngo_totals` emitted no row for them and `unattributed_totals` did
+    not count them either.
+
+    ⚠️ Nothing errored. No count looked odd. `total_value` was correct. The
+    only way to see it was to do the arithmetic the relation exists to support
+    and notice it came out 43 short — which a consumer did, on first read
+    (urb-agents #1318).
+
+    🔵 ops-dev's framing and the reason this exists rather than just a third
+    `reason` value: anywhere Atlas partitions a population into PLACED and
+    REMAINDER, the two should be asserted to sum to the measured total. Adding
+    a bucket fixes today; asserting the sum fixes the class.
+
+    ⚠️ I wrote tests for the grain and the columns of every part and none for
+    the relationship between them. A partition has an invariant and it is not
+    the parts.
+
+    WHY THIS IS A PYTHON CHECK AND NOT A SINGULAR dbt TEST
+
+    🔴 I wrote it as one first, with `ref()` to both relations, and asserted in
+    the PR that two parse-time refs were enough for dagster-dbt to attach it.
+    They are not — it can only attach a check to a SINGLE parent asset, so the
+    test landed in the manifest with nothing to run it. The image build's own
+    smoke assertion caught it:
+
+        these singular dbt tests are in the manifest but nothing runs them
+
+    That is the third time this repo has hit "in the manifest and executed are
+    two different things", and the first time a gate stopped it before merge.
+    """
+    import psycopg2
+
+    database_url = os.environ.get("ATLAS_DATABASE_URL") or os.environ.get(
+        "DATABASE_URL"
+    )
+    if not database_url:
+        raise RuntimeError(
+            "ATLAS_DATABASE_URL (or DATABASE_URL) must be set to check the "
+            "api_v1 surface."
+        )
+
+    with psycopg2.connect(database_url) as conn:
+        with conn.cursor() as cur:
+            cur.execute("select coalesce(sum(active_count), 0) from api_v1.kommune_ngo_totals")
+            placed = cur.fetchone()[0]
+            cur.execute(
+                """
+                select coalesce(sum(unattributed_value), 0),
+                       count(distinct total_value),
+                       max(total_value)
+                from api_v1.unattributed_totals
+                where relation = 'kommune_ngo_totals' and measure = 'active_count'
+                """
+            )
+            remainder, distinct_totals, claimed = cur.fetchone()
+
+    # Both failure modes: the sum not closing, and the rows disagreeing about
+    # what the total even is — the second would make the first meaningless.
+    disagree = (distinct_totals or 0) > 1
+    shortfall = (placed or 0) + (remainder or 0) - (claimed or 0)
+
+    return AssetCheckResult(
+        passed=(not disagree) and shortfall == 0,
+        severity=AssetCheckSeverity.ERROR,
+        metadata={
+            "placed": placed,
+            "remainder": remainder,
+            "claimed_total": claimed,
+            "shortfall": shortfall,
+            "rows_disagree_about_total": disagree,
+            "remedy": (
+                "A non-zero shortfall means some part of the population is in "
+                "neither relation. On 2026-09-21 it was 43 Svalbard "
+                "organisations with kommune_nr 2100 — a real code outside the "
+                "357. Find the class, give it a `reason` in "
+                "mart_unattributed_totals; do not adjust total_value."
+            ),
+        },
+    )
+
+
 # The PostgREST anonymous role, by UIS convention `<app>_web_anon`. Overridable
 # because the convention is the platform's, not Atlas's, and a rename should not
 # require an Atlas rebuild.
