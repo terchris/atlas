@@ -30,6 +30,8 @@ jobs:
         run: atlas-data/uis/generate-holdings.py --check
       - name: Every classifier value exists in ref_region_kind
         run: atlas-data/dbt/check-classifier-vocabulary.sh
+      - name: Every ingested source reaches a model, or is declared
+        run: atlas-data/dbt/check-every-source-is-served.sh
 
   kommune-marts-exclude-sentinels:
     runs-on: ubuntu-latest
