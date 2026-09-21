@@ -38,14 +38,41 @@ asserts coverage > 0 but cannot know what number is *enough*.
 stale" and was one message from telling a consumer so. `fhi-mobbing` has the
 same shape with 3-year windows.
 
-`fact_kommune_indicators` **cannot express a window** — its grain has one
-`year`. The indicator models keep `period`, `period_start_year` and
-`period_end_year`; those are lost in the fact.
+Then it happened a second time the same day, in the opposite direction: a
+consumer shipped the caption «Mobbetallene er fra 2022» for a 2022–2024
+window. Two readers, one prose warning, two wrong years.
 
-> **When a source's `AAR` is a range, say so in the description and check
-> whether `period_start_year != period_end_year` before quoting a year.**
+🔴 **The remedy this section used to give was the defect.** It said the window
+was stated in the description, and told the reader to check
+`period_start_year != period_end_year`. Neither is performable where the
+mistake is made: a PostgREST consumer rendering a caption sees
+`indicator_summary`, which had no period columns, and parsing the prose is
+worse than useless — the consumer's own workaround, matching `/1-year/i`
+against the description, false-positives on `fhi-kpr-1aar`, whose title
+contains "KPR 1-year" and which is annual anyway (urb-agents #1331).
 
-**Caught by:** nothing. Documented on `fact_kommune_indicators.year`.
+Since 2026-09-21 the number is a column: `window_years` on
+`fact_kommune_indicators` and `indicator_latest_values`,
+`latest_year_window_years` on `indicator_summary`. The covered span is
+`year` to `year + window_years - 1`. It is **derived** from the source's own
+period string by the `window_years()` macro, not declared.
+
+> **A property a consumer must read in order to render a value correctly
+> belongs in a column, not in a description.** Prose is for why; columns are
+> for what. If the only way to render your data correctly is to parse an
+> English sentence, you have shipped a trap, however well the sentence is
+> written.
+
+⚠️ `window_years = 1` means "one year", not "unknown". Eleven CTEs get the
+literal 1 because their source publishes no period columns. A genuinely
+windowed source that shipped no period columns would read 1 and be wrong.
+None do today; that is a property of today's holdings, not a guarantee.
+
+**Caught by:** `window_is_uniform_within_an_indicator_year` (a singular test,
+so it runs in `transform_checks`, not in `transform_and_publish`) asserts the
+window does not vary across kommuner within one indicator-year — which is what
+makes the `max()` in `indicator_summary` lossless. Nothing checks that a
+literal 1 is truthful.
 
 ---
 
