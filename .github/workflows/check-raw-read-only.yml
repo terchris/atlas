@@ -1,0 +1,26 @@
+name: Sources are read-only
+
+# 🔴 NO PATH FILTER, DELIBERATELY.
+#
+# Every other gate in this repo is path-filtered, and on 2026-09-20 that is how
+# a change reached main with its gates skipped (urb-agents #1296). A filter is a
+# list of places someone thought the defect could come from, and this is the one
+# gate whose failure a consumer could never detect for themselves: Atlas
+# republishes Norwegian public data, and the property that makes it worth using
+# is that a figure here is the figure SSB, FHI or Brreg published.
+#
+# The check is bash and grep, runs in seconds, needs no database and no
+# toolchain. There is no cost worth optimising by making it conditional.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  raw-is-read-only:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: No dbt object may write to a source relation
+        run: atlas-data/dbt/check-raw-is-read-only.sh
