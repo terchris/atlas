@@ -26,6 +26,8 @@ jobs:
         run: atlas-data/dbt/check-raw-is-read-only.sh
       - name: Every emitted source_id exists in the manifest
         run: atlas-data/dbt/check-source-ids-are-real.sh
+      - name: The holdings summary matches the manifests
+        run: atlas-data/uis/generate-holdings.py --check
 
   kommune-marts-exclude-sentinels:
     runs-on: ubuntu-latest
