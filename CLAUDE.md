@@ -90,7 +90,9 @@ on a change, not on a timer.
   a healthy `meta_sources` row, rows piling up in `raw`, and no symptom except an absence.
 
   **Enforced, not remembered:** `atlas-data/dbt/check-every-source-is-served.sh` fails CI when a
-  source has no downstream model and is not declared. Deferring is allowed and requires putting the
+  source does not reach a published `api_v1` relation and is not declared. ⚠️ It asked "does a
+  model exist" until 2026-09-21 and reported 0 deferred while four sources were unreachable —
+  *having a model* and *reaching a consumer* are different claims, and only the second is the rule. Deferring is allowed and requires putting the
   name in `BACKLOG` with your reason — a decision, not a way to silence the check. The live
   equivalent a consumer can run is `GET /meta_sources?downstream_model_count=eq.0`.
 

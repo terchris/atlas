@@ -126,8 +126,18 @@ def expectations():
                           and m not in fact_derived})
             if pub:
                 out[sid] = ("published", pub[0])
-            elif feeds.get(sid):
+            elif any(m.startswith("mart_") for m in feeds.get(sid, ())):
                 out[sid] = ("upstream", f"feeds {len(feeds[sid])} model(s)")
+            elif feeds.get(sid):
+                # 🔴 A model that reaches no published relation. "Has a model"
+                # is not "reaches a consumer" — fhi-innvandrere had an indicator
+                # model emitting nothing a consumer could query, and an earlier
+                # version of this classifier called that `upstream` and passed
+                # it (urb-agents #1329). ⚠️ The same conflation made the
+                # standing-rule gate report 0 deferred while four sources were
+                # unreachable.
+                out[sid] = ("unreachable", f"has {len(feeds[sid])} model(s), "
+                                           "none feeding a published relation")
             else:
                 out[sid] = ("unserved", "no downstream model at all")
     return out, relations
@@ -170,7 +180,14 @@ def main(base, only=None):
             n = int((hdrs.get("Content-Range") or "*/0").split("/")[-1]) if hdrs else 0
             ok = status in (200, 206) and n > 0
             detail = f"api_v1.{why} -> HTTP {status}, {n} rows"
-        else:  # upstream / unserved
+        elif kind == "unreachable":
+            # Declared: these have written reasons in
+            # check-every-source-is-served.sh. The check is that they stay
+            # absent rather than half-appearing.
+            ok = sid not in series
+            detail = why + ("" if ok else "  |  but it IS in indicator_summary "
+                                          "— reclassify it, the reason is stale")
+        else:  # upstream
             ok = sid not in no_model
             detail = why if ok else "downstream_model_count = 0"
         # 🔴 EVERY non-exempt source must also have a lineage edge, whatever
