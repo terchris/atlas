@@ -41,6 +41,7 @@ jobs:
         env: {PGHOST: localhost, PGPORT: '5432', PGUSER: x, PGPASSWORD: x, PGDATABASE: x}
         run: |
           mkdir -p .venv/bin && ln -sf "$(command -v python)" .venv/bin/python
+          dbt deps   # packages.yml declares dbt_utils; parse fails without it
           dbt parse
       - name: Every published per-kommune relation excludes the 9999 sentinel
         run: atlas-data/dbt/check-kommune-marts-exclude-sentinels.sh
