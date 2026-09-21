@@ -87,8 +87,14 @@ class WrapperView:
 # check-root-document-indexes-every-relation.sh fails when a relation is
 # added and not named here.
 # 🔴 LINE 1 IS THE TITLE, THE REST IS THE DESCRIPTION. PostgREST splits the
-# schema comment: the first line becomes OpenAPI `info.title` and everything
-# after it becomes `info.description`.
+# schema comment: the first line becomes OpenAPI `info.title`, and everything
+# after the BLANK SEPARATOR LINE becomes `info.description` — both newlines
+# are consumed, not one.
+#
+# 🔵 Measured 2026-09-21 against the served spec: comment 2413 chars, title
+# 54, description 2357. I predicted 2358 by subtracting the title and a
+# single newline. One character, and it is the difference between knowing
+# the rule and approximating it.
 #
 # ⚠️ THAT IS WHY THE SERVED SPEC SHOWED `info.description: 0 characters` on
 # 2026-09-21. migrations/050's comment is a SINGLE LINE, so all of it became
