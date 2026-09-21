@@ -346,8 +346,62 @@ _TRANSFORM_ASSETS = AssetSelection.assets(atlas_dbt_models) | AssetSelection.ass
     api_v1.api_v1_surface
 )
 
+# 🔴 THE MARTS ARE ONE RESOURCE AND FOUR JOBS TOUCH THEM. On 2026-09-21 a
+# `transform_checks` run launched at 21:15:11 by the previous chain was still
+# going when a new `transform_and_publish` started at 21:17:06. dbt replaces
+# marts tables as it builds, so the checks read tables mid-replacement and
+# reported 20 failures — the 20th on `mart_unattributed_totals`, the model
+# that release had just added, at severity `error`.
+#
+# ⚠️ imac nearly reported it as an error-severity regression introduced by the
+# release. Measured after the transform settled, that table held exactly three
+# rows, one per accepted reason, and the same check passed in its own run.
+#
+# 🔵 imac's sentence, which is the finding: "a checks run that overlaps a
+# transform produces failures that belong to neither build." Nothing in the
+# run record says "this read a table mid-replacement" — the failure looks
+# exactly like a finding, which is this repo's recurring failure mode arriving
+# in the orchestrator (urb-agents #1362).
+#
+# The tag is here; THE LIMIT IS NOT, and that is deliberate — the same
+# principle as ATLAS_MAX_CONCURRENT_INGESTS above. Ops sets it once on the
+# instance and can retune without an Atlas rebuild:
+#
+#   run_coordinator:
+#     module: dagster.core.run_coordinator
+#     class: QueuedRunCoordinator
+#     config:
+#       tag_concurrency_limits:
+#         - key: "atlas/serialises-on"
+#           value: "marts"
+#           limit: 1
+#
+# ⚠️ UNVERIFIED FROM HERE. I have no cluster, so I have confirmed the tag is
+# attached to the four jobs and NOT that the run coordinator enforces it. A
+# tag with no matching limit is inert: it changes nothing and breaks nothing,
+# so shipping it before the instance is configured is safe but is not the fix
+# until ops applies the block above.
+# ⚠️ brreg_transform CARRIES IT TOO, AND IT IS THE EXPENSIVE ONE. It writes
+# marts.dim_brreg_enhet, the checks suite tests that model, and it runs on a
+# raised cron against a feed that changes 3.8 times a minute — so it is the
+# job MOST likely to overlap, not the least.
+#
+# 🔴 THE COST IS REAL AND OPS SHOULD SEE IT BEFORE SETTING THE LIMIT.
+# transform_checks ran 1978 s on 2026-09-21. With limit 1, a brreg_transform
+# queued behind it waits up to ~33 minutes, and a frequent cron can queue
+# repeatedly behind one long checks run.
+#
+# 🔵 If that cost is unacceptable, the alternative is a SEPARATE key for
+# brreg_transform — accepting mid-replacement reads on that one model in
+# exchange for freshness. That is a platform trade, not a data-correctness
+# one, and it is yours: change the tag's value here, or set a per-value limit.
+# What I will not do is leave it untagged and unmentioned, which is how it
+# reads as considered when it was not.
+SERIALISE_ON_MARTS = {"atlas/serialises-on": "marts"}
+
 transform_job = define_asset_job(
     name="transform_and_publish",
+    tags=SERIALISE_ON_MARTS,
     selection=_TRANSFORM_ASSETS.without_checks(),
     description=(
         "dbt models + the api_v1 public surface, WITHOUT their checks — see the "
@@ -413,6 +467,7 @@ transform_job = define_asset_job(
 # along behind it every cycle. Verified before adding the job, not after.
 brreg_transform_job = define_asset_job(
     name="brreg_transform",
+    tags=SERIALISE_ON_MARTS,
     selection=AssetSelection.assets(*dbt.dbt_model_asset_keys("dim_brreg_enhet")),
     description=(
         "Reconciles the Brreg register into marts.dim_brreg_enhet and nothing "
@@ -489,6 +544,7 @@ brreg_transform_job = define_asset_job(
 # publishes as part of transform_and_publish.
 api_v1_publish_job = define_asset_job(
     name="publish_api_v1",
+    tags=SERIALISE_ON_MARTS,
     selection=AssetSelection.assets(api_v1.api_v1_surface),
     description=(
         "Re-create the api_v1 views, re-apply their column COMMENTs and reload "
@@ -503,6 +559,7 @@ _API_V1_CHECKS = AssetSelection.checks_for_assets(api_v1.api_v1_surface)
 
 api_v1_checks_job = define_asset_job(
     name="api_v1_checks",
+    tags=SERIALISE_ON_MARTS,
     selection=_API_V1_CHECKS,
     description=(
         "The api_v1 publish gate — does the published surface match the marts it "
@@ -513,6 +570,7 @@ api_v1_checks_job = define_asset_job(
 
 transform_checks_job = define_asset_job(
     name="transform_checks",
+    tags=SERIALISE_ON_MARTS,
     selection=AssetSelection.all_asset_checks() - _API_V1_CHECKS,
     description=(
         "The dbt data-quality suite — every dbt test as a Dagster asset check. "
