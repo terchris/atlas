@@ -227,6 +227,32 @@ reach a catalogue reader through a **pin**, which no Dagster job carries.
 `verify-release.py` gives the deployer a pass/fail per dataset with no domain
 judgement required.
 
+
+🔴 **And a deploy is not successful until the data arrives.** Terje's rule, 2026-09-21:
+a release that adds or fixes a source is not landed until that source returns **rows**
+through a published relation.
+
+Two releases passed everything and delivered nothing:
+
+```
+fhi-innvandrere   32 720 ingested · 1 model · 0 published
+                  reported as one of "the eight FHI sources served" — it was seven
+ssb-06913        783 104 ingested · 4 relations wired · 0 arriving · weeks undetected
+```
+
+Both had `transform_and_publish` SUCCESS, no test failures, `api_v1_checks` shortfall 0,
+and 19 of 19 relations answering. **Job status cannot distinguish "the release ran" from
+"the release delivered."**
+
+> **Name every source the release touches, with the relation it should appear in and an
+> expected row count. "I cannot predict the count" is a valid answer; leaving the source
+> off the list is not.**
+
+**Caught by:** `atlas-data/uis/lands-with.sh` derives the per-source list from a git range
+and flags any source with no published relation as one that will *deploy silent*. Run on
+`b5bb530` it names `fhi-innvandrere` — the release that produced the rule. ⚠️ It reads the
+lineage seed, so it tells you what SHOULD arrive, never what did; only the post-deploy
+count does that.
 ---
 
 ## 11. Green CI is not a model that compiles

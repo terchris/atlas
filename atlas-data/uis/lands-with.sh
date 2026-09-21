@@ -98,3 +98,54 @@ if git diff "$RANGE" -- 'atlas-data/dbt/models/**' | grep -qE '^\+.*indexes\s*=\
   echo "     incremental model — dbt creates indexes when the table is created."
   echo "     It needs a --full-refresh, or the index belongs in a post-hook."
 fi
+
+# 🔴 TERJE'S RULE, 2026-09-21 (urb-agents #1349): a deploy is not successful
+# until the data arrives. A release that adds or fixes a source is not landed
+# until that source returns ROWS through a published relation — job status, a
+# green suite and reachable relations are necessary and not sufficient.
+#
+# ⚠️ IT CAME FROM TWO RELEASES THAT PASSED EVERY CHECK. fhi-innvandrere:
+# 32,720 rows ingested, one model, zero published. ssb-06913: 783,104 rows
+# ingested, four relations wired, zero arriving, undetected for weeks. Both
+# had transform SUCCESS, no test failures, shortfall 0, 19 of 19 answering.
+#
+# 🔵 "I cannot predict the count" is a valid and preferred answer. Omitting
+# the source from the acceptance list is not. This section exists so omitting
+# it has to be a decision rather than an oversight.
+SOURCES_TOUCHED="$(grep -oE '^atlas-data/dbt/models/indicators/indicators__[a-z0-9_]+\.sql' <<<"$FILES" || true)"
+if [ -n "$SOURCES_TOUCHED" ]; then
+  echo
+  echo "  ROW COUNTS REQUIRED IN THE DEPLOY REQUEST (urb-agents #1349):"
+  PY=python3
+  command -v "$PY" >/dev/null 2>&1 || PY="$(dirname "$0")/../dbt/.venv/bin/python"
+  "$PY" - "$SOURCES_TOUCHED" <<'PYEOF'
+import csv, pathlib, re, sys
+root = pathlib.Path(__file__).resolve().parent if "__file__" in dir() else pathlib.Path(".")
+dbt = pathlib.Path("atlas-data/dbt")
+if not (dbt / "seeds/sources/lineage.csv").exists():
+    dbt = pathlib.Path(".")
+lineage, rel = dbt / "seeds/sources/lineage.csv", dbt / "seeds/sources/api_v1_relations.csv"
+if not lineage.exists() or not rel.exists():
+    print("    ⚠️ cannot resolve relations — run from the repo root.")
+    sys.exit(0)
+relations = {r["mart_name"]: r["relation_name"] for r in csv.DictReader(rel.open())}
+by_source = {}
+for r in csv.DictReader(lineage.open()):
+    n = relations.get(r["model_name"])
+    if n and not n.startswith("meta_"):
+        by_source.setdefault(r["source_id"], set()).add(n)
+for path in sys.argv[1].split():
+    model = pathlib.Path(path).stem
+    f = dbt / "models/indicators" / f"{model}.sql"
+    ids = re.findall(r"'([a-z0-9][a-z0-9-]+)'::text\s+as\s+source_id", f.read_text()) if f.exists() else []
+    for sid in ids or ["<source_id not found in " + model + ">"]:
+        served = sorted(by_source.get(sid, []))
+        if served:
+            print(f"    {sid:24} -> {', '.join(served)}")
+            print(f"    {'':24}    state an expected row count, or say you cannot predict one")
+        else:
+            print(f"    {sid:24} -> 🔴 NO PUBLISHED RELATION. This source will")
+            print(f"    {'':24}    deploy SILENT. Either wire it or say in the")
+            print(f"    {'':24}    request that it is deferred, with the reason.")
+PYEOF
+fi
