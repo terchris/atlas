@@ -307,12 +307,19 @@ seeds:
           every value the classifier can produce; a residual category
           is still a category.
 
-          ⚠️ `unknown` is currently a bag rather than a meaning. FHI's
-          GEO dimension is documented as "mixed kommune / fylke / bydel
-          / nasjon" and neither bydel nor nasjon has a pattern here —
-          so those are the likely contents, and nobody has looked. Do
-          NOT map it onto either `unspecified_*` member: those mean the
-          municipality was not stated, and a bydel is a real place.
+          ✅ It was a bag and it has been emptied. Measured (urb-agents
+          #1315): the contents were exactly 36 six-digit bydel codes
+          and the single `"0"` for the whole country. Both now have
+          their own member, so `unknown` should match nothing today —
+          and it stays, because a residual category that currently
+          catches nothing is the point of having one.
+
+          🔴 `bydel` rows exist for Oslo (15), Stavanger (9) and Bergen
+          (8) and have no published home. Every published relation is
+          keyed on kommune_nr and a bydel is not a kommune, so
+          region_code_to_kommune_nr correctly returns null. A bydel
+          surface needs its own mart and its own grain decision — the
+          same one ssb-10826 is waiting on.
         data_tests: [not_null, unique]
       - name: code_pattern
         description: >-

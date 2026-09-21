@@ -54,17 +54,43 @@
   suite was red every night and nobody would have known, because
   transform_and_publish runs `dbt build --exclude-resource-type test`.
 
-  ⚠️ IT IS A BAG, NOT YET A MEANING. FHI documents GEO as "mixed kommune /
-  fylke / bydel / nasjon" and there is no pattern here for bydel or nasjon, so
-  those are the likely contents — an unverified hypothesis, and the reason
-  there is no `bydel` branch yet is that nobody has looked at the codes.
+  ✅ IT WAS A BAG AND IT HAS BEEN EMPTIED. I hypothesised bydel and nasjon from
+  FHI's own documentation of GEO; imac measured it (urb-agents #1315) and it is
+  exactly those two and nothing else:
+
+      6-digit (bydel)   36 distinct codes   1 080 rows
+      "0"     (nasjon)   1 code                30 rows
+
+  Both now have their own branch, so `unknown` should match nothing today. The
+  member stays, and so does the gate — a residual category that currently
+  catches nothing is the point of having one.
+
+  🔴 AND THE BYDEL ROWS MATTER MORE THAN THE TIDINESS. imac joined the 6-digit
+  prefixes to mart_dim_kommune:
+
+      0301 Oslo 15 sub-codes · 1103 Stavanger 9 · 4601 Bergen 8
+
+  The demo consumer has been arguing for days that Oslo's need index of 62.7 is
+  an average over districts that differ enormously, and asking for ssb-10826 to
+  get bydel-level data. ⚠️ Ungdata has been carrying bydel rows for three of
+  those cities the whole time, and Atlas was discarding them into `unknown`.
+
+  ⚠️ NAMING THEM IS NOT PUBLISHING THEM. These rows still have no home: every
+  published relation is keyed on kommune_nr, and region_code_to_kommune_nr
+  correctly returns null for a bydel. A bydel surface needs its own mart and
+  its own grain decision — the same decision ssb-10826 has been waiting on.
+  What changes is that it is no longer "ingest a bydel source"; it is "two
+  sources already in raw carry bydel rows and neither has anywhere to put
+  them".
 #}
 {% macro classify_region_code(col) -%}
   case
+    when {{ col }} = '0' then 'nasjon'
     when {{ col }} = '9999' then 'unspecified_national'
     when {{ col }} ~ '^21\d{2}$' then 'svalbard'
     when {{ col }} ~ '^22\d{2}$' then 'jan_mayen'
     when {{ col }} ~ '^23\d{2}$' then 'continental_shelf'
+    when {{ col }} ~ '^\d{6}$' then 'bydel'
     when {{ col }} ~ '^\d{2}99$' then 'unspecified_within_fylke'
     when {{ col }} ~ '^\d{4}$'   then 'kommune'
     when {{ col }} ~ '^\d{2}$'   then 'fylke'
