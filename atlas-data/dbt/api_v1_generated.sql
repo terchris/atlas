@@ -14,6 +14,53 @@
 
 CREATE SCHEMA IF NOT EXISTS api_v1;
 
+COMMENT ON SCHEMA api_v1 IS
+  'Atlas — open semantic layer over Norwegian public data
+
+Curated wrapper views over Norwegian public data and NGO supply data, served
+by PostgREST. Values are republished as the upstream publishes them.
+
+THE CATALOGUE — start here:
+  meta_endpoints    every relation below, with tags. The index.
+  meta_sources      one row per ingested source: licence, publisher,
+                    coverage, freshness, downstream model count.
+  meta_dimensions   one row per source x upstream dimension: what that coded
+                    column MEANS and its value format. Read it before
+                    interpreting a code, and before deriving a fact about a
+                    dimension from prose.
+
+INDICATORS — municipal figures from SSB, FHI and Bufdir:
+  indicator_summary            one row per (source, measure): latest year,
+                               coverage, value range.
+  indicator_latest_values      per-kommune values at the latest year.
+  indicator_missing_kommuner   which kommuner an indicator does NOT cover.
+  coverage_gap_barnefattigdom  the same question for child poverty.
+  unattributed_totals          the remainder belonging to no kommune, so
+                               totals reconcile.
+  kommune_befolkning_alder     population by age band and sex.
+  bufdir_indicator_alias       Bufdir indicator naming.
+
+SUPPLY — voluntary-sector presence:
+  ngo_index, ngo_overview      organisations and their summary.
+  activity_catalog             what each organisation does.
+  kommune_ngo_summary          per-kommune rollup.
+  kommune_ngo_totals           national totals; reconcile these against
+                               unattributed_totals.
+  distrikt_summary             chapters by district.
+  kommune_local_chapters       chapters resolved to a kommune.
+
+REFERENCE:
+  dim_kommune                  the municipality dimension. Keeps SSB''s 9999
+                               ''Uoppgitt'' because Klass 131 publishes it; the
+                               analytical relations exclude it.
+  brreg_enhet                  the Bronnoysund register mirror.
+
+TIME IS THE DIMENSION MOST OFTEN MISREAD. A year here can be the FIRST year
+of a multi-year window. indicator_summary.latest_year pairs with
+latest_year_window_years, and indicator_latest_values.year with window_years;
+the span is year .. year + window_years - 1. meta_dimensions carries the
+upstream''s own words for the same fact.';
+
 -- activity_catalog  ←  marts.mart_activity_catalog
 CREATE OR REPLACE VIEW api_v1.activity_catalog AS SELECT * FROM marts.mart_activity_catalog;
 COMMENT ON VIEW api_v1.activity_catalog IS 'One row per (NGO, activity) joining dim_activity to the
@@ -738,6 +785,14 @@ from the schema. Wraps to `api_v1.meta_endpoints` and backs the
 tag-filter catalogue at `/data` in the customer frontend
 (PLAN-007 phase 4).
 
+🔵 THIS IS THE INDEX, SO IT SAYS WHERE THE OTHER TWO CATALOGUES
+ARE: `meta_sources` for one row per ingest source (licence,
+publisher, freshness), and `meta_dimensions` for one row per
+source × upstream dimension — what each coded column means and
+its value format. A consumer enumerating relations here should
+not have to read 19 descriptions to discover the second one
+(urb-agents #1335).
+
 Includes endpoints from `api_v1.*`, `marts.*`, and `raw.*`
 (Atlas''s three open-by-default schemas; `private_marts.*` stays
 auth-gated and is excluded). Skips internal seeds prefixed `_`
@@ -809,6 +864,20 @@ COMMENT ON VIEW api_v1.meta_sources IS 'Per-source catalogue row — one per ing
 consumers see freshness alongside the static metadata. Wraps to
 `api_v1.meta_sources` and backs `/data/sources` in the customer
 frontend (PLAN-007 phase 4).
+
+🔴 THIS RELATION DESCRIBES A SOURCE, NOT ITS COLUMNS. For what an
+upstream dimension MEANS — what `AAR` is, whether a code is a
+kommune, whether a year is a single year or a window — read
+`meta_dimensions`, one row per source × dimension with the
+upstream''s own words and the value format.
+
+⚠️ THIS POINTER EXISTS BECAUSE ITS ABSENCE COST A DAY. On
+2026-09-21 a consumer read all 21 descriptions here, concluded
+"exactly two sources use multi-year windows", and shipped a wrong
+year on a front page. `meta_dimensions` said `"3-year rolling
+cohort"` for a third the whole time. Reading every row of this
+relation is thorough and structurally incapable of answering a
+question about a dimension (urb-agents #1335).
 
 Tags column is a Postgres `text[]` carrying the four declared
 namespaces (`provider:`, `topic:`, `geo:`, `cadence:`) plus the

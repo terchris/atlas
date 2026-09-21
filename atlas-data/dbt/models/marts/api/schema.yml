@@ -916,6 +916,20 @@ models:
       `api_v1.meta_sources` and backs `/data/sources` in the customer
       frontend (PLAN-007 phase 4).
 
+      🔴 THIS RELATION DESCRIBES A SOURCE, NOT ITS COLUMNS. For what an
+      upstream dimension MEANS — what `AAR` is, whether a code is a
+      kommune, whether a year is a single year or a window — read
+      `meta_dimensions`, one row per source × dimension with the
+      upstream's own words and the value format.
+
+      ⚠️ THIS POINTER EXISTS BECAUSE ITS ABSENCE COST A DAY. On
+      2026-09-21 a consumer read all 21 descriptions here, concluded
+      "exactly two sources use multi-year windows", and shipped a wrong
+      year on a front page. `meta_dimensions` said `"3-year rolling
+      cohort"` for a third the whole time. Reading every row of this
+      relation is thorough and structurally incapable of answering a
+      question about a dimension (urb-agents #1335).
+
       Tags column is a Postgres `text[]` carrying the four declared
       namespaces (`provider:`, `topic:`, `geo:`, `cadence:`) plus the
       `eu_theme:` namespace. The customer frontend renders each as a
@@ -1025,6 +1039,14 @@ models:
       from the schema. Wraps to `api_v1.meta_endpoints` and backs the
       tag-filter catalogue at `/data` in the customer frontend
       (PLAN-007 phase 4).
+
+      🔵 THIS IS THE INDEX, SO IT SAYS WHERE THE OTHER TWO CATALOGUES
+      ARE: `meta_sources` for one row per ingest source (licence,
+      publisher, freshness), and `meta_dimensions` for one row per
+      source × upstream dimension — what each coded column means and
+      its value format. A consumer enumerating relations here should
+      not have to read 19 descriptions to discover the second one
+      (urb-agents #1335).
 
       Includes endpoints from `api_v1.*`, `marts.*`, and `raw.*`
       (Atlas's three open-by-default schemas; `private_marts.*` stays

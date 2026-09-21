@@ -68,6 +68,93 @@ class WrapperView:
 # --- Manifest extraction ---------------------------------------------------
 
 
+# 🔴 THE ROOT DOCUMENT. PostgREST surfaces this as the OpenAPI
+# `info.description` — the first thing a consumer reads, and until 2026-09-21
+# it named no relation at all.
+#
+# ⚠️ IT IS EMITTED HERE, NOT IN migrations/050, SO IT ACTUALLY LANDS. The
+# migration runs once at install; this file is re-applied on every deploy. A
+# pointer added only to the migration would be correct and invisible on every
+# database that already exists.
+#
+# 🔴 WHY IT IS AN INDEX AND NOT A PARAGRAPH. ops-dev reported that nothing
+# anywhere pointed at `meta_dimensions`, which had carried the answer to a
+# question that cost a consumer a wrong year on a front page. Measuring it
+# found meta_dimensions was not special: 8 of 19 relations were referenced
+# from nowhere — not the root, not another relation's description. Naming
+# them all costs one string; finding them cost a day (urb-agents #1335).
+#
+# check-root-document-indexes-every-relation.sh fails when a relation is
+# added and not named here.
+# 🔴 LINE 1 IS THE TITLE, THE REST IS THE DESCRIPTION. PostgREST splits the
+# schema comment: the first line becomes OpenAPI `info.title` and everything
+# after it becomes `info.description`.
+#
+# ⚠️ THAT IS WHY THE SERVED SPEC SHOWED `info.description: 0 characters` on
+# 2026-09-21. migrations/050's comment is a SINGLE LINE, so all of it became
+# the title and the description was empty. ops-dev could not tell that apart
+# from "no comment set" from outside the database, and it is the reason this
+# text now opens with a short title line and a blank line — otherwise the
+# index of all 19 relations below would land inside `info.title`, correct and
+# invisible, which is the failure this whole change exists to avoid
+# (urb-agents #1335, #1328).
+#
+# 🔵 Inferred, not observed: I cannot reach a PostgREST from here. The
+# measurement that confirms it is `info.title` on the served spec — if it
+# holds the long 050 sentence rather than "PostgREST API", the comment was
+# set all along and only the split was wrong.
+SCHEMA_COMMENT = """Atlas — open semantic layer over Norwegian public data
+
+Curated wrapper views over Norwegian public data and NGO supply data, served
+by PostgREST. Values are republished as the upstream publishes them.
+
+THE CATALOGUE — start here:
+  meta_endpoints    every relation below, with tags. The index.
+  meta_sources      one row per ingested source: licence, publisher,
+                    coverage, freshness, downstream model count.
+  meta_dimensions   one row per source x upstream dimension: what that coded
+                    column MEANS and its value format. Read it before
+                    interpreting a code, and before deriving a fact about a
+                    dimension from prose.
+
+INDICATORS — municipal figures from SSB, FHI and Bufdir:
+  indicator_summary            one row per (source, measure): latest year,
+                               coverage, value range.
+  indicator_latest_values      per-kommune values at the latest year.
+  indicator_missing_kommuner   which kommuner an indicator does NOT cover.
+  coverage_gap_barnefattigdom  the same question for child poverty.
+  unattributed_totals          the remainder belonging to no kommune, so
+                               totals reconcile.
+  kommune_befolkning_alder     population by age band and sex.
+  bufdir_indicator_alias       Bufdir indicator naming.
+
+SUPPLY — voluntary-sector presence:
+  ngo_index, ngo_overview      organisations and their summary.
+  activity_catalog             what each organisation does.
+  kommune_ngo_summary          per-kommune rollup.
+  kommune_ngo_totals           national totals; reconcile these against
+                               unattributed_totals.
+  distrikt_summary             chapters by district.
+  kommune_local_chapters       chapters resolved to a kommune.
+
+REFERENCE:
+  dim_kommune                  the municipality dimension. Keeps SSB's 9999
+                               'Uoppgitt' because Klass 131 publishes it; the
+                               analytical relations exclude it.
+  brreg_enhet                  the Bronnoysund register mirror.
+
+TIME IS THE DIMENSION MOST OFTEN MISREAD. A year here can be the FIRST year
+of a multi-year window. indicator_summary.latest_year pairs with
+latest_year_window_years, and indicator_latest_values.year with window_years;
+the span is year .. year + window_years - 1. meta_dimensions carries the
+upstream's own words for the same fact."""
+
+
+def _sql_string(text):
+    """A Postgres string literal. One place that doubles apostrophes."""
+    return "'" + text.replace("'", "''") + "'"
+
+
 def _strip_mart_prefix(name: str) -> str:
     """Drop the leading 'mart_' so api_v1 names are unprefixed (PLAN-004 [Q2])."""
     return name[len("mart_") :] if name.startswith("mart_") else name
@@ -131,6 +218,9 @@ def render_sql(wrappers: list[WrapperView], removed_views: list[str]) -> str:
         "-- + ./uis configure postgrest --app atlas --purge), then DROP SCHEMA api_v1 CASCADE.",
         "",
         "CREATE SCHEMA IF NOT EXISTS api_v1;",
+        "",
+        "COMMENT ON SCHEMA api_v1 IS",
+        "  " + _sql_string(SCHEMA_COMMENT) + ";",
         "",
     ]
 
