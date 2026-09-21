@@ -377,6 +377,49 @@ def _read_state(path: Path) -> list[str]:
     return list(data.get("views", []))
 
 
+def render_relations_seed(manifest: dict, wrappers: "list[WrapperView]") -> str:
+    """CSV of every api_v1 relation, for models that need to know what is served.
+
+    🔴 WHY A GENERATED SEED. `meta_sources.downstream_model_count` answered
+    "how many models" when consumers needed "can I reach this", and four
+    parties each built a different partial proxy for the real question — the
+    CI gate, that field, a consumer's hand-kept list, and an ops-dev summary.
+    Three of the four were wrong on 2026-09-21 and one of them reached a
+    consumer as "the eight FHI sources served" when it was seven
+    (urb-agents #1344).
+
+    ⚠️ The gate got it right by reading THIS file's output. A dbt model cannot
+    read api_v1_generated.sql, so the same answer is emitted as a seed and
+    both derive from one place. check-api-v1.sh already fails when the
+    generated artefacts drift from the models, so the seed cannot go stale
+    without CI noticing.
+
+    `derives_from_fact` is transitive, not direct: indicator_summary reaches
+    fact_kommune_indicators through its own parents.
+    """
+    nodes = manifest.get("nodes", {})
+    fact_ids = {k for k, n in nodes.items()
+                if n.get("name") == "fact_kommune_indicators"}
+
+    def reaches_fact(uid, seen=None):
+        seen = seen or set()
+        if uid in seen:
+            return False
+        seen.add(uid)
+        deps = nodes.get(uid, {}).get("depends_on", {}).get("nodes", [])
+        return any(d in fact_ids or reaches_fact(d, seen) for d in deps)
+
+    by_name = {n["name"]: uid for uid, n in nodes.items()
+               if n.get("resource_type") == "model"}
+    rows = ["relation_name,mart_name,derives_from_fact"]
+    for w in wrappers:
+        mart = w.source_relation
+        uid = by_name.get(mart)
+        rows.append(f"{w.view_name},{mart},"
+                    f"{'true' if uid and reaches_fact(uid) else 'false'}")
+    return "\n".join(rows) + "\n"
+
+
 def main() -> None:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--manifest", required=True, type=Path, help="Path to target/manifest.json")
@@ -392,6 +435,11 @@ def main() -> None:
         help="Path to api_v1_state.json (read previous, write new)",
     )
     p.add_argument("--out", required=True, type=Path, help="Output SQL migration path")
+    p.add_argument(
+        "--relations-seed",
+        type=Path,
+        help="Optional: write the api_v1 relation list as a dbt seed CSV",
+    )
     args = p.parse_args()
 
     manifest = json.loads(args.manifest.read_text())
@@ -406,6 +454,8 @@ def main() -> None:
 
     args.out.write_text(sql)
     args.state.write_text(state)
+    if args.relations_seed:
+        args.relations_seed.write_text(render_relations_seed(manifest, wrappers))
     print(
         f"wrote {args.out} ({len(wrappers)} wrappers, "
         f"{len(removed)} removed) and {args.state}"

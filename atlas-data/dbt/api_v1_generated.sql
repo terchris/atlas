@@ -931,7 +931,58 @@ COMMENT ON COLUMN api_v1.meta_sources.total_runs IS 'Count of successful runs ev
 no successful run exists.';
 COMMENT ON COLUMN api_v1.meta_sources.downstream_model_count IS 'Number of distinct downstream dbt models that derive from this
 source via the `lineage` seed. 0 for sources not yet wired
-into a mart.';
+into a mart.
+
+🔴 DO NOT READ THIS AS "IS IT SERVED". It counts models, and a
+model is not a consumer surface. A source feeding 357 rows into
+a published relation and a source whose only model reaches
+nothing both report a positive count. Use `served_as`.
+
+⚠️ On 2026-09-21 this field produced a statement to a consumer
+that "the eight FHI sources" were served, when it was seven —
+`fhi-innvandrere` has one model, 32,720 rows and no published
+series. Four parties had each built a different partial proxy
+for the question this field looks like it answers, and three
+were wrong the same day (urb-agents #1344).';
+COMMENT ON COLUMN api_v1.meta_sources.served_as IS 'The `api_v1` relations a consumer can actually reach this source
+through, as a Postgres `text[]`. **Empty means nothing published
+depends on it** — that is the gap, and it is the one question
+`downstream_model_count` cannot answer.
+
+Filter for the gap with `?served_as=eq.{}`, or for a specific
+surface with `?served_as=cs.{indicator_summary}`.
+
+🔵 NOT A PLAIN LINEAGE JOIN, DELIBERATELY. A relation derived
+from `fact_kommune_indicators` is only claimed when the source
+actually has rows in that fact.
+
+The case that forced that design: `ssb-06913` fed the fact and
+so reached four published relations on paper while contributing
+ZERO rows to them — its `kommune_nr` regex never matched, so
+783,104 rows were discarded downstream. A structural boolean
+would have called it served and become the fifth wrong proxy.
+It was fixed the same day (urb-agents #1345) and now reports
+those four relations, which is the column working rather than
+the example expiring.
+
+⚠️ FOR NON-FACT RELATIONS THIS IS STILL STRUCTURAL. There is no
+per-source row attribution in `brreg_enhet` or `dim_kommune` to
+check against, so for those the claim is reachability, not
+volume. A relation named here is one a consumer can query for
+this source; it is not a promise about how many rows come back.
+
+🔵 Derived from the same artefact the CI gate reads, so the two
+cannot drift: `check-every-source-is-served.sh` and this column
+both resolve the source against the generated `api_v1` relation
+list.
+
+⚠️ THE GATE AND THIS COLUMN CAN DISAGREE, AND THAT IS CORRECT.
+The gate is static and cannot see a source that is wired up and
+delivers nothing, so it will report fewer gaps than this column
+does. The gate answers "is it wired"; this answers "does it
+arrive". Neither count is written here on purpose — a number in
+a published description goes stale silently, which is most of
+why this column had to be written at all.';
 
 -- ngo_index  ←  marts.mart_ngo_index
 CREATE OR REPLACE VIEW api_v1.ngo_index AS SELECT * FROM marts.mart_ngo_index;

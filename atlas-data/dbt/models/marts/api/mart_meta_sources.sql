@@ -73,6 +73,43 @@ lineage_aggregates as (
     count(distinct model_name)::int as downstream_model_count
   from {{ ref('lineage') }}
   group by source_id
+),
+
+-- 🔴 served_as ANSWERS THE QUESTION downstream_model_count WAS BEING ASKED.
+-- That field counts models. Consumers needed "can I reach this source from
+-- api_v1", and four parties each built a different partial proxy for it: the
+-- CI gate, this field, a consumer's hand-kept list of four, and an ops-dev
+-- summary. Three of the four were wrong on 2026-09-21, and one reached the
+-- demo consumer as "the eight FHI sources served" when it was seven
+-- (urb-agents #1344).
+--
+-- ⚠️ A SOURCE SERVING 357 ROWS AND A SOURCE SERVING NOTHING BOTH READ AS
+-- "has a model". Empty served_as is the gap; non-empty names the relations.
+--
+-- 🔴 AND STRUCTURAL REACHABILITY IS NOT ENOUGH, which is why this is not a
+-- plain lineage join. ssb-06913 feeds fact_kommune_indicators and therefore
+-- reaches four published relations on paper, while contributing ZERO rows to
+-- them — imac measured it absent from indicator_summary. A lineage-derived
+-- boolean would have called it served and been the fifth wrong proxy. So a
+-- fact-derived relation is only claimed when the source actually has rows in
+-- the fact.
+--
+-- ⚠️ For relations that do NOT derive from the fact this is still structural:
+-- there is no per-source row attribution in brreg_enhet or dim_kommune to
+-- check against. The column is honest about reachability, not about volume.
+fact_sources as (
+  select distinct source_id from {{ ref('fact_kommune_indicators') }}
+),
+
+served as (
+  select
+    l.source_id,
+    array_agg(distinct r.relation_name) as served_as
+  from {{ ref('lineage') }} l
+  join {{ ref('api_v1_relations') }} r on r.mart_name = l.model_name
+  left join fact_sources f on f.source_id = l.source_id
+  where r.derives_from_fact is not true or f.source_id is not null
+  group by l.source_id
 )
 
 select
@@ -97,8 +134,10 @@ select
   ira.last_upstream_update_at,
   ira.latest_row_count,
   coalesce(ira.total_runs, 0) as total_runs,
-  coalesce(la.downstream_model_count, 0) as downstream_model_count
+  coalesce(la.downstream_model_count, 0) as downstream_model_count,
+  coalesce(sv.served_as, array[]::text[]) as served_as
 from manifest m
 left join ingest_run_aggregates ira on ira.source_id = m.source_id
 left join lineage_aggregates la on la.source_id = m.source_id
+left join served sv on sv.source_id = m.source_id
 order by m.source_id
