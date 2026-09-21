@@ -1128,11 +1128,34 @@ models:
           source by construction, so naming them would be the same value
           on every row. They describe a source; they do not serve it.
 
-          ⚠️ FOR NON-FACT RELATIONS THIS IS STILL STRUCTURAL. There is no
-          per-source row attribution in `brreg_enhet` or `dim_kommune` to
-          check against, so for those the claim is reachability, not
-          volume. A relation named here is one a consumer can query for
-          this source; it is not a promise about how many rows come back.
+          🔴 IT DOES NOT ASSERT THAT ANY NAMED RELATION CONTAINS ROWS.
+          For a relation derived from the fact, the source is checked to
+          have rows there. For every other relation the claim is
+          LINEAGE ONLY — what the source WOULD serve if it had data.
+
+          ⚠️ THE CASE THAT PROVES IT: `redcross-branches` has
+          `total_runs` 0 and has never ingested, and it still lists five
+          relations, three of which hold zero rows. A source that has
+          never run looks served.
+
+          🔵 THE COMPANION CHECK IS ON THIS SAME ROW. Read `served_as`
+          with `total_runs` and `latest_row_count`: lineage says what
+          could arrive, those say whether anything did.
+
+          ⚠️ AN EARLIER VERSION OF THIS PARAGRAPH SAID THE SAME THING AND
+          DID NOT WORK. It read "for non-fact relations this is
+          reachability, not volume", naming `brreg_enhet` and
+          `dim_kommune` — relations that are never empty, so the warning
+          was abstract. ops-dev read it and built a gate on the field
+          within the hour (urb-agents #1346). A caveat that names no
+          failing case is a caveat nobody applies.
+
+          🔵 Excluding never-ingested sources outright was considered and
+          rejected: it would collapse "has never run" into "is not
+          modelled", losing the distinction between `redcross-branches`
+          (five relations waiting for data) and the sources deferred in
+          BACKLOG (no relation at all). Say the word if that trade is
+          wrong.
 
           🔵 Derived from the same artefact the CI gate reads, so the two
           cannot drift: `check-every-source-is-served.sh` and this column
