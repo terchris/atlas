@@ -79,6 +79,27 @@ on a change, not on a timer.
   Svalbard and the shelf, because Atlas had been computing that column wrongly. `region_code` and
   `value` are untouched. The distinction to hold: upstream's values are theirs, Atlas's derived
   columns are Atlas's to get right.
+- 🔴 **If a dataset is ingested, it must be served — and verified after deploy.**
+  Terje's standing rule, 2026-09-21.
+
+  On that date Atlas held 44 ingested sources and served 30. Eight FHI sources had been pulled
+  weekly for months and modelled nowhere, including `fhi-neet` — 108,220 rows of *young people not
+  in employment, education or training* — while an external consumer built a youth-need index
+  without it. ⚠️ **Nobody decided not to serve them.** The ingest landed, the modelling never
+  followed, and an ingest that reaches no model is invisible from every direction: green pipelines,
+  a healthy `meta_sources` row, rows piling up in `raw`, and no symptom except an absence.
+
+  **Enforced, not remembered:** `atlas-data/dbt/check-every-source-is-served.sh` fails CI when a
+  source has no downstream model and is not declared. Deferring is allowed and requires putting the
+  name in `BACKLOG` with your reason — a decision, not a way to silence the check. The live
+  equivalent a consumer can run is `GET /meta_sources?downstream_model_count=eq.0`.
+
+  **And "deployed" is not "works".** A release is not finished until a deploy request has been sent
+  *and* its acceptance checks reported back. ⚠️ `transform_and_publish` runs
+  `dbt build --exclude-resource-type test`, so its green PASS count contains **no tests at all** —
+  the checks live in `transform_checks` and `api_v1_checks`. Ask for those results by name. On
+  2026-09-21 both this agent and ops-dev quoted `PASS=82 WARN=0 ERROR=0` as evidence a release
+  worked; the suite had not run, and when it did it failed ten tests.
 - **This agent has no cluster access.** It declares; another agent applies; a third verifies.
 
 ⚠️ **Unverified**: `website/docusaurus.config.ts` and the generated sources registry both give the
