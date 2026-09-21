@@ -130,6 +130,23 @@ provides:
           # reports for the image it just pushed — so it is the digest of THIS
           # build, not one looked up afterwards from a tag that could already
           # have moved.
+          #
+          # 🔴 THIS IS THE DATA IMAGE'S DIGEST. IT IS NOT THE ONE
+          # `uis template install --version <tag>@<digest>` WANTS.
+          #
+          #   ghcr.io/terchris/atlas-data       the image  <- THIS field
+          #   ghcr.io/terchris/atlas-data/uis   the artifact <- what --version wants
+          #
+          # Two repositories, two digests, never equal. ⚠️ On 2026-09-21 imac
+          # passed this one to --version and got "not found ... may need a
+          # package credential", which points at auth and sent it looking the
+          # wrong way for a round trip (urb-agents #1356).
+          #
+          # 🔵 The value --version wants is published as `artifact_digest` in
+          # the release asset uis-artifact.json, beside `image_digest` which is
+          # this field. Those two names exist precisely so they cannot be
+          # confused (#831) — and this comment is the pointer that was missing
+          # from the place someone actually reads.
           digest: __IMAGE_DIGEST__
 
           module: atlas_data.definitions
