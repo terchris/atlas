@@ -24,6 +24,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: No dbt object may write to a source relation
         run: atlas-data/dbt/check-raw-is-read-only.sh
+      - name: Every emitted source_id exists in the manifest
+        run: atlas-data/dbt/check-source-ids-are-real.sh
 
   kommune-marts-exclude-sentinels:
     runs-on: ubuntu-latest
