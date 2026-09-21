@@ -2,6 +2,7 @@
   config(
     materialized='table',
     schema='marts',
+    indexes=[{'columns': ['source_id'], 'unique': True}],
     post_hook="{{ register_source_id_fk() }}"
   )
 }}
