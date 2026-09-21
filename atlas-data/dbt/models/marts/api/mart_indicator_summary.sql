@@ -37,8 +37,28 @@ select
   l.latest_year,
   -- 🔵 `and not f.kommune_is_sentinel` on both: this view has one row per
   -- (source, contents_code), so the 9999 sentinel never was a ROW here — it was
-  -- counted INSIDE these two numbers. A coverage figure that includes a
-  -- non-place overstates coverage by one kommune, silently (urb-agents #1301).
+  -- counted INSIDE these two numbers.
+  --
+  -- 🔴 THE DEFECT WAS LATENT, NOT ACTIVE, AND I FIRST WROTE THE OPPOSITE.
+  -- I said "every published coverage figure was one kommune too high". That is
+  -- a property of this code reported as a property of the data, and the data
+  -- does not exercise it (measured by ops-dev and the demo consumer against the
+  -- live API, urb-agents #1305):
+  --
+  --     190 of 195 series   kommuner_with_value + _with_null = 357
+  --                         -> no 9999 row at all
+  --       5 of 195 series   = 358, all ssb-08764, and the sentinel's value is
+  --                         NULL in every one -> it lands in kommuner_with_null
+  --     max(kommuner_with_value) across all 195 = 357
+  --
+  -- ⚠️ So no `kommuner_with_value` was ever inflated — which is the field
+  -- consumers divide by — and one source is affected, in its null count only.
+  --
+  -- ✅ The filter still belongs here. `where f.value is not null` would have
+  -- counted a non-null 9999, and nothing stops SSB publishing one: the path was
+  -- open and happened to be carrying nulls. Closing a latent path is worth
+  -- doing; claiming it was an active error is not, and cost a consumer a
+  -- two-app re-audit it did not need.
   count(*) filter (where f.value is not null and f.kommune_is_active
                      and not f.kommune_is_sentinel)::int as kommuner_with_value,
   count(*) filter (where f.value is null and f.kommune_is_active
