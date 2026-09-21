@@ -52,6 +52,14 @@ curl -s $ATLAS/meta_sources          # every upstream, with freshness
 curl -s $ATLAS/indicator_summary     # every published series
 ```
 
+:::warning `downstream_model_count` says a source has a model, not that you can reach it
+
+A source can have `downstream_model_count > 0` and still produce nothing you can query — the model exists and feeds no published relation. `fhi-innvandrere` is in that state today: one model, 32 720 rows ingested, absent from `indicator_summary` and from every `api_v1` relation.
+
+**The measure that answers "can I use it" is whether the source appears in `indicator_summary`, or whether some `api_v1` relation carries it.** Subtracting those from `meta_sources` gives what Atlas holds and does not yet serve.
+
+:::
+
 ⚠️ Those three are the live answer. The numbers above are regenerated on release; coverage, row counts and freshness change between releases and are only true in the catalogue.
 
 <!-- END holdings (generated) -->

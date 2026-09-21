@@ -36,17 +36,52 @@ EXEMPT="frr"
 
 # Ingested and not yet modelled. EMPTY, and keeping it that way is the rule.
 #
-# 🔵 It held eight FHI sources when this gate was written on 2026-09-21 — I
-# wrote the rule down and exempted myself from it in the same commit. Terje
-# said "go ahead - all datasets must be served", and they now are. Every one of
-# the 44 reaches a model.
+# 🔵 It held eight FHI sources when this gate was written on 2026-09-21; Terje
+# said "go ahead - all datasets must be served" and they were served. It then
+# went to zero, WRONGLY — because the gate was asking whether a model existed
+# rather than whether a consumer could reach it. These four are the honest
+# number, and three of them were already documented exclusions that this gate
+# could not see.
 #
 # ⚠️ Adding a name here is a decision to defer, with your reason beside it. An
 # empty list is the normal state, not an achievement to be protected: if
 # deferring one is genuinely right, defer it and say why.
-BACKLOG=""
+#   bufdir-barnefattigdom  built, not unioned: Bufdir RENUMBERS indicators, so a
+#                          naive union could double-count a (kommune, year,
+#                          contents_code). Waits on one green grain-test cycle.
+#   ssb-10826              bydel-level. Needs its own mart and its own grain
+#                          decision — the same one the Ungdata bydel rows need.
+#   ssb-12944              period (not year) + age_group. Needs a deliberate
+#                          mapping, not a union.
+#   fhi-innvandrere        model built 2026-09-21; its headline needs the LANDBAK
+#                          aggregate code, which the manifest says to verify
+#                          against FHI's reference. Guessing it would publish a
+#                          population figure for the wrong origin group.
+BACKLOG="bufdir-barnefattigdom ssb-10826 ssb-12944 fhi-innvandrere"
 
-SERVED="$(tail -n +2 "$LINEAGE" | cut -d, -f2 | tr -d '"\r' | sort -u)"
+# 🔴 "HAS A MODEL" IS NOT "REACHES A CONSUMER", AND THIS GATE USED TO CONFLATE
+# THEM. It counted any lineage edge as served. fhi-innvandrere has an indicator
+# model that reaches no published relation — it emits nothing a consumer can
+# query — and this gate reported 0 deferred while it sat there (urb-agents
+# #1329, found by ops-dev after certifying the opposite to me AND relaying the
+# same measure to the demo consumer as "the honest measure of what is
+# unreachable").
+#
+# ⚠️ It is the mirror of the defect found in the same measure that morning:
+# brreg-oppdateringer read ZERO while serving four marts. One direction makes a
+# served source look unserved; this one makes an unserved source look served,
+# and only the second lets a rule report compliance it does not have.
+#
+# So: a source is SERVED when it feeds a mart_* that api_v1 actually exposes.
+SERVED="$(./.venv/bin/python -c '
+import csv, re, pathlib
+gen = pathlib.Path("api_v1_generated.sql").read_text()
+rel = set(re.findall(r"CREATE OR REPLACE VIEW api_v1\.(\w+)", gen))
+for r in csv.DictReader(open("seeds/sources/lineage.csv")):
+    m = r["model_name"]
+    if m.startswith("mart_") and m[5:] in rel:
+        print(r["source_id"])
+' | sort -u)"
 ALL="$(tail -n +2 "$MANIFEST" | cut -d, -f1 | tr -d '"\r' | sort -u)"
 [ -n "$SERVED" ] && [ -n "$ALL" ] || { echo "✗ CANNOT CHECK: empty manifest or lineage." >&2; exit 2; }
 
