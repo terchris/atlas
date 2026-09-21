@@ -3020,6 +3020,22 @@ models:
       Per-source indicator passthrough for FHI Folkehelsestatistikk table 344:
       suicide deaths, 5-year windows.
 
+      🔴 `year` IS THE FIRST YEAR OF A FIVE-YEAR WINDOW, NOT THE YEAR OF THE
+      DATA. A row with year = 2020 covers 2020-2024 and is current, not six
+      years old. ⚠️ ops-dev read the deployed `latest_year` of 2020 as "six
+      years stale" on 2026-09-21 and was about to tell a consumer so — the
+      reading is reasonable and the column invites it. Use `period`
+      ("2020_2024"), `period_start_year` and `period_end_year`, which this
+      model carries for exactly this reason. fact_kommune_indicators keeps only
+      `year`, so the window is lost there.
+
+      🔴 COVERAGE IS 21 OF 357 KOMMUNER, and that is disclosure control rather
+      than a data defect. Suicide counts are suppressed below a threshold at
+      kommune level, so only the largest municipalities appear. ⚠️ It is the
+      sparsest series Atlas publishes — sparser than fhi-hasj — and nobody
+      should build an index on it. Read
+      `indicator_summary.kommuner_with_value` for the live number.
+
       The headline slice for fact_kommune_indicators is chosen there, where it is visible and arguable; every other slice stays here.
     columns:
       - name: source_id

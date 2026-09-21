@@ -48,8 +48,13 @@ dimensions:
     notes: "MEIS only (FHI's smoothed indicator that pools across geography to stabilise small-area estimates). Raw RATE / TELLER / SMR available upstream for analyses where pooling is inappropriate."
 
 lifecycle: stable
+# ⚠️ WHAT ATLAS HOLDS, NOT WHAT FHI PUBLISHES. Table 344 has 31 rolling
+# windows back to 1990-1994; this ingest requests AAR=bottom(3), so Atlas holds
+# the three most recent 5-year windows. Advertising 1990 tells a catalogue
+# reader they can get 35 years from Atlas when they can get three windows.
+# Same defect as fhi-depresjon (urb-agents #1321).
 time_coverage:
-  start: 1990
+  start: 2018
   end: 2024
 keywords:
   - suicide
