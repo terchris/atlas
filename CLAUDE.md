@@ -100,6 +100,26 @@ on a change, not on a timer.
   name in `BACKLOG` with your reason — a decision, not a way to silence the check. The live
   equivalent a consumer can run is `GET /meta_sources?downstream_model_count=eq.0`.
 
+  🔴 **AND A DEPLOY IS NOT SUCCESSFUL UNTIL THE DATA ARRIVES.** Terje, 2026-09-21:
+  *"if the data did not arrive after the deploy then i would say it is a not sucessful
+  deploy."* A release that adds or fixes a source is not landed until that source returns
+  **rows** through a published relation.
+
+  ⚠️ Two releases passed every check without delivering. `fhi-innvandrere`: 32,720 rows
+  ingested, one model, zero published — reported as one of "the eight FHI sources served"
+  when it was seven. `ssb-06913`: 783,104 rows ingested, four relations wired to it, zero
+  arriving, undetected for weeks. Both had `transform_and_publish` SUCCESS, no test
+  failures, `api_v1_checks` shortfall 0 and 19 of 19 relations answering.
+
+  **In practice:** every deploy request names, per source, the relation it should appear in
+  and an expected row count. 🔵 *"I cannot predict the count"* is a valid and preferred
+  answer; omitting the source is not. `atlas-data/uis/lands-with.sh` derives that list from
+  the git range and flags a source that would **deploy silent** — run it on `b5bb530` and it
+  names `fhi-innvandrere` (urb-agents #1349).
+
+  ⚠️ Two sources are excluded because no deploy can fix them: `frr` is auth-gated by design,
+  and `redcross-branches` has no data to arrive.
+
   **And "deployed" is not "works".** A release is not finished until a deploy request has been sent
   *and* its acceptance checks reported back. ⚠️ `transform_and_publish` runs
   `dbt build --exclude-resource-type test`, so its green PASS count contains **no tests at all** —
