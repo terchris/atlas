@@ -53,6 +53,46 @@ def collect():
 
 
 
+
+def _marts_counts():
+    """
+    How many relations land in schema `marts`, tables and views separately.
+
+    🔴 THE LAST HAND-EDITED NUMBER IN template-info.yaml, and it caught me three
+    times in one day — 63, then 72, then 80. `render-template-info.sh` computed
+    the right answer each time in order to tell me I was wrong, and I typed the
+    correction in by hand. A number a gate can compute is a number nobody should
+    be typing.
+
+    ⚠️ DELIBERATELY A SECOND IMPLEMENTATION, not a shared one. The bash gate
+    greps the model files; this walks them in Python. If they ever disagree one
+    of them is wrong and I find out — sharing the derivation would make the gate
+    agree with the generator by construction and check nothing. That is
+    ops-dev's three-independent-routes point applied to a number instead of a
+    deploy.
+
+    The rule, same as the gate states it: a model lands in marts if it declares
+    `schema='marts'` or lives under models/{indicators,dimensions,marts}; views
+    are counted apart; every seed lands in marts.
+    """
+    root = ROOT / "atlas-data/dbt"
+    tables = views = 0
+    for f in (root / "models").rglob("*.sql"):
+        text = f.read_text()
+        m = re.search(r"schema='([a-z_]+)'", text)
+        schema = m.group(1) if m else (
+            "marts" if any(part in f.parts for part in ("indicators", "dimensions", "marts"))
+            else "other")
+        if schema != "marts":
+            continue
+        if "materialized='view'" in text:
+            views += 1
+        else:
+            tables += 1
+    seeds = len(list((root / "seeds").rglob("*.csv")))
+    return tables + seeds, views
+
+
 def _relations():
     """
     The published relations and the first sentence of each COMMENT ON VIEW.
@@ -150,6 +190,18 @@ def splice(path, begin, end, block, anchor=None):
     return new
 
 
+def _rewrite_counts(text):
+    """The two claims render-template-info.sh checks, written rather than typed."""
+    tables, views = _marts_counts()
+    text = re.sub(r"\d+ marts BASE TABLEs", f"{tables} marts BASE TABLEs", text)
+    text = re.sub(r"\(plus \d+\s*\n?\s*marts views\)",
+                  lambda m: m.group(0).replace(re.search(r"\d+", m.group(0)).group(0), str(views)),
+                  text)
+    text = re.sub(r"\(plus \d+ marts views\)", f"(plus {views} marts views)", text)
+    text = re.sub(r'the "\d+ marts views" above', f'the "{views} marts views" above', text)
+    return text
+
+
 def main():
     check = "--check" in sys.argv
     targets = [
@@ -159,6 +211,8 @@ def main():
     stale = []
     for path, b, e, block, anchor in targets:
         new = splice(path, b, e, block, anchor)
+        if path == TEMPLATE:
+            new = _rewrite_counts(new)
         if new != path.read_text():
             stale.append(path.relative_to(ROOT))
             if not check:
