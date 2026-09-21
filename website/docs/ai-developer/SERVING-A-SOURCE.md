@@ -206,6 +206,38 @@ judgement required.
 
 ---
 
+## 11. Green CI is not a model that compiles
+
+On 2026-09-21 a comment block in `dim_brreg_enhet` carried `--` on its **first
+line only**. Everything after it was prose sitting in the middle of a select.
+`dbt parse` passed. Every gate in this repo passed. CI was green. The model
+failed at model 1 of 90 in production, and `drop ... cascade` took three
+published relations dark — the second time that day the same three went dark.
+
+`dbt parse` renders Jinja and builds the manifest. **It never looks at whether
+the SQL it produced is SQL.** And `dbt compile` exits 0 on unparseable output,
+so it does not catch it either. Measured by reintroducing the real defect:
+
+```
+dbt compile   exit 0
+dbt parse     exit 0
+the new gate  exit 1
+```
+
+> **A gate that reads the model source is not checking what reaches the
+> database. Check the compiled output.**
+
+**Caught by:** `check-models-compile.sh` — parses every compiled model as
+Postgres with sqlglot, after verifying the parser against a known-bad and a
+known-good statement so it cannot pass by accepting everything. Runs in CI
+with an empty postgres, because `dbt compile` needs a connection even though
+it reads nothing.
+
+⚠️ It catches syntax, not semantics. A model that parses can still reference a
+column that does not exist.
+
+---
+
 ## The shape behind most of these
 
 Nearly every defect above was **wrong in a setting that corroborated it**. The
