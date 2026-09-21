@@ -36,6 +36,9 @@ jobs:
       # dbt parse, so it belongs in the job that needs neither.
       - name: Windowing agrees with the published catalogue
         run: atlas-data/dbt/check-window-agrees-with-the-catalogue.sh
+      # Reads the generated SQL only — no database, no dbt parse.
+      - name: Every published relation is findable from the root document
+        run: atlas-data/dbt/check-root-document-indexes-every-relation.sh
 
   kommune-marts-exclude-sentinels:
     runs-on: ubuntu-latest

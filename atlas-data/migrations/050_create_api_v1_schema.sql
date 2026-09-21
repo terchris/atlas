@@ -41,5 +41,19 @@
 
 CREATE SCHEMA IF NOT EXISTS api_v1;
 
+-- ⚠️ THIS COMMENT IS THE FRESH-INSTALL COPY AND IS IMMEDIATELY SUPERSEDED.
+-- api_v1_generated.sql now emits its own COMMENT ON SCHEMA and is re-applied
+-- on EVERY deploy, whereas this migration runs once at install. The pointer to
+-- meta_dimensions was deliberately put in the generator rather than here: a
+-- pointer added only to this file would be correct and invisible on every
+-- database that already exists (urb-agents #1335). Keep the two roughly in
+-- step, but the generated one is what a consumer reads.
 COMMENT ON SCHEMA api_v1 IS
-  'Atlas published API contract — curated wrapper views over marts.*, served by PostgREST. Views are generated (atlas-data/dbt/api_v1_generated.sql) and applied after dbt run; the schema itself is created here so a fresh install can configure PostgREST before any transform has run.';
+  'Atlas — open semantic layer over Norwegian public data
+
+Curated wrapper views over marts.*, served by PostgREST. Start at
+meta_endpoints (the index), then meta_sources (per ingest source) and
+meta_dimensions (per source x upstream dimension: what each coded column
+means). Views are generated (atlas-data/dbt/api_v1_generated.sql) and applied
+after dbt run; the schema itself is created here so a fresh install can
+configure PostgREST before any transform has run.';
