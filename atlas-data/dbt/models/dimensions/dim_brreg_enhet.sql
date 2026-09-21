@@ -115,7 +115,7 @@
       alter table {{ this }} set (autovacuum_vacuum_scale_factor = 0.02)
       """,
       {
-        "sql": "vacuum (analyze) {{ this }}",
+        "sql": "vacuum (analyze, skip_locked) {{ this }}",
         "transaction": False
       }
     ],
@@ -170,7 +170,38 @@
 --   ⚠️ I am recording that rather than rounding it to zero: the live number is
 --   imac's, the residue is mine, and no claim here rests on the residue.
 --
---   Cost on 2345 MB: 5.1 s after 235 k dead rows, 1.4 s in steady state,
+--   🔴 SKIP_LOCKED, AND IT IS NOT AN OPTIMISATION. `VACUUM` takes SHARE UPDATE
+  EXCLUSIVE and WAITS for a conflicting lock rather than failing.
+  `brreg_transform` writes this table every 30 minutes. If the two overlap, the
+  transform pod sits inside VACUUM and nothing times out.
+
+  ⚠️ On 2026-09-21 a transform took ~70 minutes against a 240 s norm, with
+  three published relations returning 42P01 throughout, and two brreg ingests
+  completed during the stall (urb-agents #1319). Three points of that timeline
+  fit this mechanism.
+
+  🔵 IT IS STILL A HYPOTHESIS AND THIS CHANGE DOES NOT DEPEND ON IT. The hook
+  shipped on 2026-09-20 and ran nightly without hanging, so what changed today
+  is the overlap, not the hook. Step-level timing from the run record settles
+  it and imac has been asked for it. **A VACUUM that can block a nightly
+  transform behind a 30-minute writer is worth removing whether or not it fired
+  today** — the same "latent, not active" argument I made about the sentinel
+  this morning, and the same conclusion: close the path.
+
+  Reproduced and fixed, measured on Postgres 15 against a real conflicting
+  SHARE UPDATE EXCLUSIVE lock:
+
+      vacuum (analyze)                  BLOCKED until the other side released
+      vacuum (analyze, skip_locked)     returned immediately
+
+  ⚠️ WHAT SKIPPING COSTS. If the lock is held, this cycle does no vacuum and no
+  analyze, so the visibility map degrades until the next successful run. That
+  is what `autovacuum_vacuum_scale_factor = 0.02` above is for — it was added
+  as the backstop for "the model does not run", and a skipped hook is the same
+  case. 🔵 Postgres emits a WARNING naming the skipped relation, so a skip is
+  visible in the dbt log rather than silent.
+
+  Cost on 2345 MB: 5.1 s after 235 k dead rows, 1.4 s in steady state,
 --   against a run that already takes ~21 s. (imac's 49.8 s was the FIRST vacuum
 --   of a table that had never had one — there was no visibility map yet, so
 --   nothing could be skipped. Subsequent vacuums skip all-visible pages, which
