@@ -92,6 +92,15 @@ def expectations():
         model, sid = (x.strip().strip('"') for x in line.split(",", 1))
         feeds.setdefault(sid, set()).add(model)
 
+    # Relations built on fact_kommune_indicators — shared by every indicator
+    # source, so never a single source's own surface.
+    direct = (DBT / "seeds/sources/lineage_direct.csv").read_text().splitlines()[1:]
+    fact_derived = {"mart_" + r for r in ()}
+    for line in direct:
+        parts = [x.strip().strip('"') for x in line.split(",")]
+        if len(parts) >= 2 and parts[1] == "fact_kommune_indicators":
+            fact_derived.add(parts[0])
+
     manifest = [l.split(",")[0].strip().strip('"') for l in
                 (DBT / "seeds/sources/_sources_manifest.csv").read_text().splitlines()[1:]
                 if l.strip()]
@@ -103,10 +112,18 @@ def expectations():
         elif sid in in_fact:
             out[sid] = ("indicator", "unioned into fact_kommune_indicators")
         else:
-            # a dedicated published mart, if one of its downstream models is a
-            # mart_* that api_v1 exposes
+            # A published surface this source can be held to. ⚠️ NOT the
+            # relations derived from fact_kommune_indicators — indicator_summary
+            # and its siblings are shared by every indicator source, so treating
+            # one as a given source's surface downgrades the check from "this
+            # dataset is visible" to "this relation is up", which stays true
+            # while the dataset is missing. A source that IS in the fact is
+            # already classified above; one that is not should never claim a
+            # fact-derived relation.
+            # Found by simulating a new dataset, not by reading this.
             pub = sorted({m[5:] for m in feeds.get(sid, ())
-                          if m.startswith("mart_") and m[5:] in relations})
+                          if m.startswith("mart_") and m[5:] in relations
+                          and m not in fact_derived})
             if pub:
                 out[sid] = ("published", pub[0])
             elif feeds.get(sid):
