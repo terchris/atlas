@@ -849,6 +849,55 @@ COMMENT ON COLUMN api_v1.ngo_overview.kommune_count IS 'Count of distinct kommun
 chapter for this NGO. The "footprint" metric for coverage-gap
 questions.';
 
+-- unattributed_totals  ←  marts.mart_unattributed_totals
+CREATE OR REPLACE VIEW api_v1.unattributed_totals AS SELECT * FROM marts.mart_unattributed_totals;
+COMMENT ON VIEW api_v1.unattributed_totals IS 'The part of a published quantity that belongs to no municipality.
+Published as api_v1.unattributed_totals.
+
+🔴 Atlas had no convention for this, and the two surfaces that met
+it chose opposite wrong answers: SSB''s 9999 ''Uoppgitt'' sits INSIDE
+a per-kommune relation and corrupts any sum over it, while 7 488
+active voluntary units with no kommune_nr fall OUT of one and
+vanish silently. One smuggles the remainder in as a row, the other
+discards it, and a consumer summing either gets a number that is
+wrong in a direction it cannot see (urb-agents #700, #1250, #1265).
+
+✅ The rule this establishes: the VALUE belongs, the ROW does not.
+A per-kommune relation carries only kommuner; the remainder lives
+here, named, so reconciling to a national total is a deliberate
+act rather than an accident of whether a sentinel survived a
+filter.
+
+⚠️ It does NOT remove the 9999 rows from dim_kommune or
+coverage_gap_barnefattigdom. That is a breaking contract change —
+`?is_active=eq.true` would return 357 instead of 358 with no
+warning — and it is deliberately not bundled with an additive
+change. `is_sentinel` remains a stopgap and this view does not
+make the trap gone.
+
+🔵 A zero is a result. Where the remainder is genuinely nothing
+this emits 0 rather than omitting the row: "we checked, none" and
+"nobody checked" are different answers, and a missing row cannot
+tell them apart.';
+COMMENT ON COLUMN api_v1.unattributed_totals.relation IS 'The published relation this remainder belongs to, e.g. `kommune_ngo_totals`. Not a foreign key: it names a relation, not a row.';
+COMMENT ON COLUMN api_v1.unattributed_totals.measure IS 'The column of that relation the value would have contributed to.';
+COMMENT ON COLUMN api_v1.unattributed_totals.reason IS 'Why the value is unattributable.
+
+`no_kommune_nr` — upstream publishes the record with no
+municipality at all. For Brreg this is 10.3 % of active
+voluntary units and is what Brreg itself publishes; it is not
+an Atlas defect.
+
+`sentinel_9999` — upstream attributes the value to its own
+''Uoppgitt'' bucket. ⚠️ Note this is the same 9999 that
+`classify_region_code` calls `unspecified_national` and that
+`dim_kommune.is_active` still returns as a municipality.';
+COMMENT ON COLUMN api_v1.unattributed_totals.source_id IS 'The upstream source the quantity comes from.';
+COMMENT ON COLUMN api_v1.unattributed_totals.year IS 'Calendar year, where the quantity is time-varying. NULL for register snapshots like Brreg, which have no year dimension — a null here means "not applicable", never "unknown".';
+COMMENT ON COLUMN api_v1.unattributed_totals.unattributed_value IS 'The part that belongs to no municipality. Add this to a sum over the per-kommune relation to reconcile with the upstream national figure.';
+COMMENT ON COLUMN api_v1.unattributed_totals.total_value IS 'The whole quantity, attributed and unattributed together. The denominator for the share.';
+COMMENT ON COLUMN api_v1.unattributed_totals.unattributed_share_pct IS '`unattributed_value` as a percentage of `total_value`, to one decimal. NULL when total_value is zero, because a share of nothing is undefined rather than zero.';
+
 -- Grant SELECT to the per-app anon role if it exists (created by UIS's
 -- ./uis configure postgrest --app atlas). Guarded so this migration
 -- applies cleanly against environments where UIS hasn't run configure yet.
