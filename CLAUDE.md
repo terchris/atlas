@@ -56,6 +56,29 @@ on a change, not on a timer.
   by introspecting the warehouse. Without one it discovers zero columns and, until 2026-09-16,
   reported `✓ all columns documented` on the strength of having checked nothing (urb-agents #1039).
   It now refuses instead (exit 2). This line previously claimed the gate "enforces it repo-wide".
+- 🔴 **Atlas never alters or removes source data.** Values are published as the upstream publishes
+  them. `raw.*` is verbatim. Transformations are derivations recorded beside the source columns,
+  never edits in place.
+
+  This is the whole reason Atlas is worth anything: a consumer can check a figure against SSB, FHI
+  or Brreg and get the same number. Most of what Atlas carries is Norwegian public data, defined and
+  published by the state under NLOD — **not ours to edit, and not ours to curate.**
+
+  ⚠️ **That includes omission.** If a column or a row looks like it should not be published, say so
+  to whoever owns the data and report what is actually there. Do not pre-emptively drop it. On
+  2026-09-21 this agent proposed excluding two columns from a Red Cross source on the hypothesis
+  that they *might* contain personal data, before the source had ever loaded. Terje stopped it. The
+  hypothesis was untested, and the source was not Atlas's to edit whatever the answer turned out to
+  be.
+
+  🔵 The three `delete` statements in `dim_brreg_enhet` are not exceptions — they apply Brreg's OWN
+  change feed (`Sletting` / `Fjernet`) and the incremental strategy's key swap. Deleting a row
+  because upstream says the unit is deleted is fidelity, not editing.
+
+  🔵 Correcting a DERIVATION is also not editing. `classify_region_code` made `kommune_nr` null for
+  Svalbard and the shelf, because Atlas had been computing that column wrongly. `region_code` and
+  `value` are untouched. The distinction to hold: upstream's values are theirs, Atlas's derived
+  columns are Atlas's to get right.
 - **This agent has no cluster access.** It declares; another agent applies; a third verifies.
 
 ⚠️ **Unverified**: `website/docusaurus.config.ts` and the generated sources registry both give the
