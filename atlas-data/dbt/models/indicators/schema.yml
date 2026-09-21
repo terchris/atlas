@@ -65,8 +65,21 @@ models:
 
   - name: indicators__ssb_06913
     description: |
-      Per-source indicator passthrough for SSB 06913 (population change).
+      Per-source indicator passthrough for SSB 06913 (population change:
+      births, deaths, in- and out-migration, 1951-2026).
       Same Region × ContentsCode × Tid shape as indicators__ssb_08764.
+
+      🔴 DELIVERED ZERO ROWS TO THE FACT UNTIL 2026-09-21. It matched
+      `^K_[0-9]{4}$` against region codes that are bare digits, so
+      kommune_nr was always null and the fact dropped all 783,104 rows.
+      Fixed by adopting `region_code_to_kommune_nr()`.
+
+      ⚠️ THE RECOVERED COUNT IS NOT 719,872. That is imac's figure for a
+      bare `^[0-9]{4}$` fix. The canonical macro additionally withholds
+      Svalbard, Jan Mayen, the continental shelf and the `XX99`
+      unspecified codes from kommune_nr (urb-agents #700), so the real
+      figure is lower and has not been measured. Known after the first
+      transform (urb-agents #1345).
     columns:
       - name: source_id
         data_tests:
@@ -117,6 +130,26 @@ models:
       - name: updated_at
         data_tests: [not_null]
         data_type: timestamp with time zone
+      - name: region_kind
+        description: |
+          What the region code is, from classify_region_code: kommune ·
+          fylke · svalbard · jan_mayen · continental_shelf ·
+          unspecified_within_fylke · unspecified_national · unknown.
+          Joins ref_region_kind.
+
+          🔴 ADDED 2026-09-21 WITH THE FIX THAT MADE THIS MODEL DELIVER
+          ANYTHING. It previously matched `^K_[0-9]{4}$` against bare
+          digits, so all 783,104 rows were dropped downstream.
+
+          ⚠️ 61 codes ending in `u` (37,088 rows, e.g. 0432u) classify as
+          `unknown` and get a null kommune_nr. This is a 1951-2026 series,
+          so a suffixed four-digit code is most likely historical or
+          unspecified — but nothing here documents what SSB means by the
+          suffix, so it is classified rather than interpreted. They keep
+          their region_code; they do not gain a claim to be a kommune.
+        data_tests:
+          - not_null
+          - relationships: {to: ref('ref_region_kind'), field: region_kind}
     data_tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns:
