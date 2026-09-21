@@ -298,6 +298,21 @@ data explorer''s per-indicator detail page (atlas-frontend
 /data/[source_id]/[contents_code]) and is the equivalent of the
 loadIndicatorValues() inline query.
 
+🔴 ROW COUNT IS NOT COVERAGE. A row exists for every active kommune
+the source publishes at all, INCLUDING those where `value` is null.
+So a series returns ~357 rows whether 357 kommuner have a number or
+66 do, and counting rows overstates coverage by up to five times.
+
+⚠️ This has always been true and became dangerous on 2026-09-21,
+when nine Ungdata sources published at 18-43 % kommune coverage
+against SSB register sources at nearly 100 %. `fhi-hasj` returns
+357 rows carrying 66 values.
+
+✅ `indicator_summary.kommuner_with_value` is the live count and the
+only thing to trust. It is not restated here on purpose — a number
+copied into a description goes stale, which is the defect that made
+`fhi-depresjon` advertise fourteen years of data it never held.
+
 PostgREST consumers filter via
 ?source_id=eq.X&contents_code=eq.Y. The full table is the
 cross-product of every indicator with every active kommune that
