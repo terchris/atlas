@@ -18,6 +18,7 @@
     "meta_endpoints",
     "meta_sources",
     "ngo_index",
-    "ngo_overview"
+    "ngo_overview",
+    "unattributed_totals"
   ]
 }

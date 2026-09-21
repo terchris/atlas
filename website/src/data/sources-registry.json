@@ -226,6 +226,14 @@
           "description_short": "One row per kommune: how many active voluntary organisations are registered there.",
           "description_full": "One row per kommune: how many active voluntary organisations are\nregistered there. 357 rows instead of the ~5 400 in\nkommune_ngo_summary. Published as api_v1.kommune_ngo_totals.\n\nExists because PostgREST cannot sum — `?select=active_count.sum()`\nreturns PGRST123, aggregates are disabled — so a consumer wanting\none number per kommune otherwise fetches every category row and\nadds them client-side. That was most of a cold page load\n(urb-agents #1265).\n\n⚠️ Counts exclude the 10.3 % of active voluntary units carrying no\nkommune_nr, exactly as kommune_ngo_summary does. Summing this gives\nthe placed total, not the register total.\n\n⚠️ COST, AND ONE LOAD-BEARING DEPENDENCY. Measured end-to-end\nagainst the live API: 0.12 s filtered by kommune_nr, 0.205-0.326 s\nunfiltered for all rows. Before the covering index on\ndim_brreg_enhet it was 25 s cold for a 24 kB response and one\nrequest timed out. That index is not an optimisation — drop it and\nthis relation is unusable rather than slow.",
           "sample_query": "https://api-atlas.urbalurba.com/kommune_ngo_totals?limit=5"
+        },
+        {
+          "mart_name": "mart_unattributed_totals",
+          "api_v1_name": "unattributed_totals",
+          "title": null,
+          "description_short": "The part of a published quantity that belongs to no municipality.",
+          "description_full": "The part of a published quantity that belongs to no municipality.\nPublished as api_v1.unattributed_totals.\n\n🔴 Atlas had no convention for this, and the two surfaces that met\nit chose opposite wrong answers: SSB's 9999 'Uoppgitt' sits INSIDE\na per-kommune relation and corrupts any sum over it, while 7 488\nactive voluntary units with no kommune_nr fall OUT of one and\nvanish silently. One smuggles the remainder in as a row, the other\ndiscards it, and a consumer summing either gets a number that is\nwrong in a direction it cannot see (urb-agents #700, #1250, #1265).\n\n✅ The rule this establishes: the VALUE belongs, the ROW does not.\nA per-kommune relation carries only kommuner; the remainder lives\nhere, named, so reconciling to a national total is a deliberate\nact rather than an accident of whether a sentinel survived a\nfilter.\n\n⚠️ It does NOT remove the 9999 rows from dim_kommune or\ncoverage_gap_barnefattigdom. That is a breaking contract change —\n`?is_active=eq.true` would return 357 instead of 358 with no\nwarning — and it is deliberately not bundled with an additive\nchange. `is_sentinel` remains a stopgap and this view does not\nmake the trap gone.\n\n🔵 A zero is a result. Where the remainder is genuinely nothing\nthis emits 0 rather than omitting the row: \"we checked, none\" and\n\"nobody checked\" are different answers, and a missing row cannot\ntell them apart.",
+          "sample_query": "https://api-atlas.urbalurba.com/unattributed_totals?limit=5"
         }
       ],
       "consuming_models": [
@@ -240,6 +248,10 @@
         {
           "name": "mart_kommune_ngo_totals",
           "kind": "mart"
+        },
+        {
+          "name": "mart_unattributed_totals",
+          "kind": "mart"
         }
       ],
       "joined_with": [
@@ -248,7 +260,8 @@
           "shared_models": [
             "mart_brreg_enhet",
             "mart_kommune_ngo_summary",
-            "mart_kommune_ngo_totals"
+            "mart_kommune_ngo_totals",
+            "mart_unattributed_totals"
           ]
         },
         {
@@ -256,6 +269,12 @@
           "shared_models": [
             "mart_kommune_ngo_summary",
             "mart_kommune_ngo_totals"
+          ]
+        },
+        {
+          "source_id": "ssb-08764",
+          "shared_models": [
+            "mart_unattributed_totals"
           ]
         }
       ],
@@ -374,6 +393,14 @@
           "description_short": "One row per kommune: how many active voluntary organisations are registered there.",
           "description_full": "One row per kommune: how many active voluntary organisations are\nregistered there. 357 rows instead of the ~5 400 in\nkommune_ngo_summary. Published as api_v1.kommune_ngo_totals.\n\nExists because PostgREST cannot sum — `?select=active_count.sum()`\nreturns PGRST123, aggregates are disabled — so a consumer wanting\none number per kommune otherwise fetches every category row and\nadds them client-side. That was most of a cold page load\n(urb-agents #1265).\n\n⚠️ Counts exclude the 10.3 % of active voluntary units carrying no\nkommune_nr, exactly as kommune_ngo_summary does. Summing this gives\nthe placed total, not the register total.\n\n⚠️ COST, AND ONE LOAD-BEARING DEPENDENCY. Measured end-to-end\nagainst the live API: 0.12 s filtered by kommune_nr, 0.205-0.326 s\nunfiltered for all rows. Before the covering index on\ndim_brreg_enhet it was 25 s cold for a 24 kB response and one\nrequest timed out. That index is not an optimisation — drop it and\nthis relation is unusable rather than slow.",
           "sample_query": "https://api-atlas.urbalurba.com/kommune_ngo_totals?limit=5"
+        },
+        {
+          "mart_name": "mart_unattributed_totals",
+          "api_v1_name": "unattributed_totals",
+          "title": null,
+          "description_short": "The part of a published quantity that belongs to no municipality.",
+          "description_full": "The part of a published quantity that belongs to no municipality.\nPublished as api_v1.unattributed_totals.\n\n🔴 Atlas had no convention for this, and the two surfaces that met\nit chose opposite wrong answers: SSB's 9999 'Uoppgitt' sits INSIDE\na per-kommune relation and corrupts any sum over it, while 7 488\nactive voluntary units with no kommune_nr fall OUT of one and\nvanish silently. One smuggles the remainder in as a row, the other\ndiscards it, and a consumer summing either gets a number that is\nwrong in a direction it cannot see (urb-agents #700, #1250, #1265).\n\n✅ The rule this establishes: the VALUE belongs, the ROW does not.\nA per-kommune relation carries only kommuner; the remainder lives\nhere, named, so reconciling to a national total is a deliberate\nact rather than an accident of whether a sentinel survived a\nfilter.\n\n⚠️ It does NOT remove the 9999 rows from dim_kommune or\ncoverage_gap_barnefattigdom. That is a breaking contract change —\n`?is_active=eq.true` would return 357 instead of 358 with no\nwarning — and it is deliberately not bundled with an additive\nchange. `is_sentinel` remains a stopgap and this view does not\nmake the trap gone.\n\n🔵 A zero is a result. Where the remainder is genuinely nothing\nthis emits 0 rather than omitting the row: \"we checked, none\" and\n\"nobody checked\" are different answers, and a missing row cannot\ntell them apart.",
+          "sample_query": "https://api-atlas.urbalurba.com/unattributed_totals?limit=5"
         }
       ],
       "consuming_models": [
@@ -388,6 +415,10 @@
         {
           "name": "mart_kommune_ngo_totals",
           "kind": "mart"
+        },
+        {
+          "name": "mart_unattributed_totals",
+          "kind": "mart"
         }
       ],
       "joined_with": [
@@ -396,7 +427,8 @@
           "shared_models": [
             "mart_brreg_enhet",
             "mart_kommune_ngo_summary",
-            "mart_kommune_ngo_totals"
+            "mart_kommune_ngo_totals",
+            "mart_unattributed_totals"
           ]
         },
         {
@@ -404,6 +436,12 @@
           "shared_models": [
             "mart_kommune_ngo_summary",
             "mart_kommune_ngo_totals"
+          ]
+        },
+        {
+          "source_id": "ssb-08764",
+          "shared_models": [
+            "mart_unattributed_totals"
           ]
         }
       ],
@@ -4895,6 +4933,14 @@
           "description_short": "One row per (source_id, contents_code) summarising the latest-year coverage and value range for every indicator in fact_kommune_indicators.",
           "description_full": "One row per (source_id, contents_code) summarising the latest-year\ncoverage and value range for every indicator in\nfact_kommune_indicators. This is the backing dataset for the data\nexplorer index page (atlas-frontend /data) and is the equivalent of\nthe listIndicators() inline query that PostgREST projects as\n/mart_indicator_summary on the public API.\n\nQuery shape: latest-year-per-indicator + group-by + value/null counts\nfiltered to active kommuner only. Inactive kommuner (historical\ncodes retained by upstream) are excluded from the counts so consumers\nsee \"how many of today's kommuner have data?\" not \"how many rows\nexist?\".\n\nRefreshed nightly together with fact_kommune_indicators. The\nupstream_updated column carries the most recent raw load timestamp\nacross the rows that contributed to this summary, so freshness can\nbe inspected per indicator without joining to raw.* sources.",
           "sample_query": "https://api-atlas.urbalurba.com/indicator_summary?limit=5"
+        },
+        {
+          "mart_name": "mart_unattributed_totals",
+          "api_v1_name": "unattributed_totals",
+          "title": null,
+          "description_short": "The part of a published quantity that belongs to no municipality.",
+          "description_full": "The part of a published quantity that belongs to no municipality.\nPublished as api_v1.unattributed_totals.\n\n🔴 Atlas had no convention for this, and the two surfaces that met\nit chose opposite wrong answers: SSB's 9999 'Uoppgitt' sits INSIDE\na per-kommune relation and corrupts any sum over it, while 7 488\nactive voluntary units with no kommune_nr fall OUT of one and\nvanish silently. One smuggles the remainder in as a row, the other\ndiscards it, and a consumer summing either gets a number that is\nwrong in a direction it cannot see (urb-agents #700, #1250, #1265).\n\n✅ The rule this establishes: the VALUE belongs, the ROW does not.\nA per-kommune relation carries only kommuner; the remainder lives\nhere, named, so reconciling to a national total is a deliberate\nact rather than an accident of whether a sentinel survived a\nfilter.\n\n⚠️ It does NOT remove the 9999 rows from dim_kommune or\ncoverage_gap_barnefattigdom. That is a breaking contract change —\n`?is_active=eq.true` would return 357 instead of 358 with no\nwarning — and it is deliberately not bundled with an additive\nchange. `is_sentinel` remains a stopgap and this view does not\nmake the trap gone.\n\n🔵 A zero is a result. Where the remainder is genuinely nothing\nthis emits 0 rather than omitting the row: \"we checked, none\" and\n\"nobody checked\" are different answers, and a missing row cannot\ntell them apart.",
+          "sample_query": "https://api-atlas.urbalurba.com/unattributed_totals?limit=5"
         }
       ],
       "consuming_models": [
@@ -4920,6 +4966,10 @@
         },
         {
           "name": "mart_indicator_summary",
+          "kind": "mart"
+        },
+        {
+          "name": "mart_unattributed_totals",
           "kind": "mart"
         }
       ],
@@ -8229,6 +8279,65 @@
       ],
       "sample_query": "https://api-atlas.urbalurba.com/ngo_overview?limit=5",
       "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_ngo_overview"
+    },
+    {
+      "kind": "view",
+      "view_id": "unattributed_totals",
+      "mart_name": "mart_unattributed_totals",
+      "api_v1_name": "unattributed_totals",
+      "title": "api_v1.unattributed_totals",
+      "description_short": "The part of a published quantity that belongs to no municipality.",
+      "description_full": "The part of a published quantity that belongs to no municipality.\nPublished as api_v1.unattributed_totals.\n\n🔴 Atlas had no convention for this, and the two surfaces that met\nit chose opposite wrong answers: SSB's 9999 'Uoppgitt' sits INSIDE\na per-kommune relation and corrupts any sum over it, while 7 488\nactive voluntary units with no kommune_nr fall OUT of one and\nvanish silently. One smuggles the remainder in as a row, the other\ndiscards it, and a consumer summing either gets a number that is\nwrong in a direction it cannot see (urb-agents #700, #1250, #1265).\n\n✅ The rule this establishes: the VALUE belongs, the ROW does not.\nA per-kommune relation carries only kommuner; the remainder lives\nhere, named, so reconciling to a national total is a deliberate\nact rather than an accident of whether a sentinel survived a\nfilter.\n\n⚠️ It does NOT remove the 9999 rows from dim_kommune or\ncoverage_gap_barnefattigdom. That is a breaking contract change —\n`?is_active=eq.true` would return 357 instead of 358 with no\nwarning — and it is deliberately not bundled with an additive\nchange. `is_sentinel` remains a stopgap and this view does not\nmake the trap gone.\n\n🔵 A zero is a result. Where the remainder is genuinely nothing\nthis emits 0 rather than omitting the row: \"we checked, none\" and\n\"nobody checked\" are different answers, and a missing row cannot\ntell them apart.",
+      "columns": [
+        {
+          "name": "relation",
+          "description": "The published relation this remainder belongs to, e.g. `kommune_ngo_totals`. Not a foreign key: it names a relation, not a row."
+        },
+        {
+          "name": "measure",
+          "description": "The column of that relation the value would have contributed to."
+        },
+        {
+          "name": "reason",
+          "description": "Why the value is unattributable. `no_kommune_nr` — upstream publishes the record with no municipality at all. For Brreg this is 10.3 % of active voluntary units and is what Brreg itself publishes; it is not an Atlas defect. `sentinel_9999` — upstream attributes the value to its own 'Uoppgitt' bucket. ⚠️ Note this is the same 9999 that `classify_region_code` calls `unspecified_national` and that `dim_kommune.is_active` still returns as a municipality."
+        },
+        {
+          "name": "source_id",
+          "description": "The upstream source the quantity comes from."
+        },
+        {
+          "name": "year",
+          "description": "Calendar year, where the quantity is time-varying. NULL for register snapshots like Brreg, which have no year dimension — a null here means \"not applicable\", never \"unknown\"."
+        },
+        {
+          "name": "unattributed_value",
+          "description": "The part that belongs to no municipality. Add this to a sum over the per-kommune relation to reconcile with the upstream national figure."
+        },
+        {
+          "name": "total_value",
+          "description": "The whole quantity, attributed and unattributed together. The denominator for the share."
+        },
+        {
+          "name": "unattributed_share_pct",
+          "description": "`unattributed_value` as a percentage of `total_value`, to one decimal. NULL when total_value is zero, because a share of nothing is undefined rather than zero."
+        }
+      ],
+      "built_from": [
+        {
+          "parent_kind": "model",
+          "model_name": "dim_brreg_enhet",
+          "title": null,
+          "description_short": "Current state of every organisation registered in Norway — the whole of Brønnøysundregistrene's Enhetsregisteret, ~1.17M rows, reconciled from the bulk snapshot (PLAN-001) plus…"
+        },
+        {
+          "parent_kind": "model",
+          "model_name": "fact_kommune_indicators",
+          "title": null,
+          "description_short": "First cross-source mart."
+        }
+      ],
+      "sample_query": "https://api-atlas.urbalurba.com/unattributed_totals?limit=5",
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_unattributed_totals"
     }
   ],
   "collections": [
@@ -8470,6 +8579,14 @@
                 "description_short": "One row per (source_id, contents_code) summarising the latest-year coverage and value range for every indicator in fact_kommune_indicators.",
                 "description_full": "One row per (source_id, contents_code) summarising the latest-year\ncoverage and value range for every indicator in\nfact_kommune_indicators. This is the backing dataset for the data\nexplorer index page (atlas-frontend /data) and is the equivalent of\nthe listIndicators() inline query that PostgREST projects as\n/mart_indicator_summary on the public API.\n\nQuery shape: latest-year-per-indicator + group-by + value/null counts\nfiltered to active kommuner only. Inactive kommuner (historical\ncodes retained by upstream) are excluded from the counts so consumers\nsee \"how many of today's kommuner have data?\" not \"how many rows\nexist?\".\n\nRefreshed nightly together with fact_kommune_indicators. The\nupstream_updated column carries the most recent raw load timestamp\nacross the rows that contributed to this summary, so freshness can\nbe inspected per indicator without joining to raw.* sources.",
                 "sample_query": "https://api-atlas.urbalurba.com/indicator_summary?limit=5"
+              },
+              {
+                "mart_name": "mart_unattributed_totals",
+                "api_v1_name": "unattributed_totals",
+                "title": null,
+                "description_short": "The part of a published quantity that belongs to no municipality.",
+                "description_full": "The part of a published quantity that belongs to no municipality.\nPublished as api_v1.unattributed_totals.\n\n🔴 Atlas had no convention for this, and the two surfaces that met\nit chose opposite wrong answers: SSB's 9999 'Uoppgitt' sits INSIDE\na per-kommune relation and corrupts any sum over it, while 7 488\nactive voluntary units with no kommune_nr fall OUT of one and\nvanish silently. One smuggles the remainder in as a row, the other\ndiscards it, and a consumer summing either gets a number that is\nwrong in a direction it cannot see (urb-agents #700, #1250, #1265).\n\n✅ The rule this establishes: the VALUE belongs, the ROW does not.\nA per-kommune relation carries only kommuner; the remainder lives\nhere, named, so reconciling to a national total is a deliberate\nact rather than an accident of whether a sentinel survived a\nfilter.\n\n⚠️ It does NOT remove the 9999 rows from dim_kommune or\ncoverage_gap_barnefattigdom. That is a breaking contract change —\n`?is_active=eq.true` would return 357 instead of 358 with no\nwarning — and it is deliberately not bundled with an additive\nchange. `is_sentinel` remains a stopgap and this view does not\nmake the trap gone.\n\n🔵 A zero is a result. Where the remainder is genuinely nothing\nthis emits 0 rather than omitting the row: \"we checked, none\" and\n\"nobody checked\" are different answers, and a missing row cannot\ntell them apart.",
+                "sample_query": "https://api-atlas.urbalurba.com/unattributed_totals?limit=5"
               }
             ],
             "consuming_models": [
@@ -8495,6 +8612,10 @@
               },
               {
                 "name": "mart_indicator_summary",
+                "kind": "mart"
+              },
+              {
+                "name": "mart_unattributed_totals",
                 "kind": "mart"
               }
             ],

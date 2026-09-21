@@ -68,6 +68,8 @@ mart_meta_endpoints,mart_meta_sources,model
 mart_ngo_index,dim_chapter,model
 mart_ngo_overview,dim_activity,model
 mart_ngo_overview,dim_chapter,model
+mart_unattributed_totals,dim_brreg_enhet,model
+mart_unattributed_totals,fact_kommune_indicators,model
 supply__redcross_branch_activities,redcross-branches,source
 supply__redcross_branches,redcross-branches,source
 supply__redcross_chapter_kommune_coverage,dim_chapter,model
