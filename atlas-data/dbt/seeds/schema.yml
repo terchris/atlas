@@ -263,3 +263,57 @@ seeds:
           - not_null
           - unique
           - dbt_utils.accepted_range: {min_value: 1, max_value: 46}
+
+  - name: ref_region_kind
+    description: |
+      What an SSB region code IS, by pattern. Reference data for
+      macros/classify_region_code.sql, which is the single place the
+      patterns are applied.
+
+      🔴 Atlas's scope is Norwegian kommuner, and SSB's Region dimension
+      is not only kommuner. Until 2026-09-21 every four-digit region
+      code was labelled a kommune_nr, which made Svalbard, Jan Mayen,
+      the continental shelf and the 19 "uoppgitt kommune i fylket"
+      codes into municipalities — 47 codes and 9 964 rows of permanent
+      referential warnings against dim_kommune.
+
+      ✅ Terje's decision on urb-agents #700: REPRESENT these regions,
+      do not COVER them. They exist in the model, they are named, and
+      they are not kommuner. Nothing about which kommuner Atlas
+      publishes changes.
+
+      ⚠️ Patterns, not a list of the 47 codes observed on 2026-09-06. A
+      list is a snapshot that goes stale when SSB adds a shelf sector,
+      and it would have to be typed out of a markdown table — which is
+      how a code that does not exist gets asserted into a dimension.
+    columns:
+      - name: region_kind
+        description: |
+          The kind a code resolves to. `unspecified_national` is SSB's
+          9999 'Uoppgitt' bucket and is deliberately separate from
+          `unspecified_within_fylke`: 9999 matches the XX99 pattern but
+          there is no fylke 99, and conflating them was a real bug
+          caught by testing the classifier rather than reading it.
+        data_tests: [not_null, unique]
+      - name: code_pattern
+        description: >-
+          The POSIX regex the code matches, in the order
+          classify_region_code applies them. ⚠️ Order is load-bearing: 2199
+          matches both the Svalbard range and XX99, and SSB lists it under
+          Svalbard.
+        data_tests: [not_null, unique]
+      - name: is_kommune
+        description: >-
+          Whether a code of this kind is a municipality. True for exactly one
+          kind. This is what decides kommune_nr, and 9999 is false — which
+          dim_kommune's own is_sentinel column also says.
+        data_tests: [not_null]
+      - name: label_no
+        data_tests: [not_null]
+        description: Norwegian label.
+      - name: label_en
+        data_tests: [not_null]
+        description: English label.
+      - name: sort_order
+        description: Display order.
+        data_tests: [not_null, unique]

@@ -655,15 +655,39 @@ models:
         data_type: text
       - name: kommune_nr
         data_tests:
-          # SSB 07459 covers 1986-2026 in its Region dimension so it retains
-          # ~593 historical 4-digit codes (old Østfold 01xx, etc.) with 0
-          # values for the current year. Warn instead of error until
-          # dim_kommune is extended with historical codes.
+          # 🔵 THIS WARNING HAD TWO CAUSES AND ONE IS NOW GONE.
+          #
+          # Was: 47 non-kommune region codes (Svalbard, Jan Mayen, the shelf,
+          # the XX99 "uoppgitt" family) were labelled kommune_nr by a bare
+          # four-digit regex. Fixed 2026-09-21 — they get a null kommune_nr and
+          # a region_kind instead (urb-agents #700).
+          #
+          # Remains: SSB 07459 covers 1986-2026 in its Region dimension so it
+          # retains ~593 HISTORICAL 4-digit codes (old Østfold 01xx, etc.) with
+          # 0 values for the current year. Those really are kommuner, just not
+          # current ones, so nulling them would be the same error in reverse.
+          # Warn instead of error until dim_kommune is extended with historical
+          # codes.
           - relationships:
               to: ref('dim_kommune')
               field: kommune_nr
               config:
                 severity: warn
+        data_type: text
+      - name: region_kind
+        description: |
+          What the region code is, from classify_region_code: kommune ·
+          fylke · svalbard · jan_mayen · continental_shelf ·
+          unspecified_within_fylke · unspecified_national · unknown.
+          Joins ref_region_kind.
+
+          🔵 kommune_nr is now null for every kind except `kommune`, which
+          is what resolves this model's permanent referential warning —
+          the assertion became true rather than the test being relaxed
+          (urb-agents #700).
+        data_tests:
+          - not_null
+          - relationships: {to: ref('ref_region_kind'), field: region_kind}
         data_type: text
       - name: fylke_nr
         data_tests:
