@@ -58,6 +58,13 @@ COPY dbt/models ./dbt/models
 COPY dbt/seeds ./dbt/seeds
 COPY dbt/macros ./dbt/macros
 COPY dbt/scripts ./dbt/scripts
+# 🔴 The post-deploy verifier, which imac runs to decide whether a release
+# works. I told imac on urb-agents #1320 that it "ships in the image" without
+# checking, and it did not — uis/ was never copied. The dbt files it reads
+# (api_v1_generated.sql, the fact model, the lineage and manifest seeds) were
+# already here, so the data was in the image and the script was not.
+# ⚠️ It resolves DBT as /app/dbt, which is where the lines above put it.
+COPY uis ./uis
 # ⚠️ Singular tests live in dbt/tests/ and are NOT covered by models/.
 # Omitting this directory left three singular tests — including
 # api_v1_descriptions_complete, a gate on the public API surface — absent from
