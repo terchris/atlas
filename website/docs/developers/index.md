@@ -144,6 +144,38 @@ write methods.
 
 :::
 
+### No row cap — and how to tell if that ever changes
+
+PostgREST can be configured with `db-max-rows`, which silently truncates a
+response to N rows. **Atlas does not set it.** Measured against the live API:
+
+```
+GET /brreg_enhet?limit=100000   ->  206, 100,000 rows of 1,174,770
+GET /brreg_enhet?limit=200000   ->  206, 200,000 rows
+```
+
+⚠️ **That is a measurement of behaviour, not a reading of configuration.**
+PostgREST exposes no endpoint that reports its effective settings, so "unset"
+and "set above 200,000" are indistinguishable from outside. Nobody can hand you
+the value — including us.
+
+**So do not trust it, detect it.** Send `Prefer: count=exact` and compare the
+total in `Content-Range` against the rows you actually received:
+
+```bash
+curl -sD- -H "Prefer: count=exact" "$ATLAS/brreg_enhet?limit=200000" -o body.json \
+  | grep -i content-range
+# Content-Range: 0-199999/1174770   <- you got 200,000 of 1,174,770
+```
+
+`Content-Range` is exposed cross-origin (`access-control-expose-headers`), so
+this works from a browser app as well as from curl. A cap can only ever be
+discovered by exceeding it and noticing the discrepancy — that check is the
+right pattern, not a workaround, and it keeps working whatever the cap is.
+
+If Atlas ever does set `db-max-rows`, it will be treated as a **contract
+change** and announced, even though nothing in the schema moves.
+
 ### Request-size ceiling
 
 Long `or=()` filters run into a **48 KiB URL limit**, binary-searched against the
