@@ -18,7 +18,14 @@
 select
   'ssb-07459'::text   as source_id,
   region_code,
-  case when region_code ~ '^[0-9]{4}$' then region_code end as kommune_nr,
+  -- 🔴 NOT `region_code ~ '^[0-9]{4}$'`. That called Svalbard, Jan Mayen, the
+  -- continental shelf and the 19 "uoppgitt kommune" codes municipalities — 47
+  -- codes, 9 964 rows, and the source of this model's permanent referential
+  -- warning against dim_kommune. Terje's decision on urb-agents #700 is
+  -- represent, do not cover: they keep their region_code, they lose the claim
+  -- to be a kommune. See macros/classify_region_code.sql.
+  {{ region_code_to_kommune_nr('region_code') }} as kommune_nr,
+  {{ classify_region_code('region_code') }} as region_kind,
   case when region_code ~ '^[0-9]{2}$' then region_code end as fylke_nr,
   {{ decode_sex('sex') }} as sex,
   age,

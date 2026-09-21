@@ -1,0 +1,8 @@
+region_kind,code_pattern,is_kommune,label_no,label_en,sort_order
+kommune,^\d{4}$,true,Kommune,Municipality,1
+fylke,^\d{2}$,false,Fylke,County,2
+unspecified_within_fylke,^\d{2}99$,false,Uoppgitt kommune i fylket,Municipality not specified within the county,3
+unspecified_national,^9999$,false,Uoppgitt kommune,Municipality not specified,7
+svalbard,^21\d{2}$,false,Svalbard,Svalbard,4
+jan_mayen,^22\d{2}$,false,Jan Mayen,Jan Mayen,5
+continental_shelf,^23\d{2}$,false,Kontinentalsokkelen,Continental shelf,6
