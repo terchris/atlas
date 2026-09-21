@@ -265,6 +265,15 @@
           ]
         },
         {
+          "source_id": "brreg-oppdateringer",
+          "shared_models": [
+            "mart_brreg_enhet",
+            "mart_kommune_ngo_summary",
+            "mart_kommune_ngo_totals",
+            "mart_unattributed_totals"
+          ]
+        },
+        {
           "source_id": "ssb-klass-kommuner",
           "shared_models": [
             "mart_kommune_ngo_summary",
@@ -432,6 +441,15 @@
           ]
         },
         {
+          "source_id": "brreg-oppdateringer",
+          "shared_models": [
+            "mart_brreg_enhet",
+            "mart_kommune_ngo_summary",
+            "mart_kommune_ngo_totals",
+            "mart_unattributed_totals"
+          ]
+        },
+        {
           "source_id": "ssb-klass-kommuner",
           "shared_models": [
             "mart_kommune_ngo_summary",
@@ -542,9 +560,95 @@
         "bibtex": "@misc{atlas_brreg_oppdateringer,\n  author = {Brønnøysundregistrene},\n  title  = {Enhetsregisteret — oppdateringer (endringsfeed)},\n  year   = {n.d.},\n  url    = {https://data.brreg.no/enhetsregisteret/api/dokumentasjon},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/brreg-oppdateringer}\n}"
       },
       "feedback_url": "https://www.brreg.no/om-oss/kontakt-oss/",
-      "consuming_marts": [],
-      "consuming_models": [],
-      "joined_with": [],
+      "consuming_marts": [
+        {
+          "mart_name": "mart_brreg_enhet",
+          "api_v1_name": "brreg_enhet",
+          "title": null,
+          "description_short": "Every organisation registered in Norway — the whole of Brønnøysundregistrene's Enhetsregisteret, around 1.17 million rows, current as of the last change-feed run.",
+          "description_full": "Every organisation registered in Norway — the whole of Brønnøysundregistrene's\nEnhetsregisteret, around 1.17 million rows, current as of the last change-feed run.\nCompanies, foundations, associations, public bodies and sole proprietorships.\n\nKilde: Brønnøysundregistrene. Inneholder data under norsk lisens for offentlige data\n(NLOD) tilgjengeliggjort av Brønnøysundregistrene — https://data.norge.no/nlod/no/2.0.\nRe-users must carry this attribution onward; it is a condition of the licence, not a\ncourtesy.\n\nDeleted organisations are excluded. Brreg reports deletions through its change feed and\nAtlas applies them, so an organisation removed upstream disappears from here — but the\nversion history is kept, so what it looked like before removal remains answerable.\n\nCompleteness caveat: this reflects deletions Brreg REPORTS. A row Atlas holds that Brreg\nnever had would not be removed by any automatic path, because no change event would ever\nmention it.",
+          "sample_query": "https://api-atlas.urbalurba.com/brreg_enhet?limit=5"
+        },
+        {
+          "mart_name": "mart_kommune_ngo_summary",
+          "api_v1_name": "kommune_ngo_summary",
+          "title": "Voluntary organisations per kommune",
+          "description_short": "Active voluntary organisations per kommune and ICNPO category — the number a consumer previously had to download the whole register to compute.",
+          "description_full": "Active voluntary organisations per kommune and ICNPO category —\nthe number a consumer previously had to download the whole\nregister to compute. Published as api_v1.kommune_ngo_summary.\n\nPostgREST has aggregates disabled, so `?select=count()` returns\n400 and the only alternatives were ~15 minutes of per-kommune\nprobes or a 2.8 MB CSV on every page load. One consumer shipped\nthe download (urb-agents #1250, finding 1); this replaces it with\n~12 000 rows.\n\n⚠️ Counts here will NOT match a count over brreg_enhet. 7 488 of\n72 792 active voluntary units (10.3 %) carry no kommune_nr — that\nis what Brreg publishes — and cannot be attributed to a\nmunicipality. A handful more sit on codes outside the 357 active\nkommuner and are dropped by the join.\n\nA (kommune, category) pair absent from this view has zero\norganisations; rows are not emitted for empty combinations.\n\n⚠️ CHANGED 2026-09-21: SSB's 9999 'Uoppgitt' is no longer\nincluded. It is a current code, so `is_active` never excluded it,\nand this relation had been reporting a place that does not exist.\nCounts drop by that row. `dim_kommune` still carries 9999 — the\ndimension mirrors SSB's list — and the value is published in\n`unattributed_totals` (urb-agents #1301).\n\n⚠️ COST, AND ONE LOAD-BEARING DEPENDENCY. Measured end-to-end\nagainst the live API: 0.12 s filtered by kommune_nr, 0.205-0.326 s\nunfiltered for all rows. Before the covering index on\ndim_brreg_enhet it was 25 s cold for a 24 kB response and one\nrequest timed out. That index is not an optimisation — drop it and\nthis relation is unusable rather than slow.",
+          "sample_query": "https://api-atlas.urbalurba.com/kommune_ngo_summary?limit=5"
+        },
+        {
+          "mart_name": "mart_kommune_ngo_totals",
+          "api_v1_name": "kommune_ngo_totals",
+          "title": "Voluntary organisations per kommune, total",
+          "description_short": "One row per kommune: how many active voluntary organisations are registered there.",
+          "description_full": "One row per kommune: how many active voluntary organisations are\nregistered there. 357 rows instead of the ~5 400 in\nkommune_ngo_summary. Published as api_v1.kommune_ngo_totals.\n\nExists because PostgREST cannot sum — `?select=active_count.sum()`\nreturns PGRST123, aggregates are disabled — so a consumer wanting\none number per kommune otherwise fetches every category row and\nadds them client-side. That was most of a cold page load\n(urb-agents #1265).\n\n⚠️ Counts exclude the 10.3 % of active voluntary units carrying no\nkommune_nr, exactly as kommune_ngo_summary does. Summing this gives\nthe placed total, not the register total.\n\n⚠️ CHANGED 2026-09-21: SSB's 9999 'Uoppgitt' is no longer\nincluded. It is a current code, so `is_active` never excluded it,\nand this relation had been reporting a place that does not exist.\nCounts drop by that row. `dim_kommune` still carries 9999 — the\ndimension mirrors SSB's list — and the value is published in\n`unattributed_totals` (urb-agents #1301).\n\n⚠️ COST, AND ONE LOAD-BEARING DEPENDENCY. Measured end-to-end\nagainst the live API: 0.12 s filtered by kommune_nr, 0.205-0.326 s\nunfiltered for all rows. Before the covering index on\ndim_brreg_enhet it was 25 s cold for a 24 kB response and one\nrequest timed out. That index is not an optimisation — drop it and\nthis relation is unusable rather than slow.",
+          "sample_query": "https://api-atlas.urbalurba.com/kommune_ngo_totals?limit=5"
+        },
+        {
+          "mart_name": "mart_unattributed_totals",
+          "api_v1_name": "unattributed_totals",
+          "title": null,
+          "description_short": "The part of a published quantity that belongs to no municipality.",
+          "description_full": "The part of a published quantity that belongs to no municipality.\nPublished as api_v1.unattributed_totals.\n\n🔴 Atlas had no convention for this, and the two surfaces that met\nit chose opposite wrong answers: SSB's 9999 'Uoppgitt' sits INSIDE\na per-kommune relation and corrupts any sum over it, while 7 488\nactive voluntary units with no kommune_nr fall OUT of one and\nvanish silently. One smuggles the remainder in as a row, the other\ndiscards it, and a consumer summing either gets a number that is\nwrong in a direction it cannot see (urb-agents #700, #1250, #1265).\n\n✅ The rule this establishes: the VALUE belongs, the ROW does not.\nA per-kommune relation carries only kommuner; the remainder lives\nhere, named, so reconciling to a national total is a deliberate\nact rather than an accident of whether a sentinel survived a\nfilter.\n\n⚠️ It does NOT remove the 9999 rows from dim_kommune or\ncoverage_gap_barnefattigdom. That is a breaking contract change —\n`?is_active=eq.true` would return 357 instead of 358 with no\nwarning — and it is deliberately not bundled with an additive\nchange. `is_sentinel` remains a stopgap and this view does not\nmake the trap gone.\n\n🔵 A zero is a result. Where the remainder is genuinely nothing\nthis emits 0 rather than omitting the row: \"we checked, none\" and\n\"nobody checked\" are different answers, and a missing row cannot\ntell them apart.",
+          "sample_query": "https://api-atlas.urbalurba.com/unattributed_totals?limit=5"
+        }
+      ],
+      "consuming_models": [
+        {
+          "name": "dim_brreg_enhet",
+          "kind": "dim"
+        },
+        {
+          "name": "mart_brreg_enhet",
+          "kind": "mart"
+        },
+        {
+          "name": "mart_kommune_ngo_summary",
+          "kind": "mart"
+        },
+        {
+          "name": "mart_kommune_ngo_totals",
+          "kind": "mart"
+        },
+        {
+          "name": "mart_unattributed_totals",
+          "kind": "mart"
+        }
+      ],
+      "joined_with": [
+        {
+          "source_id": "brreg-enheter-alle",
+          "shared_models": [
+            "mart_brreg_enhet",
+            "mart_kommune_ngo_summary",
+            "mart_kommune_ngo_totals",
+            "mart_unattributed_totals"
+          ]
+        },
+        {
+          "source_id": "brreg-frivillige",
+          "shared_models": [
+            "mart_brreg_enhet",
+            "mart_kommune_ngo_summary",
+            "mart_kommune_ngo_totals",
+            "mart_unattributed_totals"
+          ]
+        },
+        {
+          "source_id": "ssb-klass-kommuner",
+          "shared_models": [
+            "mart_kommune_ngo_summary",
+            "mart_kommune_ngo_totals"
+          ]
+        },
+        {
+          "source_id": "ssb-08764",
+          "shared_models": [
+            "mart_unattributed_totals"
+          ]
+        }
+      ],
       "last_ingested_at": null,
       "latest_row_count": null,
       "total_runs": null,

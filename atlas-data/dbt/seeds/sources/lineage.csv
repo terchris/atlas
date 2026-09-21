@@ -2,6 +2,7 @@ model_name,source_id
 chapter_kommune_coverage,redcross-branches
 crosswalk_kommune_name,ssb-klass-kommuner
 dim_activity,redcross-branches
+dim_brreg_enhet,brreg-oppdateringer
 dim_chapter,redcross-branches
 dim_fylke,ssb-klass-fylker
 dim_kommune,ssb-klass-kommuner
@@ -68,6 +69,7 @@ indicators__ssb_13995,ssb-13995
 mart_activity_catalog,redcross-branches
 mart_brreg_enhet,brreg-enheter-alle
 mart_brreg_enhet,brreg-frivillige
+mart_brreg_enhet,brreg-oppdateringer
 mart_coverage_gap_barnefattigdom,fhi-alkohol
 mart_coverage_gap_barnefattigdom,fhi-bor-alene
 mart_coverage_gap_barnefattigdom,fhi-depresjon
@@ -186,14 +188,17 @@ mart_kommune_befolkning_alder,ssb-klass-kommuner
 mart_kommune_local_chapters,redcross-branches
 mart_kommune_ngo_summary,brreg-enheter-alle
 mart_kommune_ngo_summary,brreg-frivillige
+mart_kommune_ngo_summary,brreg-oppdateringer
 mart_kommune_ngo_summary,ssb-klass-kommuner
 mart_kommune_ngo_totals,brreg-enheter-alle
 mart_kommune_ngo_totals,brreg-frivillige
+mart_kommune_ngo_totals,brreg-oppdateringer
 mart_kommune_ngo_totals,ssb-klass-kommuner
 mart_ngo_index,redcross-branches
 mart_ngo_overview,redcross-branches
 mart_unattributed_totals,brreg-enheter-alle
 mart_unattributed_totals,brreg-frivillige
+mart_unattributed_totals,brreg-oppdateringer
 mart_unattributed_totals,ssb-08764
 supply__redcross_branch_activities,redcross-branches
 supply__redcross_branches,redcross-branches
