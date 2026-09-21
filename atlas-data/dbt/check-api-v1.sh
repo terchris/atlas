@@ -31,16 +31,44 @@ cd "$(dirname "$0")"
 TMPDIR=$(mktemp -d)
 trap 'rm -rf "$TMPDIR"' EXIT
 
+# 🔴 "I CANNOT CHECK" IS NOT A FINDING, AND UNTIL 2026-09-21 THIS GATE COULD
+# NOT SAY THE DIFFERENCE. With `set -e`, a missing `uv` or a failed `dbt parse`
+# exited non-zero exactly like a real drift — so a reader saw a red gate and
+# could not tell "the published contract has drifted" from "the toolchain is
+# not here". The first is a finding; the second is the absence of one.
+#
+# ⚠️ Every instrument failure in this repo today was a check answering from an
+# input it should have refused: downstream_model_count from a stale lineage
+# seed, a grep from a folded YAML scalar, a null-filter from a zero-fill, and
+# render-template-info.sh printing "pyyaml unavailable — skipped" while five
+# checks quietly did not run.
+#
+# 🔵 The consumer's version of the same fix, on a snapshot missing served_as:
+# refuse to answer and say so on the page, rather than fall back to the older
+# method that produced the original bug (urb-agents #1360). Same shape, and it
+# is the shape worth copying: input absent -> refuse, loudly.
+#
+# From here: exit 2 means this gate could not run. Exit 1 means the artefacts
+# drifted, and only that.
+cannot() { echo "✗ CANNOT CHECK: $*" >&2; echo "  This is NOT a drift finding — the gate did not run." >&2; exit 2; }
+
+command -v uv >/dev/null 2>&1 || cannot "uv is not installed."
+[ -f ../ingest/.env ] || cannot "../ingest/.env is missing; dbt cannot resolve its profile."
+
 # --- 1. DRIFT GATE -------------------------------------------------------
 echo "→ drift gate: re-generate to temp + diff against checked-in"
 
-uv run --env-file ../ingest/.env dbt parse >/dev/null
+uv run --env-file ../ingest/.env dbt parse >/dev/null \
+  || cannot "dbt parse failed — no manifest to generate from."
+[ -f target/manifest.json ] || cannot "dbt parse produced no target/manifest.json."
 
 uv run python scripts/generate_api_v1.py \
   --manifest target/manifest.json \
   --models-dir-prefix models/marts/api/ \
   --state "$TMPDIR/state.json" \
-  --out "$TMPDIR/sql" >/dev/null
+  --out "$TMPDIR/sql" >/dev/null \
+  || cannot "the generator failed; there is nothing to compare against."
+[ -s "$TMPDIR/sql" ] || cannot "the generator produced an empty file."
 
 if ! diff -q api_v1_generated.sql "$TMPDIR/sql" >/dev/null; then
   echo "  ✗ api_v1_generated.sql is stale or hand-edited"
