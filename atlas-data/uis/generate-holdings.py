@@ -90,7 +90,7 @@ def _marts_counts():
         else:
             tables += 1
     seeds = len(list((root / "seeds").rglob("*.csv")))
-    return tables + seeds, views
+    return tables + seeds, views, tables, seeds
 
 
 def _relations():
@@ -182,9 +182,19 @@ def yaml_block():
          f"    {lics.get('NLOD', 0)} of {len(rows)} — Norwegian public data, free to reuse with",
          "    attribution. " + _nonpublic(rows),
          "  discover: >-",
+         # 🔵 THE FOUR A CONSUMER NEEDS, and the last two were added because
+         # each went unfound by someone who needed exactly what it holds.
+         # meta_dimensions carries what every coded column MEANS and nothing
+         # pointed at it for weeks (urb-agents #1335). served_as says whether
+         # a source reaches a consumer at all; it is live, three agents use
+         # it as a gate, and it appeared nowhere in this artifact until
+         # dev-templates noticed (urb-agents #1353).
          "    GET /meta_endpoints for what is queryable, /meta_sources for every upstream",
-         "    with its freshness, /indicator_summary for every published series. Those are",
-         "    the live answer; the counts here are regenerated per release.",
+         "    with its freshness and a served_as array naming the relations it actually",
+         "    reaches (empty means nothing published depends on it), /meta_dimensions for",
+         "    what each coded column MEANS — read it before interpreting a code —, and",
+         "    /indicator_summary for every published series. Those are the live answer;",
+         "    the counts here are regenerated per release.",
          Y_END]
     return "\n".join(L)
 
@@ -203,13 +213,20 @@ def splice(path, begin, end, block, anchor=None):
 
 def _rewrite_counts(text):
     """The two claims render-template-info.sh checks, written rather than typed."""
-    tables, views = _marts_counts()
+    tables, views, models, seeds = _marts_counts()
     text = re.sub(r"\d+ marts BASE TABLEs", f"{tables} marts BASE TABLEs", text)
     text = re.sub(r"\(plus \d+\s*\n?\s*marts views\)",
                   lambda m: m.group(0).replace(re.search(r"\d+", m.group(0)).group(0), str(views)),
                   text)
     text = re.sub(r"\(plus \d+ marts views\)", f"(plus {views} marts views)", text)
     text = re.sub(r'the "\d+ marts views" above', f'the "{views} marts views" above', text)
+    # 🔴 THE COUNTING RULE'S OWN NUMBERS, which were typed and went stale three
+    # times (#824, #1263, #1353). They are written in the form `models=46` so a
+    # YAML fold cannot break the token apart — the 2026-09-21 failure included a
+    # phrase invisible to grep for exactly that reason.
+    text = re.sub(r"models=\d+", f"models={models}", text)
+    text = re.sub(r"seeds=\d+", f"seeds={seeds}", text)
+    text = re.sub(r"views=\d+", f"views={views}", text)
     return text
 
 

@@ -46,8 +46,11 @@ data:
     attribution. The exceptions are `frr` (internal) and `redcross-branches` (permissive) — Red Cross's own data rather than the state's. `frr` is a volunteer register held in an auth-gated schema and is NOT served on the public API.
   discover: >-
     GET /meta_endpoints for what is queryable, /meta_sources for every upstream
-    with its freshness, /indicator_summary for every published series. Those are
-    the live answer; the counts here are regenerated per release.
+    with its freshness and a served_as array naming the relations it actually
+    reaches (empty means nothing published depends on it), /meta_dimensions for
+    what each coded column MEANS — read it before interpreting a code —, and
+    /indicator_summary for every published series. Those are the live answer;
+    the counts here are regenerated per release.
 # END holdings (generated)
 
 provides:
@@ -449,19 +452,28 @@ operational:
       other AND with the database while no method was written down (urb-agents
       #824): a "table" here is a BASE TABLE, views excluded and counted
       separately. raw = distinct `create table raw.*` across atlas-data/migrations
-      (52). marts = dbt models materialised table or incremental into schema marts
-      (46) plus seeds, which are always tables (16) = 62; eight models land in
-      marts as views instead and are the "10 marts views" above.
-      ⚠️ Those two numbers said 6 and five, one line apart, until 2026-09-19 —
-      in the field whose own header records fixing exactly this (#824, #1263).
-      Both are now DERIVED AND GATED by uis/render-template-info.sh rather than
-      maintained by hand, which is what the #824 rule should have meant. private_marts is excluded — it is the gated schema, not
+      (52). marts = dbt models materialised table or incremental into schema marts,
+      models=63 plus seeds, which are always tables, seeds=18; a further
+      views=10 are materialised as views instead and are the "10 marts views"
+      above.
+      ⚠️ THIS SENTENCE HAS CONTRADICTED ITSELF THREE TIMES (#824, #1263, and
+      #1353 on 2026-09-21, when it read 81 in the headline, "= 62" in the rule,
+      "eight" views one clause later and "(61 / 5 / 66 / 52)" at the end, all in
+      one folded scalar). The cause each time was the same: a field half
+      generated and half typed. EVERY NUMBER IN IT IS NOW WRITTEN BY
+      uis/generate-holdings.py — not render-template-info.sh, which this text
+      credited wrongly — and none is maintained by hand. If you are about to
+      type a figure here, add a substitution to that script instead.
+      private_marts is excluded — it is the gated schema, not
       part of a public install summary. Recompute marts from a dbt manifest:
       `python3 -c "import json,sys;m=json.load(open('dbt/target/manifest.json'))['nodes'];
       print(sum(1 for n in m.values() if n['schema']=='marts' and (n['resource_type']=='seed' or
       n['config']['materialized'] in ('table','incremental'))))"`.
-      All four figures were derived from this repo with no database and match
-      imac's live measurement exactly (61 / 5 / 66 / 52).
+      All figures here are derived from this repo with no database.
+      ⚠️ A previous line claimed they matched a live measurement "exactly
+      (61 / 5 / 66 / 52)". That reconciliation was real when written and the
+      figures have moved since; a stale claim of exact agreement is worse than
+      no claim, because it invites the reader to stop checking.
     note: >-
       🔴 UPGRADING AN EXISTING INSTALL? Run `uis dagster run publish_api_v1` afterwards.
       The column descriptions PostgREST publishes as OpenAPI docs live in the

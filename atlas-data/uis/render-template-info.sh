@@ -243,8 +243,18 @@ cp "$TMP" "$OUT"
 # Parse it if we can. Never silently skip — say which happened.
 export ATLAS_DAGSTER_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../dagster/atlas_data" && pwd)"
 export ATLAS_JOBS_OUT="$(mktemp)"
-if python3 -c 'import yaml' 2>/dev/null; then
-  python3 - "$TMP" <<'PY'
+# 🔵 FALL BACK TO THE dbt VENV RATHER THAN SKIP. This block used to announce
+# "pyyaml unavailable — skipped the parse check" on any machine whose system
+# python lacks it, which is most of them: the checks below are the only ones
+# that read the file as YAML rather than as lines, and skipping them is how a
+# folded scalar goes unexamined. The repo already has a python with pyyaml.
+PYY=python3
+if ! $PYY -c 'import yaml' 2>/dev/null; then
+  CAND="$(cd "$(dirname "${BASH_SOURCE[0]}")/../dbt" && pwd)/.venv/bin/python"
+  [ -x "$CAND" ] && $CAND -c 'import yaml' 2>/dev/null && PYY="$CAND"
+fi
+if $PYY -c 'import yaml' 2>/dev/null; then
+  $PYY - "$TMP" <<'PY'
 import os, re, sys, yaml
 d = yaml.safe_load(open(sys.argv[1]))
 svc = {s["service"]: s["config"] for s in d["provides"]["services"]}
@@ -415,10 +425,13 @@ print(f"  ✓ operational block matches the code: {len(declared)} crons, "
 
 print("  ✓ parsed; schemas=api_v1, init=single file, env_secrets ends -database-db")
 PY
-  python3 "$(dirname "${BASH_SOURCE[0]}")/check-first-data-coverage.py" \
+  $PYY "$(dirname "${BASH_SOURCE[0]}")/check-first-data-coverage.py" \
     "$ATLAS_DAGSTER_DIR" "$(cat "$ATLAS_JOBS_OUT")"
 else
-  echo "  ! pyyaml unavailable — skipped the parse check (text checks still ran)"
+  echo "  ✗ CANNOT CHECK: no python with pyyaml, not even atlas-data/dbt/.venv."
+  echo "    The YAML-parse checks did not run. Text checks alone cannot see"
+  echo "    inside a folded scalar (urb-agents #1353)."
+  exit 2
 fi
 
 echo "✓ rendered ${OUT} at ${TAG}"
