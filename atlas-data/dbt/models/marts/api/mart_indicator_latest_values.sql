@@ -11,7 +11,8 @@ select
   f.fylke_name,
   f.value::float as value,
   f.status,
-  f.year
+  f.year,
+  f.window_years
 from {{ ref('fact_kommune_indicators') }} f
 join latest l on l.source_id = f.source_id
               and l.contents_code = f.contents_code

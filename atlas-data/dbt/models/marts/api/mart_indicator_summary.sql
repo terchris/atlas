@@ -79,7 +79,11 @@ select
   max(m.upstream_title) as upstream_title,
   max(m.publisher) as publisher,
   max(m.eu_theme) as eu_theme,
-  max(m.tags) as tags
+  max(m.tags) as tags,
+  -- Last, per the rule ten lines above — which this column tried to break on
+  -- its first draft by landing next to `latest_year` where it reads best.
+  -- Adjacency belongs in schema.yml; ordinal position is a contract.
+  max(f.window_years)::int as latest_year_window_years
 from {{ ref('fact_kommune_indicators') }} f
 left join {{ ref('mart_meta_sources') }} m on m.source_id = f.source_id
 join latest l on l.source_id = f.source_id

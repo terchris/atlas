@@ -66,7 +66,8 @@ with ssb_08764 as (
 ssb_06913 as (
   select
     source_id, kommune_nr, year, contents_code, contents_label,
-    value, status, updated_at
+    value, status, updated_at,
+    1::int as window_years  {# no period columns: point-in-time #}
   from {{ ref('indicators__ssb_06913') }}
   where kommune_nr is not null
 ),
@@ -74,7 +75,8 @@ ssb_06913 as (
 ssb_06944 as (
   select
     source_id, kommune_nr, year, contents_code, contents_label,
-    value, status, updated_at
+    value, status, updated_at,
+    1::int as window_years  {# no period columns: point-in-time #}
   from {{ ref('indicators__ssb_06944') }}
   where kommune_nr is not null
     and household_type = '0000'   -- all households; headline
@@ -83,7 +85,8 @@ ssb_06944 as (
 fhi_bor_alene as (
   select
     source_id, kommune_nr, year, contents_code,
-    contents_label, value, status, updated_at
+    contents_label, value, status, updated_at,
+    {{ window_years() }}
   from {{ ref('indicators__fhi_bor_alene') }}
   where kommune_nr is not null
     and age_group = '16_120'       -- all adults 16+; headline
@@ -92,7 +95,8 @@ fhi_bor_alene as (
 ssb_13995 as (
   select
     source_id, kommune_nr, year, contents_code, contents_label,
-    value, status, updated_at
+    value, status, updated_at,
+    1::int as window_years  {# no period columns: point-in-time #}
   from {{ ref('indicators__ssb_13995') }}
   where kommune_nr is not null
 ),
@@ -100,7 +104,8 @@ ssb_13995 as (
 ssb_06947 as (
   select
     source_id, kommune_nr, year, contents_code, contents_label,
-    value, status, updated_at
+    value, status, updated_at,
+    1::int as window_years  {# no period columns: point-in-time #}
   from {{ ref('indicators__ssb_06947') }}
   where kommune_nr is not null
 ),
@@ -114,7 +119,8 @@ ssb_06083 as (
     source_id, kommune_nr, year,
     (contents_code || '_' || family_type) as contents_code,
     coalesce(contents_label, '') || ' (' || family_type_label_no || ')' as contents_label,
-    value, status, updated_at
+    value, status, updated_at,
+    1::int as window_years  {# no period columns: point-in-time #}
   from {{ ref('indicators__ssb_06083') }}
   where kommune_nr is not null
 ),
@@ -122,7 +128,8 @@ ssb_06083 as (
 ssb_12292 as (
   select
     source_id, kommune_nr, year, contents_code, contents_label,
-    value, status, updated_at
+    value, status, updated_at,
+    1::int as window_years  {# no period columns: point-in-time #}
   from {{ ref('indicators__ssb_12292') }}
   where kommune_nr is not null
 ),
@@ -130,7 +137,8 @@ ssb_12292 as (
 ssb_12063 as (
   select
     source_id, kommune_nr, year, contents_code, contents_label,
-    value, status, updated_at
+    value, status, updated_at,
+    1::int as window_years  {# no period columns: point-in-time #}
   from {{ ref('indicators__ssb_12063') }}
   where kommune_nr is not null
 ),
@@ -138,7 +146,8 @@ ssb_12063 as (
 ssb_12131 as (
   select
     source_id, kommune_nr, year, contents_code, contents_label,
-    value, status, updated_at
+    value, status, updated_at,
+    1::int as window_years  {# no period columns: point-in-time #}
   from {{ ref('indicators__ssb_12131') }}
   where kommune_nr is not null
 ),
@@ -146,7 +155,8 @@ ssb_12131 as (
 ssb_12132 as (
   select
     source_id, kommune_nr, year, contents_code, contents_label,
-    value, status, updated_at
+    value, status, updated_at,
+    1::int as window_years  {# no period columns: point-in-time #}
   from {{ ref('indicators__ssb_12132') }}
   where kommune_nr is not null
 ),
@@ -158,7 +168,8 @@ fhi_mobbing as (
     source_id, kommune_nr, year,
     (contents_code || '_grade' || grade) as contents_code,
     coalesce(contents_label, '') || ' (' || grade || '. trinn)' as contents_label,
-    value, status, updated_at
+    value, status, updated_at,
+    {{ window_years() }}
   from {{ ref('indicators__fhi_mobbing') }}
   where kommune_nr is not null
     and contents_code = 'RATE'
@@ -171,7 +182,8 @@ fhi_vgs as (
   select
     source_id, kommune_nr, year,
     contents_code, contents_label,
-    value, status, updated_at
+    value, status, updated_at,
+    {{ window_years() }}
   from {{ ref('indicators__fhi_vgs_gjennomforing') }}
   where kommune_nr is not null
     and sex = 'all'
@@ -186,7 +198,8 @@ fhi_trangbodd as (
   select
     source_id, kommune_nr, year,
     contents_code, contents_label,
-    value, status, updated_at
+    value, status, updated_at,
+    {{ window_years() }}
   from {{ ref('indicators__fhi_trangbodd') }}
   where kommune_nr is not null
     and age_group = '0_120'
@@ -203,7 +216,8 @@ ssb_09429 as (
     source_id, kommune_nr, year,
     (contents_code || '_' || education_level) as contents_code,
     coalesce(contents_label, '') || ' (' || education_level_label_no || ')' as contents_label,
-    value, status, updated_at
+    value, status, updated_at,
+    1::int as window_years  {# no period columns: point-in-time #}
   from {{ ref('indicators__ssb_09429') }}
   where kommune_nr is not null and sex = 'all'
 ),
@@ -215,7 +229,8 @@ ssb_crime_tables_08487 as (
   select
     source_id, kommune_nr, year,
     contents_code, contents_label,
-    value, status, updated_at
+    value, status, updated_at,
+    1::int as window_years  {# no period columns: point-in-time #}
   from {{ ref('indicators__ssb_08487') }}
   where kommune_nr is not null
 ),
@@ -247,7 +262,8 @@ ssb_crime_tables_08487 as (
 fhi_alkohol as (
   select
     source_id, kommune_nr, year, contents_code, contents_label,
-    value, status, updated_at
+    value, status, updated_at,
+    {{ window_years() }}
   from {{ ref('indicators__fhi_alkohol') }}
   where kommune_nr is not null
     and sex = 'all'
@@ -258,7 +274,8 @@ fhi_alkohol as (
 fhi_depresjon as (
   select
     source_id, kommune_nr, year, contents_code, contents_label,
-    value, status, updated_at
+    value, status, updated_at,
+    {{ window_years() }}
   from {{ ref('indicators__fhi_depresjon') }}
   where kommune_nr is not null
     and sex = 'all'
@@ -269,7 +286,8 @@ fhi_depresjon as (
 fhi_fortrolig_venn as (
   select
     source_id, kommune_nr, year, contents_code, contents_label,
-    value, status, updated_at
+    value, status, updated_at,
+    {{ window_years() }}
   from {{ ref('indicators__fhi_fortrolig_venn') }}
   where kommune_nr is not null
     and sex = 'all'
@@ -280,7 +298,8 @@ fhi_fortrolig_venn as (
 fhi_hasj as (
   select
     source_id, kommune_nr, year, contents_code, contents_label,
-    value, status, updated_at
+    value, status, updated_at,
+    {{ window_years() }}
   from {{ ref('indicators__fhi_hasj') }}
   where kommune_nr is not null
     and sex = 'all'
@@ -291,7 +310,8 @@ fhi_hasj as (
 fhi_livskvalitet as (
   select
     source_id, kommune_nr, year, contents_code, contents_label,
-    value, status, updated_at
+    value, status, updated_at,
+    {{ window_years() }}
   from {{ ref('indicators__fhi_livskvalitet') }}
   where kommune_nr is not null
     and sex = 'all'
@@ -302,7 +322,8 @@ fhi_livskvalitet as (
 fhi_mediebruk_some as (
   select
     source_id, kommune_nr, year, contents_code, contents_label,
-    value, status, updated_at
+    value, status, updated_at,
+    {{ window_years() }}
   from {{ ref('indicators__fhi_mediebruk_some') }}
   where kommune_nr is not null
     and sex = 'all'
@@ -313,7 +334,8 @@ fhi_mediebruk_some as (
 fhi_mediebruk_spill as (
   select
     source_id, kommune_nr, year, contents_code, contents_label,
-    value, status, updated_at
+    value, status, updated_at,
+    {{ window_years() }}
   from {{ ref('indicators__fhi_mediebruk_spill') }}
   where kommune_nr is not null
     and sex = 'all'
@@ -324,7 +346,8 @@ fhi_mediebruk_spill as (
 fhi_mediebruk_underhold as (
   select
     source_id, kommune_nr, year, contents_code, contents_label,
-    value, status, updated_at
+    value, status, updated_at,
+    {{ window_years() }}
   from {{ ref('indicators__fhi_mediebruk_underhold') }}
   where kommune_nr is not null
     and sex = 'all'
@@ -335,7 +358,8 @@ fhi_mediebruk_underhold as (
 fhi_smertestillende as (
   select
     source_id, kommune_nr, year, contents_code, contents_label,
-    value, status, updated_at
+    value, status, updated_at,
+    {{ window_years() }}
   from {{ ref('indicators__fhi_smertestillende') }}
   where kommune_nr is not null
     and sex = 'all'
@@ -364,7 +388,8 @@ fhi_neet as (
   -- partition downstream" and 15_29 is the one the indicator is named for.
   select
     source_id, kommune_nr, year, contents_code, contents_label,
-    value, status, updated_at
+    value, status, updated_at,
+    {{ window_years() }}
   from {{ ref('indicators__fhi_neet') }}
   where kommune_nr is not null
     and age_band = '15_29'
@@ -377,7 +402,8 @@ fhi_befolkning as (
   -- universal one and the only safe headline.
   select
     source_id, kommune_nr, year, contents_code, contents_label,
-    value, status, updated_at
+    value, status, updated_at,
+    {{ window_years() }}
   from {{ ref('indicators__fhi_befolkning') }}
   where kommune_nr is not null
     and sex = 'all'
@@ -391,7 +417,8 @@ fhi_befolkningsvekst as (
   -- become contents_code values rather than one being chosen.
   select
     source_id, kommune_nr, year, contents_code, contents_label,
-    value, status, updated_at
+    value, status, updated_at,
+    {{ window_years() }}
   from {{ ref('indicators__fhi_befolkningsvekst') }}
   where kommune_nr is not null
     and sex = 'all'
@@ -404,7 +431,8 @@ fhi_innvkat as (
   -- the manifest says so and this filter is why.
   select
     source_id, kommune_nr, year, contents_code, contents_label,
-    value, status, updated_at
+    value, status, updated_at,
+    {{ window_years() }}
   from {{ ref('indicators__fhi_innvkat') }}
   where kommune_nr is not null
     and age_band = '0_120'
@@ -419,7 +447,8 @@ fhi_kpr_1aar as (
   -- exactly why it is the right single headline.
   select
     source_id, kommune_nr, year, contents_code, contents_label,
-    value, status, updated_at
+    value, status, updated_at,
+    {{ window_years() }}
   from {{ ref('indicators__fhi_kpr_1aar') }}
   where kommune_nr is not null
     and age_band = '0_74'
@@ -432,7 +461,8 @@ fhi_selvmord as (
   -- rolling windows, so `year` is the first year of the window.
   select
     source_id, kommune_nr, year, contents_code, contents_label,
-    value, status, updated_at
+    value, status, updated_at,
+    {{ window_years() }}
   from {{ ref('indicators__fhi_selvmord') }}
   where kommune_nr is not null
     and sex = 'all'
@@ -450,7 +480,8 @@ fhi_prognose as (
     source_id, kommune_nr, year,
     (contents_code || '_' || projection_year) as contents_code,
     coalesce(contents_label, '') || ' (framskrevet til ' || projection_year || ')' as contents_label,
-    value, status, updated_at
+    value, status, updated_at,
+    {{ window_years() }}
   from {{ ref('indicators__fhi_prognose') }}
   where kommune_nr is not null
     and sex = 'all'
@@ -540,6 +571,7 @@ select
   -- SSB's 9999 'Uoppgitt' without each one re-deriving what a sentinel is.
   -- dim_kommune keeps the row (Klass 131 publishes it); these marts do not.
   k.is_sentinel       as kommune_is_sentinel,
+  i.window_years,
   i.updated_at
 from all_indicators i
 join {{ ref('dim_kommune') }} k using (kommune_nr)

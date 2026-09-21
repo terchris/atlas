@@ -58,16 +58,42 @@ models:
           six years stale to a careful reader, who was about to tell a
           consumer so (urb-agents #1321).
 
-          ⚠️ THIS FACT CANNOT EXPRESS THE WINDOW. Its grain is one row per
-          (source, kommune, year, contents_code) and a window needs two
-          years. The indicator models keep `period`, `period_start_year`
-          and `period_end_year`; those survive in `marts.indicators__*` and
-          are lost here. If the span matters, read the indicator model.
+          ⚠️ THIS LINE PREVIOUSLY SAID THE FACT COULD NOT EXPRESS THE
+          WINDOW, and told readers to go read the indicator model. That was
+          true until 2026-09-21 and is no longer: `window_years` below
+          carries the span. The advice was also the defect — a consumer who
+          has to leave the table to render a year correctly mostly will
+          not, and the two errors in urb-agents #1321 and #1331 are what
+          that looks like. Read `year` together with `window_years`.
         data_tests:
           - not_null
           - dbt_utils.accepted_range:
               min_value: 1900
               max_value: 2050
+      - name: window_years
+        description: |
+          How many calendar years `year` covers. 1 for a point-in-time
+          observation, 5 for `fhi-selvmord`'s rolling window, 3 for
+          `fhi-mobbing`. The covered span is `year` to
+          `year + window_years - 1` inclusive.
+
+          🔴 THIS IS A FACT ABOUT THE UPSTREAM TABLE, NOT AN ATLAS OPINION.
+          It is derived, not declared: `period_end_year - period_start_year
+          + 1` from the source's own period string, via the `window_years()`
+          macro. For the 11 CTEs whose source publishes no period columns
+          it is the literal 1, which is the same claim their single-year
+          `period` already makes.
+
+          ⚠️ 1 HERE MEANS "ONE YEAR", NOT "UNKNOWN". A source that is
+          genuinely windowed but ships no period columns would read 1 and
+          be wrong. None do today — every windowed source in Atlas is an
+          FHI table that publishes `aar_code` as `2020_2024` — but that is
+          a property of today's holdings, not a guarantee.
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 1
+              max_value: 10
       - name: contents_code
         description: Source-specific ContentsCode verbatim from upstream (e.g. 'EUskala60', 
           'Folkemengde').

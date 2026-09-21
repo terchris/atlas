@@ -340,7 +340,15 @@ COMMENT ON COLUMN api_v1.indicator_latest_values.status IS 'SSB suppression mark
 when value is present.';
 COMMENT ON COLUMN api_v1.indicator_latest_values.year IS 'The latest year for this (source_id, contents_code). Repeats
 across all kommuner for a given indicator — kept on the row so
-PostgREST consumers can read it without a separate join.';
+PostgREST consumers can read it without a separate join.
+
+⚠️ For a windowed source this is the FIRST year of the window.
+Render it with `window_years`, never alone.';
+COMMENT ON COLUMN api_v1.indicator_latest_values.window_years IS 'How many calendar years `year` covers, carried from
+fact_kommune_indicators. 1 for an annual series. The span is
+`year` to `year + window_years - 1` inclusive. See
+`mart_indicator_summary.latest_year_window_years` for why this
+is a column rather than prose.';
 
 -- indicator_missing_kommuner  ←  marts.mart_indicator_missing_kommuner
 CREATE OR REPLACE VIEW api_v1.indicator_missing_kommuner AS SELECT * FROM marts.mart_indicator_missing_kommuner;
@@ -423,7 +431,33 @@ said something a consumer acted on and it was wrong.';
 COMMENT ON COLUMN api_v1.indicator_summary.latest_year IS 'Most recent calendar year for which this (source_id,
 contents_code) has any rows in fact_kommune_indicators. The
 coverage and value-range columns below are computed against
-this year only.';
+this year only.
+
+⚠️ READ IT WITH `latest_year_window_years`. For a windowed
+source this is the FIRST year of the window, not the year of
+the data, and rendering it alone prints a date that is wrong by
+up to four years.';
+COMMENT ON COLUMN api_v1.indicator_summary.latest_year_window_years IS 'How many calendar years `latest_year` covers: 1 for an annual
+series, 5 for `fhi-selvmord`, 3 for `fhi-mobbing`. The span is
+`latest_year` to `latest_year + latest_year_window_years - 1`.
+
+🔴 WHY IT IS A COLUMN AND NOT A SENTENCE. The window was already
+stated in prose in this catalogue. On 2026-09-21 it was misread
+twice in one day in opposite directions — a reviewer called a
+live `fhi-selvmord` series six years stale, and a consumer
+shipped the caption «Mobbetallene er fra 2022» for a 2022-2024
+window. The consumer''s proposed workaround, matching `/1-year/i`
+against the description, false-positives on `fhi-kpr-1aar`,
+whose title contains "KPR 1-year" and which is annual anyway
+(urb-agents #1331).
+
+⚠️ IT IS A `max()` OVER THE KOMMUNER AT `latest_year`, because
+this view''s grain is one row per (source, contents_code) and the
+window lives on the fact row. That is only honest if the window
+is uniform across kommuner within an indicator-year, which is
+asserted by the singular test
+`window_is_uniform_within_an_indicator_year`. If that test ever
+fails, this column is lossy and the failure is the warning.';
 COMMENT ON COLUMN api_v1.indicator_summary.kommuner_with_value IS 'Count of active kommuner (kommune_is_active = true) that have a
 non-NULL value for this indicator at latest_year. The headline
 coverage number on the data explorer.';
