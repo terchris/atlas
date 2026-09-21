@@ -86,9 +86,22 @@ models:
 
           ⚠️ 1 HERE MEANS "ONE YEAR", NOT "UNKNOWN". A source that is
           genuinely windowed but ships no period columns would read 1 and
-          be wrong. None do today — every windowed source in Atlas is an
-          FHI table that publishes `aar_code` as `2020_2024` — but that is
-          a property of today's holdings, not a guarantee.
+          be wrong.
+
+          🔵 THE UPSTREAM'S OWN WORDS ARE IN `api_v1.meta_dimensions`. Query
+          `?code=in.(AAR,Tid)&select=source_id,meaning,value_format` for what
+          each source says its time dimension is — `fhi-selvmord` "5-year
+          rolling window", `fhi-vgs-gjennomforing` "3-year rolling cohort",
+          `fhi-kpr-1aar` "single-year despite the range form". That relation
+          is the independent check on this column, and
+          `check-window-agrees-with-the-catalogue.sh` fails CI when the two
+          disagree.
+
+          ⚠️ An earlier version of this description claimed every windowed
+          source in Atlas was an FHI table. `ssb-12944` is "3-year rolling
+          period" and is only absent from this fact because it is still in
+          the serving BACKLOG — it is the next source that would get a
+          wrong 1 (urb-agents #1333).
         data_tests:
           - not_null
           - dbt_utils.accepted_range:

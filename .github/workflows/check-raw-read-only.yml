@@ -32,6 +32,10 @@ jobs:
         run: atlas-data/dbt/check-classifier-vocabulary.sh
       - name: Every ingested source reaches a model, or is declared
         run: atlas-data/dbt/check-every-source-is-served.sh
+      # Reads the fact SQL and the dimensions seed directly — no database, no
+      # dbt parse, so it belongs in the job that needs neither.
+      - name: Windowing agrees with the published catalogue
+        run: atlas-data/dbt/check-window-agrees-with-the-catalogue.sh
 
   kommune-marts-exclude-sentinels:
     runs-on: ubuntu-latest

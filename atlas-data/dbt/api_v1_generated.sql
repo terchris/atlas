@@ -451,6 +451,15 @@ against the description, false-positives on `fhi-kpr-1aar`,
 whose title contains "KPR 1-year" and which is annual anyway
 (urb-agents #1331).
 
+🔵 CROSS-CHECK IT AGAINST `meta_dimensions`, WHICH SAID ALL THIS
+FIRST. `?code=in.(AAR,Tid)&select=source_id,meaning,value_format`
+carries the upstream''s own description of its time dimension. On
+2026-09-21 a consumer, ops-dev and this agent each derived the
+windowing independently while that relation was already published
+and already said it — and the claim "exactly two FHI sources are
+windowed", used as evidence, was wrong; the catalogue named three
+(urb-agents #1333).
+
 ⚠️ IT IS A `max()` OVER THE KOMMUNER AT `latest_year`, because
 this view''s grain is one row per (source, contents_code) and the
 window lives on the fact row. That is only honest if the window

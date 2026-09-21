@@ -66,9 +66,32 @@ period string by the `window_years()` macro, not declared.
 ⚠️ `window_years = 1` means "one year", not "unknown". Eleven CTEs get the
 literal 1 because their source publishes no period columns. A genuinely
 windowed source that shipped no period columns would read 1 and be wrong.
-None do today; that is a property of today's holdings, not a guarantee.
 
-**Caught by:** `window_is_uniform_within_an_indicator_year` (a singular test,
+🔴 **And the fact was already published, in a relation nobody opened.**
+`api_v1.meta_dimensions` — 228 rows, live for weeks — records what each
+upstream dimension means. It has said `fhi-selvmord AAR = "5-year rolling
+window"` the whole time, and `fhi-kpr-1aar = "single-year despite the range
+form"`, which is exactly the disambiguation that defeated the regex. **Three
+parties derived the windowing independently while it sat there**, and the
+claim "exactly two FHI sources are windowed" — used as evidence in the design
+of this column — was wrong. The catalogue named a third,
+`fhi-vgs-gjennomforing` ("3-year rolling cohort"), whose `2023` was rendering
+on a consumer's front page as a point vintage. A fourth, `ssb-12944`
+("3-year rolling period"), is still in the serving BACKLOG and is the next
+one to get a wrong `1`.
+
+> **Before deriving a fact about an upstream dimension, query
+> `meta_dimensions` for it.** Reading all 21 source descriptions by hand is
+> thorough and structurally incapable of finding a window, because
+> `meta_sources.description` does not carry one.
+
+**Caught by:** `check-window-agrees-with-the-catalogue.sh` cross-checks every
+fact source's windowing against `meta_dimensions` in CI, with no database —
+a source the catalogue calls windowed may not publish `window_years = 1`, and
+a source in the fact with no catalogue row fails rather than being skipped.
+⚠️ Both sides are hand-authored, so two claims agreeing is weaker than a
+measurement; it cannot tell you the derived number is right.
+Also `window_is_uniform_within_an_indicator_year` (a singular test,
 so it runs in `transform_checks`, not in `transform_and_publish`) asserts the
 window does not vary across kommuner within one indicator-year — which is what
 makes the `max()` in `indicator_summary` lossless. Nothing checks that a

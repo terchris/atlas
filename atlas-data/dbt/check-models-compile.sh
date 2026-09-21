@@ -78,6 +78,22 @@ root = pathlib.Path("target/compiled")
 models = [f for f in sorted(root.rglob("*.sql"))
           if "/models/" in f.as_posix() and "/tests/" not in f.as_posix()]
 
+# 🔴 STALE COMPILED OUTPUT CAN LIE IN BOTH DIRECTIONS, AND STALE-GREEN IS THE
+# DANGEROUS ONE. In CI the checkout is clean so this cannot happen; locally it
+# happened to me the first day this gate existed — I fixed a model, did not
+# recompile, and the gate reported the OLD broken file. Had the mistake gone
+# the other way it would have reported a clean repo I had just broken.
+newest = max((f.stat().st_mtime for f in models), default=0)
+edited = [f for f in pathlib.Path("models").rglob("*.sql")
+          if f.stat().st_mtime > newest]
+if edited:
+    print(f"✗ CANNOT CHECK: {len(edited)} model source(s) are newer than the "
+          f"compiled output, so this would check a stale build. Re-run "
+          f"`dbt compile`.", file=sys.stderr)
+    for f in sorted(edited)[:5]:
+        print(f"    {f}", file=sys.stderr)
+    sys.exit(2)
+
 if not models:
     print("✗ CANNOT CHECK: zero compiled model files. It would have passed "
           "without checking anything.", file=sys.stderr)
