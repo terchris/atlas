@@ -18,6 +18,10 @@ The repo uses the URB AI-developer workflow. **Before doing anything else, read 
    - [PLANS.md](website/docs/ai-developer/PLANS.md) — plan/investigation structure
    - [GIT.md](website/docs/ai-developer/GIT.md) — git safety; this repo is GitHub, so `gh` applies
    - [WORKTREE.md](website/docs/ai-developer/WORKTREE.md) — multi-agent worktree safety
+   - [SERVING-A-SOURCE.md](website/docs/ai-developer/SERVING-A-SOURCE.md) — **read before
+     modelling or publishing a source.** What goes wrong between ingest and a consumer trusting
+     the result, written from defects that happened, with which gate catches each one and which
+     are only documented
    - [SECURITY.md](website/docs/ai-developer/SECURITY.md) — **read before writing anything into
      this repo or the published site; the repo is public**
    - [AZURE-DEVOPS.md](website/docs/ai-developer/AZURE-DEVOPS.md) — not applicable here
