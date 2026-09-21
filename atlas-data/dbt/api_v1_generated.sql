@@ -240,11 +240,22 @@ not a municipality.
 live API, urb-agents #1265). For real municipalities filter
 `?is_sentinel=is.false`.
 
-This is the third sentinel of the same family across three
-published surfaces — 9999 here, 9999 in
-coverage_gap_barnefattigdom, 0 in KOSvedtakaar0000 — and the
-first that can be named in a filter rather than known. Whether
-the other two follow is urb-agents #700.';
+🔵 THIS RELATION KEEPS THE ROW ON PURPOSE, AND IT IS NOW THE
+ONLY PUBLISHED ONE THAT DOES. SSB''s Klass 131 contains 9999,
+and this dimension mirrors SSB''s kommune list — dropping it
+would mean Atlas''s list no longer matches the source anyone
+would reconcile against.
+
+⚠️ As of 2026-09-21 the ANALYTICAL relations no longer carry
+it: coverage_gap_barnefattigdom, indicator_latest_values,
+indicator_missing_kommuner and kommune_ngo_summary exclude it,
+and indicator_summary stopped counting it in its coverage
+figures. Those are Atlas''s own constructs and their grain is
+"one municipality"; this one is a mirror. Terje''s decision,
+urb-agents #1301.
+
+The unattributable value it represented is published in
+`unattributed_totals`, not discarded.';
 
 -- distrikt_summary  ←  marts.mart_distrikt_summary
 CREATE OR REPLACE VIEW api_v1.distrikt_summary AS SELECT * FROM marts.mart_distrikt_summary;
@@ -568,6 +579,13 @@ kommuner and are dropped by the join.
 A (kommune, category) pair absent from this view has zero
 organisations; rows are not emitted for empty combinations.
 
+⚠️ CHANGED 2026-09-21: SSB''s 9999 ''Uoppgitt'' is no longer
+included. It is a current code, so `is_active` never excluded it,
+and this relation had been reporting a place that does not exist.
+Counts drop by that row. `dim_kommune` still carries 9999 — the
+dimension mirrors SSB''s list — and the value is published in
+`unattributed_totals` (urb-agents #1301).
+
 ⚠️ COST, AND ONE LOAD-BEARING DEPENDENCY. Measured end-to-end
 against the live API: 0.12 s filtered by kommune_nr, 0.205-0.326 s
 unfiltered for all rows. Before the covering index on
@@ -600,6 +618,13 @@ adds them client-side. That was most of a cold page load
 ⚠️ Counts exclude the 10.3 % of active voluntary units carrying no
 kommune_nr, exactly as kommune_ngo_summary does. Summing this gives
 the placed total, not the register total.
+
+⚠️ CHANGED 2026-09-21: SSB''s 9999 ''Uoppgitt'' is no longer
+included. It is a current code, so `is_active` never excluded it,
+and this relation had been reporting a place that does not exist.
+Counts drop by that row. `dim_kommune` still carries 9999 — the
+dimension mirrors SSB''s list — and the value is published in
+`unattributed_totals` (urb-agents #1301).
 
 ⚠️ COST, AND ONE LOAD-BEARING DEPENDENCY. Measured end-to-end
 against the live API: 0.12 s filtered by kommune_nr, 0.205-0.326 s

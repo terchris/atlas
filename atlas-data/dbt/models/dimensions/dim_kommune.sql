@@ -67,6 +67,24 @@ select
   r.valid_from,
   r.valid_to,
   case when r.valid_to is null or r.valid_to > current_date
-       then true else false end            as is_active
+       then true else false end            as is_active,
+  -- 🔴 THIS DIMENSION KEEPS EVERY CODE SSB PUBLISHES, INCLUDING 9999.
+  --
+  -- Klass 131 contains 'Uoppgitt' and Atlas does not synthesise it. Dropping it
+  -- here would mean Atlas's kommune list no longer matches SSB's kommune list,
+  -- and a consumer reconciling the two would find a code missing — which is the
+  -- one promise this repo exists to keep. So the row stays and gains a flag,
+  -- and the ANALYTICAL marts downstream exclude it (urb-agents #1301, Terje's
+  -- decision 2026-09-21: option B).
+  --
+  -- 🔵 The rule: the dimension MIRRORS the source; the marts are Atlas's own
+  -- constructs and Atlas defines their grain. "One row per municipality" is a
+  -- grain statement, not curation of somebody else's data.
+  --
+  -- Derived from classify_region_code so there is one definition of "is a
+  -- municipality" in the project — the same one that stopped Svalbard being
+  -- called a kommune. mart_dim_kommune used to recompute it as
+  -- `kommune_nr = '9999'`; it now reads this.
+  ({{ classify_region_code('l.code') }}) <> 'kommune' as is_sentinel
 from latest_per_code l
 join range_per_code  r using (code)

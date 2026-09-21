@@ -73,7 +73,7 @@ select
   --
   -- 🔵 Appended rather than inserted: api_v1.dim_kommune is CREATE OR REPLACE
   -- VIEW ... SELECT *, which accepts new columns only at the end.
-  (k.kommune_nr = '9999') as is_sentinel
+  k.is_sentinel
 from {{ ref('dim_kommune') }} k
 left join {{ ref('dim_fylke') }} f on f.fylke_nr = k.fylke_nr
 order by k.kommune_nr

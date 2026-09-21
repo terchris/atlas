@@ -87,6 +87,12 @@ from banded b
 join {{ ref('dim_kommune') }} k
   on k.kommune_nr = b.kommune_nr
  and k.is_active
+ -- 🔵 Belt and braces, and the braces are one model away. ssb-07459's 9999 is
+ -- already resolved to a null kommune_nr by region_code_to_kommune_nr, so this
+ -- is redundant TODAY — but that protection lives in indicators__ssb_07459 and
+ -- a reader of this file cannot see it. Stated locally so the relation is
+ -- correct on its own terms (urb-agents #1301).
+ and not k.is_sentinel
 -- LEFT, not inner: dim_kommune holds Svalbard-style 21xx codes whose fylke_nr
 -- has no row in dim_fylke, and fact_kommune_indicators already documents that.
 -- An inner join here would drop those kommuner from the denominator entirely,
