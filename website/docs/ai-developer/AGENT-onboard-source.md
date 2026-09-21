@@ -4,6 +4,14 @@ This is the **autonomous-agent runbook** for adding one upstream data source to 
 
 > **Invariant zero**: never run `git push` or `gh pr merge` against a branch the human did not explicitly ask you to. You only ever push your own `feat/onboard-<source-id>` branch and open a PR. You never touch `main`. You never enable auto-merge.
 
+> **After the ingest lands, read
+> [`SERVING-A-SOURCE.md`](./SERVING-A-SOURCE.md).** This runbook gets bytes into
+> `raw`; that one is what goes wrong between there and a consumer trusting the
+> result — row counts that are not coverage, dimensions that contain their own
+> total, `year` columns that are window starts, and the difference between a
+> test existing and a test running. It is written from defects that happened,
+> and it says which ones a gate catches and which ones do not.
+
 ---
 
 ## Inputs you receive
