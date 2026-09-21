@@ -1,5 +1,5 @@
 with latest as (
-  select source_id, contents_code, {{ latest_year_agg() }} as latest_year
+  select source_id, contents_code, {{ latest_year_agg('kommune_is_active and not kommune_is_sentinel') }} as latest_year
   from {{ ref('fact_kommune_indicators') }}
   group by source_id, contents_code
 )

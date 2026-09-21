@@ -1,5 +1,5 @@
 with latest as (
-  select {{ latest_year_agg() }} as year
+  select {{ latest_year_agg('kommune_is_active and not kommune_is_sentinel') }} as year
   from {{ ref('fact_kommune_indicators') }}
   where source_id = 'ssb-08764' and contents_code = 'EUskala60'
 )
