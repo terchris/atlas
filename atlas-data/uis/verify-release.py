@@ -189,6 +189,25 @@ def _run(base, only=None):
     exp, relations = expectations()
 
     # One request each, reused across every dataset check.
+    #
+    # 🔴 A MISSING COLUMN IS A RELEASE FACT, NOT FORTY DATASET FAILURES.
+    # `latest_year_window_years` landed in cfb7aa2. Selecting it against an
+    # older build returns PGRST204/42703 and PostgREST fails the WHOLE
+    # request, so a naive select would report every dataset ABSENT — the
+    # identical uniform-negative that the User-Agent bug produced above, one
+    # level down, which is exactly where my last three lessons failed. So the
+    # column is probed separately and its absence is reported once, as "this
+    # build predates the column", and nothing else is claimed.
+    status, _, windowed = fetch(
+        base, "indicator_summary?select=source_id,latest_year_window_years")
+    window_deployed = status in (200, 206)
+    windows = {}
+    if window_deployed:
+        for r in windowed:
+            w = r.get("latest_year_window_years")
+            if w is not None:
+                windows.setdefault(r["source_id"], []).append(w)
+
     _, _, summary = fetch(base, "indicator_summary?select=source_id,kommuner_with_value")
     series = {}
     for r in summary:
@@ -212,6 +231,22 @@ def _run(base, only=None):
                 detail = "ABSENT from indicator_summary"
             elif cov == 0:
                 detail = f"{n} series but NO kommune carries a value"
+            elif window_deployed:
+                # Every indicator series must carry a window length. 1 is a
+                # legitimate answer (an annual series); NULL or absent is not,
+                # because a consumer rendering `latest_year` alone prints a
+                # date that can be wrong by four years (urb-agents #1331).
+                ws = windows.get(sid)
+                if not ws:
+                    ok = False
+                    detail += "  |  NO latest_year_window_years — a consumer " \
+                              "cannot render its year safely"
+                elif min(ws) < 1:
+                    ok = False
+                    detail += f"  |  latest_year_window_years = {min(ws)}, " \
+                              "which is not a length"
+                else:
+                    detail += f", window {min(ws)}-{max(ws)}y"
         elif kind == "published":
             status, hdrs, _ = fetch(base, f"{why}?limit=0", prefer="count=exact")
             n = int((hdrs.get("Content-Range") or "*/0").split("/")[-1]) if hdrs else 0
@@ -255,6 +290,19 @@ def _run(base, only=None):
     # Whole-release invariants that are not per-dataset.
     print()
     inv = []
+
+    # Said once, as a property of the BUILD. The per-dataset window check
+    # above is skipped when this is false, so it must be visible or the
+    # report silently gets weaker without saying so — "a check can pass by
+    # finding nothing to check".
+    inv.append((window_deployed,
+                "the build carries latest_year_window_years",
+                "present; every indicator's window was checked"
+                if window_deployed else
+                "ABSENT — this build predates cfb7aa2, so no window was "
+                "checked on any dataset. Consumers rendering `latest_year` "
+                "alone can be wrong by up to four years (urb-agents #1331). "
+                "This says nothing about the datasets themselves."))
 
     down = [r for r in relations
             if fetch(base, f"{r}?limit=0")[0] not in (200, 206)]
