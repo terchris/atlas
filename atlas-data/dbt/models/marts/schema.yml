@@ -48,7 +48,21 @@ models:
           Joined from dim_fylke. NULL if kommune's fylke_nr isn't in dim_fylke (rare — happens for codes
           like Svalbard 21xx without a matching fylke).
       - name: year
-        description: Calendar year.
+        description: |
+          Calendar year — and for a source published in multi-year windows,
+          the FIRST year of the window rather than the year of the data.
+
+          🔴 `fhi-selvmord` uses 5-year rolling windows, so its newest row
+          reads `year = 2020` and covers 2020-2024. `fhi-mobbing` uses
+          3-year windows. ⚠️ On 2026-09-21 that made a current series look
+          six years stale to a careful reader, who was about to tell a
+          consumer so (urb-agents #1321).
+
+          ⚠️ THIS FACT CANNOT EXPRESS THE WINDOW. Its grain is one row per
+          (source, kommune, year, contents_code) and a window needs two
+          years. The indicator models keep `period`, `period_start_year`
+          and `period_end_year`; those survive in `marts.indicators__*` and
+          are lost here. If the span matters, read the indicator model.
         data_tests:
           - not_null
           - dbt_utils.accepted_range:
