@@ -44,6 +44,13 @@ MODEL="$(grep -E '^atlas-data/dbt/(models/.*\.sql|seeds/|macros/|tests/|dbt_proj
 DOCS="$(grep -E '^atlas-data/dbt/(models/.*schema\.yml|api_v1_generated\.sql)' <<<"$FILES" || true)"
 # Python the image runs. Installing the image is the whole of the deploy.
 IMAGE="$(grep -E '^atlas-data/(dagster/|ingest/|atlas-status\.py)' <<<"$FILES" || true)"
+# 🔴 THE INSTALL DEFINITION, WHICH THIS SCRIPT USED TO CALL "nothing".
+# template-info.yaml and uis/ are the UIS install artifact — what a catalogue
+# reader sees and what `uis template install atlas` acts on. They reach nobody
+# through a Dagster job, so the job-shaped question returns "nothing to run",
+# and on 2026-09-21 I read that as "nothing to do" and told ops-dev a
+# holdings-summary change landed with publish_api_v1. It lands with a pin.
+ARTIFACT="$(grep -E '^atlas-data/(template-info\.yaml|uis/)' <<<"$FILES" || true)"
 
 echo "LANDS WITH:"
 if [ -n "$MODEL" ]; then
@@ -58,9 +65,20 @@ elif [ -n "$DOCS" ]; then
 elif [ -n "$IMAGE" ]; then
   echo "  nothing — installing the image is the deploy"
   echo "             (no marts or descriptions changed)"
+elif [ -n "$ARTIFACT" ]; then
+  echo "  no Dagster job — this is the UIS INSTALL ARTIFACT"
+  echo "             (template-info.yaml / uis/. It reaches a catalogue reader"
+  echo "              through a published pin, not through a transform. Nominate"
+  echo "              the tag; running a job changes nothing.)"
 else
   echo "  nothing — no job makes this visible"
   echo "             (website, docs or CI only)"
+fi
+
+if [ -n "$ARTIFACT" ] && { [ -n "$MODEL" ] || [ -n "$DOCS" ]; }; then
+  echo
+  echo "  ⚠️ This range ALSO changes the install artifact (template-info.yaml"
+  echo "     or uis/). The job above lands the data; the artifact needs a pin."
 fi
 
 if [ -n "$MODEL" ] && [ -n "$DOCS" ]; then
