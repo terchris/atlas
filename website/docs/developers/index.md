@@ -24,17 +24,17 @@ Licences: **NLOD** for 42 of 44 — Norwegian public data, free to reuse with at
 
 | relation | what it holds |
 |---|---|
-| `activity_catalog` | One row per (NGO, activity) joining dim_activity to the service-category seed for the human-readable label, plus a count of active chapters offering each activity. |
+| `activity_catalog` | 🔵 EXPECTED EMPTY TODAY, AND THAT IS NOT A DEFECT. |
 | `brreg_enhet` | Every organisation registered in Norway — the whole of Brønnøysundregistrene's Enhetsregisteret, around 1.17 million rows, current as of the last change-feed run. |
 | `bufdir_indicator_alias` | Cross-release alias table for `bufdir-barnefattigdom` `indicator_api_id` renumbers. |
 | `coverage_gap_barnefattigdom` | One row per active kommune for the latest year of SSB 08764 child poverty data, combining the EUskala60 share (% of children in low-income households) with the Personer count (number of children). |
 | `dim_kommune` | The canonical municipality registry — SSB Klass 131, with fylke name joined. |
-| `distrikt_summary` | One row per regional chapter (Red Cross "distrikt" level, and the equivalent regional tier for any other NGO with a hierarchy). |
+| `distrikt_summary` | 🔵 EXPECTED EMPTY TODAY, AND THAT IS NOT A DEFECT. |
 | `indicator_latest_values` | One row per (source_id, contents_code, kommune_nr) at each indicator's latest_year, restricted to active kommuner. |
 | `indicator_missing_kommuner` | One row per (source_id, contents_code, kommune_nr) for every active kommune that has *no* non-NULL value at the indicator's latest_year. |
 | `indicator_summary` | One row per (source_id, contents_code) summarising the latest-year coverage and value range for every indicator in fact_kommune_indicators. |
 | `kommune_befolkning_alder` | Population by kommune, year and age band — the denominator layer. |
-| `kommune_local_chapters` | Active local chapters in each kommune, decorated with the NGO name/brand and the service-category labels offered. |
+| `kommune_local_chapters` | 🔵 EXPECTED EMPTY TODAY, AND THAT IS NOT A DEFECT. |
 | `kommune_ngo_summary` | Active voluntary organisations per kommune and ICNPO category — the number a consumer previously had to download the whole register to compute. |
 | `kommune_ngo_totals` | One row per kommune: how many active voluntary organisations are registered there. |
 | `meta_dimensions` | Per-source × per-dimension catalogue. |

@@ -98,7 +98,11 @@ on a change, not on a timer.
   model exist" until 2026-09-21 and reported 0 deferred while four sources were unreachable —
   *having a model* and *reaching a consumer* are different claims, and only the second is the rule. Deferring is allowed and requires putting the
   name in `BACKLOG` with your reason — a decision, not a way to silence the check. The live
-  equivalent a consumer can run is `GET /meta_sources?downstream_model_count=eq.0`.
+  equivalent a consumer can run is `GET /meta_sources?served_as=eq.{}`. ⚠️ It was
+  `downstream_model_count=eq.0` until 2026-09-21, which found ONE source while four more
+  were built and served nothing — that field counts models, and a source with an indicator
+  model and nothing downstream reports 1. `served_as` is empty exactly when nothing
+  published depends on the source (urb-agents #1351).
 
   🔴 **AND A DEPLOY IS NOT SUCCESSFUL UNTIL THE DATA ARRIVES.** Terje, 2026-09-21:
   *"if the data did not arrive after the deploy then i would say it is a not sucessful

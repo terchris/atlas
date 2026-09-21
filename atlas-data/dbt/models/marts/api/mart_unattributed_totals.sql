@@ -72,7 +72,7 @@ with voluntary as (
 ),
 
 barnefattigdom_year as (
-  select max(year) as year
+  select {{ latest_year_agg() }} as year
   from {{ ref('fact_kommune_indicators') }}
   where source_id = 'ssb-08764' and contents_code = 'Personer'
 ),
