@@ -82,9 +82,19 @@ models:
       - name: tags
         description: |
           Topic vocabulary from the source manifest, e.g.
-          ['provider:brreg', 'topic:ngo-supply']. Filterable with
-          PostgREST's array contains: ?tags=cs.{topic:ngo-supply}.
-          Joined from mart_meta_sources.
+          ['provider:brreg', 'topic:ngo-supply']. Joined from
+          mart_meta_sources.
+
+          🔴 QUOTE THE VALUE. A tag contains a colon, and unquoted it is
+          rejected: `?tags=cs.{topic:ngo-supply}` returns 22P02 malformed
+          array literal. The working form is
+          `?tags=cs.{"topic:ngo-supply"}`.
+
+          ⚠️ The unquoted spelling was published HERE, in this description,
+          until 2026-09-20 — so a consumer following the documentation got
+          an error and had to work the quoting out for itself (urb-agents
+          #1281). Same class as the `personer` description: the contract
+          said something a consumer acted on and it was wrong.
       - name: latest_year
         description: |
           Most recent calendar year for which this (source_id,
@@ -837,7 +847,8 @@ models:
       Tags column is a Postgres `text[]` carrying the four declared
       namespaces (`provider:`, `topic:`, `geo:`, `cadence:`) plus the
       `eu_theme:` namespace. The customer frontend renders each as a
-      filter pill; PostgREST consumers filter via `?tags=cs.{provider:ssb}`.
+      filter pill; PostgREST consumers filter via `?tags=cs.{"provider:ssb"}`
+      — the quotes are required, because the value contains a colon.
 
       `last_ingested_at` and `last_upstream_update_at` come from
       `raw.ingest_runs` aggregated over successful (`exit_code = 0`)
@@ -904,8 +915,10 @@ models:
         description: |
           `text[]` of namespaced tags: `provider:<X>`, `topic:<X>`,
           `geo:<X>`, `cadence:<X>`, `eu_theme:<X>`. Filter via PostgREST's
-          `?tags=cs.{...}` array-contains operator. Always 5 entries (one
-          per declared namespace).
+          array-contains operator, QUOTING the value because it contains a
+          colon: `?tags=cs.{"topic:ngo-supply"}`. Unquoted it returns 22P02
+          malformed array literal. Always 5 entries (one per declared
+          namespace).
         data_tests: [not_null]
       - name: last_ingested_at
         description: |
@@ -1403,3 +1416,110 @@ models:
           - not_null
           - dbt_utils.accepted_range:
               min_value: 1
+
+  - name: mart_kommune_befolkning_alder
+    description: |
+      Population by kommune, year and age band — the denominator layer.
+      Published as api_v1.kommune_befolkning_alder.
+
+      Built from SSB table 07459 (age and sex distribution), which Atlas
+      has ingested and refreshed nightly for months while serving it to
+      nobody: nothing downstream of raw read it, so `GET /ssb-07459`
+      returned 404. A consumer built its elderly-care view around care
+      USERS rather than elderly RESIDENTS and wrote a README section
+      apologising for it, noting the substitution flatters a kommune with
+      a high threshold for granting services (urb-agents #1281).
+
+      ⚠️ SIX BANDS SUM TO befolkning_total. TWO DO NOT — they are
+      roll-ups of the six, provided because PostgREST has aggregates
+      disabled and a consumer would otherwise add them client-side:
+
+          sum to the total:  0_5 · 6_15 · 16_17 · 18_66 · 67_79 · 80_plus
+          roll-ups:          0_17     = 0_5 + 6_15 + 16_17
+                             67_plus  = 67_79 + 80_plus
+
+      Bands rather than a single "elderly" threshold on purpose. 67 is
+      defensible and it is still an editorial claim; publishing the bands
+      leaves that claim with whoever makes it, and the same rows serve as
+      the denominator for child poverty and working-age dependency.
+
+      ⚠️ Counts are residents, not care recipients, and they are SSB's
+      register population at the start of the year — not an average over
+      it. Historical kommune codes are excluded: only kommuner active
+      today get rows, so a 1990 row exists for today's kommune, not for
+      the one that held that code in 1990.
+    columns:
+      - name: kommune_nr
+        description: 4-digit kommune code. FK to dim_kommune.
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_kommune')
+              field: kommune_nr
+      - name: kommune_name
+        description: Kommune name in bokmål, joined from dim_kommune.
+        data_tests: [not_null]
+      - name: fylke_nr
+        description: 2-digit fylke code, derived from kommune_nr in dim_kommune.
+        data_tests: [not_null]
+      - name: fylke_name
+        description: >-
+          Joined from dim_fylke. NULL for kommune codes whose fylke has no row there — Svalbard-style
+          21xx codes. A LEFT join on purpose: an inner one would drop those kommuner from the
+          denominator entirely, which is worse than a missing label.
+      - name: year
+        description: Calendar year. SSB 07459 covers 1986 onwards.
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range: {min_value: 1980, max_value: 2050}
+      - name: alder_0_5
+        description: Residents aged 0-5 (pre-school). Disjoint band.
+        data_tests: [not_null]
+      - name: alder_6_15
+        description: Residents aged 6-15 (grunnskole age). Disjoint band.
+        data_tests: [not_null]
+      - name: alder_16_17
+        description: Residents aged 16-17. Disjoint band, and the one that completes 0_17.
+        data_tests: [not_null]
+      - name: alder_18_66
+        description: Residents aged 18-66 (working age, to the 67 pension threshold). Disjoint band.
+        data_tests: [not_null]
+      - name: alder_67_79
+        description: Residents aged 67-79. Disjoint band.
+        data_tests: [not_null]
+      - name: alder_80_plus
+        description: >-
+          Residents aged 80 and over, including SSB's open-ended '105+' bucket. Disjoint band.
+          Built from age_min, not age_int — age_int is NULL for '105+', so banding on it would
+          silently drop those residents.
+        data_tests: [not_null]
+      - name: alder_0_17
+        description: |
+          Residents aged 0-17. ⚠️ A ROLL-UP of 0_5 + 6_15 + 16_17, NOT a
+          seventh band — adding it to the disjoint bands double-counts.
+          The child-poverty denominator, so that coverage_gap_barnefattigdom's
+          share can be read against a population rather than against itself.
+        data_tests: [not_null]
+      - name: alder_67_plus
+        description: |
+          Residents aged 67 and over. ⚠️ A ROLL-UP of 67_79 + 80_plus, NOT a
+          band. This is the elderly denominator the consumer in #1281 did not
+          have; 67 is Norway's pension age and the choice of threshold is the
+          reader's, which is why the two bands are published beside it.
+        data_tests: [not_null]
+      - name: befolkning_total
+        description: |
+          All residents of the kommune in that year. Equals the six disjoint
+          bands summed.
+
+          🔴 Sexes are FILTERED, not summed: SSB's Kjonn dimension codes '0' as
+          ALL, so summing every sex row would double the population of every
+          kommune in Norway. The model selects male and female explicitly, and
+          the singular test bands_sum_to_the_population_total is what would
+          catch it if that ever stopped being true.
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range: {min_value: 0}
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [kommune_nr, year]
