@@ -329,6 +329,53 @@ def _run(base, only=None):
                 f"{len(relations) - len(down)} of {len(relations)}"
                 + ("" if not down else ".  DOWN: " + ", ".join(down))))
 
+    # 🔴 RESOURCE EMBEDDING, WHICH NOTHING HAS EVER CHECKED. PostgREST derives
+    # `?select=...,meta_sources(license)` from a FOREIGN KEY, and that FK is
+    # created by a post-hook — `register_source_id_fk()` — which reruns on
+    # every transform because both marts are tables and a rebuild of either
+    # drops the constraint.
+    #
+    # ⚠️ THAT HOOK HAS A DEMONSTRATED FAILURE MODE, not a theoretical one. On
+    # 2026-09-21 it aborted its model with `relation
+    # "mart_meta_sources_source_id_key" already exists`: the guard checked
+    # `conrelid`, which is table-scoped, while the collision was on an index
+    # name, which is schema-scoped. It went unreported for five releases
+    # (urb-agents #1337).
+    #
+    # 🔵 NO `limit`, DELIBERATELY, AND THE COUNT COMES FROM THE BODY. imac's
+    # correction: the three outcomes are PGRST200 (FK gone), null embeds (FK
+    # present, join matches nothing — the worse one), and data. A `limit=3`
+    # can only see the first, because a subset mismatch shows as SOME nulls
+    # and the first rows are the ones most likely to be fine. Counting the
+    # parsed JSON also sidesteps the Content-Range header-case bug that
+    # reported 0 rows for every published relation earlier today.
+    #
+    # ⚠️ PRESENCE OF A LICENCE, NEVER ITS VALUE. My own filing said to expect
+    # "NLOD 2.0"; every row returns "NLOD", and the seed holds three distinct
+    # values (NLOD, permissive, internal). Asserting the string would fail on
+    # correct data.
+    emb_status, _, emb = fetch(
+        base, "indicator_summary?select=source_id,meta_sources(license)")
+    if emb_status not in (200, 206):
+        inv.append((False, "indicator_summary embeds meta_sources",
+                    f"HTTP {emb_status} — PGRST200 here means the foreign key "
+                    f"is GONE and every embedded query a consumer writes is "
+                    f"broken"))
+    elif not emb:
+        inv.append((False, "indicator_summary embeds meta_sources",
+                    "zero rows — cannot tell a broken embed from an empty "
+                    "relation, so this is not a pass"))
+    else:
+        bad = [r["source_id"] for r in emb
+               if not isinstance(r.get("meta_sources"), dict)
+               or not r["meta_sources"].get("license")]
+        inv.append((not bad, "indicator_summary embeds meta_sources",
+                    f"{len(emb)} rows, all carrying a licence"
+                    if not bad else
+                    f"{len(bad)} of {len(emb)} rows have a null or licence-less "
+                    f"embed — the FK exists and the join misses. "
+                    f"e.g. {', '.join(sorted(bad)[:3])}"))
+
     _, _, tot = fetch(base, "kommune_ngo_totals?select=active_count")
     _, _, rem = fetch(base, "unattributed_totals?relation=eq.kommune_ngo_totals"
                             "&measure=eq.active_count&select=unattributed_value,total_value")
