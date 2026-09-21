@@ -28,6 +28,8 @@ jobs:
         run: atlas-data/dbt/check-source-ids-are-real.sh
       - name: The holdings summary matches the manifests
         run: atlas-data/uis/generate-holdings.py --check
+      - name: Every classifier value exists in ref_region_kind
+        run: atlas-data/dbt/check-classifier-vocabulary.sh
 
   kommune-marts-exclude-sentinels:
     runs-on: ubuntu-latest

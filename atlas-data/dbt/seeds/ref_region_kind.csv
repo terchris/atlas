@@ -6,3 +6,4 @@ unspecified_national,^9999$,false,Uoppgitt kommune,Municipality not specified,7
 svalbard,^21\d{2}$,false,Svalbard,Svalbard,4
 jan_mayen,^22\d{2}$,false,Jan Mayen,Jan Mayen,5
 continental_shelf,^23\d{2}$,false,Kontinentalsokkelen,Continental shelf,6
+unknown,(matches none of the above),false,Ukjent kodeform,Unrecognised code shape,8

@@ -294,6 +294,25 @@ seeds:
           `unspecified_within_fylke`: 9999 matches the XX99 pattern but
           there is no fylke 99, and conflating them was a real bug
           caught by testing the classifier rather than reading it.
+
+          🔴 `unknown` is a MEMBER, not an absence. classify_region_code
+          emits it for any code matching none of the patterns, on
+          purpose — a new upstream shape should be visible rather than
+          quietly becoming a municipality.
+
+          ⚠️ I wrote that branch and then left `unknown` out of this
+          seed, so the relationships test on every model using the
+          classifier failed for 24 178 rows the first time the check
+          suite ran (urb-agents #1313). The vocabulary must contain
+          every value the classifier can produce; a residual category
+          is still a category.
+
+          ⚠️ `unknown` is currently a bag rather than a meaning. FHI's
+          GEO dimension is documented as "mixed kommune / fylke / bydel
+          / nasjon" and neither bydel nor nasjon has a pattern here —
+          so those are the likely contents, and nobody has looked. Do
+          NOT map it onto either `unspecified_*` member: those mean the
+          municipality was not stated, and a bydel is a real place.
         data_tests: [not_null, unique]
       - name: code_pattern
         description: >-

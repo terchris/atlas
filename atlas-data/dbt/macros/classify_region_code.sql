@@ -46,6 +46,18 @@
   matches nothing here is a new upstream shape, and it should be visible as
   such instead of quietly becoming a municipality — which is the whole defect,
   one layer along.
+
+  🔴 AND IT MUST EXIST IN ref_region_kind. I wrote this branch and left the row
+  out of the seed, so the first time the dbt check suite ran, the relationships
+  test failed on 24 178 rows across ten models (urb-agents #1313). Nothing
+  reached a consumer — every `unknown` row carries a null kommune_nr — but the
+  suite was red every night and nobody would have known, because
+  transform_and_publish runs `dbt build --exclude-resource-type test`.
+
+  ⚠️ IT IS A BAG, NOT YET A MEANING. FHI documents GEO as "mixed kommune /
+  fylke / bydel / nasjon" and there is no pattern here for bydel or nasjon, so
+  those are the likely contents — an unverified hypothesis, and the reason
+  there is no `bydel` branch yet is that nobody has looked at the codes.
 #}
 {% macro classify_region_code(col) -%}
   case
