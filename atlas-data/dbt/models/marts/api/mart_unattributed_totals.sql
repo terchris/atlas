@@ -42,10 +42,31 @@
 with voluntary as (
   -- The brreg gap. Counted from the register rather than from the rollups,
   -- because the rollups are exactly what drops these rows.
+  --
+  -- 🔴 TWO REASONS, NOT ONE, AND THE SECOND IS WHY THIS RELATION FAILED ITS
+  -- OWN PURPOSE ON DAY ONE. It shipped naming 7 489 of 7 532 unattributed
+  -- organisations. The other 43 carry kommune_nr = 2100 — Svalbard. That is a
+  -- real kommune_nr, so `no_kommune_nr` did not count them, and it is not one
+  -- of the 357 current kommuner, so kommune_ngo_totals emitted no row for them
+  -- either. ⚠️ A consumer doing the reconciliation this view exists to support
+  -- got 72 759 against a total_value of 72 802 and no error anywhere
+  -- (urb-agents #1318, found by the consumer on first read).
+  --
+  -- 🔵 It is the third Svalbard incident in one day, from the same code in
+  -- three different places, each found by someone reconciling a total rather
+  -- than by a test. `2100` is the standing counterexample to "every kommune_nr
+  -- joins".
   select
-    count(*) filter (where kommune_nr is null)::numeric as unattributed,
-    count(*)::numeric                                   as total
-  from {{ ref('dim_brreg_enhet') }}
+    count(*) filter (where kommune_nr is null)::numeric              as no_kommune,
+    count(*) filter (where kommune_nr is not null
+                       and not exists (
+                         select 1 from {{ ref('dim_kommune') }} k
+                          where k.kommune_nr = e.kommune_nr
+                            and k.is_active
+                            and not k.is_sentinel
+                       ))::numeric                                   as not_current,
+    count(*)::numeric                                                as total
+  from {{ ref('dim_brreg_enhet') }} e
   where registrert_i_frivillighetsregisteret
     and is_active
 ),
@@ -77,9 +98,22 @@ select
   'no_kommune_nr'::text                 as reason,
   'brreg-frivillige'::text              as source_id,
   null::int                             as year,
-  v.unattributed::int                   as unattributed_value,
+  v.no_kommune::int                     as unattributed_value,
   v.total::int                          as total_value,
-  round(100 * v.unattributed / nullif(v.total, 0), 1) as unattributed_share_pct
+  round(100 * v.no_kommune / nullif(v.total, 0), 1) as unattributed_share_pct
+from voluntary v
+
+union all
+
+select
+  'kommune_ngo_totals'::text,
+  'active_count'::text,
+  'kommune_nr_not_current'::text,
+  'brreg-frivillige'::text,
+  null::int,
+  v.not_current::int,
+  v.total::int,
+  round(100 * v.not_current / nullif(v.total, 0), 1)
 from voluntary v
 
 union all
