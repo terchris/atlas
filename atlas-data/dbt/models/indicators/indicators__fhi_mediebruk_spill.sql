@@ -23,7 +23,7 @@
 -- regex is what called Svalbard a municipality (urb-agents #700).
 
 select
-  'fhi-mediebruk_spill'::text     as source_id,
+  'fhi-mediebruk-spill'::text     as source_id,
   geo_code              as region_code,
   {{ region_code_to_kommune_nr('geo_code') }} as kommune_nr,
   {{ classify_region_code('geo_code') }} as region_kind,
