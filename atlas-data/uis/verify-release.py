@@ -82,7 +82,18 @@ def fetch(base, path, prefer=None):
     try:
         with urllib.request.urlopen(req, timeout=60) as r:
             raw = r.read()
-            return r.status, dict(r.headers), (json.loads(raw) if raw else [])
+            # 🔴 LOWERCASED, BECAUSE HTTP HEADER NAMES ARE CASE-INSENSITIVE
+            # AND dict() IS NOT. `dict(r.headers)` keeps whatever casing the
+            # server sent, so `hdrs.get("Content-Range")` missed PostgREST's
+            # `content-range` and every `published` relation reported 0 rows
+            # and FAILED — brreg_enhet "0 rows" against 1,174,987 actual, on
+            # 2026-09-21. ⚠️ Six of the run's nine failures were this, and
+            # "0 rows" is indistinguishable from a relation that is genuinely
+            # empty, which is the failure mode this tool exists to avoid
+            # reporting (urb-agents #1332).
+            return (r.status,
+                    {k.lower(): v for k, v in r.headers.items()},
+                    (json.loads(raw) if raw else []))
     except urllib.error.HTTPError as e:
         # 403/401/429 are the API refusing us, not a relation missing.
         if e.code in (401, 403, 429, 502, 503, 504):
@@ -249,7 +260,7 @@ def _run(base, only=None):
                     detail += f", window {min(ws)}-{max(ws)}y"
         elif kind == "published":
             status, hdrs, _ = fetch(base, f"{why}?limit=0", prefer="count=exact")
-            n = int((hdrs.get("Content-Range") or "*/0").split("/")[-1]) if hdrs else 0
+            n = int((hdrs.get("content-range") or "*/0").split("/")[-1]) if hdrs else 0
             ok = status in (200, 206) and n > 0
             detail = f"api_v1.{why} -> HTTP {status}, {n} rows"
         elif kind == "unreachable":
@@ -285,7 +296,15 @@ def _run(base, only=None):
     w = max(len(r[1]) for r in rows) if rows else 10
     print(f"{'':2}{'dataset':{w}}  {'expected':10}  detail")
     for ok, sid, kind, detail in rows:
-        print(f"{'✓ ' if ok else '✗ '}{sid:{w}}  {kind:10}  {detail}")
+        # 🔴 A DEFERRED SOURCE IS NOT A PASS. `unreachable` sources are
+        # declared in BACKLOG with a reason, so they are not FAILURES — but
+        # printing ✓ beside "has 1 model(s), none feeding a published
+        # relation" reads as "this is fine", and it is not: nothing published
+        # depends on it. ops-dev called this out on urb-agents #1332 as a
+        # blind spot that was documented rather than closed. It still does not
+        # fail the run; it no longer claims to be healthy.
+        mark = ('⚠ ' if ok and kind == "unreachable" else '✓ ' if ok else '✗ ')
+        print(f"{mark}{sid:{w}}  {kind:10}  {detail}")
 
     # Whole-release invariants that are not per-dataset.
     print()
