@@ -1569,3 +1569,867 @@ models:
             - category_unit
             - category_format
             - year
+
+  - name: indicators__fhi_alkohol
+    description: |
+      Per-source indicator passthrough for FHI Folkehelsestatistikk (Ungdata):
+      share of youth reporting alcohol use one or more times in the past year.
+
+      🔴 A SURVEY, NOT AN ENUMERATION. Only SMR (standardised ratio, 100 =
+      national) and MEIS (FHI's smoothed estimate) exist — no TELLER, no RATE.
+      ⚠️ These values cannot be summed, and multiplying one by a population
+      does not give a number of young people.
+    columns:
+      - name: source_id
+        description: Atlas source identifier.
+        data_tests:
+          - not_null
+          - accepted_values: {values: [fhi-alkohol]}
+        data_type: text
+      - name: region_code
+        description: FHI GEO verbatim — kommune, fylke, bydel or national.
+        data_tests: [not_null]
+        data_type: text
+      - name: kommune_nr
+        description: >-
+          4-digit kommune code, via region_code_to_kommune_nr — NULL for every region that is not a
+          municipality. Not a bare four-digit regex; that is what called Svalbard a kommune.
+        data_tests:
+          - relationships:
+              to: ref('dim_kommune')
+              field: kommune_nr
+              config: {severity: warn}
+        data_type: text
+      - name: region_kind
+        description: What the GEO code is; joins ref_region_kind.
+        data_tests:
+          - not_null
+          - relationships: {to: ref('ref_region_kind'), field: region_kind}
+        data_type: text
+      - name: fylke_nr
+        description: 2-digit fylke code where GEO is a fylke, else NULL.
+        data_type: text
+      - name: year
+        description: First year of the period.
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
+        data_type: integer
+      - name: period
+        description: FHI AAR verbatim, e.g. "2024_2024".
+        data_tests: [not_null]
+        data_type: text
+      - name: period_start_year
+        description: Parsed first year of the period.
+        data_type: integer
+      - name: period_end_year
+        description: Parsed last year of the period.
+        data_type: integer
+      - name: sex
+        description: all / male / female, decoded from FHI KJONN.
+        data_tests:
+          - not_null
+          - accepted_values: {values: [male, female, all]}
+        data_type: text
+      - name: ungdata_cohort
+        description: >-
+          FHI ALDER verbatim, always "1_6". ⚠️ An Ungdata survey-cohort identifier, NOT ages 1 to 6.
+          Unverified against Ungdata methodology — carried rather than interpreted.
+        data_tests: [not_null]
+        data_type: text
+      - name: frequency_band
+        description: The degenerate topic slice FHI reports for this table.
+        data_tests: [not_null]
+        data_type: text
+      - name: socioeconomic_status
+        description: >-
+          FHI SOES. "0" is combined; only fhi-depresjon carries the 1/2/3 breakdown.
+        data_tests: [not_null]
+        data_type: text
+      - name: contents_code
+        description: SMR or MEIS.
+        data_tests:
+          - not_null
+          - accepted_values: {values: [SMR, MEIS]}
+        data_type: text
+      - name: contents_label
+        description: Human-readable gloss for contents_code.
+        data_type: text
+      - name: value
+        description: The measured value. NULL where FHI suppressed the cell.
+        data_type: numeric
+      - name: status
+        description: FHI suppression marker.
+        data_type: text
+      - name: updated_at
+        description: When the raw row was loaded.
+        data_tests: [not_null]
+        data_type: timestamp with time zone
+
+  - name: indicators__fhi_depresjon
+    description: |
+      Per-source indicator passthrough for FHI Folkehelsestatistikk (Ungdata):
+      share of youth reporting depressive symptoms reaching the symptomatic threshold.
+
+      🔴 A SURVEY, NOT AN ENUMERATION. Only SMR (standardised ratio, 100 =
+      national) and MEIS (FHI's smoothed estimate) exist — no TELLER, no RATE.
+      ⚠️ These values cannot be summed, and multiplying one by a population
+      does not give a number of young people.
+    columns:
+      - name: source_id
+        description: Atlas source identifier.
+        data_tests:
+          - not_null
+          - accepted_values: {values: [fhi-depresjon]}
+        data_type: text
+      - name: region_code
+        description: FHI GEO verbatim — kommune, fylke, bydel or national.
+        data_tests: [not_null]
+        data_type: text
+      - name: kommune_nr
+        description: >-
+          4-digit kommune code, via region_code_to_kommune_nr — NULL for every region that is not a
+          municipality. Not a bare four-digit regex; that is what called Svalbard a kommune.
+        data_tests:
+          - relationships:
+              to: ref('dim_kommune')
+              field: kommune_nr
+              config: {severity: warn}
+        data_type: text
+      - name: region_kind
+        description: What the GEO code is; joins ref_region_kind.
+        data_tests:
+          - not_null
+          - relationships: {to: ref('ref_region_kind'), field: region_kind}
+        data_type: text
+      - name: fylke_nr
+        description: 2-digit fylke code where GEO is a fylke, else NULL.
+        data_type: text
+      - name: year
+        description: First year of the period.
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
+        data_type: integer
+      - name: period
+        description: FHI AAR verbatim, e.g. "2024_2024".
+        data_tests: [not_null]
+        data_type: text
+      - name: period_start_year
+        description: Parsed first year of the period.
+        data_type: integer
+      - name: period_end_year
+        description: Parsed last year of the period.
+        data_type: integer
+      - name: sex
+        description: all / male / female, decoded from FHI KJONN.
+        data_tests:
+          - not_null
+          - accepted_values: {values: [male, female, all]}
+        data_type: text
+      - name: ungdata_cohort
+        description: >-
+          FHI ALDER verbatim, always "1_6". ⚠️ An Ungdata survey-cohort identifier, NOT ages 1 to 6.
+          Unverified against Ungdata methodology — carried rather than interpreted.
+        data_tests: [not_null]
+        data_type: text
+      - name: symptom_threshold
+        description: The degenerate topic slice FHI reports for this table.
+        data_tests: [not_null]
+        data_type: text
+      - name: socioeconomic_status
+        description: >-
+          FHI SOES. "0" is combined; only fhi-depresjon carries the 1/2/3 breakdown.
+        data_tests: [not_null]
+        data_type: text
+      - name: contents_code
+        description: SMR or MEIS.
+        data_tests:
+          - not_null
+          - accepted_values: {values: [SMR, MEIS]}
+        data_type: text
+      - name: contents_label
+        description: Human-readable gloss for contents_code.
+        data_type: text
+      - name: value
+        description: The measured value. NULL where FHI suppressed the cell.
+        data_type: numeric
+      - name: status
+        description: FHI suppression marker.
+        data_type: text
+      - name: updated_at
+        description: When the raw row was loaded.
+        data_tests: [not_null]
+        data_type: timestamp with time zone
+
+  - name: indicators__fhi_fortrolig_venn
+    description: |
+      Per-source indicator passthrough for FHI Folkehelsestatistikk (Ungdata):
+      share of youth reporting having a close confiding friend.
+
+      🔴 A SURVEY, NOT AN ENUMERATION. Only SMR (standardised ratio, 100 =
+      national) and MEIS (FHI's smoothed estimate) exist — no TELLER, no RATE.
+      ⚠️ These values cannot be summed, and multiplying one by a population
+      does not give a number of young people.
+    columns:
+      - name: source_id
+        description: Atlas source identifier.
+        data_tests:
+          - not_null
+          - accepted_values: {values: [fhi-fortrolig-venn]}
+        data_type: text
+      - name: region_code
+        description: FHI GEO verbatim — kommune, fylke, bydel or national.
+        data_tests: [not_null]
+        data_type: text
+      - name: kommune_nr
+        description: >-
+          4-digit kommune code, via region_code_to_kommune_nr — NULL for every region that is not a
+          municipality. Not a bare four-digit regex; that is what called Svalbard a kommune.
+        data_tests:
+          - relationships:
+              to: ref('dim_kommune')
+              field: kommune_nr
+              config: {severity: warn}
+        data_type: text
+      - name: region_kind
+        description: What the GEO code is; joins ref_region_kind.
+        data_tests:
+          - not_null
+          - relationships: {to: ref('ref_region_kind'), field: region_kind}
+        data_type: text
+      - name: fylke_nr
+        description: 2-digit fylke code where GEO is a fylke, else NULL.
+        data_type: text
+      - name: year
+        description: First year of the period.
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
+        data_type: integer
+      - name: period
+        description: FHI AAR verbatim, e.g. "2024_2024".
+        data_tests: [not_null]
+        data_type: text
+      - name: period_start_year
+        description: Parsed first year of the period.
+        data_type: integer
+      - name: period_end_year
+        description: Parsed last year of the period.
+        data_type: integer
+      - name: sex
+        description: all / male / female, decoded from FHI KJONN.
+        data_tests:
+          - not_null
+          - accepted_values: {values: [male, female, all]}
+        data_type: text
+      - name: ungdata_cohort
+        description: >-
+          FHI ALDER verbatim, always "1_6". ⚠️ An Ungdata survey-cohort identifier, NOT ages 1 to 6.
+          Unverified against Ungdata methodology — carried rather than interpreted.
+        data_tests: [not_null]
+        data_type: text
+      - name: response
+        description: The degenerate topic slice FHI reports for this table.
+        data_tests: [not_null]
+        data_type: text
+      - name: socioeconomic_status
+        description: >-
+          FHI SOES. "0" is combined; only fhi-depresjon carries the 1/2/3 breakdown.
+        data_tests: [not_null]
+        data_type: text
+      - name: contents_code
+        description: SMR or MEIS.
+        data_tests:
+          - not_null
+          - accepted_values: {values: [SMR, MEIS]}
+        data_type: text
+      - name: contents_label
+        description: Human-readable gloss for contents_code.
+        data_type: text
+      - name: value
+        description: The measured value. NULL where FHI suppressed the cell.
+        data_type: numeric
+      - name: status
+        description: FHI suppression marker.
+        data_type: text
+      - name: updated_at
+        description: When the raw row was loaded.
+        data_tests: [not_null]
+        data_type: timestamp with time zone
+
+  - name: indicators__fhi_hasj
+    description: |
+      Per-source indicator passthrough for FHI Folkehelsestatistikk (Ungdata):
+      share of youth reporting cannabis use one or more times in the past year.
+
+      🔴 A SURVEY, NOT AN ENUMERATION. Only SMR (standardised ratio, 100 =
+      national) and MEIS (FHI's smoothed estimate) exist — no TELLER, no RATE.
+      ⚠️ These values cannot be summed, and multiplying one by a population
+      does not give a number of young people.
+    columns:
+      - name: source_id
+        description: Atlas source identifier.
+        data_tests:
+          - not_null
+          - accepted_values: {values: [fhi-hasj]}
+        data_type: text
+      - name: region_code
+        description: FHI GEO verbatim — kommune, fylke, bydel or national.
+        data_tests: [not_null]
+        data_type: text
+      - name: kommune_nr
+        description: >-
+          4-digit kommune code, via region_code_to_kommune_nr — NULL for every region that is not a
+          municipality. Not a bare four-digit regex; that is what called Svalbard a kommune.
+        data_tests:
+          - relationships:
+              to: ref('dim_kommune')
+              field: kommune_nr
+              config: {severity: warn}
+        data_type: text
+      - name: region_kind
+        description: What the GEO code is; joins ref_region_kind.
+        data_tests:
+          - not_null
+          - relationships: {to: ref('ref_region_kind'), field: region_kind}
+        data_type: text
+      - name: fylke_nr
+        description: 2-digit fylke code where GEO is a fylke, else NULL.
+        data_type: text
+      - name: year
+        description: First year of the period.
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
+        data_type: integer
+      - name: period
+        description: FHI AAR verbatim, e.g. "2024_2024".
+        data_tests: [not_null]
+        data_type: text
+      - name: period_start_year
+        description: Parsed first year of the period.
+        data_type: integer
+      - name: period_end_year
+        description: Parsed last year of the period.
+        data_type: integer
+      - name: sex
+        description: all / male / female, decoded from FHI KJONN.
+        data_tests:
+          - not_null
+          - accepted_values: {values: [male, female, all]}
+        data_type: text
+      - name: ungdata_cohort
+        description: >-
+          FHI ALDER verbatim, always "1_6". ⚠️ An Ungdata survey-cohort identifier, NOT ages 1 to 6.
+          Unverified against Ungdata methodology — carried rather than interpreted.
+        data_tests: [not_null]
+        data_type: text
+      - name: frequency_band
+        description: The degenerate topic slice FHI reports for this table.
+        data_tests: [not_null]
+        data_type: text
+      - name: socioeconomic_status
+        description: >-
+          FHI SOES. "0" is combined; only fhi-depresjon carries the 1/2/3 breakdown.
+        data_tests: [not_null]
+        data_type: text
+      - name: contents_code
+        description: SMR or MEIS.
+        data_tests:
+          - not_null
+          - accepted_values: {values: [SMR, MEIS]}
+        data_type: text
+      - name: contents_label
+        description: Human-readable gloss for contents_code.
+        data_type: text
+      - name: value
+        description: The measured value. NULL where FHI suppressed the cell.
+        data_type: numeric
+      - name: status
+        description: FHI suppression marker.
+        data_type: text
+      - name: updated_at
+        description: When the raw row was loaded.
+        data_tests: [not_null]
+        data_type: timestamp with time zone
+
+  - name: indicators__fhi_livskvalitet
+    description: |
+      Per-source indicator passthrough for FHI Folkehelsestatistikk (Ungdata):
+      share of youth reporting high self-reported quality of life.
+
+      🔴 A SURVEY, NOT AN ENUMERATION. Only SMR (standardised ratio, 100 =
+      national) and MEIS (FHI's smoothed estimate) exist — no TELLER, no RATE.
+      ⚠️ These values cannot be summed, and multiplying one by a population
+      does not give a number of young people.
+    columns:
+      - name: source_id
+        description: Atlas source identifier.
+        data_tests:
+          - not_null
+          - accepted_values: {values: [fhi-livskvalitet]}
+        data_type: text
+      - name: region_code
+        description: FHI GEO verbatim — kommune, fylke, bydel or national.
+        data_tests: [not_null]
+        data_type: text
+      - name: kommune_nr
+        description: >-
+          4-digit kommune code, via region_code_to_kommune_nr — NULL for every region that is not a
+          municipality. Not a bare four-digit regex; that is what called Svalbard a kommune.
+        data_tests:
+          - relationships:
+              to: ref('dim_kommune')
+              field: kommune_nr
+              config: {severity: warn}
+        data_type: text
+      - name: region_kind
+        description: What the GEO code is; joins ref_region_kind.
+        data_tests:
+          - not_null
+          - relationships: {to: ref('ref_region_kind'), field: region_kind}
+        data_type: text
+      - name: fylke_nr
+        description: 2-digit fylke code where GEO is a fylke, else NULL.
+        data_type: text
+      - name: year
+        description: First year of the period.
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
+        data_type: integer
+      - name: period
+        description: FHI AAR verbatim, e.g. "2024_2024".
+        data_tests: [not_null]
+        data_type: text
+      - name: period_start_year
+        description: Parsed first year of the period.
+        data_type: integer
+      - name: period_end_year
+        description: Parsed last year of the period.
+        data_type: integer
+      - name: sex
+        description: all / male / female, decoded from FHI KJONN.
+        data_tests:
+          - not_null
+          - accepted_values: {values: [male, female, all]}
+        data_type: text
+      - name: ungdata_cohort
+        description: >-
+          FHI ALDER verbatim, always "1_6". ⚠️ An Ungdata survey-cohort identifier, NOT ages 1 to 6.
+          Unverified against Ungdata methodology — carried rather than interpreted.
+        data_tests: [not_null]
+        data_type: text
+      - name: score_band
+        description: The degenerate topic slice FHI reports for this table.
+        data_tests: [not_null]
+        data_type: text
+      - name: socioeconomic_status
+        description: >-
+          FHI SOES. "0" is combined; only fhi-depresjon carries the 1/2/3 breakdown.
+        data_tests: [not_null]
+        data_type: text
+      - name: contents_code
+        description: SMR or MEIS.
+        data_tests:
+          - not_null
+          - accepted_values: {values: [SMR, MEIS]}
+        data_type: text
+      - name: contents_label
+        description: Human-readable gloss for contents_code.
+        data_type: text
+      - name: value
+        description: The measured value. NULL where FHI suppressed the cell.
+        data_type: numeric
+      - name: status
+        description: FHI suppression marker.
+        data_type: text
+      - name: updated_at
+        description: When the raw row was loaded.
+        data_tests: [not_null]
+        data_type: timestamp with time zone
+
+  - name: indicators__fhi_mediebruk_some
+    description: |
+      Per-source indicator passthrough for FHI Folkehelsestatistikk (Ungdata):
+      share of youth reporting more than 3 hours per day on social media.
+
+      🔴 A SURVEY, NOT AN ENUMERATION. Only SMR (standardised ratio, 100 =
+      national) and MEIS (FHI's smoothed estimate) exist — no TELLER, no RATE.
+      ⚠️ These values cannot be summed, and multiplying one by a population
+      does not give a number of young people.
+    columns:
+      - name: source_id
+        description: Atlas source identifier.
+        data_tests:
+          - not_null
+          - accepted_values: {values: [fhi-mediebruk-some]}
+        data_type: text
+      - name: region_code
+        description: FHI GEO verbatim — kommune, fylke, bydel or national.
+        data_tests: [not_null]
+        data_type: text
+      - name: kommune_nr
+        description: >-
+          4-digit kommune code, via region_code_to_kommune_nr — NULL for every region that is not a
+          municipality. Not a bare four-digit regex; that is what called Svalbard a kommune.
+        data_tests:
+          - relationships:
+              to: ref('dim_kommune')
+              field: kommune_nr
+              config: {severity: warn}
+        data_type: text
+      - name: region_kind
+        description: What the GEO code is; joins ref_region_kind.
+        data_tests:
+          - not_null
+          - relationships: {to: ref('ref_region_kind'), field: region_kind}
+        data_type: text
+      - name: fylke_nr
+        description: 2-digit fylke code where GEO is a fylke, else NULL.
+        data_type: text
+      - name: year
+        description: First year of the period.
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
+        data_type: integer
+      - name: period
+        description: FHI AAR verbatim, e.g. "2024_2024".
+        data_tests: [not_null]
+        data_type: text
+      - name: period_start_year
+        description: Parsed first year of the period.
+        data_type: integer
+      - name: period_end_year
+        description: Parsed last year of the period.
+        data_type: integer
+      - name: sex
+        description: all / male / female, decoded from FHI KJONN.
+        data_tests:
+          - not_null
+          - accepted_values: {values: [male, female, all]}
+        data_type: text
+      - name: ungdata_cohort
+        description: >-
+          FHI ALDER verbatim, always "1_6". ⚠️ An Ungdata survey-cohort identifier, NOT ages 1 to 6.
+          Unverified against Ungdata methodology — carried rather than interpreted.
+        data_tests: [not_null]
+        data_type: text
+      - name: threshold
+        description: The degenerate topic slice FHI reports for this table.
+        data_tests: [not_null]
+        data_type: text
+      - name: socioeconomic_status
+        description: >-
+          FHI SOES. "0" is combined; only fhi-depresjon carries the 1/2/3 breakdown.
+        data_tests: [not_null]
+        data_type: text
+      - name: contents_code
+        description: SMR or MEIS.
+        data_tests:
+          - not_null
+          - accepted_values: {values: [SMR, MEIS]}
+        data_type: text
+      - name: contents_label
+        description: Human-readable gloss for contents_code.
+        data_type: text
+      - name: value
+        description: The measured value. NULL where FHI suppressed the cell.
+        data_type: numeric
+      - name: status
+        description: FHI suppression marker.
+        data_type: text
+      - name: updated_at
+        description: When the raw row was loaded.
+        data_tests: [not_null]
+        data_type: timestamp with time zone
+
+  - name: indicators__fhi_mediebruk_spill
+    description: |
+      Per-source indicator passthrough for FHI Folkehelsestatistikk (Ungdata):
+      share of youth reporting more than 3 hours per day gaming / computer / TV.
+
+      🔴 A SURVEY, NOT AN ENUMERATION. Only SMR (standardised ratio, 100 =
+      national) and MEIS (FHI's smoothed estimate) exist — no TELLER, no RATE.
+      ⚠️ These values cannot be summed, and multiplying one by a population
+      does not give a number of young people.
+    columns:
+      - name: source_id
+        description: Atlas source identifier.
+        data_tests:
+          - not_null
+          - accepted_values: {values: [fhi-mediebruk-spill]}
+        data_type: text
+      - name: region_code
+        description: FHI GEO verbatim — kommune, fylke, bydel or national.
+        data_tests: [not_null]
+        data_type: text
+      - name: kommune_nr
+        description: >-
+          4-digit kommune code, via region_code_to_kommune_nr — NULL for every region that is not a
+          municipality. Not a bare four-digit regex; that is what called Svalbard a kommune.
+        data_tests:
+          - relationships:
+              to: ref('dim_kommune')
+              field: kommune_nr
+              config: {severity: warn}
+        data_type: text
+      - name: region_kind
+        description: What the GEO code is; joins ref_region_kind.
+        data_tests:
+          - not_null
+          - relationships: {to: ref('ref_region_kind'), field: region_kind}
+        data_type: text
+      - name: fylke_nr
+        description: 2-digit fylke code where GEO is a fylke, else NULL.
+        data_type: text
+      - name: year
+        description: First year of the period.
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
+        data_type: integer
+      - name: period
+        description: FHI AAR verbatim, e.g. "2024_2024".
+        data_tests: [not_null]
+        data_type: text
+      - name: period_start_year
+        description: Parsed first year of the period.
+        data_type: integer
+      - name: period_end_year
+        description: Parsed last year of the period.
+        data_type: integer
+      - name: sex
+        description: all / male / female, decoded from FHI KJONN.
+        data_tests:
+          - not_null
+          - accepted_values: {values: [male, female, all]}
+        data_type: text
+      - name: ungdata_cohort
+        description: >-
+          FHI ALDER verbatim, always "1_6". ⚠️ An Ungdata survey-cohort identifier, NOT ages 1 to 6.
+          Unverified against Ungdata methodology — carried rather than interpreted.
+        data_tests: [not_null]
+        data_type: text
+      - name: threshold
+        description: The degenerate topic slice FHI reports for this table.
+        data_tests: [not_null]
+        data_type: text
+      - name: socioeconomic_status
+        description: >-
+          FHI SOES. "0" is combined; only fhi-depresjon carries the 1/2/3 breakdown.
+        data_tests: [not_null]
+        data_type: text
+      - name: contents_code
+        description: SMR or MEIS.
+        data_tests:
+          - not_null
+          - accepted_values: {values: [SMR, MEIS]}
+        data_type: text
+      - name: contents_label
+        description: Human-readable gloss for contents_code.
+        data_type: text
+      - name: value
+        description: The measured value. NULL where FHI suppressed the cell.
+        data_type: numeric
+      - name: status
+        description: FHI suppression marker.
+        data_type: text
+      - name: updated_at
+        description: When the raw row was loaded.
+        data_tests: [not_null]
+        data_type: timestamp with time zone
+
+  - name: indicators__fhi_mediebruk_underhold
+    description: |
+      Per-source indicator passthrough for FHI Folkehelsestatistikk (Ungdata):
+      share of youth reporting more than 3 hours per day on streaming media.
+
+      🔴 A SURVEY, NOT AN ENUMERATION. Only SMR (standardised ratio, 100 =
+      national) and MEIS (FHI's smoothed estimate) exist — no TELLER, no RATE.
+      ⚠️ These values cannot be summed, and multiplying one by a population
+      does not give a number of young people.
+    columns:
+      - name: source_id
+        description: Atlas source identifier.
+        data_tests:
+          - not_null
+          - accepted_values: {values: [fhi-mediebruk-underhold]}
+        data_type: text
+      - name: region_code
+        description: FHI GEO verbatim — kommune, fylke, bydel or national.
+        data_tests: [not_null]
+        data_type: text
+      - name: kommune_nr
+        description: >-
+          4-digit kommune code, via region_code_to_kommune_nr — NULL for every region that is not a
+          municipality. Not a bare four-digit regex; that is what called Svalbard a kommune.
+        data_tests:
+          - relationships:
+              to: ref('dim_kommune')
+              field: kommune_nr
+              config: {severity: warn}
+        data_type: text
+      - name: region_kind
+        description: What the GEO code is; joins ref_region_kind.
+        data_tests:
+          - not_null
+          - relationships: {to: ref('ref_region_kind'), field: region_kind}
+        data_type: text
+      - name: fylke_nr
+        description: 2-digit fylke code where GEO is a fylke, else NULL.
+        data_type: text
+      - name: year
+        description: First year of the period.
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
+        data_type: integer
+      - name: period
+        description: FHI AAR verbatim, e.g. "2024_2024".
+        data_tests: [not_null]
+        data_type: text
+      - name: period_start_year
+        description: Parsed first year of the period.
+        data_type: integer
+      - name: period_end_year
+        description: Parsed last year of the period.
+        data_type: integer
+      - name: sex
+        description: all / male / female, decoded from FHI KJONN.
+        data_tests:
+          - not_null
+          - accepted_values: {values: [male, female, all]}
+        data_type: text
+      - name: ungdata_cohort
+        description: >-
+          FHI ALDER verbatim, always "1_6". ⚠️ An Ungdata survey-cohort identifier, NOT ages 1 to 6.
+          Unverified against Ungdata methodology — carried rather than interpreted.
+        data_tests: [not_null]
+        data_type: text
+      - name: threshold
+        description: The degenerate topic slice FHI reports for this table.
+        data_tests: [not_null]
+        data_type: text
+      - name: socioeconomic_status
+        description: >-
+          FHI SOES. "0" is combined; only fhi-depresjon carries the 1/2/3 breakdown.
+        data_tests: [not_null]
+        data_type: text
+      - name: contents_code
+        description: SMR or MEIS.
+        data_tests:
+          - not_null
+          - accepted_values: {values: [SMR, MEIS]}
+        data_type: text
+      - name: contents_label
+        description: Human-readable gloss for contents_code.
+        data_type: text
+      - name: value
+        description: The measured value. NULL where FHI suppressed the cell.
+        data_type: numeric
+      - name: status
+        description: FHI suppression marker.
+        data_type: text
+      - name: updated_at
+        description: When the raw row was loaded.
+        data_tests: [not_null]
+        data_type: timestamp with time zone
+
+  - name: indicators__fhi_smertestillende
+    description: |
+      Per-source indicator passthrough for FHI Folkehelsestatistikk (Ungdata):
+      share of youth reporting painkiller use at least weekly.
+
+      🔴 A SURVEY, NOT AN ENUMERATION. Only SMR (standardised ratio, 100 =
+      national) and MEIS (FHI's smoothed estimate) exist — no TELLER, no RATE.
+      ⚠️ These values cannot be summed, and multiplying one by a population
+      does not give a number of young people.
+    columns:
+      - name: source_id
+        description: Atlas source identifier.
+        data_tests:
+          - not_null
+          - accepted_values: {values: [fhi-smertestillende]}
+        data_type: text
+      - name: region_code
+        description: FHI GEO verbatim — kommune, fylke, bydel or national.
+        data_tests: [not_null]
+        data_type: text
+      - name: kommune_nr
+        description: >-
+          4-digit kommune code, via region_code_to_kommune_nr — NULL for every region that is not a
+          municipality. Not a bare four-digit regex; that is what called Svalbard a kommune.
+        data_tests:
+          - relationships:
+              to: ref('dim_kommune')
+              field: kommune_nr
+              config: {severity: warn}
+        data_type: text
+      - name: region_kind
+        description: What the GEO code is; joins ref_region_kind.
+        data_tests:
+          - not_null
+          - relationships: {to: ref('ref_region_kind'), field: region_kind}
+        data_type: text
+      - name: fylke_nr
+        description: 2-digit fylke code where GEO is a fylke, else NULL.
+        data_type: text
+      - name: year
+        description: First year of the period.
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
+        data_type: integer
+      - name: period
+        description: FHI AAR verbatim, e.g. "2024_2024".
+        data_tests: [not_null]
+        data_type: text
+      - name: period_start_year
+        description: Parsed first year of the period.
+        data_type: integer
+      - name: period_end_year
+        description: Parsed last year of the period.
+        data_type: integer
+      - name: sex
+        description: all / male / female, decoded from FHI KJONN.
+        data_tests:
+          - not_null
+          - accepted_values: {values: [male, female, all]}
+        data_type: text
+      - name: ungdata_cohort
+        description: >-
+          FHI ALDER verbatim, always "1_6". ⚠️ An Ungdata survey-cohort identifier, NOT ages 1 to 6.
+          Unverified against Ungdata methodology — carried rather than interpreted.
+        data_tests: [not_null]
+        data_type: text
+      - name: frequency_band
+        description: The degenerate topic slice FHI reports for this table.
+        data_tests: [not_null]
+        data_type: text
+      - name: socioeconomic_status
+        description: >-
+          FHI SOES. "0" is combined; only fhi-depresjon carries the 1/2/3 breakdown.
+        data_tests: [not_null]
+        data_type: text
+      - name: contents_code
+        description: SMR or MEIS.
+        data_tests:
+          - not_null
+          - accepted_values: {values: [SMR, MEIS]}
+        data_type: text
+      - name: contents_label
+        description: Human-readable gloss for contents_code.
+        data_type: text
+      - name: value
+        description: The measured value. NULL where FHI suppressed the cell.
+        data_type: numeric
+      - name: status
+        description: FHI suppression marker.
+        data_type: text
+      - name: updated_at
+        description: When the raw row was loaded.
+        data_tests: [not_null]
+        data_type: timestamp with time zone

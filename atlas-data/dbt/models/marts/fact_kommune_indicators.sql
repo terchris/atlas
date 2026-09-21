@@ -220,6 +220,129 @@ ssb_crime_tables_08487 as (
   where kommune_nr is not null
 ),
 
+-- 🔴 THE NINE UNGDATA SOURCES, AND WHAT IS HELD FIXED TO GET THEM TO THIS GRAIN.
+--
+-- Each is a survey table with sex × socioeconomic status × a degenerate topic
+-- slice × two measure types. The fact's grain is
+-- (source, kommune, year, contents_code), so the headline slice is:
+--
+--     sex = 'all'                    both sexes, as fhi_bor_alene and fhi_vgs do
+--     socioeconomic_status = '0'     combined. Only fhi-depresjon HAS a
+--                                    breakdown (1/2/3); the other eight carry
+--                                    '0' alone, so the filter is a no-op there
+--                                    and load-bearing for depresjon.
+--     contents_code = 'MEIS'         FHI's smoothed estimate — the interpretable
+--                                    number. SMR is a ratio against the national
+--                                    average and belongs to a comparison, not to
+--                                    a per-kommune value.
+--
+-- ⚠️ SMR is NOT discarded: every slice stays in indicators__fhi_*, which is
+-- where a consumer goes for sex or SES breakdowns. This union is the headline.
+--
+-- ⚠️ AND THESE VALUES ARE NOT COUNTS. Ungdata is sampled, so there is no TELLER
+-- and no RATE upstream. A consumer multiplying one of these by a population
+-- gets nothing meaningful — the shape of the `personer` defect, and the reason
+-- every one of the nine says so in its own description.
+
+fhi_alkohol as (
+  select
+    source_id, kommune_nr, year, contents_code, contents_label,
+    value, status, updated_at
+  from {{ ref('indicators__fhi_alkohol') }}
+  where kommune_nr is not null
+    and sex = 'all'
+    and socioeconomic_status = '0'
+    and contents_code = 'MEIS'
+),
+
+fhi_depresjon as (
+  select
+    source_id, kommune_nr, year, contents_code, contents_label,
+    value, status, updated_at
+  from {{ ref('indicators__fhi_depresjon') }}
+  where kommune_nr is not null
+    and sex = 'all'
+    and socioeconomic_status = '0'
+    and contents_code = 'MEIS'
+),
+
+fhi_fortrolig_venn as (
+  select
+    source_id, kommune_nr, year, contents_code, contents_label,
+    value, status, updated_at
+  from {{ ref('indicators__fhi_fortrolig_venn') }}
+  where kommune_nr is not null
+    and sex = 'all'
+    and socioeconomic_status = '0'
+    and contents_code = 'MEIS'
+),
+
+fhi_hasj as (
+  select
+    source_id, kommune_nr, year, contents_code, contents_label,
+    value, status, updated_at
+  from {{ ref('indicators__fhi_hasj') }}
+  where kommune_nr is not null
+    and sex = 'all'
+    and socioeconomic_status = '0'
+    and contents_code = 'MEIS'
+),
+
+fhi_livskvalitet as (
+  select
+    source_id, kommune_nr, year, contents_code, contents_label,
+    value, status, updated_at
+  from {{ ref('indicators__fhi_livskvalitet') }}
+  where kommune_nr is not null
+    and sex = 'all'
+    and socioeconomic_status = '0'
+    and contents_code = 'MEIS'
+),
+
+fhi_mediebruk_some as (
+  select
+    source_id, kommune_nr, year, contents_code, contents_label,
+    value, status, updated_at
+  from {{ ref('indicators__fhi_mediebruk_some') }}
+  where kommune_nr is not null
+    and sex = 'all'
+    and socioeconomic_status = '0'
+    and contents_code = 'MEIS'
+),
+
+fhi_mediebruk_spill as (
+  select
+    source_id, kommune_nr, year, contents_code, contents_label,
+    value, status, updated_at
+  from {{ ref('indicators__fhi_mediebruk_spill') }}
+  where kommune_nr is not null
+    and sex = 'all'
+    and socioeconomic_status = '0'
+    and contents_code = 'MEIS'
+),
+
+fhi_mediebruk_underhold as (
+  select
+    source_id, kommune_nr, year, contents_code, contents_label,
+    value, status, updated_at
+  from {{ ref('indicators__fhi_mediebruk_underhold') }}
+  where kommune_nr is not null
+    and sex = 'all'
+    and socioeconomic_status = '0'
+    and contents_code = 'MEIS'
+),
+
+fhi_smertestillende as (
+  select
+    source_id, kommune_nr, year, contents_code, contents_label,
+    value, status, updated_at
+  from {{ ref('indicators__fhi_smertestillende') }}
+  where kommune_nr is not null
+    and sex = 'all'
+    and socioeconomic_status = '0'
+    and contents_code = 'MEIS'
+),
+
 all_indicators as (
   select * from ssb_08764
   union all
@@ -252,6 +375,24 @@ all_indicators as (
   select * from fhi_vgs
   union all
   select * from ssb_crime_tables_08487
+  union all
+  select * from fhi_alkohol
+  union all
+  select * from fhi_depresjon
+  union all
+  select * from fhi_fortrolig_venn
+  union all
+  select * from fhi_hasj
+  union all
+  select * from fhi_livskvalitet
+  union all
+  select * from fhi_mediebruk_some
+  union all
+  select * from fhi_mediebruk_spill
+  union all
+  select * from fhi_mediebruk_underhold
+  union all
+  select * from fhi_smertestillende
 )
 
 select
