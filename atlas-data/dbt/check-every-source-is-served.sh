@@ -73,7 +73,15 @@ BACKLOG="bufdir-barnefattigdom ssb-10826 ssb-12944 fhi-innvandrere"
 # and only the second lets a rule report compliance it does not have.
 #
 # So: a source is SERVED when it feeds a mart_* that api_v1 actually exposes.
-SERVED="$(./.venv/bin/python -c '
+# ⚠️ python3, not ./.venv/bin/python. This gate runs in the UNFILTERED CI job,
+# which checks out the repo and installs nothing — there is no venv there. It
+# is the third time a check of mine has been portable on my machine and broken
+# on the runner (BSD mktemp, bash 4 mapfile, now this), and all three were
+# found by CI rather than by me.
+PY=python3
+command -v "$PY" >/dev/null 2>&1 || PY=./.venv/bin/python
+
+SERVED="$("$PY" -c '
 import csv, re, pathlib
 gen = pathlib.Path("api_v1_generated.sql").read_text()
 rel = set(re.findall(r"CREATE OR REPLACE VIEW api_v1\.(\w+)", gen))
