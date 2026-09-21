@@ -56,9 +56,27 @@ DBT = next((p for p in (HERE.parents[1] / "dbt", pathlib.Path("/app/dbt"))
 EXEMPT = {"frr": "auth-gated volunteer register, never served"}
 
 
+class Unreachable(Exception):
+    """The API could not be talked to at all — not the same as data being absent."""
+
+
 def fetch(base, path, prefer=None):
-    """Return (status, headers, rows). A transport failure is a status, not a crash."""
+    """
+    Return (status, headers, rows). A transport failure raises Unreachable.
+
+    🔴 THE USER-AGENT IS NOT COSMETIC. urllib sends `Python-urllib/3.x` and
+    Cloudflare answers 403 to it. Without this header every dataset reported
+    "ABSENT from indicator_summary" — ~40 failures that looked exactly like
+    total data loss, from one missing header (urb-agents #1328).
+
+    ⚠️ And that was the worse half: the verifier could not tell "the API said
+    no" from "the data is gone". A tool whose failure mode is indistinguishable
+    from catastrophe is worse than no tool, because someone will act on it.
+    Transport failures now raise and stop the run with one clear line.
+    """
     req = urllib.request.Request(f"{base.rstrip('/')}/{path.lstrip('/')}")
+    req.add_header("User-Agent", "atlas-verify-release/1.0 (+terchris/atlas)")
+    req.add_header("Accept", "application/json")
     if prefer:
         req.add_header("Prefer", prefer)
     try:
@@ -66,9 +84,15 @@ def fetch(base, path, prefer=None):
             raw = r.read()
             return r.status, dict(r.headers), (json.loads(raw) if raw else [])
     except urllib.error.HTTPError as e:
+        # 403/401/429 are the API refusing us, not a relation missing.
+        if e.code in (401, 403, 429, 502, 503, 504):
+            raise Unreachable(
+                f"HTTP {e.code} from {path.split('?')[0]} — the API refused the "
+                f"request itself. This is not a data problem."
+            ) from e
         return e.code, {}, []
     except Exception as e:  # noqa: BLE001
-        return f"{type(e).__name__}", {}, []
+        raise Unreachable(f"{type(e).__name__} talking to {base}") from e
 
 
 def expectations():
@@ -126,8 +150,11 @@ def expectations():
                           and m not in fact_derived})
             if pub:
                 out[sid] = ("published", pub[0])
-            elif any(m.startswith("mart_") for m in feeds.get(sid, ())):
-                out[sid] = ("upstream", f"feeds {len(feeds[sid])} model(s)")
+            elif any(m in fact_derived for m in feeds.get(sid, ())):
+                # It feeds a fact-derived relation, so it IS an indicator source
+                # — ssb-crime-tables reaches the fact through a synthesised id
+                # that the `ref()` scan cannot see.
+                out[sid] = ("indicator", "feeds a fact-derived relation")
             elif feeds.get(sid):
                 # 🔴 A model that reaches no published relation. "Has a model"
                 # is not "reaches a consumer" — fhi-innvandrere had an indicator
@@ -144,6 +171,16 @@ def expectations():
 
 
 def main(base, only=None):
+    try:
+        return _run(base, only)
+    except Unreachable as e:
+        print(f"✗ CANNOT VERIFY: {e}")
+        print("  Nothing below was checked. This is NOT evidence that any dataset")
+        print("  is missing — the verifier could not reach the API at all.")
+        return 2
+
+
+def _run(base, only=None):
     if DBT is None:
         print("✗ CANNOT VERIFY: no api_v1_generated.sql beside this script or at "
               "/app/dbt. Run from a checkout or inside the image.")
@@ -187,9 +224,15 @@ def main(base, only=None):
             ok = sid not in series
             detail = why + ("" if ok else "  |  but it IS in indicator_summary "
                                           "— reclassify it, the reason is stale")
-        else:  # upstream
-            ok = sid not in no_model
-            detail = why if ok else "downstream_model_count = 0"
+        else:
+            # 🔴 THERE IS NO LONGER AN `upstream` BRANCH, AND THAT IS THE FIX.
+            # It tested only `sid not in no_model` — it never touched the API,
+            # so it PASSED during a run where the API was unreachable and forty
+            # other datasets failed. ⚠️ A branch that cannot fail is not a
+            # check, and I had written a comment two levels up warning about
+            # the shallower version of exactly this (urb-agents #1328).
+            raise AssertionError(f"unclassified source {sid!r} ({kind}) — every "
+                                 "class must assert something against the API")
         # 🔴 EVERY non-exempt source must also have a lineage edge, whatever
         # its class. A source can be live in indicator_summary AND report
         # downstream_model_count = 0 — that is exactly what brreg-oppdateringer
