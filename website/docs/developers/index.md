@@ -4,6 +4,34 @@ This section is for **anyone consuming Atlas's public PostgREST API** to build t
 
 > **Status: stub.** Real content (getting-started walkthrough, embedded API reference, versioning policy, examples) is being designed in [INVESTIGATE-developer-docs-surface.md](../ai-developer/plans/backlog/INVESTIGATE-developer-docs-surface.md). For now, the pointers below are the canonical entry points.
 
+<!-- BEGIN holdings (generated) -->
+
+**44 upstream sources** from **5 publishers**, served as **19 read-only relations**.
+
+| publisher | sources | broadly |
+|---|---|---|
+| Folkehelseinstituttet | 21 | public health, and the Ungdata youth surveys |
+| Statistisk sentralbyrå | 17 | population, income, families, housing, education, crime |
+| Brønnøysundregistrene | 3 | the company and voluntary-organisation registers |
+| Norges Røde Kors | 2 | local chapters and their activities |
+| Barne-, ungdoms- og familiedirektoratet | 1 | child poverty |
+
+By EU data theme: **SOCI** 21 (society) · **HEAL** 12 (health) · **GOVE** 5 (government) · **EDUC** 5 (education) · **JUST** 1 (justice).
+
+Licences: **NLOD** for 42 of 44 — Norwegian public data, free to reuse with attribution. The exceptions are `frr` (internal) and `redcross-branches` (permissive) — Red Cross's own data rather than the state's. `frr` is a volunteer register held in an auth-gated schema and is NOT served on the public API.
+
+Every relation, with its columns and their descriptions:
+
+```bash
+curl -s $ATLAS/meta_endpoints        # what is queryable
+curl -s $ATLAS/meta_sources          # every upstream, with freshness
+curl -s $ATLAS/indicator_summary     # every published series
+```
+
+⚠️ Those three are the live answer. The numbers above are regenerated on release; coverage, row counts and freshness change between releases and are only true in the catalogue.
+
+<!-- END holdings (generated) -->
+
 ## Open by default
 
 Atlas's posture: **anything not explicitly gated is queryable**. The public PostgREST API exposes three schemas, all anonymous-read:
