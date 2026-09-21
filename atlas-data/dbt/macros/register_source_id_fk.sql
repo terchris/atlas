@@ -35,6 +35,30 @@
   PGRST200 again with every signal green. Hence a post-hook on BOTH models:
   whichever is rebuilt, the constraint is restored by the thing that removed it.
 
+  🔴 THIS MACRO USED TO CREATE THE UNIQUE TARGET TOO, AND THAT BROKE THE
+  NIGHTLY BUILD ON ITS SECOND RUN (urb-agents #1307).
+
+      Database Error in model mart_meta_sources
+        relation "mart_meta_sources_source_id_key" already exists
+
+  ⚠️ The guard asked `pg_constraint where conrelid = <this table>` — a TABLE
+  scoped question. A unique constraint is backed by an INDEX, and index names
+  are unique at SCHEMA scope. dbt renames the old table aside and drops it
+  AFTER post-hooks run, and renaming a table does not rename its indexes — so
+  at post-hook time the name was still held by mart_meta_sources__dbt_backup,
+  the guard looked at the new table, saw nothing, and walked into a collision.
+  It succeeded exactly once, on the run where no such index existed yet.
+
+  ✅ The fix is not a better guard. The unique target is now a dbt-managed
+  index — `indexes=[{'columns': ['source_id'], 'unique': True}]` on
+  mart_meta_sources — because dbt hash-names its indexes per build and
+  dim_kommune has been rebuilding one nightly for months without collision.
+
+  🔵 A unique INDEX is a valid FK target; a unique CONSTRAINT is not required.
+  Verified in Postgres 15 rather than assumed, along with the other half: FK
+  constraint names are TABLE scoped, so the FK below never had this problem and
+  does not need the same treatment.
+
   🔵 And because "invisible unless you look" is exactly how this class of defect
   survives, the asset check `embedding_fk_is_registered` asks the database
   whether the constraint is actually there. A macro that quietly stopped firing
@@ -74,17 +98,6 @@
         return;
       end if;
 
-      -- The FK target needs a unique constraint. It is dropped with the table
-      -- on every rebuild of mart_meta_sources, so it is re-added here rather
-      -- than assumed. source_id is already tested unique + not_null.
-      if not exists (
-        select 1 from pg_constraint
-        where conrelid = target_rel and conname = 'mart_meta_sources_source_id_key'
-      ) then
-        alter table marts.mart_meta_sources
-          add constraint mart_meta_sources_source_id_key unique (source_id);
-      end if;
-
       if not exists (
         select 1 from pg_constraint
         where conrelid = source_rel and conname = 'mart_indicator_summary_source_id_fkey'
@@ -98,8 +111,8 @@
       -- are swallowed: an orphan source_id, or a target that is not unique.
       -- Anything else — a permissions error, a missing column — is a defect in
       -- this macro and must stop the model rather than degrade to a warning.
-      when foreign_key_violation or unique_violation then
-        raise warning 'register_source_id_fk: NOT registered (%). Embedding stays PGRST200. foreign_key_violation -> an orphan source_id; the relationships test on mart_indicator_summary.source_id names the rows. unique_violation -> mart_meta_sources.source_id is not unique; its own unique test names them.',
+      when foreign_key_violation then
+        raise warning 'register_source_id_fk: NOT registered (%). Embedding stays PGRST200. An orphan source_id — the relationships test on mart_indicator_summary.source_id names the rows.',
           sqlerrm;
     end $$;
   {%- endif -%}
