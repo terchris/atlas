@@ -336,6 +336,9 @@ cd atlas-data/dbt
 # 3. Smoke test the live endpoints across all three exposed schemas
 curl -s http://api-atlas.localhost/ | jq '{swagger, version: .info.version}'
 # expect: {"swagger":"2.0","version":"14.10"}
+# ⚠️ info.version is POSTGREST's version, not Atlas's — read from the running
+# binary (`postgrest --version`). info.title DOES come from the schema comment,
+# which is why the two are easy to confuse (urb-agents #1303).
 curl -s http://api-atlas.localhost/indicator_summary | jq '.[0:3]'
 # expect: 3 rows from marts.mart_indicator_summary (api_v1 schema, default)
 curl -s -H 'Accept-Profile: marts' http://api-atlas.localhost/dim_kommune?limit=3 | jq 'length'

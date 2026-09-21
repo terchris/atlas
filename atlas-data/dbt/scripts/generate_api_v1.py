@@ -168,9 +168,27 @@ def render_sql(wrappers: list[WrapperView], removed_views: list[str]) -> str:
     #
     # The dead ends, so nobody re-walks them (tor-agent, #1296):
     #
-    #   openapi-mode = follow-privileges   ALREADY the default, and UIS sets no
-    #                                      PGRST_OPENAPI_MODE at all. Setting it
-    #                                      explicitly is a no-op.
+    #   openapi-mode = follow-privileges   Not configured ANYWHERE, so the
+    #                                      upstream default applies and setting
+    #                                      it explicitly is a no-op.
+    #
+    #                                      ⚠️ Provenance, because it was
+    #                                      overstated once (#1303). MEASURED
+    #                                      unset in four places: the pod spec
+    #                                      env, the process at pid 1,
+    #                                      pg_roles.rolconfig and
+    #                                      pg_db_role_setting — PostgREST reads
+    #                                      configuration from the database as
+    #                                      well as the environment, and the
+    #                                      first report checked only the
+    #                                      environment. INFERRED, and still
+    #                                      inferred: that unset means
+    #                                      follow-privileges. No PostgREST
+    #                                      endpoint reports the effective
+    #                                      setting — the admin server exposes
+    #                                      /live, /ready and /metrics, not
+    #                                      /config — so nobody can close that
+    #                                      last link from outside.
     #   openapi-mode = ignore-privileges   ⚠️ The only value that changes
     #                                      anything, and it advertises every
     #                                      method REGARDLESS of grants by
