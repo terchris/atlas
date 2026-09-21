@@ -287,6 +287,44 @@ column that does not exist.
 
 ---
 
+## 12. One upstream dimension can carry two vocabularies, and half of them are dead
+
+`ssb-crime-tables` published **32 series, 18 of them with zero coverage**. Three parties
+measured that number — a consumer, ops-dev and this agent — and none could explain it for a
+day. It is not a defect in Atlas.
+
+SSB's table 08487 changed its crime classification around 2015 and **kept both code sets in
+the same `LovbruddKrim` dimension**:
+
+```
+16 codes = 7 current + 9 legacy      x 2 ContentsCode = 32 series
+                                       14 populated · 18 empty
+
+current   1AAAAA-9ZZZZz  4AAAAA-4ZZZZz  6AAAAA-6ZZZZz  7AAAAA-7ZZZZz
+          8AAAAA-8ZZZZz  1AAAAA-1ZZZZz  2AAAAA-3-5-9ZZZZz
+legacy    0-999  1  0  01  11  12  14  18  45
+```
+
+⚠️ **The legacy codes are not empty — they stopped.** All nine last carry a value at
+`2013-2014`; the current ones run to `2024-2025`. A dimension member that has been retired
+does not disappear from the metadata, so it keeps producing a series forever.
+
+> **Before calling a series empty, ask whether its code is discontinued. Query the upstream
+> dimension for its full history, not just the latest year.**
+
+**Caught by:** nothing, and it would be hard to. What made it *visible* was
+`latest_year_agg()` — a discontinued series now reports the last year it had data instead of
+the newest year a row exists, so `2013-2014` with real coverage rather than `2025` with
+zero. ⚠️ That also means such a source is legitimately **mixed**: some series current, some
+frozen years back. An acceptance check asserting one `latest_year` per source will read that
+as a regression.
+
+🔵 The general form, and it cost three investigations: **a code list is not a vocabulary.**
+Two vocabularies in one dimension look identical through an API that returns codes, and the
+only thing distinguishing them is which years carry values.
+
+---
+
 ## The shape behind most of these
 
 Nearly every defect above was **wrong in a setting that corroborated it**. The
