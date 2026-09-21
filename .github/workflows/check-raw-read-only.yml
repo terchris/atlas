@@ -53,3 +53,43 @@ jobs:
           dbt parse
       - name: Every published per-kommune relation excludes the 9999 sentinel
         run: atlas-data/dbt/check-kommune-marts-exclude-sentinels.sh
+
+  models-compile:
+    runs-on: ubuntu-latest
+    # 🔴 dbt compile NEEDS A CONNECTION even though it reads no marts, so this
+    # job has a postgres and the other two do not. It stays empty — nothing is
+    # created in it. The alternative was skipping the check when no database is
+    # around, which is how a gate learns to pass by checking nothing.
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: atlas
+          POSTGRES_PASSWORD: atlas
+          POSTGRES_DB: atlas
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 5s
+          --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      - name: Install dbt and the SQL parser
+        run: pip install --quiet dbt-core==1.8.10 dbt-postgres==1.8.2 sqlglot==30.17.0
+      - name: Compile every model
+        working-directory: atlas-data/dbt
+        env:
+          PGHOST: localhost
+          PGPORT: '5432'
+          PGUSER: atlas
+          PGPASSWORD: atlas
+          PGDATABASE: atlas
+        run: |
+          mkdir -p .venv/bin && ln -sf "$(command -v python)" .venv/bin/python
+          dbt deps
+          dbt compile
+      # ⚠️ `dbt compile` EXITS 0 ON UNPARSEABLE SQL. Measured 2026-09-21 by
+      # reintroducing the real defect: compile 0, parse 0, this gate 1.
+      - name: Every compiled model is parseable Postgres
+        run: atlas-data/dbt/check-models-compile.sh
