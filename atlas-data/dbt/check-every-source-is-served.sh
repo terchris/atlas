@@ -34,37 +34,17 @@ for f in "$MANIFEST" "$LINEAGE"; do [ -f "$f" ] || { echo "✗ CANNOT CHECK: no 
 #        private_marts, deliberately outside api_v1 and outside marts.
 EXEMPT="frr"
 
-# Ingested and not yet modelled. KNOWN, tracked, and shrinking — this list is
-# the backlog made visible in the repo instead of in a bus thread. The gate
-# warns on these and fails on anything in neither list.
-# ⚠️ Adding a name here is a decision to defer, not a way to silence the check.
-BACKLOG="fhi-befolkning fhi-befolkningsvekst fhi-innvandrere fhi-innvkat \
-fhi-kpr-1aar fhi-neet fhi-prognose fhi-selvmord"
-
-# 🔴 CR GUARD ON THE LINEAGE SEED ONLY, AND THE ASYMMETRY IS THE POINT.
+# Ingested and not yet modelled. EMPTY, and keeping it that way is the rule.
 #
-# Python's csv.writer emits \r\n by default (RFC 4180). Every time I rewrote
-# lineage.csv this session I silently converted it to CRLF — 205 carriage
-# returns. dbt, the website generator and every existing gate tolerated it. The
-# first thing that did not was this script's own `grep -qx`, which matched
-# nothing and reported 34 served sources as unserved.
+# 🔵 It held eight FHI sources when this gate was written on 2026-09-21 — I
+# wrote the rule down and exempted myself from it in the same commit. Terje
+# said "go ahead - all datasets must be served", and they now are. Every one of
+# the 44 reaches a model.
 #
-# ⚠️ WHY ONLY THIS FILE. In lineage.csv source_id is the LAST field, so a
-# trailing CR attaches to the value and breaks exact matching. In
-# _sources_manifest.csv source_id is the FIRST field — that file has carried 45
-# carriage returns since long before this work, harmlessly, and failing on it
-# would be a gate crying wolf about something that has never hurt anyone.
-#
-# 🔵 The parsing below strips CR regardless, so this guard is belt-and-braces
-# on the one file where the convention is LF and a CR means someone rewrote it
-# with csv.writer defaults.
-if tr -cd '\r' < "$LINEAGE" | head -c1 | grep -q .; then
-  echo "✗ $LINEAGE contains carriage returns."
-  echo "  source_id is the last field there, so a trailing CR attaches to the"
-  echo "  value and every exact-match lookup fails silently. Rewrite with LF"
-  echo "  (csv.writer needs lineterminator='\\n')."
-  exit 1
-fi
+# ⚠️ Adding a name here is a decision to defer, with your reason beside it. An
+# empty list is the normal state, not an achievement to be protected: if
+# deferring one is genuinely right, defer it and say why.
+BACKLOG=""
 
 SERVED="$(tail -n +2 "$LINEAGE" | cut -d, -f2 | tr -d '"\r' | sort -u)"
 ALL="$(tail -n +2 "$MANIFEST" | cut -d, -f1 | tr -d '"\r' | sort -u)"

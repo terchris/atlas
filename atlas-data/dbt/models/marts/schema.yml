@@ -23,7 +23,9 @@ models:
                     fhi-mobbing, fhi-vgs-gjennomforing, ssb-crime-tables,
                     fhi-alkohol, fhi-depresjon, fhi-fortrolig-venn, fhi-hasj, fhi-livskvalitet,
                     fhi-mediebruk-some, fhi-mediebruk-spill, fhi-mediebruk-underhold,
-                    fhi-smertestillende]
+                    fhi-smertestillende,
+                    fhi-neet, fhi-befolkning, fhi-befolkningsvekst, fhi-innvkat,
+                    fhi-kpr-1aar, fhi-prognose, fhi-selvmord]
       - name: kommune_nr
         description: 4-digit kommune code. FK to dim_kommune.
         data_tests:

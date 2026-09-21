@@ -52,6 +52,25 @@ def collect():
 
 
 
+
+def _relations():
+    """
+    The published relations and the first sentence of each COMMENT ON VIEW.
+
+    🔵 Read from api_v1_generated.sql, which is generated from the dbt manifest
+    — so the list cannot drift from what is actually served, and the wording is
+    the same text PostgREST hands a consumer as its OpenAPI description.
+    """
+    sql = GENERATED.read_text()
+    out = []
+    for m in re.finditer(r"COMMENT ON VIEW api_v1\.(\w+) IS '((?:[^']|'')*)';", sql, re.S):
+        name, body = m.group(1), m.group(2).replace("''", "'")
+        first = re.split(r"(?<=[.!?])\s", body.strip().replace("\n", " "), maxsplit=1)[0]
+        first = re.sub(r"\s+", " ", first).strip()
+        out.append((name, first))
+    return sorted(out)
+
+
 def _nonpublic(rows):
     """
     ⚠️ The honest sentence about the sources that are NOT open public data.
@@ -83,6 +102,10 @@ def markdown():
     nlod = lics.get("NLOD", 0)
     L += ["", f"Licences: **NLOD** for {nlod} of {len(rows)} — Norwegian public data, "
               "free to reuse with attribution. " + _nonpublic(rows)]
+    L += ["", "### What you can query", "",
+          "| relation | what it holds |", "|---|---|"]
+    for name, first in _relations():
+        L.append(f"| `{name}` | {first} |")
     L += ["", "Every relation, with its columns and their descriptions:", "",
           "```bash", "curl -s $ATLAS/meta_endpoints        # what is queryable",
           "curl -s $ATLAS/meta_sources          # every upstream, with freshness",
