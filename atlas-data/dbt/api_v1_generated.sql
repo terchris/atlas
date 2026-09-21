@@ -63,7 +63,17 @@ upstream''s own words for the same fact.';
 
 -- activity_catalog  ←  marts.mart_activity_catalog
 CREATE OR REPLACE VIEW api_v1.activity_catalog AS SELECT * FROM marts.mart_activity_catalog;
-COMMENT ON VIEW api_v1.activity_catalog IS 'One row per (NGO, activity) joining dim_activity to the
+COMMENT ON VIEW api_v1.activity_catalog IS '🔵 EXPECTED EMPTY TODAY, AND THAT IS NOT A DEFECT. Its one row per (NGO, activity), so it is empty until Red Cross activity data is loaded.
+Terje''s position, 2026-09-21: the Red Cross data is not coming now, it
+will be there later. The relation is published and answers so a consumer
+can build against its shape before the rows arrive.
+
+⚠️ A consumer cannot tell "empty by design" from "broken" without being
+told, and two of these three were asked about on the day someone noticed
+(urb-agents #1351). If this relation is still empty and this note is
+gone, something regressed.
+
+One row per (NGO, activity) joining dim_activity to the
 service-category seed for the human-readable label, plus a count
 of active chapters offering each activity. Backs the per-NGO
 activity catalogue page (atlas-frontend
@@ -306,7 +316,17 @@ The unattributable value it represented is published in
 
 -- distrikt_summary  ←  marts.mart_distrikt_summary
 CREATE OR REPLACE VIEW api_v1.distrikt_summary AS SELECT * FROM marts.mart_distrikt_summary;
-COMMENT ON VIEW api_v1.distrikt_summary IS 'One row per regional chapter (Red Cross "distrikt" level, and the
+COMMENT ON VIEW api_v1.distrikt_summary IS '🔵 EXPECTED EMPTY TODAY, AND THAT IS NOT A DEFECT. Its grain is Red Cross districts, so it is empty until that data is loaded.
+Terje''s position, 2026-09-21: the Red Cross data is not coming now, it
+will be there later. The relation is published and answers so a consumer
+can build against its shape before the rows arrive.
+
+⚠️ A consumer cannot tell "empty by design" from "broken" without being
+told, and two of these three were asked about on the day someone noticed
+(urb-agents #1351). If this relation is still empty and this note is
+gone, something regressed.
+
+One row per regional chapter (Red Cross "distrikt" level, and the
 equivalent regional tier for any other NGO with a hierarchy).
 Each row carries denormalised counts of how many child chapters
 the distrikt has and how many distinct kommuner those children
@@ -476,9 +496,21 @@ an error and had to work the quoting out for itself (urb-agents
 #1281). Same class as the `personer` description: the contract
 said something a consumer acted on and it was wrong.';
 COMMENT ON COLUMN api_v1.indicator_summary.latest_year IS 'Most recent calendar year for which this (source_id,
-contents_code) has any rows in fact_kommune_indicators. The
+contents_code) has a VALUE in fact_kommune_indicators. The
 coverage and value-range columns below are computed against
 this year only.
+
+🔴 THIS CHANGED ON 2026-09-21 AND THE OLD BEHAVIOUR WAS WRONG.
+It was "has any rows", which pointed at years the publisher had
+not released yet: upstream ships the full grid, so a row exists
+with a NULL value. Seven of `ssb-06913`''s eight series resolved
+to 2026 with `kommuner_with_value` 0 and both value bounds null
+— a live series whose summary read as empty (urb-agents #1351).
+
+⚠️ A series with no value in ANY year keeps the newest year it
+has rows for, rather than going null. Disappearing from the
+catalogue is the worse failure: "0 of 357" invites a question,
+an absent row does not.
 
 ⚠️ READ IT WITH `latest_year_window_years`. For a windowed
 source this is the FIRST year of the window, not the year of
@@ -589,7 +621,17 @@ catch it if that ever stopped being true.';
 
 -- kommune_local_chapters  ←  marts.mart_kommune_local_chapters
 CREATE OR REPLACE VIEW api_v1.kommune_local_chapters AS SELECT * FROM marts.mart_kommune_local_chapters;
-COMMENT ON VIEW api_v1.kommune_local_chapters IS 'Active local chapters in each kommune, decorated with the NGO
+COMMENT ON VIEW api_v1.kommune_local_chapters IS '🔵 EXPECTED EMPTY TODAY, AND THAT IS NOT A DEFECT. Its one row per local chapter, so it is empty until Red Cross chapter data is loaded.
+Terje''s position, 2026-09-21: the Red Cross data is not coming now, it
+will be there later. The relation is published and answers so a consumer
+can build against its shape before the rows arrive.
+
+⚠️ A consumer cannot tell "empty by design" from "broken" without being
+told, and two of these three were asked about on the day someone noticed
+(urb-agents #1351). If this relation is still empty and this note is
+gone, something regressed.
+
+Active local chapters in each kommune, decorated with the NGO
 name/brand and the service-category labels offered. Backs the
 kommune detail page (atlas-frontend /kommuner/[kommune_nr]);
 equivalent to listChaptersInKommune().

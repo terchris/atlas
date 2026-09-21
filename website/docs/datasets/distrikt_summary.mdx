@@ -1,6 +1,6 @@
 ---
 title: "Distrikt summary"
-description: "One row per regional chapter (Red Cross \"distrikt\" level, and the equivalent regional tier for any other NGO with a hierarchy)."
+description: "🔵 EXPECTED EMPTY TODAY, AND THAT IS NOT A DEFECT."
 slug: /datasets/distrikt_summary
 sidebar_label: "distrikt_summary"
 ---
@@ -40,4 +40,4 @@ Live PostgREST query that returns the first 5 rows. URL adapts to the current ho
 
 ## About this view
 
-<div style={{whiteSpace: 'pre-wrap'}}>{"One row per regional chapter (Red Cross \"distrikt\" level, and the\nequivalent regional tier for any other NGO with a hierarchy).\nEach row carries denormalised counts of how many child chapters\nthe distrikt has and how many distinct kommuner those children\ncover. Backs atlas-frontend /ngo/[slug]/distrikter and the\nindividual /distrikt/[id] pages; equivalent to the listDistrikter()\ninline query.\n\nCounts come from dim_chapter joined back to itself by\nparent_chapter_id, filtered to active children. PostgREST\nconsumers filter via ?ngo_orgnr=eq.X (or ?chapter_id=eq.Y for the\nsingle-distrikt case)."}</div>
+<div style={{whiteSpace: 'pre-wrap'}}>{"🔵 EXPECTED EMPTY TODAY, AND THAT IS NOT A DEFECT. Its grain is Red Cross districts, so it is empty until that data is loaded.\nTerje's position, 2026-09-21: the Red Cross data is not coming now, it\nwill be there later. The relation is published and answers so a consumer\ncan build against its shape before the rows arrive.\n\n⚠️ A consumer cannot tell \"empty by design\" from \"broken\" without being\ntold, and two of these three were asked about on the day someone noticed\n(urb-agents #1351). If this relation is still empty and this note is\ngone, something regressed.\n\nOne row per regional chapter (Red Cross \"distrikt\" level, and the\nequivalent regional tier for any other NGO with a hierarchy).\nEach row carries denormalised counts of how many child chapters\nthe distrikt has and how many distinct kommuner those children\ncover. Backs atlas-frontend /ngo/[slug]/distrikter and the\nindividual /distrikt/[id] pages; equivalent to the listDistrikter()\ninline query.\n\nCounts come from dim_chapter joined back to itself by\nparent_chapter_id, filtered to active children. PostgREST\nconsumers filter via ?ngo_orgnr=eq.X (or ?chapter_id=eq.Y for the\nsingle-distrikt case)."}</div>

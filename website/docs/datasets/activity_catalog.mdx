@@ -1,6 +1,6 @@
 ---
 title: "Activity catalogue (cross-NGO)"
-description: "One row per (NGO, activity) joining dim_activity to the service-category seed for the human-readable label, plus a count of active chapters offering each act…"
+description: "🔵 EXPECTED EMPTY TODAY, AND THAT IS NOT A DEFECT."
 slug: /datasets/activity_catalog
 sidebar_label: "activity_catalog"
 ---
@@ -40,4 +40,4 @@ Live PostgREST query that returns the first 5 rows. URL adapts to the current ho
 
 ## About this view
 
-<div style={{whiteSpace: 'pre-wrap'}}>{"One row per (NGO, activity) joining dim_activity to the\nservice-category seed for the human-readable label, plus a count\nof active chapters offering each activity. Backs the per-NGO\nactivity catalogue page (atlas-frontend\n/ngo/[slug]/aktiviteter); equivalent to listActivities().\n\nThe full table is small (~35 rows for Red Cross alone in v1) and\ngrows as new NGOs land. PostgREST consumers filter via\n?ngo_orgnr=eq.X."}</div>
+<div style={{whiteSpace: 'pre-wrap'}}>{"🔵 EXPECTED EMPTY TODAY, AND THAT IS NOT A DEFECT. Its one row per (NGO, activity), so it is empty until Red Cross activity data is loaded.\nTerje's position, 2026-09-21: the Red Cross data is not coming now, it\nwill be there later. The relation is published and answers so a consumer\ncan build against its shape before the rows arrive.\n\n⚠️ A consumer cannot tell \"empty by design\" from \"broken\" without being\ntold, and two of these three were asked about on the day someone noticed\n(urb-agents #1351). If this relation is still empty and this note is\ngone, something regressed.\n\nOne row per (NGO, activity) joining dim_activity to the\nservice-category seed for the human-readable label, plus a count\nof active chapters offering each activity. Backs the per-NGO\nactivity catalogue page (atlas-frontend\n/ngo/[slug]/aktiviteter); equivalent to listActivities().\n\nThe full table is small (~35 rows for Red Cross alone in v1) and\ngrows as new NGOs land. PostgREST consumers filter via\n?ngo_orgnr=eq.X."}</div>
