@@ -30,7 +30,23 @@ type SsbKlassKommunerRow = {
 export const SOURCE_ID = "ssb-klass-kommuner";
 const CLASSIFICATION_ID = "131";
 const TARGET_TABLE = "raw.ssb_klass_kommuner";
-const HISTORY_FROM = "1960-01-01";
+// 🔴 1950, NOT 1960, AND THE BOUNDARY IS THE BUG. Twelve kommuner were
+// abolished on exactly 1960-01-01 — Kragerø, Sannidal, Tvedestrand, Dypvåg,
+// Gjøvdal, Hornnes, Øvre Sirdal, Øksendal, Ålvundeid, Brattvær, Hopen — and
+// Skåre on 1958-01-01. A `from=1960-01-01` range excludes every one of them,
+// so dim_kommune had 1158 codes where Klass has 1170.
+//
+// ⚠️ IT WENT UNSEEN BECAUSE NOTHING REFERENCED THEM. ssb-06913 publishes
+// 1951-2026 and had been delivering zero rows for its whole life; when that
+// was fixed (urb-agents #1345) its 7,296 pre-1960 rows landed against a
+// dimension that did not know those twelve codes, and two relationships
+// tests that had been passing vacuously started failing. imac's framing: a
+// relationships test over 0 rows passes by having nothing to test.
+//
+// 🔵 Measured against Klass 131 directly, not inferred:
+//   from=1960-01-01 -> 1158 codes, 0 of the 12 present
+//   from=1950-01-01 -> 1170 codes, 12 of the 12 present
+const HISTORY_FROM = "1950-01-01";
 const HISTORY_TO = "2100-01-01";
 const OUTPUT_PATH = resolve(
   dirname(fileURLToPath(import.meta.url)),

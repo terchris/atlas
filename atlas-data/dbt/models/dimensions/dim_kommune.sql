@@ -11,7 +11,12 @@
 }}
 
 -- dim_kommune — canonical kommune dimension for Atlas.
--- Source: SSB Klass classification 131 (Kommuner) with full history from 1960.
+-- Source: SSB Klass classification 131 (Kommuner) with full history from 1950.
+-- ⚠️ It said 1960 until 2026-09-21, and so did the ingest. Twelve kommuner were
+-- abolished on exactly 1960-01-01 and one in 1958, so a from=1960-01-01 range
+-- excluded all thirteen: 1158 codes here against Klass's 1170. Invisible until
+-- ssb-06913's 1951-2026 series started delivering and its pre-1960 rows had
+-- nothing to join to (urb-agents #1354).
 -- One row per distinct kommune_nr, deduped across validity spans.
 --
 -- Fylke relationship is derived from the first two digits of kommune_nr, per
