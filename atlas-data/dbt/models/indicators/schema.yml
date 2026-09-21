@@ -1579,6 +1579,14 @@ models:
       national) and MEIS (FHI's smoothed estimate) exist — no TELLER, no RATE.
       ⚠️ These values cannot be summed, and multiplying one by a population
       does not give a number of young people.
+
+      🔴 AND COVERAGE IS PARTIAL. Ungdata is a voluntary school survey, so a
+      kommune appears only if enough of its pupils answered. Measured on
+      deploy, the nine sources cover 18-43 % of kommuner — `fhi-hasj` carries
+      66 values across 357 rows. ⚠️ A row exists for a kommune with no value,
+      so ROW COUNT IS NOT COVERAGE; read
+      `indicator_summary.kommuner_with_value`, which is live and cannot go
+      stale the way a number written here would.
     columns:
       - name: source_id
         description: Atlas source identifier.
@@ -1675,6 +1683,14 @@ models:
       national) and MEIS (FHI's smoothed estimate) exist — no TELLER, no RATE.
       ⚠️ These values cannot be summed, and multiplying one by a population
       does not give a number of young people.
+
+      🔴 AND COVERAGE IS PARTIAL. Ungdata is a voluntary school survey, so a
+      kommune appears only if enough of its pupils answered. Measured on
+      deploy, the nine sources cover 18-43 % of kommuner — `fhi-hasj` carries
+      66 values across 357 rows. ⚠️ A row exists for a kommune with no value,
+      so ROW COUNT IS NOT COVERAGE; read
+      `indicator_summary.kommuner_with_value`, which is live and cannot go
+      stale the way a number written here would.
     columns:
       - name: source_id
         description: Atlas source identifier.
@@ -1771,6 +1787,14 @@ models:
       national) and MEIS (FHI's smoothed estimate) exist — no TELLER, no RATE.
       ⚠️ These values cannot be summed, and multiplying one by a population
       does not give a number of young people.
+
+      🔴 AND COVERAGE IS PARTIAL. Ungdata is a voluntary school survey, so a
+      kommune appears only if enough of its pupils answered. Measured on
+      deploy, the nine sources cover 18-43 % of kommuner — `fhi-hasj` carries
+      66 values across 357 rows. ⚠️ A row exists for a kommune with no value,
+      so ROW COUNT IS NOT COVERAGE; read
+      `indicator_summary.kommuner_with_value`, which is live and cannot go
+      stale the way a number written here would.
     columns:
       - name: source_id
         description: Atlas source identifier.
@@ -1867,6 +1891,14 @@ models:
       national) and MEIS (FHI's smoothed estimate) exist — no TELLER, no RATE.
       ⚠️ These values cannot be summed, and multiplying one by a population
       does not give a number of young people.
+
+      🔴 AND COVERAGE IS PARTIAL. Ungdata is a voluntary school survey, so a
+      kommune appears only if enough of its pupils answered. Measured on
+      deploy, the nine sources cover 18-43 % of kommuner — `fhi-hasj` carries
+      66 values across 357 rows. ⚠️ A row exists for a kommune with no value,
+      so ROW COUNT IS NOT COVERAGE; read
+      `indicator_summary.kommuner_with_value`, which is live and cannot go
+      stale the way a number written here would.
     columns:
       - name: source_id
         description: Atlas source identifier.
@@ -1963,6 +1995,14 @@ models:
       national) and MEIS (FHI's smoothed estimate) exist — no TELLER, no RATE.
       ⚠️ These values cannot be summed, and multiplying one by a population
       does not give a number of young people.
+
+      🔴 AND COVERAGE IS PARTIAL. Ungdata is a voluntary school survey, so a
+      kommune appears only if enough of its pupils answered. Measured on
+      deploy, the nine sources cover 18-43 % of kommuner — `fhi-hasj` carries
+      66 values across 357 rows. ⚠️ A row exists for a kommune with no value,
+      so ROW COUNT IS NOT COVERAGE; read
+      `indicator_summary.kommuner_with_value`, which is live and cannot go
+      stale the way a number written here would.
     columns:
       - name: source_id
         description: Atlas source identifier.
@@ -2059,6 +2099,14 @@ models:
       national) and MEIS (FHI's smoothed estimate) exist — no TELLER, no RATE.
       ⚠️ These values cannot be summed, and multiplying one by a population
       does not give a number of young people.
+
+      🔴 AND COVERAGE IS PARTIAL. Ungdata is a voluntary school survey, so a
+      kommune appears only if enough of its pupils answered. Measured on
+      deploy, the nine sources cover 18-43 % of kommuner — `fhi-hasj` carries
+      66 values across 357 rows. ⚠️ A row exists for a kommune with no value,
+      so ROW COUNT IS NOT COVERAGE; read
+      `indicator_summary.kommuner_with_value`, which is live and cannot go
+      stale the way a number written here would.
     columns:
       - name: source_id
         description: Atlas source identifier.
@@ -2155,6 +2203,14 @@ models:
       national) and MEIS (FHI's smoothed estimate) exist — no TELLER, no RATE.
       ⚠️ These values cannot be summed, and multiplying one by a population
       does not give a number of young people.
+
+      🔴 AND COVERAGE IS PARTIAL. Ungdata is a voluntary school survey, so a
+      kommune appears only if enough of its pupils answered. Measured on
+      deploy, the nine sources cover 18-43 % of kommuner — `fhi-hasj` carries
+      66 values across 357 rows. ⚠️ A row exists for a kommune with no value,
+      so ROW COUNT IS NOT COVERAGE; read
+      `indicator_summary.kommuner_with_value`, which is live and cannot go
+      stale the way a number written here would.
     columns:
       - name: source_id
         description: Atlas source identifier.
@@ -2251,6 +2307,14 @@ models:
       national) and MEIS (FHI's smoothed estimate) exist — no TELLER, no RATE.
       ⚠️ These values cannot be summed, and multiplying one by a population
       does not give a number of young people.
+
+      🔴 AND COVERAGE IS PARTIAL. Ungdata is a voluntary school survey, so a
+      kommune appears only if enough of its pupils answered. Measured on
+      deploy, the nine sources cover 18-43 % of kommuner — `fhi-hasj` carries
+      66 values across 357 rows. ⚠️ A row exists for a kommune with no value,
+      so ROW COUNT IS NOT COVERAGE; read
+      `indicator_summary.kommuner_with_value`, which is live and cannot go
+      stale the way a number written here would.
     columns:
       - name: source_id
         description: Atlas source identifier.
@@ -2347,6 +2411,14 @@ models:
       national) and MEIS (FHI's smoothed estimate) exist — no TELLER, no RATE.
       ⚠️ These values cannot be summed, and multiplying one by a population
       does not give a number of young people.
+
+      🔴 AND COVERAGE IS PARTIAL. Ungdata is a voluntary school survey, so a
+      kommune appears only if enough of its pupils answered. Measured on
+      deploy, the nine sources cover 18-43 % of kommuner — `fhi-hasj` carries
+      66 values across 357 rows. ⚠️ A row exists for a kommune with no value,
+      so ROW COUNT IS NOT COVERAGE; read
+      `indicator_summary.kommuner_with_value`, which is live and cannot go
+      stale the way a number written here would.
     columns:
       - name: source_id
         description: Atlas source identifier.
