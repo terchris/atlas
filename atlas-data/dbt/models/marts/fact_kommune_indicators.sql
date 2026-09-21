@@ -58,7 +58,15 @@
 with ssb_08764 as (
   select
     source_id, kommune_nr, year, contents_code, contents_label,
-    value, status, updated_at
+    value, status, updated_at,
+    -- 🔴 THIS LINE WAS MISSING AND IT BROKE THE BUILD AT MODEL 85. Every other
+    -- branch of all_indicators gained window_years; this one did not, so the
+    -- UNION had 8 columns against 18 others' 9. ⚠️ My per-CTE script matched
+    -- `\n<name> as (` and this is the FIRST cte, written `with ssb_08764 as (`,
+    -- so it was invisible to the loop AND to the count that reported "31 CTEs
+    -- given window_years, needing a hand: none" (urb-agents #1328).
+    -- The catalogue says Tid is a 4-digit year, so 1 is the right value.
+    1::int as window_years  {# no period columns: point-in-time #}
   from {{ ref('indicators__ssb_08764') }}
   where kommune_nr is not null
 ),
