@@ -943,7 +943,21 @@ that "the eight FHI sources" were served, when it was seven —
 `fhi-innvandrere` has one model, 32,720 rows and no published
 series. Four parties had each built a different partial proxy
 for the question this field looks like it answers, and three
-were wrong the same day (urb-agents #1344).';
+were wrong the same day (urb-agents #1344).
+
+🔴 AND THIS NUMBER CAN CHANGE FOR TWO REASONS THAT LOOK
+IDENTICAL. Either a model genuinely shipped, or the lineage it
+is computed from was CORRECTED. A consumer reading it twice
+cannot tell an honest value change from an accuracy fix: on
+2026-09-21 the demo consumer read it morning and evening, got
+9 and 1, and had no way to know which it was seeing
+(urb-agents #1348).
+
+🔵 `lineage` is generated from the dbt manifest and committed,
+so it can be stale — 103 edges were missing that day, some for
+weeks. `check-lineage-is-current.sh` now fails CI on drift, so
+the accuracy kind of change should stop happening. It cannot
+be detected retroactively in a value you already read.';
 COMMENT ON COLUMN api_v1.meta_sources.served_as IS 'The `api_v1` relations a consumer can actually reach this source
 through, as a Postgres `text[]`. **Empty means nothing published
 depends on it** — that is the gap, and it is the one question
@@ -964,6 +978,11 @@ would have called it served and become the fifth wrong proxy.
 It was fixed the same day (urb-agents #1345) and now reports
 those four relations, which is the column working rather than
 the example expiring.
+
+⚠️ THE CATALOGUE RELATIONS ARE EXCLUDED. `meta_sources`,
+`meta_endpoints` and `meta_dimensions` hold a row for every
+source by construction, so naming them would be the same value
+on every row. They describe a source; they do not serve it.
 
 ⚠️ FOR NON-FACT RELATIONS THIS IS STILL STRUCTURAL. There is no
 per-source row attribution in `brreg_enhet` or `dim_kommune` to

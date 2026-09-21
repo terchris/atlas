@@ -108,7 +108,19 @@ served as (
   from {{ ref('lineage') }} l
   join {{ ref('api_v1_relations') }} r on r.mart_name = l.model_name
   left join fact_sources f on f.source_id = l.source_id
-  where r.derives_from_fact is not true or f.source_id is not null
+  where (r.derives_from_fact is not true or f.source_id is not null)
+    -- 🔴 THE CATALOGUE DESCRIBES EVERY SOURCE; IT DOES NOT SERVE ANY OF THEM.
+    -- meta_sources, meta_endpoints and meta_dimensions carry a row for every
+    -- source by construction, so naming them here would be a value that is
+    -- the same for all 44 rows — no information, and it would dilute the one
+    -- field consumers are now told to trust.
+    --
+    -- ⚠️ This became load-bearing when this very model started reading
+    -- fact_kommune_indicators: that made meta_sources depend on all 34
+    -- indicator sources, and meta_endpoints depend on them transitively, so
+    -- without this filter every indicator source would gain two meaningless
+    -- entries (urb-agents #1348).
+    and r.relation_name not like 'meta\_%'
   group by l.source_id
 )
 
