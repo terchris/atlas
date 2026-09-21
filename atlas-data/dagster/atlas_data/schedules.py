@@ -400,8 +400,8 @@ _TRANSFORM_ASSETS = AssetSelection.assets(atlas_dbt_models) | AssetSelection.ass
 SERIALISE_ON_MARTS = {"atlas/serialises-on": "marts"}
 
 transform_job = define_asset_job(
-    tags=SERIALISE_ON_MARTS,
     name="transform_and_publish",
+    tags=SERIALISE_ON_MARTS,
     selection=_TRANSFORM_ASSETS.without_checks(),
     description=(
         "dbt models + the api_v1 public surface, WITHOUT their checks — see the "
@@ -466,8 +466,8 @@ transform_job = define_asset_job(
 # monitored_jobs=[transform_job], so this job does not drag the 784-test suite
 # along behind it every cycle. Verified before adding the job, not after.
 brreg_transform_job = define_asset_job(
-    tags=SERIALISE_ON_MARTS,
     name="brreg_transform",
+    tags=SERIALISE_ON_MARTS,
     selection=AssetSelection.assets(*dbt.dbt_model_asset_keys("dim_brreg_enhet")),
     description=(
         "Reconciles the Brreg register into marts.dim_brreg_enhet and nothing "
@@ -543,8 +543,8 @@ brreg_transform_job = define_asset_job(
 # after a failed transform leaves api_v1 views missing. The scheduled path already
 # publishes as part of transform_and_publish.
 api_v1_publish_job = define_asset_job(
-    tags=SERIALISE_ON_MARTS,
     name="publish_api_v1",
+    tags=SERIALISE_ON_MARTS,
     selection=AssetSelection.assets(api_v1.api_v1_surface),
     description=(
         "Re-create the api_v1 views, re-apply their column COMMENTs and reload "
@@ -558,8 +558,8 @@ api_v1_publish_job = define_asset_job(
 _API_V1_CHECKS = AssetSelection.checks_for_assets(api_v1.api_v1_surface)
 
 api_v1_checks_job = define_asset_job(
-    tags=SERIALISE_ON_MARTS,
     name="api_v1_checks",
+    tags=SERIALISE_ON_MARTS,
     selection=_API_V1_CHECKS,
     description=(
         "The api_v1 publish gate — does the published surface match the marts it "
@@ -569,8 +569,8 @@ api_v1_checks_job = define_asset_job(
 )
 
 transform_checks_job = define_asset_job(
-    tags=SERIALISE_ON_MARTS,
     name="transform_checks",
+    tags=SERIALISE_ON_MARTS,
     selection=AssetSelection.all_asset_checks() - _API_V1_CHECKS,
     description=(
         "The dbt data-quality suite — every dbt test as a Dagster asset check. "

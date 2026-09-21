@@ -20,6 +20,7 @@ correctly excluded — the same population the dbt freshness test uses.
 
 Parses rather than imports, because this runs in CI without dagster installed.
 """
+import ast
 import re
 import sys
 from pathlib import Path
@@ -77,7 +78,24 @@ for name, ref in re.findall(r'^(_[A-Z_]+)\s*=\s*list\(([a-z_]+\.[A-Z_]+)\)', sch
 # _asset_selection(...) — transform_and_publish selects dbt models, not raw
 # sources — is a real job that contributes nothing to SOURCE coverage. That is
 # legitimate, and different from naming a job that does not exist.
-all_jobs = set(re.findall(r'define_asset_job\(\s*\n\s*name="([a-z_]+)"', schedules))
+# 🔴 AST, NOT A REGEX THAT ASSUMES KEYWORD ORDER. This line used to be
+# re.findall(r'define_asset_job\(\s*\n\s*name="([a-z_]+)"'), which requires
+# `name=` to be the FIRST argument. On 2026-09-21 a `tags=` was added above it
+# and this check reported `first_data.jobs names jobs not defined in
+# schedules.py: ['transform_and_publish']` — a job that is defined, on the
+# line below the one the regex stopped at.
+#
+# ⚠️ The check was RIGHT to fail and WRONG about why. "I cannot parse this"
+# was reported as "this does not exist", which is the same two-states-one-
+# signal failure the rest of this repo spent the day removing.
+_tree = ast.parse(schedules)
+all_jobs = {
+    kw.value.value
+    for node in ast.walk(_tree)
+    if isinstance(node, ast.Call) and getattr(node.func, "id", "") == "define_asset_job"
+    for kw in node.keywords
+    if kw.arg == "name" and isinstance(kw.value, ast.Constant)
+}
 
 job_sources: dict[str, set[str]] = {j: set() for j in all_jobs}
 for name, sel in re.findall(
