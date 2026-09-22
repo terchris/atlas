@@ -10789,14 +10789,208 @@
         "bibtex": "@misc{atlas_ssb_12944,\n  author = {Statistisk sentralbyrå},\n  title  = {12944: Personer i husholdninger med vedvarende lavinntekt (EU-skala 60 prosent), etter alder. Treårsperiode (K) (B) (2011-2013)-(2022-2024)},\n  year   = {2024},\n  url    = {https://www.ssb.no/statbank/table/12944},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/ssb-12944}\n}"
       },
       "feedback_url": "https://www.ssb.no/omssb/kontakt-oss",
-      "consuming_marts": [],
+      "consuming_marts": [
+        {
+          "mart_name": "mart_coverage_gap_barnefattigdom",
+          "api_v1_name": "coverage_gap_barnefattigdom",
+          "title": "Child-poverty coverage gap (kommune)",
+          "description_short": "One row per active kommune for the latest year of SSB 08764 child poverty data, combining the EUskala60 share (% of children in low-income households) with the Personer count (number of children).",
+          "description_full": "One row per active kommune for the latest year of SSB 08764 child\npoverty data, combining the EUskala60 share (% of children in\nlow-income households) with the Personer count (number of\nchildren). Backs the barnefattigdom map page (atlas-frontend\n/coverage-gap/barnefattigdom).\n\nFirst member of the mart_coverage_gap_<topic> family. Future\ncoverage-gap maps follow the same shape: latest year per kommune,\none row per kommune, value(s) pivoted out of contents_code into\nnamed columns. PostgREST projects this view as a single endpoint;\nconsumers don't filter, they read the whole map dataset in one\nrequest.\n\nInactive kommuner are excluded so the map renders today's\nkommune set. NULL values are kept in place — Map.tsx renders\nthem as \"no data\".",
+          "sample_query": "https://api-atlas.urbalurba.com/coverage_gap_barnefattigdom?limit=5"
+        },
+        {
+          "mart_name": "mart_indicator_latest_values",
+          "api_v1_name": "indicator_latest_values",
+          "title": "Latest indicator values per kommune",
+          "description_short": "One row per (source_id, contents_code, kommune_nr) at each indicator's latest_year, restricted to active kommuner.",
+          "description_full": "One row per (source_id, contents_code, kommune_nr) at each\nindicator's latest_year, restricted to active kommuner. Backs the\ndata explorer's per-indicator detail page (atlas-frontend\n/data/[source_id]/[contents_code]) and is the equivalent of the\nloadIndicatorValues() inline query.\n\n🔴 ROW COUNT IS NOT COVERAGE. A row exists for every active kommune\nthe source publishes at all, INCLUDING those where `value` is null.\nSo a series returns ~357 rows whether 357 kommuner have a number or\n66 do, and counting rows overstates coverage by up to five times.\n\n⚠️ This has always been true and became dangerous on 2026-09-21,\nwhen nine Ungdata sources published at 18-43 % kommune coverage\nagainst SSB register sources at nearly 100 %. `fhi-hasj` returns\n357 rows carrying 66 values.\n\n✅ `indicator_summary.kommuner_with_value` is the live count and the\nonly thing to trust. It is not restated here on purpose — a number\ncopied into a description goes stale, which is the defect that made\n`fhi-depresjon` advertise fourteen years of data it never held.\n\nPostgREST consumers filter via\n?source_id=eq.X&contents_code=eq.Y. The full table is the\ncross-product of every indicator with every active kommune that\nhas a row at latest_year, so the unfiltered row count is large\n(~360 active kommuner × ~70 indicators in v1).\n\nInactive kommuner (kommune_is_active = false) are excluded so the\noutput reflects today's kommune set, not historical codes that\nupstream still emits.",
+          "sample_query": "https://api-atlas.urbalurba.com/indicator_latest_values?limit=5"
+        },
+        {
+          "mart_name": "mart_indicator_missing_kommuner",
+          "api_v1_name": "indicator_missing_kommuner",
+          "title": "Indicator coverage gaps per kommune",
+          "description_short": "🔴 A ROW HERE IS NOT EVIDENCE OF LOW NEED.",
+          "description_full": "🔴 A ROW HERE IS NOT EVIDENCE OF LOW NEED. For `fhi-*` sources it is\nusually FHI's disclosure suppression: it hides numbers based on fewer\nthan ~6 cases, and hides a whole series when more than 20% of it is\nhidden, \"for ikke å skape et skjevt inntrykk av situasjonen i\nkommunen\" — to avoid a skewed impression of that kommune.\n\n⚠️ Measured: 105 kommuner are missing from 10+ `fhi-*` series, median\npopulation 1,452, monotonic in population, and EVERY kommune is absent\nfrom at least three. Treating absence as zero in a ranked index\ninverts the signal for the smallest kommuner (urb-agents #1379). See\n`indicator_summary.kommuners_with_null`.\n\nOne row per (source_id, contents_code, kommune_nr) for every\nactive kommune that has *no* non-NULL value at the indicator's\nlatest_year. The \"coverage gap\" sidebar on the data explorer\ndetail page; equivalent to the listMissingKommuner() inline query.\n\nPostgREST consumers filter via\n?source_id=eq.X&contents_code=eq.Y. Membership semantics: a\nkommune is considered \"missing\" if it either has no row at\nlatest_year, or has a row with value IS NULL. Status markers (':',\n'X') do not count as a value.\n\nThe full table is the cross-product of every indicator with every\nactive kommune that lacks data. Most cells are present, so the\nunfiltered row count is the per-indicator gap-list aggregated\nacross all indicators.",
+          "sample_query": "https://api-atlas.urbalurba.com/indicator_missing_kommuner?limit=5"
+        },
+        {
+          "mart_name": "mart_indicator_summary",
+          "api_v1_name": "indicator_summary",
+          "title": "Indicator coverage summary",
+          "description_short": "One row per (source_id, contents_code) summarising the latest-year coverage and value range for every indicator in fact_kommune_indicators.",
+          "description_full": "One row per (source_id, contents_code) summarising the latest-year\ncoverage and value range for every indicator in\nfact_kommune_indicators. This is the backing dataset for the data\nexplorer index page (atlas-frontend /data) and is the equivalent of\nthe listIndicators() inline query that PostgREST projects as\n/mart_indicator_summary on the public API.\n\nQuery shape: latest-year-per-indicator + group-by + value/null counts\nfiltered to active kommuner only. Inactive kommuner (historical\ncodes retained by upstream) are excluded from the counts so consumers\nsee \"how many of today's kommuner have data?\" not \"how many rows\nexist?\".\n\nRefreshed nightly together with fact_kommune_indicators. The\nupstream_updated column carries the most recent raw load timestamp\nacross the rows that contributed to this summary, so freshness can\nbe inspected per indicator without joining to raw.* sources.",
+          "sample_query": "https://api-atlas.urbalurba.com/indicator_summary?limit=5"
+        },
+        {
+          "mart_name": "mart_meta_endpoints",
+          "api_v1_name": "meta_endpoints",
+          "title": null,
+          "description_short": "One row per queryable Atlas endpoint, with tags inherited from upstream sources via the lineage graph and a `layer:<schema>` tag from the schema.",
+          "description_full": "One row per queryable Atlas endpoint, with tags inherited from\nupstream sources via the lineage graph and a `layer:<schema>` tag\nfrom the schema. Wraps to `api_v1.meta_endpoints` and backs the\ntag-filter catalogue at `/data` in the customer frontend\n(PLAN-007 phase 4).\n\n🔵 THIS IS THE INDEX, SO IT SAYS WHERE THE OTHER TWO CATALOGUES\nARE: `meta_sources` for one row per ingest source (licence,\npublisher, freshness), and `meta_dimensions` for one row per\nsource × upstream dimension — what each coded column means and\nits value format. A consumer enumerating relations here should\nnot have to read 19 descriptions to discover the second one\n(urb-agents #1335).\n\nIncludes endpoints from `api_v1.*`, `marts.*`, and `raw.*`\n(Atlas's three open-by-default schemas; `private_marts.*` stays\nauth-gated and is excluded). Skips internal seeds prefixed `_`\n(`_sources_manifest`, `_sources_dimensions`) and any `dbt_*`\ndiagnostic tables.\n\nTag inheritance uses the **union** rule: a `mart_*` derived from\nmany sources picks up every source's `provider:`, `topic:`,\n`geo:`, `cadence:`, and `eu_theme:` tag, deduped. Filter\n\"involves something annual\" beats \"purely annual\" — see PLAN-007\nphase 3.2 for the design rationale.",
+          "sample_query": "https://api-atlas.urbalurba.com/meta_endpoints?limit=5"
+        },
+        {
+          "mart_name": "mart_meta_sources",
+          "api_v1_name": "meta_sources",
+          "title": null,
+          "description_short": "Per-source catalogue row — one per ingest source in `_sources_manifest`, joined to `raw.ingest_runs` aggregates so consumers see freshness alongside the static metadata.",
+          "description_full": "Per-source catalogue row — one per ingest source in\n`_sources_manifest`, joined to `raw.ingest_runs` aggregates so\nconsumers see freshness alongside the static metadata. Wraps to\n`api_v1.meta_sources` and backs `/data/sources` in the customer\nfrontend (PLAN-007 phase 4).\n\n🔴 THIS RELATION DESCRIBES A SOURCE, NOT ITS COLUMNS. For what an\nupstream dimension MEANS — what `AAR` is, whether a code is a\nkommune, whether a year is a single year or a window — read\n`meta_dimensions`, one row per source × dimension with the\nupstream's own words and the value format.\n\n⚠️ THIS POINTER EXISTS BECAUSE ITS ABSENCE COST A DAY. On\n2026-09-21 a consumer read all 21 descriptions here, concluded\n\"exactly two sources use multi-year windows\", and shipped a wrong\nyear on a front page. `meta_dimensions` said `\"3-year rolling\ncohort\"` for a third the whole time. Reading every row of this\nrelation is thorough and structurally incapable of answering a\nquestion about a dimension (urb-agents #1335).\n\nTags column is a Postgres `text[]` carrying the four declared\nnamespaces (`provider:`, `topic:`, `geo:`, `cadence:`) plus the\n`eu_theme:` namespace. The customer frontend renders each as a\nfilter pill; PostgREST consumers filter via `?tags=cs.{\"provider:ssb\"}`\n— the quotes are required, because the value contains a colon.\n\n`last_ingested_at` and `last_upstream_update_at` come from\n`raw.ingest_runs` aggregated over successful (`exit_code = 0`)\nruns. Sources whose ingest module hasn't yet captured the\nupstream's \"updated\" field leave `last_upstream_update_at` NULL —\nthat's the design (`raw.ingest_runs.upstream_updated_at` is\nnullable per migration 028).\n\n`downstream_model_count` is the number of distinct dbt models\nthat derive from this source via the `lineage` seed (Phase 3.3).\n0 for sources whose data hasn't yet been wired into a mart.",
+          "sample_query": "https://api-atlas.urbalurba.com/meta_sources?limit=5"
+        },
+        {
+          "mart_name": "mart_unattributed_totals",
+          "api_v1_name": "unattributed_totals",
+          "title": null,
+          "description_short": "The part of a published quantity that belongs to no municipality.",
+          "description_full": "The part of a published quantity that belongs to no municipality.\nPublished as api_v1.unattributed_totals.\n\n🔴 Atlas had no convention for this, and the two surfaces that met\nit chose opposite wrong answers: SSB's 9999 'Uoppgitt' sits INSIDE\na per-kommune relation and corrupts any sum over it, while 7 488\nactive voluntary units with no kommune_nr fall OUT of one and\nvanish silently. One smuggles the remainder in as a row, the other\ndiscards it, and a consumer summing either gets a number that is\nwrong in a direction it cannot see (urb-agents #700, #1250, #1265).\n\n✅ The rule this establishes: the VALUE belongs, the ROW does not.\nA per-kommune relation carries only kommuner; the remainder lives\nhere, named, so reconciling to a national total is a deliberate\nact rather than an accident of whether a sentinel survived a\nfilter.\n\n⚠️ It does NOT remove the 9999 rows from dim_kommune or\ncoverage_gap_barnefattigdom. That is a breaking contract change —\n`?is_active=eq.true` would return 357 instead of 358 with no\nwarning — and it is deliberately not bundled with an additive\nchange. `is_sentinel` remains a stopgap and this view does not\nmake the trap gone.\n\n🔵 A zero is a result. Where the remainder is genuinely nothing\nthis emits 0 rather than omitting the row: \"we checked, none\" and\n\"nobody checked\" are different answers, and a missing row cannot\ntell them apart.\n\n✅ THE ARITHMETIC CLOSES, AND A TEST SAYS SO. Summing a per-kommune\nrelation and adding every `unattributed_value` for it must equal\n`total_value`:\n\n    kommune_ngo_totals   65 270\n    no_kommune_nr         7 489\n    kommune_nr_not_current   43\n    ---------------------------\n    total_value          72 802\n\n⚠️ It did not close on the day this shipped. It named 7 489 of\n7 532 and the 43 Svalbard organisations were counted by neither\nrelation — silent, self-consistent, and visible only by doing the\nsubtraction this view exists to support. The singular test\n`the_remainder_closes_the_total` now asserts the decomposition\nrather than the parts, which is the thing that was missing: every\npart had a test and the relationship between them had none.",
+          "sample_query": "https://api-atlas.urbalurba.com/unattributed_totals?limit=5"
+        }
+      ],
       "consuming_models": [
+        {
+          "name": "fact_kommune_indicators",
+          "kind": "fact"
+        },
         {
           "name": "indicators__ssb_12944",
           "kind": "indicators"
+        },
+        {
+          "name": "mart_coverage_gap_barnefattigdom",
+          "kind": "mart"
+        },
+        {
+          "name": "mart_indicator_latest_values",
+          "kind": "mart"
+        },
+        {
+          "name": "mart_indicator_missing_kommuner",
+          "kind": "mart"
+        },
+        {
+          "name": "mart_indicator_summary",
+          "kind": "mart"
+        },
+        {
+          "name": "mart_meta_endpoints",
+          "kind": "mart"
+        },
+        {
+          "name": "mart_meta_sources",
+          "kind": "mart"
+        },
+        {
+          "name": "mart_unattributed_totals",
+          "kind": "mart"
         }
       ],
-      "joined_with": [],
+      "joined_with": [
+        {
+          "source_id": "fhi-alkohol",
+          "shared_models": [
+            "fact_kommune_indicators",
+            "mart_coverage_gap_barnefattigdom",
+            "mart_indicator_latest_values",
+            "mart_indicator_missing_kommuner",
+            "mart_indicator_summary",
+            "mart_meta_endpoints",
+            "mart_meta_sources",
+            "mart_unattributed_totals"
+          ]
+        },
+        {
+          "source_id": "fhi-befolkning",
+          "shared_models": [
+            "fact_kommune_indicators",
+            "mart_coverage_gap_barnefattigdom",
+            "mart_indicator_latest_values",
+            "mart_indicator_missing_kommuner",
+            "mart_indicator_summary",
+            "mart_meta_endpoints",
+            "mart_meta_sources",
+            "mart_unattributed_totals"
+          ]
+        },
+        {
+          "source_id": "fhi-befolkningsvekst",
+          "shared_models": [
+            "fact_kommune_indicators",
+            "mart_coverage_gap_barnefattigdom",
+            "mart_indicator_latest_values",
+            "mart_indicator_missing_kommuner",
+            "mart_indicator_summary",
+            "mart_meta_endpoints",
+            "mart_meta_sources",
+            "mart_unattributed_totals"
+          ]
+        },
+        {
+          "source_id": "fhi-bor-alene",
+          "shared_models": [
+            "fact_kommune_indicators",
+            "mart_coverage_gap_barnefattigdom",
+            "mart_indicator_latest_values",
+            "mart_indicator_missing_kommuner",
+            "mart_indicator_summary",
+            "mart_meta_endpoints",
+            "mart_meta_sources",
+            "mart_unattributed_totals"
+          ]
+        },
+        {
+          "source_id": "fhi-depresjon",
+          "shared_models": [
+            "fact_kommune_indicators",
+            "mart_coverage_gap_barnefattigdom",
+            "mart_indicator_latest_values",
+            "mart_indicator_missing_kommuner",
+            "mart_indicator_summary",
+            "mart_meta_endpoints",
+            "mart_meta_sources",
+            "mart_unattributed_totals"
+          ]
+        },
+        {
+          "source_id": "fhi-fortrolig-venn",
+          "shared_models": [
+            "fact_kommune_indicators",
+            "mart_coverage_gap_barnefattigdom",
+            "mart_indicator_latest_values",
+            "mart_indicator_missing_kommuner",
+            "mart_indicator_summary",
+            "mart_meta_endpoints",
+            "mart_meta_sources",
+            "mart_unattributed_totals"
+          ]
+        },
+        {
+          "source_id": "fhi-hasj",
+          "shared_models": [
+            "fact_kommune_indicators",
+            "mart_coverage_gap_barnefattigdom",
+            "mart_indicator_latest_values",
+            "mart_indicator_missing_kommuner",
+            "mart_indicator_summary",
+            "mart_meta_endpoints",
+            "mart_meta_sources",
+            "mart_unattributed_totals"
+          ]
+        },
+        {
+          "source_id": "fhi-innvandrere",
+          "shared_models": [
+            "fact_kommune_indicators",
+            "mart_coverage_gap_barnefattigdom",
+            "mart_indicator_latest_values",
+            "mart_indicator_missing_kommuner",
+            "mart_indicator_summary",
+            "mart_meta_endpoints",
+            "mart_meta_sources",
+            "mart_unattributed_totals"
+          ]
+        }
+      ],
       "last_ingested_at": "2026-05-06T14:37:50.062071+00:00",
       "latest_row_count": 4296,
       "total_runs": 1,
@@ -13690,14 +13884,208 @@
               "bibtex": "@misc{atlas_ssb_12944,\n  author = {Statistisk sentralbyrå},\n  title  = {12944: Personer i husholdninger med vedvarende lavinntekt (EU-skala 60 prosent), etter alder. Treårsperiode (K) (B) (2011-2013)-(2022-2024)},\n  year   = {2024},\n  url    = {https://www.ssb.no/statbank/table/12944},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/ssb-12944}\n}"
             },
             "feedback_url": "https://www.ssb.no/omssb/kontakt-oss",
-            "consuming_marts": [],
+            "consuming_marts": [
+              {
+                "mart_name": "mart_coverage_gap_barnefattigdom",
+                "api_v1_name": "coverage_gap_barnefattigdom",
+                "title": "Child-poverty coverage gap (kommune)",
+                "description_short": "One row per active kommune for the latest year of SSB 08764 child poverty data, combining the EUskala60 share (% of children in low-income households) with the Personer count (number of children).",
+                "description_full": "One row per active kommune for the latest year of SSB 08764 child\npoverty data, combining the EUskala60 share (% of children in\nlow-income households) with the Personer count (number of\nchildren). Backs the barnefattigdom map page (atlas-frontend\n/coverage-gap/barnefattigdom).\n\nFirst member of the mart_coverage_gap_<topic> family. Future\ncoverage-gap maps follow the same shape: latest year per kommune,\none row per kommune, value(s) pivoted out of contents_code into\nnamed columns. PostgREST projects this view as a single endpoint;\nconsumers don't filter, they read the whole map dataset in one\nrequest.\n\nInactive kommuner are excluded so the map renders today's\nkommune set. NULL values are kept in place — Map.tsx renders\nthem as \"no data\".",
+                "sample_query": "https://api-atlas.urbalurba.com/coverage_gap_barnefattigdom?limit=5"
+              },
+              {
+                "mart_name": "mart_indicator_latest_values",
+                "api_v1_name": "indicator_latest_values",
+                "title": "Latest indicator values per kommune",
+                "description_short": "One row per (source_id, contents_code, kommune_nr) at each indicator's latest_year, restricted to active kommuner.",
+                "description_full": "One row per (source_id, contents_code, kommune_nr) at each\nindicator's latest_year, restricted to active kommuner. Backs the\ndata explorer's per-indicator detail page (atlas-frontend\n/data/[source_id]/[contents_code]) and is the equivalent of the\nloadIndicatorValues() inline query.\n\n🔴 ROW COUNT IS NOT COVERAGE. A row exists for every active kommune\nthe source publishes at all, INCLUDING those where `value` is null.\nSo a series returns ~357 rows whether 357 kommuner have a number or\n66 do, and counting rows overstates coverage by up to five times.\n\n⚠️ This has always been true and became dangerous on 2026-09-21,\nwhen nine Ungdata sources published at 18-43 % kommune coverage\nagainst SSB register sources at nearly 100 %. `fhi-hasj` returns\n357 rows carrying 66 values.\n\n✅ `indicator_summary.kommuner_with_value` is the live count and the\nonly thing to trust. It is not restated here on purpose — a number\ncopied into a description goes stale, which is the defect that made\n`fhi-depresjon` advertise fourteen years of data it never held.\n\nPostgREST consumers filter via\n?source_id=eq.X&contents_code=eq.Y. The full table is the\ncross-product of every indicator with every active kommune that\nhas a row at latest_year, so the unfiltered row count is large\n(~360 active kommuner × ~70 indicators in v1).\n\nInactive kommuner (kommune_is_active = false) are excluded so the\noutput reflects today's kommune set, not historical codes that\nupstream still emits.",
+                "sample_query": "https://api-atlas.urbalurba.com/indicator_latest_values?limit=5"
+              },
+              {
+                "mart_name": "mart_indicator_missing_kommuner",
+                "api_v1_name": "indicator_missing_kommuner",
+                "title": "Indicator coverage gaps per kommune",
+                "description_short": "🔴 A ROW HERE IS NOT EVIDENCE OF LOW NEED.",
+                "description_full": "🔴 A ROW HERE IS NOT EVIDENCE OF LOW NEED. For `fhi-*` sources it is\nusually FHI's disclosure suppression: it hides numbers based on fewer\nthan ~6 cases, and hides a whole series when more than 20% of it is\nhidden, \"for ikke å skape et skjevt inntrykk av situasjonen i\nkommunen\" — to avoid a skewed impression of that kommune.\n\n⚠️ Measured: 105 kommuner are missing from 10+ `fhi-*` series, median\npopulation 1,452, monotonic in population, and EVERY kommune is absent\nfrom at least three. Treating absence as zero in a ranked index\ninverts the signal for the smallest kommuner (urb-agents #1379). See\n`indicator_summary.kommuners_with_null`.\n\nOne row per (source_id, contents_code, kommune_nr) for every\nactive kommune that has *no* non-NULL value at the indicator's\nlatest_year. The \"coverage gap\" sidebar on the data explorer\ndetail page; equivalent to the listMissingKommuner() inline query.\n\nPostgREST consumers filter via\n?source_id=eq.X&contents_code=eq.Y. Membership semantics: a\nkommune is considered \"missing\" if it either has no row at\nlatest_year, or has a row with value IS NULL. Status markers (':',\n'X') do not count as a value.\n\nThe full table is the cross-product of every indicator with every\nactive kommune that lacks data. Most cells are present, so the\nunfiltered row count is the per-indicator gap-list aggregated\nacross all indicators.",
+                "sample_query": "https://api-atlas.urbalurba.com/indicator_missing_kommuner?limit=5"
+              },
+              {
+                "mart_name": "mart_indicator_summary",
+                "api_v1_name": "indicator_summary",
+                "title": "Indicator coverage summary",
+                "description_short": "One row per (source_id, contents_code) summarising the latest-year coverage and value range for every indicator in fact_kommune_indicators.",
+                "description_full": "One row per (source_id, contents_code) summarising the latest-year\ncoverage and value range for every indicator in\nfact_kommune_indicators. This is the backing dataset for the data\nexplorer index page (atlas-frontend /data) and is the equivalent of\nthe listIndicators() inline query that PostgREST projects as\n/mart_indicator_summary on the public API.\n\nQuery shape: latest-year-per-indicator + group-by + value/null counts\nfiltered to active kommuner only. Inactive kommuner (historical\ncodes retained by upstream) are excluded from the counts so consumers\nsee \"how many of today's kommuner have data?\" not \"how many rows\nexist?\".\n\nRefreshed nightly together with fact_kommune_indicators. The\nupstream_updated column carries the most recent raw load timestamp\nacross the rows that contributed to this summary, so freshness can\nbe inspected per indicator without joining to raw.* sources.",
+                "sample_query": "https://api-atlas.urbalurba.com/indicator_summary?limit=5"
+              },
+              {
+                "mart_name": "mart_meta_endpoints",
+                "api_v1_name": "meta_endpoints",
+                "title": null,
+                "description_short": "One row per queryable Atlas endpoint, with tags inherited from upstream sources via the lineage graph and a `layer:<schema>` tag from the schema.",
+                "description_full": "One row per queryable Atlas endpoint, with tags inherited from\nupstream sources via the lineage graph and a `layer:<schema>` tag\nfrom the schema. Wraps to `api_v1.meta_endpoints` and backs the\ntag-filter catalogue at `/data` in the customer frontend\n(PLAN-007 phase 4).\n\n🔵 THIS IS THE INDEX, SO IT SAYS WHERE THE OTHER TWO CATALOGUES\nARE: `meta_sources` for one row per ingest source (licence,\npublisher, freshness), and `meta_dimensions` for one row per\nsource × upstream dimension — what each coded column means and\nits value format. A consumer enumerating relations here should\nnot have to read 19 descriptions to discover the second one\n(urb-agents #1335).\n\nIncludes endpoints from `api_v1.*`, `marts.*`, and `raw.*`\n(Atlas's three open-by-default schemas; `private_marts.*` stays\nauth-gated and is excluded). Skips internal seeds prefixed `_`\n(`_sources_manifest`, `_sources_dimensions`) and any `dbt_*`\ndiagnostic tables.\n\nTag inheritance uses the **union** rule: a `mart_*` derived from\nmany sources picks up every source's `provider:`, `topic:`,\n`geo:`, `cadence:`, and `eu_theme:` tag, deduped. Filter\n\"involves something annual\" beats \"purely annual\" — see PLAN-007\nphase 3.2 for the design rationale.",
+                "sample_query": "https://api-atlas.urbalurba.com/meta_endpoints?limit=5"
+              },
+              {
+                "mart_name": "mart_meta_sources",
+                "api_v1_name": "meta_sources",
+                "title": null,
+                "description_short": "Per-source catalogue row — one per ingest source in `_sources_manifest`, joined to `raw.ingest_runs` aggregates so consumers see freshness alongside the static metadata.",
+                "description_full": "Per-source catalogue row — one per ingest source in\n`_sources_manifest`, joined to `raw.ingest_runs` aggregates so\nconsumers see freshness alongside the static metadata. Wraps to\n`api_v1.meta_sources` and backs `/data/sources` in the customer\nfrontend (PLAN-007 phase 4).\n\n🔴 THIS RELATION DESCRIBES A SOURCE, NOT ITS COLUMNS. For what an\nupstream dimension MEANS — what `AAR` is, whether a code is a\nkommune, whether a year is a single year or a window — read\n`meta_dimensions`, one row per source × dimension with the\nupstream's own words and the value format.\n\n⚠️ THIS POINTER EXISTS BECAUSE ITS ABSENCE COST A DAY. On\n2026-09-21 a consumer read all 21 descriptions here, concluded\n\"exactly two sources use multi-year windows\", and shipped a wrong\nyear on a front page. `meta_dimensions` said `\"3-year rolling\ncohort\"` for a third the whole time. Reading every row of this\nrelation is thorough and structurally incapable of answering a\nquestion about a dimension (urb-agents #1335).\n\nTags column is a Postgres `text[]` carrying the four declared\nnamespaces (`provider:`, `topic:`, `geo:`, `cadence:`) plus the\n`eu_theme:` namespace. The customer frontend renders each as a\nfilter pill; PostgREST consumers filter via `?tags=cs.{\"provider:ssb\"}`\n— the quotes are required, because the value contains a colon.\n\n`last_ingested_at` and `last_upstream_update_at` come from\n`raw.ingest_runs` aggregated over successful (`exit_code = 0`)\nruns. Sources whose ingest module hasn't yet captured the\nupstream's \"updated\" field leave `last_upstream_update_at` NULL —\nthat's the design (`raw.ingest_runs.upstream_updated_at` is\nnullable per migration 028).\n\n`downstream_model_count` is the number of distinct dbt models\nthat derive from this source via the `lineage` seed (Phase 3.3).\n0 for sources whose data hasn't yet been wired into a mart.",
+                "sample_query": "https://api-atlas.urbalurba.com/meta_sources?limit=5"
+              },
+              {
+                "mart_name": "mart_unattributed_totals",
+                "api_v1_name": "unattributed_totals",
+                "title": null,
+                "description_short": "The part of a published quantity that belongs to no municipality.",
+                "description_full": "The part of a published quantity that belongs to no municipality.\nPublished as api_v1.unattributed_totals.\n\n🔴 Atlas had no convention for this, and the two surfaces that met\nit chose opposite wrong answers: SSB's 9999 'Uoppgitt' sits INSIDE\na per-kommune relation and corrupts any sum over it, while 7 488\nactive voluntary units with no kommune_nr fall OUT of one and\nvanish silently. One smuggles the remainder in as a row, the other\ndiscards it, and a consumer summing either gets a number that is\nwrong in a direction it cannot see (urb-agents #700, #1250, #1265).\n\n✅ The rule this establishes: the VALUE belongs, the ROW does not.\nA per-kommune relation carries only kommuner; the remainder lives\nhere, named, so reconciling to a national total is a deliberate\nact rather than an accident of whether a sentinel survived a\nfilter.\n\n⚠️ It does NOT remove the 9999 rows from dim_kommune or\ncoverage_gap_barnefattigdom. That is a breaking contract change —\n`?is_active=eq.true` would return 357 instead of 358 with no\nwarning — and it is deliberately not bundled with an additive\nchange. `is_sentinel` remains a stopgap and this view does not\nmake the trap gone.\n\n🔵 A zero is a result. Where the remainder is genuinely nothing\nthis emits 0 rather than omitting the row: \"we checked, none\" and\n\"nobody checked\" are different answers, and a missing row cannot\ntell them apart.\n\n✅ THE ARITHMETIC CLOSES, AND A TEST SAYS SO. Summing a per-kommune\nrelation and adding every `unattributed_value` for it must equal\n`total_value`:\n\n    kommune_ngo_totals   65 270\n    no_kommune_nr         7 489\n    kommune_nr_not_current   43\n    ---------------------------\n    total_value          72 802\n\n⚠️ It did not close on the day this shipped. It named 7 489 of\n7 532 and the 43 Svalbard organisations were counted by neither\nrelation — silent, self-consistent, and visible only by doing the\nsubtraction this view exists to support. The singular test\n`the_remainder_closes_the_total` now asserts the decomposition\nrather than the parts, which is the thing that was missing: every\npart had a test and the relationship between them had none.",
+                "sample_query": "https://api-atlas.urbalurba.com/unattributed_totals?limit=5"
+              }
+            ],
             "consuming_models": [
+              {
+                "name": "fact_kommune_indicators",
+                "kind": "fact"
+              },
               {
                 "name": "indicators__ssb_12944",
                 "kind": "indicators"
+              },
+              {
+                "name": "mart_coverage_gap_barnefattigdom",
+                "kind": "mart"
+              },
+              {
+                "name": "mart_indicator_latest_values",
+                "kind": "mart"
+              },
+              {
+                "name": "mart_indicator_missing_kommuner",
+                "kind": "mart"
+              },
+              {
+                "name": "mart_indicator_summary",
+                "kind": "mart"
+              },
+              {
+                "name": "mart_meta_endpoints",
+                "kind": "mart"
+              },
+              {
+                "name": "mart_meta_sources",
+                "kind": "mart"
+              },
+              {
+                "name": "mart_unattributed_totals",
+                "kind": "mart"
               }
             ],
-            "joined_with": [],
+            "joined_with": [
+              {
+                "source_id": "fhi-alkohol",
+                "shared_models": [
+                  "fact_kommune_indicators",
+                  "mart_coverage_gap_barnefattigdom",
+                  "mart_indicator_latest_values",
+                  "mart_indicator_missing_kommuner",
+                  "mart_indicator_summary",
+                  "mart_meta_endpoints",
+                  "mart_meta_sources",
+                  "mart_unattributed_totals"
+                ]
+              },
+              {
+                "source_id": "fhi-befolkning",
+                "shared_models": [
+                  "fact_kommune_indicators",
+                  "mart_coverage_gap_barnefattigdom",
+                  "mart_indicator_latest_values",
+                  "mart_indicator_missing_kommuner",
+                  "mart_indicator_summary",
+                  "mart_meta_endpoints",
+                  "mart_meta_sources",
+                  "mart_unattributed_totals"
+                ]
+              },
+              {
+                "source_id": "fhi-befolkningsvekst",
+                "shared_models": [
+                  "fact_kommune_indicators",
+                  "mart_coverage_gap_barnefattigdom",
+                  "mart_indicator_latest_values",
+                  "mart_indicator_missing_kommuner",
+                  "mart_indicator_summary",
+                  "mart_meta_endpoints",
+                  "mart_meta_sources",
+                  "mart_unattributed_totals"
+                ]
+              },
+              {
+                "source_id": "fhi-bor-alene",
+                "shared_models": [
+                  "fact_kommune_indicators",
+                  "mart_coverage_gap_barnefattigdom",
+                  "mart_indicator_latest_values",
+                  "mart_indicator_missing_kommuner",
+                  "mart_indicator_summary",
+                  "mart_meta_endpoints",
+                  "mart_meta_sources",
+                  "mart_unattributed_totals"
+                ]
+              },
+              {
+                "source_id": "fhi-depresjon",
+                "shared_models": [
+                  "fact_kommune_indicators",
+                  "mart_coverage_gap_barnefattigdom",
+                  "mart_indicator_latest_values",
+                  "mart_indicator_missing_kommuner",
+                  "mart_indicator_summary",
+                  "mart_meta_endpoints",
+                  "mart_meta_sources",
+                  "mart_unattributed_totals"
+                ]
+              },
+              {
+                "source_id": "fhi-fortrolig-venn",
+                "shared_models": [
+                  "fact_kommune_indicators",
+                  "mart_coverage_gap_barnefattigdom",
+                  "mart_indicator_latest_values",
+                  "mart_indicator_missing_kommuner",
+                  "mart_indicator_summary",
+                  "mart_meta_endpoints",
+                  "mart_meta_sources",
+                  "mart_unattributed_totals"
+                ]
+              },
+              {
+                "source_id": "fhi-hasj",
+                "shared_models": [
+                  "fact_kommune_indicators",
+                  "mart_coverage_gap_barnefattigdom",
+                  "mart_indicator_latest_values",
+                  "mart_indicator_missing_kommuner",
+                  "mart_indicator_summary",
+                  "mart_meta_endpoints",
+                  "mart_meta_sources",
+                  "mart_unattributed_totals"
+                ]
+              },
+              {
+                "source_id": "fhi-innvandrere",
+                "shared_models": [
+                  "fact_kommune_indicators",
+                  "mart_coverage_gap_barnefattigdom",
+                  "mart_indicator_latest_values",
+                  "mart_indicator_missing_kommuner",
+                  "mart_indicator_summary",
+                  "mart_meta_endpoints",
+                  "mart_meta_sources",
+                  "mart_unattributed_totals"
+                ]
+              }
+            ],
             "last_ingested_at": "2026-05-06T14:37:50.062071+00:00",
             "latest_row_count": 4296,
             "total_runs": 1,

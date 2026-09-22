@@ -40,6 +40,7 @@ fact_kommune_indicators,ssb-12063
 fact_kommune_indicators,ssb-12131
 fact_kommune_indicators,ssb-12132
 fact_kommune_indicators,ssb-12292
+fact_kommune_indicators,ssb-12944
 fact_kommune_indicators,ssb-13995
 fact_kommune_indicators,ssb-crime-tables
 fact_kommune_indicators,ssb-klass-fylker
@@ -119,6 +120,7 @@ mart_coverage_gap_barnefattigdom,ssb-12063
 mart_coverage_gap_barnefattigdom,ssb-12131
 mart_coverage_gap_barnefattigdom,ssb-12132
 mart_coverage_gap_barnefattigdom,ssb-12292
+mart_coverage_gap_barnefattigdom,ssb-12944
 mart_coverage_gap_barnefattigdom,ssb-13995
 mart_coverage_gap_barnefattigdom,ssb-crime-tables
 mart_coverage_gap_barnefattigdom,ssb-klass-fylker
@@ -158,6 +160,7 @@ mart_indicator_latest_values,ssb-12063
 mart_indicator_latest_values,ssb-12131
 mart_indicator_latest_values,ssb-12132
 mart_indicator_latest_values,ssb-12292
+mart_indicator_latest_values,ssb-12944
 mart_indicator_latest_values,ssb-13995
 mart_indicator_latest_values,ssb-crime-tables
 mart_indicator_latest_values,ssb-klass-fylker
@@ -193,6 +196,7 @@ mart_indicator_missing_kommuner,ssb-12063
 mart_indicator_missing_kommuner,ssb-12131
 mart_indicator_missing_kommuner,ssb-12132
 mart_indicator_missing_kommuner,ssb-12292
+mart_indicator_missing_kommuner,ssb-12944
 mart_indicator_missing_kommuner,ssb-13995
 mart_indicator_missing_kommuner,ssb-crime-tables
 mart_indicator_missing_kommuner,ssb-klass-fylker
@@ -228,6 +232,7 @@ mart_indicator_summary,ssb-12063
 mart_indicator_summary,ssb-12131
 mart_indicator_summary,ssb-12132
 mart_indicator_summary,ssb-12292
+mart_indicator_summary,ssb-12944
 mart_indicator_summary,ssb-13995
 mart_indicator_summary,ssb-crime-tables
 mart_indicator_summary,ssb-klass-fylker
@@ -275,6 +280,7 @@ mart_meta_endpoints,ssb-12063
 mart_meta_endpoints,ssb-12131
 mart_meta_endpoints,ssb-12132
 mart_meta_endpoints,ssb-12292
+mart_meta_endpoints,ssb-12944
 mart_meta_endpoints,ssb-13995
 mart_meta_endpoints,ssb-crime-tables
 mart_meta_endpoints,ssb-klass-fylker
@@ -310,6 +316,7 @@ mart_meta_sources,ssb-12063
 mart_meta_sources,ssb-12131
 mart_meta_sources,ssb-12132
 mart_meta_sources,ssb-12292
+mart_meta_sources,ssb-12944
 mart_meta_sources,ssb-13995
 mart_meta_sources,ssb-crime-tables
 mart_meta_sources,ssb-klass-fylker
@@ -350,6 +357,7 @@ mart_unattributed_totals,ssb-12063
 mart_unattributed_totals,ssb-12131
 mart_unattributed_totals,ssb-12132
 mart_unattributed_totals,ssb-12292
+mart_unattributed_totals,ssb-12944
 mart_unattributed_totals,ssb-13995
 mart_unattributed_totals,ssb-crime-tables
 mart_unattributed_totals,ssb-klass-fylker
