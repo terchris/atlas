@@ -16,6 +16,13 @@
  *   npm run sources:snapshot-samples
  */
 
+// DRIFT-GATE: none — snapshots LIVE state (the running API / Postgres), so a
+// repo diff cannot gate it: its input is not in the repo. What it needs is a
+// LIVENESS check comparing the committed snapshot against the live source,
+// which is not written yet. ⚠️ atlas#423 is what happens without one — the
+// published API explorer served 13 of 19 relations and a 44-character root
+// document for months, and pointed every Try-it button at a localhost name.
+
 import { writeFileSync, readFileSync, mkdirSync, readdirSync, existsSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
