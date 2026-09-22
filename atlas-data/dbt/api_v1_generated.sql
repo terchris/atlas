@@ -1201,7 +1201,29 @@ COMMENT ON COLUMN api_v1.ngo_index.icnpo_code_2 IS 'ICNPO classification code (s
 COMMENT ON COLUMN api_v1.ngo_index.icnpo_code_3 IS 'ICNPO classification code (tertiary). NULL when not used.';
 COMMENT ON COLUMN api_v1.ngo_index.chapter_count IS 'Count of active chapters for this NGO (filtered by
 dim_chapter.is_active = true). Zero if the NGO has no chapters
-or all chapters are dormant.';
+or all chapters are dormant.
+
+🔴 AND A THIRD CASE, WHICH IS THE ONE TRUE TODAY: zero also
+means ATLAS HOLDS NO CHAPTER DATA. All eleven organisations
+currently report `has_chapters = true` with `chapter_count = 0`,
+and a consumer reading the pair gets a contradiction
+(urb-agents #1388).
+
+🔵 The two columns answer different questions and both answers
+are correct. `has_chapters` is a property of the ORGANISATION —
+it is structured in local chapters — and comes from the roster.
+`chapter_count` is a property of ATLAS — how many it holds — and
+comes from `dim_chapter`, which is empty until the Red Cross
+data arrives.
+
+⚠️ So `has_chapters = true, chapter_count = 0` reads "this
+organisation has chapters and Atlas has none of them", not "its
+chapters are all dormant". See `activity_catalog`,
+`distrikt_summary` and `kommune_local_chapters`, which are
+empty for the same reason and say so.
+
+🔵 Same shape as the FHI suppression note: the data is right and
+the reading is the defect.';
 COMMENT ON COLUMN api_v1.ngo_index.has_supply IS 'Convenience boolean: chapter_count > 0. True when the NGO has
 at least one active chapter — i.e. it appears on the supply
 side of Atlas.';
