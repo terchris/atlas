@@ -376,6 +376,69 @@ def _run(base, only=None):
                     f"embed — the FK exists and the join misses. "
                     f"e.g. {', '.join(sorted(bad)[:3])}"))
 
+    # 🔴 A TYPED NUMBER POSING AS A MEASUREMENT. The published descriptions
+    # assert "357 kommuner" in ten places across eight relations, and nothing
+    # recomputed it. Norway merges kommuner — that is the entire reason
+    # dim_kommune carries valid_from/valid_to — so the day the count changes,
+    # ten served descriptions become confidently wrong and no check notices.
+    #
+    # 🔵 THE TECHNIQUE IS THE DEMO CONSUMER'S, from urb-agents #1384. It found
+    # the same defect in its own page: a quartile table it had COMPUTED in a
+    # scratch script and TYPED into prose. Its first test asserted the rendered
+    # string had changed and failed, because a correct derivation produces a
+    # string identical to the correct quotation. So it perturbed the input and
+    # required the output to move.
+    #
+    # ⚠️ I cannot perturb a published database, so this is the reachable half:
+    # derive the count from the data and require the prose to agree with it.
+    # It catches the same thing one step later — after the count moves rather
+    # than before — which is the difference between a stale number that fails
+    # CI and one a consumer reports.
+    for label, flt in (("active, non-sentinel", "is_active=eq.true&is_sentinel=eq.false"),
+                       ("active, incl. sentinel", "is_active=eq.true")):
+        st, hd, _ = fetch(base, f"dim_kommune?{flt}&limit=0", prefer="count=exact")
+        n = int((hd.get("content-range") or "*/0").split("/")[-1]) if hd else 0
+        if label.startswith("active,") and "non" in label:
+            live_kommuner = n
+        else:
+            live_with_sentinel = n
+
+    st, _, spec = fetch(base, "")
+    if st in (200, 206) and isinstance(spec, dict):
+        import re as _re
+        claims = {}
+        for name, d in (spec.get("definitions") or {}).items():
+            texts = [d.get("description") or ""]
+            texts += [(p.get("description") or "")
+                      for p in (d.get("properties") or {}).values()]
+            for t in texts:
+                for tok in _re.findall(r"(?<![\d])(3\d\d)(?![\d])", t):
+                    claims.setdefault(int(tok), set()).add(name)
+        allowed = {live_kommuner, live_with_sentinel}
+        stale = {k: v for k, v in claims.items() if k not in allowed}
+        # ⚠️ MEMBERSHIP ALONE IS NOT ENOUGH, and the control proved it. If the
+        # count falls 357 -> 356, the stale 357 becomes the WITH-SENTINEL
+        # value and passes a set test — exactly the merger this check is for.
+        # So the MODAL claim must equal the non-sentinel count: the number the
+        # descriptions say most often is the one they mean by "kommuner".
+        modal = max(claims, key=lambda k: len(claims[k])) if claims else None
+        modal_ok = modal is None or modal == live_kommuner
+        detail = (f"{live_kommuner} active non-sentinel, {live_with_sentinel} with it; "
+                  f"every claim agrees (modal {modal})")
+        if stale:
+            detail = "; ".join(f"{k} claimed by {sorted(v)} but the live counts are "
+                               f"{sorted(allowed)}" for k, v in sorted(stale.items()))
+        elif not modal_ok:
+            detail = (f"the descriptions say {modal} most often ({len(claims[modal])} "
+                      f"relations) but only {live_kommuner} kommuner are active and "
+                      f"non-sentinel — a merger would look exactly like this")
+        inv.append((not stale and modal_ok,
+                    "kommune counts in the published descriptions match the data",
+                    detail))
+    else:
+        inv.append((False, "kommune counts in the published descriptions match the data",
+                    f"could not read the OpenAPI root (HTTP {st}) — not checked"))
+
     _, _, tot = fetch(base, "kommune_ngo_totals?select=active_count")
     _, _, rem = fetch(base, "unattributed_totals?relation=eq.kommune_ngo_totals"
                             "&measure=eq.active_count&select=unattributed_value,total_value")
