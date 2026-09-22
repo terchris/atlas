@@ -63,8 +63,38 @@ select
                      and not f.kommune_is_sentinel)::int as kommuner_with_value,
   count(*) filter (where f.value is null and f.kommune_is_active
                      and not f.kommune_is_sentinel)::int as kommuner_with_null,
-  min(f.value)::float as min_value,
-  max(f.value)::float as max_value,
+  -- 🔴 SCOPED TO THE SAME SUBJECT AS THE COUNTS ABOVE, AND THEY WERE NOT
+  -- UNTIL 2026-09-22. The two counts carried
+  -- `kommune_is_active and not kommune_is_sentinel` and these two carried
+  -- nothing, so one summary row published a COUNT over active kommuner and a
+  -- RANGE over every kommune the fact holds — dissolved ones included.
+  --
+  -- ⚠️ MEASURED ON THE LIVE API by the demo consumer, 33 of 221 series:
+  --
+  --     Folkemengde        min_value 0     <- a Norwegian municipality with a
+  --                                           population of zero. It is a
+  --                                           kommune dissolved in 1959, which
+  --                                           SSB zero-fills forever.
+  --     0__AnmLovbrPer1000 3.9 .. 236.0    <- published beside
+  --                        kommuners_with_value 80, whose 80 rows span
+  --                        5.4 .. 57.3
+  --
+  -- 🔵 The year was never the problem: the join below pins `f.year =
+  -- l.latest_year`, so every row here is already at the latest year. It was
+  -- the SUBJECT, the same one the zero-fill fix scoped `latest_year` to an
+  -- hour earlier and did not carry across to these two (urb-agents #1370).
+  --
+  -- ⚠️ A GENUINE ZERO STILL SURVIVES. `Levende` min 0 is a kommune with no
+  -- live births that year and must stay. What is excluded is a row whose
+  -- SUBJECT is not part of this relation, never a value because of its size.
+  --
+  -- 🔵 If no active non-sentinel kommune has a value, these are NULL rather
+  -- than a dissolved kommune's number. The row still appears — the counts
+  -- report 0 and the catalogue keeps the series.
+  min(f.value) filter (where f.kommune_is_active
+                         and not f.kommune_is_sentinel)::float as min_value,
+  max(f.value) filter (where f.kommune_is_active
+                         and not f.kommune_is_sentinel)::float as max_value,
   max(f.updated_at) as upstream_updated,
   -- 🔴 APPENDED, NOT INSERTED, AND THAT IS LOAD-BEARING.
   --
