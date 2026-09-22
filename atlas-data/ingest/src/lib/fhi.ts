@@ -13,6 +13,35 @@ import { logger } from "./logger.js";
  *
  * Docs: https://github.com/folkehelseinstituttet/Fhi.Statistikk.OpenAPI
  */
+// 🔴 `filter: "bottom"` MEANS THE NEWEST YEARS. `"top"` MEANS THE OLDEST.
+// That is the inverse of SSB, and copying a pattern across the two silently
+// costs decades.
+//
+// Measured 2026-09-22 against source `nokkel`, table 338, whole country,
+// both sexes, all ages, TELLER — the same request with one word changed:
+//
+//     filter "bottom", values ["1"]  ->  AAR 2026   value 5 627 400
+//     filter "top",    values ["1"]  ->  AAR 1990   value 4 233 116
+//
+// ⚠️ SSB's PxWeb uses the OPPOSITE sense: `Tid: "TOP(1)"` returns the MOST
+// RECENT period. Atlas has 12 FHI call sites on `bottom`, 12 SSB call sites
+// on `TOP(1)`, and zero FHI call sites on `top` — so today every one of them
+// fetches the newest year. Two conventions, both currently applied correctly.
+//
+// 🔵 The hazard is not the current code, it is the next source. Porting an
+// SSB pattern to FHI, or reading `top` here as "latest", SUCCEEDS: the
+// request is valid, the rows are real, and the year is quietly 1990. There is
+// no error to notice, and no gate that would catch it — `top` appears nowhere
+// today, so nothing is asserting its absence.
+//
+// ⚠️ The mirror-image hazard on the SSB side is real and already cost us a
+// published series: `TOP(1)` is correct for "newest", but it means a table
+// whose contents codes are populated in DIFFERENT year ranges yields nothing
+// for the codes absent from that one year. ssb-12063 spans 11 periods
+// (2015..2025, measured today) and is fetched with `Tid: "TOP(1)"`, i.e. 2025
+// alone. See urb-agents #1386 / #1362 for which contents code that emptied
+// and over which years — not restated here, because those numbers belong to
+// that investigation and this comment is about the filter words.
 const FHI_BASE = "https://statistikk-data.fhi.no/api/open/v1";
 
 export type FhiFilterKind = "item" | "top" | "bottom" | "all";
