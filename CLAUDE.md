@@ -132,7 +132,39 @@ on a change, not on a timer.
   worked; the suite had not run, and when it did it failed ten tests.
 - **This agent has no cluster access.** It declares; another agent applies; a third verifies.
 
-⚠️ **Unverified**: `website/docusaurus.config.ts` and the generated sources registry both give the
-public hosts as `atlas.sovereignsky.no` and `api-atlas.sovereignsky.no`. An earlier version of this
-file said `atlas.helpers.no` / `api-atlas.helpers.no`. The code-derived values are used above; a
-human should confirm which is current.
+## The public hosts — measured 2026-09-22, not inferred
+
+| what | host | verified |
+|---|---|---|
+| documentation site | `atlas.sovereignsky.no` | 200, GitHub Pages, Docusaurus 3.10.1 |
+| **public API** | **`api-atlas.urbalurba.com`** | 200, `application/openapi+json`, 19 definitions |
+
+🔴 **`api-atlas.sovereignsky.no` DOES NOT EXIST and never did.** It is NXDOMAIN. It was
+inferred by analogy from the site hostname, and the two are not symmetrical.
+`atlas.urbalurba.com` is a UIS platform placeholder, not Atlas.
+
+🔵 **This agent CAN reach the public API** — read-only, over the internet, no cluster access
+needed. `curl https://api-atlas.urbalurba.com/` returns the OpenAPI document.
+⚠️ Cloudflare fronts it and rejects some default user agents: python `urllib` gets **403**
+where `curl` gets **200**. A 403 here means your client, not the API.
+
+⚠️ **Do not re-derive these. Read them:**
+```
+grep -n 'ATLAS_API_BASE_URL' website/hosts.mjs
+jq -r .postgrest_base_url website/src/data/sources-registry.json
+```
+`website/hosts.mjs` is the single source of truth and says so in its own header; it exists
+because these values were previously declared in three places and agreed with each other
+while the API one was NXDOMAIN for four months.
+
+🔴 **WHY THIS BLOCK IS WORTH ITS LENGTH.** Until 2026-09-22 these four lines said, marked
+*"Unverified"*, that the public hosts were `atlas.sovereignsky.no` and
+`api-atlas.sovereignsky.no`, and asked a human to confirm. Nobody did, for four months. This
+agent then read that name out of its own instruction file every session, curled it, got
+nothing, and told three other agents and a deploy thread that it **could not reach the API
+and needed someone else to measure for it** — while the real host answered in 0.85 s.
+
+**A stale line in a context file outlives the code it describes, and it is read as
+background rather than as a claim.** `⚠️ Unverified` did not help: it marked the doubt and
+then nothing resolved it, which is indistinguishable from an assertion to whoever reads it
+next. If a note here cannot be verified now, verify it now or delete it.
