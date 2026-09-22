@@ -41,19 +41,56 @@
 
 CREATE SCHEMA IF NOT EXISTS api_v1;
 
--- ⚠️ THIS COMMENT IS THE FRESH-INSTALL COPY AND IS IMMEDIATELY SUPERSEDED.
--- api_v1_generated.sql now emits its own COMMENT ON SCHEMA and is re-applied
--- on EVERY deploy, whereas this migration runs once at install. The pointer to
--- meta_dimensions was deliberately put in the generator rather than here: a
--- pointer added only to this file would be correct and invisible on every
--- database that already exists (urb-agents #1335). Keep the two roughly in
--- step, but the generated one is what a consumer reads.
-COMMENT ON SCHEMA api_v1 IS
-  'Atlas — open semantic layer over Norwegian public data
+-- 🔴 SET ONLY IF THE SCHEMA HAS NO DESCRIPTION YET. THIS USED TO CLOBBER.
+--
+-- This file is the FRESH-INSTALL copy. api_v1_generated.sql emits a much
+-- longer COMMENT ON SCHEMA (2417 chars against this one's 464) which PostgREST
+-- splits into the OpenAPI info.title and info.description — the root document
+-- that indexes all 19 relations (urb-agents #382, #1335).
+--
+-- ⚠️ THE MIGRATION RUNNER TRACKS NO STATE. It re-applies every file on every
+-- run, by design, and that is safe for CREATE ... IF NOT EXISTS. It was NOT
+-- safe for an unconditional COMMENT: the statement is idempotent in the sense
+-- that re-running it gives the same result, and that result is the STUB.
+--
+-- 🔴 AND ALL SIX INGEST JOBS RUN MIGRATIONS. _asset_selection() in
+-- schedules.py always includes the migrations asset, so annual_sources_refresh,
+-- klass_refresh, seed_sources_refresh, brreg_bootstrap, brreg_change_feed and
+-- redcross_branches_refresh each reset the root document to this stub — and
+-- NONE of them republishes api_v1. Only transform_and_publish or
+-- publish_api_v1 puts the real one back. An ingest run therefore leaves the
+-- public API's front page truncated until the next publish.
+--
+-- 🔵 Two independent parties read the stub and neither recognised it: a
+-- consumer at 22:30Z on 2026-09-21, and ops-dev at 16:33Z on 2026-09-22 —
+-- minutes after that deploy's annual_sources_refresh. Both reported it as
+-- something else. The consumer went further and RETIRED a correct lesson about
+-- discoverability on the strength of it (urb-agents #1393).
+--
+-- ⚠️ The titles are identical in both copies, so nothing looks truncated.
+-- Only the description differs, which is why this survived so long.
+--
+-- 🔵 The conditional keeps both purposes: a fresh install still gets a usable
+-- pointer before any transform has run, and an existing database keeps the
+-- generated one. Guarded by the drift check added in atlas#411, which compares
+-- COMMENT ON SCHEMA against the generated text — the first check that could
+-- see this at all.
+DO $$
+BEGIN
+  IF (SELECT obj_description(oid, 'pg_namespace')
+        FROM pg_namespace WHERE nspname = 'api_v1') IS NULL THEN
+    COMMENT ON SCHEMA api_v1 IS
+      'Atlas — open semantic layer over Norwegian public data
 
 Curated wrapper views over marts.*, served by PostgREST. Start at
 meta_endpoints (the index), then meta_sources (per ingest source) and
 meta_dimensions (per source x upstream dimension: what each coded column
 means). Views are generated (atlas-data/dbt/api_v1_generated.sql) and applied
 after dbt run; the schema itself is created here so a fresh install can
-configure PostgREST before any transform has run.';
+configure PostgREST before any transform has run.
+
+This is the FRESH-INSTALL placeholder. If you are reading it on a database
+that has run a transform, the generated root document has been lost and a
+publish_api_v1 will restore it.';
+  END IF;
+END $$;
