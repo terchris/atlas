@@ -93,13 +93,40 @@ const config: Config = {
         showNavLink: true,
         configuration: {
           // Same-origin snapshot of the PostgREST OpenAPI spec. Refresh with
-          // `npm run api:snapshot` (in website/) when the api_v1 surface changes.
+          // `npm run api:snapshot` (in website/) AFTER EVERY DEPLOY that changes
+          // the api_v1 surface OR its descriptions — not only when relations
+          // are added. The spec carries info.description and every column
+          // COMMENT, so a docs-only release changes it.
           //
-          // We can't fetch live from the API in the browser
-          // because PostgREST 14 sends Access-Control-Allow-Origin only on
-          // OPTIONS preflight, not on GET responses — see INVESTIGATE-
-          // deployment-pipeline.md Q21. Until UIS fixes that, "Try it out"
-          // requests won't work either, regardless of how we load the spec.
+          // 🔴 THE CORS REASON THIS COMMENT USED TO GIVE IS NO LONGER TRUE.
+          // It said: "we can't fetch live from the API in the browser because
+          // PostgREST 14 sends Access-Control-Allow-Origin only on OPTIONS
+          // preflight, not on GET responses … Try it out requests won't work
+          // either, regardless of how we load the spec."
+          //
+          // Measured 2026-09-23 with a browser Origin header, against the live
+          // public API — GET responses carry the header, on the spec endpoint
+          // and on data endpoints, JSON and CSV alike:
+          //
+          //   GET /                      access-control-allow-origin: *
+          //   GET /dim_kommune?limit=2   access-control-allow-origin: *
+          //   ...with Accept: text/csv   access-control-allow-origin: *
+          //
+          // ✅ So "Try it out" DOES work now, and a live fetch would too.
+          //
+          // ⚠️ THE SNAPSHOT IS STILL REQUIRED, FOR A DIFFERENT REASON. It
+          // rewrites `host` and `schemes` from hosts.mjs, because PostgREST
+          // advertises a bind-all placeholder and http — openapi-server-proxy-uri
+          // is not set on the container, and Atlas cannot set it: the UIS
+          // postgrest config block accepts only `schemas` and `url_prefix`.
+          // Point Scalar straight at the live spec today and every Try-it
+          // button targets an address no visitor can reach.
+          //
+          // 🔵 SO THE ROUTE TO DELETING THIS FILE IS NOT A BETTER CHECK, IT IS
+          // ONE UIS CHANGE. Once the container sets openapi-server-proxy-uri,
+          // `url` can point at the live API, the snapshot goes away, and the
+          // whole drift class it belongs to disappears with it (urb-agents
+          // #1409). A copy you no longer keep cannot go stale.
           url: '/openapi.json',
         },
       },
