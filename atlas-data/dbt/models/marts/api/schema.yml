@@ -510,6 +510,27 @@ models:
     meta:
       title: "NGO registry"
     description: |
+      🔴 WHAT THIS RELATION DELIBERATELY DOES NOT CARRY. The demo consumer
+      matches an organisation's local units in Brønnøysundregistrene by a
+      name SUBSTRING it maintains itself, and it asked Atlas explicitly NOT
+      to publish that (urb-agents #1387):
+
+        "That is a heuristic we invented and are answerable for;
+         ngo_index has no such column and should not."
+
+      🔵 The split it drew, and it is the right one: the ROSTER is ours —
+      orgnr, canonical name, primary_focus, tier — and the MATCHING RULE is
+      theirs. A published pattern column would make Atlas answerable for a
+      guess it did not make, and would make one consumer's heuristic look
+      like a property of the organisation.
+
+      ⚠️ THIS NOTE EXISTS BECAUSE THE OBVIOUS RESPONSE IS THE WRONG ONE.
+      That consumer has now deleted three hardcoded copies of Atlas data in
+      two days, and each time the right fix was to publish what it was
+      copying — served_as for the unserved list, window_years for the
+      windowed-years map. The reflex "it keeps a copy, so publish it" is
+      correct twice and wrong here. It keeps this copy on purpose.
+
       One row per NGO in dim_ngo with chapter_count and has_supply
       decorations. Backs the NGO landing page (atlas-frontend /ngo) and
       is equivalent to the listNgos() inline query.

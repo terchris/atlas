@@ -40,7 +40,7 @@ Licences: **NLOD** for 42 of 44 — Norwegian public data, free to reuse with at
 | `meta_dimensions` | Per-source × per-dimension catalogue. |
 | `meta_endpoints` | One row per queryable Atlas endpoint, with tags inherited from upstream sources via the lineage graph and a `layer:<schema>` tag from the schema. |
 | `meta_sources` | Per-source catalogue row — one per ingest source in `_sources_manifest`, joined to `raw.ingest_runs` aggregates so consumers see freshness alongside the static metadata. |
-| `ngo_index` | One row per NGO in dim_ngo with chapter_count and has_supply decorations. |
+| `ngo_index` | 🔴 WHAT THIS RELATION DELIBERATELY DOES NOT CARRY. |
 | `ngo_overview` | One row per NGO in dim_ngo with the six count metrics shown on the per-NGO landing page (atlas-frontend /ngo/[slug]). |
 | `unattributed_totals` | The part of a published quantity that belongs to no municipality. |
 
