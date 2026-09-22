@@ -3,17 +3,17 @@
 # After commit, this file is human-authored — ingest runs do NOT modify it.
 
 source_id: fhi-innvkat
-upstream_id: "650"
-upstream_url: https://statistikk-data.fhi.no/api/open/v1/nokkel/table/650
+upstream_id: "932"
+upstream_url: https://statistikk-data.fhi.no/api/open/v1/nokkel/table/932
 upstream_landing_page: https://statistikk.fhi.no/nokkel/iTcQHmSn_g9PSQ0MRVD-gzOvgVzNXuZ_xJRCUnQ2Z1w?GEO=0&AAR=2020_2020,2021_2021,2022_2022,2023_2023,2024_2024,2025_2025&ALDER=0_120,0_29&INNVKAT=23,2,3&LANDBAK=0&MEASURE_TYPE=TELLER
 upstream_title: "INNVAND_INNVKAT"
-description: "FHI Folkehelsestatistikk table 650 — population by immigrant category (1st-gen / 2nd-gen / combined) per region × age band. Complements fhi-innvandrere (table 175) which has country-origin granularity but no INNVKAT split."
+description: "FHI Folkehelsestatistikk table 932 (INNVAND_INNVKAT) — population by immigrant category (1st-gen / 2nd-gen / combined) per region × age band. Complements fhi-innvandrere (table 175) which has country-origin granularity but no INNVKAT split. Published as table 650 until September 2026, when FHI renumbered it; the series is continuous across that change."
 publisher: Folkehelseinstituttet
 license: NLOD
 license_url: https://data.norge.no/nlod/no/2.0
 periodicity: P1Y
 eu_theme: SOCI
-attribution: "Kilde: Folkehelseinstituttet, Folkehelsestatistikk tabell 650"
+attribution: "Kilde: Folkehelseinstituttet, Folkehelsestatistikk tabell 932"
 
 tags:
   provider: fhi
