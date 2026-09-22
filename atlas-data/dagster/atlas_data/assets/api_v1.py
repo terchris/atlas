@@ -318,6 +318,41 @@ def api_v1_descriptions_match_the_running_build():
     for view, body in view_pattern.findall(generated_sql):
         expected[(view, None)] = body.replace("''", "'")
 
+    # 🔴 AND THE ROOT DOCUMENT, WHICH BOTH HALVES ABOVE STILL IGNORED.
+    #
+    # COMMENT ON SCHEMA api_v1 is what PostgREST splits into the OpenAPI
+    # `info.title` and `info.description` — the very first thing any consumer
+    # reads, and since #382 the index that tells them which of the 19
+    # relations to start from. Until now NOTHING compared it against the
+    # database. Columns were checked, views were checked after #1271, and the
+    # one description sitting above both of them was checked by nobody.
+    #
+    # ⚠️ IT IS ALSO THE ONLY ONE WITH TWO WRITERS. migrations/050 sets a
+    # shorter fresh-install copy so PostgREST can be configured before any
+    # transform has run; api_v1_generated.sql then supersedes it on publish.
+    # That is fine while both run — but it means a database can serve a
+    # STALE-BUT-VALID root document, which is exactly the state no check
+    # could see. On 2026-09-22 a consumer reported `info.description` and the
+    # text it quoted was migrations/050's copy character-for-character
+    # (urb-agents #1393).
+    #
+    # 🔵 `(None, None)` as the key: schema, view and column comments share one
+    # namespace here, so one comparison covers all three.
+    schema_pattern = re.compile(
+        r"COMMENT ON SCHEMA api_v1 IS\s*'((?:[^']|'')*)';",
+        re.DOTALL,
+    )
+    schema_bodies = schema_pattern.findall(generated_sql)
+    if len(schema_bodies) != 1:
+        raise RuntimeError(
+            f"expected exactly 1 COMMENT ON SCHEMA statement in "
+            f"{API_V1_SQL_PATH}, parsed {len(schema_bodies)} — the root "
+            "document is the first thing a consumer reads and this check "
+            "will not pass without having compared it. Regenerate with "
+            "./regenerate-api-v1.sh, or fix this parser if the shape changed."
+        )
+    expected[(None, None)] = schema_bodies[0].replace("''", "'")
+
     if not expected:
         raise RuntimeError(
             f"no COMMENT ON COLUMN statements parsed from {API_V1_SQL_PATH} — "
@@ -356,11 +391,22 @@ def api_v1_descriptions_match_the_running_build():
                 """
             )
             actual.update({(v, None): body for v, body in cur.fetchall()})
+            cur.execute(
+                """
+                select obj_description(oid, 'pg_namespace')
+                from pg_namespace where nspname = 'api_v1'
+                """
+            )
+            row = cur.fetchone()
+            if row is not None:
+                actual[(None, None)] = row[0]
 
     drifted = [
-        f"view {v}" if c is None else f"{v}.{c}"
+        "the root document (COMMENT ON SCHEMA api_v1)"
+        if v is None
+        else f"view {v}" if c is None else f"{v}.{c}"
         for (v, c), want in sorted(
-            expected.items(), key=lambda kv: (kv[0][0], kv[0][1] or "")
+            expected.items(), key=lambda kv: (kv[0][0] or "", kv[0][1] or "")
         )
         if (v, c) in actual and actual[(v, c)] != want
     ]
@@ -373,7 +419,10 @@ def api_v1_descriptions_match_the_running_build():
         severity=AssetCheckSeverity.WARN,
         metadata={
             "columns_compared": sum(1 for _, c in expected if c is not None),
-            "views_compared": sum(1 for _, c in expected if c is None),
+            "views_compared": sum(
+                1 for v, c in expected if c is None and v is not None
+            ),
+            "root_document_compared": (None, None) in actual,
             "drifted": ", ".join(drifted[:20]) if drifted else "none",
             "drifted_count": len(drifted),
             "remedy": (
