@@ -344,6 +344,21 @@ declared_jobs = set(op["first_data"]["jobs"])
 missing_jobs = declared_jobs - code_jobs
 assert not missing_jobs, f"first_data names jobs not defined in schedules.py: {sorted(missing_jobs)}"
 
+# 🔵 Same rule for the upgrade path, which was added on 2026-09-22 because
+# `operational:` described a first install and had no concept of an upgrade —
+# an ingest-window change shipped with nothing an operator could read
+# (urb-agents #1371). A field that names a job must name a real one, or it
+# repeats the failure it was added to prevent one field over.
+upgrade = op.get("upgrade")
+assert upgrade, "operational.upgrade is missing — first_data covers an empty install only"
+for key in ("why", "jobs", "when_more_is_needed", "self_healing_warning"):
+    assert upgrade.get(key), f"operational.upgrade.{key} is missing or empty"
+unknown_upgrade_jobs = set(upgrade["jobs"]) - code_jobs
+assert not unknown_upgrade_jobs, (
+    f"operational.upgrade names jobs not defined in schedules.py: "
+    f"{sorted(unknown_upgrade_jobs)}"
+)
+
 # install.deploys must match the services the definition actually provides,
 # or the summary promises a different cluster than the deploy performs.
 declared_services = {x["service"] for x in d["provides"]["services"]}

@@ -443,6 +443,45 @@ operational:
     # reader and the correction does not.
     takes: "~30 minutes on a COLD install: six first-data jobs, 1772 s wall, measured end to end by imac on a factory-reset cluster (urb-agents #1027). The Brreg bulk load is 501 s of that and is no longer the unmeasured part. ~4.1M rows across 52 raw BASE TABLEs and 81 marts BASE TABLEs (plus 10 marts views). An earlier figure of ~11 minutes is still in circulation and understates a cold install by nearly 3x: it was imac's measurement of the first FOUR jobs (#507: 11.1 min, 2,906,194 rows) and it predates brreg_bootstrap entirely. The individual jobs vary far more than the total suggests - annual_sources_refresh alone is 474 s and transform_and_publish 484 s - so a run that looks stalled at 8 minutes may be normal. If you need to tell slow from stuck, run the check command rather than waiting: it reports what has been pulled against what has been applied."
 
+  # 🔴 first_data ABOVE IS FOR AN EMPTY INSTALL. This is the other case, and it
+  # did not exist until 2026-09-22 — `operational:` described a first install
+  # and had no concept of an upgrade at all (dev-templates, urb-agents #1371).
+  #
+  # ⚠️ WHAT THAT COST: `3e72760` widened the SSB Klass ingest window from 1960
+  # to 1950 to recover twelve dissolved kommuner. The release shipped,
+  # `transform_and_publish` ran, and 7,296 rows kept failing a foreign-key
+  # check — because the transform can only reshape rows that are already in
+  # `raw`, and nobody had re-run the ingest that fetches them. `data:` and
+  # `operational:` were BYTE-IDENTICAL across that release, so a change to
+  # what the ingest fetches altered nothing an operator could read.
+  upgrade:
+    why: >-
+      An upgrade already has data, so the default is the transform alone. The
+      exception is a release that changes WHAT AN INGEST FETCHES — its date
+      window, its filters, its dimensions. The transform cannot recover rows
+      that were never requested, so that source's ingest job must run FIRST.
+    jobs: [transform_and_publish]
+    when_more_is_needed: >-
+      If the release notes name a change under an ingest source, run the job
+      that owns it before the transform. `operational.crons` above maps every
+      job to what it covers - klass_refresh for the SSB Klass classifications,
+      annual_sources_refresh for the ~37 annual public-sector sources,
+      brreg_change_feed for the register. Then transform_and_publish, then
+      transform_checks.
+    # 🔴 THE CRON WOULD HAVE HIDDEN IT. klass_refresh runs "0 1 1 * *" — 01:00
+    # on the 1st. The FK failure above appeared on 22 September and would have
+    # cleared by itself on 1 October, with nobody having changed anything and
+    # no record of why.
+    #
+    # ⚠️ A defect that repairs itself before anyone investigates is worse than
+    # one that stays broken: the signal and the cause end up far enough apart
+    # that they stop looking related. ops-dev's line, and it is the reason this
+    # field says the trigger rather than only the remedy.
+    self_healing_warning: >-
+      An ingest-window change left unrun is repaired by that source's next
+      scheduled cron - up to a month for klass_refresh. The symptom disappears
+      on its own and the cause is never recorded. Re-run it deliberately.
+
   # For the "what is this about to do to my cluster" question (#507 item 1).
   # provides.services below is the authoritative list; this is the human summary.
   install:
