@@ -153,7 +153,17 @@ TIME IS THE DIMENSION MOST OFTEN MISREAD. A year here can be the FIRST year
 of a multi-year window. indicator_summary.latest_year pairs with
 latest_year_window_years, and indicator_latest_values.year with window_years;
 the span is year .. year + window_years - 1. meta_dimensions carries the
-upstream's own words for the same fact."""
+upstream's own words for the same fact.
+
+FORMATS. Every relation answers JSON by default and CSV on request, via the
+Accept header:
+
+  curl -H "Accept: text/csv" <base>/indicator_latest_values
+  curl -H "Accept: application/vnd.pgrst.object+json" <base>/dim_kommune?kommune_nr=eq.0301
+
+CSV opens directly in Excel. Add ?limit=100 while exploring; an unfiltered
+relation can be large. Row counts come back in the Content-Range response
+header when you send Prefer: count=exact."""
 
 
 def _sql_string(text):
