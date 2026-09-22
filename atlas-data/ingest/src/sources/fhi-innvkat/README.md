@@ -1,6 +1,6 @@
 # fhi-innvkat
 
-FHI Folkehelsestatistikk table **650 — *INNVAND_INNVKAT***. Population by immigrant category (1st-gen immigrant / 2nd-gen Norwegian-born with immigrant parents / combined) per region × age band.
+FHI Folkehelsestatistikk table **932 — *INNVAND_INNVKAT*** (was table 650 until September 2026). Population by immigrant category (1st-gen immigrant / 2nd-gen Norwegian-born with immigrant parents / combined) per region × age band.
 
 ## What the script does
 
