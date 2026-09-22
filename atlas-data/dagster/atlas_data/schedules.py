@@ -462,13 +462,42 @@ transform_job = define_asset_job(
 # stops being true and this job must gain the publish. Nothing enforces it, so
 # it is written here and beside the materialisation in mart_brreg_enhet.sql.
 #
+# 🔴 AND THE REASONING ABOVE COVERS VISIBILITY, NOT EXISTENCE — WHICH IS WHY
+# mart_brreg_enhet IS NOW IN THE SELECTION.
+#
+# "Everything between is a view, so new rows are visible with no publish" is
+# true on the INCREMENTAL path and says nothing about the FULL-REFRESH one. An
+# incremental model is dropped and recreated on `--full-refresh`, on a schema
+# change, or when dbt decides the incremental strategy cannot apply — and dbt
+# drops with CASCADE. That destroys marts.mart_brreg_enhet and api_v1.brreg_enhet
+# outright. A view being a view does not help once it has been dropped; it needs
+# RECREATING, not refreshing.
+#
+# ⚠️ restore_api_v1_view() already solves exactly this — but it is a post-hook
+# on models/marts/api/, and this job selected ONLY the dimension. So the one
+# mechanism that would have put the view back lived on the downstream model the
+# job did not build. Selecting mart_brreg_enhet fires it.
+#
+# 🔵 Measured by imac on 2026-09-22 (urb-agents #1395): the incremental path is
+# SAFE — brreg_transform 0d22d1d8 ran 173.4s, 19 relations before and after,
+# api_v1.brreg_enhet 200 throughout, `INSERT 0 13`. It refused to let the safe
+# path close the question, and it was right to: the hazard is on the path that
+# was never measured.
+#
+# 🔵 Cost is a view definition rebuilt every half hour. mart_brreg_enhet is
+# materialized='view', so this adds no scan and no publish — it does NOT pull
+# api_v1_surface in, which would re-apply all wrappers and reload PostgREST's
+# schema cache every cycle for no gain. That part of the rationale above stands.
+#
 # The check chain is safe: run_api_v1_checks_after_transform is scoped with
 # monitored_jobs=[transform_job], so this job does not drag the 784-test suite
 # along behind it every cycle. Verified before adding the job, not after.
 brreg_transform_job = define_asset_job(
     name="brreg_transform",
     tags=SERIALISE_ON_MARTS,
-    selection=AssetSelection.assets(*dbt.dbt_model_asset_keys("dim_brreg_enhet")),
+    selection=AssetSelection.assets(
+        *dbt.dbt_model_asset_keys("dim_brreg_enhet", "mart_brreg_enhet")
+    ),
     description=(
         "Reconciles the Brreg register into marts.dim_brreg_enhet and nothing "
         "else — the incremental rebuild of one model, plus its deletion check.\n\n"
