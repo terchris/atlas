@@ -73,7 +73,7 @@ EXEMPT="frr"
 #                          aggregate code, which the manifest says to verify
 #                          against FHI's reference. Guessing it would publish a
 #                          population figure for the wrong origin group.
-BACKLOG="bufdir-barnefattigdom ssb-10826 ssb-12944"
+BACKLOG="bufdir-barnefattigdom ssb-10826"
 
 # 🔴 "HAS A MODEL" IS NOT "REACHES A CONSUMER", AND THIS GATE USED TO CONFLATE
 # THEM. It counted any lineage edge as served. fhi-innvandrere has an indicator

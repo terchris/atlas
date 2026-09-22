@@ -531,7 +531,47 @@ fhi_innvandrere as (
     and age_band = '0_120'
 ),
 
+ssb_12944 as (
+  -- Low income, EU-scale 60% of median, by age group. SSB table 12944.
+  -- Terje's decision, urb-agents #1383: serve the deferred sources.
+  --
+  -- 🔴 THE TWO THINGS THIS WAS DEFERRED FOR BOTH EXIST NOW, AND NEITHER WAS
+  -- BUILT FOR IT. The reason recorded in BACKLOG was "period (3-year rolling)
+  -- + age_group, not year — needs a deliberate mapping, not a union":
+  --
+  --   the period      window_years() shipped 2026-09-21 for a different
+  --                   defect. Tid is "2022-2024", so this DERIVES 3 — and
+  --                   check-window-agrees-with-the-catalogue.sh already named
+  --                   this source as the next one that must derive rather
+  --                   than assert 1.
+  --   the age_group   folded into contents_code, exactly as fhi_prognose
+  --                   folds its forecast horizon into TELLER_2030/_2040/_2050
+  --
+  -- 6 Alder x 2 ContentsCode = 12 series, e.g. EUskalaSeksti_00-17.
+  --
+  -- ⚠️ `999A` IS ALL AGES AND THE OTHER FIVE PARTITION IT. Measured at SSB:
+  -- 00-17, 18-34, 35-49, 50-66, 067+ are disjoint and 999A is their total.
+  -- They are separate series here and must never be summed together — the
+  -- same aggregate trap as LANDBAK 456 and ALDER 0_120 in fhi-innvandrere,
+  -- two sources and one day apart.
+  --
+  -- 🔵 `year` is the FIRST year of the window, which is the fact's documented
+  -- convention and the reason window_years exists beside it.
+  select
+    source_id,
+    kommune_nr,
+    period_start_year as year,
+    (contents_code || '_' || age_group)::text as contents_code,
+    (contents_label || ' — ' || age_group)::text as contents_label,
+    value, status, updated_at,
+    {{ window_years() }}
+  from {{ ref('indicators__ssb_12944') }}
+  where kommune_nr is not null
+),
+
 all_indicators as (
+  select * from ssb_12944
+  union all
   select * from fhi_innvandrere
   union all
   select * from ssb_08764
