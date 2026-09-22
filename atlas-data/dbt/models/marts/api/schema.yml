@@ -1341,6 +1341,21 @@ models:
       Enhetsregisteret, around 1.17 million rows, current as of the last change-feed run.
       Companies, foundations, associations, public bodies and sole proprietorships.
 
+      🔴 DO NOT SEND `Prefer: count=exact` WITH A FILTER ON THIS RELATION.
+      Measured 2026-09-21: a filtered `count=exact` takes 12-33 seconds,
+      because PostgREST counts every matching row instead of stopping at
+      your limit. The same query without the header is sub-second, and an
+      UNfiltered `count=exact` is 0.6s — it is the combination that is slow.
+
+      ⚠️ INSIDE A BROWSER FETCH THAT IS A TIMEOUT, NOT A SLOW ANSWER. A
+      consumer diagnosed it as a CORS failure, because a request that never
+      completes is indistinguishable from a blocked one on the fetch side.
+      CORS is fine (urb-agents #1361).
+
+      ⚠️ `count=planned` is 50x faster and was 6x WRONG on the filter
+      measured — 118 against an actual 716. It is a planner estimate, not
+      a count. Use it only where an order of magnitude will do.
+
       Kilde: Brønnøysundregistrene. Inneholder data under norsk lisens for offentlige data
       (NLOD) tilgjengeliggjort av Brønnøysundregistrene — https://data.norge.no/nlod/no/2.0.
       Re-users must carry this attribution onward; it is a condition of the licence, not a

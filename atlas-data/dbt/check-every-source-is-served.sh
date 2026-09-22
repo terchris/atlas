@@ -27,7 +27,23 @@ cd "$(dirname "$0")"
 
 MANIFEST=seeds/sources/_sources_manifest.csv
 LINEAGE=seeds/sources/lineage.csv
-for f in "$MANIFEST" "$LINEAGE"; do [ -f "$f" ] || { echo "✗ CANNOT CHECK: no $f" >&2; exit 2; }; done
+# 🔴 api_v1_generated.sql IS AN INPUT AND WAS NOT GUARDED. The two seeds were
+# checked here and the generated contract was not — so with it absent the
+# python below died on read_text() and the gate exited 1, which to any caller
+# reading the exit code is indistinguishable from its real finding, "a source
+# is ingested and reaches no model". In CI that is a red Data-fidelity job
+# blaming the data for a missing file.
+#
+# ⚠️ Found by probing my own refusal paths after ops-dev proposed the
+# consumer's refuse-when-the-input-is-absent handling as the shape to adopt
+# (urb-agents #1360). Six of seven gates refused correctly; this was the
+# seventh, and it is the one enforcing Terje's standing rule.
+GENERATED=api_v1_generated.sql
+for f in "$MANIFEST" "$LINEAGE" "$GENERATED"; do
+  [ -f "$f" ] || { echo "✗ CANNOT CHECK: no $f" >&2
+                   echo "  This is NOT a serving finding — the gate did not run." >&2
+                   exit 2; }
+done
 
 # NEVER served, by design. Each needs a reason, not just a name.
 #   frr  Red Cross volunteer register. Personal data, auth-gated in
