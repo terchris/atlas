@@ -21,21 +21,33 @@
  */
 
 import { writeFileSync } from 'node:fs';
+import { ATLAS_API_BASE_URL } from '../hosts.mjs';
 
-const SOURCE_URL = process.env.PGRST_SOURCE_URL ?? 'http://api-atlas.localhost/';
-// Default to the local UIS address because that's the only PostgREST reachable
-// today; api-atlas.helpers.no is the future public target (not yet deployed —
-// see INVESTIGATE-deployment-pipeline.md Q21). When PostgREST goes public,
-// override with `PGRST_PUBLISH_HOST=api-atlas.helpers.no PGRST_PUBLISH_SCHEME=https`
-// and re-snapshot, or flip these defaults.
-const PUBLISH_HOST = process.env.PGRST_PUBLISH_HOST ?? 'api-atlas.localhost';
-const PUBLISH_SCHEME = process.env.PGRST_PUBLISH_SCHEME ?? 'http';
-// URL-prefix versioning per Atlas's API convention: every endpoint lives under
-// `/v1/...` (matches Stripe/OpenAI). Mapping from URL prefix to PostgREST
-// schema is handled by a UIS-side Traefik path-rewrite (see talk.md Message 5).
-// Until that ships, `/v1/...` requests will 404 — Scalar's curls document the
-// intended public shape, not what's reachable today.
-const PUBLISH_BASEPATH = process.env.PGRST_PUBLISH_BASEPATH ?? '/v1';
+// 🔴 DEFAULTS DERIVE FROM hosts.mjs. They used to be hardcoded dev values, and
+// what they produced was published to the public site for months:
+//
+//     host  api-atlas.localhost   scheme  http   basePath  /v1
+//
+// Every "Try it" button in the live Scalar explorer at /api therefore pointed
+// at a hostname no visitor can resolve, over http, under a path prefix that
+// does not exist. Measured on the live site 2026-09-22 (urb-agents #1407).
+//
+// ⚠️ THE OLD COMMENT SAID WHY, AND SAID WHAT TO DO, AND NOBODY DID IT:
+// "api-atlas.helpers.no is the future public target (not yet deployed) … When
+// PostgREST goes public, flip these defaults." PostgREST went public. The
+// hostname it named was itself superseded twice since. A default that is
+// correct only until a deployment happens is a defect with a delay on it —
+// so this now reads the one file that is kept true.
+//
+// 🔵 `/v1` is gone for the same reason. It documented a UIS-side Traefik
+// path-rewrite that never shipped; the live API's basePath is `/`, measured.
+// A spec should describe what answers, not what was intended.
+const PUBLIC_API = new URL(ATLAS_API_BASE_URL);
+
+const SOURCE_URL = process.env.PGRST_SOURCE_URL ?? ATLAS_API_BASE_URL;
+const PUBLISH_HOST = process.env.PGRST_PUBLISH_HOST ?? PUBLIC_API.host;
+const PUBLISH_SCHEME = process.env.PGRST_PUBLISH_SCHEME ?? PUBLIC_API.protocol.replace(':', '');
+const PUBLISH_BASEPATH = process.env.PGRST_PUBLISH_BASEPATH ?? '/';
 const OUTPUT = 'static/openapi.json';
 
 const res = await fetch(SOURCE_URL);
