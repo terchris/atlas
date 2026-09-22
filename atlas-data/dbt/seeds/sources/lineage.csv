@@ -16,6 +16,7 @@ fact_kommune_indicators,fhi-bor-alene
 fact_kommune_indicators,fhi-depresjon
 fact_kommune_indicators,fhi-fortrolig-venn
 fact_kommune_indicators,fhi-hasj
+fact_kommune_indicators,fhi-innvandrere
 fact_kommune_indicators,fhi-innvkat
 fact_kommune_indicators,fhi-kpr-1aar
 fact_kommune_indicators,fhi-livskvalitet
@@ -94,6 +95,7 @@ mart_coverage_gap_barnefattigdom,fhi-bor-alene
 mart_coverage_gap_barnefattigdom,fhi-depresjon
 mart_coverage_gap_barnefattigdom,fhi-fortrolig-venn
 mart_coverage_gap_barnefattigdom,fhi-hasj
+mart_coverage_gap_barnefattigdom,fhi-innvandrere
 mart_coverage_gap_barnefattigdom,fhi-innvkat
 mart_coverage_gap_barnefattigdom,fhi-kpr-1aar
 mart_coverage_gap_barnefattigdom,fhi-livskvalitet
@@ -132,6 +134,7 @@ mart_indicator_latest_values,fhi-bor-alene
 mart_indicator_latest_values,fhi-depresjon
 mart_indicator_latest_values,fhi-fortrolig-venn
 mart_indicator_latest_values,fhi-hasj
+mart_indicator_latest_values,fhi-innvandrere
 mart_indicator_latest_values,fhi-innvkat
 mart_indicator_latest_values,fhi-kpr-1aar
 mart_indicator_latest_values,fhi-livskvalitet
@@ -166,6 +169,7 @@ mart_indicator_missing_kommuner,fhi-bor-alene
 mart_indicator_missing_kommuner,fhi-depresjon
 mart_indicator_missing_kommuner,fhi-fortrolig-venn
 mart_indicator_missing_kommuner,fhi-hasj
+mart_indicator_missing_kommuner,fhi-innvandrere
 mart_indicator_missing_kommuner,fhi-innvkat
 mart_indicator_missing_kommuner,fhi-kpr-1aar
 mart_indicator_missing_kommuner,fhi-livskvalitet
@@ -200,6 +204,7 @@ mart_indicator_summary,fhi-bor-alene
 mart_indicator_summary,fhi-depresjon
 mart_indicator_summary,fhi-fortrolig-venn
 mart_indicator_summary,fhi-hasj
+mart_indicator_summary,fhi-innvandrere
 mart_indicator_summary,fhi-innvkat
 mart_indicator_summary,fhi-kpr-1aar
 mart_indicator_summary,fhi-livskvalitet
@@ -246,6 +251,7 @@ mart_meta_endpoints,fhi-bor-alene
 mart_meta_endpoints,fhi-depresjon
 mart_meta_endpoints,fhi-fortrolig-venn
 mart_meta_endpoints,fhi-hasj
+mart_meta_endpoints,fhi-innvandrere
 mart_meta_endpoints,fhi-innvkat
 mart_meta_endpoints,fhi-kpr-1aar
 mart_meta_endpoints,fhi-livskvalitet
@@ -280,6 +286,7 @@ mart_meta_sources,fhi-bor-alene
 mart_meta_sources,fhi-depresjon
 mart_meta_sources,fhi-fortrolig-venn
 mart_meta_sources,fhi-hasj
+mart_meta_sources,fhi-innvandrere
 mart_meta_sources,fhi-innvkat
 mart_meta_sources,fhi-kpr-1aar
 mart_meta_sources,fhi-livskvalitet
@@ -319,6 +326,7 @@ mart_unattributed_totals,fhi-bor-alene
 mart_unattributed_totals,fhi-depresjon
 mart_unattributed_totals,fhi-fortrolig-venn
 mart_unattributed_totals,fhi-hasj
+mart_unattributed_totals,fhi-innvandrere
 mart_unattributed_totals,fhi-innvkat
 mart_unattributed_totals,fhi-kpr-1aar
 mart_unattributed_totals,fhi-livskvalitet

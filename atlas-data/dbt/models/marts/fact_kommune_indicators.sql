@@ -497,7 +497,43 @@ fhi_prognose as (
     and contents_code = 'TELLER'
 ),
 
+fhi_innvandrere as (
+  -- Population with immigrant background (1st-generation plus Norwegian-born
+  -- to two immigrant parents), FHI table 175. Terje's decision, urb-agents
+  -- #1383: the four ingested-but-unserved sources are to be served.
+  --
+  -- 🔴 THE HEADLINE SLICE IS LANDBAK=100 AND IT IS NOT WHAT THE MANIFEST SAID.
+  -- The manifest guessed "100 ≈ no immigrant background" and told whoever
+  -- served this to verify it against FHI's reference first. Verified 2026-09-22
+  -- by ARITHMETIC against FHI, not by reading an order:
+  --
+  --     4 + 5 + 6     = 51 984      = 456          <- 456 IS the aggregate
+  --     1 + 2 + 3 + 456 = 1 225 624 vs 100 = 1 225 627
+  --
+  -- 100 is `Totalt`. The three missing are FHI's own footnote: "«Totalt»
+  -- inkluderer statsløse og de med uoppgitt landbakgrunn."
+  --
+  -- ⚠️ TWO OVERLAPPING HIERARCHIES, AND SUMMING EITHER DOUBLE-COUNTS.
+  --   LANDBAK  456 contains 4, 5 and 6; 100 contains everything
+  --   ALDER    0_120 is all ages; 0_29 = 0_17 + 18_29; 45_120 = 45_64 +
+  --            65_79 + 80_120 — measured, they are nested, not disjoint
+  -- Both aggregates are taken here deliberately and neither is summed.
+  --
+  -- 🔵 Every other slice stays in indicators__fhi_innvandrere, which carries
+  -- all eight LANDBAK and all ten ALDER. This picks one; it removes nothing.
+  select
+    source_id, kommune_nr, year, contents_code, contents_label,
+    value, status, updated_at,
+    {{ window_years() }}
+  from {{ ref('indicators__fhi_innvandrere') }}
+  where kommune_nr is not null
+    and country_background = '100'
+    and age_band = '0_120'
+),
+
 all_indicators as (
+  select * from fhi_innvandrere
+  union all
   select * from ssb_08764
   union all
   select * from ssb_06913
