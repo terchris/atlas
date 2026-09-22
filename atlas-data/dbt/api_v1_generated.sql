@@ -1044,15 +1044,35 @@ malformed array literal. Always 5 entries (one per declared
 namespace).';
 COMMENT ON COLUMN api_v1.meta_sources.last_ingested_at IS '`MAX(finished_at)` from `raw.ingest_runs` filtered to
 successful runs (`exit_code = 0`). NULL until the source has
-at least one successful run on the current cluster.';
+at least one successful run on the current cluster.
+⚠️ AS OF THE LAST TRANSFORM, NOT LIVE. mart_meta_sources is materialized as a TABLE,
+so this is a snapshot taken when transform_and_publish last ran. An ingest that
+succeeded since then is invisible here until the next one. Do not poll this field to
+decide whether an ingest has completed — it can lag by hours and reads as though it
+were current.';
 COMMENT ON COLUMN api_v1.meta_sources.last_upstream_update_at IS '`MAX(upstream_updated_at)` from successful ingest runs.
 NULL when the source hasn''t run yet OR its ingest module
 doesn''t capture the upstream''s "updated" field (Red Cross
-web scrape, Brreg per-entity fetch).';
+web scrape, Brreg per-entity fetch).
+⚠️ AS OF THE LAST TRANSFORM, NOT LIVE. mart_meta_sources is materialized as a TABLE,
+so this is a snapshot taken when transform_and_publish last ran. An ingest that
+succeeded since then is invisible here until the next one. Do not poll this field to
+decide whether an ingest has completed — it can lag by hours and reads as though it
+were current.';
 COMMENT ON COLUMN api_v1.meta_sources.latest_row_count IS '`rows_parsed` from the most recent successful run. NULL when
-the source has zero successful runs on the current cluster.';
+the source has zero successful runs on the current cluster.
+⚠️ AS OF THE LAST TRANSFORM, NOT LIVE. mart_meta_sources is materialized as a TABLE,
+so this is a snapshot taken when transform_and_publish last ran. An ingest that
+succeeded since then is invisible here until the next one. Do not poll this field to
+decide whether an ingest has completed — it can lag by hours and reads as though it
+were current.';
 COMMENT ON COLUMN api_v1.meta_sources.total_runs IS 'Count of successful runs ever recorded for this source. 0 when
-no successful run exists.';
+no successful run exists.
+⚠️ AS OF THE LAST TRANSFORM, NOT LIVE. mart_meta_sources is materialized as a TABLE,
+so this is a snapshot taken when transform_and_publish last ran. An ingest that
+succeeded since then is invisible here until the next one. Do not poll this field to
+decide whether an ingest has completed — it can lag by hours and reads as though it
+were current.';
 COMMENT ON COLUMN api_v1.meta_sources.downstream_model_count IS 'Number of distinct downstream dbt models that derive from this
 source via the `lineage` seed. 0 for sources not yet wired
 into a mart.
