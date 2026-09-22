@@ -25,7 +25,7 @@ models:
                     fhi-mediebruk-some, fhi-mediebruk-spill, fhi-mediebruk-underhold,
                     fhi-smertestillende,
                     fhi-neet, fhi-befolkning, fhi-befolkningsvekst, fhi-innvkat,
-                    fhi-kpr-1aar, fhi-prognose, fhi-selvmord]
+                    fhi-kpr-1aar, fhi-prognose, fhi-selvmord, fhi-innvandrere]
       - name: kommune_nr
         description: 4-digit kommune code. FK to dim_kommune.
         data_tests:
