@@ -9,6 +9,10 @@
 #
 # Run from atlas-data/dbt/. See README.md for context.
 
+# DRIFT-GATE: none — runs `dbt docs generate`, so it needs a live database and
+# cannot be re-run inside a repo-only CI check. Regenerate by hand after a
+# model change.
+
 set -euo pipefail
 
 cd "$(dirname "$0")"
