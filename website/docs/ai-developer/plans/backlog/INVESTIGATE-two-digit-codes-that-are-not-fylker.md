@@ -62,6 +62,30 @@ this. It would be the third instance in one file.
 **Recommendation: A**, because the names are SSB's own and already measured, and because B
 makes two spellings of Svalbard disagree.
 
+## ⚠️ There is no classification to widen to — measured 2026-09-22
+
+The kommune half of this defect was fixed by widening the Klass window: those twelve codes
+exist in Klass 131 from 1950 and the ingest simply asked for a range starting in 1960. **The
+fylke half has no such fix.** imac measured the deployed host after a re-ingest
+(urb-agents #1369):
+
+```
+raw.ssb_klass_fylker carries   01..20, 30..56, 99
+of the six offending codes     none
+ssb_06913 fylke_nr violations  3 648 rows / 6 codes, UNCHANGED by the re-ingest
+```
+
+**SSB's population table carries region codes that SSB's own fylke classification does not
+supply, at any date.** So no cadence of re-ingest and no widened window closes this — it has
+to be decided in the model or the classifier, which is what makes A or B the only live
+options and removes "wait for better upstream data" as an implicit third.
+
+🔵 ⚠️ **A commit titled `docs: file the six two-digit codes that claim to be fylker`
+(`89a774e`) sits in a pinned release range and changes nothing.** imac measured it, found no
+movement, and reported that *"its stated effect is not observable here and the pin should not
+assert it"* — correct, because it has no stated effect. **A filing whose title names a defect
+will be read as fixing it; that was a naming error, not a missing prerequisite.**
+
 ## The one thing to check before doing it
 
 **Which other sources emit bare two-digit codes in these ranges?** Only `ssb-06913` is known,
