@@ -31,7 +31,7 @@ Licences: **NLOD** for 42 of 44 — Norwegian public data, free to reuse with at
 | `dim_kommune` | The canonical municipality registry — SSB Klass 131, with fylke name joined. |
 | `distrikt_summary` | 🔵 EXPECTED EMPTY TODAY, AND THAT IS NOT A DEFECT. |
 | `indicator_latest_values` | One row per (source_id, contents_code, kommune_nr) at each indicator's latest_year, restricted to active kommuner. |
-| `indicator_missing_kommuner` | One row per (source_id, contents_code, kommune_nr) for every active kommune that has *no* non-NULL value at the indicator's latest_year. |
+| `indicator_missing_kommuner` | 🔴 A ROW HERE IS NOT EVIDENCE OF LOW NEED. |
 | `indicator_summary` | One row per (source_id, contents_code) summarising the latest-year coverage and value range for every indicator in fact_kommune_indicators. |
 | `kommune_befolkning_alder` | Population by kommune, year and age band — the denominator layer. |
 | `kommune_local_chapters` | 🔵 EXPECTED EMPTY TODAY, AND THAT IS NOT A DEFECT. |

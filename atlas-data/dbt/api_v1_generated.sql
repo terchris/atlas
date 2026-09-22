@@ -434,7 +434,19 @@ is a column rather than prose.';
 
 -- indicator_missing_kommuner  ←  marts.mart_indicator_missing_kommuner
 CREATE OR REPLACE VIEW api_v1.indicator_missing_kommuner AS SELECT * FROM marts.mart_indicator_missing_kommuner;
-COMMENT ON VIEW api_v1.indicator_missing_kommuner IS 'One row per (source_id, contents_code, kommune_nr) for every
+COMMENT ON VIEW api_v1.indicator_missing_kommuner IS '🔴 A ROW HERE IS NOT EVIDENCE OF LOW NEED. For `fhi-*` sources it is
+usually FHI''s disclosure suppression: it hides numbers based on fewer
+than ~6 cases, and hides a whole series when more than 20% of it is
+hidden, "for ikke å skape et skjevt inntrykk av situasjonen i
+kommunen" — to avoid a skewed impression of that kommune.
+
+⚠️ Measured: 105 kommuner are missing from 10+ `fhi-*` series, median
+population 1,452, monotonic in population, and EVERY kommune is absent
+from at least three. Treating absence as zero in a ranked index
+inverts the signal for the smallest kommuner (urb-agents #1379). See
+`indicator_summary.kommuners_with_null`.
+
+One row per (source_id, contents_code, kommune_nr) for every
 active kommune that has *no* non-NULL value at the indicator''s
 latest_year. The "coverage gap" sidebar on the data explorer
 detail page; equivalent to the listMissingKommuner() inline query.
@@ -573,7 +585,43 @@ fails, this column is lossy and the failure is the warning.';
 COMMENT ON COLUMN api_v1.indicator_summary.kommuner_with_value IS 'Count of active kommuner (kommune_is_active = true) that have a
 non-NULL value for this indicator at latest_year. The headline
 coverage number on the data explorer.';
-COMMENT ON COLUMN api_v1.indicator_summary.kommuner_with_null IS 'Count of active kommuner that have a row at latest_year but
+COMMENT ON COLUMN api_v1.indicator_summary.kommuner_with_null IS '🔴 FOR AN `fhi-*` SOURCE THIS IS SUPPRESSION, NOT ABSENCE, AND THE
+TWO LEAD TO OPPOSITE CONCLUSIONS IN A NEED INDEX.
+
+FHI hides small numbers by policy. Quoted from FHI''s own table
+metadata (table 377, read 2026-09-22):
+
+  "Statistikk basert på færre enn 6 tilfeller skjules av
+   personvernhensyn... Dersom mer enn 20 prosent av tallene i en
+   tidsserie er skjult av personvernhensyn, skjules hele
+   tidsserien for ikke å skape et skjevt inntrykk av situasjonen
+   i kommunen."
+
+So FHI hides a cell under ~6 cases, and hides the WHOLE SERIES
+when more than 20% of it is hidden — explicitly to avoid giving a
+skewed impression of that kommune. ⚠️ A consumer that reads the
+resulting gap as "no need here" is producing exactly the skew the
+suppression exists to prevent, and doing it in the direction that
+moves help away from the smallest places.
+
+🔵 MEASURED, and the shape is unambiguous (urb-agents #1369,
+#1379): 105 kommuner are missing from 10 or more `fhi-*` series,
+median population 1,452, monotonic in population. `1151 Utsira`,
+219 people, is missing from 15. EVERY kommune is absent from at
+least three series — so a kommune appearing here is ordinary and
+is not a defect to report.
+
+⚠️ The thresholds above are table 377''s; the policy is FHI-wide
+but each table states its own. Read the source''s metadata rather
+than assuming 6.
+
+🔵 It is NOT suppression for SSB sources. SSB zero-fills instead —
+a dissolved kommune carries a literal 0 forever — which is a
+different failure and was the cause of the `latest_year` defect
+fixed in a657f4f. Two publishers, two conventions, and the same
+column has to be read differently for each.
+
+Count of active kommuner that have a row at latest_year but
 value IS NULL (i.e. upstream suppressed the cell). Inactive
 kommuner are not counted.';
 COMMENT ON COLUMN api_v1.indicator_summary.min_value IS 'Minimum non-NULL value across all rows at latest_year, regardless
