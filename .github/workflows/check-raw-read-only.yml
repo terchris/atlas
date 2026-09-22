@@ -34,6 +34,8 @@ jobs:
         run: atlas-data/dbt/check-every-source-is-served.sh
       - name: Every raw table created by a migration has a producer
         run: atlas-data/dbt/check-every-raw-table-has-a-producer.sh
+      - name: The committed sources seed matches the manifests
+        run: atlas-data/dbt/check-sources-seed-is-current.sh
       # Reads the fact SQL and the dimensions seed directly — no database, no
       # dbt parse, so it belongs in the job that needs neither.
       - name: Windowing agrees with the published catalogue
