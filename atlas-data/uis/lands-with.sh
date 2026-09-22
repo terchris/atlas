@@ -43,7 +43,27 @@ MODEL="$(grep -E '^atlas-data/dbt/(models/.*\.sql|seeds/|macros/|tests/|dbt_proj
 # reach consumers through COMMENTs, which only the api_v1 asset applies.
 DOCS="$(grep -E '^atlas-data/dbt/(models/.*schema\.yml|api_v1_generated\.sql)' <<<"$FILES" || true)"
 # Python the image runs. Installing the image is the whole of the deploy.
-IMAGE="$(grep -E '^atlas-data/(dagster/|ingest/|atlas-status\.py)' <<<"$FILES" || true)"
+# 🔵 dagster/ only. ingest/ USED TO BE IN HERE and that was the bug below.
+IMAGE="$(grep -E '^atlas-data/(dagster/|atlas-status\.py)' <<<"$FILES" || true)"
+# 🔴 INGEST IS NOT "INSTALL THE IMAGE AND YOU ARE DONE", AND THIS SCRIPT SAID
+# IT WAS. An ingest change alters what a fetch RETURNS; it reaches raw.* only
+# when the ingest actually RUNS. Installing the image changes nothing in the
+# database.
+#
+# ⚠️ Measured on 2026-09-22 against ee3d4df..8990235 — a range whose entire
+# content is the fhi-innvandrere KJONN fix, i.e. a source that had been
+# failing with HTTP 400 for 8 days. This script answered:
+#
+#     LANDS WITH:
+#       nothing — installing the image is the deploy
+#                  (no marts or descriptions changed)
+#
+# 🔴 That is the "deploy silent" failure this script exists to PREVENT, emitted
+# by the script itself. An operator following it would install the fix, run no
+# ingest, and report a successful deploy over 8-day-old rows.
+INGEST_DIRS="$(grep -oE '^atlas-data/ingest/src/sources/[a-z0-9][a-z0-9-]*/' <<<"$FILES" | sort -u || true)"
+INGEST_IDS="$(sed -E 's|.*/sources/([^/]+)/|\1|' <<<"$INGEST_DIRS" | sort -u | tr '\n' ' ' | sed 's/ $//')"
+INGEST_LIB="$(grep -E '^atlas-data/ingest/src/(lib|scripts)/' <<<"$FILES" || true)"
 # 🔴 THE INSTALL DEFINITION, WHICH THIS SCRIPT USED TO CALL "nothing".
 # template-info.yaml and uis/ are the UIS install artifact — what a catalogue
 # reader sees and what `uis template install atlas` acts on. They reach nobody
@@ -62,9 +82,20 @@ elif [ -n "$DOCS" ]; then
   echo "  uis dagster run publish_api_v1"
   echo "             (descriptions only — COMMENTs live in the database, not the"
   echo "              image, and this is the only job that applies them)"
+elif [ -n "$INGEST_IDS" ]; then
+  echo "  an INGEST job, then transform_and_publish"
+  echo "             (an ingest change only reaches raw.* when the ingest RUNS."
+  echo "              Installing the image changes nothing in the database.)"
+elif [ -n "$INGEST_LIB" ]; then
+  echo "  an INGEST job for every source using the changed lib, then"
+  echo "  transform_and_publish"
+  echo "             (atlas-data/ingest/src/lib or scripts changed — this"
+  echo "              script cannot tell which sources that affects. Say"
+  echo "              explicitly which ones you expect to move.)"
 elif [ -n "$IMAGE" ]; then
   echo "  nothing — installing the image is the deploy"
-  echo "             (no marts or descriptions changed)"
+  echo "             (dagster asset code only; no marts, descriptions or"
+  echo "              ingest changed)"
 elif [ -n "$ARTIFACT" ]; then
   echo "  no Dagster job — this is the UIS INSTALL ARTIFACT"
   echo "             (template-info.yaml / uis/. It reaches a catalogue reader"
@@ -112,6 +143,67 @@ fi
 # 🔵 "I cannot predict the count" is a valid and preferred answer. Omitting
 # the source from the acceptance list is not. This section exists so omitting
 # it has to be a decision rather than an oversight.
+if [ -n "$INGEST_IDS" ]; then
+  echo
+  echo "  🔴 INGEST CHANGED — THESE SOURCES MUST BE RE-FETCHED BEFORE THE TRANSFORM:"
+  PY=python3
+  command -v "$PY" >/dev/null 2>&1 || PY="$(dirname "$0")/../dbt/.venv/bin/python"
+  "$PY" - "$INGEST_IDS" <<'PYEOF'
+import ast, pathlib, re, sys
+
+dag = pathlib.Path("atlas-data/dagster/atlas_data")
+if not (dag / "schedules.py").exists():
+    print("    ⚠️ cannot resolve jobs — run from the repo root.")
+    sys.exit(0)
+schedules = (dag / "schedules.py").read_text()
+
+def literal_lists(text):
+    return {n: re.findall(r'"([^"]+)"', b)
+            for n, b in re.findall(r'^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*\[(.*?)\]',
+                                   text, re.S | re.M)}
+
+per_module = {}
+for f in sorted((dag / "assets").glob("raw_*.py")):
+    for n, ids in literal_lists(f.read_text()).items():
+        if n.endswith("_SOURCES"):
+            per_module[n] = ids
+            per_module[f"{f.stem}.{n}"] = ids
+
+sched = literal_lists(schedules)
+for n, body in re.findall(r'^(_[A-Z_]+)\s*=\s*\[(.*?)\]', schedules, re.S | re.M):
+    ids = []
+    for ref in re.findall(r'\*([a-z_]+\.[A-Z_]+)', body):
+        ids += per_module.get(ref, per_module.get(ref.split(".")[-1], []))
+    ids += re.findall(r'^\s*"([^"]+)"', body, re.M)
+    sched[n] = ids
+for n, ref in re.findall(r'^(_[A-Z_]+)\s*=\s*list\(([a-z_]+\.[A-Z_]+)\)', schedules, re.M):
+    sched[n] = list(per_module.get(ref, per_module.get(ref.split(".")[-1], [])))
+
+jobs = {}
+for name, sel in re.findall(
+        r'name="([a-z_]+)",\s*\n(?:\s*tags=[^\n]*\n)?\s*selection=_asset_selection\(([^)]*)\)',
+        schedules):
+    sel = sel.strip()
+    if sel.startswith("["):
+        jobs[name] = set(re.findall(r'"([^"]+)"', sel))
+    else:
+        key = sel.split(".")[-1]
+        jobs[name] = set(sched.get(sel, sched.get(key, per_module.get(key, []))))
+
+for sid in sys.argv[1].split():
+    covering = sorted(j for j, ids in jobs.items() if sid in ids)
+    if covering:
+        print(f"    {sid:24} -> uis dagster run {covering[0]}")
+        if len(covering) > 1:
+            print(f"    {'':24}    (also: {', '.join(covering[1:])})")
+    else:
+        print(f"    {sid:24} -> 🔴 NO NAMED JOB SELECTS THIS SOURCE. It is")
+        print(f"    {'':24}    reachable only via __ASSET_JOB, which nobody")
+        print(f"    {'':24}    thinks to run. Say how it will be fetched.")
+    print(f"    {'':24}    state the expected row count, or say you cannot predict one")
+PYEOF
+fi
+
 SOURCES_TOUCHED="$(grep -oE '^atlas-data/dbt/models/indicators/indicators__[a-z0-9_]+\.sql' <<<"$FILES" || true)"
 if [ -n "$SOURCES_TOUCHED" ]; then
   echo
