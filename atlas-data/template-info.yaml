@@ -463,7 +463,7 @@ operational:
     jobs: [transform_and_publish]
     when_more_is_needed: >-
       If the release notes name a change under an ingest source, run the job
-      that owns it before the transform. `operational.crons` above maps every
+      that owns it before the transform. `operational.cadence` below maps every
       job to what it covers - klass_refresh for the SSB Klass classifications,
       annual_sources_refresh for the ~37 annual public-sector sources,
       brreg_change_feed for the register. Then transform_and_publish, then
@@ -800,6 +800,32 @@ operational:
   # fix is to delete it and watch the warning stop. The correct fix is to find
   # out which surface it was supposed to reach and why it did not — because the
   # warning is about the RENDERER, not about the content.
+  # 🔴 THE JOBS NOTHING DECLARED. Until 2026-09-22 `publish_api_v1`,
+  # `api_v1_checks` and `transform_checks` appeared in this artifact only as
+  # prose — eight mentions, no map — while `operational.upgrade` instructed an
+  # operator to end the sequence with `transform_checks`. The artifact told
+  # someone to run a job it never declared (dev-templates, urb-agents #1378).
+  #
+  # ⚠️ They are on no cron and are not manual-only: they are chained off run
+  # status. That was a missing CATEGORY, not a missing row, which is why
+  # nobody noticed a gap in a list that looked complete.
+  sensor_triggered:
+    - job: publish_api_v1
+      after: transform_and_publish succeeds
+      why: >-
+        dbt drops the api_v1 views by CASCADE when it swaps the marts tables,
+        so they exist again only after this runs.
+    - job: api_v1_checks
+      after: publish_api_v1 succeeds
+      why: >-
+        the publish gate - does the public surface match the marts it wraps.
+        Cheap and high-signal, so it reports before the long suite.
+    - job: transform_checks
+      after: api_v1_checks succeeds
+      why: >-
+        the dbt data-quality suite. transform_and_publish deliberately
+        EXCLUDES tests, so a green transform contains none - these are them.
+
   manual_only: [brreg_bootstrap]
 
   # No scraper row: SCRAPER_CRON (Sunday 03:30) still exists in cadence.py, but

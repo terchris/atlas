@@ -274,7 +274,7 @@ assert cl["env_secrets"].endswith("-database-db"), cl["env_secrets"]
 # The operational block duplicates facts that live in cadence.py and
 # schedules.py. Duplication is the point — it has to travel in the artifact —
 # so the drift it invites is closed here rather than by remembering.
-import re, pathlib
+import ast, re, pathlib
 root = pathlib.Path(os.environ["ATLAS_DAGSTER_DIR"])
 cad = (root / "cadence.py").read_text()
 sch = (root / "schedules.py").read_text()
@@ -324,7 +324,23 @@ assert op["timezone"] == tz, (op["timezone"], tz)
 # first_data names the jobs a user must launch to get data on day one. A renamed
 # job would leave the artifact telling them to launch something that no longer
 # exists — worse than saying nothing, because it looks authoritative.
-code_jobs = set(re.findall(r'name="([a-z_]+)"', sch))
+# 🔴 AST, NOT `name="..."` ANYWHERE IN THE FILE. That regex matched every
+# name= keyword in schedules.py — ScheduleDefinitions and sensors included —
+# so `transform_daily` and `brreg_transform_half_hourly` counted as jobs. It
+# was harmless while the checks only ran artifact -> code; the moment a check
+# ran code -> artifact it demanded the artifact declare two schedules as if
+# they were jobs (urb-agents #1378).
+#
+# ⚠️ Third population tonight that a regex got wrong by matching more than it
+# meant. The AST asks the question directly: which define_asset_job calls are
+# there, and what is each one's name.
+code_jobs = {
+    kw.value.value
+    for node in ast.walk(ast.parse(sch))
+    if isinstance(node, ast.Call) and getattr(node.func, "id", "") == "define_asset_job"
+    for kw in node.keywords
+    if kw.arg == "name" and isinstance(kw.value, ast.Constant)
+}
 
 # Every cadence row names the job that owns it, and the name must be real.
 # The field exists because two agents read four Brreg crons as one job and one
@@ -357,6 +373,52 @@ unknown_upgrade_jobs = set(upgrade["jobs"]) - code_jobs
 assert not unknown_upgrade_jobs, (
     f"operational.upgrade names jobs not defined in schedules.py: "
     f"{sorted(unknown_upgrade_jobs)}"
+)
+
+# 🔴 AND THE OTHER DIRECTION: every job the CODE defines must be declared
+# somewhere in this artifact. The checks above all run code -> artifact and
+# would pass an artifact that simply omits a job.
+#
+# ⚠️ That is what happened. publish_api_v1, api_v1_checks and transform_checks
+# appeared only in prose — eight mentions, no map — while operational.upgrade
+# told an operator to finish with transform_checks. A job the artifact
+# instructs you to run and never declares (dev-templates, urb-agents #1378).
+#
+# 🔵 The gap was a missing CATEGORY, not a missing row: they are chained off
+# run status, and there was no key for that. A list with no hole in it is
+# exactly what nobody re-reads.
+# 🔴 A FIELD MAY NOT POINT AT A KEY THAT IS NOT THERE. `operational.upgrade`
+# was added to stop a misreading and told the reader to consult
+# `operational.crons`. There is no `crons` key — it is `cadence`. The field
+# written to make the sequence derivable sent you to a key that does not
+# exist (dev-templates, urb-agents #1378).
+#
+# 🔵 This file already says it about numbers: "a field added to prevent a
+# misreading that is itself allowed to go stale would be worse than not
+# having it". A dangling pointer is the same defect with no number in it.
+_op_text = yaml.safe_dump(op, allow_unicode=True)
+_referenced = set(re.findall(r"operational\.([a-z_]+)", _op_text))
+_dangling = _referenced - set(op)
+assert not _dangling, (
+    f"operational prose references keys that do not exist: {sorted(_dangling)}. "
+    f"Real keys: {sorted(op)}"
+)
+
+sensor_jobs = {r["job"] for r in (op.get("sensor_triggered") or [])}
+for r in (op.get("sensor_triggered") or []):
+    assert r.get("after") and r.get("why"), (
+        f"operational.sensor_triggered[{r.get('job')}] needs both `after:` and `why:`"
+    )
+declared_anywhere = cadence_jobs | set(op.get("manual_only") or []) | declared_jobs \
+                    | set(upgrade["jobs"]) | sensor_jobs
+# redcross_branches_refresh is parked by declaration: its source is in
+# operational.unscheduled, which is the artifact saying so.
+parked_jobs = {"redcross_branches_refresh"}
+undeclared = code_jobs - declared_anywhere - parked_jobs
+assert not undeclared, (
+    f"schedules.py defines jobs this artifact declares nowhere: {sorted(undeclared)}. "
+    f"Add them to cadence, manual_only, sensor_triggered or first_data.jobs — "
+    f"an operator cannot run what the artifact does not name."
 )
 
 # install.deploys must match the services the definition actually provides,
