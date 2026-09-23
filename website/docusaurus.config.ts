@@ -145,12 +145,15 @@ const config: Config = {
           // not the instance, and it retires the liveness gate that was
           // designed to police it.
           //
-          // ⚠️ static/openapi.json and scripts/snapshot-openapi.mjs are kept
-          // for ONE deploy so this is a one-line revert if Scalar cannot load
-          // the live document from a browser. Nothing has rendered it in
-          // Scalar yet, and a page that fails to fetch its own spec is a
-          // worse front door than a stale one. Delete them once the published
-          // page is seen working.
+          // ✅ CONFIRMED RENDERING LIVE, then the snapshot was deleted.
+          // ops-dev ran headless Chrome against the published page: 19 of 19
+          // relations in the DOM, FORMATS and THE CATALOGUE present, no error
+          // text. ⚠️ And it added the discriminator that mattered — "19
+          // relations rendered" is true whether the page read the live spec
+          // or the committed copy, because the two had converged. The one
+          // field that differs is `:443`, which exists ONLY in the live
+          // document, and it appeared in the painted DOM. A human eyeballing
+          // the page could not have told the two apart.
           //
           // 🔵 `:443` in the host is PostgREST splitting the URI and keeping
           // the explicit port. Swagger 2.0 allows it and the URL resolves;

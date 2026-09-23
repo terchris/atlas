@@ -15,7 +15,9 @@
  * Issue #11986. Verify --static still works whenever bumping dbt.
  *
  * Refresh manually whenever the dbt project's shape changes (new models,
- * renamed fields). Same pattern as `npm run api:snapshot`.
+ * renamed fields). ⚠️ `npm run api:snapshot` was the third of these and was
+ * DELETED on 2026-09-23 — Scalar reads the live spec now, so no copy exists
+ * to go stale (urb-agents #1414). This one still keeps a copy.
  */
 
 // DRIFT-GATE: none — snapshots LIVE state (the running API / Postgres), so a
