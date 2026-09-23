@@ -56,6 +56,12 @@ jobs:
       - name: Status tool tests
         run: python3 atlas-data/tests/test_atlas_status.py
 
+      # 🔴 The endpoint check shipped with two parsing bugs that only a live
+      # PostgREST shows — 206 read as "no answer", and `*/*` read as zero rows.
+      # http_range.py imports nothing so this runs on the runner's own python3.
+      - name: Endpoint response parsing tests
+        run: python3 atlas-data/tests/test_validation_parsing.py
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
