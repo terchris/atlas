@@ -117,11 +117,34 @@ function extractAtlasSummary(readmePath) {
  * Build the default sample-query URL when the manifest doesn't supply one.
  * Uses the first raw_table (explicit or underscore-translated) and adds limit=5.
  */
-function buildDefaultSampleQuery(manifest) {
-  const rawTables = Array.isArray(manifest.raw_tables) && manifest.raw_tables.length > 0
-    ? manifest.raw_tables
-    : [manifest.source_id.replace(/-/g, '_')];
-  return `${POSTGREST_BASE_URL}/${rawTables[0]}?limit=5`;
+// 🔴 THE URL MUST NAME A PUBLISHED RELATION, NOT A RAW TABLE.
+// This used to return `${POSTGREST_BASE_URL}/${rawTables[0]}?limit=5`. Every
+// one of those 404s: the public API exposes api_v1 ONLY — Terje, #350, "marts
+// and raw stay behind it" — and raw table names are not in it. Measured on the
+// live site 2026-09-23: 44 dataset pages, 42 printed such a URL, 0 returned
+// 200, and the response is a well-formed PGRST205 naming a schema the reader
+// has never heard of. It reads as "this dataset does not exist", which is
+// false — the data is served, through the curated relations (urb-agents #1419).
+//
+// ⚠️ I ESTABLISHED THE CAUSE FIVE HOURS EARLIER AND DID NOT CARRY IT HERE.
+// On #1417 I reverted a script change with exactly this reasoning and applied
+// it only to the file in my hand, not to the pages that print the same URL
+// pattern to visitors.
+//
+// 🔵 served_as names the relations that actually publish a source. Prefer one
+// that can be FILTERED to this source, so the example is about the dataset the
+// reader is looking at rather than the whole relation — and derive that set
+// from the registry's own view columns rather than hardcoding names, because a
+// hand-list is what drifts.
+function buildDefaultSampleQuery(manifest, servedAs, filterableRelations) {
+  const served = Array.isArray(servedAs) ? servedAs.filter(Boolean) : [];
+  if (served.length === 0) return null;
+  const sid = manifest.source_id;
+  const filterable = served.find((r) => filterableRelations.has(r));
+  if (filterable) {
+    return `${POSTGREST_BASE_URL}/${filterable}?source_id=eq.${sid}&limit=5`;
+  }
+  return `${POSTGREST_BASE_URL}/${served[0]}?limit=5`;
 }
 
 /**
@@ -239,9 +262,11 @@ Datasets that co-occur with this one inside Atlas's dbt models — the datasets 
 
 ## Sample query {#sample-query}
 
-Live PostgREST query that returns the first 5 rows of \`raw.${(source.raw_tables ?? [sid.replace(/-/g, '_')])[0]}\`. URL adapts to the current host — local dev shows \`api-atlas.localhost\`; the deployed site shows the configured API base.
+${source.sample_query
+  ? `Live PostgREST query returning the first 5 rows this source publishes${source.sample_query.includes('source_id=eq.') ? `, filtered to \`${sid}\`` : ''}. It queries a published \`api_v1\` relation — raw tables are not exposed through the public API.
 
-<SampleQueryUrl url={source.sample_query} />
+<SampleQueryUrl url={source.sample_query} />`
+  : `**Ingested, not yet published.** Atlas holds this source but no published relation carries it yet, so there is no query to run against the public API. Its rows are in Atlas; the modelling that would expose them has not been done. See \`meta_sources.served_as\` — an empty value is exactly this state.`}
 
 ## Citation {#citation}
 
@@ -672,6 +697,14 @@ function main() {
   const directRefs = loadDirectRefs();
   const dbtLabels = loadDbtModelLabels();
   const martDetails = loadMartDetails();
+  // 🔵 Which published relations can be narrowed to a single source. DERIVED
+  // from the marts/api schema rather than listed here, because a hand-list is
+  // exactly what goes stale — the defect this whole page-URL fix came out of.
+  const FILTERABLE_RELATIONS = new Set(
+    [...martDetails.entries()]
+      .filter(([, d]) => (d.columns ?? []).some((c) => c.name === 'source_id'))
+      .map(([martName]) => martName.replace(/^mart_/, '')),
+  );
   const { snapshot: metaSnapshot, generated_at: metaSnapshotAt } = loadMetaSourcesSnapshot();
   const publishersByName = new Map(publishers.map((p) => [p.display_name, p]));
   const categoriesById = new Map(categories.map((c) => [c.id, c]));
@@ -693,16 +726,18 @@ function main() {
       throw new Error(`${sourceId}: tags.topic '${m.tags?.topic}' not found in source-categories.yaml`);
     }
 
-    const sampleQuery = m.sample_query && m.sample_query.length > 0
-      ? m.sample_query
-      : buildDefaultSampleQuery(m);
-
     const feedbackUrl = m.feedback_url && m.feedback_url.length > 0
       ? m.feedback_url
       : publisher.feedback_url;
 
     const atlasIntegration = computeAtlasIntegration(sourceId, lineage, martDetails);
     const liveMeta = metaSnapshot.get(sourceId) ?? null;
+    // ⚠️ AFTER liveMeta, because the query is derived from served_as. A source
+    // with an empty served_as gets NULL rather than a URL — "ingested, not yet
+    // published" is true and useful; a link that 404s is neither.
+    const sampleQuery = m.sample_query && m.sample_query.length > 0
+      ? m.sample_query
+      : buildDefaultSampleQuery(m, liveMeta?.served_as, FILTERABLE_RELATIONS);
 
     return {
       kind: 'source',

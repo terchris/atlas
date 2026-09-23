@@ -55,6 +55,11 @@ const FIELDS = [
   'latest_row_count',
   'total_runs',
   'downstream_model_count',
+  // 🔴 served_as IS WHAT THE DATASET PAGES NEED. Without it the registry had no
+  // way to know which api_v1 relation actually publishes a source, so it printed
+  // a URL built from the RAW table name — and every one of those 404s, because
+  // the public API exposes api_v1 only (urb-agents #1419).
+  'served_as',
 ].join(',');
 
 async function main() {

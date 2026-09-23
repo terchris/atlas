@@ -49,7 +49,7 @@ Datasets that co-occur with this one inside Atlas's dbt models — the datasets 
 
 ## Sample query {#sample-query}
 
-Live PostgREST query that returns the first 5 rows of `raw.ssb_12944`. URL adapts to the current host — local dev shows `api-atlas.localhost`; the deployed site shows the configured API base.
+Live PostgREST query returning the first 5 rows this source publishes, filtered to `ssb-12944`. It queries a published `api_v1` relation — raw tables are not exposed through the public API.
 
 <SampleQueryUrl url={source.sample_query} />
 
