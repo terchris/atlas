@@ -12454,6 +12454,36 @@
     },
     {
       "kind": "view",
+      "view_id": "bufdir_indicator_alias",
+      "mart_name": "mart_bufdir_indicator_alias",
+      "api_v1_name": "bufdir_indicator_alias",
+      "title": "api_v1.bufdir_indicator_alias",
+      "description_short": "Cross-release alias table for `bufdir-barnefattigdom` `indicator_api_id` renumbers.",
+      "description_full": "Cross-release alias table for `bufdir-barnefattigdom`\n`indicator_api_id` renumbers. One row per (historical_id,\ncanonical_id) mapping consumers join on for cross-time-series\ncontinuity when Bufdir splits, retires, or renumbers a workbook\nupstream — e.g. the observed `Indikator 9` → `9a` / `9b` split,\nand `Indikator 10` retired without successor.\n\nThin republish of the editorial seed `bufdir_indicator_alias` so\nthe PLAN-004 generator auto-emits `api_v1.bufdir_indicator_alias`\n(the leading `mart_` is stripped per `models/marts/api/README.md`\n§ Naming).\n\nSee `website/docs/ai-developer/plans/active/PLAN-bufdir-surrogate-id-migration.md`\nfor design rationale + the maintenance ritual that appends rows\nwhen a new Bufdir bundle release surfaces additional renumbering.",
+      "columns": [
+        {
+          "name": "source_id",
+          "description": "Source the alias applies to. Always `bufdir-barnefattigdom` today; forward-looking column kept so other ZIP sources can adopt the same convention without a schema migration."
+        },
+        {
+          "name": "historical_id",
+          "description": "Previous `indicator_api_id` from an earlier bufdir release — the id consumers may have cached and now need to bridge to the current canonical id. Same shape as `indicators__bufdir_barnefattigdom.indicator_api_id` (`bf_zip_ind_<N>`)."
+        },
+        {
+          "name": "canonical_id",
+          "description": "Current `indicator_api_id`, or NULL when the historical indicator was retired without a successor. NULL is meaningful: consumers treat such rows as terminating series rather than orphans."
+        },
+        {
+          "name": "note",
+          "description": "Editorial explanation of the renumbering event — why the historical id maps to this canonical id, or why no successor exists. One sentence; read by humans, not parsers."
+        }
+      ],
+      "built_from": [],
+      "sample_query": "https://api-atlas.urbalurba.com/bufdir_indicator_alias?limit=5",
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_bufdir_indicator_alias"
+    },
+    {
+      "kind": "view",
       "view_id": "coverage_gap_barnefattigdom",
       "mart_name": "mart_coverage_gap_barnefattigdom",
       "api_v1_name": "coverage_gap_barnefattigdom",
@@ -13043,6 +13073,40 @@
       ],
       "sample_query": "https://api-atlas.urbalurba.com/kommune_ngo_totals?limit=5",
       "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_kommune_ngo_totals"
+    },
+    {
+      "kind": "view",
+      "view_id": "meta_dimensions",
+      "mart_name": "mart_meta_dimensions",
+      "api_v1_name": "meta_dimensions",
+      "title": "api_v1.meta_dimensions",
+      "description_short": "Per-source × per-dimension catalogue.",
+      "description_full": "Per-source × per-dimension catalogue. Backs the \"what does this\ncolumn mean\" panel on `/data/sources/[source_id]` (customer\nfrontend, PLAN-007 phase 4) and exposes editorial semantics\nshoppers would otherwise have to leave Atlas to find on the\nupstream's docs site.\n\nv1 scope (this PR): editorial pass-through over the\n`_sources_dimensions` seed (4 columns: `meaning`, `value_format`,\n`notes`). The `cardinality`, `example_values`, and `null_count`\ncolumns from PLAN-007 phase 3.4's full spec require introspecting\n`raw.<source>` tables with per-source column-name rules — deferred\nto a follow-up PR. See `mart_meta_dimensions.sql` header for the\nopen question (Jinja loop vs separate Python extract script vs\nper-source `column_name:` field in manifest.yml).\n\nRow count = same as `_sources_dimensions` (~216, growing with\nevery new source × upstream-dimension).",
+      "columns": [
+        {
+          "name": "source_id",
+          "description": "Source the dimension belongs to. Joins to `mart_meta_sources.source_id` and `_sources_manifest.source_id`."
+        },
+        {
+          "name": "code",
+          "description": "Upstream's own dimension code (e.g. `Region`, `Tid`, `ContentsCode` for SSB; `GEO`, `AAR`, `KJONN`, `MEASURE_TYPE` for FHI). Verbatim from the source's API/export — not translated to canonical Atlas vocabulary."
+        },
+        {
+          "name": "meaning",
+          "description": "Short human-readable description of what the dimension represents. Hand-authored editorial content from each source's `manifest.yml` `dimensions:` block."
+        },
+        {
+          "name": "value_format",
+          "description": "Encoding of values within the dimension (e.g. \"4-digit year as text\", \"1- to 6-character numeric code\"). Empty string when no specific format applies."
+        },
+        {
+          "name": "notes",
+          "description": "Editorial notes — code-list size, semantic gotchas, downstream filtering decisions. Empty string when no notes apply."
+        }
+      ],
+      "built_from": [],
+      "sample_query": "https://api-atlas.urbalurba.com/meta_dimensions?limit=5",
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_meta_dimensions"
     },
     {
       "kind": "view",
