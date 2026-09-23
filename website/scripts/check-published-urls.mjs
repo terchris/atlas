@@ -40,10 +40,28 @@ if (!existsSync(REGISTRY)) {
 }
 const reg = JSON.parse(readFileSync(REGISTRY, 'utf8'));
 
-const targets = [
-  ...(reg.sources ?? []).filter((s) => s.sample_query).map((s) => [`source ${s.source_id}`, s.sample_query]),
-  ...(reg.views ?? []).filter((v) => v.sample_query).map((v) => [`view ${v.view_id}`, v.sample_query]),
-];
+// 🔴 EVERY URL IN THE FILE, NOT JUST THE GENERATED ONES.
+// The first version of this walked `sample_query` on sources and views — 51
+// URLs, all 200. It missed a 400 sitting in the hand-written `join_recipe`
+// prose in the same file: a worked example telling readers to filter on
+// `kommune_code`, a column that exists in 0 of 19 published relations
+// (urb-agents #1420). ops-dev found it while verifying the check.
+//
+// ⚠️ THAT IS THE THIRD TIME IN TWELVE HOURS THAT A CONCLUSION STOPPED AT THE
+// ARTIFACT IN HAND: a script revert not carried to the pages that print the
+// same URL (#1417), a page count attached to the wrong file (#1417), and a
+// checker covering the URLs it GENERATES but not the URLs it SHIPS. Scanning
+// the serialised JSON needs no knowledge of the schema and cannot be outflanked
+// by someone adding a new field.
+const seen = new Map();
+for (const m of JSON.stringify(reg).matchAll(/https:\/\/api-atlas[^"'\\\s<>)]+/g)) {
+  // strip trailing punctuation a URL inside prose picks up
+  const url = m[0].replace(/[.,;:]+$/, '');
+  if (!seen.has(url)) seen.set(url, `url ${url.split('.com/')[1] ?? url}`);
+}
+for (const s of reg.sources ?? []) if (s.sample_query) seen.set(s.sample_query, `source ${s.source_id}`);
+for (const v of reg.views ?? []) if (v.sample_query) seen.set(v.sample_query, `view ${v.view_id}`);
+const targets = [...seen.entries()].map(([url, label]) => [label, url]);
 
 if (targets.length === 0) {
   console.error('✗ CANNOT CHECK: the registry produced zero URLs. This check cannot pass by');
