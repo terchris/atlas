@@ -138,14 +138,15 @@ def _public_site_url() -> str:
 
 SCHEMA_COMMENT_TEMPLATE = """Atlas — open semantic layer over Norwegian public data
 
+DOCUMENTATION — the full guide to this API, its datasets, licences and
+provenance. Start here if you are new:
+  {site}
+  {site}/api   this same document, browsable, with worked examples
+
 Curated wrapper views over Norwegian public data and NGO supply data, served
 by PostgREST. Values are republished as the upstream publishes them.
 
-DOCUMENTATION — guides, per-dataset pages, licence and provenance:
-  {site}
-  {site}/api   the same document as this one, browsable, with worked examples
-
-THE CATALOGUE — start here:
+THE CATALOGUE:
   meta_endpoints    every relation below, with tags. The index.
   meta_sources      one row per ingested source: licence, publisher,
                     coverage, freshness, downstream model count.
