@@ -39,6 +39,7 @@ if (!existsSync(REGISTRY)) {
   process.exit(2);
 }
 const reg = JSON.parse(readFileSync(REGISTRY, 'utf8'));
+const API_BASE = (reg.postgrest_base_url ?? '').replace(/\/$/, '');
 
 // 🔴 EVERY URL IN THE FILE, NOT JUST THE GENERATED ONES.
 // The first version of this walked `sample_query` on sources and views — 51
@@ -94,6 +95,81 @@ const noUrl = (reg.sources ?? []).filter((s) => !s.sample_query).map((s) => s.so
 
 let failed = 0;
 let empty = 0;
+
+// 🔴 AND THE URLs meta_sources SERVES, which is the surface a consumer meets.
+// The seed scan above walks dbt/seeds/sources/*.csv — the repo. A reader who
+// does not know the repository exists gets these from the API instead, and on
+// 2026-09-23 one of them was a plain 404: brreg-frivillige.upstream_landing_page,
+// the source behind 72 827 rows (urb-agents #1430).
+//
+// ⚠️ THREE RULES, AND THEY ARE THE REASON THIS IS USABLE AT ALL. A consumer ran
+// this logic first and got 16 failures of which THIRTEEN were its own checker
+// being wrong. Its conclusion is the design spec: "a link checker that fires on
+// templates, auth-gated URLs and bot-protected hosts gets switched off, and then
+// the real 404 rides through with it."
+//
+//   templates     a URL containing { } is a pattern, not an address. Its
+//                 extractor stopped at "{" and probed the bare directory, got
+//                 404, and reported a WORKING link as broken.
+//   401 / 403     UNDETERMINED, never dead. This tracker has the counter-example:
+//                 python urllib gets 403 from our own API where curl gets 200,
+//                 on a User-Agent string. Same status, three meanings.
+//   5xx/timeout   someone else's outage, not our wrong URL.
+//
+// 🔵 Only 404 and 410 FAIL. Those mean the address is wrong, which is ours.
+const PLACEHOLDER = /localhost|127\.0\.0\.1|your-|example\.(com|org|net)/i;
+let undetermined = 0;
+let skipped = 0;
+try {
+  const res = await fetch(`${API_BASE}/meta_sources?select=*`, { headers: { accept: 'application/json' } });
+  if (!res.ok) throw new Error(`meta_sources returned ${res.status}`);
+  const rows = await res.json();
+  const urls = new Map();
+  for (const row of rows) {
+    for (const [col, val] of Object.entries(row)) {
+      if (typeof val !== 'string') continue;
+      for (const m of val.matchAll(/https?:\/\/[^"'\s<>)\]]+/g)) {
+        const u = m[0].replace(/[.,;:]+$/, '');
+        if (!urls.has(u)) urls.set(u, `${row.source_id}.${col}`);
+      }
+    }
+  }
+  console.log(`  meta_sources: ${urls.size} distinct URLs across ${rows.length} rows`);
+  for (const [url, where] of urls) {
+    if (url.includes('{') || url.includes('}') || PLACEHOLDER.test(url)) { skipped += 1; continue; }
+    let status = 0;
+    try {
+      const r = await fetch(url, { redirect: 'follow', headers: { 'user-agent': 'curl/8' } });
+      status = r.status;
+    } catch {
+      undetermined += 1;
+      console.log(`  ⚠ ${where}: request failed (network) — UNDETERMINED`);
+      continue;
+    }
+    if (status === 404 || status === 410) {
+      console.error(`✗ ${where}: HTTP ${status} — the address is wrong`);
+      console.error(`    ${url}`);
+      failed += 1;
+    } else if (status === 401 || status === 403 || status >= 500) {
+      undetermined += 1;
+      console.log(`  ⚠ ${where}: HTTP ${status} — UNDETERMINED, not treated as dead`);
+    }
+  }
+  console.log(`  upstream URLs: ${failed === 0 ? 'no 404s' : `${failed} dead`} · ${undetermined} undetermined · ${skipped} skipped (template/placeholder)`);
+} catch (err) {
+  // 🔴 ONLY NETWORK FAILURES ARE SKIPPABLE. The first version of this caught
+  // everything, and a TDZ bug in this very block was swallowed as "could not
+  // sweep" — the run printed a real 404 and then exited 0 with
+  // "✓ every URL the site publishes answers". A checker that reports success
+  // immediately after printing a failure is worse than no checker.
+  if (err instanceof TypeError || /fetch|network|ENOTFOUND|ECONN/i.test(err.message)) {
+    console.log(`  ⚠ could not reach meta_sources (${err.message}) — skipped, not failed`);
+  } else {
+    console.error(`✗ the meta_sources sweep itself is broken: ${err.message}`);
+    process.exit(2);
+  }
+}
+
 for (const [label, url] of targets) {
   let status = 0;
   let rows = -1;

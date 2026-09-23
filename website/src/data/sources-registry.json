@@ -330,7 +330,7 @@
       "source_id": "brreg-frivillige",
       "upstream_id": "frivillighetsregisteret",
       "upstream_url": "https://data.brreg.no/frivillighetsregisteret/api/frivillige-organisasjoner",
-      "upstream_landing_page": "https://www.brreg.no/organisasjon/frivillighetsregisteret/",
+      "upstream_landing_page": "https://www.brreg.no/om-oss/registrene-vare/om-frivillighetsregisteret/",
       "upstream_title": "Frivillighetsregisteret — frivillige organisasjoner",
       "description": "Brønnøysundregistrene's Frivillighetsregisteret holds the ~72,800 Norwegian\norganisations registered as voluntary. Atlas walks it in full and stores each\nrecord verbatim in `raw.brreg_frivillige`, typing out the registrant's own ICNPO\nclassification.\n\n🔴 This is not where Atlas learns which organisations are voluntary. That flag —\n`registrertIFrivillighetsregisteret` — is on 100% of Enhetsregisteret's bulk\nrecords and true for ~72,798 of them, so the NGO population is derived from the\nsnapshot alone with no second API call. This source exists for the attributes\nEnhetsregisteret does not carry: `icnpoKategorier`, `grasrotandel`,\n`innfoertDato`, `vedtekter` and `regnskapsrapportering`.\n\nThat split was designed in deliberately. If this register becomes unavailable,\nthe membership half of Atlas's NGO population survives untouched and only the\nenrichment half needs rethinking.\n",
       "atlas_summary": null,
@@ -408,8 +408,8 @@
       ],
       "sample_query": "https://api-atlas.urbalurba.com/brreg_enhet?limit=5",
       "citation": {
-        "text": "Brønnøysundregistrene. (n.d.). Frivillighetsregisteret — frivillige organisasjoner. Retrieved from https://www.brreg.no/organisasjon/frivillighetsregisteret/. Available in Atlas at https://atlas.sovereignsky.no/datasets/brreg-frivillige.",
-        "bibtex": "@misc{atlas_brreg_frivillige,\n  author = {Brønnøysundregistrene},\n  title  = {Frivillighetsregisteret — frivillige organisasjoner},\n  year   = {n.d.},\n  url    = {https://www.brreg.no/organisasjon/frivillighetsregisteret/},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/brreg-frivillige}\n}"
+        "text": "Brønnøysundregistrene. (n.d.). Frivillighetsregisteret — frivillige organisasjoner. Retrieved from https://www.brreg.no/om-oss/registrene-vare/om-frivillighetsregisteret/. Available in Atlas at https://atlas.sovereignsky.no/datasets/brreg-frivillige.",
+        "bibtex": "@misc{atlas_brreg_frivillige,\n  author = {Brønnøysundregistrene},\n  title  = {Frivillighetsregisteret — frivillige organisasjoner},\n  year   = {n.d.},\n  url    = {https://www.brreg.no/om-oss/registrene-vare/om-frivillighetsregisteret/},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/brreg-frivillige}\n}"
       },
       "feedback_url": "https://www.brreg.no/om-oss/kontakt-oss/",
       "consuming_marts": [
