@@ -721,6 +721,18 @@ operational:
   # in the code and invisible here, which is the same defect as a retraction that
   # does not travel with its claim.
   cadence:
+    - cron: "0 6 * * *"
+      job: daily_validation
+      what: >-
+        Post-ingest validation, one hour after transform_daily: every published
+        relation answers a real HTTP request and returns its row count, and
+        every URL meta_sources serves is dereferenced. Asked for by Røde Kors —
+        "validate that all datasets that are ingested has an endpoint and it can
+        be queried". WARN severity on both checks: a dead upstream link is a real
+        defect and not a reason to fail a pipeline at 06:00. It is deliberately
+        NOT chained to the transform by sensor, because that would fire it on
+        brreg_transform every 30 minutes and dereference other people's hosts 48
+        times a day.
     - cron: "0 2 * * 0"
       job: annual_sources_refresh
       what: ~37 annual public-sector sources — SSB, FHI, Bufdir

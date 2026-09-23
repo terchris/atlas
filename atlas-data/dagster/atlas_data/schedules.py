@@ -48,6 +48,7 @@ from dagster import (
 from atlas_data import cadence
 from atlas_data.assets import (
     api_v1,
+    validation,
     dbt,
     migrations,
     raw_brreg,
@@ -584,7 +585,16 @@ api_v1_publish_job = define_asset_job(
     ),
 )
 
-_API_V1_CHECKS = AssetSelection.checks_for_assets(api_v1.api_v1_surface)
+# 🔵 The two validation checks hang off api_v1_surface so they inherit its
+# lineage, but they are NOT the publish gate: they make real HTTP requests,
+# including to upstream hosts, and a publish should not wait on brreg.no being
+# up. Subtracted here and given their own daily job below.
+_DAILY_VALIDATION = AssetSelection.checks(
+    validation.every_endpoint_answers,
+    validation.every_served_url_resolves,
+)
+
+_API_V1_CHECKS = AssetSelection.checks_for_assets(api_v1.api_v1_surface) - _DAILY_VALIDATION
 
 api_v1_checks_job = define_asset_job(
     name="api_v1_checks",
@@ -672,6 +682,42 @@ transform_schedule = ScheduleDefinition(
     execution_timezone=TIMEZONE,
 )
 
+
+# ── Daily post-ingest validation ─────────────────────────────────────────────
+#
+# 🔵 TERJE ASKED FOR THIS HALF EXPLICITLY (urb-agents #1433): "validate that all
+# datasets that are ingested has an endpoint AND IT CAN BE QUERIED … once a day."
+# api_v1.atlas_inventory answers "what exists and how many rows"; this answers
+# "does a request come back", which is a different question and the only one
+# that has caught anything this week.
+#
+# 🔴 06:00, AN HOUR AFTER transform_daily. It must run AFTER the transform that
+# publishes what it checks, not before — validating yesterday's surface against
+# today's expectations is worse than not validating, because it passes.
+#
+# ⚠️ NOT CHAINED TO THE TRANSFORM BY SENSOR, DELIBERATELY. A sensor would fire
+# it on every transform, including brreg_transform every 30 minutes, and
+# dereferencing brreg.no and ssb.no 48 times a day is rude to upstreams who owe
+# us nothing. Daily is what was asked for and daily is what upstream hosts
+# should expect from us.
+daily_validation_job = define_asset_job(
+    name="daily_validation",
+    selection=_DAILY_VALIDATION,
+    description=(
+        "Every published endpoint answers a real HTTP request, and every URL "
+        "meta_sources serves resolves. Runs after the daily transform. Both "
+        "checks are WARN severity: a dead upstream URL is a real defect and not "
+        "a reason to fail a pipeline nobody is watching at 06:00."
+    ),
+)
+
+daily_validation_schedule = ScheduleDefinition(
+    name="daily_validation",
+    job=daily_validation_job,
+    cron_schedule="0 6 * * *",  # 06:00 daily — one hour after transform_daily
+    execution_timezone=TIMEZONE,
+)
+
 # ── What happened to the ingest schedules ────────────────────────────────────
 #
 # annual_sources_weekly / klass_monthly / redcross_branches_weekly are gone.
@@ -703,6 +749,7 @@ brreg_transform_schedule = ScheduleDefinition(
 
 schedules = [
     transform_schedule,
+    daily_validation_schedule,
     brreg_transform_schedule,
 ]
 
@@ -718,6 +765,7 @@ jobs = [
     api_v1_checks_job,
     api_v1_publish_job,
     transform_checks_job,
+    daily_validation_job,
 ]
 
 sensors = [run_api_v1_checks_after_transform, run_dbt_checks_after_api_v1]
