@@ -56,6 +56,7 @@ publishers:
   - id: brreg
     display_name: Brønnøysundregistrene
     homepage: https://www.brreg.no/
+    logo: /img/publishers/brreg.svg
     feedback_url: https://www.brreg.no/om-oss/kontakt-oss/
     notes: |
       The Brønnøysund Register Centre — the Norwegian government agency that

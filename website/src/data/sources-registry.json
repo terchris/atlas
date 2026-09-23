@@ -75,6 +75,7 @@
       "id": "brreg",
       "display_name": "Brønnøysundregistrene",
       "homepage": "https://www.brreg.no/",
+      "logo": "/img/publishers/brreg.svg",
       "feedback_url": "https://www.brreg.no/om-oss/kontakt-oss/",
       "notes": "The Brønnøysund Register Centre — the Norwegian government agency that\noperates the country's central registers. Atlas reads Enhetsregisteret\n(every registered legal entity, ~1.17M) and Frivillighetsregisteret (the\nvoluntary-organisation register, a filtered view of the same entities).\nData released under NLOD 2.0; `organisasjonsnummer` is the join key that\nmakes organisational data from any Norwegian source line up.\n\nNo logo: Brreg's mark is not offered under the same open licence as the\ndata, so the publisher page renders without one rather than\nredistributing it.\n",
       "source_count": 3
@@ -129,7 +130,8 @@
       "publisher": {
         "id": "brreg",
         "display_name": "Brønnøysundregistrene",
-        "homepage": "https://www.brreg.no/"
+        "homepage": "https://www.brreg.no/",
+        "logo": "/img/publishers/brreg.svg"
       },
       "category": {
         "id": "organisations",
@@ -335,7 +337,8 @@
       "publisher": {
         "id": "brreg",
         "display_name": "Brønnøysundregistrene",
-        "homepage": "https://www.brreg.no/"
+        "homepage": "https://www.brreg.no/",
+        "logo": "/img/publishers/brreg.svg"
       },
       "category": {
         "id": "ngo-supply",
@@ -542,7 +545,8 @@
       "publisher": {
         "id": "brreg",
         "display_name": "Brønnøysundregistrene",
-        "homepage": "https://www.brreg.no/"
+        "homepage": "https://www.brreg.no/",
+        "logo": "/img/publishers/brreg.svg"
       },
       "category": {
         "id": "organisations",
