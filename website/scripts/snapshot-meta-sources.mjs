@@ -4,7 +4,8 @@
  * so the catalog generator can render live ingest freshness (last_ingested_at,
  * row counts) without hitting Postgres at build time.
  *
- * Same pattern as snapshot-openapi.mjs and snapshot-lineage.mjs — refresh
+ * Same pattern as snapshot-lineage.mjs (snapshot-openapi.mjs was deleted
+ * 2026-09-23 when Scalar switched to reading live) — refresh
  * manually whenever you want the catalog to reflect a newer ingest state,
  * then commit the snapshot.
  *
