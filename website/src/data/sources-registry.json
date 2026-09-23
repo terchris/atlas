@@ -3,7 +3,7 @@
   "manifest_schema_id": "https://atlas.sovereignsky.no/schemas/manifest.schema.json",
   "atlas_base_url": "https://atlas.sovereignsky.no",
   "postgrest_base_url": "https://api-atlas.urbalurba.com",
-  "meta_sources_snapshot_at": "2026-09-23T04:05:37.730Z",
+  "meta_sources_snapshot_at": "2026-09-23T05:52:52.328Z",
   "categories": [
     {
       "id": "health",
@@ -196,7 +196,7 @@
       "raw_tables": [
         "brreg_enheter_snapshot"
       ],
-      "sample_query": "https://api-atlas.urbalurba.com/brreg_enheter_snapshot?limit=5",
+      "sample_query": "https://api-atlas.urbalurba.com/brreg_enhet?limit=5",
       "citation": {
         "text": "Brønnøysundregistrene. (n.d.). Enhetsregisteret — alle registrerte enheter. Retrieved from https://data.brreg.no/enhetsregisteret/api/dokumentasjon. Available in Atlas at https://atlas.sovereignsky.no/datasets/brreg-enheter-alle.",
         "bibtex": "@misc{atlas_brreg_enheter_alle,\n  author = {Brønnøysundregistrene},\n  title  = {Enhetsregisteret — alle registrerte enheter},\n  year   = {n.d.},\n  url    = {https://data.brreg.no/enhetsregisteret/api/dokumentasjon},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/brreg-enheter-alle}\n}"
@@ -403,7 +403,7 @@
       "raw_tables": [
         "brreg_frivillige"
       ],
-      "sample_query": "https://api-atlas.urbalurba.com/brreg_frivillige?limit=5",
+      "sample_query": "https://api-atlas.urbalurba.com/brreg_enhet?limit=5",
       "citation": {
         "text": "Brønnøysundregistrene. (n.d.). Frivillighetsregisteret — frivillige organisasjoner. Retrieved from https://www.brreg.no/organisasjon/frivillighetsregisteret/. Available in Atlas at https://atlas.sovereignsky.no/datasets/brreg-frivillige.",
         "bibtex": "@misc{atlas_brreg_frivillige,\n  author = {Brønnøysundregistrene},\n  title  = {Frivillighetsregisteret — frivillige organisasjoner},\n  year   = {n.d.},\n  url    = {https://www.brreg.no/organisasjon/frivillighetsregisteret/},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/brreg-frivillige}\n}"
@@ -616,7 +616,7 @@
         "brreg_enheter_versions",
         "brreg_feed_watermark"
       ],
-      "sample_query": "https://api-atlas.urbalurba.com/brreg_oppdateringer?limit=5",
+      "sample_query": "https://api-atlas.urbalurba.com/brreg_enhet?limit=5",
       "citation": {
         "text": "Brønnøysundregistrene. (n.d.). Enhetsregisteret — oppdateringer (endringsfeed). Retrieved from https://data.brreg.no/enhetsregisteret/api/dokumentasjon. Available in Atlas at https://atlas.sovereignsky.no/datasets/brreg-oppdateringer.",
         "bibtex": "@misc{atlas_brreg_oppdateringer,\n  author = {Brønnøysundregistrene},\n  title  = {Enhetsregisteret — oppdateringer (endringsfeed)},\n  year   = {n.d.},\n  url    = {https://data.brreg.no/enhetsregisteret/api/dokumentasjon},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/brreg-oppdateringer}\n}"
@@ -835,7 +835,7 @@
         }
       ],
       "raw_tables": null,
-      "sample_query": "https://api-atlas.urbalurba.com/bufdir_barnefattigdom?limit=5",
+      "sample_query": null,
       "citation": {
         "text": "Barne-, ungdoms- og familiedirektoratet. (n.d.). Barnefattigdom kommunemonitor. Retrieved from https://www.bufdir.no/statistikk-og-analyse/monitor/barnefattigdom/. Available in Atlas at https://atlas.sovereignsky.no/datasets/bufdir-barnefattigdom.",
         "bibtex": "@misc{atlas_bufdir_barnefattigdom,\n  author = {Barne-, ungdoms- og familiedirektoratet},\n  title  = {Barnefattigdom kommunemonitor},\n  year   = {n.d.},\n  url    = {https://www.bufdir.no/statistikk-og-analyse/monitor/barnefattigdom/},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/bufdir-barnefattigdom}\n}"
@@ -952,7 +952,7 @@
         }
       ],
       "raw_tables": null,
-      "sample_query": "https://api-atlas.urbalurba.com/fhi_alkohol?limit=5",
+      "sample_query": "https://api-atlas.urbalurba.com/indicator_latest_values?source_id=eq.fhi-alkohol&limit=5",
       "citation": {
         "text": "Folkehelseinstituttet. (2025). Alkohol_Ungdata_KH. Retrieved from https://statistikk.fhi.no/nokkel/129pesZRVuNuNrXngx3ao4bF8odgrZClPRFCbZEJnxs?GEO=0,03&AAR=2020_2020,2021_2021,2022_2022,2023_2023,2024_2024,2025_2025&KJONN=0&ALDER=1_6&ANTALL_GANGER=engangellerflere&SOES=0&MEASURE_TYPE=SMR. Available in Atlas at https://atlas.sovereignsky.no/datasets/fhi-alkohol.",
         "bibtex": "@misc{atlas_fhi_alkohol,\n  author = {Folkehelseinstituttet},\n  title  = {Alkohol_Ungdata_KH},\n  year   = {2025},\n  url    = {https://statistikk.fhi.no/nokkel/129pesZRVuNuNrXngx3ao4bF8odgrZClPRFCbZEJnxs?GEO=0,03&AAR=2020_2020,2021_2021,2022_2022,2023_2023,2024_2024,2025_2025&KJONN=0&ALDER=1_6&ANTALL_GANGER=engangellerflere&SOES=0&MEASURE_TYPE=SMR},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/fhi-alkohol}\n}"
@@ -1251,7 +1251,7 @@
         }
       ],
       "raw_tables": null,
-      "sample_query": "https://api-atlas.urbalurba.com/fhi_befolkning?limit=5",
+      "sample_query": "https://api-atlas.urbalurba.com/indicator_latest_values?source_id=eq.fhi-befolkning&limit=5",
       "citation": {
         "text": "Folkehelseinstituttet. (2025). Befolkningssammensetning_antall_andel. Retrieved from https://statistikk.fhi.no/nokkel/iIALHYpjwwxCYECV9iAnanUAYXxFBhFZdQW1M7T5EeA?GEO=0&AAR=2020_2020,2021_2021,2022_2022,2023_2023,2024_2024,2025_2025&KJONN=0&ALDER=0_120,0_17,80_120&MEASURE_TYPE=TELLER. Available in Atlas at https://atlas.sovereignsky.no/datasets/fhi-befolkning.",
         "bibtex": "@misc{atlas_fhi_befolkning,\n  author = {Folkehelseinstituttet},\n  title  = {Befolkningssammensetning_antall_andel},\n  year   = {2025},\n  url    = {https://statistikk.fhi.no/nokkel/iIALHYpjwwxCYECV9iAnanUAYXxFBhFZdQW1M7T5EeA?GEO=0&AAR=2020_2020,2021_2021,2022_2022,2023_2023,2024_2024,2025_2025&KJONN=0&ALDER=0_120,0_17,80_120&MEASURE_TYPE=TELLER},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/fhi-befolkning}\n}"
@@ -1548,7 +1548,7 @@
         }
       ],
       "raw_tables": null,
-      "sample_query": "https://api-atlas.urbalurba.com/fhi_befolkningsvekst?limit=5",
+      "sample_query": "https://api-atlas.urbalurba.com/indicator_latest_values?source_id=eq.fhi-befolkningsvekst&limit=5",
       "citation": {
         "text": "Folkehelseinstituttet. (2024). Befolkningsvekst. Retrieved from https://statistikk.fhi.no/nokkel/_SvW9Ag1SYWnNEu0EHxrI_00QJUulcZKUvTgpPNqiyw?GEO=0,03,31,32,33,34,39,40,42,11,46,15,50,18,55,56&AAR=2019_2019,2020_2020,2021_2021,2022_2022,2023_2023,2024_2024&KJONN=0&ALDER=0_120&MEASURE_TYPE=TELLER. Available in Atlas at https://atlas.sovereignsky.no/datasets/fhi-befolkningsvekst.",
         "bibtex": "@misc{atlas_fhi_befolkningsvekst,\n  author = {Folkehelseinstituttet},\n  title  = {Befolkningsvekst},\n  year   = {2024},\n  url    = {https://statistikk.fhi.no/nokkel/_SvW9Ag1SYWnNEu0EHxrI_00QJUulcZKUvTgpPNqiyw?GEO=0,03,31,32,33,34,39,40,42,11,46,15,50,18,55,56&AAR=2019_2019,2020_2020,2021_2021,2022_2022,2023_2023,2024_2024&KJONN=0&ALDER=0_120&MEASURE_TYPE=TELLER},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/fhi-befolkningsvekst}\n}"
@@ -1843,7 +1843,7 @@
         }
       ],
       "raw_tables": null,
-      "sample_query": "https://api-atlas.urbalurba.com/fhi_bor_alene?limit=5",
+      "sample_query": "https://api-atlas.urbalurba.com/indicator_latest_values?source_id=eq.fhi-bor-alene&limit=5",
       "citation": {
         "text": "Folkehelseinstituttet. (2025). Personer som bor alene. Retrieved from https://statistikk.fhi.no/nokkel/E1gPZ5le1oMsIccxUCPlzvSxxb-8u3gtb7h1tg_zGwg?GEO=0&AAR=2020_2020,2021_2021,2022_2022,2023_2023,2024_2024,2025_2025&ALDER=30_44,45_120,75_120&MEASURE_TYPE=TELLER. Available in Atlas at https://atlas.sovereignsky.no/datasets/fhi-bor-alene.",
         "bibtex": "@misc{atlas_fhi_bor_alene,\n  author = {Folkehelseinstituttet},\n  title  = {Personer som bor alene},\n  year   = {2025},\n  url    = {https://statistikk.fhi.no/nokkel/E1gPZ5le1oMsIccxUCPlzvSxxb-8u3gtb7h1tg_zGwg?GEO=0&AAR=2020_2020,2021_2021,2022_2022,2023_2023,2024_2024,2025_2025&ALDER=30_44,45_120,75_120&MEASURE_TYPE=TELLER},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/fhi-bor-alene}\n}"
@@ -2154,7 +2154,7 @@
         }
       ],
       "raw_tables": null,
-      "sample_query": "https://api-atlas.urbalurba.com/fhi_depresjon?limit=5",
+      "sample_query": "https://api-atlas.urbalurba.com/indicator_latest_values?source_id=eq.fhi-depresjon&limit=5",
       "citation": {
         "text": "Folkehelseinstituttet. (2025). Depressive symptomer_Ungdata_KH. Retrieved from https://statistikk.fhi.no/nokkel/oeMEaMEosmYB-_HX2QxpL_txHoxxrNa5sWQZ-q7lqWU?GEO=0,03&AAR=2020_2020,2021_2021,2022_2022,2023_2023,2024_2024,2025_2025&KJONN=0&ALDER=1_6&DEPRESJON=Ja&SOES=0&MEASURE_TYPE=MEIS. Available in Atlas at https://atlas.sovereignsky.no/datasets/fhi-depresjon.",
         "bibtex": "@misc{atlas_fhi_depresjon,\n  author = {Folkehelseinstituttet},\n  title  = {Depressive symptomer_Ungdata_KH},\n  year   = {2025},\n  url    = {https://statistikk.fhi.no/nokkel/oeMEaMEosmYB-_HX2QxpL_txHoxxrNa5sWQZ-q7lqWU?GEO=0,03&AAR=2020_2020,2021_2021,2022_2022,2023_2023,2024_2024,2025_2025&KJONN=0&ALDER=1_6&DEPRESJON=Ja&SOES=0&MEASURE_TYPE=MEIS},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/fhi-depresjon}\n}"
@@ -2465,7 +2465,7 @@
         }
       ],
       "raw_tables": null,
-      "sample_query": "https://api-atlas.urbalurba.com/fhi_fortrolig_venn?limit=5",
+      "sample_query": "https://api-atlas.urbalurba.com/indicator_latest_values?source_id=eq.fhi-fortrolig-venn&limit=5",
       "citation": {
         "text": "Folkehelseinstituttet. (2025). FORTROLIGVENN_Ungdata_KH. Retrieved from https://statistikk.fhi.no/nokkel/PnlTNkQXZx2WYq7cpkgIJ40JGIkZKjhylVzS429-rYQ?GEO=0,03&AAR=2020_2020,2021_2021,2022_2022,2023_2023,2024_2024,2025_2025&KJONN=0&ALDER=1_6&HARVENN=Jatrorellerheltsikker&SOES=0&MEASURE_TYPE=SMR. Available in Atlas at https://atlas.sovereignsky.no/datasets/fhi-fortrolig-venn.",
         "bibtex": "@misc{atlas_fhi_fortrolig_venn,\n  author = {Folkehelseinstituttet},\n  title  = {FORTROLIGVENN_Ungdata_KH},\n  year   = {2025},\n  url    = {https://statistikk.fhi.no/nokkel/PnlTNkQXZx2WYq7cpkgIJ40JGIkZKjhylVzS429-rYQ?GEO=0,03&AAR=2020_2020,2021_2021,2022_2022,2023_2023,2024_2024,2025_2025&KJONN=0&ALDER=1_6&HARVENN=Jatrorellerheltsikker&SOES=0&MEASURE_TYPE=SMR},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/fhi-fortrolig-venn}\n}"
@@ -2776,7 +2776,7 @@
         }
       ],
       "raw_tables": null,
-      "sample_query": "https://api-atlas.urbalurba.com/fhi_hasj?limit=5",
+      "sample_query": "https://api-atlas.urbalurba.com/indicator_latest_values?source_id=eq.fhi-hasj&limit=5",
       "citation": {
         "text": "Folkehelseinstituttet. (2025). Hasjbruk_Ungdata_KH. Retrieved from https://statistikk-data.fhi.no/api/open/v1/nokkel/table/363. Available in Atlas at https://atlas.sovereignsky.no/datasets/fhi-hasj.",
         "bibtex": "@misc{atlas_fhi_hasj,\n  author = {Folkehelseinstituttet},\n  title  = {Hasjbruk_Ungdata_KH},\n  year   = {2025},\n  url    = {https://statistikk-data.fhi.no/api/open/v1/nokkel/table/363},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/fhi-hasj}\n}"
@@ -3075,7 +3075,7 @@
         }
       ],
       "raw_tables": null,
-      "sample_query": "https://api-atlas.urbalurba.com/fhi_innvandrere?limit=5",
+      "sample_query": "https://api-atlas.urbalurba.com/indicator_latest_values?source_id=eq.fhi-innvandrere&limit=5",
       "citation": {
         "text": "Folkehelseinstituttet. (2025). Innvandrere og norskfødte med innv.foreldre _LANDBAK. Retrieved from https://statistikk.fhi.no/nokkel/ZQAEuMN7Ar2Mmi30zcPD232XzenC3NS5IJyQ1nUeySQ?GEO=0&AAR=2020_2020,2021_2021,2022_2022,2023_2023,2024_2024,2025_2025&ALDER=0_120&LANDBAK=100,1,2,3,456&MEASURE_TYPE=TELLER. Available in Atlas at https://atlas.sovereignsky.no/datasets/fhi-innvandrere.",
         "bibtex": "@misc{atlas_fhi_innvandrere,\n  author = {Folkehelseinstituttet},\n  title  = {Innvandrere og norskfødte med innv.foreldre _LANDBAK},\n  year   = {2025},\n  url    = {https://statistikk.fhi.no/nokkel/ZQAEuMN7Ar2Mmi30zcPD232XzenC3NS5IJyQ1nUeySQ?GEO=0&AAR=2020_2020,2021_2021,2022_2022,2023_2023,2024_2024,2025_2025&ALDER=0_120&LANDBAK=100,1,2,3,456&MEASURE_TYPE=TELLER},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/fhi-innvandrere}\n}"
@@ -3379,7 +3379,7 @@
         }
       ],
       "raw_tables": null,
-      "sample_query": "https://api-atlas.urbalurba.com/fhi_innvkat?limit=5",
+      "sample_query": "https://api-atlas.urbalurba.com/indicator_latest_values?source_id=eq.fhi-innvkat&limit=5",
       "citation": {
         "text": "Folkehelseinstituttet. (2025). INNVAND_INNVKAT. Retrieved from https://statistikk.fhi.no/nokkel/iTcQHmSn_g9PSQ0MRVD-gzOvgVzNXuZ_xJRCUnQ2Z1w?GEO=0&AAR=2020_2020,2021_2021,2022_2022,2023_2023,2024_2024,2025_2025&ALDER=0_120,0_29&INNVKAT=23,2,3&LANDBAK=0&MEASURE_TYPE=TELLER. Available in Atlas at https://atlas.sovereignsky.no/datasets/fhi-innvkat.",
         "bibtex": "@misc{atlas_fhi_innvkat,\n  author = {Folkehelseinstituttet},\n  title  = {INNVAND_INNVKAT},\n  year   = {2025},\n  url    = {https://statistikk.fhi.no/nokkel/iTcQHmSn_g9PSQ0MRVD-gzOvgVzNXuZ_xJRCUnQ2Z1w?GEO=0&AAR=2020_2020,2021_2021,2022_2022,2023_2023,2024_2024,2025_2025&ALDER=0_120,0_29&INNVKAT=23,2,3&LANDBAK=0&MEASURE_TYPE=TELLER},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/fhi-innvkat}\n}"
@@ -3683,7 +3683,7 @@
         }
       ],
       "raw_tables": null,
-      "sample_query": "https://api-atlas.urbalurba.com/fhi_kpr_1aar?limit=5",
+      "sample_query": "https://api-atlas.urbalurba.com/indicator_latest_values?source_id=eq.fhi-kpr-1aar&limit=5",
       "citation": {
         "text": "Folkehelseinstituttet. (2024). KPR_1. Retrieved from https://statistikk.fhi.no/nokkel/FEh3FmY9SjEIMKlfUdTVsY9Qe8bwZpCq4IGSRgB9-ag?GEO=0,03&AAR=2020_2020,2021_2021,2022_2022,2023_2023,2024_2024&KJONN=0&ALDER=0_74,15_24&KODEGRUPPE=P01_P29ogP70_P99,P01_P29,P70_P99&MEASURE_TYPE=MEIS. Available in Atlas at https://atlas.sovereignsky.no/datasets/fhi-kpr-1aar.",
         "bibtex": "@misc{atlas_fhi_kpr_1aar,\n  author = {Folkehelseinstituttet},\n  title  = {KPR_1},\n  year   = {2024},\n  url    = {https://statistikk.fhi.no/nokkel/FEh3FmY9SjEIMKlfUdTVsY9Qe8bwZpCq4IGSRgB9-ag?GEO=0,03&AAR=2020_2020,2021_2021,2022_2022,2023_2023,2024_2024&KJONN=0&ALDER=0_74,15_24&KODEGRUPPE=P01_P29ogP70_P99,P01_P29,P70_P99&MEASURE_TYPE=MEIS},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/fhi-kpr-1aar}\n}"
@@ -3994,7 +3994,7 @@
         }
       ],
       "raw_tables": null,
-      "sample_query": "https://api-atlas.urbalurba.com/fhi_livskvalitet?limit=5",
+      "sample_query": "https://api-atlas.urbalurba.com/indicator_latest_values?source_id=eq.fhi-livskvalitet&limit=5",
       "citation": {
         "text": "Folkehelseinstituttet. (2025). Livskvalitet_Ungdata_KH. Retrieved from https://statistikk.fhi.no/nokkel/EOwbpb5d3pTfdkmtuYZnk59JAoZPFZ-ZbVldUfs3So4?GEO=0,03&AAR=2021_2021,2022_2022,2023_2023,2024_2024,2025_2025&KJONN=0&ALDER=1_6&LIVSKVALITET=8_10&SOES=0&MEASURE_TYPE=MEIS. Available in Atlas at https://atlas.sovereignsky.no/datasets/fhi-livskvalitet.",
         "bibtex": "@misc{atlas_fhi_livskvalitet,\n  author = {Folkehelseinstituttet},\n  title  = {Livskvalitet_Ungdata_KH},\n  year   = {2025},\n  url    = {https://statistikk.fhi.no/nokkel/EOwbpb5d3pTfdkmtuYZnk59JAoZPFZ-ZbVldUfs3So4?GEO=0,03&AAR=2021_2021,2022_2022,2023_2023,2024_2024,2025_2025&KJONN=0&ALDER=1_6&LIVSKVALITET=8_10&SOES=0&MEASURE_TYPE=MEIS},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/fhi-livskvalitet}\n}"
@@ -4305,7 +4305,7 @@
         }
       ],
       "raw_tables": null,
-      "sample_query": "https://api-atlas.urbalurba.com/fhi_mediebruk_some?limit=5",
+      "sample_query": "https://api-atlas.urbalurba.com/indicator_latest_values?source_id=eq.fhi-mediebruk-some&limit=5",
       "citation": {
         "text": "Folkehelseinstituttet. (2025). Mediebruk_SOME_Ungdata_KH. Retrieved from https://statistikk-data.fhi.no/api/open/v1/nokkel/table/602. Available in Atlas at https://atlas.sovereignsky.no/datasets/fhi-mediebruk-some.",
         "bibtex": "@misc{atlas_fhi_mediebruk_some,\n  author = {Folkehelseinstituttet},\n  title  = {Mediebruk_SOME_Ungdata_KH},\n  year   = {2025},\n  url    = {https://statistikk-data.fhi.no/api/open/v1/nokkel/table/602},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/fhi-mediebruk-some}\n}"
@@ -4616,7 +4616,7 @@
         }
       ],
       "raw_tables": null,
-      "sample_query": "https://api-atlas.urbalurba.com/fhi_mediebruk_spill?limit=5",
+      "sample_query": "https://api-atlas.urbalurba.com/indicator_latest_values?source_id=eq.fhi-mediebruk-spill&limit=5",
       "citation": {
         "text": "Folkehelseinstituttet. (2025). Mediebruk_DataTVspill_Ungdata_KH. Retrieved from https://statistikk.fhi.no/nokkel/2BpjmzfL0vnGaXdZtguQnDGkWL6YC84J0JxV7y7lW94?GEO=0,03&AAR=2019_2019,2020_2020,2021_2021,2022_2022,2023_2023,2024_2024&KJONN=0&ALDER=1_6&MEDIEBRUK=Merenn3timer&SOES=0&MEASURE_TYPE=SMR. Available in Atlas at https://atlas.sovereignsky.no/datasets/fhi-mediebruk-spill.",
         "bibtex": "@misc{atlas_fhi_mediebruk_spill,\n  author = {Folkehelseinstituttet},\n  title  = {Mediebruk_DataTVspill_Ungdata_KH},\n  year   = {2025},\n  url    = {https://statistikk.fhi.no/nokkel/2BpjmzfL0vnGaXdZtguQnDGkWL6YC84J0JxV7y7lW94?GEO=0,03&AAR=2019_2019,2020_2020,2021_2021,2022_2022,2023_2023,2024_2024&KJONN=0&ALDER=1_6&MEDIEBRUK=Merenn3timer&SOES=0&MEASURE_TYPE=SMR},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/fhi-mediebruk-spill}\n}"
@@ -4927,7 +4927,7 @@
         }
       ],
       "raw_tables": null,
-      "sample_query": "https://api-atlas.urbalurba.com/fhi_mediebruk_underhold?limit=5",
+      "sample_query": "https://api-atlas.urbalurba.com/indicator_latest_values?source_id=eq.fhi-mediebruk-underhold&limit=5",
       "citation": {
         "text": "Folkehelseinstituttet. (2025). Mediebruk_underhold_ungdata. Retrieved from https://statistikk-data.fhi.no/api/open/v1/nokkel/table/667. Available in Atlas at https://atlas.sovereignsky.no/datasets/fhi-mediebruk-underhold.",
         "bibtex": "@misc{atlas_fhi_mediebruk_underhold,\n  author = {Folkehelseinstituttet},\n  title  = {Mediebruk_underhold_ungdata},\n  year   = {2025},\n  url    = {https://statistikk-data.fhi.no/api/open/v1/nokkel/table/667},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/fhi-mediebruk-underhold}\n}"
@@ -5233,7 +5233,7 @@
         }
       ],
       "raw_tables": null,
-      "sample_query": "https://api-atlas.urbalurba.com/fhi_mobbing?limit=5",
+      "sample_query": "https://api-atlas.urbalurba.com/indicator_latest_values?source_id=eq.fhi-mobbing&limit=5",
       "citation": {
         "text": "Folkehelseinstituttet. (2024). Mobbing, 7. og 10. klasse, 3-årige tall. Retrieved from https://statistikk-data.fhi.no/api/open/v1/nokkel/table/377. Available in Atlas at https://atlas.sovereignsky.no/datasets/fhi-mobbing.",
         "bibtex": "@misc{atlas_fhi_mobbing,\n  author = {Folkehelseinstituttet},\n  title  = {Mobbing, 7. og 10. klasse, 3-årige tall},\n  year   = {2024},\n  url    = {https://statistikk-data.fhi.no/api/open/v1/nokkel/table/377},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/fhi-mobbing}\n}"
@@ -5538,7 +5538,7 @@
         }
       ],
       "raw_tables": null,
-      "sample_query": "https://api-atlas.urbalurba.com/fhi_neet?limit=5",
+      "sample_query": "https://api-atlas.urbalurba.com/indicator_latest_values?source_id=eq.fhi-neet&limit=5",
       "citation": {
         "text": "Folkehelseinstituttet. (2024). NEET_UTDANN. Retrieved from https://statistikk.fhi.no/nokkel/sGprm5F-rJQcpEqkZhAfGis_ImrcQCCkOBfyOWGUQnE?GEO=0&AAR=2019_2019,2020_2020,2021_2021,2022_2022,2023_2023,2024_2024&KJONN=0&ALDER=30_39&UTDANN=1,23&MEASURE_TYPE=TELLER. Available in Atlas at https://atlas.sovereignsky.no/datasets/fhi-neet.",
         "bibtex": "@misc{atlas_fhi_neet,\n  author = {Folkehelseinstituttet},\n  title  = {NEET_UTDANN},\n  year   = {2024},\n  url    = {https://statistikk.fhi.no/nokkel/sGprm5F-rJQcpEqkZhAfGis_ImrcQCCkOBfyOWGUQnE?GEO=0&AAR=2019_2019,2020_2020,2021_2021,2022_2022,2023_2023,2024_2024&KJONN=0&ALDER=30_39&UTDANN=1,23&MEASURE_TYPE=TELLER},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/fhi-neet}\n}"
@@ -5842,7 +5842,7 @@
         }
       ],
       "raw_tables": null,
-      "sample_query": "https://api-atlas.urbalurba.com/fhi_prognose?limit=5",
+      "sample_query": "https://api-atlas.urbalurba.com/indicator_latest_values?source_id=eq.fhi-prognose&limit=5",
       "citation": {
         "text": "Folkehelseinstituttet. (n.d.). Befolkningsframskriving. Retrieved from https://statistikk.fhi.no/nokkel/xhjU-zpSijmY8w2E1Zhcrzqbt_xSfLCoudR2O1jYTbM?GEO=0,03,31,32,33,34,39,40,42,11,46,15,50,18,55,56&AAR=2024_2024&KJONN=0&ALDER=0_17,80_120&PROGNOSEAAR=2030,2035,2040,2045,2050&MEASURE_TYPE=TELLER. Available in Atlas at https://atlas.sovereignsky.no/datasets/fhi-prognose.",
         "bibtex": "@misc{atlas_fhi_prognose,\n  author = {Folkehelseinstituttet},\n  title  = {Befolkningsframskriving},\n  year   = {n.d.},\n  url    = {https://statistikk.fhi.no/nokkel/xhjU-zpSijmY8w2E1Zhcrzqbt_xSfLCoudR2O1jYTbM?GEO=0,03,31,32,33,34,39,40,42,11,46,15,50,18,55,56&AAR=2024_2024&KJONN=0&ALDER=0_17,80_120&PROGNOSEAAR=2030,2035,2040,2045,2050&MEASURE_TYPE=TELLER},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/fhi-prognose}\n}"
@@ -6146,7 +6146,7 @@
         }
       ],
       "raw_tables": null,
-      "sample_query": "https://api-atlas.urbalurba.com/fhi_selvmord?limit=5",
+      "sample_query": "https://api-atlas.urbalurba.com/indicator_latest_values?source_id=eq.fhi-selvmord&limit=5",
       "citation": {
         "text": "Folkehelseinstituttet. (2024). Selvmord femårig. Retrieved from https://statistikk.fhi.no/nokkel/RTjn0fQXR547TPcEHive5-gh-ZnuYv3q6Z3Ol8rAZeM?GEO=0,03&AAR=2016_2020,2017_2021,2018_2022,2019_2023,2020_2024&KJONN=1,2&ALDER=0_120&AARSAK=SELVMORD&MEASURE_TYPE=TELLER. Available in Atlas at https://atlas.sovereignsky.no/datasets/fhi-selvmord.",
         "bibtex": "@misc{atlas_fhi_selvmord,\n  author = {Folkehelseinstituttet},\n  title  = {Selvmord femårig},\n  year   = {2024},\n  url    = {https://statistikk.fhi.no/nokkel/RTjn0fQXR547TPcEHive5-gh-ZnuYv3q6Z3Ol8rAZeM?GEO=0,03&AAR=2016_2020,2017_2021,2018_2022,2019_2023,2020_2024&KJONN=1,2&ALDER=0_120&AARSAK=SELVMORD&MEASURE_TYPE=TELLER},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/fhi-selvmord}\n}"
@@ -6456,7 +6456,7 @@
         }
       ],
       "raw_tables": null,
-      "sample_query": "https://api-atlas.urbalurba.com/fhi_smertestillende?limit=5",
+      "sample_query": "https://api-atlas.urbalurba.com/indicator_latest_values?source_id=eq.fhi-smertestillende&limit=5",
       "citation": {
         "text": "Folkehelseinstituttet. (2025). Smertestillende_ungdata. Retrieved from https://statistikk.fhi.no/nokkel/DIeM2P4Upuwir7v_3w5qABRz9Zjnu_2e7UzFHbSVrxw?GEO=0,03&AAR=2020_2020,2021_2021,2022_2022,2023_2023,2024_2024,2025_2025&KJONN=0&ALDER=1_6&STATUS=Minst_ukentlig&SOES=0&MEASURE_TYPE=MEIS. Available in Atlas at https://atlas.sovereignsky.no/datasets/fhi-smertestillende.",
         "bibtex": "@misc{atlas_fhi_smertestillende,\n  author = {Folkehelseinstituttet},\n  title  = {Smertestillende_ungdata},\n  year   = {2025},\n  url    = {https://statistikk.fhi.no/nokkel/DIeM2P4Upuwir7v_3w5qABRz9Zjnu_2e7UzFHbSVrxw?GEO=0,03&AAR=2020_2020,2021_2021,2022_2022,2023_2023,2024_2024,2025_2025&KJONN=0&ALDER=1_6&STATUS=Minst_ukentlig&SOES=0&MEASURE_TYPE=MEIS},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/fhi-smertestillende}\n}"
@@ -6758,7 +6758,7 @@
         }
       ],
       "raw_tables": null,
-      "sample_query": "https://api-atlas.urbalurba.com/fhi_trangbodd?limit=5",
+      "sample_query": "https://api-atlas.urbalurba.com/indicator_latest_values?source_id=eq.fhi-trangbodd&limit=5",
       "citation": {
         "text": "Folkehelseinstituttet. (2024). Trangbodd_UTDANN. Retrieved from https://statistikk-data.fhi.no/api/open/v1/nokkel/table/794. Available in Atlas at https://atlas.sovereignsky.no/datasets/fhi-trangbodd.",
         "bibtex": "@misc{atlas_fhi_trangbodd,\n  author = {Folkehelseinstituttet},\n  title  = {Trangbodd_UTDANN},\n  year   = {2024},\n  url    = {https://statistikk-data.fhi.no/api/open/v1/nokkel/table/794},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/fhi-trangbodd}\n}"
@@ -7064,7 +7064,7 @@
         }
       ],
       "raw_tables": null,
-      "sample_query": "https://api-atlas.urbalurba.com/fhi_vgs_gjennomforing?limit=5",
+      "sample_query": "https://api-atlas.urbalurba.com/indicator_latest_values?source_id=eq.fhi-vgs-gjennomforing&limit=5",
       "citation": {
         "text": "Folkehelseinstituttet. (n.d.). Gjennomforing i videregående skole (utdann_3). Retrieved from https://statistikk-data.fhi.no/api/open/v1/nokkel/table/360. Available in Atlas at https://atlas.sovereignsky.no/datasets/fhi-vgs-gjennomforing.",
         "bibtex": "@misc{atlas_fhi_vgs_gjennomforing,\n  author = {Folkehelseinstituttet},\n  title  = {Gjennomforing i videregående skole (utdann_3)},\n  year   = {n.d.},\n  url    = {https://statistikk-data.fhi.no/api/open/v1/nokkel/table/360},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/fhi-vgs-gjennomforing}\n}"
@@ -7353,7 +7353,7 @@
         }
       ],
       "raw_tables": null,
-      "sample_query": "https://api-atlas.urbalurba.com/frr?limit=5",
+      "sample_query": null,
       "citation": {
         "text": "Norges Røde Kors. (n.d.). Frivillig Resource Register (FRR) — Norges Røde Kors internal volunteer register. Retrieved from https://www.rodekors.no/. Available in Atlas at https://atlas.sovereignsky.no/datasets/frr.",
         "bibtex": "@misc{atlas_frr,\n  author = {Norges Røde Kors},\n  title  = {Frivillig Resource Register (FRR) — Norges Røde Kors internal volunteer register},\n  year   = {n.d.},\n  url    = {https://www.rodekors.no/},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/frr}\n}"
@@ -7465,7 +7465,7 @@
         "redcross_branches",
         "redcross_branch_activities"
       ],
-      "sample_query": "https://api-atlas.urbalurba.com/redcross_branches?limit=5",
+      "sample_query": "https://api-atlas.urbalurba.com/activity_catalog?limit=5",
       "citation": {
         "text": "Norges Røde Kors. (n.d.). Norges Røde Kors Organizations API — branches + per-branch activities. Retrieved from https://www.rodekors.no/lokalforeninger/. Available in Atlas at https://atlas.sovereignsky.no/datasets/redcross-branches.",
         "bibtex": "@misc{atlas_redcross_branches,\n  author = {Norges Røde Kors},\n  title  = {Norges Røde Kors Organizations API — branches + per-branch activities},\n  year   = {n.d.},\n  url    = {https://www.rodekors.no/lokalforeninger/},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/redcross-branches}\n}"
@@ -7658,7 +7658,7 @@
         }
       ],
       "raw_tables": null,
-      "sample_query": "https://api-atlas.urbalurba.com/ssb_06083?limit=5",
+      "sample_query": "https://api-atlas.urbalurba.com/indicator_latest_values?source_id=eq.ssb-06083&limit=5",
       "citation": {
         "text": "Statistisk sentralbyrå. (2025). 06083: Familier, etter familietype (K) (B) 2005-2025. Retrieved from https://www.ssb.no/statbank/table/06083. Available in Atlas at https://atlas.sovereignsky.no/datasets/ssb-06083.",
         "bibtex": "@misc{atlas_ssb_06083,\n  author = {Statistisk sentralbyrå},\n  title  = {06083: Familier, etter familietype (K) (B) 2005-2025},\n  year   = {2025},\n  url    = {https://www.ssb.no/statbank/table/06083},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/ssb-06083}\n}"
@@ -7945,7 +7945,7 @@
         }
       ],
       "raw_tables": null,
-      "sample_query": "https://api-atlas.urbalurba.com/ssb_06913?limit=5",
+      "sample_query": "https://api-atlas.urbalurba.com/indicator_latest_values?source_id=eq.ssb-06913&limit=5",
       "citation": {
         "text": "Statistisk sentralbyrå. (2026). 06913: Endringer i kommuner, fylker og hele landets befolkning (K) 1951-2026. Retrieved from https://www.ssb.no/statbank/table/06913. Available in Atlas at https://atlas.sovereignsky.no/datasets/ssb-06913.",
         "bibtex": "@misc{atlas_ssb_06913,\n  author = {Statistisk sentralbyrå},\n  title  = {06913: Endringer i kommuner, fylker og hele landets befolkning (K) 1951-2026},\n  year   = {2026},\n  url    = {https://www.ssb.no/statbank/table/06913},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/ssb-06913}\n}"
@@ -8239,7 +8239,7 @@
         }
       ],
       "raw_tables": null,
-      "sample_query": "https://api-atlas.urbalurba.com/ssb_06944?limit=5",
+      "sample_query": "https://api-atlas.urbalurba.com/indicator_latest_values?source_id=eq.ssb-06944&limit=5",
       "citation": {
         "text": "Statistisk sentralbyrå. (2024). 06944: Inntekt for husholdninger, etter husholdningstype. Antall og median. Delområder (K) (B) 2005-2024. Retrieved from https://www.ssb.no/statbank/table/06944. Available in Atlas at https://atlas.sovereignsky.no/datasets/ssb-06944.",
         "bibtex": "@misc{atlas_ssb_06944,\n  author = {Statistisk sentralbyrå},\n  title  = {06944: Inntekt for husholdninger, etter husholdningstype. Antall og median. Delområder (K) (B) 2005-2024},\n  year   = {2024},\n  url    = {https://www.ssb.no/statbank/table/06944},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/ssb-06944}\n}"
@@ -8527,7 +8527,7 @@
         }
       ],
       "raw_tables": null,
-      "sample_query": "https://api-atlas.urbalurba.com/ssb_06947?limit=5",
+      "sample_query": "https://api-atlas.urbalurba.com/indicator_latest_values?source_id=eq.ssb-06947&limit=5",
       "citation": {
         "text": "Statistisk sentralbyrå. (2024). 06947: Personer i husholdninger med lavinntekt (EU- og OECD-skala). Antall og prosent (K) (B) 2005-2024. Retrieved from https://www.ssb.no/statbank/table/06947. Available in Atlas at https://atlas.sovereignsky.no/datasets/ssb-06947.",
         "bibtex": "@misc{atlas_ssb_06947,\n  author = {Statistisk sentralbyrå},\n  title  = {06947: Personer i husholdninger med lavinntekt (EU- og OECD-skala). Antall og prosent (K) (B) 2005-2024},\n  year   = {2024},\n  url    = {https://www.ssb.no/statbank/table/06947},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/ssb-06947}\n}"
@@ -8829,7 +8829,7 @@
         }
       ],
       "raw_tables": null,
-      "sample_query": "https://api-atlas.urbalurba.com/ssb_07459?limit=5",
+      "sample_query": "https://api-atlas.urbalurba.com/kommune_befolkning_alder?limit=5",
       "citation": {
         "text": "Statistisk sentralbyrå. (2026). 07459: Alders- og kjønnsfordeling i kommuner, fylker og hele landets befolkning (K) 1986-2025. Retrieved from https://www.ssb.no/statbank/table/07459. Available in Atlas at https://atlas.sovereignsky.no/datasets/ssb-07459.",
         "bibtex": "@misc{atlas_ssb_07459,\n  author = {Statistisk sentralbyrå},\n  title  = {07459: Alders- og kjønnsfordeling i kommuner, fylker og hele landets befolkning (K) 1986-2025},\n  year   = {2026},\n  url    = {https://www.ssb.no/statbank/table/07459},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/ssb-07459}\n}"
@@ -8951,7 +8951,7 @@
         }
       ],
       "raw_tables": null,
-      "sample_query": "https://api-atlas.urbalurba.com/ssb_08764?limit=5",
+      "sample_query": "https://api-atlas.urbalurba.com/indicator_latest_values?source_id=eq.ssb-08764&limit=5",
       "citation": {
         "text": "Statistisk sentralbyrå. (2024). 08764: Personer under 18 år i husholdninger med lavinntekt (EU- og OECD-skala). Antall og prosent (K) (B) 2005-2024. Retrieved from https://www.ssb.no/statbank/table/08764. Available in Atlas at https://atlas.sovereignsky.no/datasets/ssb-08764.",
         "bibtex": "@misc{atlas_ssb_08764,\n  author = {Statistisk sentralbyrå},\n  title  = {08764: Personer under 18 år i husholdninger med lavinntekt (EU- og OECD-skala). Antall og prosent (K) (B) 2005-2024},\n  year   = {2024},\n  url    = {https://www.ssb.no/statbank/table/08764},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/ssb-08764}\n}"
@@ -9247,7 +9247,7 @@
         }
       ],
       "raw_tables": null,
-      "sample_query": "https://api-atlas.urbalurba.com/ssb_09429?limit=5",
+      "sample_query": "https://api-atlas.urbalurba.com/indicator_latest_values?source_id=eq.ssb-09429&limit=5",
       "citation": {
         "text": "Statistisk sentralbyrå. (2024). 09429: Utdanningsnivå, etter kommune og kjønn (K) 1970-2024. Retrieved from https://www.ssb.no/statbank/table/09429. Available in Atlas at https://atlas.sovereignsky.no/datasets/ssb-09429.",
         "bibtex": "@misc{atlas_ssb_09429,\n  author = {Statistisk sentralbyrå},\n  title  = {09429: Utdanningsnivå, etter kommune og kjønn (K) 1970-2024},\n  year   = {2024},\n  url    = {https://www.ssb.no/statbank/table/09429},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/ssb-09429}\n}"
@@ -9548,7 +9548,7 @@
         }
       ],
       "raw_tables": null,
-      "sample_query": "https://api-atlas.urbalurba.com/ssb_10826?limit=5",
+      "sample_query": null,
       "citation": {
         "text": "Statistisk sentralbyrå. (2026). 10826: Alders- og kjønnsfordeling for befolkningen i bydeler (B) 2001-2026. Retrieved from https://www.ssb.no/statbank/table/10826. Available in Atlas at https://atlas.sovereignsky.no/datasets/ssb-10826.",
         "bibtex": "@misc{atlas_ssb_10826,\n  author = {Statistisk sentralbyrå},\n  title  = {10826: Alders- og kjønnsfordeling for befolkningen i bydeler (B) 2001-2026},\n  year   = {2026},\n  url    = {https://www.ssb.no/statbank/table/10826},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/ssb-10826}\n}"
@@ -9637,7 +9637,7 @@
         }
       ],
       "raw_tables": null,
-      "sample_query": "https://api-atlas.urbalurba.com/ssb_12063?limit=5",
+      "sample_query": "https://api-atlas.urbalurba.com/indicator_latest_values?source_id=eq.ssb-12063&limit=5",
       "citation": {
         "text": "Statistisk sentralbyrå. (2024). 12063: Kommunale fritidstilbud (K) 2015-2024. Retrieved from https://www.ssb.no/statbank/table/12063. Available in Atlas at https://atlas.sovereignsky.no/datasets/ssb-12063.",
         "bibtex": "@misc{atlas_ssb_12063,\n  author = {Statistisk sentralbyrå},\n  title  = {12063: Kommunale fritidstilbud (K) 2015-2024},\n  year   = {2024},\n  url    = {https://www.ssb.no/statbank/table/12063},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/ssb-12063}\n}"
@@ -9920,7 +9920,7 @@
         }
       ],
       "raw_tables": null,
-      "sample_query": "https://api-atlas.urbalurba.com/ssb_12131?limit=5",
+      "sample_query": "https://api-atlas.urbalurba.com/indicator_latest_values?source_id=eq.ssb-12131&limit=5",
       "citation": {
         "text": "Statistisk sentralbyrå. (2024). 12131: Stønadssatser for sosialhjelp og vedtakstidspunkt  (K) 2015-2024. Retrieved from https://www.ssb.no/statbank/table/12131. Available in Atlas at https://atlas.sovereignsky.no/datasets/ssb-12131.",
         "bibtex": "@misc{atlas_ssb_12131,\n  author = {Statistisk sentralbyrå},\n  title  = {12131: Stønadssatser for sosialhjelp og vedtakstidspunkt  (K) 2015-2024},\n  year   = {2024},\n  url    = {https://www.ssb.no/statbank/table/12131},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/ssb-12131}\n}"
@@ -10203,7 +10203,7 @@
         }
       ],
       "raw_tables": null,
-      "sample_query": "https://api-atlas.urbalurba.com/ssb_12132?limit=5",
+      "sample_query": "https://api-atlas.urbalurba.com/indicator_latest_values?source_id=eq.ssb-12132&limit=5",
       "citation": {
         "text": "Statistisk sentralbyrå. (2024). 12132: Utgifter som inngår i stønadssatsene for økonomisk sosialhjelp (K) 2015-2024. Retrieved from https://www.ssb.no/statbank/table/12132. Available in Atlas at https://atlas.sovereignsky.no/datasets/ssb-12132.",
         "bibtex": "@misc{atlas_ssb_12132,\n  author = {Statistisk sentralbyrå},\n  title  = {12132: Utgifter som inngår i stønadssatsene for økonomisk sosialhjelp (K) 2015-2024},\n  year   = {2024},\n  url    = {https://www.ssb.no/statbank/table/12132},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/ssb-12132}\n}"
@@ -10489,7 +10489,7 @@
         }
       ],
       "raw_tables": null,
-      "sample_query": "https://api-atlas.urbalurba.com/ssb_12292?limit=5",
+      "sample_query": "https://api-atlas.urbalurba.com/indicator_latest_values?source_id=eq.ssb-12292&limit=5",
       "citation": {
         "text": "Statistisk sentralbyrå. (2024). 12292: Omsorgstjenester - supplerende grunnlagstall (K) 2015-2024. Retrieved from https://www.ssb.no/statbank/table/12292. Available in Atlas at https://atlas.sovereignsky.no/datasets/ssb-12292.",
         "bibtex": "@misc{atlas_ssb_12292,\n  author = {Statistisk sentralbyrå},\n  title  = {12292: Omsorgstjenester - supplerende grunnlagstall (K) 2015-2024},\n  year   = {2024},\n  url    = {https://www.ssb.no/statbank/table/12292},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/ssb-12292}\n}"
@@ -10783,7 +10783,7 @@
         }
       ],
       "raw_tables": null,
-      "sample_query": "https://api-atlas.urbalurba.com/ssb_12944?limit=5",
+      "sample_query": "https://api-atlas.urbalurba.com/indicator_latest_values?source_id=eq.ssb-12944&limit=5",
       "citation": {
         "text": "Statistisk sentralbyrå. (2024). 12944: Personer i husholdninger med vedvarende lavinntekt (EU-skala 60 prosent), etter alder. Treårsperiode (K) (B) (2011-2013)-(2022-2024). Retrieved from https://www.ssb.no/statbank/table/12944. Available in Atlas at https://atlas.sovereignsky.no/datasets/ssb-12944.",
         "bibtex": "@misc{atlas_ssb_12944,\n  author = {Statistisk sentralbyrå},\n  title  = {12944: Personer i husholdninger med vedvarende lavinntekt (EU-skala 60 prosent), etter alder. Treårsperiode (K) (B) (2011-2013)-(2022-2024)},\n  year   = {2024},\n  url    = {https://www.ssb.no/statbank/table/12944},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/ssb-12944}\n}"
@@ -11067,7 +11067,7 @@
         }
       ],
       "raw_tables": null,
-      "sample_query": "https://api-atlas.urbalurba.com/ssb_13995?limit=5",
+      "sample_query": "https://api-atlas.urbalurba.com/indicator_latest_values?source_id=eq.ssb-13995&limit=5",
       "citation": {
         "text": "Statistisk sentralbyrå. (2025). 13995: Sosialhjelpstilfeller, utbetalt beløp og stønadstid (K) 2022-2024. Retrieved from https://www.ssb.no/statbank/table/13995. Available in Atlas at https://atlas.sovereignsky.no/datasets/ssb-13995.",
         "bibtex": "@misc{atlas_ssb_13995,\n  author = {Statistisk sentralbyrå},\n  title  = {13995: Sosialhjelpstilfeller, utbetalt beløp og stønadstid (K) 2022-2024},\n  year   = {2025},\n  url    = {https://www.ssb.no/statbank/table/13995},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/ssb-13995}\n}"
@@ -11373,7 +11373,7 @@
         "ssb_09405",
         "ssb_09406"
       ],
-      "sample_query": "https://api-atlas.urbalurba.com/ssb_08484?limit=5",
+      "sample_query": "https://api-atlas.urbalurba.com/indicator_latest_values?source_id=eq.ssb-crime-tables&limit=5",
       "citation": {
         "text": "Statistisk sentralbyrå. (n.d.). SSB lovbruddsstatistikk (08484, 08487, 09405, 09406) — anmeldte og etterforskede lovbrudd. Retrieved from https://www.ssb.no/statbank/table/08487. Available in Atlas at https://atlas.sovereignsky.no/datasets/ssb-crime-tables.",
         "bibtex": "@misc{atlas_ssb_crime_tables,\n  author = {Statistisk sentralbyrå},\n  title  = {SSB lovbruddsstatistikk (08484, 08487, 09405, 09406) — anmeldte og etterforskede lovbrudd},\n  year   = {n.d.},\n  url    = {https://www.ssb.no/statbank/table/08487},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/ssb-crime-tables}\n}"
@@ -11680,7 +11680,7 @@
         }
       ],
       "raw_tables": null,
-      "sample_query": "https://api-atlas.urbalurba.com/ssb_klass_fylker?limit=5",
+      "sample_query": "https://api-atlas.urbalurba.com/dim_kommune?limit=5",
       "citation": {
         "text": "Statistisk sentralbyrå. (n.d.). Standard for fylkesinndeling. Retrieved from https://www.ssb.no/klass/klassifikasjoner/104. Available in Atlas at https://atlas.sovereignsky.no/datasets/ssb-klass-fylker.",
         "bibtex": "@misc{atlas_ssb_klass_fylker,\n  author = {Statistisk sentralbyrå},\n  title  = {Standard for fylkesinndeling},\n  year   = {n.d.},\n  url    = {https://www.ssb.no/klass/klassifikasjoner/104},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/ssb-klass-fylker}\n}"
@@ -12007,7 +12007,7 @@
         }
       ],
       "raw_tables": null,
-      "sample_query": "https://api-atlas.urbalurba.com/ssb_klass_kommuner?limit=5",
+      "sample_query": "https://api-atlas.urbalurba.com/dim_kommune?limit=5",
       "citation": {
         "text": "Statistisk sentralbyrå. (n.d.). Standard for kommuneinndeling. Retrieved from https://www.ssb.no/klass/klassifikasjoner/131. Available in Atlas at https://atlas.sovereignsky.no/datasets/ssb-klass-kommuner.",
         "bibtex": "@misc{atlas_ssb_klass_kommuner,\n  author = {Statistisk sentralbyrå},\n  title  = {Standard for kommuneinndeling},\n  year   = {n.d.},\n  url    = {https://www.ssb.no/klass/klassifikasjoner/131},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/ssb-klass-kommuner}\n}"
@@ -13482,7 +13482,7 @@
               }
             ],
             "raw_tables": null,
-            "sample_query": "https://api-atlas.urbalurba.com/bufdir_barnefattigdom?limit=5",
+            "sample_query": null,
             "citation": {
               "text": "Barne-, ungdoms- og familiedirektoratet. (n.d.). Barnefattigdom kommunemonitor. Retrieved from https://www.bufdir.no/statistikk-og-analyse/monitor/barnefattigdom/. Available in Atlas at https://atlas.sovereignsky.no/datasets/bufdir-barnefattigdom.",
               "bibtex": "@misc{atlas_bufdir_barnefattigdom,\n  author = {Barne-, ungdoms- og familiedirektoratet},\n  title  = {Barnefattigdom kommunemonitor},\n  year   = {n.d.},\n  url    = {https://www.bufdir.no/statistikk-og-analyse/monitor/barnefattigdom/},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/bufdir-barnefattigdom}\n}"
@@ -13581,7 +13581,7 @@
               }
             ],
             "raw_tables": null,
-            "sample_query": "https://api-atlas.urbalurba.com/ssb_08764?limit=5",
+            "sample_query": "https://api-atlas.urbalurba.com/indicator_latest_values?source_id=eq.ssb-08764&limit=5",
             "citation": {
               "text": "Statistisk sentralbyrå. (2024). 08764: Personer under 18 år i husholdninger med lavinntekt (EU- og OECD-skala). Antall og prosent (K) (B) 2005-2024. Retrieved from https://www.ssb.no/statbank/table/08764. Available in Atlas at https://atlas.sovereignsky.no/datasets/ssb-08764.",
               "bibtex": "@misc{atlas_ssb_08764,\n  author = {Statistisk sentralbyrå},\n  title  = {08764: Personer under 18 år i husholdninger med lavinntekt (EU- og OECD-skala). Antall og prosent (K) (B) 2005-2024},\n  year   = {2024},\n  url    = {https://www.ssb.no/statbank/table/08764},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/ssb-08764}\n}"
@@ -13878,7 +13878,7 @@
               }
             ],
             "raw_tables": null,
-            "sample_query": "https://api-atlas.urbalurba.com/ssb_12944?limit=5",
+            "sample_query": "https://api-atlas.urbalurba.com/indicator_latest_values?source_id=eq.ssb-12944&limit=5",
             "citation": {
               "text": "Statistisk sentralbyrå. (2024). 12944: Personer i husholdninger med vedvarende lavinntekt (EU-skala 60 prosent), etter alder. Treårsperiode (K) (B) (2011-2013)-(2022-2024). Retrieved from https://www.ssb.no/statbank/table/12944. Available in Atlas at https://atlas.sovereignsky.no/datasets/ssb-12944.",
               "bibtex": "@misc{atlas_ssb_12944,\n  author = {Statistisk sentralbyrå},\n  title  = {12944: Personer i husholdninger med vedvarende lavinntekt (EU-skala 60 prosent), etter alder. Treårsperiode (K) (B) (2011-2013)-(2022-2024)},\n  year   = {2024},\n  url    = {https://www.ssb.no/statbank/table/12944},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/ssb-12944}\n}"
@@ -14183,7 +14183,7 @@
               }
             ],
             "raw_tables": null,
-            "sample_query": "https://api-atlas.urbalurba.com/fhi_trangbodd?limit=5",
+            "sample_query": "https://api-atlas.urbalurba.com/indicator_latest_values?source_id=eq.fhi-trangbodd&limit=5",
             "citation": {
               "text": "Folkehelseinstituttet. (2024). Trangbodd_UTDANN. Retrieved from https://statistikk-data.fhi.no/api/open/v1/nokkel/table/794. Available in Atlas at https://atlas.sovereignsky.no/datasets/fhi-trangbodd.",
               "bibtex": "@misc{atlas_fhi_trangbodd,\n  author = {Folkehelseinstituttet},\n  title  = {Trangbodd_UTDANN},\n  year   = {2024},\n  url    = {https://statistikk-data.fhi.no/api/open/v1/nokkel/table/794},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/fhi-trangbodd}\n}"

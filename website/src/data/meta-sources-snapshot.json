@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-23T04:05:37.730Z",
+  "generated_at": "2026-09-23T05:52:52.328Z",
   "source_url": "https://api-atlas.urbalurba.com",
   "rows": [
     {
@@ -7,308 +7,585 @@
       "last_ingested_at": "2026-09-14T11:24:49.919574+00:00",
       "latest_row_count": 1174030,
       "total_runs": 1,
-      "downstream_model_count": 5
+      "downstream_model_count": 5,
+      "served_as": [
+        "brreg_enhet",
+        "kommune_ngo_summary",
+        "kommune_ngo_totals"
+      ]
     },
     {
       "source_id": "brreg-frivillige",
       "last_ingested_at": "2026-09-23T02:01:41.931588+00:00",
       "latest_row_count": 72827,
       "total_runs": 10,
-      "downstream_model_count": 5
+      "downstream_model_count": 5,
+      "served_as": [
+        "brreg_enhet",
+        "kommune_ngo_summary",
+        "kommune_ngo_totals"
+      ]
     },
     {
       "source_id": "brreg-oppdateringer",
       "last_ingested_at": "2026-09-23T03:01:02.579103+00:00",
       "latest_row_count": 0,
       "total_runs": 414,
-      "downstream_model_count": 5
+      "downstream_model_count": 5,
+      "served_as": [
+        "brreg_enhet",
+        "kommune_ngo_summary",
+        "kommune_ngo_totals"
+      ]
     },
     {
       "source_id": "bufdir-barnefattigdom",
       "last_ingested_at": "2026-09-22T20:33:58.185556+00:00",
       "latest_row_count": 81568,
       "total_runs": 5,
-      "downstream_model_count": 1
+      "downstream_model_count": 1,
+      "served_as": []
     },
     {
       "source_id": "fhi-alkohol",
       "last_ingested_at": "2026-09-22T20:32:54.468252+00:00",
       "latest_row_count": 34356,
       "total_runs": 5,
-      "downstream_model_count": 9
+      "downstream_model_count": 9,
+      "served_as": [
+        "coverage_gap_barnefattigdom",
+        "indicator_latest_values",
+        "indicator_missing_kommuner",
+        "indicator_summary",
+        "unattributed_totals"
+      ]
     },
     {
       "source_id": "fhi-befolkning",
       "last_ingested_at": "2026-09-22T20:33:54.383665+00:00",
       "latest_row_count": 166968,
       "total_runs": 5,
-      "downstream_model_count": 9
+      "downstream_model_count": 9,
+      "served_as": [
+        "coverage_gap_barnefattigdom",
+        "indicator_latest_values",
+        "indicator_missing_kommuner",
+        "indicator_summary",
+        "unattributed_totals"
+      ]
     },
     {
       "source_id": "fhi-befolkningsvekst",
       "last_ingested_at": "2026-09-22T20:33:05.795322+00:00",
       "latest_row_count": 74208,
       "total_runs": 5,
-      "downstream_model_count": 9
+      "downstream_model_count": 9,
+      "served_as": [
+        "coverage_gap_barnefattigdom",
+        "indicator_latest_values",
+        "indicator_missing_kommuner",
+        "indicator_summary",
+        "unattributed_totals"
+      ]
     },
     {
       "source_id": "fhi-bor-alene",
       "last_ingested_at": "2026-09-22T20:34:37.842304+00:00",
       "latest_row_count": 12270,
       "total_runs": 5,
-      "downstream_model_count": 9
+      "downstream_model_count": 9,
+      "served_as": [
+        "coverage_gap_barnefattigdom",
+        "indicator_latest_values",
+        "indicator_missing_kommuner",
+        "indicator_summary",
+        "unattributed_totals"
+      ]
     },
     {
       "source_id": "fhi-depresjon",
       "last_ingested_at": "2026-09-22T20:34:51.698457+00:00",
       "latest_row_count": 39264,
       "total_runs": 5,
-      "downstream_model_count": 9
+      "downstream_model_count": 9,
+      "served_as": [
+        "coverage_gap_barnefattigdom",
+        "indicator_latest_values",
+        "indicator_missing_kommuner",
+        "indicator_summary",
+        "unattributed_totals"
+      ]
     },
     {
       "source_id": "fhi-fortrolig-venn",
       "last_ingested_at": "2026-09-22T20:36:03.247776+00:00",
       "latest_row_count": 34356,
       "total_runs": 5,
-      "downstream_model_count": 9
+      "downstream_model_count": 9,
+      "served_as": [
+        "coverage_gap_barnefattigdom",
+        "indicator_latest_values",
+        "indicator_missing_kommuner",
+        "indicator_summary",
+        "unattributed_totals"
+      ]
     },
     {
       "source_id": "fhi-hasj",
       "last_ingested_at": "2026-09-22T20:36:10.849763+00:00",
       "latest_row_count": 34356,
       "total_runs": 5,
-      "downstream_model_count": 9
+      "downstream_model_count": 9,
+      "served_as": [
+        "coverage_gap_barnefattigdom",
+        "indicator_latest_values",
+        "indicator_missing_kommuner",
+        "indicator_summary",
+        "unattributed_totals"
+      ]
     },
     {
       "source_id": "fhi-innvandrere",
       "last_ingested_at": "2026-09-22T20:37:44.936899+00:00",
       "latest_row_count": 123680,
       "total_runs": 3,
-      "downstream_model_count": 9
+      "downstream_model_count": 9,
+      "served_as": [
+        "coverage_gap_barnefattigdom",
+        "indicator_latest_values",
+        "indicator_missing_kommuner",
+        "indicator_summary",
+        "unattributed_totals"
+      ]
     },
     {
       "source_id": "fhi-innvkat",
       "last_ingested_at": "2026-09-22T20:37:51.086346+00:00",
       "latest_row_count": 139140,
       "total_runs": 2,
-      "downstream_model_count": 9
+      "downstream_model_count": 9,
+      "served_as": [
+        "coverage_gap_barnefattigdom",
+        "indicator_latest_values",
+        "indicator_missing_kommuner",
+        "indicator_summary",
+        "unattributed_totals"
+      ]
     },
     {
       "source_id": "fhi-kpr-1aar",
       "last_ingested_at": "2026-09-22T20:37:41.283474+00:00",
       "latest_row_count": 41030,
       "total_runs": 5,
-      "downstream_model_count": 9
+      "downstream_model_count": 9,
+      "served_as": [
+        "coverage_gap_barnefattigdom",
+        "indicator_latest_values",
+        "indicator_missing_kommuner",
+        "indicator_summary",
+        "unattributed_totals"
+      ]
     },
     {
       "source_id": "fhi-livskvalitet",
       "last_ingested_at": "2026-09-22T20:37:33.218419+00:00",
       "latest_row_count": 12270,
       "total_runs": 5,
-      "downstream_model_count": 9
+      "downstream_model_count": 9,
+      "served_as": [
+        "coverage_gap_barnefattigdom",
+        "indicator_latest_values",
+        "indicator_missing_kommuner",
+        "indicator_summary",
+        "unattributed_totals"
+      ]
     },
     {
       "source_id": "fhi-mediebruk-some",
       "last_ingested_at": "2026-09-22T20:39:27.058078+00:00",
       "latest_row_count": 26994,
       "total_runs": 5,
-      "downstream_model_count": 9
+      "downstream_model_count": 9,
+      "served_as": [
+        "coverage_gap_barnefattigdom",
+        "indicator_latest_values",
+        "indicator_missing_kommuner",
+        "indicator_summary",
+        "unattributed_totals"
+      ]
     },
     {
       "source_id": "fhi-mediebruk-spill",
       "last_ingested_at": "2026-09-22T20:39:56.179842+00:00",
       "latest_row_count": 31902,
       "total_runs": 5,
-      "downstream_model_count": 9
+      "downstream_model_count": 9,
+      "served_as": [
+        "coverage_gap_barnefattigdom",
+        "indicator_latest_values",
+        "indicator_missing_kommuner",
+        "indicator_summary",
+        "unattributed_totals"
+      ]
     },
     {
       "source_id": "fhi-mediebruk-underhold",
       "last_ingested_at": "2026-09-22T20:39:31.980263+00:00",
       "latest_row_count": 19632,
       "total_runs": 5,
-      "downstream_model_count": 9
+      "downstream_model_count": 9,
+      "served_as": [
+        "coverage_gap_barnefattigdom",
+        "indicator_latest_values",
+        "indicator_missing_kommuner",
+        "indicator_summary",
+        "unattributed_totals"
+      ]
     },
     {
       "source_id": "fhi-mobbing",
       "last_ingested_at": "2026-09-22T20:39:36.167273+00:00",
       "latest_row_count": 2454,
       "total_runs": 5,
-      "downstream_model_count": 9
+      "downstream_model_count": 9,
+      "served_as": [
+        "coverage_gap_barnefattigdom",
+        "indicator_latest_values",
+        "indicator_missing_kommuner",
+        "indicator_summary",
+        "unattributed_totals"
+      ]
     },
     {
       "source_id": "fhi-neet",
       "last_ingested_at": "2026-09-22T20:42:45.812511+00:00",
       "latest_row_count": 108220,
       "total_runs": 5,
-      "downstream_model_count": 9
+      "downstream_model_count": 9,
+      "served_as": [
+        "coverage_gap_barnefattigdom",
+        "indicator_latest_values",
+        "indicator_missing_kommuner",
+        "indicator_summary",
+        "unattributed_totals"
+      ]
     },
     {
       "source_id": "fhi-prognose",
       "last_ingested_at": "2026-09-22T20:42:07.269871+00:00",
       "latest_row_count": 34689,
       "total_runs": 5,
-      "downstream_model_count": 9
+      "downstream_model_count": 9,
+      "served_as": [
+        "coverage_gap_barnefattigdom",
+        "indicator_latest_values",
+        "indicator_missing_kommuner",
+        "indicator_summary",
+        "unattributed_totals"
+      ]
     },
     {
       "source_id": "fhi-selvmord",
       "last_ingested_at": "2026-09-22T20:42:14.334856+00:00",
       "latest_row_count": 47853,
       "total_runs": 5,
-      "downstream_model_count": 9
+      "downstream_model_count": 9,
+      "served_as": [
+        "coverage_gap_barnefattigdom",
+        "indicator_latest_values",
+        "indicator_missing_kommuner",
+        "indicator_summary",
+        "unattributed_totals"
+      ]
     },
     {
       "source_id": "fhi-smertestillende",
       "last_ingested_at": "2026-09-22T20:42:16.085549+00:00",
       "latest_row_count": 29448,
       "total_runs": 5,
-      "downstream_model_count": 9
+      "downstream_model_count": 9,
+      "served_as": [
+        "coverage_gap_barnefattigdom",
+        "indicator_latest_values",
+        "indicator_missing_kommuner",
+        "indicator_summary",
+        "unattributed_totals"
+      ]
     },
     {
       "source_id": "fhi-trangbodd",
       "last_ingested_at": "2026-09-22T20:44:19.469411+00:00",
       "latest_row_count": 36810,
       "total_runs": 5,
-      "downstream_model_count": 9
+      "downstream_model_count": 9,
+      "served_as": [
+        "coverage_gap_barnefattigdom",
+        "indicator_latest_values",
+        "indicator_missing_kommuner",
+        "indicator_summary",
+        "unattributed_totals"
+      ]
     },
     {
       "source_id": "fhi-vgs-gjennomforing",
       "last_ingested_at": "2026-09-22T20:45:15.208971+00:00",
       "latest_row_count": 92760,
       "total_runs": 5,
-      "downstream_model_count": 9
+      "downstream_model_count": 9,
+      "served_as": [
+        "coverage_gap_barnefattigdom",
+        "indicator_latest_values",
+        "indicator_missing_kommuner",
+        "indicator_summary",
+        "unattributed_totals"
+      ]
     },
     {
       "source_id": "frr",
       "last_ingested_at": null,
       "latest_row_count": null,
       "total_runs": 0,
-      "downstream_model_count": 0
+      "downstream_model_count": 0,
+      "served_as": []
     },
     {
       "source_id": "redcross-branches",
       "last_ingested_at": null,
       "latest_row_count": null,
       "total_runs": 0,
-      "downstream_model_count": 12
+      "downstream_model_count": 12,
+      "served_as": [
+        "activity_catalog",
+        "distrikt_summary",
+        "kommune_local_chapters",
+        "ngo_index",
+        "ngo_overview"
+      ]
     },
     {
       "source_id": "ssb-06083",
       "last_ingested_at": "2026-09-22T20:43:56.108297+00:00",
       "latest_row_count": 9459,
       "total_runs": 5,
-      "downstream_model_count": 9
+      "downstream_model_count": 9,
+      "served_as": [
+        "coverage_gap_barnefattigdom",
+        "indicator_latest_values",
+        "indicator_missing_kommuner",
+        "indicator_summary",
+        "unattributed_totals"
+      ]
     },
     {
       "source_id": "ssb-06913",
       "last_ingested_at": "2026-09-22T20:49:38.841005+00:00",
       "latest_row_count": 783104,
       "total_runs": 5,
-      "downstream_model_count": 9
+      "downstream_model_count": 9,
+      "served_as": [
+        "coverage_gap_barnefattigdom",
+        "indicator_latest_values",
+        "indicator_missing_kommuner",
+        "indicator_summary",
+        "unattributed_totals"
+      ]
     },
     {
       "source_id": "ssb-06944",
       "last_ingested_at": "2026-09-22T20:45:53.710585+00:00",
       "latest_row_count": 49245,
       "total_runs": 5,
-      "downstream_model_count": 9
+      "downstream_model_count": 9,
+      "served_as": [
+        "coverage_gap_barnefattigdom",
+        "indicator_latest_values",
+        "indicator_missing_kommuner",
+        "indicator_summary",
+        "unattributed_totals"
+      ]
     },
     {
       "source_id": "ssb-06947",
       "last_ingested_at": "2026-09-22T20:45:36.502244+00:00",
       "latest_row_count": 5180,
       "total_runs": 5,
-      "downstream_model_count": 9
+      "downstream_model_count": 9,
+      "served_as": [
+        "coverage_gap_barnefattigdom",
+        "indicator_latest_values",
+        "indicator_missing_kommuner",
+        "indicator_summary",
+        "unattributed_totals"
+      ]
     },
     {
       "source_id": "ssb-07459",
       "last_ingested_at": "2026-09-22T20:48:25.72045+00:00",
       "latest_row_count": 210728,
       "total_runs": 5,
-      "downstream_model_count": 2
+      "downstream_model_count": 2,
+      "served_as": [
+        "kommune_befolkning_alder"
+      ]
     },
     {
       "source_id": "ssb-08764",
       "last_ingested_at": "2026-09-22T20:46:55.705545+00:00",
       "latest_row_count": 1790,
       "total_runs": 5,
-      "downstream_model_count": 9
+      "downstream_model_count": 9,
+      "served_as": [
+        "coverage_gap_barnefattigdom",
+        "indicator_latest_values",
+        "indicator_missing_kommuner",
+        "indicator_summary",
+        "unattributed_totals"
+      ]
     },
     {
       "source_id": "ssb-09429",
       "last_ingested_at": "2026-09-22T20:47:44.578897+00:00",
       "latest_row_count": 41118,
       "total_runs": 5,
-      "downstream_model_count": 9
+      "downstream_model_count": 9,
+      "served_as": [
+        "coverage_gap_barnefattigdom",
+        "indicator_latest_values",
+        "indicator_missing_kommuner",
+        "indicator_summary",
+        "unattributed_totals"
+      ]
     },
     {
       "source_id": "ssb-10826",
       "last_ingested_at": "2026-09-22T20:48:09.731987+00:00",
       "latest_row_count": 20988,
       "total_runs": 5,
-      "downstream_model_count": 1
+      "downstream_model_count": 1,
+      "served_as": []
     },
     {
       "source_id": "ssb-12063",
       "last_ingested_at": "2026-09-22T20:48:44.129154+00:00",
       "latest_row_count": 13365,
       "total_runs": 5,
-      "downstream_model_count": 9
+      "downstream_model_count": 9,
+      "served_as": [
+        "coverage_gap_barnefattigdom",
+        "indicator_latest_values",
+        "indicator_missing_kommuner",
+        "indicator_summary",
+        "unattributed_totals"
+      ]
     },
     {
       "source_id": "ssb-12131",
       "last_ingested_at": "2026-09-22T20:49:07.5614+00:00",
       "latest_row_count": 6237,
       "total_runs": 5,
-      "downstream_model_count": 9
+      "downstream_model_count": 9,
+      "served_as": [
+        "coverage_gap_barnefattigdom",
+        "indicator_latest_values",
+        "indicator_missing_kommuner",
+        "indicator_summary",
+        "unattributed_totals"
+      ]
     },
     {
       "source_id": "ssb-12132",
       "last_ingested_at": "2026-09-22T20:49:31.724627+00:00",
       "latest_row_count": 13365,
       "total_runs": 5,
-      "downstream_model_count": 9
+      "downstream_model_count": 9,
+      "served_as": [
+        "coverage_gap_barnefattigdom",
+        "indicator_latest_values",
+        "indicator_missing_kommuner",
+        "indicator_summary",
+        "unattributed_totals"
+      ]
     },
     {
       "source_id": "ssb-12292",
       "last_ingested_at": "2026-09-22T20:49:51.296407+00:00",
       "latest_row_count": 43659,
       "total_runs": 5,
-      "downstream_model_count": 9
+      "downstream_model_count": 9,
+      "served_as": [
+        "coverage_gap_barnefattigdom",
+        "indicator_latest_values",
+        "indicator_missing_kommuner",
+        "indicator_summary",
+        "unattributed_totals"
+      ]
     },
     {
       "source_id": "ssb-12944",
       "last_ingested_at": "2026-09-22T20:50:02.386444+00:00",
       "latest_row_count": 4296,
       "total_runs": 5,
-      "downstream_model_count": 9
+      "downstream_model_count": 9,
+      "served_as": [
+        "coverage_gap_barnefattigdom",
+        "indicator_latest_values",
+        "indicator_missing_kommuner",
+        "indicator_summary",
+        "unattributed_totals"
+      ]
     },
     {
       "source_id": "ssb-13995",
       "last_ingested_at": "2026-09-22T20:50:21.962333+00:00",
       "latest_row_count": 30294,
       "total_runs": 5,
-      "downstream_model_count": 9
+      "downstream_model_count": 9,
+      "served_as": [
+        "coverage_gap_barnefattigdom",
+        "indicator_latest_values",
+        "indicator_missing_kommuner",
+        "indicator_summary",
+        "unattributed_totals"
+      ]
     },
     {
       "source_id": "ssb-crime-tables",
       "last_ingested_at": "2026-09-22T20:52:09.753099+00:00",
       "latest_row_count": 709118,
       "total_runs": 5,
-      "downstream_model_count": 12
+      "downstream_model_count": 12,
+      "served_as": [
+        "coverage_gap_barnefattigdom",
+        "indicator_latest_values",
+        "indicator_missing_kommuner",
+        "indicator_summary",
+        "unattributed_totals"
+      ]
     },
     {
       "source_id": "ssb-klass-fylker",
       "last_ingested_at": "2026-09-21T23:54:17.992119+00:00",
       "latest_row_count": 41,
       "total_runs": 3,
-      "downstream_model_count": 11
+      "downstream_model_count": 11,
+      "served_as": [
+        "dim_kommune",
+        "kommune_befolkning_alder"
+      ]
     },
     {
       "source_id": "ssb-klass-kommuner",
       "last_ingested_at": "2026-09-21T23:54:25.542401+00:00",
       "latest_row_count": 1345,
       "total_runs": 3,
-      "downstream_model_count": 15
+      "downstream_model_count": 15,
+      "served_as": [
+        "dim_kommune",
+        "distrikt_summary",
+        "kommune_befolkning_alder",
+        "kommune_ngo_summary",
+        "kommune_ngo_totals"
+      ]
     }
   ]
 }
