@@ -27,6 +27,7 @@ import urllib.request
 from dagster import AssetCheckResult, AssetCheckSeverity, asset_check
 
 from atlas_data.assets.api_v1 import api_v1_surface
+from atlas_data.http_range import answered, read_count
 
 # 🔵 In-cluster service name, the same variable the UIS install sets.
 _DEFAULT_BASE = "http://postgrest"
@@ -93,10 +94,11 @@ def every_endpoint_answers():
 
     failed: list[str] = []
     empty: list[str] = []
+    uncounted: list[str] = []
     counts: dict[str, int] = {}
     for rel in relations:
         try:
-            res = _get(f"{base}/{rel}?limit=1", {"Prefer": "count=exact"})
+            res = _get(f"{base}/{rel}?limit=0", {"Prefer": "count=exact"})
             status = res.status
             rng = res.headers.get("Content-Range", "")
         except urllib.error.HTTPError as err:
@@ -105,15 +107,20 @@ def every_endpoint_answers():
         except urllib.error.URLError as err:
             failed.append(f"{rel}: {err}")
             continue
-        if status != 200:
+        if not answered(status):
             failed.append(f"{rel}: HTTP {status}")
             continue
-        total = rng.rsplit("/", 1)[-1] if "/" in rng else ""
-        counts[rel] = int(total) if total.isdigit() else -1
-        # 🔵 Empty is a STATE, not a fault. activity_catalog, distrikt_summary
-        # and kommune_local_chapters are all correctly empty while
-        # redcross-branches is on hold. Reported so it is visible, never failed.
-        if counts[rel] == 0:
+        count = read_count(rng)
+        if count is None:
+            # 🔵 Answered, but told us nothing. Reported on its own line rather
+            # than counted as 0 — reading "no count" as "no rows" is exactly
+            # the bug that hid all three real empties.
+            uncounted.append(f"{rel}: Content-Range {rng!r}")
+            continue
+        counts[rel] = count
+        # 🔵 Empty is a STATE, not a fault. Three relations are empty because
+        # redcross-branches is on hold, and that is the answer, not a failure.
+        if count == 0:
             empty.append(rel)
 
     return AssetCheckResult(
@@ -123,11 +130,17 @@ def every_endpoint_answers():
             "endpoints_checked": len(relations),
             "failed": ", ".join(failed) if failed else "none",
             "empty_but_published": ", ".join(empty) if empty else "none",
-            "total_rows_served": sum(c for c in counts.values() if c > 0),
+            "answered_without_a_count": ", ".join(uncounted) if uncounted else "none",
+            "total_rows_served": sum(counts.values()),
             "remedy": (
-                "A published relation that does not answer is invisible from the "
-                "repo: every CI gate stays green. Check the api_v1 views exist and "
-                "that PostgREST's schema cache was reloaded after the last publish."
+                "Only a 4xx/5xx or a connection error fails this check: 200 and 206 "
+                "are both answers, and an EMPTY relation is listed under "
+                "empty_but_published, not here. So a name in `failed` means that "
+                "relation did not answer at all — check the api_v1 view exists and "
+                "that PostgREST's schema cache was reloaded after the last publish. "
+                "\u26a0 Do NOT go looking for a publish problem on the strength of a "
+                "name in empty_but_published: the previous remedy text said exactly "
+                "that, and it pointed at a cache that was fine."
             ),
         },
     )
