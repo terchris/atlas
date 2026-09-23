@@ -25,12 +25,26 @@ done
 
 declared=$(grep -oE "depends_on: \{\{ ref\('mart_[a-z0-9_]+'\)" "$MODEL" \
            | sed "s/.*ref('//;s/'.*//" | sort -u)
+
+# 🔵 AND THE STATIC RELATION LIST, which is what the model actually counts. The
+# depends_on hints control BUILD ORDER; this list controls WHAT IS COUNTED. They
+# are separate and both must equal the seed — a model that declares 19 marts and
+# counts 18 would build correctly and under-report, silently.
+counted=$(grep -oE "\{'relation': '[a-z0-9_]+', 'mart': '[a-z0-9_]+'\}" "$MODEL" \
+          | sed "s/.*'mart': '//;s/'.*//" | sort -u)
 expected=$(tail -n +2 "$SEED" | cut -d, -f2 | grep -v '^mart_atlas_inventory$' | sort -u)
 
 if [ -z "$expected" ]; then
   echo "✗ CANNOT CHECK: parsed zero marts from $SEED — this check cannot pass" >&2
   echo "  by finding nothing to compare." >&2
   exit 2
+fi
+
+if [ "$counted" != "$expected" ]; then
+  echo "✗ mart_atlas_inventory COUNTS a different set than $SEED publishes:"
+  diff <(echo "$expected") <(echo "$counted") | sed 's/^/    /' | head -20
+  echo "  The model would build fine and under-report. Regenerate the list."
+  exit 1
 fi
 
 if [ "$declared" != "$expected" ]; then
@@ -42,4 +56,4 @@ if [ "$declared" != "$expected" ]; then
   exit 1
 fi
 
-echo "  ✓ mart_atlas_inventory declares all $(echo "$expected" | wc -l | tr -d ' ') published marts (itself correctly excluded)"
+echo "  ✓ mart_atlas_inventory declares AND counts all $(echo "$expected" | wc -l | tr -d ' ') published marts (itself correctly excluded)"

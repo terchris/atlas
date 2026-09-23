@@ -78,21 +78,38 @@
 -- depends_on: {{ ref('mart_ngo_overview') }}
 -- depends_on: {{ ref('mart_unattributed_totals') }}
 
-{% set relations = [] %}
-{% if execute %}
-  {% set rows = run_query("select relation_name, mart_name from " ~ ref('api_v1_relations') ~ " order by relation_name") %}
-  {% for r in rows.rows %}
-    {# 🔴 SKIP ITSELF. Once atlas_inventory is published it appears in the seed
-       it reads, and ref()-ing itself is a circular dependency dbt refuses. It
-       also could not report an honest row_count for itself: the number would
-       be whatever the table held DURING its own build. It is absent from its
-       own listing, and that absence is stated in the column docs rather than
-       left for a reader to notice — the #1427 lesson, applied to this model. #}
-    {% if r[1] != 'mart_atlas_inventory' %}
-      {% do relations.append({'relation': r[0], 'mart': r[1]}) %}
-    {% endif %}
-  {% endfor %}
-{% endif %}
+{# 🔴 A LITERAL LIST, GENERATED FROM seeds/sources/api_v1_relations.csv AND GATED.
+   The first version read the seed with run_query() at execute time, which is
+   honest and does not work: `dbt compile` in CI has no database, so the model
+   failed to compile with a Database Error. Measured, not predicted — it broke
+   four CI jobs on the first push.
+   ⚠️ So the list is static, and check-inventory-depends-on.sh asserts that BOTH
+   this list and the depends_on hints above equal the seed. A hand-list that
+   nothing checks is the defect this repo has fixed four times this week; a
+   hand-list a gate compares against its source is just a cache.
+   🔵 mart_atlas_inventory is excluded: it is published, so it appears in the
+   seed it reads, and counting itself is circular. #}
+{% set relations = [
+  {'relation': 'activity_catalog', 'mart': 'mart_activity_catalog'},
+  {'relation': 'brreg_enhet', 'mart': 'mart_brreg_enhet'},
+  {'relation': 'bufdir_indicator_alias', 'mart': 'mart_bufdir_indicator_alias'},
+  {'relation': 'coverage_gap_barnefattigdom', 'mart': 'mart_coverage_gap_barnefattigdom'},
+  {'relation': 'dim_kommune', 'mart': 'mart_dim_kommune'},
+  {'relation': 'distrikt_summary', 'mart': 'mart_distrikt_summary'},
+  {'relation': 'indicator_latest_values', 'mart': 'mart_indicator_latest_values'},
+  {'relation': 'indicator_missing_kommuner', 'mart': 'mart_indicator_missing_kommuner'},
+  {'relation': 'indicator_summary', 'mart': 'mart_indicator_summary'},
+  {'relation': 'kommune_befolkning_alder', 'mart': 'mart_kommune_befolkning_alder'},
+  {'relation': 'kommune_local_chapters', 'mart': 'mart_kommune_local_chapters'},
+  {'relation': 'kommune_ngo_summary', 'mart': 'mart_kommune_ngo_summary'},
+  {'relation': 'kommune_ngo_totals', 'mart': 'mart_kommune_ngo_totals'},
+  {'relation': 'meta_dimensions', 'mart': 'mart_meta_dimensions'},
+  {'relation': 'meta_endpoints', 'mart': 'mart_meta_endpoints'},
+  {'relation': 'meta_sources', 'mart': 'mart_meta_sources'},
+  {'relation': 'ngo_index', 'mart': 'mart_ngo_index'},
+  {'relation': 'ngo_overview', 'mart': 'mart_ngo_overview'},
+  {'relation': 'unattributed_totals', 'mart': 'mart_unattributed_totals'},
+] %}
 
 {% if relations | length == 0 %}
 
