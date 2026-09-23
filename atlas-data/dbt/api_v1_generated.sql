@@ -26,6 +26,10 @@ Curated wrapper views over Norwegian public data and NGO supply data, served
 by PostgREST. Values are republished as the upstream publishes them.
 
 THE CATALOGUE:
+  atlas_inventory   what Atlas publishes: per endpoint, how many records it
+                    serves, when its data last arrived and last SUCCEEDED
+                    (different columns), how many ingest attempts, and whether
+                    the rows came from an ingest, a seed or the catalogue.
   meta_endpoints    every relation below, with tags. The index.
   meta_sources      one row per ingested source: licence, publisher,
                     coverage, freshness, downstream model count.
@@ -124,6 +128,84 @@ activity_id values.';
 COMMENT ON COLUMN api_v1.activity_catalog.chapter_count IS 'Count of distinct active chapters offering this activity. Zero
 when the activity exists in dim_activity but no active chapter
 provides it (rare but possible during transitions).';
+
+-- atlas_inventory  ←  marts.mart_atlas_inventory
+CREATE OR REPLACE VIEW api_v1.atlas_inventory AS SELECT * FROM marts.mart_atlas_inventory;
+COMMENT ON VIEW api_v1.atlas_inventory IS 'What Atlas publishes, one row per queryable endpoint: how many records it
+serves, when its data last arrived, and where those rows came from.
+
+Asked for by Røde Kors — "validate that all datasets that are ingested has
+an endpoint and it can be queried … count the number of records each
+endpoint has and update the last time it ingested data."
+
+⚠️ THE GRAIN IS PER ENDPOINT, NOT PER SOURCE. meta_sources answers "what
+did Atlas ingest"; this answers "what can I query, and is there anything
+in it". One source can feed several endpoints and one endpoint can draw on
+several sources, so the two row counts are not comparable and summing
+sources will not reproduce an endpoint''s count.
+
+⚠️ atlas_inventory does not list ITSELF. It is built from the same seed it
+reports on, so counting itself would be circular and the number would be
+whatever the table held mid-build. 19 endpoints are listed; 20 are
+published.';
+COMMENT ON COLUMN api_v1.atlas_inventory.endpoint IS 'The api_v1 relation name, exactly as it appears in the URL path —
+`GET /indicator_latest_values`. Unique.';
+COMMENT ON COLUMN api_v1.atlas_inventory.row_count IS 'Records the endpoint serves, counted at transform time with an
+unfiltered `count(*)`.
+
+⚠️ This is the whole relation, not a filtered view of it. A source
+contributing to a multi-source endpoint is not visible here — use
+meta_sources.served_as to see which endpoints carry a given source.';
+COMMENT ON COLUMN api_v1.atlas_inventory.is_empty IS 'True when row_count is 0. An endpoint can be published, correct and
+empty — activity_catalog, distrikt_summary and kommune_local_chapters
+all are, because redcross-branches is on hold. Empty is a state, not a
+fault, and is reported rather than hidden.';
+COMMENT ON COLUMN api_v1.atlas_inventory.origin IS 'Where the served rows come from.
+
+  ingest              at least one contributing source has a
+                      successful ingest run behind it
+  seed                no contributing source; the rows are a
+                      committed CSV in the repo
+  declared_no_ingest  a source is declared in lineage but has never
+                      run successfully — the rows, if any, came from
+                      somewhere else
+  catalogue           meta_* relations, which describe Atlas itself
+
+⚠️ ''editorial'' is NOT yet distinguished from ''seed''.
+bufdir_indicator_alias carries hand-written judgements about which
+successor indicator is closer, served beside republished NLOD
+statistics with nothing marking the difference. That distinction needs
+a human decision about what Atlas asserts; the column exists so the
+value can be added without a schema change.';
+COMMENT ON COLUMN api_v1.atlas_inventory.contributing_sources IS 'Source ids feeding this endpoint, from the dbt lineage graph.
+
+🔴 THIS IS LINEAGE, NOT PROVENANCE. It states which sources the models
+READ, not where the rows currently served came from. ngo_index declares
+redcross-branches and serves 11 rows from a seed, because
+redcross-branches has never run. Read it with `origin`, never alone.';
+COMMENT ON COLUMN api_v1.atlas_inventory.last_run_at IS 'The last ingest attempt for any contributing source, success or
+failure.
+
+🔴 NOT THE SAME AS last_succeeded_at, AND THAT GAP IS THE POINT.
+meta_sources filters every freshness field to successful runs, so a
+source failing for nine days reports its last success and looks
+healthy — fhi-innvandrere did exactly that, 14 to 22 September. Compare
+the two columns; a wide gap means something has been failing quietly.';
+COMMENT ON COLUMN api_v1.atlas_inventory.last_succeeded_at IS 'The last ingest attempt that completed with exit code 0, for any
+contributing source. Null when nothing has ever succeeded.';
+COMMENT ON COLUMN api_v1.atlas_inventory.last_status IS '`ok` or `fail` — whether the most recent run of each contributing
+source succeeded.
+
+⚠️ `fail` if ANY contributing source''s latest run failed. An endpoint
+is only as fresh as its worst input, and reporting `ok` because four
+of five sources are healthy would hide the one that is not.';
+COMMENT ON COLUMN api_v1.atlas_inventory.runs_total IS 'Ingest attempts for the contributing sources, successes AND failures.
+
+⚠️ Deliberately NOT called total_runs. meta_sources.total_runs already
+means successes-only in a published relation, and one word with two
+meanings across two endpoints is a defect waiting to be quoted.';
+COMMENT ON COLUMN api_v1.atlas_inventory.runs_succeeded IS 'Ingest attempts that completed with exit code 0. `runs_total -
+runs_succeeded` is the number of failures.';
 
 -- brreg_enhet  ←  marts.mart_brreg_enhet
 CREATE OR REPLACE VIEW api_v1.brreg_enhet AS SELECT * FROM marts.mart_brreg_enhet;

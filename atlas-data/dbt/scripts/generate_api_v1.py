@@ -147,6 +147,10 @@ Curated wrapper views over Norwegian public data and NGO supply data, served
 by PostgREST. Values are republished as the upstream publishes them.
 
 THE CATALOGUE:
+  atlas_inventory   what Atlas publishes: per endpoint, how many records it
+                    serves, when its data last arrived and last SUCCEEDED
+                    (different columns), how many ingest attempts, and whether
+                    the rows came from an ingest, a seed or the catalogue.
   meta_endpoints    every relation below, with tags. The index.
   meta_sources      one row per ingested source: licence, publisher,
                     coverage, freshness, downstream model count.

@@ -38,6 +38,8 @@ jobs:
         run: atlas-data/dbt/check-sources-seed-is-current.sh
       - name: Every generator has a drift gate or declares why not
         run: atlas-data/dbt/check-generators-declare-a-drift-gate.sh
+      - name: The inventory declares every published mart
+        run: atlas-data/dbt/check-inventory-depends-on.sh
       # Reads the fact SQL and the dimensions seed directly — no database, no
       # dbt parse, so it belongs in the job that needs neither.
       - name: Windowing agrees with the published catalogue
