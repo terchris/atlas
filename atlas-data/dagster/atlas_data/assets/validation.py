@@ -98,6 +98,10 @@ def every_endpoint_answers():
     counts: dict[str, int] = {}
     for rel in relations:
         try:
+            # 🔵 limit=0: an exact count for empty AND non-empty, no rows on
+            # the wire. ⚠️ Read the note in http_range.read_count before
+            # changing this — the ORIGINAL reason given for it (a phantom `*/*`
+            # from ?limit=1) was a Cloudflare cache artifact and is retracted.
             res = _get(f"{base}/{rel}?limit=0", {"Prefer": "count=exact"})
             status = res.status
             rng = res.headers.get("Content-Range", "")
