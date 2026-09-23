@@ -79,7 +79,10 @@ check keeps you correct if that changes, and no client can read the setting
 from outside. brreg_enhet carries the cost caveat: on that relation a
 count=exact over a predicate that cannot use an index scans 1.17 million rows.
 Do not substitute count=planned to make it cheap — it is a planner estimate
-and can report FEWER rows than exist.';
+whose error is unbounded in both directions. Measured: 118 for a pattern
+matching nothing, and 1176875 against an actual 1175169 unfiltered, i.e. MORE
+rows than exist, which would raise a false truncation alarm on a complete
+answer.';
 
 -- activity_catalog  ←  marts.mart_activity_catalog
 CREATE OR REPLACE VIEW api_v1.activity_catalog AS SELECT * FROM marts.mart_activity_catalog;
@@ -173,12 +176,29 @@ that never completes is indistinguishable from a blocked one on the
 fetch side. CORS is fine (urb-agents #1361).
 
 🔴 AND DO NOT SUBSTITUTE `count=planned` AS THE DETECTOR. It is fast
-(0.16 s on the pattern above) and it UNDER-REPORTS: it returned 118
-against an actual 428. A detector that can report fewer rows than
-exist will tell you a truncated result was complete. `count=estimated`
-does not help either — measured 10.99 s, because it falls back to an
-exact count when the planner''s estimate is small. Use `planned` only
-where an order of magnitude will do, never to decide completeness.
+(0.16 s on the pattern above) and its error is unbounded in BOTH
+directions. Measured 2026-09-23:
+
+    navn ilike *zzzzqqq*   planned    118   exact         0
+    navn ilike *frivillig* planned    118
+    navn ilike *røde*      planned    118
+    navn ilike *as*        planned 570 606
+    no filter              planned 1 176 875  exact 1 175 169
+
+⚠️ 118 for a pattern that matches NOTHING, and the same 118 for three
+unrelated patterns — for those it is not an estimate of your query at
+all, it is the planner''s fallback guess. `*as*` gets a real estimate,
+so it is not a constant either; you cannot tell which you got.
+
+🔴 And unfiltered it reports 1 706 MORE rows than exist. A detector
+built on it would raise a FALSE TRUNCATION ALARM on a complete answer
+— the opposite failure to the one you were guarding against, and just
+as silent.
+
+`count=estimated` does not help — measured 10.99 s, because it falls
+back to an exact count when the planner''s estimate is small. Use
+`planned` only where an order of magnitude will do, never to decide
+completeness.
 
 Kilde: Brønnøysundregistrene. Inneholder data under norsk lisens for offentlige data
 (NLOD) tilgjengeliggjort av Brønnøysundregistrene — https://data.norge.no/nlod/no/2.0.
