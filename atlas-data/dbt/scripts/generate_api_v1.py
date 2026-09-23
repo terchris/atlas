@@ -173,7 +173,10 @@ check keeps you correct if that changes, and no client can read the setting
 from outside. brreg_enhet carries the cost caveat: on that relation a
 count=exact over a predicate that cannot use an index scans 1.17 million rows.
 Do not substitute count=planned to make it cheap — it is a planner estimate
-and can report FEWER rows than exist."""
+whose error is unbounded in both directions. Measured: 118 for a pattern
+matching nothing, and 1176875 against an actual 1175169 unfiltered, i.e. MORE
+rows than exist, which would raise a false truncation alarm on a complete
+answer."""
 
 
 def _sql_string(text):
