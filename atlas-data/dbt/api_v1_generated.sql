@@ -20,6 +20,10 @@ COMMENT ON SCHEMA api_v1 IS
 Curated wrapper views over Norwegian public data and NGO supply data, served
 by PostgREST. Values are republished as the upstream publishes them.
 
+DOCUMENTATION — guides, per-dataset pages, licence and provenance:
+  https://atlas.sovereignsky.no
+  https://atlas.sovereignsky.no/api   the same document as this one, browsable, with worked examples
+
 THE CATALOGUE — start here:
   meta_endpoints    every relation below, with tags. The index.
   meta_sources      one row per ingested source: licence, publisher,
