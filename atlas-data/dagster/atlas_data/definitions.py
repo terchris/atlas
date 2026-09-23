@@ -34,6 +34,7 @@ from dagster import Definitions, load_asset_checks_from_modules
 
 from atlas_data.assets import (
     api_v1,
+    validation,
     migrations,
     raw_brreg,
     raw_fhi,
@@ -87,7 +88,11 @@ defs = Definitions(
     # 🔵 A guard would have to be maintained and, with no dagster test suite in
     # CI, would not run. Enumerating removes the class of error instead: a check
     # decorated in assets/api_v1.py is registered by existing.
-    asset_checks=load_asset_checks_from_modules([api_v1]),
+    # ⚠️ validation's two checks are attached to api_v1_surface but are NOT part
+    # of the publish gate — they leave the process and dereference external URLs,
+    # so they run daily after ingest rather than after every publish. The
+    # exclusion is in schedules.py where _API_V1_CHECKS is built.
+    asset_checks=load_asset_checks_from_modules([api_v1, validation]),
     jobs=jobs,
     # Cadence comes from each source's declared periodicity — see schedules.py.
     # They ship stopped; turning them on is a go-live decision.
