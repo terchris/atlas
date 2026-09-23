@@ -4,7 +4,7 @@
 both PLANs and INVESTIGATEs — an earlier version of this doc covered only INVESTIGATEs, which left
 the whole data-platform workstream invisible here for months.
 
-**Last updated**: 2026-08-30. Re-rank whenever something moves to `completed/`, a new item lands,
+**Last updated**: 2026-09-23. Re-rank whenever something moves to `completed/`, a new item lands,
 or a blocker clears.
 
 **State**: `active/` is **empty**, and that is honest — PLAN-007 and the asgard deployment plan both
@@ -37,6 +37,8 @@ answered within hours.
 | **Should imac's cluster start with its host?** | [INVESTIGATE-atlas-as-a-uis-application](INVESTIGATE-atlas-as-a-uis-application.md) | 2026-09-07 | The API **disappears silently on every reboot** and a frontend is about to be built against it. All cluster state survives; only the process does not. **One host setting, ~5 minutes** — Rancher Desktop autostart or k3s under systemd. Not platform work, queues behind nothing. |
 | **NLOD attribution across everything Atlas publishes** | [INVESTIGATE-nlod-attribution](INVESTIGATE-nlod-attribution.md) | 2026-09-11 | Split out of the Brreg work at Terje's direction so it is not treated as Brreg-specific. Repo-wide: every upstream is NLOD and requires attribution. Machinery exists (`meta_sources` publishes licence and attribution); `seed-sources/brreg-enheter/` has no manifest at all. **Deliberately parked** — recorded so it is not lost, not being worked. |
 | **Public-docs topology** — internal detail in a public repo | raised in `terchris/home` talk | 2026-08-26 | `asgard-performance-baseline.md` is world-readable and names infrastructure. Proposed a platform-facts-to-home split. **Still unanswered.** Recurs every time a doc mentions infrastructure. |
+| 🔴 **Four decisions on the analytical surface** — publish Parquet at all ([Q1]), drop `doc` from responses ([Q4]), host on R2 ([Q5]), accept a prerelease `duckdb-wasm` tag ([Q8]) | [INVESTIGATE-parquet-duckdb-wasm-surface](INVESTIGATE-parquet-duckdb-wasm-surface.md) | 2026-09-23 | Decides whether Atlas gets a second, file-based query surface or stays single-surface. **Does not block the hardening half** — Option A (`db-max-rows`, `statement_timeout`, indexes) is correct regardless and needs no decision. [Q5] touches Terje's Cloudflare account, so it is his either way. |
+| 🔴 **Does the public API stay pointed at imac?** | [INVESTIGATE-parquet-duckdb-wasm-surface](INVESTIGATE-parquet-duckdb-wasm-surface.md) [Q15] | 2026-09-23 | `api-atlas.urbalurba.com` is served from **imac (test)** today, while `PLAN-atlas-asgard-001` puts production on asgard against Odin pg and imac's charter is explicitly a place to try things *without* touching production. Inherited rather than chosen. Pairs with the reboot question two rows up — a public endpoint that vanishes on every reboot is the same decision seen from the other end. |
 
 ---
 
@@ -45,8 +47,15 @@ answered within hours.
 **No one can observe asgard.** `kubectl` is absent on tecMacDev and on the ops host; the ops host
 has the kubeconfig but no client; huginn runs inside the cluster but is excluded pending login.
 The tester's green Dagster verification of 2026-09-04 describes **its own cluster**, not ours.
-**asgard's Dagster is unverified since 2026-08-30.** The public API hostnames also do not resolve
-from this machine, so the data cannot be probed from outside either.
+**asgard's Dagster is unverified since 2026-08-30.** ~~The public API hostnames also do not resolve
+from this machine, so the data cannot be probed from outside either.~~
+
+✅ **The struck sentence is no longer true, corrected 2026-09-23.** `api-atlas.urbalurba.com`
+resolves and answers from tecMacDev today, and was measured end to end — latency by query shape,
+row counts, payload sizes, allowed methods and the Cloudflare edge configuration. See
+[INVESTIGATE-parquet-duckdb-wasm-surface](INVESTIGATE-parquet-duckdb-wasm-surface.md). ⚠️ **The
+rest of this constraint stands**: that hostname is served from **imac**, not asgard, so probing it
+says nothing about asgard. The observability gap is unchanged.
 
 This is not an Atlas defect and not something Atlas can fix. It is recorded here because it
 bounds what any item below can claim: **no plan may treat "verified" as meaning verified on the
@@ -59,6 +68,7 @@ instance that serves data**, unless it names who ran the check and where.
 | # | Item | Effort | Why this tier |
 |---|---|---|---|
 | — | 🔴 **Brreg: all 1.17M organisations + automated updates** — [INVESTIGATE-all-brreg-organisations](INVESTIGATE-all-brreg-organisations.md) | L | **Decided by Terje 2026-09-11**: full Enhetsregisteret, no new public endpoint. Needs a PLAN. Architecture is settled — bulk snapshot + `/oppdateringer` change feed polled by `?oppdateringsid=`, append-only into `raw.*`, reconciled by a dbt incremental model. Two Brreg sources: Enhetsregisteret for the base, the dedicated Frivillighetsregisteret API to enrich the ~72,806 voluntary ones. ⚠️ **One question surfaced after the decision and needs Terje's confirmation**: Enhetsregisteret is two registers — `enheter` (1,174,098) and `underenheter` (862,903, own change feed). "Everything" was answered before that distinction was put to him. Recommendation in the file: enheter only in the first PLAN. |
+| — | 🔴 **`navn` is unindexed, so name search and name sort scan 1.17M rows** — [INVESTIGATE-parquet-duckdb-wasm-surface](INVESTIGATE-parquet-duckdb-wasm-surface.md) | S (hardening) / M (Parquet) | **New 2026-09-23, measured from tecMacDev against the live host.** `order=navn.desc` takes 5.2–7.0 s, and an `ilike` matching nothing takes 8.96 s; concurrent scans saturate the origin (figures on urb-agents #1438, not here). ⚠️ **First diagnosis said "no indexes on `marts.*`" and was wrong** — it came from a case-sensitive `grep "CREATE INDEX"` that could see neither lowercase SQL nor dbt's declarative `indexes=` config. `dim_brreg_enhet` has **seven** indexes; an indexed lookup matching nothing returns in 0.32 s against the same query's 8.96 s unindexed. The real gap is **one column, `navn`** — btree plus `pg_trgm` GIN, added the way the existing seven were. Cloudflare reports **0.01% cached** (14 kB of 108 MB in 24 h); there are no Cache Rules and PostgREST sends no `Cache-Control`/`ETag`. ✅ **Split it**: the hardening half (`db-max-rows`, `statement_timeout`, indexes) needs **no decision from Terje** and removes a collapse mode anyone can trigger from a browser address bar — do that first. The Parquet half is the four decisions in the Terje table. 🔵 Directly downstream of the Brreg row above: the 1.17M decision is what makes this load-bearing. |
 | 0 | [INVESTIGATE-atlas-as-a-uis-application](INVESTIGATE-atlas-as-a-uis-application.md) | L | 🔴 **The product's target shape (Terje, 2026-09-06).** Install Atlas on UIS with one command, using the Dagster/PostgreSQL/PostgREST it already ships and the config system it already has. Acceptance is stricter than anything before it: **the API answers from tecMacDev over the LAN**, because the frontend will be built against it from there. Two machines, one network — no public domain, no tunnel. Needs tor-agent — the platform may need an `Application` type it does not have. |
 | 0 | [INVESTIGATE-atlas-data-as-deployable-application](INVESTIGATE-atlas-data-as-deployable-application.md) | L | 🔴 **The product's target shape (Terje, 2026-09-05).** One installable application that gathers the data and makes it queryable, with the frontend as a forkable example. The container already exists and runs on UIS; what is missing is the installer, the declared query surface, and a repo split blocked by a build-time coupling from the docs site. |
 | 1 | [INVESTIGATE-ingest-freshness-visibility](INVESTIGATE-ingest-freshness-visibility.md) | M | 🔴 **Highest.** On 2026-08-30, 15 of 41 sources silently did not refresh and *every signal stayed green* — the check suite returned identical numbers. We cannot currently tell "refreshed and unchanged" from "never refreshed". Monitoring that cannot distinguish those is not monitoring. **The in-suite half now ships and has been seen to fail on-cluster (FAIL 28 → 24 → 2).** 2026-09-08: its single 8-day threshold was wrong for the two monthly-polled KLASS sources and was measured to go falsely red from 09-13 until 10-01 — thresholds now derive from a declared `meta.ingest_cadence`, and `brreg-enheter` became a Dagster asset rather than being exempted. The remaining gap is unchanged and is what this item is still open for: **if the daemon stalls, nothing runs, so nothing reports.** That needs a reader outside the pipeline. |
@@ -119,6 +129,16 @@ instance that serves data**, unless it names who ran the check and where.
 
 ## Cross-cutting notes
 
+- 🔴 **One check outranks everything in this doc, and it is not a decision: does the public API
+  accept writes?** Found while measuring the Parquet item, 2026-09-23. The live API advertises
+  `Allow: OPTIONS,GET,HEAD,POST,PATCH,DELETE` on all 16 auto-updatable `api_v1` views; the 4
+  aggregate views show `GET,HEAD` only — which is Postgres refusing to write through aggregates,
+  **not** a privilege boundary. `api_v1_generated.sql` grants `SELECT` only, but inside
+  a role-existence guard, so the grants can **silently never apply**. ⚠️ **No write was attempted**,
+  and the mechanism is deliberately not spelled out in this public repo — it is on urb-agents
+  #1438. It should be settled with `\du` and `\dp` on the host rather than by
+  testing against a public endpoint. [Q14] in
+  [INVESTIGATE-parquet-duckdb-wasm-surface](INVESTIGATE-parquet-duckdb-wasm-surface.md).
 - **The data-platform cluster (#1–#4) is new and currently the most urgent**, all of it from one
   night's evidence. #1 is the one with teeth: #2 and #4 are about *preventing* a missed refresh,
   #1 is about *noticing* one.
