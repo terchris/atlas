@@ -62,6 +62,7 @@ const ALL_SCHEMA_FILES = [
 import { ATLAS_SITE_BASE_URL, ATLAS_API_BASE_URL } from '../hosts.mjs';
 
 const META_SOURCES_SNAPSHOT = resolve(WEBSITE_DIR, 'src', 'data', 'meta-sources-snapshot.json');
+const API_V1_RELATIONS = resolve(DBT_DIR, 'seeds', 'sources', 'api_v1_relations.csv');
 
 /**
  * Substitute host tokens into HAND-WRITTEN content.
@@ -792,9 +793,44 @@ function main() {
   // (mart_ prefix stripped). Title comes from meta.title in dbt's
   // schema.yml; description from the same file.
 
-  const viewsFromLineage = [...lineage.edgesByModel.keys()]
-    .filter((m) => m.startsWith('mart_'))
-    .sort();
+  // 🔴 DERIVED FROM WHAT IS PUBLISHED, NOT FROM WHAT CONSUMES A SOURCE.
+  // This used to be the lineage CSV alone — "each mart_<name> that appears in
+  // the lineage CSV (i.e. consumes at least one raw source)". That silently
+  // excluded every published relation with no source behind it:
+  //
+  //     19 published relations, 17 dataset pages
+  //     missing: bufdir_indicator_alias (editorial seed, 0 lineage rows)
+  //              meta_dimensions        (built from a seed, 0 lineage rows)
+  //
+  // ⚠️ Both are in the OpenAPI document and in meta_endpoints, so a MACHINE
+  // found them and a PERSON browsing /datasets could not. That is the #418
+  // finding inverted — there, CSV was declared for a parser and nowhere for a
+  // reader (urb-agents #1428, Terje's question about the Try button).
+  //
+  // 🔵 It was never a judgement about these two relations. It was a side
+  // effect of deriving the page list from lineage, and lineage is a statement
+  // about sources. seeds/sources/api_v1_relations.csv is the authority on what
+  // is published, so page coverage now follows publication.
+  // Same shape as loadLineage() reads its CSV — header row, then mart_name in
+  // column 2. Kept literal rather than adding a parser dependency for one file.
+  const publishedMarts = existsSync(API_V1_RELATIONS)
+    ? readFileSync(API_V1_RELATIONS, 'utf-8')
+        .split(/\r?\n/)
+        .filter((l) => l.length > 0)
+        .slice(1)
+        .map((l) => l.split(',')[1])
+        .filter(Boolean)
+    : [];
+  if (publishedMarts.length === 0) {
+    throw new Error(
+      `${API_V1_RELATIONS} yielded zero published relations — the dataset page list ` +
+      'would silently shrink to whatever lineage happens to cover. Regenerate the seed.',
+    );
+  }
+  const viewsFromLineage = [...new Set([
+    ...[...lineage.edgesByModel.keys()].filter((m) => m.startsWith('mart_')),
+    ...publishedMarts,
+  ])].sort();
 
   /**
    * Resolve a direct-refs row to a rich entry for the "Built from" UI.

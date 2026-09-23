@@ -119,6 +119,8 @@ jobs:
         run: npm run sources:generate
       - name: Every publisher has a logo and the file exists
         run: node scripts/check-publisher-logos.mjs
+      - name: Every published relation has a dataset page
+        run: node scripts/check-dataset-page-coverage.mjs
 
       - name: Check for catalog drift
         run: |
