@@ -163,7 +163,17 @@ Accept header:
 
 CSV opens directly in Excel. Add ?limit=100 while exploring; an unfiltered
 relation can be large. Row counts come back in the Content-Range response
-header when you send Prefer: count=exact."""
+header when you send Prefer: count=exact.
+
+DID YOU GET EVERYTHING? Compare that Content-Range total against the number of
+rows you received — not against your own ?limit. A server-side row cap applies
+BELOW your limit, so a cap of 1000 against limit=20000 returns 1000 rows and a
+comparison with your own limit still passes. Atlas has no cap set today; this
+check keeps you correct if that changes, and no client can read the setting
+from outside. brreg_enhet carries the cost caveat: on that relation a
+count=exact over a predicate that cannot use an index scans 1.17 million rows.
+Do not substitute count=planned to make it cheap — it is a planner estimate
+and can report FEWER rows than exist."""
 
 
 def _sql_string(text):
