@@ -4,7 +4,7 @@
 source_id: brreg-frivillige
 upstream_id: frivillighetsregisteret
 upstream_url: https://data.brreg.no/frivillighetsregisteret/api/frivillige-organisasjoner
-upstream_landing_page: https://www.brreg.no/organisasjon/frivillighetsregisteret/
+upstream_landing_page: https://www.brreg.no/om-oss/registrene-vare/om-frivillighetsregisteret/
 upstream_title: "Frivillighetsregisteret — frivillige organisasjoner"
 description: |
   Brønnøysundregistrene's Frivillighetsregisteret holds the ~72,800 Norwegian
