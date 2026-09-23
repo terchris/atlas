@@ -1452,20 +1452,62 @@ models:
       Enhetsregisteret, around 1.17 million rows, current as of the last change-feed run.
       Companies, foundations, associations, public bodies and sole proprietorships.
 
-      🔴 DO NOT SEND `Prefer: count=exact` WITH A FILTER ON THIS RELATION.
-      Measured 2026-09-21: a filtered `count=exact` takes 12-33 seconds,
-      because PostgREST counts every matching row instead of stopping at
-      your limit. The same query without the header is sub-second, and an
-      UNfiltered `count=exact` is 0.6s — it is the combination that is slow.
+      🔵 CHECK WHETHER YOUR RESULT WAS TRUNCATED, AND DO NOT CHECK IT
+      AGAINST YOUR OWN `limit`. Send `Prefer: count=exact` and compare the
+      total in the `Content-Range` response header against the number of
+      rows you actually received:
 
-      ⚠️ INSIDE A BROWSER FETCH THAT IS A TIMEOUT, NOT A SLOW ANSWER. A
-      consumer diagnosed it as a CORS failure, because a request that never
-      completes is indistinguishable from a blocked one on the fetch side.
-      CORS is fine (urb-agents #1361).
+          Content-Range: 0-4/1175169   with 5 rows  ->  truncated
 
-      ⚠️ `count=planned` is 50x faster and was 6x WRONG on the filter
-      measured — 118 against an actual 716. It is a planner estimate, not
-      a count. Use it only where an order of magnitude will do.
+      Comparing `rows.length` against your own `limit=N` cannot see the cap
+      that matters. A server-side `db-max-rows` applies BELOW your limit, so
+      a cap of 1 000 against `limit=20000` returns 1 000 rows and the
+      comparison passes. It measures your intent, not the server's answer.
+      (The recipe is a consumer's, relayed on urb-agents #1410.)
+
+      🔵 Nobody can read `db-max-rows` from outside — PostgREST exposes no
+      endpoint for its effective settings, so "unset" and "set above N" are
+      indistinguishable. A cap is only ever discoverable by exceeding it.
+      Atlas has it UNSET today; this check keeps you correct if that changes.
+
+      🔴 THE COUNT IS WHAT COSTS, AND ONLY WHEN YOUR FILTER CANNOT USE AN
+      INDEX. Measured against this relation 2026-09-23:
+
+          kommune_nr=eq.1103  + count=exact      0.10 s   27 765 rows
+          navn=ilike.*...*    + count=exact     10.87 s      428 rows
+          navn=ilike.*...*    without the count  0.16 s      428 rows
+          no filter           + count=exact      0.50 s   1 175 169
+
+      ⚠️ Adding the count to that pattern query cost 70x on a result of 428
+      rows. `count=exact` cannot stop at your limit — it counts every
+      matching row — so an unindexed predicate scans all 1.17 million.
+
+      ⚠️ AN EARLIER VERSION OF THIS NOTE SAID "DO NOT SEND count=exact WITH
+      A FILTER". That is too broad — an equality filter on `kommune_nr` came
+      back in 0.10 s above — and the advice would have pushed consumers off a
+      cheap, correct call.
+
+      🔵 MEASURE YOUR OWN PREDICATE RATHER THAN TRUSTING A LIST OF COLUMNS.
+      `organisasjonsnummer` carries a unique index. `kommune_nr` appears only
+      inside a PARTIAL index restricted to voluntary, active rows, so whether
+      a bare `kommune_nr` filter can use it depends on the rest of your
+      query. The timings above are measurements, not query plans — this
+      relation is not introspectable from outside, and the cheap experiment
+      is to send your real query twice, once with the count and once
+      without.
+
+      ⚠️ INSIDE A BROWSER FETCH A SLOW COUNT IS A TIMEOUT, NOT A SLOW
+      ANSWER. A consumer diagnosed one as a CORS failure, because a request
+      that never completes is indistinguishable from a blocked one on the
+      fetch side. CORS is fine (urb-agents #1361).
+
+      🔴 AND DO NOT SUBSTITUTE `count=planned` AS THE DETECTOR. It is fast
+      (0.16 s on the pattern above) and it UNDER-REPORTS: it returned 118
+      against an actual 428. A detector that can report fewer rows than
+      exist will tell you a truncated result was complete. `count=estimated`
+      does not help either — measured 10.99 s, because it falls back to an
+      exact count when the planner's estimate is small. Use `planned` only
+      where an order of magnitude will do, never to decide completeness.
 
       Kilde: Brønnøysundregistrene. Inneholder data under norsk lisens for offentlige data
       (NLOD) tilgjengeliggjort av Brønnøysundregistrene — https://data.norge.no/nlod/no/2.0.
