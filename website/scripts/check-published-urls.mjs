@@ -27,7 +27,7 @@
  * Usage:  node scripts/check-published-urls.mjs
  * Exit:   0 all answered · 1 at least one did not · 2 could not check
  */
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -59,6 +59,25 @@ for (const m of JSON.stringify(reg).matchAll(/https:\/\/api-atlas[^"'\\\s<>)]+/g
   const url = m[0].replace(/[.,;:]+$/, '');
   if (!seen.has(url)) seen.set(url, `url ${url.split('.com/')[1] ?? url}`);
 }
+// 🔵 AND SEED CSVs, because their cells are published too. A note in
+// dbt/seeds/sources/*.csv becomes a column value in api_v1 — bufdir_indicator_alias
+// cites an investigation this way. It cited it as a BARE FILENAME, which a
+// consumer cannot resolve; now it carries the URL, and this makes the URL
+// checkable (urb-agents #1427).
+//
+// ⚠️ Only OUR hosts. Upstream URLs (FHI, SSB, Brreg) are not ours to keep
+// working and checking them would make this flaky for someone else's outage.
+const SEED_DIR = resolve(WEBSITE_DIR, '..', 'atlas-data', 'dbt', 'seeds', 'sources');
+if (existsSync(SEED_DIR)) {
+  for (const f of readdirSync(SEED_DIR).filter((n) => n.endsWith('.csv'))) {
+    const body = readFileSync(resolve(SEED_DIR, f), 'utf8');
+    for (const m of body.matchAll(/https:\/\/(?:api-atlas|atlas)\.[^"',\s<>)]+/g)) {
+      const url = m[0].replace(/[.,;:]+$/, '');
+      if (!seen.has(url)) seen.set(url, `seed ${f}`);
+    }
+  }
+}
+
 for (const s of reg.sources ?? []) if (s.sample_query) seen.set(s.sample_query, `source ${s.source_id}`);
 for (const v of reg.views ?? []) if (v.sample_query) seen.set(v.sample_query, `view ${v.view_id}`);
 const targets = [...seen.entries()].map(([url, label]) => [label, url]);
