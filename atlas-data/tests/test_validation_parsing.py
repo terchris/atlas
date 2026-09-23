@@ -22,6 +22,8 @@ _spec = importlib.util.spec_from_file_location("http_range", _MOD)
 http_range = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(http_range)
 answered, read_count = http_range.answered, http_range.read_count
+explain_empty = http_range.explain_empty
+has_never_delivered = http_range.has_never_delivered
 
 failures = []
 
@@ -62,9 +64,42 @@ check("dim_kommune would pass", answered(206) and read_count("*/1170") == 1170, 
 check("activity_catalog reads empty, not broken",
       answered(200) and read_count("*/0") == 0, True)
 
+# ── Why an empty relation is empty ───────────────────────────────────────────
+# 🔴 The rule is asked ONLY of relations that already serve zero rows, because
+# neither max nor min over contributing sources works. Measured 2026-09-23
+# (urb-agents #1441): min would relabel brreg_enhet — 1,175,359 rows — as
+# declared_no_ingest, along with three other populated relations.
+REDCROSS = {"source_id": "redcross-branches", "total_runs": 0, "latest_row_count": None}
+KLASS = {"source_id": "ssb-klass-kommuner", "total_runs": 3, "latest_row_count": 1170}
+# ⚠️ A delta feed reporting zero rows on a quiet run is WORKING. It must never
+# be allowed to account for a downstream relation serving nothing.
+DELTA = {"source_id": "brreg-oppdateringer", "total_runs": 445, "latest_row_count": 0}
+
+check("never-delivered source", has_never_delivered(REDCROSS), True)
+check("healthy source", has_never_delivered(KLASS), False)
+check("delta feed, quiet run, is NOT an excuse", has_never_delivered(DELTA), False)
+
+by_id = {s["source_id"]: s for s in (REDCROSS, KLASS, DELTA)}
+
+# distrikt_summary: the live case. Explained by redcross-branches even though
+# its OTHER source is healthy — which is exactly what origin gets wrong.
+check("distrikt_summary is explained",
+      explain_empty(["redcross-branches", "ssb-klass-kommuner"], by_id), ["redcross-branches"])
+check("single dead source", explain_empty(["redcross-branches"], by_id), ["redcross-branches"])
+
+# 🔴 THE ONE THAT MUST BE LOUD: every source has delivered, relation still
+# empty. This is the ssb-06913 shape.
+check("all sources healthy -> UNEXPLAINED", explain_empty(["ssb-klass-kommuner"], by_id), [])
+check("delta feed alone -> UNEXPLAINED", explain_empty(["brreg-oppdateringer"], by_id), [])
+
+# An unknown source id cannot be vouched for, so it explains nothing away
+# silently — it is returned, which routes it to the explained list with a name
+# a reader can chase rather than to a bare pass.
+check("unknown source is named", explain_empty(["nope"], by_id), ["nope"])
+
 if failures:
     print("FAIL")
     for f in failures:
         print(f"  {f}")
     sys.exit(1)
-print(f"✓ validation response parsing: {14} cases, all pass")
+print(f"\u2713 validation response parsing: {14 + 8} cases, all pass")

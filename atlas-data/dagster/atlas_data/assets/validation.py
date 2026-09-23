@@ -27,7 +27,7 @@ import urllib.request
 from dagster import AssetCheckResult, AssetCheckSeverity, asset_check
 
 from atlas_data.assets.api_v1 import api_v1_surface
-from atlas_data.http_range import answered, read_count
+from atlas_data.http_range import answered, explain_empty, read_count
 
 # 🔵 In-cluster service name, the same variable the UIS install sets.
 _DEFAULT_BASE = "http://postgrest"
@@ -123,13 +123,48 @@ def every_endpoint_answers():
         if count == 0:
             empty.append(rel)
 
+    # 🔴 AN EMPTY RELATION IS ONLY FINE IF SOMETHING ACCOUNTS FOR IT. Three are
+    # empty because redcross-branches has no data to arrive — that is an answer.
+    # A relation whose every source HAS delivered rows and which still serves
+    # none is the ssb-06913 shape: four relations wired, zero arriving,
+    # undetected for weeks. That one has to be loud.
+    unexplained: list[str] = []
+    explained: list[str] = []
+    if empty:
+        try:
+            inv = {
+                r["endpoint"]: r.get("contributing_sources") or []
+                for r in json.load(_get(f"{base}/atlas_inventory?select=endpoint,contributing_sources"))
+            }
+            by_id = {
+                r["source_id"]: r
+                for r in json.load(
+                    _get(f"{base}/meta_sources?select=source_id,total_runs,latest_row_count")
+                )
+            }
+        except (urllib.error.URLError, ValueError, KeyError) as err:
+            # 🔵 Degrade to reporting rather than inventing a verdict — but say
+            # so, because "no unexplained empties" and "I could not ask" must
+            # never read the same.
+            explained = [f"could not classify: {err}"]
+            inv = by_id = {}
+        for rel in empty:
+            if not inv:
+                continue
+            why = explain_empty(inv.get(rel, []), by_id)
+            (explained if why else unexplained).append(
+                f"{rel} <- {', '.join(why)}" if why else rel
+            )
+
     return AssetCheckResult(
-        passed=not failed,
+        passed=not failed and not unexplained,
         severity=AssetCheckSeverity.WARN,
         metadata={
             "endpoints_checked": len(relations),
             "failed": ", ".join(failed) if failed else "none",
             "empty_but_published": ", ".join(empty) if empty else "none",
+            "empty_and_explained": ", ".join(explained) if explained else "none",
+            "empty_and_UNEXPLAINED": ", ".join(unexplained) if unexplained else "none",
             "answered_without_a_count": ", ".join(uncounted) if uncounted else "none",
             "total_rows_served": sum(counts.values()),
             "remedy": (
@@ -140,7 +175,10 @@ def every_endpoint_answers():
                 "that PostgREST's schema cache was reloaded after the last publish. "
                 "\u26a0 Do NOT go looking for a publish problem on the strength of a "
                 "name in empty_but_published: the previous remedy text said exactly "
-                "that, and it pointed at a cache that was fine."
+                "that, and it pointed at a cache that was fine. A name in "
+                "empty_and_UNEXPLAINED is different and IS a defect: every source "
+                "feeding it has delivered rows and it still serves none, which is "
+                "how ssb-06913 went unnoticed for weeks."
             ),
         },
     )
