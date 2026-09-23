@@ -1,5 +1,6 @@
 relation_name,mart_name,derives_from_fact
 activity_catalog,mart_activity_catalog,false
+atlas_inventory,mart_atlas_inventory,true
 brreg_enhet,mart_brreg_enhet,false
 bufdir_indicator_alias,mart_bufdir_indicator_alias,false
 coverage_gap_barnefattigdom,mart_coverage_gap_barnefattigdom,true

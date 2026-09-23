@@ -121,6 +121,13 @@ served as (
     -- without this filter every indicator source would gain two meaningless
     -- entries (urb-agents #1348).
     and r.relation_name not like 'meta\_%'
+    -- ⚠️ AND atlas_inventory, FOR THE SAME REASON, added 2026-09-23. It declares
+    -- a dependency on every published mart (dbt cannot infer refs inside an
+    -- execute-guarded block, so they are explicit), which makes lineage record
+    -- it against every source. Naming it in served_as would give all 44 sources
+    -- an identical extra entry that says nothing — the exact dilution this
+    -- filter was written to prevent (urb-agents #1433).
+    and r.relation_name <> 'atlas_inventory'
   group by l.source_id
 )
 
