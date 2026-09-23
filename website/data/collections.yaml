@@ -27,9 +27,9 @@ collections:
       reviewer asks: how many, how persistent, how that compares to the
       neighbours, and what the policy gap looks like.
 
-      Every dataset here is at kommune (4-digit kommune_code, post-2020
-      reform) resolution. They share a join key — `kommune_code` — so a
-      single query stitches the whole evidence base together.
+      Every dataset here is at kommune resolution. They share a join key
+      — `kommune_nr`, the 4-digit zero-padded kommune number — so a single
+      query stitches the whole evidence base together.
 
     datasets:
       - id: bufdir-barnefattigdom
@@ -62,21 +62,30 @@ collections:
           you have a story to tell.
 
     join_recipe: |
-      All five datasets join on `kommune_code` — the 4-digit post-2020
-      kommune identifier. A minimal query that pulls a single kommune's
-      evidence base looks like this (PostgREST):
+      All five datasets join on `kommune_nr` — the 4-digit, zero-padded
+      kommune number. A minimal query that pulls one kommune's evidence
+      base (PostgREST):
 
       ```bash
-      curl -sS '{{API_BASE}}/indicator_summary?kommune_code=eq.3024&select=kommune_name,indicator_id,latest_value,latest_year'
+      curl -sS '{{API_BASE}}/indicator_latest_values?kommune_nr=eq.0301&select=kommune_name,source_id,contents_code,value,year'
       ```
 
-      To compare a kommune against its neighbours in the same fylke, swap
-      `eq.3024` for `like.30*` (the 2-digit fylke prefix). The four upstream
-      tables are also queryable directly via PostgREST — use those when you
-      need the raw structure (publisher dimensions, units, etc.) rather
-      than the indicator framing.
+      Per-kommune values live in `indicator_latest_values`.
+      `indicator_summary` is one row per (source, measure) across the whole
+      country — coverage and value range, no kommune column — so it answers
+      "what does this indicator look like nationally", not "what is the
+      number for my kommune".
 
-      **Watch out**: name-based kommune joins multiply rows ~5× because
-      pre-2020 kommune codes still appear in some upstream history. Always
-      join on `kommune_code` and filter `is_active = true` when joining
-      against `dim_kommune`.
+      To compare a kommune against its neighbours in the same fylke, swap
+      `eq.0301` for `like.03*` — the leading two digits are the fylke.
+
+      **Watch out**: the number is zero-padded, so Oslo is `0301`, not
+      `301`. And kommune numbers are reissued by reform: Bærum was `3024`
+      under Viken (2020-2023) and is `3201` today. A retired number returns
+      200 with an empty array rather than an error — `dim_kommune` carries
+      both, distinguished by `is_active`, so filter `is_active=eq.true`
+      when you join against it.
+
+      Only the curated `api_v1` relations are public. The upstream source
+      tables are not exposed through this API; use `meta_sources` to see
+      which relations publish a given source.
