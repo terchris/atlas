@@ -23,15 +23,43 @@ def answered(status: int) -> bool:
 def read_count(content_range: str) -> int | None:
     """Rows the relation reports, or None when it reports no count.
 
-    ⚠️ `*/0` and `*/*` are DIFFERENT and the difference is the whole point.
-    `*/0` is a real zero — the relation is empty. `*/*` means PostgREST
-    computed no count, which is what `?limit=1` returns on an empty relation.
-    Reading the second as zero is how the check reported "nothing is empty"
-    while three relations were.
+    ⚠️ `*/0` and `*/*` are DIFFERENT: `*/0` is a real zero — the relation is
+    empty — while `*/*` carries no count at all. Reading the second as zero
+    would report "nothing is empty" while relations were.
 
-        ?limit=1   empty -> */*            non-empty -> 0-0/1170
-        Range 0-0  empty -> */0            non-empty -> 0-1169/1170 (whole body)
-        ?limit=0   empty -> */0            non-empty -> */1170       <- use this
+        Range 0-0  empty -> */0   non-empty -> 0-1169/1170 (returns the whole body)
+        ?limit=0   empty -> */0   non-empty -> */1170       <- use this
+        ?limit=1   empty -> */0   non-empty -> 0-0/1170     (also fine; see below)
+
+    🔴 CORRECTION, 2026-09-23. AN EARLIER VERSION OF THIS COMMENT, AND THE
+    COMMIT MESSAGE OF eb5590a, SAID `?limit=1` RETURNS `*/*` ON AN EMPTY
+    RELATION AND THAT THIS HID THE EMPTIES. **That is wrong.** ops-dev and imac
+    each contradicted it with a different instrument (urb-agents #1447), and it
+    does not reproduce: `?limit=1` with count=exact returns `*/0`, and the
+    FAILING pre-fix run had in fact listed all three empties correctly.
+
+    ⚠️ Only the FIRST bug was real — 206 read as "does not answer", which
+    failed 17 of 20. The empty-detection half was a misreading of a measurement
+    I took through the PUBLIC API, where **Cloudflare served me a cached
+    response belonging to a different request**. Measured:
+
+        GET /activity_catalog?limit=1   WITHOUT any Prefer header
+          -> preference-applied: count=exact
+             cf-cache-status: HIT, age: 63, cache-control: no-store
+
+    A response generated for a count=exact request came back to a request that
+    never asked for one. There is no `Vary`, and `no-store` is not honoured, so
+    responses cross request variants.
+
+    🔵 `?limit=0` is kept regardless: it is the only shape that yields an exact
+    count for BOTH empty and non-empty while transferring no rows. The reason
+    to keep it is the row transfer, not the phantom `*/*`.
+
+    🔴 AND THE GENERAL LESSON, WHICH IS BIGGER THAN THIS CHECK: a row count read
+    through the public API can belong to someone else's request. In-cluster
+    against http://postgrest there is no edge cache, which is why the deployed
+    check sees consistent values and why measurements taken from outside must
+    not be treated as ground truth about PostgREST's behaviour.
     """
     total = content_range.rsplit("/", 1)[-1] if "/" in content_range else ""
     return int(total) if total.isdigit() else None
