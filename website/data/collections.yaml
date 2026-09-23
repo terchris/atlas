@@ -76,15 +76,22 @@ collections:
       "what does this indicator look like nationally", not "what is the
       number for my kommune".
 
-      To compare a kommune against its neighbours in the same fylke, swap
-      `eq.0301` for `like.03*` — the leading two digits are the fylke.
+      To compare kommuner within a fylke, use the two-digit fylke prefix:
+      `kommune_nr=like.11*` is Rogaland's 23 kommuner.
+
+      Oslo is the exception, and it is the example directly above: fylke `03`
+      contains only kommune `0301`, so `like.03*` returns Oslo by itself. If
+      you try the pattern on Oslo first, one kommune is the correct answer,
+      not a broken filter.
 
       **Watch out**: the number is zero-padded, so Oslo is `0301`, not
       `301`. And kommune numbers are reissued by reform: Bærum was `3024`
       under Viken (2020-2023) and is `3201` today. A retired number returns
       200 with an empty array rather than an error — `dim_kommune` carries
       both, distinguished by `is_active`, so filter `is_active=eq.true`
-      when you join against it.
+      when you join against it. Concretely: `dim_kommune?kommune_nr=like.11*`
+      returns 57 rows for Rogaland — 23 active kommuner and 34 retired
+      numbers. Without the filter you would count Rogaland's kommuner as 57.
 
       Only the curated `api_v1` relations are public. The upstream source
       tables are not exposed through this API; use `meta_sources` to see
