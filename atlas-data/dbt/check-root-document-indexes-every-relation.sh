@@ -138,6 +138,34 @@ if mig.exists():
             print("  A fresh install serves this one until the first transform.")
             sys.exit(1)
 
+# 🔴 AND THE DOCUMENTATION SITE MUST BE REACHABLE FROM THE SPEC.
+# Terje, urb-agents #1418: "there must be some info when you access the API
+# about where you can find the good documentation." There was not — measured
+# on the live spec, info.description held ZERO occurrences of the site host
+# and no URL of any kind, while the only externalDocs link PostgREST emits
+# points at postgrest.org. That link is not ours to set; this is.
+#
+# ⚠️ Compared against website/hosts.mjs rather than a literal, so this fails if
+# the two drift apart — the failure CLAUDE.md had for four months with a dead
+# API host (atlas#420).
+hosts = pathlib.Path("../../website/hosts.mjs")
+if not hosts.exists():
+    print(f"✗ CANNOT CHECK: {hosts} not found — the site URL must come from hosts.mjs.")
+    sys.exit(2)
+hm = re.search(r"""ATLAS_SITE_BASE_URL\s*=\s*(?:[^;]*?\|\|\s*)?['"]([^'"]+)['"]""",
+               hosts.read_text())
+if not hm:
+    print(f"✗ CANNOT CHECK: ATLAS_SITE_BASE_URL not parseable from {hosts}.")
+    sys.exit(2)
+site = hm.group(1).rstrip("/")
+if site not in description:
+    print(f"✗ the root document never mentions the documentation site ({site}).")
+    print("  A reader landing on the API has no path to it, and a tool following")
+    print("  externalDocs is sent to postgrest.org. Add it to SCHEMA_COMMENT in")
+    print("  scripts/generate_api_v1.py, where it is derived from hosts.mjs.")
+    sys.exit(1)
+print(f"  ✓ the documentation site ({site}) is reachable from the root document")
+
 in_root = sum(1 for v in views if named_in(description, v))
 print(f"✓ all {len(views)} published relations are findable "
       f"({in_root} named in the root document's description, which is\n  what PostgREST serves as info.description)")
