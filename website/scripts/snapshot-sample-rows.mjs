@@ -10,7 +10,7 @@
  * is missing or a specific dataset failed (other datasets keep working).
  *
  * Env vars:
- *   PGRST_SOURCE_URL   where to fetch from (default http://api-atlas.localhost)
+ *   PGRST_SOURCE_URL   where to fetch from (default: a LOCAL PostgREST — see below)
  *
  * Usage:
  *   npm run sources:snapshot-samples
@@ -31,6 +31,28 @@ import yaml from 'js-yaml';
 const WEBSITE_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const SOURCES_DIR = resolve(WEBSITE_DIR, '..', 'atlas-data', 'ingest', 'src', 'sources');
 const OUT_PATH = resolve(WEBSITE_DIR, 'src', 'data', 'sample-rows-snapshot.json');
+// 🔴 THIS ONE KEEPS A LOCAL DEFAULT ON PURPOSE, UNLIKE ITS SIBLING.
+// snapshot-meta-sources.mjs was repointed at the public API on 2026-09-23
+// because meta_sources IS an api_v1 relation. This script is different: it
+// samples RAW SOURCE tables, and the public API deliberately exposes api_v1
+// ONLY — Terje, urb-agents #350: "The public API serves api_v1 only … marts
+// and raw stay behind it."
+//
+// ⚠️ MEASURED, and this is why the comment is here rather than a one-line
+// default. I repointed this script at the public API by analogy with its
+// sibling and regenerated: sources with sample rows went 40 -> 0, because
+// every /<source> request 404s against api_v1. Views went 13 -> 19, so the
+// output LOOKED richer while silently losing two thirds of the page's
+// content. Reverted before committing (urb-agents #1417).
+//
+// 🔵 The lesson ops-dev stated on that issue and I then walked into: "two
+// different fixes and one accepted manual step, not one pattern." A shape
+// that worked for one artifact is not an argument about the next one.
+//
+// ⚠️ SO THIS SNAPSHOT NEEDS AN INTERNAL PostgREST and cannot be regenerated
+// from a laptop with only public access. That makes it the second artifact
+// here that needs a deliberate operator step, alongside the lineage bundle.
+
 const SOURCE_URL = process.env.PGRST_SOURCE_URL ?? 'http://api-atlas.localhost';
 const LIMIT = 5;
 
