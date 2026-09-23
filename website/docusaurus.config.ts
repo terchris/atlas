@@ -127,7 +127,36 @@ const config: Config = {
           // `url` can point at the live API, the snapshot goes away, and the
           // whole drift class it belongs to disappears with it (urb-agents
           // #1409). A copy you no longer keep cannot go stale.
-          url: '/openapi.json',
+          // 🔵 LIVE, NOT A SNAPSHOT — as of 2026-09-23. Both reasons the
+          // same-origin copy existed are now gone:
+          //   CORS   GET responses carry access-control-allow-origin: *,
+          //          measured from a browser Origin (see above).
+          //   host   UIS 1.6.143 set openapi-server-proxy-uri, so the live
+          //          document names api-atlas.urbalurba.com:443 / https
+          //          instead of a bind-all placeholder. The derived URL
+          //          answers 200, checked — a correct-looking field is not
+          //          a working one (urb-agents #1414).
+          //
+          // 🔴 THIS IS WHY THE PAGE CANNOT GO STALE AGAIN. static/openapi.json
+          // was a generated copy of live state committed to the repo, and it
+          // drifted three times in one evening — on a deploy, on a config
+          // default that outlived its reason, and on a transform. A copy you
+          // no longer keep cannot go stale. Reading live removes the class,
+          // not the instance, and it retires the liveness gate that was
+          // designed to police it.
+          //
+          // ⚠️ static/openapi.json and scripts/snapshot-openapi.mjs are kept
+          // for ONE deploy so this is a one-line revert if Scalar cannot load
+          // the live document from a browser. Nothing has rendered it in
+          // Scalar yet, and a page that fails to fetch its own spec is a
+          // worse front door than a stale one. Delete them once the published
+          // page is seen working.
+          //
+          // 🔵 `:443` in the host is PostgREST splitting the URI and keeping
+          // the explicit port. Swagger 2.0 allows it and the URL resolves;
+          // Scalar will display it. Not worth reintroducing a rewrite — and a
+          // rewrite is exactly what we are removing — for six characters.
+          url: 'https://api-atlas.urbalurba.com/',
         },
       },
     ],
