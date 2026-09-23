@@ -29,6 +29,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -109,10 +110,40 @@ class WrapperView:
 # measurement that confirms it is `info.title` on the served spec — if it
 # holds the long 050 sentence rather than "PostgREST API", the comment was
 # set all along and only the split was wrong.
-SCHEMA_COMMENT = """Atlas — open semantic layer over Norwegian public data
+# 🔴 THE PUBLIC SITE URL IS READ FROM website/hosts.mjs, NEVER TYPED HERE.
+# Terje, urb-agents #1418: "there must be some info when you access the API
+# about where you can find the good documentation." There was not — measured
+# on the live spec, info.description contained ZERO occurrences of the site
+# host and no URL of any kind, and the only externalDocs link PostgREST emits
+# points at postgrest.org, which is the framework's default rather than
+# anyone's choice.
+#
+# ⚠️ AND THIS IS THE LAST PLACE A WRONG HOSTNAME WOULD BE NOTICED. CLAUDE.md
+# asserted a dead API host for four months and three agents worked from it
+# (atlas#420). A schema COMMENT is worse: it is published to every consumer
+# and nothing renders it where a maintainer looks. hosts.mjs is the one file
+# kept true, so this reads it and FAILS LOUDLY rather than falling back —
+# a silent default is how the last one survived.
+def _public_site_url() -> str:
+    """ATLAS_SITE_BASE_URL out of website/hosts.mjs. Raises if absent."""
+    hosts = Path(__file__).resolve().parents[3] / "website" / "hosts.mjs"
+    if not hosts.is_file():
+        raise SystemExit(f"cannot find {hosts} — the site URL must come from hosts.mjs, not a literal")
+    m = re.search(r"ATLAS_SITE_BASE_URL\s*=\s*(?:[^;]*?\|\|\s*)?['\"]([^'\"]+)['\"]",
+                  hosts.read_text())
+    if not m:
+        raise SystemExit(f"ATLAS_SITE_BASE_URL not parseable from {hosts}")
+    return m.group(1).rstrip("/")
+
+
+SCHEMA_COMMENT_TEMPLATE = """Atlas — open semantic layer over Norwegian public data
 
 Curated wrapper views over Norwegian public data and NGO supply data, served
 by PostgREST. Values are republished as the upstream publishes them.
+
+DOCUMENTATION — guides, per-dataset pages, licence and provenance:
+  {site}
+  {site}/api   the same document as this one, browsable, with worked examples
 
 THE CATALOGUE — start here:
   meta_endpoints    every relation below, with tags. The index.
@@ -177,6 +208,8 @@ whose error is unbounded in both directions. Measured: 118 for a pattern
 matching nothing, and 1176875 against an actual 1175169 unfiltered, i.e. MORE
 rows than exist, which would raise a false truncation alarm on a complete
 answer."""
+
+SCHEMA_COMMENT = SCHEMA_COMMENT_TEMPLATE.format(site=_public_site_url())
 
 
 def _sql_string(text):
