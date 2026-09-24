@@ -362,8 +362,14 @@
 --
 -- `fail` stops the run AT THIS MODEL with "the source and target schemas are out
 -- of sync", which is the true statement. The upgrade is then a deliberate
--- `dbt build --full-refresh --select dim_brreg_enhet+` — 256 s for 1.17M rows,
--- measured by imac.
+-- `dbt build --full-refresh --select dim_brreg_enhet+`.
+--
+-- ⚠️ THAT COMMAND TOOK 1 438 s, NOT 256 s. This line said "256 s for 1.17M
+-- rows, measured by imac" and sat directly beside the command — but the 256 s
+-- measured THE DIMENSION ALONE, and the `+` also builds 58 data tests, 4 view
+-- models and 1 table model. About 5.6x more work than the figure describes.
+-- Measured 2026-09-24 by imac on the eec241d refresh: 1 437.94 s.
+-- Plan a maintenance window off 1 438 s; quote 256 s only for the dimension.
 --
 -- 🔴 RUN THAT FULL REFRESH AS `atlas`, NOT AS A SUPERUSER. `--full-refresh`
 -- drops and recreates, so the new tables take the running user's ownership. imac
@@ -499,8 +505,11 @@ changed as (
   --
   -- 🔵 The column costs a `--full-refresh` on upgrade, which is why it was
   -- rejected the first time — on an assumption that was never measured. imac has
-  -- now measured it three times: **256 s, once**. 256 seconds once against 34
-  -- minutes a day is not a close call.
+  -- now measured it three times: **256 s, once**, for THE DIMENSION ALONE.
+  -- 256 seconds once against 34 minutes a day is not a close call.
+  -- ⚠️ The documented upgrade command is `--select dim_brreg_enhet+`, which
+  -- also builds the tests and downstream models and took 1 438 s on 2026-09-24.
+  -- The trade above is still not close; the window you book is the larger one.
   --
   -- Served by `brreg_enheter_snapshot_loaded_at_idx` (migration 055): an index
   -- range scan returning zero rows on an ordinary run, rather than a sequential
