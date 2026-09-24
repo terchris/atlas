@@ -22,10 +22,11 @@ Three things here are deliberate:
    _SOURCE_KEY_OVERRIDES below.
 
 3. **`private`-tagged models are excluded by default.** They read
-   private_raw.frr_resources, which is empty on any public deployment (see
-   dbt/models/private_marts/sources.yml). They materialise as empty tables by
-   contract, and they should not be sitting in a shared cluster's asset list
-   inviting a click. Set ATLAS_DAGSTER_INCLUDE_PRIVATE=1 for local work.
+   private_raw.*, which is empty on any public deployment. They materialise as
+   empty tables by contract, and they should not be sitting in a shared
+   cluster's asset list inviting a click. Set ATLAS_DAGSTER_INCLUDE_PRIVATE=1
+   for local work. ⚠️ No private model exists today — the previous ones were
+   removed 2026-09-24 on Terje's instruction (urb-agents #1453).
 """
 
 import json
@@ -69,11 +70,10 @@ DBT_MANIFEST_PATH = DBT_PROJECT_DIR / "target" / "manifest.json"
 # ingest/src/lib/ingest_run.ts, not a mapping tweak. Left as a follow-up; the
 # activities table therefore shows as an unproduced source, same as the three
 # above.
-_SOURCE_KEY_OVERRIDES: dict[tuple[str, str], AssetKey] = {
-    # The frr ingest writes private_raw.frr_resources; its asset is raw/frr.
-    # 1:1, so this one is safe to collapse.
-    ("private_raw", "frr_resources"): AssetKey(["raw", "frr"]),
-}
+# ⚠️ Empty since a source was removed on 2026-09-24 (urb-agents #1453). Keep the
+# mechanism: the next source whose dbt source name differs from its asset key
+# needs a row here.
+_SOURCE_KEY_OVERRIDES: dict[tuple[str, str], AssetKey] = {}
 
 
 # enable_asset_checks: surface dbt tests as Dagster asset checks rather than

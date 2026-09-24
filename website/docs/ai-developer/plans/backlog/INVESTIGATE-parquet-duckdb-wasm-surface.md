@@ -74,7 +74,7 @@ yet applied, is a recipe and not a finding.
 
 ⚠️ **An earlier version of this section said there are no indexes on `marts.*`. That is wrong, and
 the correction changes what needs building.** It was based on `grep -rn "CREATE INDEX"` returning
-two hits on private `raw` FRR tables. That grep was **case-sensitive and looked only for literal
+two hits on private `raw` tables. That grep was **case-sensitive and looked only for literal
 SQL**, and it could not see either of the two ways this repo actually creates indexes:
 
 ```

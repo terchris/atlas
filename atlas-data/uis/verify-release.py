@@ -30,7 +30,7 @@ do is DERIVED from the repo rather than declared in a list:
     a source with downstream models but no published surface
         -> must have downstream_model_count > 0 (it feeds something)
     a declared exemption
-        -> must NOT appear; frr is auth-gated by design
+        -> must NOT appear
 
 **So adding a dataset means adding a source and a model. This verifier then
 expects it automatically.** Nothing to update here, and it cannot pass because
@@ -52,8 +52,9 @@ DBT = next((p for p in (HERE.parents[1] / "dbt", pathlib.Path("/app/dbt"))
 
 # Never served, by design. Mirrors check-every-source-is-served.sh; a name here
 # needs a reason, not just an entry.
-#   frr  Red Cross volunteer register — personal data, auth-gated, outside api_v1.
-EXEMPT = {"frr": "auth-gated volunteer register, never served"}
+# ⚠️ EMPTY since 2026-09-24, when its only entry was removed on Terje's
+# instruction (urb-agents #1453). Empty is correct, not a gap.
+EXEMPT: dict[str, str] = {}
 
 
 class Unreachable(Exception):

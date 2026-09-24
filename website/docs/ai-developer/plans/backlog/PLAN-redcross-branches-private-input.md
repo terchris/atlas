@@ -14,7 +14,8 @@
 > Cross. `redcross-branches` is cleared for publication on public deployments.**
 >
 > This resolves the licensing/consent question that made option 1 a decision rather
-> than a task. `frr` is unaffected and stays exactly as it is — Terje reviews it
+> than a task. The private-source comparison below is historical — that source was
+> removed on 2026-09-24 (urb-agents #1453) — Terje reviews it
 > personally before it ever publishes, and its deliberately-empty-on-public behaviour
 > remains the contract.
 >
@@ -36,23 +37,23 @@ atlas-private-data-repo/redcross/organisations/api-getOrganizations-output-21apr
 
 and that directory is gitignored and deliberately absent from the polyglot image.
 
-## ⚠️ Why "give it the frr treatment" is the wrong fix
+## ⚠️ Why "treat a missing private directory as no data" is the wrong fix
 
-The obvious move is what `frr` got: treat a missing private directory as "no data", materialise zero rows, exit 0. **For this source that would be worse than the crash.**
+The obvious move is what the private source got: treat a missing private directory as "no data", materialise zero rows, exit 0. **For this source that would be worse than the crash.**
 
 The two cases are not alike:
 
-| | `frr` | `redcross-branches` |
+| | the private source | `redcross-branches` |
 |---|---|---|
 | What the private repo provides | *All* of its data, and it is **private by design** — the contract in `private_marts/sources.yml` says public deployments hold an empty table | Its **primary input**, a Red Cross API dump, feeding data intended to be **public** |
 | Zero rows on a public deployment | Correct, expected, documented | A silent, permanent outage of three public API views |
 
-Degrading here would convert a loud failure into a quiet one — and the loud one is the correct signal, because something *is* missing that should not be. Atlas already has one alarm that can never fire (frr's absent freshness policy, deliberately); it does not need a second that fires never *and* hides three empty views.
+Degrading here would convert a loud failure into a quiet one — and the loud one is the correct signal, because something *is* missing that should not be. Atlas already had one alarm that could never fire (that source's absent freshness policy, deliberately); it does not need a second that fires never *and* hides three empty views.
 
 ## The actual decision (Terje's, not the implementer's)
 
 1. **Ship the dump into the image.** Makes the source work in-cluster and fills the three views. The dump is a static export of a Red Cross internal API, gitignored for a reason — so this is a licensing/consent question about publishing that data, not a technical one.
-2. **Accept it as local-only, like `frr`, and say so.** Remove it from cluster automation, mark the three views as expected-empty in the catalogue, and document that Red Cross chapter data needs the private repo. Honest, and cheap.
+2. **Accept it as local-only and say so.** Remove it from cluster automation, mark the three views as expected-empty in the catalogue, and document that Red Cross chapter data needs the private repo. Honest, and cheap.
 3. **Replace the input** with something public — scrape or request the chapter list from a public Red Cross source. Most work, best outcome, needs its own investigation.
 
 **Until it is decided, leave the hard failure in place.** A failing source in the run report is visible; an empty view that nobody notices is not.
@@ -60,12 +61,12 @@ Degrading here would convert a loud failure into a quiet one — and the loud on
 ## Tasks (after the decision)
 
 - [ ] 1.1 Terje picks 1, 2 or 3.
-- [ ] 1.2 Implement, and either way make the *reason* legible at the failure site — the current `ENOENT` says nothing about the private repo, whereas `frr`'s equivalent logs `private_data_root_absent`.
+- [ ] 1.2 Implement, and either way make the *reason* legible at the failure site — the current `ENOENT` says nothing about the private repo, whereas the private source's equivalent logged `private_data_root_absent`.
 - [ ] 1.3 If option 2, mark the three affected views as expected-empty rather than leaving them looking broken.
 
 ## Out of Scope
 
-- `frr`'s behaviour, which is correct and contractual.
+- that source's behaviour, which was correct and contractual.
 
 
 ---
@@ -77,7 +78,7 @@ source reads it from there. Nothing else changes.
 
 **Why this and not the alternatives:**
 
-- It is **the pattern Atlas already uses**. `frr` reads
+- It is **the pattern Atlas already used**. That source read
   `src/seed-sources/atlas-ngo-landscape/landscape.json`, which is committed and ships
   in the image today. `COPY ingest/src` already exists in the Dockerfile, so this needs
   **no Dockerfile change and no new mechanism** — and this thread has just spent four
@@ -147,12 +148,13 @@ would have inherited a **guaranteed failure every Sunday at 03:30**, and Phase 3
 acceptance criterion is "no orphaned or hung runs". That would have been compromised
 **by design rather than discovered**, which is the worse of the two.
 
-It now sits in `cadence.UNSCHEDULED_SOURCES` alongside `frr`, with no condition and no
+It now sits alone in `cadence.UNSCHEDULED_SOURCES`, with no condition and no
 freshness policy. The two omissions are deliberate and different: no condition means the
 daemon cannot launch it; no freshness means it cannot report permanently-violated
 staleness, since an alarm that is always on is the same as no alarm.
 
-`frr` is permanent — private by design. **This one is a park**, and the comment says so
+The other entry was permanent — private by design — and has since been removed.
+**This one is a park**, and the comment says so
 so nobody mistakes it for the same thing.
 
 The `redcross_branches_refresh` job is deliberately kept, so the moment the credential

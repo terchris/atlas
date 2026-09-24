@@ -35,15 +35,15 @@ params:
 
 # BEGIN holdings (generated)
 data:
-  sources: 44
+  sources: 43
   publishers: 5
   public_relations: 20
   holds: >-
     Norwegian public data at kommune level, joined into one semantic layer:
-    Folkehelseinstituttet (21); Statistisk sentralbyrå (17); Brønnøysundregistrene (3); Norges Røde Kors (2); Barne-, ungdoms- og familiedirektoratet (1).
+    Folkehelseinstituttet (21); Statistisk sentralbyrå (17); Brønnøysundregistrene (3); Barne-, ungdoms- og familiedirektoratet (1); Norges Røde Kors (1).
     Published as read-only PostgREST relations under api_v1. NLOD for
-    42 of 44 — Norwegian public data, free to reuse with
-    attribution. The exceptions are `frr` (internal) and `redcross-branches` (permissive) — Red Cross's own data rather than the state's. `frr` is a volunteer register held in an auth-gated schema and is NOT served on the public API.
+    42 of 43 — Norwegian public data, free to reuse with
+    attribution. The exceptions are `redcross-branches` (permissive) — Red Cross's own data rather than the state's.
   discover: >-
     GET /meta_endpoints for what is queryable, /meta_sources for every upstream
     with its freshness and a served_as array naming the relations it actually
@@ -853,7 +853,7 @@ operational:
 
   # No automation condition, no freshness policy — these never self-trigger.
   # Parked pending a Red Cross API credential.
-  unscheduled: [redcross-branches, frr]
+  unscheduled: [redcross-branches]
 
 exports:
   api-url: "http://api-{{ params.app_name }}.localhost"

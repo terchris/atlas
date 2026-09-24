@@ -20,24 +20,20 @@ atlas/                                   (this public repo)
 ├── src/
 ├── atlas-data/                     (public + standards-based private code, committed)
 │   ├── ingest/
-│   │   ├── src/sources/frr/             (NGO-agnostic FRR ingest, scans atlas-private-data-repo/*/frr/)
-│   │   └── scripts/{verify,validate}-frr.ts
+│   │   └── src/sources/<standard>/      (NGO-agnostic ingest, scans atlas-private-data-repo/*/<standard>/)
 │   ├── dbt/
-│   │   └── models/private_marts/        (private_marts.frr_* — tagged 'private', empty on public deploy)
+│   │   └── models/private_marts/        (tagged 'private', empty on public deploy)
 │   └── migrations/
-│       ├── 026_private_schemas.sql
-│       └── 027_private_raw_frr_resources.sql
+│       └── 026_private_schemas.sql
 ├── atlas-private-data-repo/             (only sample-ngo/ is committed; per-NGO subdirs are gitignored)
 │   ├── sample-ngo/                      (synthetic onboarding data — committed)
-│   │   ├── frr/sample-frr.json          (~5 synthetic FRR records, exercises every code path)
 │   │   ├── orgunits/sample-orgunits.json
 │   │   └── README.md
 │   ├── redcross/                        (Red Cross's private data + NGO-specific code; their own git repo, gitignored)
-│   │   ├── frr/*.json                   (FRR snapshots — data only)
 │   │   ├── orgunits/*.json              (org-unit snapshots — data only)
-│   │   ├── docs/                        (private specs: FRR OpenAPI copy, payment-rail JSONs)
+│   │   ├── docs/                        (private specs, payment-rail JSONs)
 │   │   ├── dbt/                         (only NGO-specific Layer 3 dbt — private_marts_redcross.*)
-│   │   ├── migrations/                  (only NGO-specific raw tables, not the FRR ones)
+│   │   ├── migrations/                  (only NGO-specific raw tables, not the shared ones)
 │   │   └── README.md
 │   └── folkehjelp/                      (mirrors redcross/ when stood up)
 └── docs/
@@ -45,7 +41,7 @@ atlas/                                   (this public repo)
 
 **Standards-based vs NGO-specific split** (per the revised [Q-priv-18]):
 
-- **FRR** is a Norwegian government-shared standard consumed by multiple NGOs in the same shape, so the FRR ingest, migrations, and dbt models live in `atlas-data/`. Multi-NGO coexistence is via the `ngo_orgnr` column populated from each per-NGO subdirectory's data files.
+- A **government-shared standard** is consumed by multiple NGOs in the same shape, so its ingest, migrations, and dbt models live in `atlas-data/`. Multi-NGO coexistence is via the `ngo_orgnr` column populated from each per-NGO subdirectory's data files.
 - **NGO-specific sources** (e.g. Visma org-unit feeds, internal CRMs, payment integrations) keep their ingest + dbt code in the NGO's private repo at `atlas-private-data-repo/<ngo>/`.
 - **Per-NGO data files** are always gitignored — never in the public repo. Synthetic stand-ins for those data files live in `sample-ngo/` so onboarding new contributors and CI can run end-to-end without any real NGO data.
 
@@ -57,7 +53,7 @@ atlas/                                   (this public repo)
 
 For the **NGO-specific Layer 3** code (`atlas-private-data-repo/<ngo>/{dbt,migrations}/`), the layout mirrors `atlas-data/{dbt,migrations}/`. Anyone who knows the public layout can navigate the private one immediately. Same naming for source folders, same script-naming convention (`refresh:<source>`, `ingest:<source>`).
 
-For **standards-based Layer 2** sources (e.g. FRR), the ingest/dbt/migrations all live in `atlas-data/` and the per-NGO subdirectory contains data only (`atlas-private-data-repo/<ngo>/<source>/*.json`).
+For **standards-based Layer 2** sources, the ingest/dbt/migrations all live in `atlas-data/` and the per-NGO subdirectory contains data only (`atlas-private-data-repo/<ngo>/<source>/*.json`).
 
 ### Per-NGO subdirectory
 
@@ -65,7 +61,7 @@ One subdirectory per NGO under the umbrella `atlas-private-data-repo/`. Each NGO
 
 ### sample-ngo
 
-`atlas-private-data-repo/sample-ngo/` is committed (under the public repo) and contains synthetic, fictitious data that exercises every standards-based ingest path. New contributors run the FRR ingest against `sample-ngo/frr/sample-frr.json` to verify their dev setup before any real NGO data is in play. CI can use it the same way (no real NGO data required to validate code changes).
+`atlas-private-data-repo/sample-ngo/` is committed (under the public repo) and contains synthetic, fictitious data that exercises every standards-based ingest path. New contributors run the shared ingest against it before ever touching real NGO data.
 
 The synthetic NGO uses orgnr `999999999` (deliberately fails Brreg's MOD-11) so it never collides with a real NGO.
 
@@ -85,7 +81,7 @@ The `docs/research/*-internal/` rule is belt-and-suspenders for pre-existing pri
 
 ### Cross-project dbt: marts is a `source`, not a `ref` — only for Layer 3
 
-For **standards-based shapes** like FRR, the dbt models live in the public `atlas-data/dbt/` project and reference `marts.*` via normal `{{ ref('dim_kommune') }}` (same project, same DAG). Models are tagged `private` so operators can `dbt build --exclude tag:private` if needed.
+For **standards-based shapes**, the dbt models live in the public `atlas-data/dbt/` project and reference `marts.*` via normal `{{ ref('dim_kommune') }}` (same project, same DAG). Models are tagged `private` so operators can `dbt build --exclude tag:private` if needed.
 
 For **NGO-specific Layer 3 code** (`atlas-private-data-repo/<ngo>/dbt/`) the private dbt project is fully separate from the public Atlas project — they are not merged or extended. The private project does **not** rebuild `marts.*` — those tables arrive in the private deployment's Postgres via the nightly restore from atlas.helpers.no. From the private dbt project's perspective, `marts.*` is an **external data source**, declared in `sources.yml`:
 
@@ -135,9 +131,9 @@ Per-NGO private UI routes (`/private/<ngo>/donations`, `/private/<ngo>/equipment
 2. Clone the public Atlas repo locally.
 3. Add `atlas-private-data-repo/<ngo>/` to `.gitignore` in the public repo (one line per NGO, alongside the existing `redcross/`).
 4. `mkdir -p atlas-private-data-repo/<ngo>` and clone the private repo into it.
-5. Create the per-source data subdirectories the NGO uses (`frr/`, `orgunits/`, plus any NGO-specific source folders) + `docs/` (private specs) + `README.md`. Add `dbt/` and `migrations/` only if the NGO has Layer-3 NGO-specific data sources.
+5. Create the per-source data subdirectories the NGO uses (`orgunits/`, plus any standards-based or NGO-specific source folders) + `docs/` (private specs) + `README.md`. Add `dbt/` and `migrations/` only if the NGO has Layer-3 NGO-specific data sources.
 6. Add the NGO to `atlas-data/ingest/src/seed-sources/atlas-ngo-landscape/landscape.json` (slug + orgnr) so the standards-based ingests can resolve `<ngo-slug>` → orgnr.
-7. Drop the NGO's first FRR snapshot into `atlas-private-data-repo/<ngo>/frr/` and run `npx tsx atlas-data/ingest/src/sources/frr/index.ts`. The shared ingest auto-discovers the new folder.
+7. Drop the NGO's first snapshot into `atlas-private-data-repo/<ngo>/<standard>/` and run the shared ingest for that standard. It auto-discovers the new folder.
 8. Move any pre-existing private specs from `docs/research/<ngo>-internal/` (in the public repo working tree) into `atlas-private-data-repo/<ngo>/docs/`.
 9. Add the first row to `atlas-private-data-repo/<ngo>/docs/data-inventory.md`.
 

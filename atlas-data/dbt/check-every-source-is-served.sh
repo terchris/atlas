@@ -46,9 +46,10 @@ for f in "$MANIFEST" "$LINEAGE" "$GENERATED"; do
 done
 
 # NEVER served, by design. Each needs a reason, not just a name.
-#   frr  Red Cross volunteer register. Personal data, auth-gated in
-#        private_marts, deliberately outside api_v1 and outside marts.
-EXEMPT="frr"
+# ⚠️ EMPTY since 2026-09-24, when its only entry was removed on Terje's
+# instruction (urb-agents #1453). Empty is the correct state, not a gap: every
+# remaining ingested source is expected to reach a published relation.
+EXEMPT=""
 
 # Ingested and not yet modelled. EMPTY, and keeping it that way is the rule.
 #
@@ -130,5 +131,6 @@ fi
 n_all=$(printf '%s\n' "$ALL" | wc -l | tr -d ' ')
 n_def=$(printf '%s\n' $deferred | wc -w | tr -d ' ')
 echo "✓ every ingested source reaches a model, or is declared"
-echo "  ${n_all} sources · 1 exempt by design (frr) · ${n_def} deferred and tracked"
+n_ex=$(printf '%s\n' $EXEMPT | wc -w | tr -d ' ')
+echo "  ${n_all} sources · ${n_ex} exempt by design · ${n_def} deferred and tracked"
 [ "$n_def" -eq 0 ] || echo "  ⚠️ still unserved:$deferred"

@@ -184,10 +184,9 @@ def _ingest_executor():
 
 # ── Source groupings ─────────────────────────────────────────────────────────
 #
-# frr is deliberately absent. It reads atlas-private-data-repo/, which is not
-# present on any public deployment, so a scheduled run would materialise zero
-# rows on a timer forever — pure noise in the run history. It stays manual, and
-# is run locally by whoever has the private data.
+# ⚠️ Every ingested source now appears in one of the groupings below or in
+# cadence.UNSCHEDULED_SOURCES. The one standing exception was removed on
+# 2026-09-24 (urb-agents #1453).
 
 _ANNUAL_SOURCE_IDS = [
     *raw_ssb.SSB_SOURCES,

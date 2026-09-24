@@ -151,7 +151,7 @@ Run against a throwaway Postgres with all 34 declared source tables created and 
    cadence. Needs a per-source expected cadence, which we do not have as data today — cadence
    currently lives in schedules and manifests.
 2. 🔴 **How do sources with no cadence behave?** This is the question that decides the design.
-   `frr` is permanent and private by design; `redcross-branches` is parked on Terje's APIM key.
+   `redcross-branches` is parked on Terje's APIM key.
    **Both legitimately have no automation condition and no freshness policy, for different
    reasons**, and neither should ever alarm. A naive "everything must be fresh" check fires on both
    from day one, gets muted, and then protects nothing.

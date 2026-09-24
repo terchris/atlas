@@ -1,5 +1,11 @@
 # PLAN-002 — Fill 180 schema.yml description gaps
 
+> ⚠️ **Edited 2026-09-24.** This record named a private Red Cross source that has
+> since been removed from Atlas on Terje's instruction (urb-agents #1453). Its
+> identifier is written `<private>` here. The sequence of events, the commands
+> and the measurements are otherwise unchanged.
+
+
 > **IMPLEMENTATION RULES:** Before implementing this plan, read and follow:
 > - [WORKFLOW.md](../../WORKFLOW.md) — The implementation process
 > - [PLANS.md](../../PLANS.md) — Plan structure and best practices
@@ -22,9 +28,9 @@ Snapshot from PLAN-001 phase 1 baseline run (2026-04-27). The check script (`atl
 
 | File | Columns | Notes |
 |---|---:|---|
-| `atlas-data/dbt/models/supply/schema.yml` | **77** | Largest gap. Supply models (`supply__redcross_*`, `supply__frr_*`) and `dim_chapter` extensions. |
+| `atlas-data/dbt/models/supply/schema.yml` | **77** | Largest gap. Supply models (`supply__redcross_*`, `supply__<private>_*`) and `dim_chapter` extensions. |
 | `atlas-data/dbt/models/indicators/schema.yml` | **48** | Per-source `indicators__*` passthroughs. Many columns inherit naturally from `naming-conventions.md` canonical vocabulary; could be propagated mechanically. |
-| `atlas-data/dbt/models/private_marts/schema.yml` | **34** | FRR (Felles Ressursregister) models. Some columns require domain knowledge to describe. |
+| `atlas-data/dbt/models/private_marts/schema.yml` | **34** | private-source models. Some columns require domain knowledge to describe. |
 | `atlas-data/dbt/models/dimensions/schema.yml` | **12** | Conformed dimensions — small fixable chunk. |
 | `atlas-data/dbt/models/marts/schema.yml` | **7** | Cross-source mart facts. |
 | `atlas-data/dbt/seeds/schema.yml` | **2** | Reference seeds. Trivial. |
@@ -59,7 +65,7 @@ Per-source `indicators__*` passthroughs. Many columns repeat across sources (`so
 
 ### Phase 4 — `private_marts/schema.yml` (34 columns)
 
-FRR models. Some columns are FRR-specific and need domain knowledge (consult [`atlas-private-data-repo/redcross/docs/felles-ressursregister-frr-openapi-spec.md`](https://github.com/terchris/atlas-private-data-repo/tree/main/redcross/docs/felles-ressursregister-frr-openapi-spec.md) if available, otherwise the FRR upstream docs). ~2-3 hours.
+<private> models. Some columns are <private>-specific and need domain knowledge (consult [`atlas-private-data-repo/redcross/docs/<private>-openapi-spec.md`](https://github.com/terchris/atlas-private-data-repo/tree/main/redcross/docs/<private>-openapi-spec.md) if available, otherwise the <private> upstream docs). ~2-3 hours.
 
 ### Phase 5 — `supply/schema.yml` (77 columns)
 

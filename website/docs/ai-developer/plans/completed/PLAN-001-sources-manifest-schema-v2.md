@@ -1,5 +1,11 @@
 # PLAN-001: Sources manifest schema v2 — fields, JSON Schema, validation gate
 
+> ⚠️ **Edited 2026-09-24.** This record named a private Red Cross source that has
+> since been removed from Atlas on Terje's instruction (urb-agents #1453). Its
+> identifier is written `<private>` here. The sequence of events, the commands
+> and the measurements are otherwise unchanged.
+
+
 > **IMPLEMENTATION RULES:** Before implementing this plan, read and follow:
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
@@ -109,7 +115,7 @@ User confirms phase is complete.
 
 - [x] 2.1 Added `lifecycle: stable` to all 41 manifests.
 
-- [x] 2.2 Added `time_coverage: {start, end}` to all 41 manifests. Year ranges drawn from existing `dimensions[].Tid` / `dimensions[].AAR` notes. 7 manifests use `{null, null}` where the cadence is genuinely irregular or the range isn't stated (bufdir-barnefattigdom, fhi-prognose, fhi-vgs-gjennomforing, frr, redcross-branches, ssb-crime-tables, ssb-klass-fylker, ssb-klass-kommuner).
+- [x] 2.2 Added `time_coverage: {start, end}` to all 41 manifests. Year ranges drawn from existing `dimensions[].Tid` / `dimensions[].AAR` notes. 7 manifests use `{null, null}` where the cadence is genuinely irregular or the range isn't stated (bufdir-barnefattigdom, fhi-prognose, fhi-vgs-gjennomforing, <private>, redcross-branches, ssb-crime-tables, ssb-klass-fylker, ssb-klass-kommuner).
 
 - [x] 2.3 Quoted 20 unquoted numeric `upstream_id` values across SSB + 4 FHI manifests. Leading zeros on SSB table IDs (`07459`, `06083`, etc.) now preserved as strings.
 
@@ -132,7 +138,7 @@ User confirms phase is complete.
 
 ## Phase 3: Companion files — `publishers.yaml` + `source-categories.yaml` — DONE
 
-**Outcome (2026-05-12)**: All cross-file checks now pass — `→ validated 41 manifests` with no warnings. Logos are placeholders (text wordmarks) flagged with TODO comments inside each SVG; need replacement with official publisher logos before launch. Normalised `frr/manifest.yml` publisher field from "Norges Røde Kors (private FRR register)" to "Norges Røde Kors" to consolidate with redcross-branches under one publisher entry (the FRR qualifier remains in `attribution:`).
+**Outcome (2026-05-12)**: All cross-file checks now pass — `→ validated 41 manifests` with no warnings. Logos are placeholders (text wordmarks) flagged with TODO comments inside each SVG; need replacement with official publisher logos before launch. Normalised `<private>/manifest.yml` publisher field from "Norges Røde Kors (private <private> register)" to "Norges Røde Kors" to consolidate with redcross-branches under one publisher entry (the <private> qualifier remains in `attribution:`).
 
 ### Tasks
 

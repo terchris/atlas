@@ -121,8 +121,8 @@ on a change, not on a timer.
   the git range and flags a source that would **deploy silent** — run it on `b5bb530` and it
   names `fhi-innvandrere` (urb-agents #1349).
 
-  ⚠️ Two sources are excluded because no deploy can fix them: `frr` is auth-gated by design,
-  and `redcross-branches` has no data to arrive.
+  ⚠️ One source is excluded because no deploy can fix it: `redcross-branches` has no data
+  to arrive.
 
   **And "deployed" is not "works".** A release is not finished until a deploy request has been sent
   *and* its acceptance checks reported back. ⚠️ `transform_and_publish` runs

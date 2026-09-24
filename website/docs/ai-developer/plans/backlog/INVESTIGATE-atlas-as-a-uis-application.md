@@ -392,7 +392,7 @@ this project keeps meeting — a code location LOADED, an API answering, and zer
    too — probably that the code location is LOADED, the API answers, and the data is fresh.
 7. **What is the minimum viable install?** Probably not 41 sources. A stranger evaluating this wants
    something that works in minutes.
-8. **What happens to `atlas-private-data-repo`?** `frr` reads a private tree absent on any public
+8. **What happens to `atlas-private-data-repo`?** a private-source ingest reads a tree absent on any public
    deployment. A stranger's install must not fail for a source they cannot have.
 
 ## Falsifications

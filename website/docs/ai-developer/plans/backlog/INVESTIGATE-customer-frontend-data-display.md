@@ -18,7 +18,7 @@ This INVESTIGATE settles how to deliver both.
 
 ## The principle: open by default
 
-Atlas's data layer is **whitelist-private, not whitelist-public**. The default for every table and view is "public, queryable via the API"; only data explicitly tagged for auth-gated access (today: `private_marts.*` — Red Cross FRR resources covered by [INVESTIGATE-private-atlas-deployments.md](INVESTIGATE-private-atlas-deployments.md)) stays hidden.
+Atlas's data layer is **whitelist-private, not whitelist-public**. The default for every table and view is "public, queryable via the API"; only data explicitly tagged for auth-gated access (today: `private_marts.*`, covered by [INVESTIGATE-private-atlas-deployments.md](INVESTIGATE-private-atlas-deployments.md)) stays hidden.
 
 The previous INVESTIGATE-frontend-data-access-architecture established `api_v1.*` as a curated stable contract surface. That doesn't go away — it remains the recommended endpoint set for production consumers who want versioned guarantees. But it's no longer the *only* thing visible on `/data`. The principle changes from "expose only the curated set" to "expose everything; mark some endpoints as the stable contract."
 
@@ -33,7 +33,7 @@ Counts as of 2026-05-05 (catalogue is **38 sources, growing** — the FHI-onboar
 | `api_v1` | 9 wrapper views (the stable contract) | yes | yes — keep, unchanged |
 | `marts` | ~50 dbt models — 5 `dim_*`, 2 `fact_*`, ~38 `indicators__*` (one per ingest source), 7 `supply__*`, 9 `mart_*` (the underlying tables `api_v1` wraps), plus `_sources_manifest` / `_sources_dimensions` / `eu_data_theme` seeds (private, prefixed `_`). | no | **yes — expose** (`_*` prefixed seeds stay internal) |
 | `raw` | 38 ingest tables — verbatim landings from SSB / FHI / Red Cross / Brreg, plus `raw.ingest_runs` (operational run log; tracks `upstream_updated_at`) and `raw.sitemap_log` (scraping-side discovery state). | no | **yes — expose** |
-| `private_marts` | 4 FRR resource tables containing personal data | no | **stay private** — auth-gated, separate concern |
+| `private_marts` | private per-NGO tables containing personal data | no | **stay private** — auth-gated, separate concern |
 
 Net effect for external consumers: ~80 endpoints become queryable instead of 9, growing as new sources land. None of them contain personal data; everything is sourced from public providers. Pagination (already built into the customer frontend) handles the row-count growth.
 
@@ -61,7 +61,7 @@ Atlas already has the substrate. Three artefacts exist; the gap is the join.
 | **Hand-maintained Markdown registry** of all 20 implemented sources | [`atlas-data/ingest/src/sources/README.md`](https://github.com/terchris/atlas/tree/main/atlas-data/ingest/src/sources/README.md) | Source ID + provider + one-line description + npm-run command + notes. Source of truth for the static metadata today, just unstructured. |
 | **Per-source READMEs** (20 of 21 sources have one) | `atlas-data/ingest/src/sources/<id>/README.md` | Richer per-source notes: implementation, schema quirks, observed issues. Free-form prose — not a registry, but useful provenance for the upstream URL + description fields. |
 | **`raw.ingest_runs` table** (already populated, queryable) | atlas_db | One row per ingest invocation: `source_slug`, `started_at`, `finished_at`, `exit_code`, `rows_scraped`, `rows_parsed`, `warnings_count`, `errors_count`, `notes`. Both timestamp and row-count fields the sources list needs are already here, just not joined to source-level metadata or exposed via PostgREST. |
-| **`atlas-data/dbt/models/indicators/sources.yml`** | dbt project | 17 declarations of `raw.*` indicator tables as dbt sources, with column-level descriptions. Subset only — doesn't include redcross-branches, ssb-klass-*, frr. |
+| **`atlas-data/dbt/models/indicators/sources.yml`** | dbt project | 17 declarations of `raw.*` indicator tables as dbt sources, with column-level descriptions. Subset only — doesn't include redcross-branches or ssb-klass-*. |
 
 What's missing is a **single queryable shape** that joins the static metadata (provider / upstream URL / description, today as Markdown) with `raw.ingest_runs` aggregates (already in the DB) and dbt lineage (in `target/manifest.json`). Building that join is the work.
 

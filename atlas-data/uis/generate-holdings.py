@@ -125,8 +125,7 @@ def _nonpublic(rows):
     for r in sorted(other, key=lambda r: r["source_id"]):
         bits.append(f"`{r['source_id']}` ({r['license']})")
     return ("The exceptions are " + " and ".join(bits) +
-            " — Red Cross's own data rather than the state's. `frr` is a volunteer "
-            "register held in an auth-gated schema and is NOT served on the public API.")
+            " — Red Cross's own data rather than the state's.")
 
 
 def markdown():

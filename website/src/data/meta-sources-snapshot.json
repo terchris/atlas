@@ -341,14 +341,6 @@
       ]
     },
     {
-      "source_id": "frr",
-      "last_ingested_at": null,
-      "latest_row_count": null,
-      "total_runs": 0,
-      "downstream_model_count": 0,
-      "served_as": []
-    },
-    {
       "source_id": "redcross-branches",
       "last_ingested_at": null,
       "latest_row_count": null,

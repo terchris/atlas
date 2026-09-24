@@ -148,10 +148,6 @@ fhi-vgs-gjennomforing,KJONN,Sex,3 codes,"""0"" both, ""1"" men, ""2"" women"
 fhi-vgs-gjennomforing,UTDANN,Parents' education level,5 codes,Highest parental education at child's birth — proxy for socioeconomic context
 fhi-vgs-gjennomforing,INNVKAT,Immigration category,1 code,Single category (collapsed in this slice)
 fhi-vgs-gjennomforing,MEASURE_TYPE,Which number,4 codes,"TELLER (count), RATE (completion %), SMR (standardised ratio), MEIS"
-frr,id,FRR resource UUID,text,Stable across snapshots; primary key
-frr,ngo_orgnr,Owning NGO orgnr (Brreg),9-digit numeric,Resolved from atlas-ngo-landscape/landscape.json at ingest; sample-ngo uses synthetic 999999999
-frr,sist_oppdatert,FRR-side last-updated timestamp,timestamptz,Per-resource freshness; max across run is captured as upstream_updated_at
-frr,raw_payload,FRR record payload,jsonb,"Verbatim JSON from FRR — schema is FRR-managed, mirrored without flattening"
 redcross-branches,branch_id,Branch UUID,text,Stable identifier across snapshots
 redcross-branches,branch_type,Branch type,3 codes,"HQ (national), Distrikt (regional), Lokalforening (local chapter)"
 redcross-branches,branch_name,Branch name,text,

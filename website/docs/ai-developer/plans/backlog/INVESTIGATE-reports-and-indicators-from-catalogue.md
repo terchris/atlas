@@ -82,7 +82,6 @@ Tagged by `topic` (Atlas-domain), with `eu_theme` (DCAT-AP) and `geo`. All annua
 |---|---|
 | `ssb-12063` | KOSTRA kommunale fritidstilbud + voluntary-association count |
 | `redcross-branches` | Red Cross HQ + Distrikt + Lokalforening with per-branch activities |
-| `frr` | Frivillig Resource Register (private; per-NGO volunteer roster) |
 
 ### Reference (2 sources, eu_theme=GOVE)
 | Source | What |

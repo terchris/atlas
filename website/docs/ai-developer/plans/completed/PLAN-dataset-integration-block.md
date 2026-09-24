@@ -1,5 +1,11 @@
 # PLAN: Dataset integration block — surface Atlas's derived layer on each dataset page
 
+> ⚠️ **Edited 2026-09-24.** This record named a private Red Cross source that has
+> since been removed from Atlas on Terje's instruction (urb-agents #1453). Its
+> identifier is written `<private>` here. The sequence of events, the commands
+> and the measurements are otherwise unchanged.
+
+
 > **IMPLEMENTATION RULES:** Before implementing this plan, read and follow:
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
@@ -147,7 +153,7 @@ User confirms phase is complete.
 - [ ] Per-dataset MDX renders a "Joined with" section listing co-occurring datasets with the dbt models that join them.
 - [ ] Stable anchor IDs `#in-atlas` and `#joined-with` exist on every per-dataset page.
 - [ ] Reference datasets (e.g. `ssb-klass-kommuner`) with many downstream consumers render gracefully (capped lists).
-- [ ] Datasets with no current downstream (if any — `frr` is a candidate) render an honest "no Atlas indicators consume this dataset yet" note instead of an empty section.
+- [ ] Datasets with no current downstream (if any — `<private>` is a candidate) render an honest "no Atlas indicators consume this dataset yet" note instead of an empty section.
 - [ ] Local build clean.
 
 ---
