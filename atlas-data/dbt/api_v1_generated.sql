@@ -213,6 +213,45 @@ COMMENT ON VIEW api_v1.brreg_enhet IS 'Every organisation registered in Norway �
 Enhetsregisteret, around 1.17 million rows, current as of the last change-feed run.
 Companies, foundations, associations, public bodies and sole proprietorships.
 
+🔴 SEND A `select=` ON THIS RELATION. THE DEFAULT PROJECTION IS ~20x
+LARGER THAN A USEFUL ONE, AND YOU ALMOST CERTAINLY DO NOT WANT THE
+COLUMN THAT MAKES IT SO. Measured against this relation 2026-09-24,
+cache-busted, 1 000 rows:
+
+    no select=                                    2 118 854 B   0.48 s
+    select=organisasjonsnummer,navn,kommune_nr,
+           is_active                                 104 940 B   0.18 s
+    select=doc                                    1 452 121 B   0.28 s
+
+⚠️ `doc` is the full raw upstream JSON document for each row — 68.5%
+of the default response on its own. It DUPLICATES columns already
+flattened beside it: `doc->>''navn''` is `navn`,
+`doc->>''organisasjonsnummer''` is `organisasjonsnummer`. It is published
+because the upstream record is what Atlas received and consumers may
+legitimately want a field Atlas did not flatten — not because it is a
+sensible default.
+
+🔵 A request with no `select=` is the first thing anyone sends: it is
+what the API playground''s try-it button sends and what every first probe
+sends. That is exactly who pays the 20x. Named here rather than left to
+be discovered (urb-agents #1454).
+
+🔴 BUT `select=` CANNOT RESCUE A SLOW QUERY. Narrowing the projection
+cuts BYTES, never the scan. Same `ilike` filter, with and without a
+narrow `select=`:
+
+    navn=ilike.*speider*                      1 405 502 B   12.6 s
+    navn=ilike.*speider*&select=navn             28 607 B    9.1 s
+
+⚠️ 49x fewer bytes and barely any less time. An unindexed predicate
+reads the whole ~2 GB heap whatever you project. Use `select=` for
+payload and an indexed filter for time — they are different problems,
+and only one of them is yours to fix from the client.
+
+🔵 Measured twice, independently: a consumer got 28 607 B / 9.9 s for
+the narrow one and Atlas got 28 607 B / 9.1 s. Identical bytes, timing
+in range (urb-agents #1454).
+
 🔵 CHECK WHETHER YOUR RESULT WAS TRUNCATED, AND DO NOT CHECK IT
 AGAINST YOUR OWN `limit`. Send `Prefer: count=exact` and compare the
 total in the `Content-Range` response header against the number of
