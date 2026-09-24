@@ -40,6 +40,17 @@
   shown roughly thirty conversions; the identical pair was the anomaly, and I
   read it as the finding.
 
+  ⚠️ AND THE OTHER READING'S ORIGIN IS UNEXPLAINED, NOT DIAGNOSED. It was first
+  put down to the edge cache serving a stale copy (urb-agents #1448). That was
+  withdrawn on #1484: the CDN's TTL was measured at five minutes and the reading
+  was two hours stale, so a cache hit cannot produce it. A transcription, a
+  mislabelled timestamp, a value read from notes — all fit, none is measured.
+  🔵 The refutation never depended on the cause and does not now.
+
+  🔴 Which makes the lesson broader than "check for the cache". An unverified
+  number has UNKNOWN provenance, not PRESUMED provenance — reaching for the
+  failure mode you documented yesterday is still reaching for a story.
+
   🔵 THE RATE IS STILL NOT A PROJECTION, but for one reason only: the population
   is NOT UNIFORM. Organisations that change often convert first and the long
   tail may never change at all, so ~130 rows/hour cannot be extended to an end
