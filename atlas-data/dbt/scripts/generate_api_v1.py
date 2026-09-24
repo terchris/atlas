@@ -143,6 +143,15 @@ provenance. Start here if you are new:
   {site}
   {site}/api   this same document, browsable, with worked examples
 
+⚠️ `info.version` IN THIS DOCUMENT IS POSTGREST'S VERSION, NOT ATLAS'S. It
+reads 14.10 because PostgREST generates this spec and reports itself; Atlas
+cannot set it and there is no Atlas version in here at all. A client that reads
+`info.version` and believes it has the API's version is wrong — which is worse
+than the field being absent, so it is written down here rather than left to be
+discovered. `info.contact` and `info.license` are absent for the same reason:
+PostgREST derives only the title and this description from the schema comment.
+Licence and attribution are per-source and live in `meta_sources`.
+
 Curated wrapper views over Norwegian public data and NGO supply data, served
 by PostgREST. Values are republished as the upstream publishes them.
 

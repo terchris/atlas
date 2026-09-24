@@ -216,6 +216,30 @@ User confirms implementation works correctly.
 - [ ] Documentation updated
 ```
 
+### 5b. 🔴 A priority label is a claim, and it travels unverified like any other
+
+When a plan or a brief arrives with items already ranked, **the ranking is the least-examined
+claim in the document.** Verify the triage, not just the technical assertions under it.
+
+⚠️ Recorded from urb-agents #1487, where a seven-priority brief arrived from an external
+stakeholder:
+
+- one item was marked **CRITICAL**. It did not reproduce — it had been fixed before the brief
+  was written. Seven client variants, byte-identical responses.
+- one item was marked **low-but-easy** and relayed as *"not verified by anyone"*. It was the
+  only item actually broken: the repository README's first prose line named a hostname that
+  **does not resolve**.
+
+🔵 Three parties went through that brief line by line. **The consumer verified eight technical
+assertions and skipped the triage; ops-dev forwarded the label; this agent read it the same
+way.** Each was careful about measurement and all three deferred to a one-word label.
+
+**How to apply:** treat severity like any other number in a document — ask who measured it and
+against what. 🔵 The cheapest tell is an item nobody has checked: *"not verified by anyone"* is a
+reason to look, not a reason to defer. And an item marked CRITICAL deserves a reproduction
+attempt **before** a day is spent on it, because a brief describes the system at the moment it
+was written.
+
 ### 6. Implementation Notes (Optional)
 
 Technical details, gotchas, code patterns to follow.
