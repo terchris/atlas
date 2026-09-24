@@ -22,6 +22,16 @@ provenance. Start here if you are new:
   https://atlas.sovereignsky.no
   https://atlas.sovereignsky.no/api   this same document, browsable, with worked examples
 
+THIS MACHINE-READABLE DOCUMENT IS SERVED AT THE API ROOT — a GET on the base
+URL returns it, as `application/openapi+json`. 🔵 It is Swagger 2.0, generated
+by PostgREST; there is no OpenAPI 3.x rendering and no separate spec file.
+
+⚠️ `/openapi.json`, `/swagger.json` and similar conventional paths return 404
+today. Worse, they return PGRST205 — "Could not find the table
+''api_v1.openapi.json''" — because PostgREST reads any unknown path as a relation
+name, so a client looking for the spec is told the API has no such TABLE rather
+than that it guessed the wrong URL. Ask for the base URL instead.
+
 ⚠️ `info.version` IN THIS DOCUMENT IS POSTGREST''S VERSION, NOT ATLAS''S. It
 reads 14.10 because PostgREST generates this spec and reports itself; Atlas
 cannot set it and there is no Atlas version in here at all. A client that reads
