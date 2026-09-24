@@ -5,6 +5,31 @@
   )
 }}
 
+-- 🔴 THREE OF BRREG'S 64 KEYS ARE DELIBERATELY NOT COLUMNS, AND THIS IS THE
+-- RECORD OF WHY. Terje's instruction was "extract all fields properly"
+-- (urb-agents #1457). Someone auditing that against the enumeration will count
+-- 64 keys and fewer columns, and a silence there looks like an oversight.
+--
+--   respons_klasse   COUNTED, not sampled: 'Enhet' on all 1 175 415 rows and
+--                    zero rows differ. It is a TYPE DISCRIMINATOR for a Brreg
+--                    endpoint that can also return Underenhet; Atlas ingests
+--                    only Enhet, so it is constant here by construction. A
+--                    column with one distinct value across 1.17M rows carries
+--                    no information.
+--                    ⚠️ It becomes meaningful the day Atlas ingests Underenhet
+--                    — which PLAN-001 notes is a separate register with its own
+--                    change feed. Add it then.
+--   links / _links   HATEOAS navigation for Brreg's own API, not data about the
+--                    organisation. 🔵 They partition the table perfectly
+--                    (1 112 582 / 62 716 / both 0) and that fact is recorded in
+--                    dim_brreg_enhet, because it says something about Atlas's
+--                    ingest paths rather than about any organisation.
+--
+-- 🔵 ops-dev's view was to extract respons_klasse anyway — a constant column is
+-- useless and harmless, and an exception costs a justification someone has to
+-- maintain. That is a fair argument and this comment is the maintenance cost
+-- being paid up front rather than deferred.
+
 -- mart_brreg_enhet — the whole Norwegian organisation register, published.
 --
 -- 🔴 MATERIALIZED AS A VIEW, unlike every other model in models/marts/api/.
@@ -82,5 +107,81 @@ select
   -- telephone, mobile, email, website, capital, sector code, articles of
   -- association, historical names and the rest. Brreg publishes all of it
   -- openly under NLOD; Atlas neither adds to it nor withholds from it.
+  epostadresse,
+  mobil,
+  telefon,
+  hjemmeside,
+  registrert_i_mvaregisteret,
+  registrert_i_foretaksregisteret,
+  registrert_i_stiftelsesregisteret,
+  registrert_i_partiregisteret,
+  er_i_konsern,
+  stiftelsesdato,
+  vedtektsdato,
+  registreringsdato_foretaksregisteret,
+  registreringsdato_merverdiavgiftsregisteret,
+  registreringsdato_mva_enhetsregisteret,
+  registreringsdato_frivillig_mva,
+  registreringsdato_frivillighetsregisteret,
+  registreringsdato_antall_ansatte_enhetsreg,
+  registreringsdato_antall_ansatte_nav,
+  fravalg_revisjon_dato,
+  fravalg_revisjon_beslutnings_dato,
+  konkursdato,
+  under_avvikling_dato,
+  tvangsopplost_pga_manglende_regnskap_dato,
+  tvangsopplost_pga_manglende_revisor_dato,
+  tvangsopplost_pga_mangelfullt_styre_dato,
+  under_rekonstruksjonsforhandling_dato,
+  tvangsavviklet_pga_manglende_sletting_dato,
+  registreringsdato_partiregisteret,
+  under_utenlandsk_insolvensbehandling_dato,
+  naeringskode1_beskrivelse,
+  naeringskode2_kode,
+  naeringskode2_beskrivelse,
+  naeringskode3_kode,
+  naeringskode3_beskrivelse,
+  institusjonell_sektorkode_kode,
+  institusjonell_sektorkode_beskrivelse,
+  hjelpeenhetskode_kode,
+  hjelpeenhetskode_beskrivelse,
+  forretningsadresse_adresse,
+  forretningsadresse_postnummer,
+  forretningsadresse_poststed,
+  forretningsadresse_kommune,
+  forretningsadresse_land,
+  forretningsadresse_landkode,
+  postadresse_adresse,
+  postadresse_postnummer,
+  postadresse_poststed,
+  postadresse_kommune,
+  postadresse_kommune_nr,
+  postadresse_land,
+  postadresse_landkode,
+  kapital_belop,
+  kapital_valuta,
+  kapital_antall_aksjer,
+  kapital_innfort_dato,
+  kapital_type,
+  kapital_fullt_innbetalt,
+  kapital_innbetalt,
+  foretaksform_i_hjemlandet_kode,
+  foretaksform_i_hjemlandet_beskrivelse,
+  foretaksform_i_hjemlandet_beskrivelse_bokmaal,
+  utenlandsk_register_adresse_adresse,
+  utenlandsk_register_adresse_poststed,
+  utenlandsk_register_adresse_land,
+  utenlandsk_register_navn,
+  registreringsnummer_i_hjemlandet,
+  underlagt_lovgivning_land,
+  underlagt_lovgivning_landkode,
+  overordnet_enhet,
+  maalform,
+  siste_innsendte_aarsregnskap,
+  aktivitet,
+  vedtektsfestet_formaal,
+  frivillig_mva_registrert_beskrivelser,
+  historiske_navn,
+  paategninger,
   doc
 from {{ ref('dim_brreg_enhet') }}

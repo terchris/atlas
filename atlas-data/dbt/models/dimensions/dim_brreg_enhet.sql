@@ -1,4 +1,25 @@
 {#
+
+  🔵 TWO UPSTREAM PAYLOAD SHAPES ARRIVE IN THIS TABLE, AND THEY PARTITION IT.
+  Recorded here because the evidence lives in `doc`, and `doc` may stop being
+  published — at which point it becomes unrecoverable from the API.
+  Counted 2026-09-24 with count=exact over all rows (urb-agents #1457):
+
+      doc ? 'links'   1 112 582        doc ? '_links'   62 716
+      rows with BOTH          0        sum        1 175 298 = exactly the total
+
+  Every row carries exactly one and never both. That is a structural fact about
+  the table rather than a proportion, which is why it is worth keeping: one
+  800-row sample put the split at 93/7, another at 97.9/2.1, and a designed
+  20 000-row sample at 29.7/70.3. None was evidence of anything.
+
+  ⚠️ WHICH SHAPE COMES FROM WHICH UPSTREAM PATH IS NOT ESTABLISHED. The obvious
+  test fails: `reconciled_at` is non-null on all 1 175 334 rows and
+  discriminates nothing. `snapshot_loaded_at` and `last_oppdateringsid` would,
+  and they are not published — so it needs a query here, not from outside. The
+  plausible reading is snapshot rows versus change-feed rows, given the
+  coalesce below. INFERENCE, untested.
+
   🔴 WHY `last_oppdateringsid` AND `snapshot_loaded_at` ARE INDEXED.
 
   Both incremental predicates below read `max(...)` from THIS table. Until
@@ -621,8 +642,14 @@ typed as (
     doc -> 'organisasjonsform' ->> 'beskrivelse'                 as organisasjonsform_beskrivelse,
     doc -> 'naeringskode1' ->> 'kode'                            as naeringskode1_kode,
     doc -> 'forretningsadresse' ->> 'kommunenummer'              as kommune_nr,
-    -- ⚠️ `antallAnsatte` is present on only ~4% of records (13 of 300 sampled
-    -- live on 2026-09-12), while `harRegistrertAntallAnsatte` is on 100%. NULL
+    -- ⚠️ `antallAnsatte` is present on 72 097 of 1 175 334 records — 6.13%,
+    -- COUNTED by jsonb_object_keys on 2026-09-24 (urb-agents #1458) — while
+    -- `harRegistrertAntallAnsatte` is on 100%.
+    --
+    -- 🔵 This line said "~4% (13 of 300 sampled live on 2026-09-12)" until
+    -- 2026-09-24. A 300-row sample, wrong by half, in a comment that read as
+    -- settled. Four instruments in this data have now failed the same way; the
+    -- conclusion below is untouched and was always right. NULL
     -- here therefore means "not reported", which is NOT the same as zero
     -- employees — and a coverage analysis that reads NULL as 0 understates
     -- staffed organisations by a wide margin. Both columns are kept so the
@@ -642,6 +669,121 @@ typed as (
     f.icnpo_kategori,
     f.frivillig_doc -> 'grasrotandel' ->> 'deltarI'              as grasrotandel_deltar_i,
     nullif(f.frivillig_doc ->> 'innfoertDato', '')::date         as frivillig_innfoert_dato,
+    -- ── contact details ──────────────────────────────────────────────
+    -- 🔴 EXTRACTED ON TERJE'S DECISION, 2026-09-24 (urb-agents #1457):
+    -- "yes the ENK are businesses, extract all the fields". An
+    -- enkeltpersonforetak is a registered business and these are the
+    -- contact details it registered AS one; Brreg publishes them under
+    -- NLOD. That reasoning is indifferent to the row counts, which is why
+    -- the counts doubling on re-measurement did not change the answer.
+    -- Measured 2026-09-24 by count=exact over all 1 175 298 rows:
+    --   epostadresse 324 959 (27.65%) · mobil 308 984 (26.29%)
+    --   telefon 194 519 (16.55%) · hjemmeside 114 070 (9.71%)
+    doc ->> 'epostadresse'                                            as epostadresse,
+    doc ->> 'mobil'                                                   as mobil,
+    doc ->> 'telefon'                                                 as telefon,
+    doc ->> 'hjemmeside'                                              as hjemmeside,
+    -- ── registry memberships ─────────────────────────────────────────
+    (doc ->> 'registrertIMvaregisteret')::boolean                     as registrert_i_mvaregisteret,
+    (doc ->> 'registrertIForetaksregisteret')::boolean                as registrert_i_foretaksregisteret,
+    (doc ->> 'registrertIStiftelsesregisteret')::boolean              as registrert_i_stiftelsesregisteret,
+    (doc ->> 'registrertIPartiregisteret')::boolean                   as registrert_i_partiregisteret,
+    (doc ->> 'erIKonsern')::boolean                                   as er_i_konsern,
+    -- ── registration and event dates ─────────────────────────────────
+    -- 🔵 Upstream sends every one of these as a STRING. Casting to date
+    -- is a derivation and therefore Atlas's to get right; raw keeps the
+    -- verbatim string.
+    nullif(doc ->> 'stiftelsesdato', '')::date                              as stiftelsesdato,
+    nullif(doc ->> 'vedtektsdato', '')::date                                as vedtektsdato,
+    nullif(doc ->> 'registreringsdatoForetaksregisteret', '')::date         as registreringsdato_foretaksregisteret,
+    nullif(doc ->> 'registreringsdatoMerverdiavgiftsregisteret', '')::date  as registreringsdato_merverdiavgiftsregisteret,
+    nullif(doc ->> 'registreringsdatoMerverdiavgiftsregisteretEnhetsregisteret', '')::date as registreringsdato_mva_enhetsregisteret,
+    nullif(doc ->> 'registreringsdatoFrivilligMerverdiavgiftsregisteret', '')::date as registreringsdato_frivillig_mva,
+    nullif(doc ->> 'registreringsdatoFrivillighetsregisteret', '')::date    as registreringsdato_frivillighetsregisteret,
+    nullif(doc ->> 'registreringsdatoAntallAnsatteEnhetsregisteret', '')::date as registreringsdato_antall_ansatte_enhetsreg,
+    nullif(doc ->> 'registreringsdatoAntallAnsatteNAVAaregisteret', '')::date as registreringsdato_antall_ansatte_nav,
+    nullif(doc ->> 'fravalgRevisjonDato', '')::date                         as fravalg_revisjon_dato,
+    nullif(doc ->> 'fravalgRevisjonBeslutningsDato', '')::date              as fravalg_revisjon_beslutnings_dato,
+    -- ── distress and dissolution ─────────────────────────────────────
+    -- 🔴 THE SPARSITY IS THE SIGNAL. These are 99%+ null because few
+    -- organisations reach these states — which is exactly what a
+    -- consumer filtering for distressed organisations needs. Measured
+    -- 2026-09-24: konkursdato 3 249 · underAvviklingDato 7 396 ·
+    -- tvangsopplost…Regnskap 975 · …Revisor 302 · …Styre 106 ·
+    -- underRekonstruksjonsforhandlingDato 15.
+    nullif(doc ->> 'konkursdato', '')::date                                 as konkursdato,
+    nullif(doc ->> 'underAvviklingDato', '')::date                          as under_avvikling_dato,
+    nullif(doc ->> 'tvangsopplostPgaManglendeRegnskapDato', '')::date       as tvangsopplost_pga_manglende_regnskap_dato,
+    nullif(doc ->> 'tvangsopplostPgaManglendeRevisorDato', '')::date        as tvangsopplost_pga_manglende_revisor_dato,
+    nullif(doc ->> 'tvangsopplostPgaMangelfulltStyreDato', '')::date        as tvangsopplost_pga_mangelfullt_styre_dato,
+    nullif(doc ->> 'underRekonstruksjonsforhandlingDato', '')::date         as under_rekonstruksjonsforhandling_dato,
+    -- 🔴 THE THREE KEYS MY 20 000-ROW SAMPLE MISSED. imac's
+    -- jsonb_object_keys enumeration returned 64 keys against my floor of 61
+    -- (urb-agents #1458). Two of them are on 24 and 2 rows — no sample was
+    -- ever going to find those, which is the whole argument for enumerating.
+    nullif(doc ->> 'tvangsavvikletPgaManglendeSlettingDato', '')::date as tvangsavviklet_pga_manglende_sletting_dato,
+    nullif(doc ->> 'registreringsdatoPartiregisteret', '')::date       as registreringsdato_partiregisteret,
+    nullif(doc ->> 'underUtenlandskInsolvensbehandlingDato', '')::date as under_utenlandsk_insolvensbehandling_dato,
+    -- ── classification codes ─────────────────────────────────────────
+    doc -> 'naeringskode1' ->> 'beskrivelse'                      as naeringskode1_beskrivelse,
+    doc -> 'naeringskode2' ->> 'kode'                             as naeringskode2_kode,
+    doc -> 'naeringskode2' ->> 'beskrivelse'                      as naeringskode2_beskrivelse,
+    doc -> 'naeringskode3' ->> 'kode'                             as naeringskode3_kode,
+    doc -> 'naeringskode3' ->> 'beskrivelse'                      as naeringskode3_beskrivelse,
+    doc -> 'institusjonellSektorkode' ->> 'kode'                  as institusjonell_sektorkode_kode,
+    doc -> 'institusjonellSektorkode' ->> 'beskrivelse'           as institusjonell_sektorkode_beskrivelse,
+    doc -> 'hjelpeenhetskode' ->> 'kode'                          as hjelpeenhetskode_kode,
+    doc -> 'hjelpeenhetskode' ->> 'beskrivelse'                   as hjelpeenhetskode_beskrivelse,
+    -- ── addresses ────────────────────────────────────────────────────
+    -- ⚠️ `adresse` is an ARRAY of street lines upstream, not a string.
+    coalesce((select array_agg(x) from jsonb_array_elements_text(doc -> 'forretningsadresse' -> 'adresse') x), '{}')::text[] as forretningsadresse_adresse,
+    doc -> 'forretningsadresse' ->> 'postnummer'                  as forretningsadresse_postnummer,
+    doc -> 'forretningsadresse' ->> 'poststed'                    as forretningsadresse_poststed,
+    doc -> 'forretningsadresse' ->> 'kommune'                     as forretningsadresse_kommune,
+    doc -> 'forretningsadresse' ->> 'land'                        as forretningsadresse_land,
+    doc -> 'forretningsadresse' ->> 'landkode'                    as forretningsadresse_landkode,
+    coalesce((select array_agg(x) from jsonb_array_elements_text(doc -> 'postadresse' -> 'adresse') x), '{}')::text[] as postadresse_adresse,
+    doc -> 'postadresse' ->> 'postnummer'                         as postadresse_postnummer,
+    doc -> 'postadresse' ->> 'poststed'                           as postadresse_poststed,
+    doc -> 'postadresse' ->> 'kommune'                            as postadresse_kommune,
+    doc -> 'postadresse' ->> 'kommunenummer'                      as postadresse_kommune_nr,
+    doc -> 'postadresse' ->> 'land'                               as postadresse_land,
+    doc -> 'postadresse' ->> 'landkode'                           as postadresse_landkode,
+    -- ── capital, foreign registration, group ─────────────────────────
+    nullif(doc -> 'kapital' ->> 'belop', '')::numeric             as kapital_belop,
+    doc -> 'kapital' ->> 'valuta'                                 as kapital_valuta,
+    nullif(doc -> 'kapital' ->> 'antallAksjer', '')::bigint       as kapital_antall_aksjer,
+    nullif(doc -> 'kapital' ->> 'innfortDato', '')::date          as kapital_innfort_dato,
+    doc -> 'kapital' ->> 'type'                                   as kapital_type,
+    (doc -> 'kapital' ->> 'fulltInnbetalt')::boolean              as kapital_fullt_innbetalt,
+    nullif(doc -> 'kapital' ->> 'innbetalt', '')::numeric         as kapital_innbetalt,
+    doc -> 'foretaksformIHjemlandet' ->> 'kode'                   as foretaksform_i_hjemlandet_kode,
+    doc -> 'foretaksformIHjemlandet' ->> 'beskrivelse'            as foretaksform_i_hjemlandet_beskrivelse,
+    doc -> 'foretaksformIHjemlandet' ->> 'beskrivelseBokmaal'     as foretaksform_i_hjemlandet_beskrivelse_bokmaal,
+    doc -> 'utenlandskRegisterAdresse' ->> 'adresse'              as utenlandsk_register_adresse_adresse,
+    doc -> 'utenlandskRegisterAdresse' ->> 'poststed'             as utenlandsk_register_adresse_poststed,
+    doc -> 'utenlandskRegisterAdresse' ->> 'land'                 as utenlandsk_register_adresse_land,
+    doc ->> 'utenlandskRegisterNavn'                                  as utenlandsk_register_navn,
+    doc ->> 'registreringsnummerIHjemlandet'                          as registreringsnummer_i_hjemlandet,
+    doc ->> 'underlagtLovgivningLand'                                 as underlagt_lovgivning_land,
+    doc ->> 'underlagtLovgivningLandKode'                             as underlagt_lovgivning_landkode,
+    doc ->> 'overordnetEnhet'                                         as overordnet_enhet,
+    doc ->> 'maalform'                                                as maalform,
+    -- 🔵 A YEAR, sent as a string. Guarded rather than cast blindly: a
+    -- single malformed value would fail the build across 1.17M rows.
+    case when doc ->> 'sisteInnsendteAarsregnskap' ~ '^[0-9]{4}$'
+         then (doc ->> 'sisteInnsendteAarsregnskap')::int end     as siste_innsendte_aarsregnskap,
+    -- ── arrays ───────────────────────────────────────────────────────
+    -- 🔴 ELEMENT TYPES VERIFIED AGAINST NON-EMPTY ROWS, not assumed. My
+    -- first plan said text[] for all the prose lists; `paategninger`
+    -- turned out to hold OBJECTS ({tekst, …} enforcement notices), and
+    -- an array column's type cannot be changed after publication
+    -- without breaking callers.
+    coalesce((select array_agg(x) from jsonb_array_elements_text(doc -> 'aktivitet') x), '{}')::text[] as aktivitet,
+    coalesce((select array_agg(x) from jsonb_array_elements_text(doc -> 'vedtektsfestetFormaal') x), '{}')::text[] as vedtektsfestet_formaal,
+    coalesce((select array_agg(x) from jsonb_array_elements_text(doc -> 'frivilligMvaRegistrertBeskrivelser') x), '{}')::text[] as frivillig_mva_registrert_beskrivelser,
+    doc -> 'historiskeNavn'                                          as historiske_navn,
+    doc -> 'paategninger'                                            as paategninger,
     endringstype,
     oppdateringsid,
     snapshot_file_date,
@@ -670,6 +812,83 @@ select
   icnpo_kategori,
   (grasrotandel_deltar_i = 'true') as grasrotandel_deltar_i,
   frivillig_innfoert_dato,
+  -- ── extracted from `doc` on Terje's instruction, 2026-09-24 ──────
+  epostadresse,
+  mobil,
+  telefon,
+  hjemmeside,
+  registrert_i_mvaregisteret,
+  registrert_i_foretaksregisteret,
+  registrert_i_stiftelsesregisteret,
+  registrert_i_partiregisteret,
+  er_i_konsern,
+  stiftelsesdato,
+  vedtektsdato,
+  registreringsdato_foretaksregisteret,
+  registreringsdato_merverdiavgiftsregisteret,
+  registreringsdato_mva_enhetsregisteret,
+  registreringsdato_frivillig_mva,
+  registreringsdato_frivillighetsregisteret,
+  registreringsdato_antall_ansatte_enhetsreg,
+  registreringsdato_antall_ansatte_nav,
+  fravalg_revisjon_dato,
+  fravalg_revisjon_beslutnings_dato,
+  konkursdato,
+  under_avvikling_dato,
+  tvangsopplost_pga_manglende_regnskap_dato,
+  tvangsopplost_pga_manglende_revisor_dato,
+  tvangsopplost_pga_mangelfullt_styre_dato,
+  under_rekonstruksjonsforhandling_dato,
+  tvangsavviklet_pga_manglende_sletting_dato,
+  registreringsdato_partiregisteret,
+  under_utenlandsk_insolvensbehandling_dato,
+  naeringskode1_beskrivelse,
+  naeringskode2_kode,
+  naeringskode2_beskrivelse,
+  naeringskode3_kode,
+  naeringskode3_beskrivelse,
+  institusjonell_sektorkode_kode,
+  institusjonell_sektorkode_beskrivelse,
+  hjelpeenhetskode_kode,
+  hjelpeenhetskode_beskrivelse,
+  forretningsadresse_adresse,
+  forretningsadresse_postnummer,
+  forretningsadresse_poststed,
+  forretningsadresse_kommune,
+  forretningsadresse_land,
+  forretningsadresse_landkode,
+  postadresse_adresse,
+  postadresse_postnummer,
+  postadresse_poststed,
+  postadresse_kommune,
+  postadresse_kommune_nr,
+  postadresse_land,
+  postadresse_landkode,
+  kapital_belop,
+  kapital_valuta,
+  kapital_antall_aksjer,
+  kapital_innfort_dato,
+  kapital_type,
+  kapital_fullt_innbetalt,
+  kapital_innbetalt,
+  foretaksform_i_hjemlandet_kode,
+  foretaksform_i_hjemlandet_beskrivelse,
+  foretaksform_i_hjemlandet_beskrivelse_bokmaal,
+  utenlandsk_register_adresse_adresse,
+  utenlandsk_register_adresse_poststed,
+  utenlandsk_register_adresse_land,
+  utenlandsk_register_navn,
+  registreringsnummer_i_hjemlandet,
+  underlagt_lovgivning_land,
+  underlagt_lovgivning_landkode,
+  overordnet_enhet,
+  maalform,
+  siste_innsendte_aarsregnskap,
+  aktivitet,
+  vedtektsfestet_formaal,
+  frivillig_mva_registrert_beskrivelser,
+  historiske_navn,
+  paategninger,
   -- "Trading" rather than "exists". An organisation in konkurs or under
   -- avvikling is still registered and still answers from Brreg; it is simply not
   -- something a coverage analysis should count as an operating body. Consumers
