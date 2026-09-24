@@ -653,21 +653,43 @@ operational:
         touched has not changed, so its two file dates carry the same document.
         Finish the load for provenance and completeness, not as a precondition.
     - symptom: >-
-        A transform run fails naming dim_brreg_enhet — Database Error, 'column
-        "snapshot_loaded_at" does not exist', pointing at LINE 209 and
-        "select coalesce(max(snapshot_loaded_at), '-infinity'".
+        A transform run fails naming dim_brreg_enhet with EITHER of two errors:
+        Database Error, 'column "snapshot_loaded_at" does not exist' pointing at
+        "select coalesce(max(snapshot_loaded_at), '-infinity'"; OR dbt's own
+        "The source and target schemas on this incremental model are out of sync!"
+        followed by "Source columns not in target". Both mean the same
+        thing and take the same fix — see cause for which you get and why.
       cause: >-
         An Atlas upgrade added a column to a model that is materialised
         incrementally. The existing table cannot gain it in place.
-        This entry used to quote dbt's own message, "the source and target
-        schemas on this incremental model are out of sync". dbt never emits it
-        for THIS model, and an operator searching the real text found nothing -
-        which is the outcome the quoted text existed to prevent. The reason is
-        the model's own shape: its incremental predicate reads
-        max(snapshot_loaded_at) FROM ITSELF, so the compiled SELECT touches the
-        missing column and Postgres raises before dbt's schema-change handling
-        gets a chance to compare anything. Measured by imac, which ran the
-        incremental first rather than assuming a refresh was needed.
+        ADDING A COLUMN TO THIS MODEL PRODUCES ONE OF TWO COMPLETELY DIFFERENT
+        ERRORS, and which one depends on whether the incremental predicate reads
+        the new column:
+
+          the new column IS read by the predicate - e.g. snapshot_loaded_at.
+            The compiled SELECT does `max(snapshot_loaded_at) from {{ this }}`,
+            so POSTGRES raises 'column "snapshot_loaded_at" does not exist'
+            before dbt's schema-change handling compares anything. That is the
+            symptom quoted above.
+
+          the new column is NOT read by the predicate - e.g. the 76 columns
+            extracted from `doc` on 2026-09-24. dbt's comparison runs normally
+            and emits its own standard message:
+              "The source and target schemas on this incremental model are out of sync!"
+              followed by "Source columns not in target: [...]"
+
+        Same cause, same fix, two search terms. An operator will search for
+        whichever text is on their screen, so both are written out here.
+
+        This entry previously said dbt "never emits" the out-of-sync message for
+        this model. It emitted it word for word on 2026-09-24 when the model
+        gained 76 columns none of the predicates read (urb-agents #1464).
+        The original observation was correct about the case it was written from
+        and wrong to generalise from one column to the model - which is the same
+        outcome the entry existed to prevent, reached from the other direction.
+        Verified in the code: the predicates read max(last_oppdateringsid) and
+        max(snapshot_loaded_at) from {{ this }}, and ZERO of the 76 new columns
+        appear inside any is_incremental() block. Distinction found by imac.
         Expected on the upgrade that added dim_brreg_enhet.snapshot_loaded_at:
         that column is what lets the dimension notice a bulk reload without
         joining two multi-gigabyte tables on every half-hourly run, and it was
