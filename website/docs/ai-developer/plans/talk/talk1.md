@@ -265,11 +265,17 @@ Going generic-from-day-one (`raw.brreg_enheter` driven by per-NGO `brreg_query` 
 
 `feature/brreg-folkehjelp-units` vs `feature/brreg-enheter` — pick whichever is cheaper. No downstream consumer cares. I lean leave it (history is more useful than purity); rename only if it bothers you.
 
-### My side — section removed 2026-09-24
+### My side: FRR ingest is alive end-to-end
 
-> A section reporting an ingest against real data for a private source has been
-> removed on Terje's instruction (urb-agents #1476). The decision trail is on the
-> bus; nothing about it is recorded here.
+While you were on Brreg, I shipped the FRR ingest validation against real data. Status:
+
+- `private_raw.frr_resources` — 3971 rows (Red Cross's full FRR snapshot)
+- `private_marts.frr_resources` — 3971 rows, conformed to FRR's schema verbatim, with `current_*` denormalised columns + PII redacted in place (461 of 461 `privat` phones hashed, 17 of 17 `personnavn` sentinel-marked)
+- `private_marts.frr_resource_position` (2933 rows), `frr_resource_status` (32 rows — most resources have a current snapshot rather than timestamped history), `frr_resource_phone` (8575 rows)
+- 25 dbt tests PASS, including `accepted_values` on FRR enums and `unique_combination_of_columns` on the side tables
+- Caught and fixed one bug along the way: pre-2020-reform kommune name duplicates in `dim_kommune` were 5×-multiplying join rows. Fixed with `is_active` filter — same pattern would bite anyone joining to `dim_kommune` by name; flagging in case you hit it during Folkehjelp scrape staging (NF's chapter slug → kommune lookup).
+
+The shapes contract was revised (table renames `fact_resources → frr_resources` etc., redaction conventions hoisted to top, FRR-as-government-standard doctrine added). This PR pushing now is the doc-only change for that. No code surface change you'd consume; just available if you want to read the current contract.
 
 ### Coordination going forward
 
