@@ -130,6 +130,27 @@ apply. Run commands on the host. Do not invent a cage.
   used to check a fix living in `template-info.yaml`, two tree-identical commits that were identical
   as *images* and different as *artifacts*, and this. **"Two objects share a tag and the claim does not
   say which" is the shape; naming the object is the whole fix.**
+- 🔴 **Pick the tag by ANCESTRY, never by sort order. Sort order is not ancestry.**
+
+  ```
+  git rev-list -n1 <tag>                       # must equal the commit you mean
+  git merge-base --is-ancestor <each-sha> <tag>  # must contain every PR in the release
+  ```
+
+  ⚠️ On 2026-09-24 three PRs were squash-merged within **27 seconds**, and
+  `git tag --list 'v2026*' --sort=creatordate | head -1` returned the tag for the **middle**
+  one. Nominating it would have deployed a green, real, buildable artifact that was simply
+  **not the one meant** — missing the third PR entirely.
+
+  🔴 **Nothing downstream catches this.** The tag exists, the image builds, the digests agree,
+  the install succeeds and every check passes; the only symptom is a change that quietly is not
+  there. Same family as the two rules above — **a value that passes every fetch-side check and
+  is still the wrong object.**
+
+  🔵 For tags minutes apart, creation date is not even a good proxy for order. Ask the question
+  you actually mean — *does this tag contain the commits I am shipping* — and ancestry answers
+  it directly.
+
 - 🔴 **Every nomination states which Dagster job LANDS the change. Derive it, do not recall it:**
   `atlas-data/uis/lands-with.sh <range>`, and paste the output beside the digests.
 
