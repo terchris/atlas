@@ -473,7 +473,7 @@ npm run ingest:ssb-klass-kommuner && npm run ingest:ssb-klass-fylker && \
 npm run ingest:redcross-branches && npm run ingest:ssb-08764 && ...   # 20 sources, ~5 min
 cd ../dbt && uv venv && uv pip install -r requirements.txt && uv run --env-file ../ingest/.env dbt deps
 uv run --env-file ../ingest/.env dbt seed                          # 10 reference seeds
-uv run --env-file ../ingest/.env dbt run --exclude tag:private     # 38 PASS / 0 ERROR (skips frr)
+uv run --env-file ../ingest/.env dbt run --exclude tag:private     # 38 PASS / 0 ERROR (skips private models)
 ./apply-api-v1.sh                                                   # 9 api_v1 wrapper views w/ COMMENT ON COLUMN
 
 ./uis configure postgrest --app atlas --database atlas_db --url-prefix api-atlas --json

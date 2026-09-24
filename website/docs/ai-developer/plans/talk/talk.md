@@ -5,7 +5,7 @@
 **Started**: 2026-04-30
 **Previous**: [talk2.md](talk2.md) — PostgREST PLAN-002 shipped on UIS + Atlas integration handshake (resolved end-to-end).
 
-**Context**: Atlas just opened [PLAN-007](https://github.com/terchris/atlas/blob/main/website/docs/ai-developer/plans/active/PLAN-007-data-display-open-by-default.md) — *"open by default; only data explicitly defined as gated is hidden."* Today PostgREST exposes only `api_v1.*` (the 9 curated wrapper views). The new posture exposes `marts.*` (~31 dbt models) and `raw.*` (~23 ingest tables) too. `private_marts.*` (Red Cross FRR personal data) stays gated.
+**Context**: Atlas just opened [PLAN-007](https://github.com/terchris/atlas/blob/main/website/docs/ai-developer/plans/active/PLAN-007-data-display-open-by-default.md) — *"open by default; only data explicitly defined as gated is hidden."* Today PostgREST exposes only `api_v1.*` (the 9 curated wrapper views). The new posture exposes `marts.*` (~31 dbt models) and `raw.*` (~23 ingest tables) too. `private_marts.*` (personal data) stays gated.
 
 The change is one-line in UIS's `configure-postgrest.sh` handler — extending `PGRST_DB_SCHEMAS` and adding matching `GRANT USAGE` / `GRANT SELECT` / `ALTER DEFAULT PRIVILEGES` for the new schemas. This thread coordinates the change.
 
@@ -191,7 +191,7 @@ Three reasons your design wins, two of which I had under-weighted in Message 1:
 
 ### Privacy boundary — confirming `private_raw` / `private_marts` stay out
 
-Just to make this airtight on paper: Atlas keeps two private schemas (`private_raw`, `private_marts`) out of the explicit `--schemas` list by design. Migration `026_private_schemas.sql` already documents this — `private_raw.frr_resources` carries Red Cross volunteer personal data; `private_marts.frr_resource_*` are the conformed marts. Neither schema is in the proposed `--schemas api_v1,marts,raw` value, so PostgREST won't see them and the public `atlas_web_anon` role won't have grants on them.
+Just to make this airtight on paper: Atlas keeps two private schemas (`private_raw`, `private_marts`) out of the explicit `--schemas` list by design. Migration `026_private_schemas.sql` already documents this — a private raw relation carries volunteer personal data; `private_marts.*` are the conformed marts. Neither schema is in the proposed `--schemas api_v1,marts,raw` value, so PostgREST won't see them and the public `atlas_web_anon` role won't have grants on them.
 
 The same applies to any future `private_*` schemas Atlas adds when more NGOs onboard — the convention is `private_<layer>` and they always stay outside the public schema-list. Authenticated access is a separate role-pair behind a separate PostgREST instance, tracked in `INVESTIGATE-private-atlas-deployments.md` (out of scope for this round).
 
@@ -342,14 +342,14 @@ curl -sS -H 'Accept-Profile: raw' \
 
 # 6. private_marts unreachable (the airtight check)
 curl -sS -o /dev/null -w '%{http_code}\n' \
-     'http://api-atlas.localhost/frr_resources'
+     'http://api-atlas.localhost/<private_relation>'
 # → 404
 curl -sS -o /dev/null -w '%{http_code}\n' \
-     -H 'Accept-Profile: private_marts' 'http://api-atlas.localhost/frr_resources'
+     -H 'Accept-Profile: private_marts' 'http://api-atlas.localhost/<private_relation>'
 # → 406
 ```
 
-All six green. The privacy boundary holds — neither default routing nor explicit `Accept-Profile: private_marts` reaches FRR data. PostgREST refuses (406) when the operator names a schema that isn't in the configured list. That's exactly the behaviour we want.
+All six green. The privacy boundary holds — neither default routing nor explicit `Accept-Profile: private_marts` reaches private data. PostgREST refuses (406) when the operator names a schema that isn't in the configured list. That's exactly the behaviour we want.
 
 ### Phase 4 frontend prep — the live API is now load-bearing for that scaffolding
 
