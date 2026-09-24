@@ -27,16 +27,33 @@
 -- the measured value: the target is ZERO, not drift. `brreg-oppdateringer`
 -- rewrites this table every thirty minutes and these counts move daily.
 --
+-- ⚠️ THE `paategninger` FIGURE IS A RANGE BECAUSE THE COUNT MOVES. Three
+-- observations on 2026-09-24 gave 2 599, 2 600 and 2 598, hours apart. That was
+-- first reported as one agent miscounting another's Content-Range; it was not.
+-- `0-2599/2600` and `*/2598` are both correctly parsed totals AT DIFFERENT
+-- MOMENTS. 🔴 A single figure in a comment whose purpose is to record COUNTED
+-- coverage implies a stability this column does not have.
+--
 --     column                                 measured 2026-09-24      floor
 --     forretningsadresse_poststed                     1 156 789    900 000
 --     epostadresse                                      324 980    200 000
 --     konkursdato                                         3 249      1 000
---     paategninger (non-empty)                            2 599        500
+--     paategninger (non-empty)                      2 598-2 600        500
 --     under_rekonstruksjonsforhandling_dato                  15          1
 --
 -- ⚠️ THE LAST ONE IS DELIBERATELY A NON-ZERO TEST, NOT A PROPORTION. It is the
 -- rarest key that survived enumeration — four separate samples missed it — and
 -- the only useful assertion about a 15-row column is that it is not empty.
+--
+-- ⚠️ WHAT THE FIRST RUN PROVED, AND WHAT IT DID NOT. Four of these five floors
+-- came from measurements taken about an hour before the test first executed, so
+-- the first PASS confirmed those four numbers HAD NOT MOVED IN AN HOUR — not
+-- that the extraction is sound. imac said so unprompted about its own green
+-- result. `forretningsadresse_poststed` was the one genuinely independent line,
+-- against a column nobody had measured before. 🔵 From the second run onward all
+-- five compare against numbers taken a day earlier and the circularity is gone —
+-- it is a property of the first run only. Do not cite a first green as evidence
+-- the thing it guards is correct.
 --
 -- 🔴 IF THAT ROW LEGITIMATELY EMPTIES, THIS TEST FAILS AND THAT IS CORRECT.
 -- Norway having no organisations under rekonstruksjonsforhandling is a real
