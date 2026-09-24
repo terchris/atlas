@@ -5,6 +5,31 @@
   )
 }}
 
+-- 🔴 THREE OF BRREG'S 64 KEYS ARE DELIBERATELY NOT COLUMNS, AND THIS IS THE
+-- RECORD OF WHY. Terje's instruction was "extract all fields properly"
+-- (urb-agents #1457). Someone auditing that against the enumeration will count
+-- 64 keys and fewer columns, and a silence there looks like an oversight.
+--
+--   respons_klasse   COUNTED, not sampled: 'Enhet' on all 1 175 415 rows and
+--                    zero rows differ. It is a TYPE DISCRIMINATOR for a Brreg
+--                    endpoint that can also return Underenhet; Atlas ingests
+--                    only Enhet, so it is constant here by construction. A
+--                    column with one distinct value across 1.17M rows carries
+--                    no information.
+--                    ⚠️ It becomes meaningful the day Atlas ingests Underenhet
+--                    — which PLAN-001 notes is a separate register with its own
+--                    change feed. Add it then.
+--   links / _links   HATEOAS navigation for Brreg's own API, not data about the
+--                    organisation. 🔵 They partition the table perfectly
+--                    (1 112 582 / 62 716 / both 0) and that fact is recorded in
+--                    dim_brreg_enhet, because it says something about Atlas's
+--                    ingest paths rather than about any organisation.
+--
+-- 🔵 ops-dev's view was to extract respons_klasse anyway — a constant column is
+-- useless and harmless, and an exception costs a justification someone has to
+-- maintain. That is a fair argument and this comment is the maintenance cost
+-- being paid up front rather than deferred.
+
 -- mart_brreg_enhet — the whole Norwegian organisation register, published.
 --
 -- 🔴 MATERIALIZED AS A VIEW, unlike every other model in models/marts/api/.
