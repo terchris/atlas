@@ -19,14 +19,32 @@
   🔵 A consumer building on "rows before 14 September behave like X" is building
   on a population that is LEAVING.
 
-  🔴 THE DIRECTION IS THE FINDING. THE RATE IS NOT. The third observation is
-  identical to the second thirteen minutes later, because the delta job runs
-  every thirty minutes and the conversion moves in STEPS at job boundaries — so
-  an interval that falls between two runs shows zero and an interval spanning
-  one shows a jump. ⚠️ Do not divide a count difference by an elapsed time here.
-  What is safe: the split narrows monotonically, it will be visible for a long
-  time, and it will probably never reach zero — organisations that change often
-  convert first, and the long tail may never change at all.
+  🔵 THE CONVERSION IS CONTINUOUS. `_links` cumulative by `last_seen_at`,
+  measured 2026-09-24, every read confirmed `cf-cache-status: BYPASS`:
+
+      < 05:00  62 648                < 08:00  62 992   +118
+      < 06:00  62 712   +64          < 09:00  63 169   +177
+      < 07:00  62 874  +162          < 10:00  63 319   +150
+
+  Six consecutive hours, never zero, never a spike.
+
+  ⚠️ AN EARLIER VERSION OF THIS NOTE SAID THE CONVERSION MOVES IN STEPS AT JOB
+  BOUNDARIES, so an interval between two runs would show zero. The +162 above
+  falls exactly in a window that reading called empty. **It is retracted.**
+
+  🔴 HOW I GOT IT WRONG IS THE PART WORTH KEEPING. Two whole-table readings
+  thirteen minutes apart were identical, and I concluded the count had not moved.
+  I had confirmed MY OWN reading was origin — and not the other one, which came
+  from a different agent. **Verifying one endpoint of a comparison says nothing
+  about the comparison.** At ~130 rows/hour those thirteen minutes should have
+  shown roughly thirty conversions; the identical pair was the anomaly, and I
+  read it as the finding.
+
+  🔵 THE RATE IS STILL NOT A PROJECTION, but for one reason only: the population
+  is NOT UNIFORM. Organisations that change often convert first and the long
+  tail may never change at all, so ~130 rows/hour cannot be extended to an end
+  date. What is safe: the split narrows monotonically, it stays visible for a
+  long time, and it probably never reaches zero.
 
       bulk download (enheter/lastned)   ->  doc carries `links`     1 112 582
       REST API (the change feed)        ->  doc carries `_links`       62 716
