@@ -703,7 +703,11 @@ models:
           Official remarks Brreg has attached to the organisation, as jsonb objects carrying
           `tekst`. 🔴 jsonb rather than text[] for the same reason as `historiske_navn`, and
           getting this wrong would have flattened enforcement notices into unparseable strings.
-          Present on 1,175,334 of 1,175,334 rows (100.00%), counted 2026-09-24.
+          ⚠️ Present on 100% of rows and NON-EMPTY on about 2 600 — around 0.2%. The column is
+          `[]` for almost every organisation, so "present" and "has a remark" are different
+          questions and only the second is usually the one being asked. The non-empty count
+          moves as the delta job rewrites rows: three observations on 2026-09-24 gave 2 599,
+          2 600 and 2 598.
       - name: forretningsadresse_adresse
         description: >-
           Business address component, as registered with Brreg. ⚠️ An ARRAY of street lines

@@ -1,9 +1,32 @@
 {#
 
-  🔴 THIS TABLE WAS BUILT FROM TWO BRREG DISTRIBUTIONS, AND THE BOUNDARY IS
-  14 SEPTEMBER 2026, 11:30. Anyone analysing `last_seen_at` will trip over this
+  🔴 THIS TABLE WAS BUILT FROM TWO BRREG DISTRIBUTIONS, AND THE `links` COHORT
+  IS DRAINING INTO `_links`. Anyone analysing `last_seen_at` will trip over this
   eventually, and the only visible evidence is a `doc` key that may stop being
   published — so it is recorded here rather than left in the data.
+
+  ⚠️ THE TWO HALVES ARE NOT FIXED. The delta job rewrites whole documents: when
+  it touches an organisation it moves `last_seen_at` forward AND replaces the
+  doc with the REST shape, so the row leaves the `links` cohort and joins
+  `_links`. Whole-table counts, 2026-09-24:
+
+      05:30Z   links 1 112 582   _links 62 716   total 1 175 298
+      09:50Z   links 1 112 154   _links 63 324   total 1 175 478
+      10:03Z   links 1 112 154   _links 63 324   total 1 175 478
+
+      -428 converted + 180 new rows = +608 into _links.  Reconciles exactly.
+
+  🔵 A consumer building on "rows before 14 September behave like X" is building
+  on a population that is LEAVING.
+
+  🔴 THE DIRECTION IS THE FINDING. THE RATE IS NOT. The third observation is
+  identical to the second thirteen minutes later, because the delta job runs
+  every thirty minutes and the conversion moves in STEPS at job boundaries — so
+  an interval that falls between two runs shows zero and an interval spanning
+  one shows a jump. ⚠️ Do not divide a count difference by an elapsed time here.
+  What is safe: the split narrows monotonically, it will be visible for a long
+  time, and it will probably never reach zero — organisations that change often
+  convert first, and the long tail may never change at all.
 
       bulk download (enheter/lastned)   ->  doc carries `links`     1 112 582
       REST API (the change feed)        ->  doc carries `_links`       62 716
@@ -27,18 +50,29 @@
   sample was never evidence for either; three separate samples put the split at
   93/7, 97.9/2.1 and 29.7/70.3.
 
-  🔵 THE 577-ROW RESIDUE IS THE FIRST DELTA RUN OVERLAPPING THE LOAD'S TAIL, and
-  that is measured rather than assumed. 577 rows carry `_links` with
-  `last_seen_at` inside the bulk-load window — 0.05% of the load. They are not
-  scattered through it:
+  🔵 THE 577-ROW RESIDUE IS THE FIRST DELTA RUN, AND IT RAN AFTER THE LOAD
+  FINISHED — SEQUENCE, NOT OVERLAP.
+
+      last `links` row written    2026-09-14T11:24:49.766Z
+      first `_links` row written  2026-09-14T11:26:21.329Z
+      gap                         1 min 31 s, with nothing in between
+
+  ⚠️ AN EARLIER VERSION OF THIS NOTE SAID "a delta run arriving BEFORE the load
+  finished". The band was measured correctly and the word was wrong: I read
+  `last_seen_at <= 11:30` as "inside the load window" because 11:30 was the
+  quoted boundary, and never checked when the load actually STOPPED. It stopped
+  at 11:24:49. **A rounded boundary someone quoted is not a measurement of the
+  event.** Found by the consumer that reported the partition.
+
+  🔵 The band itself stands. 577 rows carry `_links` with `last_seen_at` before
+  11:30 — 0.05% of the load — and they are not scattered:
 
       <= 11:00    0        <= 11:20    0
       <= 11:25    0        <= 11:29  577        <= 11:30  577
 
-  A FOUR-MINUTE BAND at the very end, while 1 112 276 `links` rows were still
-  being written in the same half hour. Scatter would mean something re-fetched
-  577 organisations for a reason nobody has named; a single narrow band at the
-  tail is one feed run arriving before the load finished.
+  A FOUR-MINUTE BAND immediately after the load's last write. Scatter would mean
+  something re-fetched 577 organisations for a reason nobody has named; a single
+  narrow band starting 91 seconds after the load stopped is its first delta run.
 
   ⚠️ What this does NOT establish is which JOB wrote them. That the rows came by
   the REST path follows from the `_links` shape — established above — but job
