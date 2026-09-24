@@ -135,7 +135,7 @@ When you wipe the cluster (rancher-desktop reset, fresh laptop, UIS-image rebuil
    |---|---|---|
    | 1. `migrate` | Applies pending `raw.*` migrations. Brings the schema to the latest committed shape. | seconds |
    | 2. `refresh` | Runs every `refresh:*` seed-source whose `index.ts` writes to a `raw.*` table (auto-detected; today just `refresh:brreg-enheter`). The other `refresh:*` sources update committed CSV seeds and don't need re-running on a cluster reset. | 1–3 min |
-   | 3. `ingest` | Runs every `npm run ingest:*` (41 sources today), validating each via `raw.ingest_runs`. Skips `frr` (private; needs Red Cross internal API access). | 7–10 min |
+   | 3. `ingest` | Runs every `npm run ingest:*` (41 sources today), validating each via `raw.ingest_runs`. All are public sources. | 7–10 min |
    | 4. `seed` | `dbt seed` — loads committed `seeds/*.csv` into `marts.*` (reference dims like `dim_postnummer`, `dim_ngo`, etc.). | seconds |
    | 5. `run` | `dbt run` — builds every dbt model. With `+persist_docs` enabled (`atlas-data/dbt/dbt_project.yml`), this also issues `COMMENT ON COLUMN` / `COMMENT ON TABLE` per materialised model so PostgREST's spec exposes the schema.yml descriptions. | 5-7 min |
    | 6. `api` | `apply-api-v1.sh` (creates `api_v1.*` wrapper views) + re-grants SELECT on `marts.*` + `raw.*` to `atlas_web_anon` + `NOTIFY pgrst, 'reload schema'`. The regrants are needed because dbt's CREATE TABLE in phase 5 doesn't reliably inherit the schema-level grants UIS configured via `ALTER DEFAULT PRIVILEGES` — without them, `Accept-Profile: marts` requests get 401. Guarded by `IF EXISTS` on the role so it's a no-op when PostgREST isn't deployed yet. | seconds |
@@ -152,7 +152,6 @@ When you wipe the cluster (rancher-desktop reset, fresh laptop, UIS-image rebuil
    npm run bootstrap -- --only api                      # just re-apply api_v1 + regrant (cheap)
    npm run bootstrap -- --only docs                     # just regenerate dbt docs (catalog.json)
    npm run bootstrap -- --skip test                     # everything except dbt test
-   npm run bootstrap -- --include frr                   # also run the private frr ingest
    ```
 
    **Companion alias** for the post-edit cycle (you changed a model SQL or added one new ingest source — but everything else is already in place):
@@ -347,7 +346,7 @@ curl -s -H 'Accept-Profile: raw' http://api-atlas.localhost/ssb_08764?limit=3 | 
 # expect: 3 (raw.ssb_08764 via Accept-Profile header)
 ```
 
-The `--schemas` flag (plural, comma-separated) is what tells UIS's configure handler to grant the `atlas_web_anon` role on each named schema and pin them as PostgREST's `db-schemas` value. **Atlas serves exactly one: `api_v1`** — the curated wrapper views, every column documented. `marts` (dbt-built tables) and `raw` (verbatim ingest landings) stay behind it, and `private_marts` / `private_raw` are excluded outright — FRR personal data lives there and the public `atlas_web_anon` role gets no grants on them. Hitting `/frr_resources` returns 404 by default and 406 with `Accept-Profile: private_marts` because PostgREST refuses any schema name not in its configured list.
+The `--schemas` flag (plural, comma-separated) is what tells UIS's configure handler to grant the `atlas_web_anon` role on each named schema and pin them as PostgREST's `db-schemas` value. **Atlas serves exactly one: `api_v1`** — the curated wrapper views, every column documented. `marts` (dbt-built tables) and `raw` (verbatim ingest landings) stay behind it, and `private_marts` / `private_raw` are excluded outright — personal data lives there and the public `atlas_web_anon` role gets no grants on them. Hitting a private relation returns 404 by default and 406 with `Accept-Profile: private_marts`, because PostgREST refuses any schema name not in its configured list.
 
 :::info Why one schema, and what to do when you need a mart
 

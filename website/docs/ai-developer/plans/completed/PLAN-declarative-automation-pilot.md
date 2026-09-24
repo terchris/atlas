@@ -1,5 +1,11 @@
 # PLAN: declarative automation + freshness — pilot on one slice
 
+> ⚠️ **Edited 2026-09-24.** This record named a private Red Cross source that has
+> since been removed from Atlas on Terje's instruction (urb-agents #1453). Its
+> identifier is written `<private>` here. The sequence of events, the commands
+> and the measurements are otherwise unchanged.
+
+
 > **IMPLEMENTATION RULES:** Before implementing this plan, read and follow:
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
@@ -134,7 +140,7 @@ still fetched weekly, so "not fetched in a month" means the pipeline is broken
 regardless of whether SSB published anything. Weekly-polled sources WARN at 14 days
 and FAIL at 30; Klass WARNs at 45 and FAILs at 90.
 
-⚠️ **`frr` gets no freshness policy and no condition.** It reads the private repo,
+⚠️ **`<private>` gets no freshness policy and no condition.** It reads the private repo,
 which is absent from the image by design, so it materialises zero rows on any public
 deployment. A freshness policy there would be permanently violated — an alarm that is
 always on, which is the same as no alarm at all.

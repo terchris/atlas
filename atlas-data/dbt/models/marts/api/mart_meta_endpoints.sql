@@ -24,7 +24,7 @@
 --     to see "what came in from upstream verbatim".
 --
 -- Filters (what's OUT):
---   - private_marts.*    — auth-gated (Red Cross FRR personal data); kept
+--   - private_marts.*    — auth-gated (private per-NGO data); kept
 --     out by the explicit IN filter on api_v1/marts/raw schemas.
 --   - marts.<seed>_<...>_<...>  — internal seeds whose name starts with
 --     `_` (PLAN-007 convention: underscore prefix = "internal substrate,

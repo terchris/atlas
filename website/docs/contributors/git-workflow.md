@@ -52,7 +52,7 @@ The first line is a short imperative summary; the body explains the *why* (or wh
 
 - `Add ssb-12345 (population by age and sex)`
 - `Fix dbt-osmosis double-pass on first install`
-- `PLAN-002 phase 4: document 34 FRR columns in private_marts/schema.yml`
+- `PLAN-002 phase 4: document 34 columns in private_marts/schema.yml`
 
 For PLAN-driven work, prefix the subject with `PLAN-NNN phase M:`. The body of the commit is a good place for verification notes (`dbt test` output, count diffs, etc.) — a reviewer can see what was actually checked.
 

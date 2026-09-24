@@ -20,9 +20,8 @@ as no alarm, burying the ones that mean something.
 
 ## This is a THIRD category, not the parked one
 
-`cadence.UNSCHEDULED_SOURCES` means *cannot run*: `frr` has no private data on a
-public deployment, `redcross-branches` has no credential. Both are correctly
-absent from any first-day sequence.
+`cadence.UNSCHEDULED_SOURCES` means *cannot run*: `redcross-branches` has no
+credential. It is correctly absent from any first-day sequence.
 
 `brreg-enheter-alle` is the opposite — it **must** run, exactly once, on a fresh
 install, and then be left alone. So it stays out of UNSCHEDULED_SOURCES (which

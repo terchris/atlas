@@ -22,13 +22,13 @@ describe("buildMaterializationMetadata", () => {
   });
 
   it("never emits a null value even when every field is absent", () => {
-    const m = buildMaterializationMetadata("frr", {}, null);
-    expect(m).toEqual({ source_id: "frr" });
+    const m = buildMaterializationMetadata("demo-source", {}, null);
+    expect(m).toEqual({ source_id: "demo-source" });
     expect(Object.values(m)).not.toContain(null);
   });
 
   it("keeps zero, which is a real row count and must not be dropped", () => {
-    const m = buildMaterializationMetadata("frr", { rowsParsed: 0 }, 7);
+    const m = buildMaterializationMetadata("demo-source", { rowsParsed: 0 }, 7);
     expect(m["rows_parsed"]).toBe(0);
   });
 

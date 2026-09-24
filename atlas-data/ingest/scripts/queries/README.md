@@ -1,11 +1,11 @@
 # queries/ — ad-hoc and debugging scripts
 
-Small TypeScript scripts that ask a specific question of the database. Lives separately from the operational scripts (`migrate`, `verify-frr`, `validate-frr`) because these are throwaway / one-off / written for a particular investigation.
+Small TypeScript scripts that ask a specific question of the database. Lives separately from the operational scripts (`migrate`) because these are throwaway / one-off / written for a particular investigation.
 
 ## When to put a script here
 
 - **Ad-hoc query** — "show me all resources matching X" written to answer one question, never run again. Example: `query-gol-snoskuter.ts`.
-- **Debugging investigation** — "why is this row count off?" written to figure out what's going on. May be re-run if the same kind of bug surfaces again. Example: `diagnose-frr.ts`.
+- **Debugging investigation** — "why is this row count off?" written to figure out what's going on. May be re-run if the same kind of bug surfaces again. Example: a one-off row-count reconciliation script.
 
 ## When NOT to put a script here
 

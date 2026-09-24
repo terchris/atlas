@@ -5,9 +5,9 @@ under `atlas-private-data-repo/<ngo>/orgunits/` carry the NGO's own
 hierarchical org-unit registry — the source-of-truth for which lokallag
 exist, where they sit in the distrikt/region hierarchy, etc.
 
-For FRR-using NGOs, org units also appear in `frr/` with
+For NGOs with a resource register, org units may also appear in a per-register folder with
 `ressurstype='organisatorisk enhet'`. The orgunits feed adds NGO-internal
-structure that FRR doesn't carry (e.g. coverage area, contact patterns).
+structure such a register doesn't carry (e.g. coverage area, contact patterns).
 
 `sample-orgunits.json` is a tiny synthetic example matching the shape Atlas
 expects; refine when the orgunits ingest gets implemented.

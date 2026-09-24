@@ -41,7 +41,7 @@ type ManifestStub = {
   description: string | null;
 };
 
-type Provider = "ssb" | "ssb-klass" | "fhi" | "redcross" | "frr" | "bufdir" | "unknown";
+type Provider = "ssb" | "ssb-klass" | "fhi" | "redcross" | "bufdir" | "unknown";
 
 const NLOD_URL = "https://data.norge.no/nlod/no/2.0";
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
@@ -53,7 +53,6 @@ function detectProvider(sourceId: string): Provider {
   if (sourceId.startsWith("fhi-")) return "fhi";
   if (sourceId.startsWith("redcross-")) return "redcross";
   if (sourceId.startsWith("bufdir-")) return "bufdir";
-  if (sourceId === "frr") return "frr";
   return "unknown";
 }
 
@@ -264,7 +263,6 @@ function guessProviderTag(sourceId: string): string {
   if (sourceId.startsWith("fhi-")) return "fhi";
   if (sourceId.startsWith("redcross-")) return "redcross";
   if (sourceId.startsWith("bufdir-")) return "bufdir";
-  if (sourceId === "frr") return "redcross";
   return "TODO";
 }
 
@@ -332,14 +330,6 @@ async function main(): Promise<void> {
       stub.publisher = "Barne-, ungdoms- og familiedirektoratet";
       stub.license = "NLOD";
       stub.license_url = NLOD_URL;
-      break;
-    case "frr":
-      stub = extractFallback(sourceId);
-      // Publisher is the org, not the dataset — the "private FRR register"
-      // qualifier belongs in the manifest's attribution field instead.
-      stub.publisher = "Norges Røde Kors";
-      stub.license = "internal";
-      stub.license_url = "internal";
       break;
     default:
       stub = extractFallback(sourceId);

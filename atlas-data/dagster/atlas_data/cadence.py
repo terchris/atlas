@@ -158,11 +158,6 @@ FRIVILLIG_FRESHNESS = FreshnessPolicy.time_window(
 # Both remain runnable by hand — the jobs are kept — which is how they get
 # exercised the moment their blocker clears.
 #
-# `frr`: private by design. It reads atlas-private-data-repo/, deliberately
-# absent from the image, so on any public deployment it materialises zero rows.
-# See dbt/models/private_marts/sources.yml for the contract. This one is
-# permanent, not a park.
-#
 # `redcross-branches`: **parked 2026-08-25** pending Terje's Red Cross API
 # credential. It carried `on_cron(30 3 * * 0)`, so with the automation sensor
 # enabled it would have failed every Sunday at 03:30 — and Phase 3's acceptance
@@ -171,4 +166,4 @@ FRIVILLIG_FRESHNESS = FreshnessPolicy.time_window(
 # `automation_condition=cadence.scraper_polled()` and
 # `freshness_policy=cadence.WEEKLY_FRESHNESS` in assets/raw_other.py, one line
 # each. See PLAN-redcross-branches-private-input.
-UNSCHEDULED_SOURCES = {"frr", "redcross-branches"}
+UNSCHEDULED_SOURCES = {"redcross-branches"}

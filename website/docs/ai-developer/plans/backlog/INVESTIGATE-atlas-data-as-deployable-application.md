@@ -407,7 +407,7 @@ even when a completed plan already decided it, so it is with Terje rather than b
 7. **Does the repo split come first, or last?** It may be easier to build the installer inside the
    monorepo and split once it works — the split is the reversible-looking step that is hardest to
    reverse.
-8. **What happens to `atlas-private-data-repo`?** `frr` reads a private tree that is absent on any
+8. **What happens to `atlas-private-data-repo`?** a private-source ingest reads a tree that is absent on any
    public deployment. A stranger's install must not fail because of a source they cannot have.
 
 ## What would make this investigation wrong

@@ -1,5 +1,11 @@
 # PLAN-003: Datasets catalog — merchandising layer
 
+> ⚠️ **Edited 2026-09-24.** This record named a private Red Cross source that has
+> since been removed from Atlas on Terje's instruction (urb-agents #1453). Its
+> identifier is written `<private>` here. The sequence of events, the commands
+> and the measurements are otherwise unchanged.
+
+
 > **IMPLEMENTATION RULES:** Before implementing this plan, read and follow:
 > - [WORKFLOW.md](../../WORKFLOW.md) — The implementation process
 > - [PLANS.md](../../PLANS.md) — Plan structure and best practices
@@ -126,7 +132,7 @@ A single persona landing at `/datasets/for/grant-officers` — sister to Phase 3
 
 **Outcome (2026-05-12)**: Shipped `DatasetSamplePreview` rendering the first 5 rows of every queryable dataset directly below its hero. Sources read from the `raw.*` schema (Accept-Profile: raw); views read from the default `api_v1.*` schema. Resolved **[Q3]**: snapshot is committed JSON (same pattern as `meta-sources-snapshot.json`), refreshed manually via `npm run sources:snapshot-samples`. Build never hits PostgREST.
 
-- New script `website/scripts/snapshot-sample-rows.mjs` and npm hook `sources:snapshot-samples`. Walks manifests + dbt mart schemas; logs warnings for unreachable datasets (e.g. private `frr` source, internal `mart_ingest_health`) but keeps the rest of the snapshot.
+- New script `website/scripts/snapshot-sample-rows.mjs` and npm hook `sources:snapshot-samples`. Walks manifests + dbt mart schemas; logs warnings for unreachable datasets (e.g. private `<private>` source, internal `mart_ingest_health`) but keeps the rest of the snapshot.
 - New snapshot: `website/src/data/sample-rows-snapshot.json` — 44/45 sources, 13/14 views from the local PostgREST.
 - Compact monospace table with horizontal scroll for wide row shapes; nested JSON values are truncated to 80 chars inline.
 - Component returns null when the snapshot lacks an entry for the dataset — the page simply skips the section.

@@ -295,7 +295,7 @@ For most new sources, the workflow in [adding-a-source.md](./adding-a-source.md)
 ## Where this doesn't generalise
 
 - **HTML scraping sources** (Folkehjelp and other NGOs without an API) — Stage 2 has an extended folder layout (`discover.ts`, `parse.ts`, `__tests__/fixtures/`), Stage 3 raw tables have additional mandatory columns (`url`, `record_hash`, `is_active`). See [ingest-modules.md § scraping convention](./ingest-modules.md#scraping-sources).
-- **NGO supply data** (chapters, activities, coverage) — different fact / dim shape (`fact_chapter_activities`, `dim_chapter`, `dim_activity`); different per-NGO supply staging models (`supply__redcross_*`, `supply__frr_*`). The journey shape is the same; just different facts/dims.
+- **NGO supply data** (chapters, activities, coverage) — different fact / dim shape (`fact_chapter_activities`, `dim_chapter`, `dim_activity`); different per-NGO supply staging models (`supply__redcross_*`). The journey shape is the same; just different facts/dims.
 - **Brreg legal-entity metadata** — handled by the generic `refresh:brreg-enheter` flow; you don't add a new ingest source per NGO. See [adding-a-source.md § prerequisites](./adding-a-source.md#prerequisites).
 
 ---

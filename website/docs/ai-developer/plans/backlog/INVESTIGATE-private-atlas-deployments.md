@@ -8,7 +8,7 @@
 
 **Goal**: Define how an NGO can run a private, authenticated Atlas instance inside its own infrastructure that combines the public Atlas data (mirrored from `atlas.helpers.no`) with the NGO's own sensitive data — without compromising the public Atlas's organisation-neutral, no-auth, read-only posture. Red Cross is the first concrete case (private donation transactions, equipment inventory); the pattern should generalise to any Tier A NGO.
 
-**Last Updated**: 2026-04-24 (revised after the private-data discussion: 4 payment rails, FRR is OpenAPI'd, repo layout decided, marts-only export confirmed)
+**Last Updated**: 2026-04-24 (revised after the private-data discussion: 4 payment rails, resource registry is OpenAPI'd, repo layout decided, marts-only export confirmed)
 
 ---
 
@@ -139,7 +139,7 @@ The private deployment's Postgres holds three classes of data, each with its own
 | Layer | Schema | Shape owned by | Data ingested by | Example tables |
 |---|---|---|---|---|
 | **L1 — Public open data** | `marts.*` | atlas.helpers.no | atlas.helpers.no (restored via [Q1] data contract) | `dim_kommune`, `dim_chapter`, `fact_kommune_indicators` |
-| **L2 — Conformed private** | `private_marts.*` | atlas.helpers.no (shape contract in [`private-marts-shapes.md`](https://github.com/terchris/atlas/tree/main/docs/stack/private-marts-shapes.md)) | The NGO from their own systems | `fact_resources` (FRR-aligned, includes org units as `ressurstype='organisatorisk enhet'`), `fact_resource_position`, `fact_resource_status`, `dim_resource_phone` |
+| **L2 — Conformed private** | `private_marts.*` | atlas.helpers.no (shape contract in [`private-marts-shapes.md`](https://github.com/terchris/atlas/tree/main/docs/stack/private-marts-shapes.md)) | The NGO from their own systems | `fact_resources` (standard-aligned, includes org units as `ressurstype='organisatorisk enhet'`), `fact_resource_position`, `fact_resource_status`, `dim_resource_phone` |
 | **L3 — NGO-specific private** | `private_marts_<ngo>.*` (e.g. `private_marts_redcross.*`) | The NGO | The NGO from their own systems | `private_marts_redcross.fact_beredskap_excercises` |
 
 Plus one staging schema:
@@ -280,13 +280,13 @@ UI view: map of chapters coloured by incoming donations over last 30/90/365 days
 
 **Atlas is not the source of truth.** Red Cross's CRM / fundraising platform already holds the canonical donation data. Atlas pulls aggregates and displays them with public chapter context. If the CRM disagrees with Atlas, the CRM wins — Atlas is just a join-and-display surface.
 
-### F.2 Equipment / resources — FRR (Felles Ressursregister)
+### F.2 Equipment / resources — an NGO resource registry
 
-- Source: Red Cross's FRR — exposed via OpenAPI (spec lives in the private data repo per §G).
-- **Ingest model** (per Q-priv-3): nightly mirror into `private_raw.frr_*`. Mirror approach (a) from the earlier discussion — same pattern as donations. Live API queries from server components are explicitly rejected to keep the dependency one-way and to avoid Atlas-availability getting tangled with FRR-availability.
+- Source: the NGO's own resource registry — exposed via OpenAPI (spec lives in the private data repo per §G).
+- **Ingest model** (per Q-priv-3): nightly mirror into `private_raw.<registry>_*`. Mirror approach (a) from the earlier discussion — same pattern as donations. Live API queries from server components are explicitly rejected to keep the dependency one-way and to avoid Atlas-availability getting tangled with the registry's availability.
 - Probable shape:
   ```
-  private_raw.frr_resources (
+  private_raw.<registry>_resources (
     resource_id          text not null,
     resource_type        text not null,
     quantity             int,
@@ -329,7 +329,7 @@ atlas/                                   (public, this repo)
 │   │   ├── ingest/                      (mirrors atlas-data/ingest layout)
 │   │   ├── dbt/                         (cross-refs marts.* via dbt project ref)
 │   │   ├── migrations/
-│   │   ├── docs/                        (private specs: FRR OpenAPI, payment-rail JSONs)
+│   │   ├── docs/                        (private specs: registry OpenAPI, payment-rail JSONs)
 │   │   └── README.md
 │   └── folkehjelp/                      (would exist on Folkehjelp's clone, when they stand up theirs)
 └── docs/
@@ -340,7 +340,7 @@ atlas/                                   (public, this repo)
 - **Symmetry**: `atlas-private-data-repo/<ngo>/{ingest,dbt,migrations,docs}` mirrors `atlas-data/{ingest,dbt,migrations}`. Anyone who knows the public layout can navigate the private one immediately.
 - **Per-NGO subdir** under the umbrella `atlas-private-data-repo/`. Each NGO clones the public repo, drops their own private repo as a subdir alongside.
 - **Each `<ngo>/` is its own git repo**, hosted privately by that NGO. Never pushed to a public remote. The umbrella `atlas-private-data-repo/` directory exists only on disk — it has no git identity itself.
-- **Private specs live in `<ngo>/docs/`**, not in the public Atlas's `docs/research/`. The current `docs/research/redcross-internal/` (FRR OpenAPI spec) and `terchris/{vipps-epayment,vipps-recurring,mastercard-avtalegiro-onboarding,nets-easy-payments}.json` should move into `atlas-private-data-repo/redcross/docs/` as Phase 0 of any private PLAN. `terchris/keys.tst` is a different concern — secrets stay in env files / a secrets manager, never in version control even private.
+- **Private specs live in `<ngo>/docs/`**, not in the public Atlas's `docs/research/`. The current `docs/research/redcross-internal/` (registry OpenAPI spec) and `terchris/{vipps-epayment,vipps-recurring,mastercard-avtalegiro-onboarding,nets-easy-payments}.json` should move into `atlas-private-data-repo/redcross/docs/` as Phase 0 of any private PLAN. `terchris/keys.tst` is a different concern — secrets stay in env files / a secrets manager, never in version control even private.
 - **Cross-repo dbt refs**: private dbt models reference public marts via `{{ ref('dim_chapter') }}` in the same dbt project, materialised against the same Postgres in the private deployment. dbt project config under `<ngo>/dbt/dbt_project.yml` extends the public one. No separate dbt project; one project, two source trees.
 - **Gitignore**: a single line in the public repo's `.gitignore`:
   ```
@@ -355,7 +355,7 @@ atlas/                                   (public, this repo)
 
 This section covers **Layer 2 only** (per the §C.1 three-layer table). Layer 3 (NGO-specific private marts) gets its own treatment in §J.
 
-Some categories of private data exist at every operational NGO: equipment registries (FRR for Red Cross; analogous systems at Folkehjelp, NKS, Frelsesarmeen, etc.), internal org units (committees / working groups / divisions), and likely future categories (member systems, training records, donor segments). The data shape is the same across NGOs; only the source system varies.
+Some categories of private data exist at every operational NGO: equipment registries (each NGO has its own; analogous systems at Folkehjelp, NKS, Frelsesarmeen, etc.), internal org units (committees / working groups / divisions), and likely future categories (member systems, training records, donor segments). The data shape is the same across NGOs; only the source system varies.
 
 **Decision**: Atlas defines the canonical `private_marts.*` shape **once**, in a long-lived contract document — [`docs/stack/private-marts-shapes.md`](https://github.com/terchris/atlas/tree/main/docs/stack/private-marts-shapes.md). Each NGO's private repo ships a per-NGO `supply__<ngo>_<entity>.sql` staging that maps their source into the canonical shape. The `private_marts.*` table is a UNION ALL of all per-NGO stagings — same pattern as the public side (`dim_chapter` UNIONs `supply__<ngo>_branches.sql`).
 
@@ -363,18 +363,18 @@ Some categories of private data exist at every operational NGO: equipment regist
 
 **Initial shape catalog** (in the contract doc, expanded as new categories emerge):
 
-- **Resources — FRR-aligned**: Atlas adopts FRR's schema verbatim (it's a Norwegian government standard the FORF NGOs all use). Tables: `private_marts.fact_resources` (one row per FRR resource, denormalised current state — *includes org units as `ressurstype='organisatorisk enhet'`*), `fact_resource_position` (history), `fact_resource_status` (history), `dim_resource_phone` (PII-redacted in place).
-- **Org units** are NOT a separate Layer 2 shape — for FRR-participating NGOs they're already in `fact_resources`. NGOs not in FRR who want internal-org-unit display surfaces use Layer 3 (`private_marts_<ngo>.*`); no Atlas Layer 2 contract for it.
+- **Resources — standard-aligned**: Atlas adopts the registry's schema verbatim (a Norwegian standard the FORF NGOs all use). Tables: `private_marts.fact_resources` (one row per resource, denormalised current state — *includes org units as `ressurstype='organisatorisk enhet'`*), `fact_resource_position` (history), `fact_resource_status` (history), `dim_resource_phone` (PII-redacted in place).
+- **Org units** are NOT a separate Layer 2 shape — for participating NGOs they're already in `fact_resources`. NGOs outside the registry who want internal-org-unit display surfaces use Layer 3 (`private_marts_<ngo>.*`); no Atlas Layer 2 contract for it.
 
 **Doctrine for new shapes** (codified in [`private-marts-shapes.md`](https://github.com/terchris/atlas/tree/main/docs/stack/private-marts-shapes.md) "Adding new shapes"): always check for an external standard first. Adopt verbatim if it exists. Invent an Atlas-defined shape only when no external standard does the job.
 
 **Where the dbt files live — [Q-priv-18] Revised 2026-04-24 (split by source ownership)**:
 
-- **Standards-based sources (e.g. FRR)** — schema is defined by an external standard, and consumed by multiple NGOs in the same shape. The dbt code lives **in `atlas-data/`** (`models/supply/supply__frr_*.sql` + `models/private_marts/frr_*.sql`), tagged `tags=['private']` so operators can `dbt build --exclude tag:private` if the deployment has no private data. Multi-NGO coexistence is via the `ngo_orgnr` column in `private_raw` — no per-NGO UNION ALL needed. The migrations also live in `atlas-data/migrations/` (`private_schemas`, `private_raw_frr_resources`). On public deployments these schemas + tables exist as empty (option a — no gating needed; the dbt models materialize as empty tables).
+- **Standards-based sources** — schema is defined by an external standard, and consumed by multiple NGOs in the same shape. The dbt code lives **in `atlas-data/`** (`models/supply/supply__<standard>_*.sql` + `models/private_marts/<standard>_*.sql`), tagged `tags=['private']` so operators can `dbt build --exclude tag:private` if the deployment has no private data. Multi-NGO coexistence is via the `ngo_orgnr` column in `private_raw` — no per-NGO UNION ALL needed. The migrations also live in `atlas-data/migrations/` (`private_schemas`, `private_raw_<registry>_resources`). On public deployments these schemas + tables exist as empty (option a — no gating needed; the dbt models materialize as empty tables).
 - **NGO-specific sources (e.g. Visma org units, internal CRMs)** — the source is unique to one NGO; the schema is invented for that NGO. The dbt code lives in **the NGO's private repo** under `atlas-private-data-repo/<ngo>/dbt/` and materializes into `private_marts_<ngo>.*` (Layer 3, see §J).
-- **Per-NGO data files** — JSON/CSV snapshots — always live in `atlas-private-data-repo/<ngo>/<source>/` (e.g. `atlas-private-data-repo/redcross/frr/2026-04-24-FRR.json`); the entire per-NGO subdirectory is gitignored. Synthetic onboarding data lives in `atlas-private-data-repo/sample-ngo/` (committed).
+- **Per-NGO data files** — JSON/CSV snapshots — always live in `atlas-private-data-repo/<ngo>/<source>/` (e.g. `atlas-private-data-repo/<ngo>/<registry>/2026-04-24-snapshot.json`); the entire per-NGO subdirectory is gitignored. Synthetic onboarding data lives in `atlas-private-data-repo/sample-ngo/` (committed).
 
-The split rule: **standards travel with the standard**. Atlas owns FRR's shape *and* the SQL that interprets FRR JSON, because every NGO that uses FRR uses the same SQL. NGO-specific shapes stay in the NGO's repo because the SQL is bespoke. The earlier "all Layer 2 in NGO repo" decision (Option B) over-corrected — it duplicated identical FRR staging code per NGO. See §I.
+The split rule: **standards travel with the standard**. Atlas owns the standard's shape *and* the SQL that interprets its JSON, because every NGO using that standard uses the same SQL. NGO-specific shapes stay in the NGO's repo because the SQL is bespoke. The earlier "all Layer 2 in NGO repo" decision (Option B) over-corrected — it duplicated identical the registry staging code per NGO. See §I.
 
 The original Option B alternatives (UNION-ALL files in `atlas-data/dbt/models/private_marts/` gated by `var()`; a shared `atlas-private-marts` dbt package) remain rejected — `tags=['private']` plus the multi-NGO `ngo_orgnr` column gives the same guarantees more simply.
 
@@ -457,14 +457,14 @@ These were initially Open Questions; resolved during the discussion that produce
 
 - ~~**[Q-priv-1]**~~ Source inventory up-front? **No** — sources accrete as we go. Architecture must be additive (one new `private_raw.*` table + UNION ALL into the existing aggregate marts). §F is a snapshot, not a contract.
 - ~~**[Q-priv-2]**~~ Is Atlas the source of truth for private data? **No** — every NGO already has their CRM / fundraising platform / equipment registry. Atlas is a **viewer**: pulls aggregates, joins to public chapter context, displays. No write-back, no historical retention beyond source, no reconciliation. See §A.3.
-- ~~**[Q-priv-3]**~~ FRR architecture? **Nightly mirror into `private_raw.frr_*`** (same pattern as donations). Live API queries from server components rejected to keep dependency one-way.
+- ~~**[Q-priv-3]**~~ Resource-registry architecture? **Nightly mirror into `private_raw.<registry>_*`** (same pattern as donations). Live API queries from server components rejected to keep dependency one-way.
 - ~~**[Q-priv-4]**~~ Per-donor identity in `private_marts`? **No** — ingest aggregates at write-time. Atlas never persists donor identifiers or transaction IDs, even in raw. GDPR scope reduces to operational metrics.
 - ~~**[Q-priv-5]**~~ Multi-tenant private hosting? **No** — each NGO runs their own instance. Atlas codebase ships the framework; no shared sandbox.
 - ~~**[Q-priv-6]**~~ Data inventory doc? **Yes** — `docs/stack/data-inventory.md` as the single source of truth listing every ingested source with `(source_id, name, visibility, owner_ngo, cadence, raw_schema, populating_script)`. See §H.
 - ~~**[Q-priv-13]**~~ Repo organisation for private code? **Sibling directory `atlas-private-data-repo/<ngo>/` mirroring `atlas-data/`'s shape**, gitignored at the public-repo level. Each NGO subdirectory is its own private git repo. See §G.
 - ~~**[Q1]**~~ Public export ships `raw.*` too? **No** — `marts.*` only. Private instances don't need raw; their own dbt builds against the conformed marts dimensions / facts. Drops dump size and contract surface considerably. **Resolved 2026-04-24.**
 - ~~**[Q-priv-16]**~~ Conformed private mart shapes (Layer 2)? **Yes** — Atlas defines the shape once in [`docs/stack/private-marts-shapes.md`](https://github.com/terchris/atlas/tree/main/docs/stack/private-marts-shapes.md); per-NGO stagings map their source into the canonical shape; `private_marts.*` is a UNION ALL. See §I. **Resolved 2026-04-24.**
-- ~~**[Q-priv-18]**~~ Where do Layer 2 + Layer 3 dbt files live? **Revised 2026-04-24 — split by source ownership**: standards-based sources (FRR) live in `atlas-data/dbt/models/{supply,private_marts}/` tagged `private`; NGO-specific sources (Layer 3) live in `atlas-private-data-repo/<ngo>/dbt/`. Original Option B over-corrected by duplicating identical FRR SQL per NGO. Per-NGO data files always live in `atlas-private-data-repo/<ngo>/<source>/` (gitignored); synthetic onboarding data in `atlas-private-data-repo/sample-ngo/` (committed). See §I + §J.
+- ~~**[Q-priv-18]**~~ Where do Layer 2 + Layer 3 dbt files live? **Revised 2026-04-24 — split by source ownership**: standards-based sources live in `atlas-data/dbt/models/{supply,private_marts}/` tagged `private`; NGO-specific sources (Layer 3) live in `atlas-private-data-repo/<ngo>/dbt/`. Original Option B over-corrected by duplicating identical standard SQL per NGO. Per-NGO data files always live in `atlas-private-data-repo/<ngo>/<source>/` (gitignored); synthetic onboarding data in `atlas-private-data-repo/sample-ngo/` (committed). See §I + §J.
 
 ---
 
@@ -491,17 +491,17 @@ These were initially Open Questions; resolved during the discussion that produce
 
 Five PLANs total. PLAN-0 is foundational scaffolding; A/B/C are the original three; D documents the shared inventory format.
 
-- **PLAN-0 — Repo layout + private-data convention.** Create the `atlas-private-data-repo/redcross/` skeleton (locally; the directory itself is gitignored). Move `docs/research/redcross-internal/felles-ressursregister-frr-openapi-spec.md` and the four payment-API specs from `terchris/` into `atlas-private-data-repo/redcross/docs/`. Add the `atlas-private-data-repo/` and `docs/research/*-internal/` lines to the public repo's `.gitignore`. Write `docs/stack/private-data-layout.md` documenting the §G convention. Stand up the empty `<ngo>/` git repo on RC's private remote. ~1–2h, no code.
+- **PLAN-0 — Repo layout + private-data convention.** Create the `atlas-private-data-repo/redcross/` skeleton (locally; the directory itself is gitignored). Move `docs/research/redcross-internal/<registry>-openapi-spec.md` and the four payment-API specs from `terchris/` into `atlas-private-data-repo/redcross/docs/`. Add the `atlas-private-data-repo/` and `docs/research/*-internal/` lines to the public repo's `.gitignore`. Write `docs/stack/private-data-layout.md` documenting the §G convention. Stand up the empty `<ngo>/` git repo on RC's private remote. ~1–2h, no code.
 
 - **PLAN-A — Public data contract.** `atlas.helpers.no` produces a nightly `pg_dump --schema=marts` to an HTTPS-reachable object store. Document the contract + forward-only schema discipline. Add the data-inventory doc shell at `docs/stack/data-inventory.md` (per §H) and backfill rows for every public source already shipping. No downstream consumer yet — this is the supply side.
 
 - **PLAN-B — Private instance skeleton.** Stand up a second deployment of the same Next.js codebase in `ATLAS_MODE=private`, pulling the PLAN-A dump nightly into its own Postgres, with OIDC auth in front. No private data yet. Initially Helpers-operated as a proof; eventually moved into Red Cross's infra. Proves the restore + auth + feature-gating mechanics. Per Q-priv-12, this is the minimum-viable private Atlas.
 
-- **PLAN-C — First private source.** Red Cross picks one rail (e.g. Vipps Recurring) and authors the full path: ingest under `atlas-private-data-repo/redcross/ingest/src/sources/donations-vipps-recurring/`, migration under `atlas-private-data-repo/redcross/migrations/`, dbt model under `atlas-private-data-repo/redcross/dbt/`, UI view under `app/private/redcross/donations/`, row added to the private data-inventory doc. Shows the whole pattern end to end. Subsequent rails / FRR / future sources are variations of this recipe.
+- **PLAN-C — First private source.** Red Cross picks one rail (e.g. Vipps Recurring) and authors the full path: ingest under `atlas-private-data-repo/redcross/ingest/src/sources/donations-vipps-recurring/`, migration under `atlas-private-data-repo/redcross/migrations/`, dbt model under `atlas-private-data-repo/redcross/dbt/`, UI view under `app/private/redcross/donations/`, row added to the private data-inventory doc. Shows the whole pattern end to end. Subsequent rails and future sources are variations of this recipe.
 
 - **PLAN-D — Data-inventory format definition.** A short doc at `docs/stack/data-inventory.md` defining the row format (per §H), maintained as part of every ingest PLAN's acceptance criteria. Could be folded into PLAN-A's deliverables; calling it out separately so it doesn't get dropped.
 
-If any of the three middle PLANs gets stuck (contract versioning, OIDC integration, FRR access), the others can proceed — they're loosely coupled. PLAN-0 is the prerequisite for any private-side work; PLAN-A is the prerequisite for PLAN-B; PLAN-B is the prerequisite for PLAN-C.
+If any of the three middle PLANs gets stuck (contract versioning, OIDC integration, registry access), the others can proceed — they're loosely coupled. PLAN-0 is the prerequisite for any private-side work; PLAN-A is the prerequisite for PLAN-B; PLAN-B is the prerequisite for PLAN-C.
 
 ---
 
@@ -521,7 +521,7 @@ If any of the three middle PLANs gets stuck (contract versioning, OIDC integrati
 - `.gitignore` additions: `atlas-private-data-repo/` and `docs/research/*-internal/`.
 - `docs/stack/private-data-layout.md` — codifies §G.
 - `atlas-private-data-repo/redcross/{ingest,dbt,migrations,docs}/` skeleton + `README.md` (created locally; the directory is gitignored at the public repo level).
-- File moves into `atlas-private-data-repo/redcross/docs/`: FRR OpenAPI spec + 4 payment-rail JSON specs.
+- File moves into `atlas-private-data-repo/redcross/docs/`: registry OpenAPI spec + 4 payment-rail JSON specs.
 
 **New infrastructure (PLAN-A):**
 - `atlas-data/ingest/src/export/` — job that runs `pg_dump --schema=marts` on a schedule and publishes the artefact. Or a dbt post-build hook.

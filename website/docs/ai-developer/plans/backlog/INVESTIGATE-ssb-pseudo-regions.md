@@ -73,7 +73,7 @@ and it would be wrong.
 
 ## Why this still matters, and it is not the WARNs themselves
 
-17 WARNs that fire on every single run are worse than they look. **An alarm that is always on is not an alarm.** Atlas has now made this argument twice — for `frr`'s deliberately-absent freshness policy, and for why `redcross-branches` should keep failing loudly — and the same logic applies here. The imac tester reached it independently: *"17 permanent WARNs is where a real regression hides."*
+17 WARNs that fire on every single run are worse than they look. **An alarm that is always on is not an alarm.** Atlas has now made this argument twice — for a private source's deliberately-absent freshness policy, and for why `redcross-branches` should keep failing loudly — and the same logic applies here. The imac tester reached it independently: *"17 permanent WARNs is where a real regression hides."*
 
 The 18th WARN, the one that means something, arrives into a list nobody reads.
 

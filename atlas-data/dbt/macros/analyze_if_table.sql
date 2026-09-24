@@ -12,9 +12,11 @@
                   have been ANALYZEd. Postgres answers that with a WARNING on
                   every run, and a warning on every run is how a log stops
                   being read.
-      MISSED    the four private_marts frr_* tables, which live outside those
-                directories and would have kept the stale statistics this
-                change exists to remove.
+      MISSED    the four private_marts tables that existed at the time, which
+                live outside those directories and would have kept the stale
+                statistics this change exists to remove. (Those models were
+                removed on 2026-09-24; the reasoning stands for the next
+                private model.)
 
   Directory is a proxy for materialisation and it is a leaky one. This asks the
   model what it is, so a model that changes materialisation later gets the

@@ -76,7 +76,9 @@ const SEED_SOURCES_DIR = resolve(INGEST_DIR, "src/seed-sources");
 const DBT_DIR = resolve(INGEST_DIR, "..", "dbt");
 
 /** Sources excluded from `--all` ingest by default. Override via --include. */
-const DEFAULT_EXCLUDED_INGESTS = new Set(["frr"]);
+// ⚠️ Empty since 2026-09-24, when its only entry was removed on Terje's
+// instruction (urb-agents #1453). The mechanism stays for the next private source.
+const DEFAULT_EXCLUDED_INGESTS = new Set<string>([]);
 
 type PhaseId =
   | "migrate"
@@ -144,7 +146,7 @@ function parseArgs(argv: string[]): Args {
       console.log(
         "Usage: npm run bootstrap -- [--dry-run] [--skip phase,...] [--only phase,...] [--include source,...]\n" +
           "  Phases: migrate, refresh, ingest, seed, run, test\n" +
-          "  --include adds otherwise-excluded ingests (e.g. 'frr' for the private-data path)",
+          "  --include adds otherwise-excluded ingests",
       );
       process.exit(0);
     }

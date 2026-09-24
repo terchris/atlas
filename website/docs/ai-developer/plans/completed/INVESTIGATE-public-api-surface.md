@@ -1,5 +1,11 @@
 # Investigate: Public API surface — dogfood pattern, technology choice, contract location
 
+> ⚠️ **Edited 2026-09-24.** This record named a private Red Cross source that has
+> since been removed from Atlas on Terje's instruction (urb-agents #1453). Its
+> identifier is written `<private>` here. The sequence of events, the commands
+> and the measurements are otherwise unchanged.
+
+
 > **IMPLEMENTATION RULES:** Before implementing this plan, read and follow:
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
@@ -98,7 +104,7 @@ This deferred-but-known posture matches the [`docs/stack/suggested-stack.md`](ht
 ### What API needs are emerging
 
 - **Tilskuddsmatcher / Lisa** ([goal.md:153](https://github.com/terchris/atlas/tree/main/docs/research/goal.md#L153)) — if Lisa-first wins as the v1 wedge, she's the first external-shaped consumer. Her workflow involves filtering open grant calls against need indicators per kommune — exactly the cross-source pattern `fact_kommune_indicators` was built for.
-- **Atlas's own next-generation features** — Storm mode (Lars persona) needs FRR resources + weather warnings overlaid. Coverage-gap explorer needs cross-source queries. Both fit the same query patterns external consumers would want.
+- **Atlas's own next-generation features** — Storm mode (Lars persona) needs private resource data + weather warnings overlaid. Coverage-gap explorer needs cross-source queries. Both fit the same query patterns external consumers would want.
 - **Public-good positioning** ([goal.md:88](https://github.com/terchris/atlas/tree/main/docs/research/goal.md#L88)) — "valuable as a public good on its own — for journalists, researchers, policy planners". An API is how that promise becomes real.
 
 ### What the dogfood pattern actually buys

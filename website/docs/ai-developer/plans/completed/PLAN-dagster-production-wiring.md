@@ -1,4 +1,10 @@
-# PLAN: Dagster production wiring — frr, dagster-dbt, schedules, testable declaration
+# PLAN: Dagster production wiring — <private>, dagster-dbt, schedules, testable declaration
+
+> ⚠️ **Edited 2026-09-24.** This record named a private Red Cross source that has
+> since been removed from Atlas on Terje's instruction (urb-agents #1453). Its
+> identifier is written `<private>` here. The sequence of events, the commands
+> and the measurements are otherwise unchanged.
+
 
 > **IMPLEMENTATION RULES:** Before implementing this plan, read and follow:
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
@@ -24,17 +30,17 @@ Dagster is now a **UIS platform service** (service `dagster`, category ANALYTICS
 
 Atlas's side is most of the way there — 40 of 41 ingest sources are Pipes-enabled and materialise via `dagster dev` — but three gaps remain before the code location is worth registering in the cluster:
 
-1. **`frr` is not orchestrated.** It is the only source with no `ingest:frr` npm script and no `@asset`. It is also the only source that reads from `atlas-private-data-repo/` — a gitignored directory that is **absent from the polyglot image by design**. `discoverNgoFolders()` calls `readdir(PRIVATE_DATA_ROOT)` unguarded, so in a cluster run pod it throws `ENOENT` rather than doing the already-agreed thing.
+1. **`<private>` is not orchestrated.** It is the only source with no `ingest:<private>` npm script and no `@asset`. It is also the only source that reads from `atlas-private-data-repo/` — a gitignored directory that is **absent from the polyglot image by design**. `discoverNgoFolders()` calls `readdir(PRIVATE_DATA_ROOT)` unguarded, so in a cluster run pod it throws `ENOENT` rather than doing the already-agreed thing.
 2. **dbt is not in the asset graph.** Dagster orchestrates `raw.*` but stops there. `marts.*` and `api_v1.*` are still manual, so the lineage graph ends halfway and nothing downstream of ingest has a freshness signal.
 3. **No schedules.** There is no daemon-driven cadence, which is the entire reason for adopting an orchestrator.
 
-### The `frr` contract is already decided — don't re-litigate it
+### The `<private>` contract is already decided — don't re-litigate it
 
 [`models/private_marts/sources.yml`](https://github.com/terchris/atlas/blob/main/atlas-data/dbt/models/private_marts/sources.yml) states it plainly:
 
-> On public deployments the table exists but is empty (no NGO data present); `private_marts.frr_*` models materialize as empty tables (option a).
+> On public deployments the table exists but is empty (no NGO data present); `private_marts.<private>_*` models materialize as empty tables (option a).
 
-So the correct cluster behaviour for `frr` is **materialise zero rows, successfully** — not fail, and not mount private NGO data into a shared cluster. This PLAN implements that contract; it does not reopen it. No private data reaches the platform.
+So the correct cluster behaviour for `<private>` is **materialise zero rows, successfully** — not fail, and not mount private NGO data into a shared cluster. This PLAN implements that contract; it does not reopen it. No private data reaches the platform.
 
 ### Capacity policy is the platform's, not Atlas's
 
@@ -46,20 +52,20 @@ Phase 3 therefore declares schedules **without** in-code concurrency limits.
 
 ---
 
-## Phase 1: `frr` — the 41st source
+## Phase 1: `<private>` — the 41st source
 
-Bring `frr` to parity with the other 40, and make it safe to run where the private data isn't.
+Bring `<private>` to parity with the other 40, and make it safe to run where the private data isn't.
 
 ### Tasks
 
-- [x] 1.1 Add `"ingest:frr": "tsx --env-file=.env src/sources/frr/index.ts"` to `atlas-data/ingest/package.json`, in alphabetical position (between `fhi-vgs-gjennomforing` and `redcross-branches`).
-- [x] 1.2 Guard `discoverNgoFolders()` in `atlas-data/ingest/src/sources/frr/index.ts`: a missing `PRIVATE_DATA_ROOT` returns `[]` rather than throwing `ENOENT`. Log it at `info` with the resolved path so an operator can tell "no private data mounted" from "private data mounted but empty" — those look identical in the row count otherwise.
-- [x] 1.3 Add `"frr"` to `OTHER_SOURCES` in `atlas-data/dagster/atlas_data/assets/raw_other.py`, with a module-docstring note that it materialises **0 rows on public deployments by design** (cite the `sources.yml` contract) so a future reader doesn't file the empty asset as a bug.
-- [x] 1.4 Verify locally, both paths: `npm run ingest:frr` with the private repo present (rows > 0) and with `PRIVATE_DATA_ROOT` temporarily renamed (exits 0, 0 rows).
+- [x] 1.1 Add `"ingest:<private>": "tsx --env-file=.env src/sources/<private>/index.ts"` to `atlas-data/ingest/package.json`, in alphabetical position (between `fhi-vgs-gjennomforing` and `redcross-branches`).
+- [x] 1.2 Guard `discoverNgoFolders()` in `atlas-data/ingest/src/sources/<private>/index.ts`: a missing `PRIVATE_DATA_ROOT` returns `[]` rather than throwing `ENOENT`. Log it at `info` with the resolved path so an operator can tell "no private data mounted" from "private data mounted but empty" — those look identical in the row count otherwise.
+- [x] 1.3 Add `"<private>"` to `OTHER_SOURCES` in `atlas-data/dagster/atlas_data/assets/raw_other.py`, with a module-docstring note that it materialises **0 rows on public deployments by design** (cite the `sources.yml` contract) so a future reader doesn't file the empty asset as a bug.
+- [x] 1.4 Verify locally, both paths: `npm run ingest:<private>` with the private repo present (rows > 0) and with `PRIVATE_DATA_ROOT` temporarily renamed (exits 0, 0 rows).
 
 ### Validation
 
-`dagster dev` shows 41 raw assets. `raw/frr` materialises successfully in both states. No regression in the other 40.
+`dagster dev` shows 41 raw assets. `raw/<private>` materialises successfully in both states. No regression in the other 40.
 
 ### Outcome (2026-08-23) — complete
 
@@ -67,14 +73,14 @@ Verified against a real Postgres (throwaway instance, all 49 migrations applied)
 
 | Check | Result |
 |---|---|
-| Pre-fix behaviour, private root absent | **Reproduced the defect**: `frr.fatal … ENOENT: no such file or directory, scandir '…/atlas-private-data-repo'` |
-| Post-fix, private root present | 5 rows upserted to `private_raw.frr_resources`, exit 0 |
-| Post-fix, private root absent (the cluster case) | `frr.private_data_root_absent` logged, 0 rows, **exit 0** |
-| Dagster asset graph | 41 raw assets, `raw/frr` present, `definitions.py` import 0.34s (well inside the <2s discipline) |
+| Pre-fix behaviour, private root absent | **Reproduced the defect**: `<private>.fatal … ENOENT: no such file or directory, scandir '…/atlas-private-data-repo'` |
+| Post-fix, private root present | 5 rows upserted to `private_raw.<private>_resources`, exit 0 |
+| Post-fix, private root absent (the cluster case) | `<private>.private_data_root_absent` logged, 0 rows, **exit 0** |
+| Dagster asset graph | 41 raw assets, `raw/<private>` present, `definitions.py` import 0.34s (well inside the <2s discipline) |
 | `npm test` | 99 passed / 9 files, including 6 new `discover.test.ts` cases |
 | `npm run typecheck` | No new errors (see known issue below) |
 
-`discoverNgoFolders` was **extracted to `src/sources/frr/discover.ts`** because `index.ts` invokes `run()` at module scope, so nothing in it can be imported by a test. The extraction is what lets the ENOENT guard be covered by CI (C11 tier 1) rather than trusted. Non-ENOENT errors (e.g. `EACCES`) still throw — reading a permissions failure as "no NGO data" would silently empty `private_raw.frr_resources`, which is the dangerous failure mode.
+`discoverNgoFolders` was **extracted to `src/sources/<private>/discover.ts`** because `index.ts` invokes `run()` at module scope, so nothing in it can be imported by a test. The extraction is what lets the ENOENT guard be covered by CI (C11 tier 1) rather than trusted. Non-ENOENT errors (e.g. `EACCES`) still throw — reading a permissions failure as "no NGO data" would silently empty `private_raw.<private>_resources`, which is the dangerous failure mode.
 
 **Known issue, pre-existing, not introduced here**: `npm run typecheck` reports two errors in `src/sources/validate-manifests.ts` (ajv / ajv-formats ESM-CJS call signatures). Confirmed present on a clean tree with the changes stashed. Left alone as out of scope — worth its own fix so the gate is trustworthy again.
 
@@ -91,7 +97,7 @@ Load dbt models as Dagster assets so `raw → marts → api_v1` is one lineage g
 - [x] 2.1 Add a `DbtProject` pointing at `atlas-data/dbt/`, resolving its path the same way `_factory.py` resolves the ingest dir (up-4 from `__file__`), so one code path serves both the local layout and `/app` in the image.
 - [x] 2.2 Bake `dbt parse` into `atlas-data/deploy/Dockerfile` so `target/manifest.json` ships in the image. Run pods must never parse dbt at runtime — `dagster-dbt`'s manifest load is the one expensive import the architecture accepts, and only because it's precomputed.
 - [x] 2.3 Declare `@dbt_assets` over the manifest. Map dbt sources to the existing `raw/*` asset keys so the ingest assets become real upstream dependencies rather than a disconnected second graph.
-- [x] 2.4 **Exclude the `private` tag from the deployed selection.** `private_marts.frr_*` models are tagged `private`; they materialise as empty tables per the contract, but they should not appear as schedulable assets in a shared cluster UI. Keep them available locally.
+- [x] 2.4 **Exclude the `private` tag from the deployed selection.** `private_marts.<private>_*` models are tagged `private`; they materialise as empty tables per the contract, but they should not appear as schedulable assets in a shared cluster UI. Keep them available locally.
 - [x] 2.5 Add an `api_v1` asset downstream of the marts assets that applies `atlas-data/dbt/api_v1_generated.sql` (the `apply-api-v1.sh` step: wrapper views, column COMMENTs, the `<app>_web_anon` grant, and `NOTIFY pgrst, 'reload schema'`). This is what makes a refresh visible to PostgREST without a human.
 - [x] 2.6 Verify the full chain in `dagster dev`: materialise a raw asset → its downstream dbt models → the api_v1 asset, and confirm the row count changes land in the API.
 
@@ -107,7 +113,7 @@ New modules: `atlas_data/assets/dbt.py` (dbt half) and `atlas_data/assets/api_v1
 
 **Ran, not just inspected:** `raw/ssb_klass_kommuner+` materialised through Dagster (Pipes subprocess → 1327 rows → downstream dbt model, `RUN_SUCCESS`); `api_v1` materialised through Dagster, creating **13 views with 104 column comments** in Postgres. `dbt build` 855 PASS / 1 WARN (pre-existing seed relationship warning), `check-osmosis.sh` exit 0, 99 ingest tests pass.
 
-**Private exclusion works both ways:** default 125 assets with zero `private_marts` keys; `ATLAS_DAGSTER_INCLUDE_PRIVATE=1` gives 133 and restores `raw/frr → private_marts/supply__frr_*`. Excluded by **tag**, not path, so a newly tagged model is covered without editing this file.
+**Private exclusion works both ways:** default 125 assets with zero `private_marts` keys; `ATLAS_DAGSTER_INCLUDE_PRIVATE=1` gives 133 and restores `raw/<private> → private_marts/supply__<private>_*`. Excluded by **tag**, not path, so a newly tagged model is covered without editing this file.
 
 **Import cost:** 1.0–1.2s steady (first import ~2s while bytecode compiles), inside the <2s discipline.
 
@@ -155,7 +161,7 @@ Schedules are visible and correctly parameterised locally. Nothing is self-certi
 | `redcross_branches_weekly` | `30 3 * * 0` | 1 scraper | Heaviest asset (~512MiB headless browser) and it scrapes someone else's site. Offset from the annual wave so it isn't competing for the 4 run-pod slots with 37 API fetches. |
 | `transform_daily` | `0 5 * * *` | dbt + `api_v1` | Daily despite weekly sources: this run is also the in-pipeline data-quality gate (644 dbt tests as asset checks) and the step that republishes `api_v1` and reloads PostgREST's schema cache. A daily green run is the signal the public API still serves what it should. |
 
-**`frr` is deliberately unscheduled** — it would materialise zero rows on a timer forever in the cluster. Verified absent from every job.
+**`<private>` is deliberately unscheduled** — it would materialise zero rows on a timer forever in the cluster. Verified absent from every job.
 
 **No in-code concurrency limits**, per the maintainer's push-back; the cap of 4 is chart-side. `schedules.py` says so at the top so nobody "helpfully" adds one.
 
@@ -183,7 +189,7 @@ Per `~/home/ai-developer/platform-conformance.md` C11, Atlas does **not** self-c
 
 - [x] 4.1 Push a `main`-merge so CI builds a fresh `ghcr.io/terchris/atlas-data` tag containing all of the above; record the exact tag.
 - [x] 4.2 Write `ai-developer/for-ops-atlas-testable.md` in `~/home`: scope, exact deploy steps (`./uis deploy dagster` + the code-location registration with the recorded tag), the `ATLAS_DATABASE_URL` secret requirement, and explicit PASS criteria.
-- [x] 4.3 PASS criteria to state: code location loads and shows 41 raw assets + the dbt assets; no `private`-tagged assets present; a nominated raw asset materialises end-to-end into `marts.*` and `api_v1.*`; `raw/frr` materialises 0 rows without failing; schedules visible to the daemon.
+- [x] 4.3 PASS criteria to state: code location loads and shows 41 raw assets + the dbt assets; no `private`-tagged assets present; a nominated raw asset materialises end-to-end into `marts.*` and `api_v1.*`; `raw/<private>` materialises 0 rows without failing; schedules visible to the daemon.
 - [ ] 4.4 Fix whatever the tester reports, on Atlas's side, and re-declare. Do not argue with a FAIL — re-declare after fixing.
 
 ### Validation
@@ -218,7 +224,7 @@ criteria) covers materialisations. Three criteria are deliberately sharp:
 
 - **No `private_marts/*` asset may appear** — its presence is a FAIL, meaning the tag exclusion didn't survive into the image.
 - **All 4 schedules must be STOPPED** — a RUNNING schedule is a FAIL; go-live is Terje's decision, not a deploy side effect.
-- **`raw/frr` must SUCCEED WITH ZERO ROWS** — a *failed* frr is a FAIL, a successful empty one is the expected result. That inversion is the whole point of phase 1.
+- **`raw/<private>` must SUCCEED WITH ZERO ROWS** — a *failed* <private> is a FAIL, a successful empty one is the expected result. That inversion is the whole point of phase 1.
 
 The declaration also lists four known-not-broken items so they aren't filed as
 defects, and flags that the platform's 4-slot concurrency cap has never been
@@ -271,7 +277,7 @@ and reaches both pod types. Not a service gap — my declaration was wrong to im
 one. The re-declaration includes `env_secrets: [atlas-database-url]`.
 
 **Free intelligence from round 1**: the tester verified criteria 2–6 by static
-introspection with a `PYTHONPATH` workaround — 112 assets, `raw/frr` present, **zero
+introspection with a `PYTHONPATH` workaround — 112 assets, `raw/<private>` present, **zero
 `private_marts`**, 4 STOPPED schedules, 645 checks. The graph is exactly as declared,
 so round 2 should not surprise on shape.
 
@@ -279,7 +285,7 @@ so round 2 should not surprise on shape.
 
 ## Acceptance Criteria
 
-- [ ] All 41 ingest sources are Dagster assets; `frr` succeeds with zero rows where private data is absent.
+- [ ] All 41 ingest sources are Dagster assets; `<private>` succeeds with zero rows where private data is absent.
 - [ ] `raw.* → marts.* → api_v1.*` is one lineage graph; a refresh reaches PostgREST with no manual step.
 - [ ] No `private`-tagged asset is exposed in the deployed code location, and no private NGO data reaches the platform.
 - [ ] Schedules declared, cadence matched to real upstream periodicity, no in-code concurrency cap.
@@ -302,7 +308,7 @@ confirmed at the root — the tester checked **both** halves from inside the run
 pod (`_INGEST_DIR=/app/ingest`, `DBT_PROJECT_DIR=/app/dbt`, manifest present) and
 noted that fixing only `dbt.py` would have failed criterion 8 anyway. All seven
 Tier 1 criteria pass in-cluster, queried through the webserver's GraphQL rather
-than by static introspection: 112 assets, `raw/frr` present, **zero
+than by static introspection: 112 assets, `raw/<private>` present, **zero
 `private_marts`**, 4 schedules STOPPED per the daemon's own state, pod `1/1` with
 **0 restarts**.
 
@@ -376,8 +382,8 @@ three are now build-time gates.
 ### Free intelligence: the ingest payloads are already proven in-cluster
 
 The tester ran criteria 8 and 9's payloads directly, bypassing the blockers:
-`ssb-klass-kommuner` wrote **1327 rows** (matching local), and `frr` logged
-`frr.private_data_root_absent`, `rows: 0`, success — the exact inverted criterion
+`ssb-klass-kommuner` wrote **1327 rows** (matching local), and `<private>` logged
+`<private>.private_data_root_absent`, `rows: 0`, success — the exact inverted criterion
 from phase 1, confirmed in a real cluster. The orchestration wrapper was broken;
 the ingest code was not.
 
@@ -391,7 +397,7 @@ materialisations ever to run in a Kubernetes run pod.** Both round-2 blockers
 confirmed fixed; `./uis verify dagster` now exits 0 with "All can hydrate run
 storage (D5)". The migrations asset built **47 raw tables from a database with 0
 tables**, inside a run pod. `raw/ssb_klass_kommuner` wrote 1327 rows through a real
-Pipes subprocess; `raw/frr` succeeded empty with `frr.private_data_root_absent`.
+Pipes subprocess; `raw/<private>` succeeded empty with `<private>.private_data_root_absent`.
 
 ### The FAIL: dbt could not parse — `PGHOST` not set
 

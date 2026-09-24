@@ -130,9 +130,9 @@
 -- changed it would have reported a fault in the wrong place entirely.
 --
 -- ⚠️ There was also, from the first version until 2026-09-08, an exemption for
--- `frr_` carrying a paragraph of justification. It never excluded anything:
--- `frr_resources` declares no `loaded_at_field`, so the guard below had always
--- skipped it. It read exactly like coverage for three weeks. A mechanism whose
+-- one source prefix carrying a paragraph of justification. It never excluded
+-- anything: that source declared no `loaded_at_field`, so the guard below had
+-- always skipped it. It read exactly like coverage for three weeks. A mechanism whose
 -- entries can be inert is a bad mechanism, which is the second reason the
 -- prefix list is gone: `meta` cannot be attached to a source that isn't there.
 --

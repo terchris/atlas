@@ -601,8 +601,8 @@ combined as (
 --
 -- 🔴 This does NOT supply membership. `registrertIFrivillighetsregisteret` below
 -- comes from the Enhetsregister document and is on 100% of records, so the NGO
--- population is derived without this table. Only icnpo_* and the FRR-specific
--- attributes depend on it — which means a day when this register is unreachable
+-- population is derived without this table. Only icnpo_* and the
+-- frivillighetsregister-specific attributes depend on it — which means a day when this register is unreachable
 -- costs Atlas its classifications, not its NGO population.
 frivillig as (
   select

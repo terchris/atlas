@@ -37,7 +37,7 @@ Plus `extract:redcross` script for one-off Red Cross data prep work.
 This app is for **contributors verifying their own work** during ingest + dbt iteration. It needs:
 
 - Arbitrary SQL across `marts.*` and `raw.*` (sometimes ad-hoc joins between half-built models)
-- Visibility into dev-only `private_marts.*` data (e.g. FRR resource details for Red Cross integration testing) — these never go through PostgREST
+- Visibility into dev-only `private_marts.*` data — these never go through PostgREST
 - Fast iteration when a dbt model changes shape and you need to see the new columns *now* without regenerating the API spec
 
 The PostgREST app (`atlas-frontend/`) is the wrong tool for this work — its whole reason for existing is to enforce the public-API contract. Contributor diagnostics need to bypass that contract.

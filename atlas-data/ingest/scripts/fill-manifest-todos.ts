@@ -76,7 +76,6 @@ const TOPIC_RULES: Array<{ topic: string; pattern: RegExp }> = [
 const GEO_OVERRIDES: Record<string, string> = {
   "ssb-klass-fylker": "fylke",
   "ssb-klass-kommuner": "kommune",
-  "frr": "national",
 };
 
 /**
@@ -98,15 +97,13 @@ const TOPIC_TO_EU_THEME: Record<string, string> = {
   reference: "GOVE",
 };
 
-/** Last-resort topic when nothing matches. */
-const TOPIC_FALLBACK: Record<string, string> = {
-  "frr": "ngo-supply",
-};
+/** Last-resort topic when nothing matches. ⚠️ Empty since 2026-09-24, when its
+ * only entry was removed on Terje's instruction (urb-agents #1453). */
+const TOPIC_FALLBACK: Record<string, string> = {};
 
-/** Description fallbacks for the few sources whose README text is sparse. */
-const DESCRIPTION_FALLBACKS: Record<string, string> = {
-  frr: "Norges Røde Kors's internal Frivillig Resource Register (FRR) — operational data on volunteer resources, status, and positions. Private; never exposed via the public API.",
-};
+/** Description fallbacks for the few sources whose README text is sparse.
+ * ⚠️ Empty since 2026-09-24 (urb-agents #1453). */
+const DESCRIPTION_FALLBACKS: Record<string, string> = {};
 
 /**
  * Hardcoded overrides for sources whose READMEs don't follow the
@@ -121,14 +118,6 @@ const MANUAL_OVERRIDES: Record<string, Partial<Manifest>> = {
     license: "permissive",
     license_url: "https://www.rodekors.no/personvern/",
     attribution: "Norges Røde Kors, Organizations API",
-  },
-  "frr": {
-    upstream_id: "frr",
-    // FRR is internal — no public canonical URL; rodekors.no is the closest
-    // public-facing parent reference.
-    upstream_url: "https://www.rodekors.no/",
-    upstream_title: "Frivillig Resource Register (FRR) — Norges Røde Kors internal volunteer register",
-    attribution: "Norges Røde Kors, Frivillig Resource Register (FRR) — internal data",
   },
 };
 
@@ -533,7 +522,7 @@ function fillOne(sourceDir: string): { sourceId: string; changed: boolean; warni
       m.upstream_landing_page = `https://www.ssb.no/statbank/table/${m.upstream_id}`;
       touched = true;
     }
-    // For FHI / redcross / frr the contributor hand-fills.
+    // For FHI and redcross the contributor hand-fills.
   }
 
   // upstream_url — manual override > derived from upstream_id (FHI/SSB) >
@@ -621,7 +610,6 @@ function fillOne(sourceDir: string): { sourceId: string; changed: boolean; warni
   if (isTodo(m.periodicity)) {
     if (m.source_id.startsWith("ssb-klass-")) m.periodicity = "irregular";
     else if (m.source_id === "redcross-branches") m.periodicity = "irregular";
-    else if (m.source_id === "frr") m.periodicity = "irregular";
     else m.periodicity = "P1Y"; // FHI tables are mostly annual
     touched = true;
   }

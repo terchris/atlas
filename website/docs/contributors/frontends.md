@@ -12,7 +12,7 @@ Atlas has **two** Next.js apps with deliberately different access patterns. New 
 | **Deploys to** | `atlas.helpers.no` (production) | Dev / staging only — **never public** |
 | **Default port (local)** | `3001` | `4000` |
 | **Forkable?** | Yes — explicitly designed as a reference for external developers | No — Atlas-internal |
-| **Sees private data?** | No (`private_*` schemas not exposed via PostgREST) | Yes (e.g. FRR resource details for Red Cross verification) |
+| **Sees private data?** | No (`private_*` schemas not exposed via PostgREST) | Yes (`private_marts.*`, for verification) |
 | **Has `postgres.js`?** | No, never will | Yes |
 | **Imports from `atlas-data/`?** | No, never will | OK |
 
@@ -58,7 +58,7 @@ Ask: **who's using this page?**
 
 - **DB driver code** (`postgres`, connection strings, env vars like `DATABASE_URL`) → stays in `atlas-contributor-frontend/`.
 - **PostgREST client code** (`api.ts`, `api-types.ts`, `Accept-Profile` headers) → stays in `atlas-frontend/`.
-- **Routes containing personal data** (FRR resource details, anything from `private_marts.*`) → stays in `atlas-contributor-frontend/`. Never a customer-app concern.
+- **Routes containing personal data** (anything from `private_marts.*`) → stays in `atlas-contributor-frontend/`. Never a customer-app concern.
 
 ## See also
 

@@ -49,9 +49,7 @@ publishers:
     feedback_url: https://www.rodekors.no/kontakt-oss/
     notes: |
       Norwegian Red Cross. Source of NGO-supply data via the public
-      Organizations API (branches and per-branch activities). The Frivillig
-      Resource Register (FRR) is also from Red Cross but is private operational
-      data, never exposed via the public API.
+      Organizations API (branches and per-branch activities).
 
   - id: brreg
     display_name: Brønnøysundregistrene

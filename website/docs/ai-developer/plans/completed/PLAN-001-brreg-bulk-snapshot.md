@@ -5,6 +5,12 @@ mdx:
 
 # PLAN-001: Brreg bulk snapshot
 
+> ⚠️ **Edited 2026-09-24.** This record named a private Red Cross source that has
+> since been removed from Atlas on Terje's instruction (urb-agents #1453). Its
+> identifier is written `<private>` here. The sequence of events, the commands
+> and the measurements are otherwise unchanged.
+
+
 Loads all 1,174,098 Norwegian organisations from Brønnøysundregistrene into `raw.brreg_enheter_snapshot` in one streaming pass, with no CSV stage and no data mutated to fit a transport format.
 
 > **IMPLEMENTATION RULES:** Before implementing this plan, read and follow:
@@ -291,7 +297,7 @@ and the README rather than left as an implicit property of "upsert".
 
 ### The distinction this phase had to make explicit
 
-`cadence.UNSCHEDULED_SOURCES` means **cannot run** — `frr` has no private data on a public
+`cadence.UNSCHEDULED_SOURCES` means **cannot run** — `<private>` has no private data on a public
 deployment, `redcross-branches` has no credential — and both are correctly absent from the first-day
 sequence. `brreg-enheter-alle` is the opposite: it **must** run, once, on day one, and then be left
 alone.

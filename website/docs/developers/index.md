@@ -6,19 +6,19 @@ This section is for **anyone consuming Atlas's public PostgREST API** to build t
 
 <!-- BEGIN holdings (generated) -->
 
-**44 upstream sources** from **5 publishers**, served as **20 read-only relations**.
+**43 upstream sources** from **5 publishers**, served as **20 read-only relations**.
 
 | publisher | sources | broadly |
 |---|---|---|
 | Folkehelseinstituttet | 21 | public health, and the Ungdata youth surveys |
 | Statistisk sentralbyrå | 17 | population, income, families, housing, education, crime |
 | Brønnøysundregistrene | 3 | the company and voluntary-organisation registers |
-| Norges Røde Kors | 2 | local chapters and their activities |
 | Barne-, ungdoms- og familiedirektoratet | 1 | child poverty |
+| Norges Røde Kors | 1 | local chapters and their activities |
 
-By EU data theme: **SOCI** 21 (society) · **HEAL** 12 (health) · **GOVE** 5 (government) · **EDUC** 5 (education) · **JUST** 1 (justice).
+By EU data theme: **SOCI** 20 (society) · **HEAL** 12 (health) · **GOVE** 5 (government) · **EDUC** 5 (education) · **JUST** 1 (justice).
 
-Licences: **NLOD** for 42 of 44 — Norwegian public data, free to reuse with attribution. The exceptions are `frr` (internal) and `redcross-branches` (permissive) — Red Cross's own data rather than the state's. `frr` is a volunteer register held in an auth-gated schema and is NOT served on the public API.
+Licences: **NLOD** for 42 of 43 — Norwegian public data, free to reuse with attribution. The exceptions are `redcross-branches` (permissive) — Red Cross's own data rather than the state's.
 
 ### What you can query
 
@@ -75,7 +75,7 @@ Atlas's posture: **anything not explicitly gated is queryable**. The public Post
 | `marts` | Every dbt-built mart (dim, fact, indicator, supply, ref) | When you want the working dataset that hasn't been frozen into an `api_v1` view yet |
 | `raw` | Verbatim ingest landings — every row Atlas pulled from upstream | When you want full provenance or are debugging a transformation |
 
-Private schemas (`private_marts`, `private_raw`) carry personal data (e.g. Red Cross volunteer records via the FRR integration) and stay outside the schema list — `atlas_web_anon` has no grants on them; PostgREST returns 404 even with explicit `Accept-Profile: private_marts`.
+Private schemas (`private_marts`, `private_raw`) carry personal data and stay outside the schema list — `atlas_web_anon` has no grants on them; PostgREST returns 404 even with explicit `Accept-Profile: private_marts`.
 
 ### Reaching non-default schemas
 
