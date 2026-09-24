@@ -1,24 +1,50 @@
 {#
 
-  🔵 TWO UPSTREAM PAYLOAD SHAPES ARRIVE IN THIS TABLE, AND THEY PARTITION IT.
-  Recorded here because the evidence lives in `doc`, and `doc` may stop being
-  published — at which point it becomes unrecoverable from the API.
-  Counted 2026-09-24 with count=exact over all rows (urb-agents #1457):
+  🔴 THIS TABLE WAS BUILT FROM TWO BRREG DISTRIBUTIONS, AND THE BOUNDARY IS
+  14 SEPTEMBER 2026, 11:30. Anyone analysing `last_seen_at` will trip over this
+  eventually, and the only visible evidence is a `doc` key that may stop being
+  published — so it is recorded here rather than left in the data.
 
-      doc ? 'links'   1 112 582        doc ? '_links'   62 716
-      rows with BOTH          0        sum        1 175 298 = exactly the total
+      bulk download (enheter/lastned)   ->  doc carries `links`     1 112 582
+      REST API (the change feed)        ->  doc carries `_links`       62 716
+      rows carrying BOTH                                                    0
+                                                                    ---------
+                                                                    1 175 298
 
-  Every row carries exactly one and never both. That is a structural fact about
-  the table rather than a proportion, which is why it is worth keeping: one
-  800-row sample put the split at 93/7, another at 97.9/2.1, and a designed
-  20 000-row sample at 29.7/70.3. None was evidence of anything.
+  Every row carries exactly one and never both, and the two sum to the row count
+  with nothing left over. ⚠️ BOTH FORMATS ARE CURRENT. Neither is legacy and
+  neither is a version: they are two distributions of the same register that
+  differ in shape. The decisive measurement is the boundary, not the ratio:
 
-  ⚠️ WHICH SHAPE COMES FROM WHICH UPSTREAM PATH IS NOT ESTABLISHED. The obvious
-  test fails: `reconciled_at` is non-null on all 1 175 334 rows and
-  discriminates nothing. `snapshot_loaded_at` and `last_oppdateringsid` would,
-  and they are not published — so it needs a query here, not from outside. The
-  plausible reading is snapshot rows versus change-feed rows, given the
-  coalesce below. INFERENCE, untested.
+      last_seen_at >= 2026-09-15     _links 20 908     links 0
+
+  Zero. Not "few". Verified by count=exact, one query each, 2026-09-24.
+
+  ⚠️ AN EARLIER VERSION OF THIS NOTE READ THE PARTITION AS "two upstream API
+  versions landing in the same table" and marked it INFERENCE, untested. The
+  partition was real and that mechanism was wrong — the consumer that first
+  reported it retracted the story and kept the fact. A ratio from an 800-row
+  sample was never evidence for either; three separate samples put the split at
+  93/7, 97.9/2.1 and 29.7/70.3.
+
+  🔵 THE 577-ROW RESIDUE IS THE FIRST DELTA RUN OVERLAPPING THE LOAD'S TAIL, and
+  that is measured rather than assumed. 577 rows carry `_links` with
+  `last_seen_at` inside the bulk-load window — 0.05% of the load. They are not
+  scattered through it:
+
+      <= 11:00    0        <= 11:20    0
+      <= 11:25    0        <= 11:29  577        <= 11:30  577
+
+  A FOUR-MINUTE BAND at the very end, while 1 112 276 `links` rows were still
+  being written in the same half hour. Scatter would mean something re-fetched
+  577 organisations for a reason nobody has named; a single narrow band at the
+  tail is one feed run arriving before the load finished.
+
+  ⚠️ What this does NOT establish is which JOB wrote them. That the rows came by
+  the REST path follows from the `_links` shape — established above — but job
+  identity needs `raw.ingest_runs`, which is not published. It was thought to
+  need ingest logs; it needed the DISTRIBUTION of a published column, which a
+  count alone could not show.
 
   🔴 WHY `last_oppdateringsid` AND `snapshot_loaded_at` ARE INDEXED.
 
