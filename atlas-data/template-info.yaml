@@ -656,8 +656,8 @@ operational:
         A transform run fails naming dim_brreg_enhet with EITHER of two errors:
         Database Error, 'column "snapshot_loaded_at" does not exist' pointing at
         "select coalesce(max(snapshot_loaded_at), '-infinity'"; OR dbt's own
-        "The source and target schemas on this incremental model are out of
-        sync!" followed by "Source columns not in target". Both mean the same
+        "The source and target schemas on this incremental model are out of sync!"
+        followed by "Source columns not in target". Both mean the same
         thing and take the same fix — see cause for which you get and why.
       cause: >-
         An Atlas upgrade added a column to a model that is materialised
@@ -675,8 +675,8 @@ operational:
           the new column is NOT read by the predicate - e.g. the 76 columns
             extracted from `doc` on 2026-09-24. dbt's comparison runs normally
             and emits its own standard message:
-              "The source and target schemas on this incremental model are out
-               of sync!"  Source columns not in target: [...]
+              "The source and target schemas on this incremental model are out of sync!"
+              followed by "Source columns not in target: [...]"
 
         Same cause, same fix, two search terms. An operator will search for
         whichever text is on their screen, so both are written out here.
