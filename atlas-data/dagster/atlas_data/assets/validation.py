@@ -210,12 +210,14 @@ def every_served_url_resolves():
         )
 
     urls: dict[str, str] = {}
+    occurrences = 0
     for row in rows:
         for col, val in row.items():
             if not isinstance(val, str):
                 continue
             for m in _URL.finditer(val):
                 u = m.group(0).rstrip(".,;:")
+                occurrences += 1
                 urls.setdefault(u, f"{row.get('source_id')}.{col}")
 
     if not urls:
@@ -226,7 +228,19 @@ def every_served_url_resolves():
         )
 
     dead: list[str] = []
-    undetermined = skipped = 0
+    # 🔴 NAMED, NOT COUNTED. This was `undetermined = 0` until 2026-09-24. The
+    # first scheduled run reported `undetermined: 1` and NOBODY COULD SAY WHICH
+    # URL — not me, and I wrote it. I swept all 64 from outside the cluster and
+    # every one answered 2xx/3xx, so the one the cluster saw is either transient
+    # or specific to its egress, and a bare count can distinguish neither.
+    #
+    # ⚠️ A persistent undetermined and a flapping one are different problems: the
+    # first is a URL that needs a decision, the second is somebody else's
+    # outage. Telling them apart needs the NAME across runs, which is exactly
+    # what a counter destroys. Same defect as the old empty_but_published
+    # remedy text — a number with nothing a reader can chase.
+    undetermined: list[str] = []
+    skipped = 0
     for url, where in urls.items():
         if "{" in url or "}" in url or _PLACEHOLDER.search(url):
             skipped += 1
@@ -235,22 +249,28 @@ def every_served_url_resolves():
             status = _get(url).status
         except urllib.error.HTTPError as err:
             status = err.code
-        except urllib.error.URLError:
-            undetermined += 1
+        except urllib.error.URLError as err:
+            undetermined.append(f"{where}: {err.reason} — {url}")
             continue
         if status in (404, 410):
             dead.append(f"{where}: HTTP {status} — {url}")
         elif status in (401, 403) or status >= 500:
-            undetermined += 1
+            undetermined.append(f"{where}: HTTP {status} — {url}")
 
     return AssetCheckResult(
         passed=not dead,
         severity=AssetCheckSeverity.WARN,
         metadata={
             "sources": len(rows),
+            # 🔵 DISTINCT urls, not occurrences. `urls` is keyed by the URL, so a
+            # value repeated across rows or columns is dereferenced ONCE. On
+            # 2026-09-24 that was 64 distinct out of 123 occurrences across 43
+            # sources — so a sweep counting occurrences will report a much larger
+            # number for the same data and neither is wrong. Say which you mean.
             "urls_checked": len(urls) - skipped,
+            "url_occurrences": occurrences,
             "dead": "\n".join(dead) if dead else "none",
-            "undetermined": undetermined,
+            "undetermined": "\n".join(undetermined) if undetermined else "none",
             "skipped_template_or_placeholder": skipped,
             "remedy": (
                 "A dead URL in meta_sources is served to every consumer who reads "
