@@ -4,7 +4,14 @@
 
 Atlas is an organisation-neutral information platform that aggregates public data about every large Norwegian NGO — activities, chapters, funding, people, and the humanitarian needs that shape them — so anyone can find what they're looking for without learning how 40 different NGO websites work.
 
-Launched as **atlas.helpers.no**, the first service from [Helpers](https://helpers.no) — helping the helpers (NGOs and volunteers).
+Published at **[atlas.sovereignsky.no](https://atlas.sovereignsky.no)** (documentation and dataset
+catalogue) and **api-atlas.urbalurba.com** (the public PostgREST API). The first service from
+Helpers — helping the helpers (NGOs and volunteers).
+
+> ⚠️ **These two hostnames are the verified ones and they are derived, not remembered.**
+> `website/hosts.mjs` is the single source of truth and says so in its own header. This line
+> previously read *"Launched as atlas.helpers.no"* — **a hostname that does not resolve at all**,
+> measured 2026-09-24. Do not reintroduce it; check `hosts.mjs`.
 
 ---
 
@@ -72,7 +79,7 @@ Plus tertiary: Magnus (active volunteer QC), Henrik (corporate partnerships), Å
 ```
 ./
 ├── README.md                                — this file
-├── atlas-frontend/                          — public customer Next.js app (atlas.helpers.no)
+├── atlas-frontend/                          — public customer Next.js app
 │   │                                          — PostgREST consumer; no DB role; forkable reference. Default port 3001.
 │   ├── app/                                 — App Router pages and layouts
 │   ├── src/                                 — shared code (components, lib)
@@ -168,7 +175,12 @@ Full catalogue with verification dates and auth requirements: [`docs/research/da
 
 ## Helpers
 
-Atlas is the first service from **Helpers** (helpers.no), whose purpose is helping the helpers — NGOs and the volunteers who work for them. Additional Helpers services will follow the `<service>.helpers.no` pattern.
+Atlas is the first service from **Helpers**, whose purpose is helping the helpers — NGOs and the volunteers who work for them. Additional Helpers services will follow the `<service>.helpers.no` pattern.
+
+> ⚠️ **Atlas itself does not follow that pattern today.** It is published at
+> `atlas.sovereignsky.no`; `atlas.helpers.no` does not resolve, measured 2026-09-24. Left as
+> written because it states an intention about Helpers' naming rather than a fact about Atlas —
+> but a reader should not infer the live hostname from it.
 
 ---
 
