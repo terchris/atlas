@@ -1744,6 +1744,331 @@ models:
           actually changed are re-stamped, so an old value means "nothing about this organisation has
           changed since then", not "this endpoint is stale".
         data_tests: [not_null]
+      - name: epostadresse
+        description: >-
+          Email address the organisation registered with Brreg. Present on 324,967 of 1,175,334
+          rows (27.65%), counted 2026-09-24.
+      - name: mobil
+        description: >-
+          Mobile number registered with Brreg. Present on 308,989 of 1,175,334 rows (26.29%),
+          counted 2026-09-24.
+      - name: telefon
+        description: >-
+          Telephone number registered with Brreg. Present on 194,520 of 1,175,334 rows (16.55%),
+          counted 2026-09-24.
+      - name: hjemmeside
+        description: >-
+          Website the organisation registered with Brreg. Present on 114,075 of 1,175,334 rows
+          (9.71%), counted 2026-09-24.
+      - name: registrert_i_mvaregisteret
+        description: >-
+          Whether the organisation is registered in mvaregisteret. Present on 1,175,334 of
+          1,175,334 rows (100.00%), counted 2026-09-24.
+      - name: registrert_i_foretaksregisteret
+        description: >-
+          Whether the organisation is registered in foretaksregisteret. Present on 1,175,334 of
+          1,175,334 rows (100.00%), counted 2026-09-24.
+      - name: registrert_i_stiftelsesregisteret
+        description: >-
+          Whether the organisation is registered in stiftelsesregisteret. Present on 1,175,334
+          of 1,175,334 rows (100.00%), counted 2026-09-24.
+      - name: registrert_i_partiregisteret
+        description: >-
+          Whether the organisation is registered in partiregisteret. Present on 1,175,334 of
+          1,175,334 rows (100.00%), counted 2026-09-24.
+      - name: er_i_konsern
+        description: >-
+          Whether Brreg records the organisation as part of a group (konsern). Present on
+          1,175,334 of 1,175,334 rows (100.00%), counted 2026-09-24.
+      - name: stiftelsesdato
+        description: >-
+          Date Brreg records for this event. Present on 676,822 of 1,175,334 rows (57.59%),
+          counted 2026-09-24.
+      - name: vedtektsdato
+        description: >-
+          Date Brreg records for this event. Present on 491,178 of 1,175,334 rows (41.79%),
+          counted 2026-09-24.
+      - name: registreringsdato_foretaksregisteret
+        description: >-
+          Date Brreg records for this event. Present on 577,303 of 1,175,334 rows (49.12%),
+          counted 2026-09-24.
+      - name: registreringsdato_merverdiavgiftsregisteret
+        description: >-
+          Date Brreg records for this event. Present on 410,226 of 1,175,334 rows (34.90%),
+          counted 2026-09-24.
+      - name: registreringsdato_mva_enhetsregisteret
+        description: >-
+          Date Brreg records for this event. Present on 410,230 of 1,175,334 rows (34.90%),
+          counted 2026-09-24.
+      - name: registreringsdato_frivillig_mva
+        description: >-
+          Date Brreg records for this event. Present on 49,032 of 1,175,334 rows (4.17%),
+          counted 2026-09-24.
+      - name: registreringsdato_frivillighetsregisteret
+        description: >-
+          Date Brreg records for this event. Present on 72,826 of 1,175,334 rows (6.20%),
+          counted 2026-09-24.
+      - name: registreringsdato_antall_ansatte_enhetsreg
+        description: >-
+          Date Brreg records for this event. Present on 177,771 of 1,175,334 rows (15.13%),
+          counted 2026-09-24.
+      - name: registreringsdato_antall_ansatte_nav
+        description: >-
+          Date Brreg records for this event. Present on 177,682 of 1,175,334 rows (15.12%),
+          counted 2026-09-24.
+      - name: fravalg_revisjon_dato
+        description: >-
+          Date Brreg records for this event. Present on 294,837 of 1,175,334 rows (25.09%),
+          counted 2026-09-24.
+      - name: fravalg_revisjon_beslutnings_dato
+        description: >-
+          Date Brreg records for this event. Present on 213,866 of 1,175,334 rows (18.20%),
+          counted 2026-09-24.
+      - name: konkursdato
+        description: >-
+          Date Brreg records for this event. Present on 3,249 of 1,175,334 rows (0.28%), counted
+          2026-09-24. 🔵 The sparsity IS the signal — this is an event that few organisations
+          reach, and it is exactly what a consumer filtering for them needs.
+      - name: under_avvikling_dato
+        description: >-
+          Date Brreg records for this event. Present on 7,396 of 1,175,334 rows (0.63%), counted
+          2026-09-24. 🔵 The sparsity IS the signal — this is an event that few organisations
+          reach, and it is exactly what a consumer filtering for them needs.
+      - name: tvangsopplost_pga_manglende_regnskap_dato
+        description: >-
+          Date Brreg records for this event. Present on 975 of 1,175,334 rows (0.08%), counted
+          2026-09-24. 🔵 The sparsity IS the signal — this is an event that few organisations
+          reach, and it is exactly what a consumer filtering for them needs.
+      - name: tvangsopplost_pga_manglende_revisor_dato
+        description: >-
+          Date Brreg records for this event. Present on 302 of 1,175,334 rows (0.03%), counted
+          2026-09-24. 🔵 The sparsity IS the signal — this is an event that few organisations
+          reach, and it is exactly what a consumer filtering for them needs.
+      - name: tvangsopplost_pga_mangelfullt_styre_dato
+        description: >-
+          Date Brreg records for this event. Present on 106 of 1,175,334 rows (0.01%), counted
+          2026-09-24. 🔵 The sparsity IS the signal — this is an event that few organisations
+          reach, and it is exactly what a consumer filtering for them needs.
+      - name: under_rekonstruksjonsforhandling_dato
+        description: >-
+          Date Brreg records for this event. Present on 15 of 1,175,334 rows (0.00%), counted
+          2026-09-24. 🔵 The sparsity IS the signal — this is an event that few organisations
+          reach, and it is exactly what a consumer filtering for them needs.
+      - name: tvangsavviklet_pga_manglende_sletting_dato
+        description: >-
+          Date Brreg records for this event. Present on 103 of 1,175,334 rows (0.01%), counted
+          2026-09-24. 🔵 The sparsity IS the signal — this is an event that few organisations
+          reach, and it is exactly what a consumer filtering for them needs.
+      - name: registreringsdato_partiregisteret
+        description: >-
+          Date Brreg records for this event. Present on 24 of 1,175,334 rows (0.00%), counted
+          2026-09-24. 🔵 The sparsity IS the signal — this is an event that few organisations
+          reach, and it is exactly what a consumer filtering for them needs.
+      - name: under_utenlandsk_insolvensbehandling_dato
+        description: >-
+          Date Brreg records for this event. Present on 2 of 1,175,334 rows (0.00%), counted
+          2026-09-24. 🔵 The sparsity IS the signal — this is an event that few organisations
+          reach, and it is exactly what a consumer filtering for them needs.
+      - name: naeringskode1_beskrivelse
+        description: >-
+          Industry classification (NACE) as registered with Brreg. Present on 1,139,692 of
+          1,175,334 rows (96.97%), counted 2026-09-24.
+      - name: naeringskode2_kode
+        description: >-
+          Industry classification (NACE) as registered with Brreg. Present on 18,343 of
+          1,175,334 rows (1.56%), counted 2026-09-24.
+      - name: naeringskode2_beskrivelse
+        description: >-
+          Industry classification (NACE) as registered with Brreg. Present on 18,343 of
+          1,175,334 rows (1.56%), counted 2026-09-24.
+      - name: naeringskode3_kode
+        description: >-
+          Industry classification (NACE) as registered with Brreg. Present on 1,577 of 1,175,334
+          rows (0.13%), counted 2026-09-24. 🔵 The sparsity IS the signal — this is an event that
+          few organisations reach, and it is exactly what a consumer filtering for them needs.
+      - name: naeringskode3_beskrivelse
+        description: >-
+          Industry classification (NACE) as registered with Brreg. Present on 1,577 of 1,175,334
+          rows (0.13%), counted 2026-09-24. 🔵 The sparsity IS the signal — this is an event that
+          few organisations reach, and it is exactly what a consumer filtering for them needs.
+      - name: institusjonell_sektorkode_kode
+        description: >-
+          Institutional sector classification from SSB’s code list. Present on 1,078,258 of
+          1,175,334 rows (91.74%), counted 2026-09-24.
+      - name: institusjonell_sektorkode_beskrivelse
+        description: >-
+          Institutional sector classification from SSB’s code list. Present on 1,078,258 of
+          1,175,334 rows (91.74%), counted 2026-09-24.
+      - name: hjelpeenhetskode_kode
+        description: >-
+          Auxiliary-unit classification code. Present on 33,455 of 1,175,334 rows (2.85%),
+          counted 2026-09-24.
+      - name: hjelpeenhetskode_beskrivelse
+        description: >-
+          Auxiliary-unit classification code. Present on 33,455 of 1,175,334 rows (2.85%),
+          counted 2026-09-24.
+      - name: kapital_belop
+        description: >-
+          Share-capital detail as registered with Brreg. Present on 439,027 of 1,175,334 rows
+          (37.35%), counted 2026-09-24.
+      - name: kapital_valuta
+        description: >-
+          Share-capital detail as registered with Brreg. Present on 439,027 of 1,175,334 rows
+          (37.35%), counted 2026-09-24.
+      - name: kapital_antall_aksjer
+        description: >-
+          Share-capital detail as registered with Brreg. Present on 439,027 of 1,175,334 rows
+          (37.35%), counted 2026-09-24.
+      - name: kapital_innfort_dato
+        description: >-
+          Date Brreg records for this event. Present on 439,027 of 1,175,334 rows (37.35%),
+          counted 2026-09-24.
+      - name: kapital_type
+        description: >-
+          Share-capital detail as registered with Brreg. Present on 439,027 of 1,175,334 rows
+          (37.35%), counted 2026-09-24.
+      - name: kapital_fullt_innbetalt
+        description: >-
+          Share-capital detail as registered with Brreg. Present on 439,027 of 1,175,334 rows
+          (37.35%), counted 2026-09-24.
+      - name: kapital_innbetalt
+        description: >-
+          Share-capital detail as registered with Brreg. Present on 439,027 of 1,175,334 rows
+          (37.35%), counted 2026-09-24.
+      - name: foretaksform_i_hjemlandet_kode
+        description: >-
+          Foreign-registration detail, present only for organisations registered abroad. Present
+          on 24,452 of 1,175,334 rows (2.08%), counted 2026-09-24.
+      - name: foretaksform_i_hjemlandet_beskrivelse
+        description: >-
+          Foreign-registration detail, present only for organisations registered abroad. Present
+          on 24,452 of 1,175,334 rows (2.08%), counted 2026-09-24.
+      - name: foretaksform_i_hjemlandet_beskrivelse_bokmaal
+        description: >-
+          Foreign-registration detail, present only for organisations registered abroad. Present
+          on 24,452 of 1,175,334 rows (2.08%), counted 2026-09-24.
+      - name: utenlandsk_register_adresse_adresse
+        description: >-
+          Foreign-registration detail, present only for organisations registered abroad. Present
+          on 22,464 of 1,175,334 rows (1.91%), counted 2026-09-24.
+      - name: utenlandsk_register_adresse_poststed
+        description: >-
+          Foreign-registration detail, present only for organisations registered abroad. Present
+          on 22,464 of 1,175,334 rows (1.91%), counted 2026-09-24.
+      - name: utenlandsk_register_adresse_land
+        description: >-
+          Foreign-registration detail, present only for organisations registered abroad. Present
+          on 22,464 of 1,175,334 rows (1.91%), counted 2026-09-24.
+      - name: utenlandsk_register_navn
+        description: >-
+          Foreign-registration detail, present only for organisations registered abroad. Present
+          on 22,464 of 1,175,334 rows (1.91%), counted 2026-09-24.
+      - name: registreringsnummer_i_hjemlandet
+        description: >-
+          Foreign-registration detail, present only for organisations registered abroad. Present
+          on 22,464 of 1,175,334 rows (1.91%), counted 2026-09-24.
+      - name: underlagt_lovgivning_land
+        description: >-
+          Foreign-registration detail, present only for organisations registered abroad. Present
+          on 24,452 of 1,175,334 rows (2.08%), counted 2026-09-24.
+      - name: underlagt_lovgivning_landkode
+        description: >-
+          Foreign-registration detail, present only for organisations registered abroad. Present
+          on 24,452 of 1,175,334 rows (2.08%), counted 2026-09-24.
+      - name: overordnet_enhet
+        description: >-
+          Organisation number of the parent unit, when the organisation is part of a group.
+          Present on 1,757 of 1,175,334 rows (0.15%), counted 2026-09-24. 🔵 The sparsity IS the
+          signal — this is an event that few organisations reach, and it is exactly what a
+          consumer filtering for them needs.
+      - name: maalform
+        description: >-
+          Official language form the organisation registered (Bokmål / Nynorsk). Present on
+          1,175,334 of 1,175,334 rows (100.00%), counted 2026-09-24.
+      - name: siste_innsendte_aarsregnskap
+        description: >-
+          Year of the most recent annual accounts Brreg has received. ⚠️ Upstream sends this as
+          a string; it is cast only when it matches four digits, so one malformed value cannot
+          fail a build across 1.17M rows. Present on 448,912 of 1,175,334 rows (38.19%), counted
+          2026-09-24.
+      - name: aktivitet
+        description: >-
+          Free-text description of what the organisation does, as an array of lines. Present on
+          1,175,334 of 1,175,334 rows (100.00%), counted 2026-09-24.
+      - name: vedtektsfestet_formaal
+        description: >-
+          The purpose set out in the organisation’s articles, as an array of lines. Present on
+          490,235 of 1,175,334 rows (41.71%), counted 2026-09-24.
+      - name: frivillig_mva_registrert_beskrivelser
+        description: >-
+          Descriptions of the activities covered by voluntary VAT registration. Present on
+          49,032 of 1,175,334 rows (4.17%), counted 2026-09-24.
+      - name: historiske_navn
+        description: >-
+          Previous names, as jsonb objects carrying `navn`, `fraDato` and `tilDato`. 🔴 jsonb
+          rather than text[] because the elements are OBJECTS — verified against non-empty rows,
+          since the array is empty on most. Present on 1,175,334 of 1,175,334 rows (100.00%),
+          counted 2026-09-24.
+      - name: paategninger
+        description: >-
+          Official remarks Brreg has attached to the organisation, as jsonb objects carrying
+          `tekst`. 🔴 jsonb rather than text[] for the same reason as `historiske_navn`, and
+          getting this wrong would have flattened enforcement notices into unparseable strings.
+          Present on 1,175,334 of 1,175,334 rows (100.00%), counted 2026-09-24.
+      - name: forretningsadresse_adresse
+        description: >-
+          Business address component, as registered with Brreg. ⚠️ An ARRAY of street lines
+          upstream, not a single string. Present on 1,156,677 of 1,175,334 rows (98.41%),
+          counted 2026-09-24.
+      - name: forretningsadresse_postnummer
+        description: >-
+          Business address component, as registered with Brreg. Present on 1,156,677 of
+          1,175,334 rows (98.41%), counted 2026-09-24.
+      - name: forretningsadresse_poststed
+        description: >-
+          Business address component, as registered with Brreg. Present on 1,156,677 of
+          1,175,334 rows (98.41%), counted 2026-09-24.
+      - name: forretningsadresse_kommune
+        description: >-
+          Business address component, as registered with Brreg. Present on 1,156,677 of
+          1,175,334 rows (98.41%), counted 2026-09-24.
+      - name: forretningsadresse_land
+        description: >-
+          Business address component, as registered with Brreg. Present on 1,156,677 of
+          1,175,334 rows (98.41%), counted 2026-09-24.
+      - name: forretningsadresse_landkode
+        description: >-
+          Business address component, as registered with Brreg. Present on 1,156,677 of
+          1,175,334 rows (98.41%), counted 2026-09-24.
+      - name: postadresse_adresse
+        description: >-
+          Postal address component, as registered with Brreg. ⚠️ An ARRAY of street lines
+          upstream, not a single string. Present on 203,770 of 1,175,334 rows (17.34%), counted
+          2026-09-24.
+      - name: postadresse_postnummer
+        description: >-
+          Postal address component, as registered with Brreg. Present on 203,770 of 1,175,334
+          rows (17.34%), counted 2026-09-24.
+      - name: postadresse_poststed
+        description: >-
+          Postal address component, as registered with Brreg. Present on 203,770 of 1,175,334
+          rows (17.34%), counted 2026-09-24.
+      - name: postadresse_kommune
+        description: >-
+          Postal address component, as registered with Brreg. Present on 203,770 of 1,175,334
+          rows (17.34%), counted 2026-09-24.
+      - name: postadresse_land
+        description: >-
+          Postal address component, as registered with Brreg. Present on 203,770 of 1,175,334
+          rows (17.34%), counted 2026-09-24.
+      - name: postadresse_landkode
+        description: >-
+          Postal address component, as registered with Brreg. Present on 203,770 of 1,175,334
+          rows (17.34%), counted 2026-09-24.
+      - name: postadresse_kommune_nr
+        description: >-
+          Postal address component, as registered with Brreg. Present on 203,770 of 1,175,334
+          rows (17.34%), counted 2026-09-24.
       - name: doc
         description: >-
           The complete upstream record as Brreg published it, with nothing dropped or renamed —
