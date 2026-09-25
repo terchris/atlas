@@ -173,6 +173,17 @@ for _lw_f in $(git diff --name-only "$RANGE" -- 'atlas-data/dbt/seeds/**/*.csv' 
     echo "     Run ONCE, before the job:"
     echo "       dbt seed --select $_lw_name --full-refresh"
     echo "     Ordinary builds work again afterwards; it is not a standing flag."
+    echo
+    echo "     ⚠️ IT WILL NOT RUN AS WRITTEN IF YOU exec INTO THE POD."
+    echo "        dbt reads PGHOST/PGPORT/PGUSER/PGPASSWORD/PGDATABASE, and the"
+    echo "        pod carries only DATABASE_URL — the conversion happens inside"
+    echo "        the run path, which exec bypasses. You get:"
+    echo "          Env var required but not provided: 'PGHOST'"
+    echo "        Derive the five from DATABASE_URL inside the pod, without"
+    echo "        printing the password."
+    echo "     🔴 AND RUN IT AS \`atlas\`, NOT AS A SUPERUSER — a full refresh"
+    echo "        drops and recreates the table, and the owner it comes back"
+    echo "        with is the one that ran the command."
   fi
 done
 unset _lw_base _lw_head _lw_f _lw_old _lw_new _lw_name _lw_seeds
