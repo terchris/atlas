@@ -153,6 +153,24 @@ today. Worse, they return PGRST205 — "Could not find the table
 name, so a client looking for the spec is told the API has no such TABLE rather
 than that it guessed the wrong URL. Ask for the base URL instead.
 
+🔴 THE RAW TABLES ARE NEVER PUBLIC, BY DESIGN — NOT MISSING, NOT PENDING.
+`raw` is verbatim upstream payload. Publishing it would make every upstream
+schema change a breaking API change, and the modelled layer above exists
+precisely so consumers do not depend on that shape.
+
+⚠️ THIS IS WRITTEN DOWN BECAUSE THE ALTERNATIVE IS 52 SILENT 404s. Atlas holds
+52 raw tables. A consumer who guesses one of their names gets the same PGRST205
+described above — "Could not find the table" — which reads as *this endpoint is
+broken or not built yet*, when it is a decision that will not be revisited. An
+absence cannot say why it is absent, so the reason is stated here rather than
+left to be inferred one failed request at a time.
+
+🔵 WHAT TO ASK FOR INSTEAD. Everything Atlas publishes is in the list below and
+in `meta_endpoints`. If you need a column that exists upstream and is not in a
+relation here, that is a modelling request, not a missing endpoint — and it is
+worth making, because a source that reaches no published relation is a defect
+in Atlas's terms, not a deliberate omission.
+
 ⚠️ `info.version` IN THIS DOCUMENT IS POSTGREST'S VERSION, NOT ATLAS'S. It
 reads 14.10 because PostgREST generates this spec and reports itself; Atlas
 cannot set it and there is no Atlas version in here at all. A client that reads
