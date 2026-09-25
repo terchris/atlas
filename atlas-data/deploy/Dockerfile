@@ -46,6 +46,21 @@ RUN cd ingest && npm ci --no-audit --no-fund
 # Copy each top-level subdir explicitly to avoid pulling in dbt_packages,
 # node_modules (already installed above), target/, output/, etc.
 # .dockerignore at the build-context root reinforces this.
+# 🔴 uv.lock IS NOT COPIED AND IS NOT USED. `uv pip install` below resolves
+# against PyPI at BUILD time, so two builds of identical source can install
+# different dependency trees. On 2026-09-25 that shipped SQLAlchemy 2.1.0
+# (released 2026-09-24T20:36) into an image whose changed files were twelve
+# SQL and documentation files, and every run pod died with
+# `ModuleNotFoundError: No module named 'psycopg'` — see the pin in
+# dagster/pyproject.toml.
+#
+# ⚠️ THE ROLLBACK WORKED BECAUSE THE OLD IMAGE STILL EXISTS, not because the
+# old source is reproducible. Rebuilding the previous tag today would produce
+# the same broken image. Every version floor in pyproject.toml is doing the
+# whole job of pinning, alone.
+#
+# 🔵 The structural fix is `uv sync --frozen` against the committed lock. It is
+# a larger change than a pin and is filed rather than done here.
 COPY dagster/pyproject.toml ./dagster/pyproject.toml
 COPY dagster/atlas_data ./dagster/atlas_data
 COPY ingest/src ./ingest/src
