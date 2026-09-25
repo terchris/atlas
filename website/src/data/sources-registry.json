@@ -12459,6 +12459,14 @@
           "sample_query": "https://api-atlas.urbalurba.com/coverage_gap_barnefattigdom?limit=5"
         },
         {
+          "mart_name": "mart_dim_fylke",
+          "api_v1_name": "dim_fylke",
+          "title": "Fylke dimension",
+          "description_short": "The county dimension — the sibling of dim_kommune that was not published, so a consumer joining at fylke level was rebuilding this mapping, each slightly differently.",
+          "description_full": "The county dimension — the sibling of dim_kommune that was not published, so a consumer joining at fylke level was rebuilding this mapping, each slightly differently. ⚠️ 35 distinct codes resolve here; 16 appear on at least one ACTIVE kommune (15 real fylker + residual '99 Uoppgitt'). Filter ?is_active=eq.true for today's set rather than reading a row count. Sourced from SSB Klass classification 104 (NLOD).",
+          "sample_query": "https://api-atlas.urbalurba.com/dim_fylke?limit=5"
+        },
+        {
           "mart_name": "mart_dim_kommune",
           "api_v1_name": "dim_kommune",
           "title": "Kommune dimension",
@@ -12538,6 +12546,10 @@
         },
         {
           "name": "mart_coverage_gap_barnefattigdom",
+          "kind": "mart"
+        },
+        {
+          "name": "mart_dim_fylke",
           "kind": "mart"
         },
         {
@@ -13215,9 +13227,21 @@
         },
         {
           "parent_kind": "model",
+          "model_name": "mart_dim_fylke",
+          "title": "Fylke dimension",
+          "description_short": "The county dimension — the sibling of dim_kommune that was not published, so a consumer joining at fylke level was rebuilding this mapping, each slightly differently."
+        },
+        {
+          "parent_kind": "model",
           "model_name": "mart_dim_kommune",
           "title": "Kommune dimension",
           "description_short": "The canonical municipality registry — SSB Klass 131, with fylke name joined."
+        },
+        {
+          "parent_kind": "model",
+          "model_name": "mart_dim_postnummer",
+          "title": "Postnummer to kommune",
+          "description_short": "Norwegian postal codes resolved to a primary kommune, 5 122 rows — the lookup that turns an address into a kommune_nr without the municipal-merger ambiguity that names carry."
         },
         {
           "parent_kind": "model",
@@ -13863,6 +13887,63 @@
     },
     {
       "kind": "view",
+      "view_id": "dim_fylke",
+      "mart_name": "mart_dim_fylke",
+      "api_v1_name": "dim_fylke",
+      "title": "Fylke dimension",
+      "description_short": "The county dimension — the sibling of dim_kommune that was not published, so a consumer joining at fylke level was rebuilding this mapping, each slightly differently.",
+      "description_full": "The county dimension — the sibling of dim_kommune that was not published, so a consumer joining at fylke level was rebuilding this mapping, each slightly differently. ⚠️ 35 distinct codes resolve here; 16 appear on at least one ACTIVE kommune (15 real fylker + residual '99 Uoppgitt'). Filter ?is_active=eq.true for today's set rather than reading a row count. Sourced from SSB Klass classification 104 (NLOD).",
+      "columns": [
+        {
+          "name": "fylke_nr",
+          "description": "2-digit zero-padded fylke code, e.g. '03' = Oslo. Text, not integer — the padding is significant."
+        },
+        {
+          "name": "fylke_name",
+          "description": "The county name as SSB Klass publishes it."
+        },
+        {
+          "name": "fylke_name_alt",
+          "description": "The Sámi variant where there is one, split out of upstream's combined \"Name - Nama\" string exactly as dim_kommune does it. Null where upstream publishes no variant."
+        },
+        {
+          "name": "is_active",
+          "description": "Whether this code is CURRENT. 🔴 Not \"is this a county\" — '99 Uoppgitt' is an active code and is not a place. See is_sentinel."
+        },
+        {
+          "name": "valid_from",
+          "description": "First date this code was in use, as SSB Klass records it."
+        },
+        {
+          "name": "valid_to",
+          "description": "Last date this code was in use; null while the code is current."
+        },
+        {
+          "name": "notes",
+          "description": "Upstream's own remarks about the code, passed through unedited."
+        },
+        {
+          "name": "updated_at",
+          "description": "When Atlas last loaded this row from SSB Klass."
+        },
+        {
+          "name": "is_sentinel",
+          "description": "🔴 True for the '99 Uoppgitt' residual, which is a bucket and not a county. Derived by Atlas, not an upstream column — published because dim_kommune already carries the same flag for its own 9999 bucket, and a consumer who learned the filter on one relation would otherwise silently not have it on the other."
+        }
+      ],
+      "built_from": [
+        {
+          "parent_kind": "model",
+          "model_name": "dim_fylke",
+          "title": null,
+          "description_short": "Canonical fylke dimension, sourced from SSB Klass classification 104."
+        }
+      ],
+      "sample_query": "https://api-atlas.urbalurba.com/dim_fylke?limit=5",
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_dim_fylke"
+    },
+    {
+      "kind": "view",
       "view_id": "dim_kommune",
       "mart_name": "mart_dim_kommune",
       "api_v1_name": "dim_kommune",
@@ -13916,7 +13997,7 @@
           "parent_kind": "model",
           "model_name": "dim_fylke",
           "title": null,
-          "description_short": "Canonical fylke dimension."
+          "description_short": "Canonical fylke dimension, sourced from SSB Klass classification 104."
         },
         {
           "parent_kind": "model",
@@ -13927,6 +14008,36 @@
       ],
       "sample_query": "https://api-atlas.urbalurba.com/dim_kommune?limit=5",
       "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_dim_kommune"
+    },
+    {
+      "kind": "view",
+      "view_id": "dim_postnummer",
+      "mart_name": "mart_dim_postnummer",
+      "api_v1_name": "dim_postnummer",
+      "title": "Postnummer to kommune",
+      "description_short": "Norwegian postal codes resolved to a primary kommune, 5 122 rows — the lookup that turns an address into a kommune_nr without the municipal-merger ambiguity that names carry.",
+      "description_full": "Norwegian postal codes resolved to a primary kommune, 5 122 rows — the lookup that turns an address into a kommune_nr without the municipal-merger ambiguity that names carry. ⚠️ Upstream is Bring's free weekly Postnummerregister, fetched by a seed-refresh script rather than an ingested source — so this relation has NO row in meta_sources and NO recorded licence, unlike Atlas's 42 ingested sources. That is a gap in Atlas's records, not a claim the data is unlicensed; a consumer redistributing it should check Bring's own terms rather than infer NLOD from the rest of the catalogue.",
+      "columns": [
+        {
+          "name": "postnummer",
+          "description": "4-digit postal code, leading zeros preserved (e.g. '0150' Oslo). Text — casting to int loses the padding."
+        },
+        {
+          "name": "post_office",
+          "description": "Post-office name, ALLCAPS as Bring publishes it. Not normalised."
+        },
+        {
+          "name": "kommune_nr",
+          "description": "🔴 The PRIMARY kommune for the postnummer, and a simplification. A few postnummer span more than one kommune; this column carries one of them, so a join through it is a good default and not a ground truth. Atlas cannot say which rows are affected — Bring's register as fetched does not mark them."
+        },
+        {
+          "name": "sort_order",
+          "description": "Bring's own ordering of the register, preserved so the published order matches upstream's."
+        }
+      ],
+      "built_from": [],
+      "sample_query": "https://api-atlas.urbalurba.com/dim_postnummer?limit=5",
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_dim_postnummer"
     },
     {
       "kind": "view",
@@ -14263,7 +14374,7 @@
           "parent_kind": "model",
           "model_name": "dim_fylke",
           "title": null,
-          "description_short": "Canonical fylke dimension."
+          "description_short": "Canonical fylke dimension, sourced from SSB Klass classification 104."
         },
         {
           "parent_kind": "model",

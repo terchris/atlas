@@ -166,6 +166,7 @@ mart_coverage_gap_barnefattigdom,ssb-13995
 mart_coverage_gap_barnefattigdom,ssb-crime-tables
 mart_coverage_gap_barnefattigdom,ssb-klass-fylker
 mart_coverage_gap_barnefattigdom,ssb-klass-kommuner
+mart_dim_fylke,ssb-klass-fylker
 mart_dim_kommune,ssb-klass-fylker
 mart_dim_kommune,ssb-klass-kommuner
 mart_distrikt_summary,redcross-branches

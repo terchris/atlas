@@ -214,6 +214,18 @@ REFERENCE:
   dim_kommune                  the municipality dimension. Keeps SSB's 9999
                                'Uoppgitt' because Klass 131 publishes it; the
                                analytical relations exclude it.
+  dim_fylke                    the county dimension, dim_kommune's sibling.
+                               ⚠️ 16 codes are current; the rest are history.
+                               Filter ?is_active=eq.true, and note is_sentinel
+                               marks '99 Uoppgitt', which is not a county.
+  dim_postnummer               postal code -> primary kommune, 5 122 rows.
+                               ⚠️ A few postnummer span more than one kommune
+                               and this carries ONE of them, so a join through
+                               it is a good default, not a ground truth.
+                               ⚠️ From Bring's register via a seed refresh, so
+                               it has NO meta_sources row and NO recorded
+                               licence — check Bring's terms before
+                               redistributing rather than assuming NLOD.
   brreg_enhet                  the Bronnoysund register mirror.
 
 CODE LISTS — decode the coded columns the relations above already expose.

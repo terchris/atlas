@@ -53,8 +53,16 @@ models:
               values: [true, false]
   - name: dim_fylke
     description: |
-      Canonical fylke dimension. 16 rows: 15 real fylker + residual '99 Uoppgitt'.
-      Sourced from SSB Klass classification 104.
+      Canonical fylke dimension, sourced from SSB Klass classification 104.
+      History-aware: one row per distinct fylke_nr ever in use, historical codes
+      carrying is_active = false.
+
+      ⚠️ 16 IS THE ACTIVE SET, NOT THE ROW COUNT — this line said "16 rows" until
+      2026-09-25 and it was read that way. Measured through the published
+      dim_kommune, whose fylke_name LEFT JOINs this table: 35 distinct codes
+      resolve to a name here, of which 16 appear on at least one active kommune
+      (15 real fylker + residual '99 Uoppgitt'). The rest are history — the
+      pre-2020 01–20 numbering, Viken 30, Vestfold og Telemark 38, and 13 Bergen.
     columns:
       - name: fylke_nr
         description: 2-digit zero-padded fylke code (e.g. '03' = Oslo).

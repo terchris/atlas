@@ -62,7 +62,9 @@
 -- depends_on: {{ ref('mart_brreg_enhet') }}
 -- depends_on: {{ ref('mart_bufdir_indicator_alias') }}
 -- depends_on: {{ ref('mart_coverage_gap_barnefattigdom') }}
+-- depends_on: {{ ref('mart_dim_fylke') }}
 -- depends_on: {{ ref('mart_dim_kommune') }}
+-- depends_on: {{ ref('mart_dim_postnummer') }}
 -- depends_on: {{ ref('mart_distrikt_summary') }}
 -- depends_on: {{ ref('mart_indicator_latest_values') }}
 -- depends_on: {{ ref('mart_indicator_missing_kommuner') }}
@@ -105,7 +107,9 @@
   {'relation': 'brreg_enhet', 'mart': 'mart_brreg_enhet'},
   {'relation': 'bufdir_indicator_alias', 'mart': 'mart_bufdir_indicator_alias'},
   {'relation': 'coverage_gap_barnefattigdom', 'mart': 'mart_coverage_gap_barnefattigdom'},
+  {'relation': 'dim_fylke', 'mart': 'mart_dim_fylke'},
   {'relation': 'dim_kommune', 'mart': 'mart_dim_kommune'},
+  {'relation': 'dim_postnummer', 'mart': 'mart_dim_postnummer'},
   {'relation': 'distrikt_summary', 'mart': 'mart_distrikt_summary'},
   {'relation': 'indicator_latest_values', 'mart': 'mart_indicator_latest_values'},
   {'relation': 'indicator_missing_kommuner', 'mart': 'mart_indicator_missing_kommuner'},

@@ -93,7 +93,9 @@ mart_atlas_inventory,mart_activity_catalog,model
 mart_atlas_inventory,mart_brreg_enhet,model
 mart_atlas_inventory,mart_bufdir_indicator_alias,model
 mart_atlas_inventory,mart_coverage_gap_barnefattigdom,model
+mart_atlas_inventory,mart_dim_fylke,model
 mart_atlas_inventory,mart_dim_kommune,model
+mart_atlas_inventory,mart_dim_postnummer,model
 mart_atlas_inventory,mart_distrikt_summary,model
 mart_atlas_inventory,mart_indicator_latest_values,model
 mart_atlas_inventory,mart_indicator_missing_kommuner,model
@@ -121,6 +123,7 @@ mart_atlas_inventory,mart_source_freshness,model
 mart_atlas_inventory,mart_unattributed_totals,model
 mart_brreg_enhet,dim_brreg_enhet,model
 mart_coverage_gap_barnefattigdom,fact_kommune_indicators,model
+mart_dim_fylke,dim_fylke,model
 mart_dim_kommune,dim_fylke,model
 mart_dim_kommune,dim_kommune,model
 mart_distrikt_summary,dim_chapter,model

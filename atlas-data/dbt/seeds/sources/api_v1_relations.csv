@@ -4,7 +4,9 @@ atlas_inventory,mart_atlas_inventory,true
 brreg_enhet,mart_brreg_enhet,false
 bufdir_indicator_alias,mart_bufdir_indicator_alias,false
 coverage_gap_barnefattigdom,mart_coverage_gap_barnefattigdom,true
+dim_fylke,mart_dim_fylke,false
 dim_kommune,mart_dim_kommune,false
+dim_postnummer,mart_dim_postnummer,false
 distrikt_summary,mart_distrikt_summary,false
 indicator_latest_values,mart_indicator_latest_values,true
 indicator_missing_kommuner,mart_indicator_missing_kommuner,true

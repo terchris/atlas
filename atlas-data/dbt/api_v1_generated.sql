@@ -93,6 +93,18 @@ REFERENCE:
   dim_kommune                  the municipality dimension. Keeps SSB''s 9999
                                ''Uoppgitt'' because Klass 131 publishes it; the
                                analytical relations exclude it.
+  dim_fylke                    the county dimension, dim_kommune''s sibling.
+                               ⚠️ 16 codes are current; the rest are history.
+                               Filter ?is_active=eq.true, and note is_sentinel
+                               marks ''99 Uoppgitt'', which is not a county.
+  dim_postnummer               postal code -> primary kommune, 5 122 rows.
+                               ⚠️ A few postnummer span more than one kommune
+                               and this carries ONE of them, so a join through
+                               it is a good default, not a ground truth.
+                               ⚠️ From Bring''s register via a seed refresh, so
+                               it has NO meta_sources row and NO recorded
+                               licence — check Bring''s terms before
+                               redistributing rather than assuming NLOD.
   brreg_enhet                  the Bronnoysund register mirror.
 
 CODE LISTS — decode the coded columns the relations above already expose.
@@ -583,6 +595,19 @@ it as SSB''s own figure.
 
 NULL when either input was suppressed upstream.';
 
+-- dim_fylke  ←  marts.mart_dim_fylke
+CREATE OR REPLACE VIEW api_v1.dim_fylke AS SELECT * FROM marts.mart_dim_fylke;
+COMMENT ON VIEW api_v1.dim_fylke IS 'The county dimension — the sibling of dim_kommune that was not published, so a consumer joining at fylke level was rebuilding this mapping, each slightly differently. ⚠️ 35 distinct codes resolve here; 16 appear on at least one ACTIVE kommune (15 real fylker + residual ''99 Uoppgitt''). Filter ?is_active=eq.true for today''s set rather than reading a row count. Sourced from SSB Klass classification 104 (NLOD).';
+COMMENT ON COLUMN api_v1.dim_fylke.fylke_nr IS '2-digit zero-padded fylke code, e.g. ''03'' = Oslo. Text, not integer — the padding is significant.';
+COMMENT ON COLUMN api_v1.dim_fylke.fylke_name IS 'The county name as SSB Klass publishes it.';
+COMMENT ON COLUMN api_v1.dim_fylke.fylke_name_alt IS 'The Sámi variant where there is one, split out of upstream''s combined "Name - Nama" string exactly as dim_kommune does it. Null where upstream publishes no variant.';
+COMMENT ON COLUMN api_v1.dim_fylke.is_active IS 'Whether this code is CURRENT. 🔴 Not "is this a county" — ''99 Uoppgitt'' is an active code and is not a place. See is_sentinel.';
+COMMENT ON COLUMN api_v1.dim_fylke.valid_from IS 'First date this code was in use, as SSB Klass records it.';
+COMMENT ON COLUMN api_v1.dim_fylke.valid_to IS 'Last date this code was in use; null while the code is current.';
+COMMENT ON COLUMN api_v1.dim_fylke.notes IS 'Upstream''s own remarks about the code, passed through unedited.';
+COMMENT ON COLUMN api_v1.dim_fylke.updated_at IS 'When Atlas last loaded this row from SSB Klass.';
+COMMENT ON COLUMN api_v1.dim_fylke.is_sentinel IS '🔴 True for the ''99 Uoppgitt'' residual, which is a bucket and not a county. Derived by Atlas, not an upstream column — published because dim_kommune already carries the same flag for its own 9999 bucket, and a consumer who learned the filter on one relation would otherwise silently not have it on the other.';
+
 -- dim_kommune  ←  marts.mart_dim_kommune
 CREATE OR REPLACE VIEW api_v1.dim_kommune AS SELECT * FROM marts.mart_dim_kommune;
 COMMENT ON VIEW api_v1.dim_kommune IS 'The canonical municipality registry — SSB Klass 131, with fylke
@@ -654,6 +679,14 @@ urb-agents #1301.
 
 The unattributable value it represented is published in
 `unattributed_totals`, not discarded.';
+
+-- dim_postnummer  ←  marts.mart_dim_postnummer
+CREATE OR REPLACE VIEW api_v1.dim_postnummer AS SELECT * FROM marts.mart_dim_postnummer;
+COMMENT ON VIEW api_v1.dim_postnummer IS 'Norwegian postal codes resolved to a primary kommune, 5 122 rows — the lookup that turns an address into a kommune_nr without the municipal-merger ambiguity that names carry. ⚠️ Upstream is Bring''s free weekly Postnummerregister, fetched by a seed-refresh script rather than an ingested source — so this relation has NO row in meta_sources and NO recorded licence, unlike Atlas''s 42 ingested sources. That is a gap in Atlas''s records, not a claim the data is unlicensed; a consumer redistributing it should check Bring''s own terms rather than infer NLOD from the rest of the catalogue.';
+COMMENT ON COLUMN api_v1.dim_postnummer.postnummer IS '4-digit postal code, leading zeros preserved (e.g. ''0150'' Oslo). Text — casting to int loses the padding.';
+COMMENT ON COLUMN api_v1.dim_postnummer.post_office IS 'Post-office name, ALLCAPS as Bring publishes it. Not normalised.';
+COMMENT ON COLUMN api_v1.dim_postnummer.kommune_nr IS '🔴 The PRIMARY kommune for the postnummer, and a simplification. A few postnummer span more than one kommune; this column carries one of them, so a join through it is a good default and not a ground truth. Atlas cannot say which rows are affected — Bring''s register as fetched does not mark them.';
+COMMENT ON COLUMN api_v1.dim_postnummer.sort_order IS 'Bring''s own ordering of the register, preserved so the published order matches upstream''s.';
 
 -- distrikt_summary  ←  marts.mart_distrikt_summary
 CREATE OR REPLACE VIEW api_v1.distrikt_summary AS SELECT * FROM marts.mart_distrikt_summary;
