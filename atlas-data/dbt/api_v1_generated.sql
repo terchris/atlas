@@ -95,6 +95,33 @@ REFERENCE:
                                analytical relations exclude it.
   brreg_enhet                  the Bronnoysund register mirror.
 
+CODE LISTS — decode the coded columns the relations above already expose.
+Every one is small, stable, and safe to cache locally:
+  ref_brreg_icnpo              ICNPO categories, 14 groups + 32 subgroups.
+                               Decodes the code in kommune_ngo_summary.
+  ref_un_sdg                   the 17 UN Sustainable Development Goals.
+  ref_region_kind              what a region_code denotes, with the pattern
+                               Atlas classifies by and an is_kommune flag.
+  ref_ssb_nivaa                SSB NUS2000 education levels (table 09429).
+  ref_ssb_family_type          SSB family types.
+  ref_ssb_household_type       SSB household types. Codes are ZERO-PADDED
+                               TEXT; casting to int matches nothing.
+  ref_fhi_utdann               FHI education levels. In vgs_gjennomforing
+                               this is the PARENTS'' education.
+  ref_fhi_innvkat              FHI immigrant categories AS USED BY TABLE 360
+                               — one row, ''0''. ⚠️ It does NOT decode the
+                               immigrant_category column of the fhi-innvkat
+                               relation (table 932: ''2'', ''3'', ''23''). For
+                               those, read
+                               /meta_dimensions?source_id=eq.fhi-innvkat
+  ref_atlas_service_category   ⚠️ ATLAS''S OWN vocabulary, not an upstream
+                               standard — the only list here that is Atlas''s
+                               editorial judgement. Weigh it accordingly.
+
+⚠️ SORT A CODE LIST BY sort_order, NOT BY code. Several carry their
+publisher''s ordering, which is not the alphabetical one — ref_ssb_nivaa
+interleaves ''11'' between ''02a'' and ''03a''.
+
 HOW STALE CAN A 200 BE? UP TO ABOUT AN HOUR, AND THE HEADERS WILL NOT TELL YOU.
 A CDN sits in front of this API with an edge TTL of roughly 60 minutes —
 measured 2026-09-25 as a cache HIT still being served at age 3 249 s. The rows
@@ -1588,6 +1615,82 @@ dim_activity for this orgnr).';
 COMMENT ON COLUMN api_v1.ngo_overview.kommune_count IS 'Count of distinct kommuner with at least one active local
 chapter for this NGO. The "footprint" metric for coverage-gap
 questions.';
+
+-- ref_atlas_service_category  ←  marts.mart_ref_atlas_service_category
+CREATE OR REPLACE VIEW api_v1.ref_atlas_service_category AS SELECT * FROM marts.mart_ref_atlas_service_category;
+COMMENT ON VIEW api_v1.ref_atlas_service_category IS '⚠️ ATLAS''S OWN VOCABULARY, NOT AN UPSTREAM STANDARD — the only list here that is Atlas''s editorial judgement rather than another body''s published standard. It exists because no Norwegian authority publishes a cross-NGO service taxonomy. The other eight lists are citable to their publisher; this one is citable to Atlas. 22 rows.';
+COMMENT ON COLUMN api_v1.ref_atlas_service_category.code IS 'Atlas''s category code. Referenced by each NGO''s dim_activity row.';
+COMMENT ON COLUMN api_v1.ref_atlas_service_category.label_no IS 'The Norwegian label, as its publisher writes it. Atlas does not translate or normalise upstream label text.';
+COMMENT ON COLUMN api_v1.ref_atlas_service_category.label_en IS 'The English label where the publisher provides one.';
+COMMENT ON COLUMN api_v1.ref_atlas_service_category.description IS 'What the category covers, in Atlas''s words — the editorial definition a consumer needs in order to judge whether an activity was classified as they would.';
+COMMENT ON COLUMN api_v1.ref_atlas_service_category.sort_order IS 'The publisher''s own display order. ⚠️ Sort by this, not by `code` — several of these lists do not sort into their intended sequence alphabetically.';
+
+-- ref_brreg_icnpo  ←  marts.mart_ref_brreg_icnpo
+CREATE OR REPLACE VIEW api_v1.ref_brreg_icnpo AS SELECT * FROM marts.mart_ref_brreg_icnpo;
+COMMENT ON VIEW api_v1.ref_brreg_icnpo IS 'ICNPO categories from Brreg''s Frivillighetsregister: 14 main groups + 32 subgroups = 46 rows. 🔵 This is the decoder for the ICNPO code a consumer can already read out of kommune_ngo_summary and, until now, could not turn into a name.';
+COMMENT ON COLUMN api_v1.ref_brreg_icnpo.code IS 'The ICNPO code.';
+COMMENT ON COLUMN api_v1.ref_brreg_icnpo.parent_code IS 'Null on a main group; the group''s code on a subgroup. Lets a consumer walk the hierarchy without a second request.';
+COMMENT ON COLUMN api_v1.ref_brreg_icnpo.label_no IS 'The Norwegian label, as its publisher writes it. Atlas does not translate or normalise upstream label text.';
+COMMENT ON COLUMN api_v1.ref_brreg_icnpo.label_en IS 'The English label where the publisher provides one.';
+COMMENT ON COLUMN api_v1.ref_brreg_icnpo.sort_order IS 'The publisher''s own display order. ⚠️ Sort by this, not by `code` — several of these lists do not sort into their intended sequence alphabetically.';
+
+-- ref_fhi_innvkat  ←  marts.mart_ref_fhi_innvkat
+CREATE OR REPLACE VIEW api_v1.ref_fhi_innvkat AS SELECT * FROM marts.mart_ref_fhi_innvkat;
+COMMENT ON VIEW api_v1.ref_fhi_innvkat IS '🔴 ONE ROW — code ''0'', ''totalt'' — and that is correct. It decodes INNVKAT as it appears in FHI table 360 (fhi_vgs_gjennomforing), where the dimension is collapsed and always ''0''; a relationships test on indicators__fhi_vgs_gjennomforing enforces that. ⚠️ IT DOES NOT DECODE indicators__fhi_innvkat, which comes from FHI table 932 and holds ''2'', ''3'' and ''23''. Joining it to that column returns nothing. Those three codes are published at /meta_dimensions?source_id=eq.fhi-innvkat&code=eq.INNVKAT (verified 2026-09-25). Said here because the two names differ by nothing a consumer would notice.';
+COMMENT ON COLUMN api_v1.ref_fhi_innvkat.code IS 'FHI''s INNVKAT code as used by table 360 — ''0'' only.';
+COMMENT ON COLUMN api_v1.ref_fhi_innvkat.label_no IS 'The Norwegian label, as its publisher writes it. Atlas does not translate or normalise upstream label text.';
+COMMENT ON COLUMN api_v1.ref_fhi_innvkat.label_en IS 'The English label where the publisher provides one. ⚠️ Empty: FHI publishes this label in Norwegian only.';
+COMMENT ON COLUMN api_v1.ref_fhi_innvkat.sort_order IS 'The publisher''s own display order. ⚠️ Sort by this, not by `code` — several of these lists do not sort into their intended sequence alphabetically.';
+
+-- ref_fhi_utdann  ←  marts.mart_ref_fhi_utdann
+CREATE OR REPLACE VIEW api_v1.ref_fhi_utdann AS SELECT * FROM marts.mart_ref_fhi_utdann;
+COMMENT ON VIEW api_v1.ref_fhi_utdann IS 'FHI UTDANN (education-level) labels. ⚠️ In fhi_vgs_gjennomforing this dimension is the PARENTS'' education, not the pupil''s — that relation aliases it `parents_education`.';
+COMMENT ON COLUMN api_v1.ref_fhi_utdann.code IS 'FHI''s UTDANN code.';
+COMMENT ON COLUMN api_v1.ref_fhi_utdann.label_no IS 'The Norwegian label, as its publisher writes it. Atlas does not translate or normalise upstream label text.';
+COMMENT ON COLUMN api_v1.ref_fhi_utdann.label_en IS 'The English label where the publisher provides one. ⚠️ Empty for every row: FHI publishes these in Norwegian only, and Atlas does not translate upstream values.';
+COMMENT ON COLUMN api_v1.ref_fhi_utdann.sort_order IS 'The publisher''s own display order. ⚠️ Sort by this, not by `code` — several of these lists do not sort into their intended sequence alphabetically.';
+
+-- ref_region_kind  ←  marts.mart_ref_region_kind
+CREATE OR REPLACE VIEW api_v1.ref_region_kind AS SELECT * FROM marts.mart_ref_region_kind;
+COMMENT ON VIEW api_v1.ref_region_kind IS 'What kind of region a region_code denotes — the decoder for the `region_kind` column that several indicator relations already expose.';
+COMMENT ON COLUMN api_v1.ref_region_kind.region_kind IS 'The kind value as it appears in the indicator relations.';
+COMMENT ON COLUMN api_v1.ref_region_kind.code_pattern IS 'The regular expression Atlas classifies by, published so a consumer can read the rule rather than infer it from examples.';
+COMMENT ON COLUMN api_v1.ref_region_kind.is_kommune IS 'Whether this kind is a real municipality. 🔴 Not the same question as ''does the code look like a kommune_nr'' — the pseudo-codes are the reason this column exists.';
+COMMENT ON COLUMN api_v1.ref_region_kind.label_no IS 'The Norwegian label, as its publisher writes it. Atlas does not translate or normalise upstream label text.';
+COMMENT ON COLUMN api_v1.ref_region_kind.label_en IS 'The English label where the publisher provides one.';
+COMMENT ON COLUMN api_v1.ref_region_kind.sort_order IS 'The publisher''s own display order. ⚠️ Sort by this, not by `code` — several of these lists do not sort into their intended sequence alphabetically.';
+
+-- ref_ssb_family_type  ←  marts.mart_ref_ssb_family_type
+CREATE OR REPLACE VIEW api_v1.ref_ssb_family_type AS SELECT * FROM marts.mart_ref_ssb_family_type;
+COMMENT ON VIEW api_v1.ref_ssb_family_type IS 'SSB family-type codes. ⚠️ Family type and household type are different classifications with similar-looking codes — see ref_ssb_household_type, and do not join one to the other.';
+COMMENT ON COLUMN api_v1.ref_ssb_family_type.code IS 'SSB''s family-type code, as published.';
+COMMENT ON COLUMN api_v1.ref_ssb_family_type.label_no IS 'The Norwegian label, as its publisher writes it. Atlas does not translate or normalise upstream label text.';
+COMMENT ON COLUMN api_v1.ref_ssb_family_type.label_en IS 'The English label where the publisher provides one.';
+COMMENT ON COLUMN api_v1.ref_ssb_family_type.sort_order IS 'The publisher''s own display order. ⚠️ Sort by this, not by `code` — several of these lists do not sort into their intended sequence alphabetically.';
+
+-- ref_ssb_household_type  ←  marts.mart_ref_ssb_household_type
+CREATE OR REPLACE VIEW api_v1.ref_ssb_household_type AS SELECT * FROM marts.mart_ref_ssb_household_type;
+COMMENT ON VIEW api_v1.ref_ssb_household_type IS 'SSB household-type codes. ⚠️ Codes are ZERO-PADDED TEXT (''0000'', ''0001''), not integers: a consumer casting them to int and back loses the padding and matches nothing.';
+COMMENT ON COLUMN api_v1.ref_ssb_household_type.code IS 'SSB''s household-type code, zero-padded text exactly as published.';
+COMMENT ON COLUMN api_v1.ref_ssb_household_type.label_no IS 'The Norwegian label, as its publisher writes it. Atlas does not translate or normalise upstream label text.';
+COMMENT ON COLUMN api_v1.ref_ssb_household_type.label_en IS 'The English label where the publisher provides one.';
+COMMENT ON COLUMN api_v1.ref_ssb_household_type.sort_order IS 'The publisher''s own display order. ⚠️ Sort by this, not by `code` — several of these lists do not sort into their intended sequence alphabetically.';
+
+-- ref_ssb_nivaa  ←  marts.mart_ref_ssb_nivaa
+CREATE OR REPLACE VIEW api_v1.ref_ssb_nivaa AS SELECT * FROM marts.mart_ref_ssb_nivaa;
+COMMENT ON VIEW api_v1.ref_ssb_nivaa IS 'SSB NUS2000 education-level labels for table 09429. 7 codes. ⚠️ Sort by sort_order, not by code: upstream''s own ordering interleaves ''11'' (Fagskole) between ''02a'' and ''03a'', so the codes do not sort into the sequence they represent.';
+COMMENT ON COLUMN api_v1.ref_ssb_nivaa.code IS 'The NUS2000 level code, e.g. ''02a'', ''11'', ''03a''.';
+COMMENT ON COLUMN api_v1.ref_ssb_nivaa.label_no IS 'The Norwegian label, as its publisher writes it. Atlas does not translate or normalise upstream label text.';
+COMMENT ON COLUMN api_v1.ref_ssb_nivaa.label_en IS 'The English label where the publisher provides one.';
+COMMENT ON COLUMN api_v1.ref_ssb_nivaa.sort_order IS 'The publisher''s own display order. ⚠️ Sort by this, not by `code` — several of these lists do not sort into their intended sequence alphabetically.';
+
+-- ref_un_sdg  ←  marts.mart_ref_un_sdg
+CREATE OR REPLACE VIEW api_v1.ref_un_sdg AS SELECT * FROM marts.mart_ref_un_sdg;
+COMMENT ON VIEW api_v1.ref_un_sdg IS 'The 17 UN Sustainable Development Goals. Hand-curated and pinned — the goals do not change. The 169 sub-targets are not included; nothing in Atlas references them yet.';
+COMMENT ON COLUMN api_v1.ref_un_sdg.code IS 'SDG number as text, ''1'' to ''17''. Text rather than integer for consistency with every other ref_* list, whose codes are not all numeric.';
+COMMENT ON COLUMN api_v1.ref_un_sdg.label_no IS 'The Norwegian label, as its publisher writes it. Atlas does not translate or normalise upstream label text.';
+COMMENT ON COLUMN api_v1.ref_un_sdg.label_en IS 'The English label where the publisher provides one.';
+COMMENT ON COLUMN api_v1.ref_un_sdg.sort_order IS 'The publisher''s own display order. ⚠️ Sort by this, not by `code` — several of these lists do not sort into their intended sequence alphabetically.';
 
 -- source_freshness  ←  marts.mart_source_freshness
 CREATE OR REPLACE VIEW api_v1.source_freshness AS SELECT * FROM marts.mart_source_freshness;

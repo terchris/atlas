@@ -13305,6 +13305,60 @@
         },
         {
           "parent_kind": "model",
+          "model_name": "mart_ref_atlas_service_category",
+          "title": "Atlas service categories",
+          "description_short": "⚠️ ATLAS'S OWN VOCABULARY, NOT AN UPSTREAM STANDARD — the only list here that is Atlas's editorial judgement rather than another body's published standard."
+        },
+        {
+          "parent_kind": "model",
+          "model_name": "mart_ref_brreg_icnpo",
+          "title": "ICNPO categories",
+          "description_short": "ICNPO categories from Brreg's Frivillighetsregister: 14 main groups + 32 subgroups = 46 rows."
+        },
+        {
+          "parent_kind": "model",
+          "model_name": "mart_ref_fhi_innvkat",
+          "title": "FHI immigrant categories (table 360)",
+          "description_short": "🔴 ONE ROW — code '0', 'totalt' — and that is correct."
+        },
+        {
+          "parent_kind": "model",
+          "model_name": "mart_ref_fhi_utdann",
+          "title": "FHI education levels",
+          "description_short": "FHI UTDANN (education-level) labels."
+        },
+        {
+          "parent_kind": "model",
+          "model_name": "mart_ref_region_kind",
+          "title": "Region kinds",
+          "description_short": "What kind of region a region_code denotes — the decoder for the `region_kind` column that several indicator relations already expose."
+        },
+        {
+          "parent_kind": "model",
+          "model_name": "mart_ref_ssb_family_type",
+          "title": "SSB family types",
+          "description_short": "SSB family-type codes."
+        },
+        {
+          "parent_kind": "model",
+          "model_name": "mart_ref_ssb_household_type",
+          "title": "SSB household types",
+          "description_short": "SSB household-type codes."
+        },
+        {
+          "parent_kind": "model",
+          "model_name": "mart_ref_ssb_nivaa",
+          "title": "SSB education levels",
+          "description_short": "SSB NUS2000 education-level labels for table 09429."
+        },
+        {
+          "parent_kind": "model",
+          "model_name": "mart_ref_un_sdg",
+          "title": "UN Sustainable Development Goals",
+          "description_short": "The 17 UN Sustainable Development Goals."
+        },
+        {
+          "parent_kind": "model",
           "model_name": "mart_source_freshness",
           "title": "Source freshness",
           "description_short": "One row per raw source table that declares a `loaded_at_field`, saying whether it is inside the window its own declared cadence allows."
@@ -14683,6 +14737,292 @@
       ],
       "sample_query": "https://api-atlas.urbalurba.com/ngo_overview?limit=5",
       "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_ngo_overview"
+    },
+    {
+      "kind": "view",
+      "view_id": "ref_atlas_service_category",
+      "mart_name": "mart_ref_atlas_service_category",
+      "api_v1_name": "ref_atlas_service_category",
+      "title": "Atlas service categories",
+      "description_short": "⚠️ ATLAS'S OWN VOCABULARY, NOT AN UPSTREAM STANDARD — the only list here that is Atlas's editorial judgement rather than another body's published standard.",
+      "description_full": "⚠️ ATLAS'S OWN VOCABULARY, NOT AN UPSTREAM STANDARD — the only list here that is Atlas's editorial judgement rather than another body's published standard. It exists because no Norwegian authority publishes a cross-NGO service taxonomy. The other eight lists are citable to their publisher; this one is citable to Atlas. 22 rows.",
+      "columns": [
+        {
+          "name": "code",
+          "description": "Atlas's category code. Referenced by each NGO's dim_activity row."
+        },
+        {
+          "name": "label_no",
+          "description": "The Norwegian label, as its publisher writes it. Atlas does not translate or normalise upstream label text."
+        },
+        {
+          "name": "label_en",
+          "description": "The English label where the publisher provides one."
+        },
+        {
+          "name": "description",
+          "description": "What the category covers, in Atlas's words — the editorial definition a consumer needs in order to judge whether an activity was classified as they would."
+        },
+        {
+          "name": "sort_order",
+          "description": "The publisher's own display order. ⚠️ Sort by this, not by `code` — several of these lists do not sort into their intended sequence alphabetically."
+        }
+      ],
+      "built_from": [],
+      "sample_query": "https://api-atlas.urbalurba.com/ref_atlas_service_category?limit=5",
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_ref_atlas_service_category"
+    },
+    {
+      "kind": "view",
+      "view_id": "ref_brreg_icnpo",
+      "mart_name": "mart_ref_brreg_icnpo",
+      "api_v1_name": "ref_brreg_icnpo",
+      "title": "ICNPO categories",
+      "description_short": "ICNPO categories from Brreg's Frivillighetsregister: 14 main groups + 32 subgroups = 46 rows.",
+      "description_full": "ICNPO categories from Brreg's Frivillighetsregister: 14 main groups + 32 subgroups = 46 rows. 🔵 This is the decoder for the ICNPO code a consumer can already read out of kommune_ngo_summary and, until now, could not turn into a name.",
+      "columns": [
+        {
+          "name": "code",
+          "description": "The ICNPO code."
+        },
+        {
+          "name": "parent_code",
+          "description": "Null on a main group; the group's code on a subgroup. Lets a consumer walk the hierarchy without a second request."
+        },
+        {
+          "name": "label_no",
+          "description": "The Norwegian label, as its publisher writes it. Atlas does not translate or normalise upstream label text."
+        },
+        {
+          "name": "label_en",
+          "description": "The English label where the publisher provides one."
+        },
+        {
+          "name": "sort_order",
+          "description": "The publisher's own display order. ⚠️ Sort by this, not by `code` — several of these lists do not sort into their intended sequence alphabetically."
+        }
+      ],
+      "built_from": [],
+      "sample_query": "https://api-atlas.urbalurba.com/ref_brreg_icnpo?limit=5",
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_ref_brreg_icnpo"
+    },
+    {
+      "kind": "view",
+      "view_id": "ref_fhi_innvkat",
+      "mart_name": "mart_ref_fhi_innvkat",
+      "api_v1_name": "ref_fhi_innvkat",
+      "title": "FHI immigrant categories (table 360)",
+      "description_short": "🔴 ONE ROW — code '0', 'totalt' — and that is correct.",
+      "description_full": "🔴 ONE ROW — code '0', 'totalt' — and that is correct. It decodes INNVKAT as it appears in FHI table 360 (fhi_vgs_gjennomforing), where the dimension is collapsed and always '0'; a relationships test on indicators__fhi_vgs_gjennomforing enforces that. ⚠️ IT DOES NOT DECODE indicators__fhi_innvkat, which comes from FHI table 932 and holds '2', '3' and '23'. Joining it to that column returns nothing. Those three codes are published at /meta_dimensions?source_id=eq.fhi-innvkat&code=eq.INNVKAT (verified 2026-09-25). Said here because the two names differ by nothing a consumer would notice.",
+      "columns": [
+        {
+          "name": "code",
+          "description": "FHI's INNVKAT code as used by table 360 — '0' only."
+        },
+        {
+          "name": "label_no",
+          "description": "The Norwegian label, as its publisher writes it. Atlas does not translate or normalise upstream label text."
+        },
+        {
+          "name": "label_en",
+          "description": "The English label where the publisher provides one. ⚠️ Empty: FHI publishes this label in Norwegian only."
+        },
+        {
+          "name": "sort_order",
+          "description": "The publisher's own display order. ⚠️ Sort by this, not by `code` — several of these lists do not sort into their intended sequence alphabetically."
+        }
+      ],
+      "built_from": [],
+      "sample_query": "https://api-atlas.urbalurba.com/ref_fhi_innvkat?limit=5",
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_ref_fhi_innvkat"
+    },
+    {
+      "kind": "view",
+      "view_id": "ref_fhi_utdann",
+      "mart_name": "mart_ref_fhi_utdann",
+      "api_v1_name": "ref_fhi_utdann",
+      "title": "FHI education levels",
+      "description_short": "FHI UTDANN (education-level) labels.",
+      "description_full": "FHI UTDANN (education-level) labels. ⚠️ In fhi_vgs_gjennomforing this dimension is the PARENTS' education, not the pupil's — that relation aliases it `parents_education`.",
+      "columns": [
+        {
+          "name": "code",
+          "description": "FHI's UTDANN code."
+        },
+        {
+          "name": "label_no",
+          "description": "The Norwegian label, as its publisher writes it. Atlas does not translate or normalise upstream label text."
+        },
+        {
+          "name": "label_en",
+          "description": "The English label where the publisher provides one. ⚠️ Empty for every row: FHI publishes these in Norwegian only, and Atlas does not translate upstream values."
+        },
+        {
+          "name": "sort_order",
+          "description": "The publisher's own display order. ⚠️ Sort by this, not by `code` — several of these lists do not sort into their intended sequence alphabetically."
+        }
+      ],
+      "built_from": [],
+      "sample_query": "https://api-atlas.urbalurba.com/ref_fhi_utdann?limit=5",
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_ref_fhi_utdann"
+    },
+    {
+      "kind": "view",
+      "view_id": "ref_region_kind",
+      "mart_name": "mart_ref_region_kind",
+      "api_v1_name": "ref_region_kind",
+      "title": "Region kinds",
+      "description_short": "What kind of region a region_code denotes — the decoder for the `region_kind` column that several indicator relations already expose.",
+      "description_full": "What kind of region a region_code denotes — the decoder for the `region_kind` column that several indicator relations already expose.",
+      "columns": [
+        {
+          "name": "region_kind",
+          "description": "The kind value as it appears in the indicator relations."
+        },
+        {
+          "name": "code_pattern",
+          "description": "The regular expression Atlas classifies by, published so a consumer can read the rule rather than infer it from examples."
+        },
+        {
+          "name": "is_kommune",
+          "description": "Whether this kind is a real municipality. 🔴 Not the same question as 'does the code look like a kommune_nr' — the pseudo-codes are the reason this column exists."
+        },
+        {
+          "name": "label_no",
+          "description": "The Norwegian label, as its publisher writes it. Atlas does not translate or normalise upstream label text."
+        },
+        {
+          "name": "label_en",
+          "description": "The English label where the publisher provides one."
+        },
+        {
+          "name": "sort_order",
+          "description": "The publisher's own display order. ⚠️ Sort by this, not by `code` — several of these lists do not sort into their intended sequence alphabetically."
+        }
+      ],
+      "built_from": [],
+      "sample_query": "https://api-atlas.urbalurba.com/ref_region_kind?limit=5",
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_ref_region_kind"
+    },
+    {
+      "kind": "view",
+      "view_id": "ref_ssb_family_type",
+      "mart_name": "mart_ref_ssb_family_type",
+      "api_v1_name": "ref_ssb_family_type",
+      "title": "SSB family types",
+      "description_short": "SSB family-type codes.",
+      "description_full": "SSB family-type codes. ⚠️ Family type and household type are different classifications with similar-looking codes — see ref_ssb_household_type, and do not join one to the other.",
+      "columns": [
+        {
+          "name": "code",
+          "description": "SSB's family-type code, as published."
+        },
+        {
+          "name": "label_no",
+          "description": "The Norwegian label, as its publisher writes it. Atlas does not translate or normalise upstream label text."
+        },
+        {
+          "name": "label_en",
+          "description": "The English label where the publisher provides one."
+        },
+        {
+          "name": "sort_order",
+          "description": "The publisher's own display order. ⚠️ Sort by this, not by `code` — several of these lists do not sort into their intended sequence alphabetically."
+        }
+      ],
+      "built_from": [],
+      "sample_query": "https://api-atlas.urbalurba.com/ref_ssb_family_type?limit=5",
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_ref_ssb_family_type"
+    },
+    {
+      "kind": "view",
+      "view_id": "ref_ssb_household_type",
+      "mart_name": "mart_ref_ssb_household_type",
+      "api_v1_name": "ref_ssb_household_type",
+      "title": "SSB household types",
+      "description_short": "SSB household-type codes.",
+      "description_full": "SSB household-type codes. ⚠️ Codes are ZERO-PADDED TEXT ('0000', '0001'), not integers: a consumer casting them to int and back loses the padding and matches nothing.",
+      "columns": [
+        {
+          "name": "code",
+          "description": "SSB's household-type code, zero-padded text exactly as published."
+        },
+        {
+          "name": "label_no",
+          "description": "The Norwegian label, as its publisher writes it. Atlas does not translate or normalise upstream label text."
+        },
+        {
+          "name": "label_en",
+          "description": "The English label where the publisher provides one."
+        },
+        {
+          "name": "sort_order",
+          "description": "The publisher's own display order. ⚠️ Sort by this, not by `code` — several of these lists do not sort into their intended sequence alphabetically."
+        }
+      ],
+      "built_from": [],
+      "sample_query": "https://api-atlas.urbalurba.com/ref_ssb_household_type?limit=5",
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_ref_ssb_household_type"
+    },
+    {
+      "kind": "view",
+      "view_id": "ref_ssb_nivaa",
+      "mart_name": "mart_ref_ssb_nivaa",
+      "api_v1_name": "ref_ssb_nivaa",
+      "title": "SSB education levels",
+      "description_short": "SSB NUS2000 education-level labels for table 09429.",
+      "description_full": "SSB NUS2000 education-level labels for table 09429. 7 codes. ⚠️ Sort by sort_order, not by code: upstream's own ordering interleaves '11' (Fagskole) between '02a' and '03a', so the codes do not sort into the sequence they represent.",
+      "columns": [
+        {
+          "name": "code",
+          "description": "The NUS2000 level code, e.g. '02a', '11', '03a'."
+        },
+        {
+          "name": "label_no",
+          "description": "The Norwegian label, as its publisher writes it. Atlas does not translate or normalise upstream label text."
+        },
+        {
+          "name": "label_en",
+          "description": "The English label where the publisher provides one."
+        },
+        {
+          "name": "sort_order",
+          "description": "The publisher's own display order. ⚠️ Sort by this, not by `code` — several of these lists do not sort into their intended sequence alphabetically."
+        }
+      ],
+      "built_from": [],
+      "sample_query": "https://api-atlas.urbalurba.com/ref_ssb_nivaa?limit=5",
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_ref_ssb_nivaa"
+    },
+    {
+      "kind": "view",
+      "view_id": "ref_un_sdg",
+      "mart_name": "mart_ref_un_sdg",
+      "api_v1_name": "ref_un_sdg",
+      "title": "UN Sustainable Development Goals",
+      "description_short": "The 17 UN Sustainable Development Goals.",
+      "description_full": "The 17 UN Sustainable Development Goals. Hand-curated and pinned — the goals do not change. The 169 sub-targets are not included; nothing in Atlas references them yet.",
+      "columns": [
+        {
+          "name": "code",
+          "description": "SDG number as text, '1' to '17'. Text rather than integer for consistency with every other ref_* list, whose codes are not all numeric."
+        },
+        {
+          "name": "label_no",
+          "description": "The Norwegian label, as its publisher writes it. Atlas does not translate or normalise upstream label text."
+        },
+        {
+          "name": "label_en",
+          "description": "The English label where the publisher provides one."
+        },
+        {
+          "name": "sort_order",
+          "description": "The publisher's own display order. ⚠️ Sort by this, not by `code` — several of these lists do not sort into their intended sequence alphabetically."
+        }
+      ],
+      "built_from": [],
+      "sample_query": "https://api-atlas.urbalurba.com/ref_un_sdg?limit=5",
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_ref_un_sdg"
     },
     {
       "kind": "view",

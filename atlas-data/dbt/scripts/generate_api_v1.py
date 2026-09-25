@@ -216,6 +216,33 @@ REFERENCE:
                                analytical relations exclude it.
   brreg_enhet                  the Bronnoysund register mirror.
 
+CODE LISTS — decode the coded columns the relations above already expose.
+Every one is small, stable, and safe to cache locally:
+  ref_brreg_icnpo              ICNPO categories, 14 groups + 32 subgroups.
+                               Decodes the code in kommune_ngo_summary.
+  ref_un_sdg                   the 17 UN Sustainable Development Goals.
+  ref_region_kind              what a region_code denotes, with the pattern
+                               Atlas classifies by and an is_kommune flag.
+  ref_ssb_nivaa                SSB NUS2000 education levels (table 09429).
+  ref_ssb_family_type          SSB family types.
+  ref_ssb_household_type       SSB household types. Codes are ZERO-PADDED
+                               TEXT; casting to int matches nothing.
+  ref_fhi_utdann               FHI education levels. In vgs_gjennomforing
+                               this is the PARENTS' education.
+  ref_fhi_innvkat              FHI immigrant categories AS USED BY TABLE 360
+                               — one row, '0'. ⚠️ It does NOT decode the
+                               immigrant_category column of the fhi-innvkat
+                               relation (table 932: '2', '3', '23'). For
+                               those, read
+                               /meta_dimensions?source_id=eq.fhi-innvkat
+  ref_atlas_service_category   ⚠️ ATLAS'S OWN vocabulary, not an upstream
+                               standard — the only list here that is Atlas's
+                               editorial judgement. Weigh it accordingly.
+
+⚠️ SORT A CODE LIST BY sort_order, NOT BY code. Several carry their
+publisher's ordering, which is not the alphabetical one — ref_ssb_nivaa
+interleaves '11' between '02a' and '03a'.
+
 HOW STALE CAN A 200 BE? UP TO ABOUT AN HOUR, AND THE HEADERS WILL NOT TELL YOU.
 A CDN sits in front of this API with an edge TTL of roughly 60 minutes —
 measured 2026-09-25 as a cache HIT still being served at age 3 249 s. The rows

@@ -77,6 +77,15 @@
 -- depends_on: {{ ref('mart_meta_sources') }}
 -- depends_on: {{ ref('mart_ngo_index') }}
 -- depends_on: {{ ref('mart_ngo_overview') }}
+-- depends_on: {{ ref('mart_ref_atlas_service_category') }}
+-- depends_on: {{ ref('mart_ref_brreg_icnpo') }}
+-- depends_on: {{ ref('mart_ref_fhi_innvkat') }}
+-- depends_on: {{ ref('mart_ref_fhi_utdann') }}
+-- depends_on: {{ ref('mart_ref_region_kind') }}
+-- depends_on: {{ ref('mart_ref_ssb_family_type') }}
+-- depends_on: {{ ref('mart_ref_ssb_household_type') }}
+-- depends_on: {{ ref('mart_ref_ssb_nivaa') }}
+-- depends_on: {{ ref('mart_ref_un_sdg') }}
 -- depends_on: {{ ref('mart_source_freshness') }}
 -- depends_on: {{ ref('mart_unattributed_totals') }}
 
@@ -111,6 +120,15 @@
   {'relation': 'meta_sources', 'mart': 'mart_meta_sources'},
   {'relation': 'ngo_index', 'mart': 'mart_ngo_index'},
   {'relation': 'ngo_overview', 'mart': 'mart_ngo_overview'},
+  {'relation': 'ref_atlas_service_category', 'mart': 'mart_ref_atlas_service_category'},
+  {'relation': 'ref_brreg_icnpo', 'mart': 'mart_ref_brreg_icnpo'},
+  {'relation': 'ref_fhi_innvkat', 'mart': 'mart_ref_fhi_innvkat'},
+  {'relation': 'ref_fhi_utdann', 'mart': 'mart_ref_fhi_utdann'},
+  {'relation': 'ref_region_kind', 'mart': 'mart_ref_region_kind'},
+  {'relation': 'ref_ssb_family_type', 'mart': 'mart_ref_ssb_family_type'},
+  {'relation': 'ref_ssb_household_type', 'mart': 'mart_ref_ssb_household_type'},
+  {'relation': 'ref_ssb_nivaa', 'mart': 'mart_ref_ssb_nivaa'},
+  {'relation': 'ref_un_sdg', 'mart': 'mart_ref_un_sdg'},
   {'relation': 'source_freshness', 'mart': 'mart_source_freshness'},
   {'relation': 'unattributed_totals', 'mart': 'mart_unattributed_totals'},
 ] %}

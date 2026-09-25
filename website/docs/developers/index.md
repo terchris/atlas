@@ -6,7 +6,7 @@ This section is for **anyone consuming Atlas's public PostgREST API** to build t
 
 <!-- BEGIN holdings (generated) -->
 
-**43 upstream sources** from **5 publishers**, served as **22 read-only relations**.
+**43 upstream sources** from **5 publishers**, served as **31 read-only relations**.
 
 | publisher | sources | broadly |
 |---|---|---|
@@ -44,6 +44,15 @@ Licences: **NLOD** for 42 of 43 — Norwegian public data, free to reuse with at
 | `meta_sources` | Per-source catalogue row — one per ingest source in `_sources_manifest`, joined to `raw.ingest_runs` aggregates so consumers see freshness alongside the static metadata. |
 | `ngo_index` | 🔴 WHAT THIS RELATION DELIBERATELY DOES NOT CARRY. |
 | `ngo_overview` | One row per NGO in dim_ngo with the six count metrics shown on the per-NGO landing page (atlas-frontend /ngo/[slug]). |
+| `ref_atlas_service_category` | ⚠️ ATLAS'S OWN VOCABULARY, NOT AN UPSTREAM STANDARD — the only list here that is Atlas's editorial judgement rather than another body's published standard. |
+| `ref_brreg_icnpo` | ICNPO categories from Brreg's Frivillighetsregister: 14 main groups + 32 subgroups = 46 rows. |
+| `ref_fhi_innvkat` | 🔴 ONE ROW — code '0', 'totalt' — and that is correct. |
+| `ref_fhi_utdann` | FHI UTDANN (education-level) labels. |
+| `ref_region_kind` | What kind of region a region_code denotes — the decoder for the `region_kind` column that several indicator relations already expose. |
+| `ref_ssb_family_type` | SSB family-type codes. |
+| `ref_ssb_household_type` | SSB household-type codes. |
+| `ref_ssb_nivaa` | SSB NUS2000 education-level labels for table 09429. |
+| `ref_un_sdg` | The 17 UN Sustainable Development Goals. |
 | `source_freshness` | One row per raw source table that declares a `loaded_at_field`, saying whether it is inside the window its own declared cadence allows. |
 | `unattributed_totals` | The part of a published quantity that belongs to no municipality. |
 

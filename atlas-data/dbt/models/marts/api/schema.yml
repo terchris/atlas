@@ -2625,3 +2625,264 @@ models:
           - not_null
           - accepted_values:
               values: [ok, fail]
+
+  - name: mart_ref_un_sdg
+    meta:
+      title: "UN Sustainable Development Goals"
+    description: >-
+      The 17 UN Sustainable Development Goals. Hand-curated and pinned — the goals do not
+      change. The 169 sub-targets are not included; nothing in Atlas references them yet.
+    columns:
+      - name: code
+        description: >-
+          SDG number as text, '1' to '17'. Text rather than integer for consistency
+          with every other ref_* list, whose codes are not all numeric.
+        data_tests: [not_null, unique]
+      - name: label_no
+        description: >-
+          The Norwegian label, as its publisher writes it. Atlas does not translate or
+          normalise upstream label text.
+        data_tests: [not_null]
+      - name: label_en
+        description: >-
+          The English label where the publisher provides one.
+        data_tests: [not_null]
+      - name: sort_order
+        description: >-
+          The publisher's own display order. ⚠️ Sort by this, not by `code` — several of
+          these lists do not sort into their intended sequence alphabetically.
+        data_tests: [not_null]
+
+  - name: mart_ref_brreg_icnpo
+    meta:
+      title: "ICNPO categories"
+    description: >-
+      ICNPO categories from Brreg's Frivillighetsregister: 14 main groups + 32 subgroups =
+      46 rows. 🔵 This is the decoder for the ICNPO code a consumer can already read out of
+      kommune_ngo_summary and, until now, could not turn into a name.
+    columns:
+      - name: code
+        description: >-
+          The ICNPO code.
+        data_tests: [not_null, unique]
+      - name: parent_code
+        description: >-
+          Null on a main group; the group's code on a subgroup. Lets a consumer walk the
+          hierarchy without a second request.
+      - name: label_no
+        description: >-
+          The Norwegian label, as its publisher writes it. Atlas does not translate or
+          normalise upstream label text.
+        data_tests: [not_null]
+      - name: label_en
+        description: >-
+          The English label where the publisher provides one.
+        data_tests: [not_null]
+      - name: sort_order
+        description: >-
+          The publisher's own display order. ⚠️ Sort by this, not by `code` — several of
+          these lists do not sort into their intended sequence alphabetically.
+        data_tests: [not_null]
+
+  - name: mart_ref_atlas_service_category
+    meta:
+      title: "Atlas service categories"
+    description: >-
+      ⚠️ ATLAS'S OWN VOCABULARY, NOT AN UPSTREAM STANDARD — the only list here that is
+      Atlas's editorial judgement rather than another body's published standard. It exists
+      because no Norwegian authority publishes a cross-NGO service taxonomy. The other eight
+      lists are citable to their publisher; this one is citable to Atlas. 22 rows.
+    columns:
+      - name: code
+        description: >-
+          Atlas's category code. Referenced by each NGO's dim_activity row.
+        data_tests: [not_null, unique]
+      - name: label_no
+        description: >-
+          The Norwegian label, as its publisher writes it. Atlas does not translate or
+          normalise upstream label text.
+        data_tests: [not_null]
+      - name: label_en
+        description: >-
+          The English label where the publisher provides one.
+        data_tests: [not_null]
+      - name: description
+        description: >-
+          What the category covers, in Atlas's words — the editorial definition a consumer
+          needs in order to judge whether an activity was classified as they would.
+      - name: sort_order
+        description: >-
+          The publisher's own display order. ⚠️ Sort by this, not by `code` — several of
+          these lists do not sort into their intended sequence alphabetically.
+        data_tests: [not_null]
+
+  - name: mart_ref_region_kind
+    meta:
+      title: "Region kinds"
+    description: >-
+      What kind of region a region_code denotes — the decoder for the `region_kind` column
+      that several indicator relations already expose.
+    columns:
+      - name: region_kind
+        description: >-
+          The kind value as it appears in the indicator relations.
+        data_tests: [not_null, unique]
+      - name: code_pattern
+        description: >-
+          The regular expression Atlas classifies by, published so a consumer can read the
+          rule rather than infer it from examples.
+      - name: is_kommune
+        description: >-
+          Whether this kind is a real municipality. 🔴 Not the same question as 'does the
+          code look like a kommune_nr' — the pseudo-codes are the reason this column
+          exists.
+        data_tests: [not_null]
+      - name: label_no
+        description: >-
+          The Norwegian label, as its publisher writes it. Atlas does not translate or
+          normalise upstream label text.
+        data_tests: [not_null]
+      - name: label_en
+        description: >-
+          The English label where the publisher provides one.
+      - name: sort_order
+        description: >-
+          The publisher's own display order. ⚠️ Sort by this, not by `code` — several of
+          these lists do not sort into their intended sequence alphabetically.
+        data_tests: [not_null]
+
+  - name: mart_ref_ssb_family_type
+    meta:
+      title: "SSB family types"
+    description: >-
+      SSB family-type codes. ⚠️ Family type and household type are different classifications
+      with similar-looking codes — see ref_ssb_household_type, and do not join one to the other.
+    columns:
+      - name: code
+        description: >-
+          SSB's family-type code, as published.
+        data_tests: [not_null, unique]
+      - name: label_no
+        description: >-
+          The Norwegian label, as its publisher writes it. Atlas does not translate or
+          normalise upstream label text.
+        data_tests: [not_null]
+      - name: label_en
+        description: >-
+          The English label where the publisher provides one.
+        data_tests: [not_null]
+      - name: sort_order
+        description: >-
+          The publisher's own display order. ⚠️ Sort by this, not by `code` — several of
+          these lists do not sort into their intended sequence alphabetically.
+        data_tests: [not_null]
+
+  - name: mart_ref_ssb_household_type
+    meta:
+      title: "SSB household types"
+    description: >-
+      SSB household-type codes. ⚠️ Codes are ZERO-PADDED TEXT ('0000', '0001'), not integers:
+      a consumer casting them to int and back loses the padding and matches nothing.
+    columns:
+      - name: code
+        description: >-
+          SSB's household-type code, zero-padded text exactly as published.
+        data_tests: [not_null, unique]
+      - name: label_no
+        description: >-
+          The Norwegian label, as its publisher writes it. Atlas does not translate or
+          normalise upstream label text.
+        data_tests: [not_null]
+      - name: label_en
+        description: >-
+          The English label where the publisher provides one.
+        data_tests: [not_null]
+      - name: sort_order
+        description: >-
+          The publisher's own display order. ⚠️ Sort by this, not by `code` — several of
+          these lists do not sort into their intended sequence alphabetically.
+        data_tests: [not_null]
+
+  - name: mart_ref_ssb_nivaa
+    meta:
+      title: "SSB education levels"
+    description: >-
+      SSB NUS2000 education-level labels for table 09429. 7 codes.
+      ⚠️ Sort by sort_order, not by code: upstream's own ordering interleaves '11' (Fagskole)
+      between '02a' and '03a', so the codes do not sort into the sequence they represent.
+    columns:
+      - name: code
+        description: >-
+          The NUS2000 level code, e.g. '02a', '11', '03a'.
+        data_tests: [not_null, unique]
+      - name: label_no
+        description: >-
+          The Norwegian label, as its publisher writes it. Atlas does not translate or
+          normalise upstream label text.
+        data_tests: [not_null]
+      - name: label_en
+        description: >-
+          The English label where the publisher provides one.
+        data_tests: [not_null]
+      - name: sort_order
+        description: >-
+          The publisher's own display order. ⚠️ Sort by this, not by `code` — several of
+          these lists do not sort into their intended sequence alphabetically.
+        data_tests: [not_null]
+
+  - name: mart_ref_fhi_utdann
+    meta:
+      title: "FHI education levels"
+    description: >-
+      FHI UTDANN (education-level) labels. ⚠️ In fhi_vgs_gjennomforing this dimension is the
+      PARENTS' education, not the pupil's — that relation aliases it `parents_education`.
+    columns:
+      - name: code
+        description: >-
+          FHI's UTDANN code.
+        data_tests: [not_null, unique]
+      - name: label_no
+        description: >-
+          The Norwegian label, as its publisher writes it. Atlas does not translate or
+          normalise upstream label text.
+        data_tests: [not_null]
+      - name: label_en
+        description: >-
+          The English label where the publisher provides one.
+          ⚠️ Empty for every row: FHI publishes these in Norwegian only, and Atlas does not translate upstream values.
+      - name: sort_order
+        description: >-
+          The publisher's own display order. ⚠️ Sort by this, not by `code` — several of
+          these lists do not sort into their intended sequence alphabetically.
+        data_tests: [not_null]
+
+  - name: mart_ref_fhi_innvkat
+    meta:
+      title: "FHI immigrant categories (table 360)"
+    description: >-
+      🔴 ONE ROW — code '0', 'totalt' — and that is correct. It decodes INNVKAT as it appears
+      in FHI table 360 (fhi_vgs_gjennomforing), where the dimension is collapsed and always
+      '0'; a relationships test on indicators__fhi_vgs_gjennomforing enforces that.
+      ⚠️ IT DOES NOT DECODE indicators__fhi_innvkat, which comes from FHI table 932 and holds
+      '2', '3' and '23'. Joining it to that column returns nothing. Those three codes are
+      published at /meta_dimensions?source_id=eq.fhi-innvkat&code=eq.INNVKAT (verified
+      2026-09-25). Said here because the two names differ by nothing a consumer would notice.
+    columns:
+      - name: code
+        description: >-
+          FHI's INNVKAT code as used by table 360 — '0' only.
+        data_tests: [not_null, unique]
+      - name: label_no
+        description: >-
+          The Norwegian label, as its publisher writes it. Atlas does not translate or
+          normalise upstream label text.
+        data_tests: [not_null]
+      - name: label_en
+        description: >-
+          The English label where the publisher provides one.
+          ⚠️ Empty: FHI publishes this label in Norwegian only.
+      - name: sort_order
+        description: >-
+          The publisher's own display order. ⚠️ Sort by this, not by `code` — several of
+          these lists do not sort into their intended sequence alphabetically.
+        data_tests: [not_null]

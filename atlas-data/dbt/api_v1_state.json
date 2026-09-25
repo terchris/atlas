@@ -21,6 +21,15 @@
     "meta_sources",
     "ngo_index",
     "ngo_overview",
+    "ref_atlas_service_category",
+    "ref_brreg_icnpo",
+    "ref_fhi_innvkat",
+    "ref_fhi_utdann",
+    "ref_region_kind",
+    "ref_ssb_family_type",
+    "ref_ssb_household_type",
+    "ref_ssb_nivaa",
+    "ref_un_sdg",
     "source_freshness",
     "unattributed_totals"
   ]

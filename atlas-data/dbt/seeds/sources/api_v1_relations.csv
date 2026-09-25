@@ -19,5 +19,14 @@ meta_endpoints,mart_meta_endpoints,true
 meta_sources,mart_meta_sources,true
 ngo_index,mart_ngo_index,false
 ngo_overview,mart_ngo_overview,false
+ref_atlas_service_category,mart_ref_atlas_service_category,false
+ref_brreg_icnpo,mart_ref_brreg_icnpo,false
+ref_fhi_innvkat,mart_ref_fhi_innvkat,false
+ref_fhi_utdann,mart_ref_fhi_utdann,false
+ref_region_kind,mart_ref_region_kind,false
+ref_ssb_family_type,mart_ref_ssb_family_type,false
+ref_ssb_household_type,mart_ref_ssb_household_type,false
+ref_ssb_nivaa,mart_ref_ssb_nivaa,false
+ref_un_sdg,mart_ref_un_sdg,false
 source_freshness,mart_source_freshness,false
 unattributed_totals,mart_unattributed_totals,true
