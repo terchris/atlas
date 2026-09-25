@@ -919,6 +919,25 @@ COMMENT ON COLUMN api_v1.indicator_summary.upstream_updated IS 'Most recent fact
 that contributed to this summary. Useful for staleness checks
 per indicator without joining to raw.*.';
 
+-- ingest_health  ←  marts.mart_ingest_health
+CREATE OR REPLACE VIEW api_v1.ingest_health AS SELECT * FROM marts.mart_ingest_health;
+COMMENT ON VIEW api_v1.ingest_health IS 'Per-source ingest-run health. One row per scraper or API-source,
+showing the most recent COMPLETED run (finished_at IS NOT NULL).
+Minimal v1 surface per Q14 of
+INVESTIGATE-ngo-scraping-infrastructure.md — just the three columns
+needed to answer "which sources are failing?" and "which sources
+haven''t refreshed recently?". Empty until the first scraper writes
+to raw.ingest_runs.';
+COMMENT ON COLUMN api_v1.ingest_health.source_id IS 'Atlas source identifier, e.g. ''ssb-08764'' or ''redcross''.
+Unique within this table — one row per source. Joins back to
+raw.ingest_runs.source_id.';
+COMMENT ON COLUMN api_v1.ingest_health.last_run_at IS 'finished_at of the most recent COMPLETED ingest run for this
+source. NULL rows from raw.ingest_runs (in-flight or
+aborted runs) are filtered out upstream.';
+COMMENT ON COLUMN api_v1.ingest_health.last_status IS 'Status of the most recent COMPLETED run. ''ok'' = the scraper
+finished and wrote rows; ''fail'' = it errored or completed
+with the expected output shape missing.';
+
 -- kommune_befolkning_alder  ←  marts.mart_kommune_befolkning_alder
 CREATE OR REPLACE VIEW api_v1.kommune_befolkning_alder AS SELECT * FROM marts.mart_kommune_befolkning_alder;
 COMMENT ON VIEW api_v1.kommune_befolkning_alder IS 'Population by kommune, year and age band — the denominator layer.
@@ -1557,6 +1576,52 @@ dim_activity for this orgnr).';
 COMMENT ON COLUMN api_v1.ngo_overview.kommune_count IS 'Count of distinct kommuner with at least one active local
 chapter for this NGO. The "footprint" metric for coverage-gap
 questions.';
+
+-- source_freshness  ←  marts.mart_source_freshness
+CREATE OR REPLACE VIEW api_v1.source_freshness AS SELECT * FROM marts.mart_source_freshness;
+COMMENT ON VIEW api_v1.source_freshness IS 'One row per raw source table that declares a `loaded_at_field`, saying
+whether it is inside the window its own declared cadence allows.
+
+This is the operator-readable half of the ingest-freshness signal. The
+comparison used to live only inside the dbt test
+`raw_sources_were_refreshed_recently`, whose verdict exists only while the
+suite is running — it lands in dbt''s run results and Dagster''s event log,
+and `atlas-status.py` can read neither. So `uis template check atlas`
+reported a 24-hour window instead, which cannot see a weekly or monthly
+source go stale at all (urb-agents #1039).
+
+It is a VIEW on purpose: evaluated when queried, so it is current whether
+or not the transform, the check suite or the Dagster daemon has run. A
+table would carry the very staleness it is meant to report.
+
+The test now selects its failing rows from here rather than recomputing
+them, so the gate and the surface cannot disagree. Cadence bounds are
+`vars.ingest_cadence_max_age_days` in dbt_project.yml, read by both and
+defaulted by neither.';
+COMMENT ON COLUMN api_v1.source_freshness.source_name IS 'The dbt source collection the table belongs to. ''raw'' for every row today.';
+COMMENT ON COLUMN api_v1.source_freshness.source_table IS 'Raw table name, e.g. ''ssb_08484''. Unique across the view.';
+COMMENT ON COLUMN api_v1.source_freshness.ingest_cadence IS 'The cadence declared on the source in sources.yml
+(`meta.ingest_cadence`): half_hourly, daily, weekly, monthly, or the
+two silencing values manual and none, each of which requires a written
+`meta.cadence_note`. ''undeclared'' appears only when a source declares
+a loaded_at_field and no cadence — a state the dbt test refuses to
+compile on, which this view still reports.';
+COMMENT ON COLUMN api_v1.source_freshness.max_age_days IS 'Tolerated age for this cadence, from vars.ingest_cadence_max_age_days.
+Null for manual, none, and any cadence with no bound declared.';
+COMMENT ON COLUMN api_v1.source_freshness.last_loaded_at IS 'Newest value of the source''s own `loaded_at_field`. Null when the table
+has no rows at all, which is a failure rather than a separate kind of
+healthy: "never loaded" and "loaded long ago" are the same defect to a
+consumer.';
+COMMENT ON COLUMN api_v1.source_freshness.age_days IS 'Age of last_loaded_at in days, to two decimals. Null when the table is empty.';
+COMMENT ON COLUMN api_v1.source_freshness.freshness_status IS 'ok · overdue · never_loaded · not_bounded · undeclared · unknown_cadence.
+
+`not_bounded` rows are emitted rather than filtered out, so a reader
+can say "29 bounded, 5 silenced" instead of quietly reporting a smaller
+universe than exists — a row that vanishes from a freshness surface is
+indistinguishable from a source nobody ever added. `undeclared` and
+`unknown_cadence` are kept apart: one is a source nobody finished
+adding, the other a cadence somebody invented, and they need different
+fixes.';
 
 -- unattributed_totals  ←  marts.mart_unattributed_totals
 CREATE OR REPLACE VIEW api_v1.unattributed_totals AS SELECT * FROM marts.mart_unattributed_totals;

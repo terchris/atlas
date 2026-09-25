@@ -37,7 +37,7 @@ params:
 data:
   sources: 43
   publishers: 5
-  public_relations: 20
+  public_relations: 22
   holds: >-
     Norwegian public data at kommune level, joined into one semantic layer:
     Folkehelseinstituttet (21); Statistisk sentralbyrå (17); Brønnøysundregistrene (3); Barne-, ungdoms- og familiedirektoratet (1); Norges Røde Kors (1).

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-24",
+  "generated_at": "2026-09-25",
   "manifest_schema_id": "https://atlas.sovereignsky.no/schemas/manifest.schema.json",
   "atlas_base_url": "https://atlas.sovereignsky.no",
   "postgrest_base_url": "https://api-atlas.urbalurba.com",
@@ -14102,6 +14102,32 @@
     },
     {
       "kind": "view",
+      "view_id": "ingest_health",
+      "mart_name": "mart_ingest_health",
+      "api_v1_name": "ingest_health",
+      "title": "api_v1.ingest_health",
+      "description_short": "Per-source ingest-run health.",
+      "description_full": "Per-source ingest-run health. One row per scraper or API-source,\nshowing the most recent COMPLETED run (finished_at IS NOT NULL).\nMinimal v1 surface per Q14 of\nINVESTIGATE-ngo-scraping-infrastructure.md — just the three columns\nneeded to answer \"which sources are failing?\" and \"which sources\nhaven't refreshed recently?\". Empty until the first scraper writes\nto raw.ingest_runs.",
+      "columns": [
+        {
+          "name": "source_id",
+          "description": "Atlas source identifier, e.g. 'ssb-08764' or 'redcross'. Unique within this table — one row per source. Joins back to raw.ingest_runs.source_id."
+        },
+        {
+          "name": "last_run_at",
+          "description": "finished_at of the most recent COMPLETED ingest run for this source. NULL rows from raw.ingest_runs (in-flight or aborted runs) are filtered out upstream."
+        },
+        {
+          "name": "last_status",
+          "description": "Status of the most recent COMPLETED run. 'ok' = the scraper finished and wrote rows; 'fail' = it errored or completed with the expected output shape missing."
+        }
+      ],
+      "built_from": [],
+      "sample_query": "https://api-atlas.urbalurba.com/ingest_health?limit=5",
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_ingest_health"
+    },
+    {
+      "kind": "view",
       "view_id": "kommune_befolkning_alder",
       "mart_name": "mart_kommune_befolkning_alder",
       "api_v1_name": "kommune_befolkning_alder",
@@ -14645,6 +14671,48 @@
       ],
       "sample_query": "https://api-atlas.urbalurba.com/ngo_overview?limit=5",
       "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_ngo_overview"
+    },
+    {
+      "kind": "view",
+      "view_id": "source_freshness",
+      "mart_name": "mart_source_freshness",
+      "api_v1_name": "source_freshness",
+      "title": "api_v1.source_freshness",
+      "description_short": "One row per raw source table that declares a `loaded_at_field`, saying whether it is inside the window its own declared cadence allows.",
+      "description_full": "One row per raw source table that declares a `loaded_at_field`, saying\nwhether it is inside the window its own declared cadence allows.\n\nThis is the operator-readable half of the ingest-freshness signal. The\ncomparison used to live only inside the dbt test\n`raw_sources_were_refreshed_recently`, whose verdict exists only while the\nsuite is running — it lands in dbt's run results and Dagster's event log,\nand `atlas-status.py` can read neither. So `uis template check atlas`\nreported a 24-hour window instead, which cannot see a weekly or monthly\nsource go stale at all (urb-agents #1039).\n\nIt is a VIEW on purpose: evaluated when queried, so it is current whether\nor not the transform, the check suite or the Dagster daemon has run. A\ntable would carry the very staleness it is meant to report.\n\nThe test now selects its failing rows from here rather than recomputing\nthem, so the gate and the surface cannot disagree. Cadence bounds are\n`vars.ingest_cadence_max_age_days` in dbt_project.yml, read by both and\ndefaulted by neither.",
+      "columns": [
+        {
+          "name": "source_name",
+          "description": "The dbt source collection the table belongs to. 'raw' for every row today."
+        },
+        {
+          "name": "source_table",
+          "description": "Raw table name, e.g. 'ssb_08484'. Unique across the view."
+        },
+        {
+          "name": "ingest_cadence",
+          "description": "The cadence declared on the source in sources.yml (`meta.ingest_cadence`): half_hourly, daily, weekly, monthly, or the two silencing values manual and none, each of which requires a written `meta.cadence_note`. 'undeclared' appears only when a source declares a loaded_at_field and no cadence — a state the dbt test refuses to compile on, which this view still reports."
+        },
+        {
+          "name": "max_age_days",
+          "description": "Tolerated age for this cadence, from vars.ingest_cadence_max_age_days. Null for manual, none, and any cadence with no bound declared."
+        },
+        {
+          "name": "last_loaded_at",
+          "description": "Newest value of the source's own `loaded_at_field`. Null when the table has no rows at all, which is a failure rather than a separate kind of healthy: \"never loaded\" and \"loaded long ago\" are the same defect to a consumer."
+        },
+        {
+          "name": "age_days",
+          "description": "Age of last_loaded_at in days, to two decimals. Null when the table is empty."
+        },
+        {
+          "name": "freshness_status",
+          "description": "ok · overdue · never_loaded · not_bounded · undeclared · unknown_cadence. `not_bounded` rows are emitted rather than filtered out, so a reader can say \"29 bounded, 5 silenced\" instead of quietly reporting a smaller universe than exists — a row that vanishes from a freshness surface is indistinguishable from a source nobody ever added. `undeclared` and `unknown_cadence` are kept apart: one is a source nobody finished adding, the other a cadence somebody invented, and they need different fixes."
+        }
+      ],
+      "built_from": [],
+      "sample_query": "https://api-atlas.urbalurba.com/source_freshness?limit=5",
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_source_freshness"
     },
     {
       "kind": "view",

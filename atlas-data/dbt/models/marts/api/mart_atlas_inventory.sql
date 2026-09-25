@@ -67,6 +67,7 @@
 -- depends_on: {{ ref('mart_indicator_latest_values') }}
 -- depends_on: {{ ref('mart_indicator_missing_kommuner') }}
 -- depends_on: {{ ref('mart_indicator_summary') }}
+-- depends_on: {{ ref('mart_ingest_health') }}
 -- depends_on: {{ ref('mart_kommune_befolkning_alder') }}
 -- depends_on: {{ ref('mart_kommune_local_chapters') }}
 -- depends_on: {{ ref('mart_kommune_ngo_summary') }}
@@ -76,6 +77,7 @@
 -- depends_on: {{ ref('mart_meta_sources') }}
 -- depends_on: {{ ref('mart_ngo_index') }}
 -- depends_on: {{ ref('mart_ngo_overview') }}
+-- depends_on: {{ ref('mart_source_freshness') }}
 -- depends_on: {{ ref('mart_unattributed_totals') }}
 
 {# 🔴 A LITERAL LIST, GENERATED FROM seeds/sources/api_v1_relations.csv AND GATED.
@@ -99,6 +101,7 @@
   {'relation': 'indicator_latest_values', 'mart': 'mart_indicator_latest_values'},
   {'relation': 'indicator_missing_kommuner', 'mart': 'mart_indicator_missing_kommuner'},
   {'relation': 'indicator_summary', 'mart': 'mart_indicator_summary'},
+  {'relation': 'ingest_health', 'mart': 'mart_ingest_health'},
   {'relation': 'kommune_befolkning_alder', 'mart': 'mart_kommune_befolkning_alder'},
   {'relation': 'kommune_local_chapters', 'mart': 'mart_kommune_local_chapters'},
   {'relation': 'kommune_ngo_summary', 'mart': 'mart_kommune_ngo_summary'},
@@ -108,6 +111,7 @@
   {'relation': 'meta_sources', 'mart': 'mart_meta_sources'},
   {'relation': 'ngo_index', 'mart': 'mart_ngo_index'},
   {'relation': 'ngo_overview', 'mart': 'mart_ngo_overview'},
+  {'relation': 'source_freshness', 'mart': 'mart_source_freshness'},
   {'relation': 'unattributed_totals', 'mart': 'mart_unattributed_totals'},
 ] %}
 

@@ -11,6 +11,7 @@
     "indicator_latest_values",
     "indicator_missing_kommuner",
     "indicator_summary",
+    "ingest_health",
     "kommune_befolkning_alder",
     "kommune_local_chapters",
     "kommune_ngo_summary",
@@ -20,6 +21,7 @@
     "meta_sources",
     "ngo_index",
     "ngo_overview",
+    "source_freshness",
     "unattributed_totals"
   ]
 }

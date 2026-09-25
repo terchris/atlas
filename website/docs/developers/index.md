@@ -6,7 +6,7 @@ This section is for **anyone consuming Atlas's public PostgREST API** to build t
 
 <!-- BEGIN holdings (generated) -->
 
-**43 upstream sources** from **5 publishers**, served as **20 read-only relations**.
+**43 upstream sources** from **5 publishers**, served as **22 read-only relations**.
 
 | publisher | sources | broadly |
 |---|---|---|
@@ -34,6 +34,7 @@ Licences: **NLOD** for 42 of 43 — Norwegian public data, free to reuse with at
 | `indicator_latest_values` | One row per (source_id, contents_code, kommune_nr) at each indicator's latest_year, restricted to active kommuner. |
 | `indicator_missing_kommuner` | 🔴 A ROW HERE IS NOT EVIDENCE OF LOW NEED. |
 | `indicator_summary` | One row per (source_id, contents_code) summarising the latest-year coverage and value range for every indicator in fact_kommune_indicators. |
+| `ingest_health` | Per-source ingest-run health. |
 | `kommune_befolkning_alder` | Population by kommune, year and age band — the denominator layer. |
 | `kommune_local_chapters` | 🔵 EXPECTED EMPTY TODAY, AND THAT IS NOT A DEFECT. |
 | `kommune_ngo_summary` | Active voluntary organisations per kommune and ICNPO category — the number a consumer previously had to download the whole register to compute. |
@@ -43,6 +44,7 @@ Licences: **NLOD** for 42 of 43 — Norwegian public data, free to reuse with at
 | `meta_sources` | Per-source catalogue row — one per ingest source in `_sources_manifest`, joined to `raw.ingest_runs` aggregates so consumers see freshness alongside the static metadata. |
 | `ngo_index` | 🔴 WHAT THIS RELATION DELIBERATELY DOES NOT CARRY. |
 | `ngo_overview` | One row per NGO in dim_ngo with the six count metrics shown on the per-NGO landing page (atlas-frontend /ngo/[slug]). |
+| `source_freshness` | One row per raw source table that declares a `loaded_at_field`, saying whether it is inside the window its own declared cadence allows. |
 | `unattributed_totals` | The part of a published quantity that belongs to no municipality. |
 
 Every relation, with its columns and their descriptions:
