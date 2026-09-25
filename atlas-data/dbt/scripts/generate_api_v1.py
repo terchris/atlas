@@ -204,6 +204,29 @@ REFERENCE:
                                analytical relations exclude it.
   brreg_enhet                  the Bronnoysund register mirror.
 
+HOW STALE CAN A 200 BE? UP TO ABOUT AN HOUR, AND THE HEADERS WILL NOT TELL YOU.
+A CDN sits in front of this API with an edge TTL of roughly 60 minutes —
+measured 2026-09-25 as a cache HIT still being served at age 3 249 s. The rows
+underneath move faster than that:
+
+  brreg change feed   every 30 minutes      raw
+  brreg transform     at :10 and :40        marts, and therefore this API
+  edge cache TTL      about 60 minutes
+
+⚠️ SO A CACHED 200 CAN BE OLDER THAN THE INTERVAL AT WHICH ITS ROWS CHANGE —
+up to two reconciliation cycles behind. If you need a value fresher than that,
+send `Cache-Control: no-cache` and check `cf-cache-status` on the response.
+
+🔴 AND THE `cache-control: no-store` HEADER ON THIS API IS NOT ABOUT THE EDGE.
+It is addressed to your client, and the edge is configured to ignore it — that
+is why caching works here at all. You will see `no-store` on a response that has
+itself been cached for 54 minutes. Reading it as "this was not cached" is wrong.
+
+⚠️ A CONSEQUENCE WORTH STATING PLAINLY: an outage is invisible for the length
+of the TTL. A repeated query keeps returning 200 from the edge after the origin
+has stopped answering, so a healthy-looking response is not evidence the service
+is up. Check `age` if that matters to you.
+
 TIME IS THE DIMENSION MOST OFTEN MISREAD. A year here can be the FIRST year
 of a multi-year window. indicator_summary.latest_year pairs with
 latest_year_window_years, and indicator_latest_values.year with window_years;
