@@ -9,6 +9,7 @@ distrikt_summary,mart_distrikt_summary,false
 indicator_latest_values,mart_indicator_latest_values,true
 indicator_missing_kommuner,mart_indicator_missing_kommuner,true
 indicator_summary,mart_indicator_summary,true
+ingest_health,mart_ingest_health,false
 kommune_befolkning_alder,mart_kommune_befolkning_alder,false
 kommune_local_chapters,mart_kommune_local_chapters,false
 kommune_ngo_summary,mart_kommune_ngo_summary,false
@@ -18,4 +19,5 @@ meta_endpoints,mart_meta_endpoints,true
 meta_sources,mart_meta_sources,true
 ngo_index,mart_ngo_index,false
 ngo_overview,mart_ngo_overview,false
+source_freshness,mart_source_freshness,false
 unattributed_totals,mart_unattributed_totals,true

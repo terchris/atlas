@@ -98,6 +98,7 @@ mart_atlas_inventory,mart_distrikt_summary,model
 mart_atlas_inventory,mart_indicator_latest_values,model
 mart_atlas_inventory,mart_indicator_missing_kommuner,model
 mart_atlas_inventory,mart_indicator_summary,model
+mart_atlas_inventory,mart_ingest_health,model
 mart_atlas_inventory,mart_kommune_befolkning_alder,model
 mart_atlas_inventory,mart_kommune_local_chapters,model
 mart_atlas_inventory,mart_kommune_ngo_summary,model
@@ -107,6 +108,7 @@ mart_atlas_inventory,mart_meta_endpoints,model
 mart_atlas_inventory,mart_meta_sources,model
 mart_atlas_inventory,mart_ngo_index,model
 mart_atlas_inventory,mart_ngo_overview,model
+mart_atlas_inventory,mart_source_freshness,model
 mart_atlas_inventory,mart_unattributed_totals,model
 mart_brreg_enhet,dim_brreg_enhet,model
 mart_coverage_gap_barnefattigdom,fact_kommune_indicators,model
