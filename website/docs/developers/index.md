@@ -6,7 +6,7 @@ This section is for **anyone consuming Atlas's public PostgREST API** to build t
 
 <!-- BEGIN holdings (generated) -->
 
-**43 upstream sources** from **5 publishers**, served as **33 read-only relations**.
+**43 upstream sources** from **5 publishers**, served as **73 read-only relations**.
 
 | publisher | sources | broadly |
 |---|---|---|
@@ -36,6 +36,46 @@ Licences: **NLOD** for 42 of 43 — Norwegian public data, free to reuse with at
 | `indicator_latest_values` | One row per (source_id, contents_code, kommune_nr) at each indicator's latest_year, restricted to active kommuner. |
 | `indicator_missing_kommuner` | 🔴 A ROW HERE IS NOT EVIDENCE OF LOW NEED. |
 | `indicator_summary` | One row per (source_id, contents_code) summarising the latest-year coverage and value range for every indicator in fact_kommune_indicators. |
+| `indicators__bufdir_barnefattigdom` | Per-source indicator relation for `bufdir-barnefattigdom` (Barne-, ungdoms- og familiedirektoratet), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
+| `indicators__fhi_alkohol` | Per-source indicator relation for `fhi-alkohol` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
+| `indicators__fhi_befolkning` | Per-source indicator relation for `fhi-befolkning` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
+| `indicators__fhi_befolkningsvekst` | Per-source indicator relation for `fhi-befolkningsvekst` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
+| `indicators__fhi_bor_alene` | Per-source indicator relation for `fhi-bor-alene` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
+| `indicators__fhi_depresjon` | Per-source indicator relation for `fhi-depresjon` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
+| `indicators__fhi_fortrolig_venn` | Per-source indicator relation for `fhi-fortrolig-venn` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
+| `indicators__fhi_hasj` | Per-source indicator relation for `fhi-hasj` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
+| `indicators__fhi_innvandrere` | Per-source indicator relation for `fhi-innvandrere` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
+| `indicators__fhi_innvkat` | Per-source indicator relation for `fhi-innvkat` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
+| `indicators__fhi_kpr_1aar` | Per-source indicator relation for `fhi-kpr-1aar` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
+| `indicators__fhi_livskvalitet` | Per-source indicator relation for `fhi-livskvalitet` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
+| `indicators__fhi_mediebruk_some` | Per-source indicator relation for `fhi-mediebruk-some` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
+| `indicators__fhi_mediebruk_spill` | Per-source indicator relation for `fhi-mediebruk-spill` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
+| `indicators__fhi_mediebruk_underhold` | Per-source indicator relation for `fhi-mediebruk-underhold` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
+| `indicators__fhi_mobbing` | Per-source indicator relation for `fhi-mobbing` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
+| `indicators__fhi_neet` | Per-source indicator relation for `fhi-neet` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
+| `indicators__fhi_prognose` | Per-source indicator relation for `fhi-prognose` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
+| `indicators__fhi_selvmord` | Per-source indicator relation for `fhi-selvmord` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
+| `indicators__fhi_smertestillende` | Per-source indicator relation for `fhi-smertestillende` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
+| `indicators__fhi_trangbodd` | Per-source indicator relation for `fhi-trangbodd` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
+| `indicators__fhi_vgs_gjennomforing` | Per-source indicator relation for `fhi-vgs-gjennomforing` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
+| `indicators__ssb_06083` | Per-source indicator relation for `ssb-06083` (Statistisk sentralbyrå), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
+| `indicators__ssb_06913` | Per-source indicator relation for `ssb-06913` (Statistisk sentralbyrå), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
+| `indicators__ssb_06944` | Per-source indicator relation for `ssb-06944` (Statistisk sentralbyrå), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
+| `indicators__ssb_06947` | Per-source indicator relation for `ssb-06947` (Statistisk sentralbyrå), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
+| `indicators__ssb_07459` | Per-source indicator relation for `ssb-07459` (Statistisk sentralbyrå), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
+| `indicators__ssb_08484` | Per-source indicator relation for `ssb-08484`, published at the grain the publisher actually uses rather than flattened into the cross-source views. |
+| `indicators__ssb_08487` | Per-source indicator relation for `ssb-08487`, published at the grain the publisher actually uses rather than flattened into the cross-source views. |
+| `indicators__ssb_08764` | Per-source indicator relation for `ssb-08764` (Statistisk sentralbyrå), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
+| `indicators__ssb_09405` | Per-source indicator relation for `ssb-09405`, published at the grain the publisher actually uses rather than flattened into the cross-source views. |
+| `indicators__ssb_09406` | Per-source indicator relation for `ssb-09406`, published at the grain the publisher actually uses rather than flattened into the cross-source views. |
+| `indicators__ssb_09429` | Per-source indicator relation for `ssb-09429` (Statistisk sentralbyrå), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
+| `indicators__ssb_10826` | Per-source indicator relation for `ssb-10826` (Statistisk sentralbyrå), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
+| `indicators__ssb_12063` | Per-source indicator relation for `ssb-12063` (Statistisk sentralbyrå), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
+| `indicators__ssb_12131` | Per-source indicator relation for `ssb-12131` (Statistisk sentralbyrå), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
+| `indicators__ssb_12132` | Per-source indicator relation for `ssb-12132` (Statistisk sentralbyrå), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
+| `indicators__ssb_12292` | Per-source indicator relation for `ssb-12292` (Statistisk sentralbyrå), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
+| `indicators__ssb_12944` | Per-source indicator relation for `ssb-12944` (Statistisk sentralbyrå), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
+| `indicators__ssb_13995` | Per-source indicator relation for `ssb-13995` (Statistisk sentralbyrå), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
 | `ingest_health` | Per-source ingest-run health. |
 | `kommune_befolkning_alder` | Population by kommune, year and age band — the denominator layer. |
 | `kommune_local_chapters` | 🔵 EXPECTED EMPTY TODAY, AND THAT IS NOT A DEFECT. |

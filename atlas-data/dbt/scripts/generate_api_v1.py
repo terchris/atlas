@@ -189,6 +189,14 @@ THE CATALOGUE:
                     (different columns), how many ingest attempts, and whether
                     the rows came from an ingest, a seed or the catalogue.
   meta_endpoints    every relation below, with tags. The index.
+                    ⚠️ READ ITS stability: TAG BEFORE YOU BUILD ON A RELATION.
+                    `stability:curated` means Atlas defines the column set and
+                    a change to it is a change to a published contract.
+                    `stability:source` means the column set follows an upstream
+                    publisher — they add, rename or drop a dimension and the
+                    relation changes with it, and Atlas does not promise
+                    otherwise. Every published relation carries exactly one;
+                    the generator refuses to publish one that does not.
   meta_sources      one row per ingested source: licence, publisher,
                     coverage, freshness, downstream model count.
   meta_dimensions   one row per source x upstream dimension: what that coded
@@ -227,6 +235,42 @@ SUPPLY — voluntary-sector presence:
                                unattributed_totals.
   distrikt_summary             chapters by district.
   kommune_local_chapters       chapters resolved to a kommune.
+
+PER-SOURCE INDICATOR RELATIONS — 40 of them, one per upstream table, at the
+grain the publisher actually uses. The cross-source views above impose ONE
+shape on every source; these keep the source's own dimensions, so a breakdown
+those views flatten away (a sex, an age band, a household or family type, a
+parental-education split) is only answerable here.
+
+🔴 ALL 40 ARE stability:source. THE COLUMN SET FOLLOWS THE PUBLISHER, NOT
+ATLAS. If SSB, FHI or Bufdir adds, renames or drops a dimension, these change
+with it — that is the deliberate trade for getting the real grain. Filter
+`meta_endpoints?tags=cs.{{stability:curated}}` for the relations whose shape
+Atlas promises to hold still.
+
+🔵 Codes are codes here. Decode them through `meta_dimensions` filtered to the
+same source_id, and through the ref_* lists above where one exists.
+
+  bufdir (1):
+    indicators__bufdir_barnefattigdom
+  fhi (21):
+    indicators__fhi_alkohol indicators__fhi_befolkning
+    indicators__fhi_befolkningsvekst indicators__fhi_bor_alene
+    indicators__fhi_depresjon indicators__fhi_fortrolig_venn
+    indicators__fhi_hasj indicators__fhi_innvandrere
+    indicators__fhi_innvkat indicators__fhi_kpr_1aar
+    indicators__fhi_livskvalitet indicators__fhi_mediebruk_some
+    indicators__fhi_mediebruk_spill indicators__fhi_mediebruk_underhold
+    indicators__fhi_mobbing indicators__fhi_neet indicators__fhi_prognose
+    indicators__fhi_selvmord indicators__fhi_smertestillende
+    indicators__fhi_trangbodd indicators__fhi_vgs_gjennomforing
+  ssb (18):
+    indicators__ssb_06083 indicators__ssb_06913 indicators__ssb_06944
+    indicators__ssb_06947 indicators__ssb_07459 indicators__ssb_08484
+    indicators__ssb_08487 indicators__ssb_08764 indicators__ssb_09405
+    indicators__ssb_09406 indicators__ssb_09429 indicators__ssb_10826
+    indicators__ssb_12063 indicators__ssb_12131 indicators__ssb_12132
+    indicators__ssb_12292 indicators__ssb_12944 indicators__ssb_13995
 
 REFERENCE:
   dim_kommune                  the municipality dimension. Keeps SSB's 9999
@@ -612,13 +656,84 @@ def render_relations_seed(manifest: dict, wrappers: "list[WrapperView]") -> str:
 
     by_name = {n["name"]: uid for uid, n in nodes.items()
                if n.get("resource_type") == "model"}
-    rows = ["relation_name,mart_name,derives_from_fact"]
+    # 🔴 stability — WHOSE SHAPE IS THIS, AND WHO CAN CHANGE IT.
+    #
+    #   source   the COLUMN SET follows an upstream publisher. They add, rename
+    #            or drop a dimension and this relation changes with it. Atlas
+    #            cannot promise the shape and does not pretend to.
+    #   curated  Atlas defines the column set and treats a change to it as a
+    #            change to a published contract.
+    #
+    # ⚠️ DECLARED IN THE MODEL, NOT INFERRED HERE. It is an editorial judgement
+    # about who owns a shape — a heuristic would get it wrong silently, and the
+    # whole value of the tag is that a consumer can trust it. It is read from
+    # `meta.stability` in models/marts/api/schema.yml.
+    #
+    # 🔴 AND AN UNDECLARED RELATION IS A HARD FAILURE, NOT A DEFAULT. Defaulting
+    # would publish "curated" for a relation nobody classified — an Atlas
+    # promise nobody made. Terje's condition on urb-agents #1547 was "same
+    # change or neither", precisely because a partially-tagged surface implies
+    # the untagged half was considered and found stable.
+    rows = ["relation_name,mart_name,derives_from_fact,stability"]
     for w in wrappers:
         mart = w.source_relation
         uid = by_name.get(mart)
         rows.append(f"{w.view_name},{mart},"
-                    f"{'true' if uid and reaches_fact(uid) else 'false'}")
+                    f"{'true' if uid and reaches_fact(uid) else 'false'},"
+                    f"{(nodes.get(uid, {}).get('meta') or {}).get('stability')}")
     return "\n".join(rows) + "\n"
+
+
+STABILITY_VALUES = {"source", "curated"}
+
+
+def assert_every_wrapper_declares_stability(manifest: dict, wrappers: "list[WrapperView]") -> None:
+    """Every published relation must declare meta.stability. No default.
+
+    🔴 WHOSE SHAPE IS THIS, AND WHO CAN CHANGE IT.
+
+      source   the COLUMN SET follows an upstream publisher. They add, rename
+               or drop a dimension and this relation changes with it. Atlas
+               cannot promise the shape and does not pretend to.
+      curated  Atlas defines the column set and treats a change to it as a
+               change to a published contract.
+
+    ⚠️ DECLARED, NOT INFERRED. It is an editorial judgement about who owns a
+    shape; a heuristic would get it wrong silently, and the only value the tag
+    has is that a consumer can trust it.
+
+    🔴 AN UNDECLARED RELATION IS A HARD FAILURE, NOT A DEFAULT. Defaulting to
+    "curated" would publish an Atlas promise nobody made. Terje's condition on
+    urb-agents #1547 was "same change or neither", precisely because a
+    partially tagged surface implies the untagged half was considered and found
+    stable.
+
+    ⚠️ THIS LIVES HERE, NOT IN render_relations_seed, AND THAT IS THE POINT.
+    It was in the seed writer first. check-api-v1.sh — the drift gate CI
+    actually runs — invokes this generator WITHOUT --relations-seed, so the
+    seed writer never executed and an unclassified relation passed CI while
+    ./regenerate-api-v1.sh rejected it. A check that only runs on the developer's
+    path is not a gate. Called from main(), so every invocation validates.
+    """
+    nodes = manifest.get("nodes", {})
+    by_name = {n["name"]: uid for uid, n in nodes.items()
+               if n.get("resource_type") == "model"}
+    missing = []
+    for w in wrappers:
+        uid = by_name.get(w.source_relation)
+        value = (nodes.get(uid, {}).get("meta") or {}).get("stability")
+        if value not in STABILITY_VALUES:
+            missing.append((w.view_name, value))
+    if missing:
+        detail = "\n".join(
+            f"    {name}  (meta.stability = {val!r})" for name, val in sorted(missing))
+        raise SystemExit(
+            "\u2717 published relation(s) without a valid meta.stability:\n"
+            f"{detail}\n"
+            "  Add `meta: {stability: source|curated}` to the model in\n"
+            "  models/marts/api/schema.yml. source = the column set follows an\n"
+            "  upstream publisher; curated = Atlas defines and owns the shape."
+        )
 
 
 def main() -> None:
@@ -645,6 +760,7 @@ def main() -> None:
 
     manifest = json.loads(args.manifest.read_text())
     wrappers = extract_wrappers(manifest, args.models_dir_prefix)
+    assert_every_wrapper_declares_stability(manifest, wrappers)
 
     prev_views = set(_read_state(args.state))
     current_views = {w.view_name for w in wrappers}

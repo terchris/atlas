@@ -68,6 +68,14 @@ THE CATALOGUE:
                     (different columns), how many ingest attempts, and whether
                     the rows came from an ingest, a seed or the catalogue.
   meta_endpoints    every relation below, with tags. The index.
+                    ⚠️ READ ITS stability: TAG BEFORE YOU BUILD ON A RELATION.
+                    `stability:curated` means Atlas defines the column set and
+                    a change to it is a change to a published contract.
+                    `stability:source` means the column set follows an upstream
+                    publisher — they add, rename or drop a dimension and the
+                    relation changes with it, and Atlas does not promise
+                    otherwise. Every published relation carries exactly one;
+                    the generator refuses to publish one that does not.
   meta_sources      one row per ingested source: licence, publisher,
                     coverage, freshness, downstream model count.
   meta_dimensions   one row per source x upstream dimension: what that coded
@@ -106,6 +114,42 @@ SUPPLY — voluntary-sector presence:
                                unattributed_totals.
   distrikt_summary             chapters by district.
   kommune_local_chapters       chapters resolved to a kommune.
+
+PER-SOURCE INDICATOR RELATIONS — 40 of them, one per upstream table, at the
+grain the publisher actually uses. The cross-source views above impose ONE
+shape on every source; these keep the source''s own dimensions, so a breakdown
+those views flatten away (a sex, an age band, a household or family type, a
+parental-education split) is only answerable here.
+
+🔴 ALL 40 ARE stability:source. THE COLUMN SET FOLLOWS THE PUBLISHER, NOT
+ATLAS. If SSB, FHI or Bufdir adds, renames or drops a dimension, these change
+with it — that is the deliberate trade for getting the real grain. Filter
+`meta_endpoints?tags=cs.{stability:curated}` for the relations whose shape
+Atlas promises to hold still.
+
+🔵 Codes are codes here. Decode them through `meta_dimensions` filtered to the
+same source_id, and through the ref_* lists above where one exists.
+
+  bufdir (1):
+    indicators__bufdir_barnefattigdom
+  fhi (21):
+    indicators__fhi_alkohol indicators__fhi_befolkning
+    indicators__fhi_befolkningsvekst indicators__fhi_bor_alene
+    indicators__fhi_depresjon indicators__fhi_fortrolig_venn
+    indicators__fhi_hasj indicators__fhi_innvandrere
+    indicators__fhi_innvkat indicators__fhi_kpr_1aar
+    indicators__fhi_livskvalitet indicators__fhi_mediebruk_some
+    indicators__fhi_mediebruk_spill indicators__fhi_mediebruk_underhold
+    indicators__fhi_mobbing indicators__fhi_neet indicators__fhi_prognose
+    indicators__fhi_selvmord indicators__fhi_smertestillende
+    indicators__fhi_trangbodd indicators__fhi_vgs_gjennomforing
+  ssb (18):
+    indicators__ssb_06083 indicators__ssb_06913 indicators__ssb_06944
+    indicators__ssb_06947 indicators__ssb_07459 indicators__ssb_08484
+    indicators__ssb_08487 indicators__ssb_08764 indicators__ssb_09405
+    indicators__ssb_09406 indicators__ssb_09429 indicators__ssb_10826
+    indicators__ssb_12063 indicators__ssb_12131 indicators__ssb_12132
+    indicators__ssb_12292 indicators__ssb_12944 indicators__ssb_13995
 
 REFERENCE:
   dim_kommune                  the municipality dimension. Keeps SSB''s 9999
@@ -1037,6 +1081,755 @@ of whether the kommune is active. NULL if no row had a value.';
 COMMENT ON COLUMN api_v1.indicator_summary.upstream_updated IS 'Most recent fact_kommune_indicators.updated_at across the rows
 that contributed to this summary. Useful for staleness checks
 per indicator without joining to raw.*.';
+
+-- indicators__bufdir_barnefattigdom  ←  marts.mart_indicators__bufdir_barnefattigdom
+CREATE OR REPLACE VIEW api_v1.indicators__bufdir_barnefattigdom AS SELECT * FROM marts.mart_indicators__bufdir_barnefattigdom;
+COMMENT ON VIEW api_v1.indicators__bufdir_barnefattigdom IS 'Per-source indicator relation for `bufdir-barnefattigdom` (Barne-, ungdoms- og familiedirektoratet), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Barne-, ungdoms- og familiedirektoratet, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=bufdir-barnefattigdom.';
+COMMENT ON COLUMN api_v1.indicators__bufdir_barnefattigdom.source_id IS 'Atlas catalogue id for this ingest — always bufdir-barnefattigdom.';
+COMMENT ON COLUMN api_v1.indicators__bufdir_barnefattigdom.indicator_api_id IS 'Stable surrogate workbook id — bf_zip_<24 hex fingerprint of the XLSX filename stem>.';
+COMMENT ON COLUMN api_v1.indicators__bufdir_barnefattigdom.indicator_slug IS 'Normalised slug from the upstream indicator name; used as part of contents_code.';
+COMMENT ON COLUMN api_v1.indicators__bufdir_barnefattigdom.indicator_group_slug IS 'Fixed literal barnefattigdom_zip for ZIP-ingested rows (replaces legacy Strapi group slugs).';
+COMMENT ON COLUMN api_v1.indicators__bufdir_barnefattigdom.indicator_name IS 'Workbook-derived indicator title concatenated above the Region header rows.';
+COMMENT ON COLUMN api_v1.indicators__bufdir_barnefattigdom.indicator_title IS 'Same human-facing title chain as indicator_name after ZIP parsing.';
+COMMENT ON COLUMN api_v1.indicators__bufdir_barnefattigdom.link_text IS 'NULL for workbook-backed rows (legacy Strapi link label not present upstream).';
+COMMENT ON COLUMN api_v1.indicators__bufdir_barnefattigdom.region_code IS 'Geographic code string from workbook column Region (same levels as the legacy API: land, fylke, kommune, longer bydel codes).';
+COMMENT ON COLUMN api_v1.indicators__bufdir_barnefattigdom.kommune_nr IS 'Four-digit kommune code when region_code is exactly four digits; NULL for other geography levels.';
+COMMENT ON COLUMN api_v1.indicators__bufdir_barnefattigdom.fylke_nr IS 'Two-digit fylke code when region_code is exactly two digits; NULL otherwise.';
+COMMENT ON COLUMN api_v1.indicators__bufdir_barnefattigdom.category_unit IS 'First category axis from column Enhet — barn (children) or husholdning (households).';
+COMMENT ON COLUMN api_v1.indicators__bufdir_barnefattigdom.category_format IS 'Second category axis — prosent (share) or antall (count).';
+COMMENT ON COLUMN api_v1.indicators__bufdir_barnefattigdom.year IS 'Calendar year of the observation.';
+COMMENT ON COLUMN api_v1.indicators__bufdir_barnefattigdom.contents_code IS 'Atlas-normalised variable code: prefix `bf_`, the indicator slug, and the two category axes joined with `__`, so each measure is filter-stable in the catalogue.';
+COMMENT ON COLUMN api_v1.indicators__bufdir_barnefattigdom.contents_label IS 'Human-readable label combining workbook title rows with barn/husholdning and prosent/antall verbs.';
+COMMENT ON COLUMN api_v1.indicators__bufdir_barnefattigdom.value IS 'Numeric value for this year; NULL when the upstream series omits this year.';
+COMMENT ON COLUMN api_v1.indicators__bufdir_barnefattigdom.values_json IS 'Parse of Data sheet rows into year keys (spreadsheet blanks / suppression → JSON null values).';
+COMMENT ON COLUMN api_v1.indicators__bufdir_barnefattigdom.updated_at IS 'Timestamp when the row was last written by ingest (from raw.loaded_at).';
+
+-- indicators__fhi_alkohol  ←  marts.mart_indicators__fhi_alkohol
+CREATE OR REPLACE VIEW api_v1.indicators__fhi_alkohol AS SELECT * FROM marts.mart_indicators__fhi_alkohol;
+COMMENT ON VIEW api_v1.indicators__fhi_alkohol IS 'Per-source indicator relation for `fhi-alkohol` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=fhi-alkohol.';
+COMMENT ON COLUMN api_v1.indicators__fhi_alkohol.source_id IS 'Atlas source identifier.';
+COMMENT ON COLUMN api_v1.indicators__fhi_alkohol.region_code IS 'FHI GEO verbatim — kommune, fylke, bydel or national.';
+COMMENT ON COLUMN api_v1.indicators__fhi_alkohol.kommune_nr IS '4-digit kommune code, via region_code_to_kommune_nr — NULL for every region that is not a municipality. Not a bare four-digit regex; that is what called Svalbard a kommune.';
+COMMENT ON COLUMN api_v1.indicators__fhi_alkohol.region_kind IS 'What the GEO code is; joins ref_region_kind.';
+COMMENT ON COLUMN api_v1.indicators__fhi_alkohol.fylke_nr IS '2-digit fylke code where GEO is a fylke, else NULL.';
+COMMENT ON COLUMN api_v1.indicators__fhi_alkohol.year IS 'First year of the period.';
+COMMENT ON COLUMN api_v1.indicators__fhi_alkohol.period IS 'FHI AAR verbatim, e.g. "2024_2024".';
+COMMENT ON COLUMN api_v1.indicators__fhi_alkohol.period_start_year IS 'Parsed first year of the period.';
+COMMENT ON COLUMN api_v1.indicators__fhi_alkohol.period_end_year IS 'Parsed last year of the period.';
+COMMENT ON COLUMN api_v1.indicators__fhi_alkohol.sex IS 'all / male / female, decoded from FHI KJONN.';
+COMMENT ON COLUMN api_v1.indicators__fhi_alkohol.ungdata_cohort IS 'FHI ALDER verbatim, always "1_6". ⚠️ An Ungdata survey-cohort identifier, NOT ages 1 to 6. Unverified against Ungdata methodology — carried rather than interpreted.';
+COMMENT ON COLUMN api_v1.indicators__fhi_alkohol.frequency_band IS 'The degenerate topic slice FHI reports for this table.';
+COMMENT ON COLUMN api_v1.indicators__fhi_alkohol.socioeconomic_status IS 'FHI SOES. "0" is combined; only fhi-depresjon carries the 1/2/3 breakdown.';
+COMMENT ON COLUMN api_v1.indicators__fhi_alkohol.contents_code IS 'SMR or MEIS.';
+COMMENT ON COLUMN api_v1.indicators__fhi_alkohol.contents_label IS 'Human-readable gloss for contents_code.';
+COMMENT ON COLUMN api_v1.indicators__fhi_alkohol.value IS 'The measured value. NULL where FHI suppressed the cell.';
+COMMENT ON COLUMN api_v1.indicators__fhi_alkohol.status IS 'FHI suppression marker.';
+COMMENT ON COLUMN api_v1.indicators__fhi_alkohol.updated_at IS 'When the raw row was loaded.';
+
+-- indicators__fhi_befolkning  ←  marts.mart_indicators__fhi_befolkning
+CREATE OR REPLACE VIEW api_v1.indicators__fhi_befolkning AS SELECT * FROM marts.mart_indicators__fhi_befolkning;
+COMMENT ON VIEW api_v1.indicators__fhi_befolkning IS 'Per-source indicator relation for `fhi-befolkning` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=fhi-befolkning.';
+COMMENT ON COLUMN api_v1.indicators__fhi_befolkning.source_id IS 'Atlas source identifier.';
+COMMENT ON COLUMN api_v1.indicators__fhi_befolkning.region_code IS 'FHI GEO verbatim — kommune, fylke, bydel or national.';
+COMMENT ON COLUMN api_v1.indicators__fhi_befolkning.kommune_nr IS '4-digit kommune code via region_code_to_kommune_nr — NULL for every region that is not a municipality.';
+COMMENT ON COLUMN api_v1.indicators__fhi_befolkning.region_kind IS 'What the GEO code is; joins ref_region_kind.';
+COMMENT ON COLUMN api_v1.indicators__fhi_befolkning.fylke_nr IS '2-digit fylke code where GEO is a fylke, else NULL.';
+COMMENT ON COLUMN api_v1.indicators__fhi_befolkning.year IS 'First year of the period.';
+COMMENT ON COLUMN api_v1.indicators__fhi_befolkning.period IS 'FHI AAR verbatim.';
+COMMENT ON COLUMN api_v1.indicators__fhi_befolkning.period_start_year IS 'Parsed first year of the period.';
+COMMENT ON COLUMN api_v1.indicators__fhi_befolkning.period_end_year IS 'Parsed last year of the period.';
+COMMENT ON COLUMN api_v1.indicators__fhi_befolkning.sex IS 'all / male / female, decoded from FHI KJONN.';
+COMMENT ON COLUMN api_v1.indicators__fhi_befolkning.age_band IS 'FHI ALDER, a "min_max" band string. Bands OVERLAP — 0_120 is everyone, so summing bands double-counts.';
+COMMENT ON COLUMN api_v1.indicators__fhi_befolkning.contents_code IS 'TELLER, RATE, SMR or MEIS — which exist varies by table.';
+COMMENT ON COLUMN api_v1.indicators__fhi_befolkning.contents_label IS 'Human-readable gloss for contents_code.';
+COMMENT ON COLUMN api_v1.indicators__fhi_befolkning.value IS 'The measured value. NULL where FHI suppressed the cell.';
+COMMENT ON COLUMN api_v1.indicators__fhi_befolkning.status IS 'FHI suppression marker.';
+COMMENT ON COLUMN api_v1.indicators__fhi_befolkning.updated_at IS 'When the raw row was loaded.';
+
+-- indicators__fhi_befolkningsvekst  ←  marts.mart_indicators__fhi_befolkningsvekst
+CREATE OR REPLACE VIEW api_v1.indicators__fhi_befolkningsvekst AS SELECT * FROM marts.mart_indicators__fhi_befolkningsvekst;
+COMMENT ON VIEW api_v1.indicators__fhi_befolkningsvekst IS 'Per-source indicator relation for `fhi-befolkningsvekst` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=fhi-befolkningsvekst.';
+COMMENT ON COLUMN api_v1.indicators__fhi_befolkningsvekst.source_id IS 'Atlas source identifier.';
+COMMENT ON COLUMN api_v1.indicators__fhi_befolkningsvekst.region_code IS 'FHI GEO verbatim — kommune, fylke, bydel or national.';
+COMMENT ON COLUMN api_v1.indicators__fhi_befolkningsvekst.kommune_nr IS '4-digit kommune code via region_code_to_kommune_nr — NULL for every region that is not a municipality.';
+COMMENT ON COLUMN api_v1.indicators__fhi_befolkningsvekst.region_kind IS 'What the GEO code is; joins ref_region_kind.';
+COMMENT ON COLUMN api_v1.indicators__fhi_befolkningsvekst.fylke_nr IS '2-digit fylke code where GEO is a fylke, else NULL.';
+COMMENT ON COLUMN api_v1.indicators__fhi_befolkningsvekst.year IS 'First year of the period.';
+COMMENT ON COLUMN api_v1.indicators__fhi_befolkningsvekst.period IS 'FHI AAR verbatim.';
+COMMENT ON COLUMN api_v1.indicators__fhi_befolkningsvekst.period_start_year IS 'Parsed first year of the period.';
+COMMENT ON COLUMN api_v1.indicators__fhi_befolkningsvekst.period_end_year IS 'Parsed last year of the period.';
+COMMENT ON COLUMN api_v1.indicators__fhi_befolkningsvekst.sex IS 'all / male / female, decoded from FHI KJONN.';
+COMMENT ON COLUMN api_v1.indicators__fhi_befolkningsvekst.age_band IS 'FHI ALDER, a "min_max" band string. Bands OVERLAP — 0_120 is everyone, so summing bands double-counts.';
+COMMENT ON COLUMN api_v1.indicators__fhi_befolkningsvekst.contents_code IS 'TELLER, RATE, SMR or MEIS — which exist varies by table.';
+COMMENT ON COLUMN api_v1.indicators__fhi_befolkningsvekst.contents_label IS 'Human-readable gloss for contents_code.';
+COMMENT ON COLUMN api_v1.indicators__fhi_befolkningsvekst.value IS 'The measured value. NULL where FHI suppressed the cell.';
+COMMENT ON COLUMN api_v1.indicators__fhi_befolkningsvekst.status IS 'FHI suppression marker.';
+COMMENT ON COLUMN api_v1.indicators__fhi_befolkningsvekst.updated_at IS 'When the raw row was loaded.';
+
+-- indicators__fhi_bor_alene  ←  marts.mart_indicators__fhi_bor_alene
+CREATE OR REPLACE VIEW api_v1.indicators__fhi_bor_alene AS SELECT * FROM marts.mart_indicators__fhi_bor_alene;
+COMMENT ON VIEW api_v1.indicators__fhi_bor_alene IS 'Per-source indicator relation for `fhi-bor-alene` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=fhi-bor-alene.';
+COMMENT ON COLUMN api_v1.indicators__fhi_bor_alene.source_id IS 'Atlas source identifier for the upstream table this row came from — the same id used by meta_sources and meta_dimensions.';
+COMMENT ON COLUMN api_v1.indicators__fhi_bor_alene.region_code IS 'The publisher''s own region code, verbatim. It may be a kommune, fylke, bydel or national code depending on what that publisher emits; region_kind says which.';
+COMMENT ON COLUMN api_v1.indicators__fhi_bor_alene.kommune_nr IS '4-digit kommune code, derived via region_code_to_kommune_nr. NULL for every region that is not a municipality. ⚠️ Not a bare four-digit match — that is what once called Svalbard, Jan Mayen and the continental shelf municipalities.';
+COMMENT ON COLUMN api_v1.indicators__fhi_bor_alene.fylke_nr IS '2-digit fylke code where the region is a fylke, else NULL.';
+COMMENT ON COLUMN api_v1.indicators__fhi_bor_alene.year IS 'First year of the period this row covers. ⚠️ For a multi-year window this is the FIRST year, not the only one — read period_start_year and period_end_year for the span.';
+COMMENT ON COLUMN api_v1.indicators__fhi_bor_alene.period IS 'The publisher''s own period code, verbatim (e.g. "2024_2024").';
+COMMENT ON COLUMN api_v1.indicators__fhi_bor_alene.period_start_year IS 'Parsed first year of the period.';
+COMMENT ON COLUMN api_v1.indicators__fhi_bor_alene.period_end_year IS 'Parsed last year of the period.';
+COMMENT ON COLUMN api_v1.indicators__fhi_bor_alene.age_group IS 'The publisher''s age-band dimension, verbatim. Bands are not always disjoint — an "all ages" bucket usually sits alongside the slices, so summing without filtering double-counts.';
+COMMENT ON COLUMN api_v1.indicators__fhi_bor_alene.age_group_min IS 'Numeric floor of age_group, parsed from the band''s "min_max" form. NULL where the band has no finite floor.';
+COMMENT ON COLUMN api_v1.indicators__fhi_bor_alene.age_group_max IS 'Numeric ceiling of age_group, parsed from the band''s "min_max" form. NULL for an open-ended band.';
+COMMENT ON COLUMN api_v1.indicators__fhi_bor_alene.contents_code IS 'The publisher''s code for WHICH measure this row reports. Decode it through meta_dimensions for this source_id.';
+COMMENT ON COLUMN api_v1.indicators__fhi_bor_alene.contents_label IS 'Human-readable gloss for contents_code.';
+COMMENT ON COLUMN api_v1.indicators__fhi_bor_alene.value IS 'The measured value. NULL where the publisher suppressed the cell — see status.';
+COMMENT ON COLUMN api_v1.indicators__fhi_bor_alene.status IS 'The publisher''s own suppression or quality marker for this cell, passed through verbatim.';
+COMMENT ON COLUMN api_v1.indicators__fhi_bor_alene.updated_at IS 'When Atlas last loaded this row from the upstream.';
+
+-- indicators__fhi_depresjon  ←  marts.mart_indicators__fhi_depresjon
+CREATE OR REPLACE VIEW api_v1.indicators__fhi_depresjon AS SELECT * FROM marts.mart_indicators__fhi_depresjon;
+COMMENT ON VIEW api_v1.indicators__fhi_depresjon IS 'Per-source indicator relation for `fhi-depresjon` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=fhi-depresjon.';
+COMMENT ON COLUMN api_v1.indicators__fhi_depresjon.source_id IS 'Atlas source identifier.';
+COMMENT ON COLUMN api_v1.indicators__fhi_depresjon.region_code IS 'FHI GEO verbatim — kommune, fylke, bydel or national.';
+COMMENT ON COLUMN api_v1.indicators__fhi_depresjon.kommune_nr IS '4-digit kommune code, via region_code_to_kommune_nr — NULL for every region that is not a municipality. Not a bare four-digit regex; that is what called Svalbard a kommune.';
+COMMENT ON COLUMN api_v1.indicators__fhi_depresjon.region_kind IS 'What the GEO code is; joins ref_region_kind.';
+COMMENT ON COLUMN api_v1.indicators__fhi_depresjon.fylke_nr IS '2-digit fylke code where GEO is a fylke, else NULL.';
+COMMENT ON COLUMN api_v1.indicators__fhi_depresjon.year IS 'First year of the period.';
+COMMENT ON COLUMN api_v1.indicators__fhi_depresjon.period IS 'FHI AAR verbatim, e.g. "2024_2024".';
+COMMENT ON COLUMN api_v1.indicators__fhi_depresjon.period_start_year IS 'Parsed first year of the period.';
+COMMENT ON COLUMN api_v1.indicators__fhi_depresjon.period_end_year IS 'Parsed last year of the period.';
+COMMENT ON COLUMN api_v1.indicators__fhi_depresjon.sex IS 'all / male / female, decoded from FHI KJONN.';
+COMMENT ON COLUMN api_v1.indicators__fhi_depresjon.ungdata_cohort IS 'FHI ALDER verbatim, always "1_6". ⚠️ An Ungdata survey-cohort identifier, NOT ages 1 to 6. Unverified against Ungdata methodology — carried rather than interpreted.';
+COMMENT ON COLUMN api_v1.indicators__fhi_depresjon.symptom_threshold IS 'The degenerate topic slice FHI reports for this table.';
+COMMENT ON COLUMN api_v1.indicators__fhi_depresjon.socioeconomic_status IS 'FHI SOES. "0" is combined; only fhi-depresjon carries the 1/2/3 breakdown.';
+COMMENT ON COLUMN api_v1.indicators__fhi_depresjon.contents_code IS 'SMR or MEIS.';
+COMMENT ON COLUMN api_v1.indicators__fhi_depresjon.contents_label IS 'Human-readable gloss for contents_code.';
+COMMENT ON COLUMN api_v1.indicators__fhi_depresjon.value IS 'The measured value. NULL where FHI suppressed the cell.';
+COMMENT ON COLUMN api_v1.indicators__fhi_depresjon.status IS 'FHI suppression marker.';
+COMMENT ON COLUMN api_v1.indicators__fhi_depresjon.updated_at IS 'When the raw row was loaded.';
+
+-- indicators__fhi_fortrolig_venn  ←  marts.mart_indicators__fhi_fortrolig_venn
+CREATE OR REPLACE VIEW api_v1.indicators__fhi_fortrolig_venn AS SELECT * FROM marts.mart_indicators__fhi_fortrolig_venn;
+COMMENT ON VIEW api_v1.indicators__fhi_fortrolig_venn IS 'Per-source indicator relation for `fhi-fortrolig-venn` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=fhi-fortrolig-venn.';
+COMMENT ON COLUMN api_v1.indicators__fhi_fortrolig_venn.source_id IS 'Atlas source identifier.';
+COMMENT ON COLUMN api_v1.indicators__fhi_fortrolig_venn.region_code IS 'FHI GEO verbatim — kommune, fylke, bydel or national.';
+COMMENT ON COLUMN api_v1.indicators__fhi_fortrolig_venn.kommune_nr IS '4-digit kommune code, via region_code_to_kommune_nr — NULL for every region that is not a municipality. Not a bare four-digit regex; that is what called Svalbard a kommune.';
+COMMENT ON COLUMN api_v1.indicators__fhi_fortrolig_venn.region_kind IS 'What the GEO code is; joins ref_region_kind.';
+COMMENT ON COLUMN api_v1.indicators__fhi_fortrolig_venn.fylke_nr IS '2-digit fylke code where GEO is a fylke, else NULL.';
+COMMENT ON COLUMN api_v1.indicators__fhi_fortrolig_venn.year IS 'First year of the period.';
+COMMENT ON COLUMN api_v1.indicators__fhi_fortrolig_venn.period IS 'FHI AAR verbatim, e.g. "2024_2024".';
+COMMENT ON COLUMN api_v1.indicators__fhi_fortrolig_venn.period_start_year IS 'Parsed first year of the period.';
+COMMENT ON COLUMN api_v1.indicators__fhi_fortrolig_venn.period_end_year IS 'Parsed last year of the period.';
+COMMENT ON COLUMN api_v1.indicators__fhi_fortrolig_venn.sex IS 'all / male / female, decoded from FHI KJONN.';
+COMMENT ON COLUMN api_v1.indicators__fhi_fortrolig_venn.ungdata_cohort IS 'FHI ALDER verbatim, always "1_6". ⚠️ An Ungdata survey-cohort identifier, NOT ages 1 to 6. Unverified against Ungdata methodology — carried rather than interpreted.';
+COMMENT ON COLUMN api_v1.indicators__fhi_fortrolig_venn.response IS 'The degenerate topic slice FHI reports for this table.';
+COMMENT ON COLUMN api_v1.indicators__fhi_fortrolig_venn.socioeconomic_status IS 'FHI SOES. "0" is combined; only fhi-depresjon carries the 1/2/3 breakdown.';
+COMMENT ON COLUMN api_v1.indicators__fhi_fortrolig_venn.contents_code IS 'SMR or MEIS.';
+COMMENT ON COLUMN api_v1.indicators__fhi_fortrolig_venn.contents_label IS 'Human-readable gloss for contents_code.';
+COMMENT ON COLUMN api_v1.indicators__fhi_fortrolig_venn.value IS 'The measured value. NULL where FHI suppressed the cell.';
+COMMENT ON COLUMN api_v1.indicators__fhi_fortrolig_venn.status IS 'FHI suppression marker.';
+COMMENT ON COLUMN api_v1.indicators__fhi_fortrolig_venn.updated_at IS 'When the raw row was loaded.';
+
+-- indicators__fhi_hasj  ←  marts.mart_indicators__fhi_hasj
+CREATE OR REPLACE VIEW api_v1.indicators__fhi_hasj AS SELECT * FROM marts.mart_indicators__fhi_hasj;
+COMMENT ON VIEW api_v1.indicators__fhi_hasj IS 'Per-source indicator relation for `fhi-hasj` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=fhi-hasj.';
+COMMENT ON COLUMN api_v1.indicators__fhi_hasj.source_id IS 'Atlas source identifier.';
+COMMENT ON COLUMN api_v1.indicators__fhi_hasj.region_code IS 'FHI GEO verbatim — kommune, fylke, bydel or national.';
+COMMENT ON COLUMN api_v1.indicators__fhi_hasj.kommune_nr IS '4-digit kommune code, via region_code_to_kommune_nr — NULL for every region that is not a municipality. Not a bare four-digit regex; that is what called Svalbard a kommune.';
+COMMENT ON COLUMN api_v1.indicators__fhi_hasj.region_kind IS 'What the GEO code is; joins ref_region_kind.';
+COMMENT ON COLUMN api_v1.indicators__fhi_hasj.fylke_nr IS '2-digit fylke code where GEO is a fylke, else NULL.';
+COMMENT ON COLUMN api_v1.indicators__fhi_hasj.year IS 'First year of the period.';
+COMMENT ON COLUMN api_v1.indicators__fhi_hasj.period IS 'FHI AAR verbatim, e.g. "2024_2024".';
+COMMENT ON COLUMN api_v1.indicators__fhi_hasj.period_start_year IS 'Parsed first year of the period.';
+COMMENT ON COLUMN api_v1.indicators__fhi_hasj.period_end_year IS 'Parsed last year of the period.';
+COMMENT ON COLUMN api_v1.indicators__fhi_hasj.sex IS 'all / male / female, decoded from FHI KJONN.';
+COMMENT ON COLUMN api_v1.indicators__fhi_hasj.ungdata_cohort IS 'FHI ALDER verbatim, always "1_6". ⚠️ An Ungdata survey-cohort identifier, NOT ages 1 to 6. Unverified against Ungdata methodology — carried rather than interpreted.';
+COMMENT ON COLUMN api_v1.indicators__fhi_hasj.frequency_band IS 'The degenerate topic slice FHI reports for this table.';
+COMMENT ON COLUMN api_v1.indicators__fhi_hasj.socioeconomic_status IS 'FHI SOES. "0" is combined; only fhi-depresjon carries the 1/2/3 breakdown.';
+COMMENT ON COLUMN api_v1.indicators__fhi_hasj.contents_code IS 'SMR or MEIS.';
+COMMENT ON COLUMN api_v1.indicators__fhi_hasj.contents_label IS 'Human-readable gloss for contents_code.';
+COMMENT ON COLUMN api_v1.indicators__fhi_hasj.value IS 'The measured value. NULL where FHI suppressed the cell.';
+COMMENT ON COLUMN api_v1.indicators__fhi_hasj.status IS 'FHI suppression marker.';
+COMMENT ON COLUMN api_v1.indicators__fhi_hasj.updated_at IS 'When the raw row was loaded.';
+
+-- indicators__fhi_innvandrere  ←  marts.mart_indicators__fhi_innvandrere
+CREATE OR REPLACE VIEW api_v1.indicators__fhi_innvandrere AS SELECT * FROM marts.mart_indicators__fhi_innvandrere;
+COMMENT ON VIEW api_v1.indicators__fhi_innvandrere IS 'Per-source indicator relation for `fhi-innvandrere` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=fhi-innvandrere.';
+COMMENT ON COLUMN api_v1.indicators__fhi_innvandrere.source_id IS 'Atlas source identifier.';
+COMMENT ON COLUMN api_v1.indicators__fhi_innvandrere.region_code IS 'FHI GEO verbatim — kommune, fylke, bydel or national.';
+COMMENT ON COLUMN api_v1.indicators__fhi_innvandrere.kommune_nr IS '4-digit kommune code via region_code_to_kommune_nr — NULL for every region that is not a municipality.';
+COMMENT ON COLUMN api_v1.indicators__fhi_innvandrere.region_kind IS 'What the GEO code is; joins ref_region_kind.';
+COMMENT ON COLUMN api_v1.indicators__fhi_innvandrere.fylke_nr IS '2-digit fylke code where GEO is a fylke, else NULL.';
+COMMENT ON COLUMN api_v1.indicators__fhi_innvandrere.year IS 'First year of the period.';
+COMMENT ON COLUMN api_v1.indicators__fhi_innvandrere.period IS 'FHI AAR verbatim.';
+COMMENT ON COLUMN api_v1.indicators__fhi_innvandrere.period_start_year IS 'Parsed first year of the period.';
+COMMENT ON COLUMN api_v1.indicators__fhi_innvandrere.period_end_year IS 'Parsed last year of the period.';
+COMMENT ON COLUMN api_v1.indicators__fhi_innvandrere.age_band IS 'FHI ALDER, a "min_max" band string. Bands OVERLAP — 0_120 is everyone, so summing bands double-counts.';
+COMMENT ON COLUMN api_v1.indicators__fhi_innvandrere.country_background IS 'FHI LANDBAK origin-region code. Not human-readable; verify against FHI dimension reference.';
+COMMENT ON COLUMN api_v1.indicators__fhi_innvandrere.contents_code IS 'TELLER, RATE, SMR or MEIS — which exist varies by table.';
+COMMENT ON COLUMN api_v1.indicators__fhi_innvandrere.contents_label IS 'Human-readable gloss for contents_code.';
+COMMENT ON COLUMN api_v1.indicators__fhi_innvandrere.value IS 'The measured value. NULL where FHI suppressed the cell.';
+COMMENT ON COLUMN api_v1.indicators__fhi_innvandrere.status IS 'FHI suppression marker.';
+COMMENT ON COLUMN api_v1.indicators__fhi_innvandrere.updated_at IS 'When the raw row was loaded.';
+
+-- indicators__fhi_innvkat  ←  marts.mart_indicators__fhi_innvkat
+CREATE OR REPLACE VIEW api_v1.indicators__fhi_innvkat AS SELECT * FROM marts.mart_indicators__fhi_innvkat;
+COMMENT ON VIEW api_v1.indicators__fhi_innvkat IS 'Per-source indicator relation for `fhi-innvkat` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=fhi-innvkat.';
+COMMENT ON COLUMN api_v1.indicators__fhi_innvkat.source_id IS 'Atlas source identifier.';
+COMMENT ON COLUMN api_v1.indicators__fhi_innvkat.region_code IS 'FHI GEO verbatim — kommune, fylke, bydel or national.';
+COMMENT ON COLUMN api_v1.indicators__fhi_innvkat.kommune_nr IS '4-digit kommune code via region_code_to_kommune_nr — NULL for every region that is not a municipality.';
+COMMENT ON COLUMN api_v1.indicators__fhi_innvkat.region_kind IS 'What the GEO code is; joins ref_region_kind.';
+COMMENT ON COLUMN api_v1.indicators__fhi_innvkat.fylke_nr IS '2-digit fylke code where GEO is a fylke, else NULL.';
+COMMENT ON COLUMN api_v1.indicators__fhi_innvkat.year IS 'First year of the period.';
+COMMENT ON COLUMN api_v1.indicators__fhi_innvkat.period IS 'FHI AAR verbatim.';
+COMMENT ON COLUMN api_v1.indicators__fhi_innvkat.period_start_year IS 'Parsed first year of the period.';
+COMMENT ON COLUMN api_v1.indicators__fhi_innvkat.period_end_year IS 'Parsed last year of the period.';
+COMMENT ON COLUMN api_v1.indicators__fhi_innvkat.age_band IS 'FHI ALDER, a "min_max" band string. Bands OVERLAP — 0_120 is everyone, so summing bands double-counts.';
+COMMENT ON COLUMN api_v1.indicators__fhi_innvkat.immigrant_category IS '"2" 1st-gen, "3" 2nd-gen, "23" combined. The combined code is the SUM of the other two.';
+COMMENT ON COLUMN api_v1.indicators__fhi_innvkat.country_background IS 'Always "0" here; origin region is collapsed.';
+COMMENT ON COLUMN api_v1.indicators__fhi_innvkat.contents_code IS 'TELLER, RATE, SMR or MEIS — which exist varies by table.';
+COMMENT ON COLUMN api_v1.indicators__fhi_innvkat.contents_label IS 'Human-readable gloss for contents_code.';
+COMMENT ON COLUMN api_v1.indicators__fhi_innvkat.value IS 'The measured value. NULL where FHI suppressed the cell.';
+COMMENT ON COLUMN api_v1.indicators__fhi_innvkat.status IS 'FHI suppression marker.';
+COMMENT ON COLUMN api_v1.indicators__fhi_innvkat.updated_at IS 'When the raw row was loaded.';
+
+-- indicators__fhi_kpr_1aar  ←  marts.mart_indicators__fhi_kpr_1aar
+CREATE OR REPLACE VIEW api_v1.indicators__fhi_kpr_1aar AS SELECT * FROM marts.mart_indicators__fhi_kpr_1aar;
+COMMENT ON VIEW api_v1.indicators__fhi_kpr_1aar IS 'Per-source indicator relation for `fhi-kpr-1aar` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=fhi-kpr-1aar.';
+COMMENT ON COLUMN api_v1.indicators__fhi_kpr_1aar.source_id IS 'Atlas source identifier.';
+COMMENT ON COLUMN api_v1.indicators__fhi_kpr_1aar.region_code IS 'FHI GEO verbatim — kommune, fylke, bydel or national.';
+COMMENT ON COLUMN api_v1.indicators__fhi_kpr_1aar.kommune_nr IS '4-digit kommune code via region_code_to_kommune_nr — NULL for every region that is not a municipality.';
+COMMENT ON COLUMN api_v1.indicators__fhi_kpr_1aar.region_kind IS 'What the GEO code is; joins ref_region_kind.';
+COMMENT ON COLUMN api_v1.indicators__fhi_kpr_1aar.fylke_nr IS '2-digit fylke code where GEO is a fylke, else NULL.';
+COMMENT ON COLUMN api_v1.indicators__fhi_kpr_1aar.year IS 'First year of the period.';
+COMMENT ON COLUMN api_v1.indicators__fhi_kpr_1aar.period IS 'FHI AAR verbatim.';
+COMMENT ON COLUMN api_v1.indicators__fhi_kpr_1aar.period_start_year IS 'Parsed first year of the period.';
+COMMENT ON COLUMN api_v1.indicators__fhi_kpr_1aar.period_end_year IS 'Parsed last year of the period.';
+COMMENT ON COLUMN api_v1.indicators__fhi_kpr_1aar.sex IS 'all / male / female, decoded from FHI KJONN.';
+COMMENT ON COLUMN api_v1.indicators__fhi_kpr_1aar.age_band IS 'FHI ALDER, a "min_max" band string. Bands OVERLAP — 0_120 is everyone, so summing bands double-counts.';
+COMMENT ON COLUMN api_v1.indicators__fhi_kpr_1aar.icpc2_group IS 'ICPC-2 code-range group. "P01_P29ogP70_P99" is combined chapter P and excluded from disjoint sums.';
+COMMENT ON COLUMN api_v1.indicators__fhi_kpr_1aar.contents_code IS 'TELLER, RATE, SMR or MEIS — which exist varies by table.';
+COMMENT ON COLUMN api_v1.indicators__fhi_kpr_1aar.contents_label IS 'Human-readable gloss for contents_code.';
+COMMENT ON COLUMN api_v1.indicators__fhi_kpr_1aar.value IS 'The measured value. NULL where FHI suppressed the cell.';
+COMMENT ON COLUMN api_v1.indicators__fhi_kpr_1aar.status IS 'FHI suppression marker.';
+COMMENT ON COLUMN api_v1.indicators__fhi_kpr_1aar.updated_at IS 'When the raw row was loaded.';
+
+-- indicators__fhi_livskvalitet  ←  marts.mart_indicators__fhi_livskvalitet
+CREATE OR REPLACE VIEW api_v1.indicators__fhi_livskvalitet AS SELECT * FROM marts.mart_indicators__fhi_livskvalitet;
+COMMENT ON VIEW api_v1.indicators__fhi_livskvalitet IS 'Per-source indicator relation for `fhi-livskvalitet` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=fhi-livskvalitet.';
+COMMENT ON COLUMN api_v1.indicators__fhi_livskvalitet.source_id IS 'Atlas source identifier.';
+COMMENT ON COLUMN api_v1.indicators__fhi_livskvalitet.region_code IS 'FHI GEO verbatim — kommune, fylke, bydel or national.';
+COMMENT ON COLUMN api_v1.indicators__fhi_livskvalitet.kommune_nr IS '4-digit kommune code, via region_code_to_kommune_nr — NULL for every region that is not a municipality. Not a bare four-digit regex; that is what called Svalbard a kommune.';
+COMMENT ON COLUMN api_v1.indicators__fhi_livskvalitet.region_kind IS 'What the GEO code is; joins ref_region_kind.';
+COMMENT ON COLUMN api_v1.indicators__fhi_livskvalitet.fylke_nr IS '2-digit fylke code where GEO is a fylke, else NULL.';
+COMMENT ON COLUMN api_v1.indicators__fhi_livskvalitet.year IS 'First year of the period.';
+COMMENT ON COLUMN api_v1.indicators__fhi_livskvalitet.period IS 'FHI AAR verbatim, e.g. "2024_2024".';
+COMMENT ON COLUMN api_v1.indicators__fhi_livskvalitet.period_start_year IS 'Parsed first year of the period.';
+COMMENT ON COLUMN api_v1.indicators__fhi_livskvalitet.period_end_year IS 'Parsed last year of the period.';
+COMMENT ON COLUMN api_v1.indicators__fhi_livskvalitet.sex IS 'all / male / female, decoded from FHI KJONN.';
+COMMENT ON COLUMN api_v1.indicators__fhi_livskvalitet.ungdata_cohort IS 'FHI ALDER verbatim, always "1_6". ⚠️ An Ungdata survey-cohort identifier, NOT ages 1 to 6. Unverified against Ungdata methodology — carried rather than interpreted.';
+COMMENT ON COLUMN api_v1.indicators__fhi_livskvalitet.score_band IS 'The degenerate topic slice FHI reports for this table.';
+COMMENT ON COLUMN api_v1.indicators__fhi_livskvalitet.socioeconomic_status IS 'FHI SOES. "0" is combined; only fhi-depresjon carries the 1/2/3 breakdown.';
+COMMENT ON COLUMN api_v1.indicators__fhi_livskvalitet.contents_code IS 'SMR or MEIS.';
+COMMENT ON COLUMN api_v1.indicators__fhi_livskvalitet.contents_label IS 'Human-readable gloss for contents_code.';
+COMMENT ON COLUMN api_v1.indicators__fhi_livskvalitet.value IS 'The measured value. NULL where FHI suppressed the cell.';
+COMMENT ON COLUMN api_v1.indicators__fhi_livskvalitet.status IS 'FHI suppression marker.';
+COMMENT ON COLUMN api_v1.indicators__fhi_livskvalitet.updated_at IS 'When the raw row was loaded.';
+
+-- indicators__fhi_mediebruk_some  ←  marts.mart_indicators__fhi_mediebruk_some
+CREATE OR REPLACE VIEW api_v1.indicators__fhi_mediebruk_some AS SELECT * FROM marts.mart_indicators__fhi_mediebruk_some;
+COMMENT ON VIEW api_v1.indicators__fhi_mediebruk_some IS 'Per-source indicator relation for `fhi-mediebruk-some` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=fhi-mediebruk-some.';
+COMMENT ON COLUMN api_v1.indicators__fhi_mediebruk_some.source_id IS 'Atlas source identifier.';
+COMMENT ON COLUMN api_v1.indicators__fhi_mediebruk_some.region_code IS 'FHI GEO verbatim — kommune, fylke, bydel or national.';
+COMMENT ON COLUMN api_v1.indicators__fhi_mediebruk_some.kommune_nr IS '4-digit kommune code, via region_code_to_kommune_nr — NULL for every region that is not a municipality. Not a bare four-digit regex; that is what called Svalbard a kommune.';
+COMMENT ON COLUMN api_v1.indicators__fhi_mediebruk_some.region_kind IS 'What the GEO code is; joins ref_region_kind.';
+COMMENT ON COLUMN api_v1.indicators__fhi_mediebruk_some.fylke_nr IS '2-digit fylke code where GEO is a fylke, else NULL.';
+COMMENT ON COLUMN api_v1.indicators__fhi_mediebruk_some.year IS 'First year of the period.';
+COMMENT ON COLUMN api_v1.indicators__fhi_mediebruk_some.period IS 'FHI AAR verbatim, e.g. "2024_2024".';
+COMMENT ON COLUMN api_v1.indicators__fhi_mediebruk_some.period_start_year IS 'Parsed first year of the period.';
+COMMENT ON COLUMN api_v1.indicators__fhi_mediebruk_some.period_end_year IS 'Parsed last year of the period.';
+COMMENT ON COLUMN api_v1.indicators__fhi_mediebruk_some.sex IS 'all / male / female, decoded from FHI KJONN.';
+COMMENT ON COLUMN api_v1.indicators__fhi_mediebruk_some.ungdata_cohort IS 'FHI ALDER verbatim, always "1_6". ⚠️ An Ungdata survey-cohort identifier, NOT ages 1 to 6. Unverified against Ungdata methodology — carried rather than interpreted.';
+COMMENT ON COLUMN api_v1.indicators__fhi_mediebruk_some.threshold IS 'The degenerate topic slice FHI reports for this table.';
+COMMENT ON COLUMN api_v1.indicators__fhi_mediebruk_some.socioeconomic_status IS 'FHI SOES. "0" is combined; only fhi-depresjon carries the 1/2/3 breakdown.';
+COMMENT ON COLUMN api_v1.indicators__fhi_mediebruk_some.contents_code IS 'SMR or MEIS.';
+COMMENT ON COLUMN api_v1.indicators__fhi_mediebruk_some.contents_label IS 'Human-readable gloss for contents_code.';
+COMMENT ON COLUMN api_v1.indicators__fhi_mediebruk_some.value IS 'The measured value. NULL where FHI suppressed the cell.';
+COMMENT ON COLUMN api_v1.indicators__fhi_mediebruk_some.status IS 'FHI suppression marker.';
+COMMENT ON COLUMN api_v1.indicators__fhi_mediebruk_some.updated_at IS 'When the raw row was loaded.';
+
+-- indicators__fhi_mediebruk_spill  ←  marts.mart_indicators__fhi_mediebruk_spill
+CREATE OR REPLACE VIEW api_v1.indicators__fhi_mediebruk_spill AS SELECT * FROM marts.mart_indicators__fhi_mediebruk_spill;
+COMMENT ON VIEW api_v1.indicators__fhi_mediebruk_spill IS 'Per-source indicator relation for `fhi-mediebruk-spill` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=fhi-mediebruk-spill.';
+COMMENT ON COLUMN api_v1.indicators__fhi_mediebruk_spill.source_id IS 'Atlas source identifier.';
+COMMENT ON COLUMN api_v1.indicators__fhi_mediebruk_spill.region_code IS 'FHI GEO verbatim — kommune, fylke, bydel or national.';
+COMMENT ON COLUMN api_v1.indicators__fhi_mediebruk_spill.kommune_nr IS '4-digit kommune code, via region_code_to_kommune_nr — NULL for every region that is not a municipality. Not a bare four-digit regex; that is what called Svalbard a kommune.';
+COMMENT ON COLUMN api_v1.indicators__fhi_mediebruk_spill.region_kind IS 'What the GEO code is; joins ref_region_kind.';
+COMMENT ON COLUMN api_v1.indicators__fhi_mediebruk_spill.fylke_nr IS '2-digit fylke code where GEO is a fylke, else NULL.';
+COMMENT ON COLUMN api_v1.indicators__fhi_mediebruk_spill.year IS 'First year of the period.';
+COMMENT ON COLUMN api_v1.indicators__fhi_mediebruk_spill.period IS 'FHI AAR verbatim, e.g. "2024_2024".';
+COMMENT ON COLUMN api_v1.indicators__fhi_mediebruk_spill.period_start_year IS 'Parsed first year of the period.';
+COMMENT ON COLUMN api_v1.indicators__fhi_mediebruk_spill.period_end_year IS 'Parsed last year of the period.';
+COMMENT ON COLUMN api_v1.indicators__fhi_mediebruk_spill.sex IS 'all / male / female, decoded from FHI KJONN.';
+COMMENT ON COLUMN api_v1.indicators__fhi_mediebruk_spill.ungdata_cohort IS 'FHI ALDER verbatim, always "1_6". ⚠️ An Ungdata survey-cohort identifier, NOT ages 1 to 6. Unverified against Ungdata methodology — carried rather than interpreted.';
+COMMENT ON COLUMN api_v1.indicators__fhi_mediebruk_spill.threshold IS 'The degenerate topic slice FHI reports for this table.';
+COMMENT ON COLUMN api_v1.indicators__fhi_mediebruk_spill.socioeconomic_status IS 'FHI SOES. "0" is combined; only fhi-depresjon carries the 1/2/3 breakdown.';
+COMMENT ON COLUMN api_v1.indicators__fhi_mediebruk_spill.contents_code IS 'SMR or MEIS.';
+COMMENT ON COLUMN api_v1.indicators__fhi_mediebruk_spill.contents_label IS 'Human-readable gloss for contents_code.';
+COMMENT ON COLUMN api_v1.indicators__fhi_mediebruk_spill.value IS 'The measured value. NULL where FHI suppressed the cell.';
+COMMENT ON COLUMN api_v1.indicators__fhi_mediebruk_spill.status IS 'FHI suppression marker.';
+COMMENT ON COLUMN api_v1.indicators__fhi_mediebruk_spill.updated_at IS 'When the raw row was loaded.';
+
+-- indicators__fhi_mediebruk_underhold  ←  marts.mart_indicators__fhi_mediebruk_underhold
+CREATE OR REPLACE VIEW api_v1.indicators__fhi_mediebruk_underhold AS SELECT * FROM marts.mart_indicators__fhi_mediebruk_underhold;
+COMMENT ON VIEW api_v1.indicators__fhi_mediebruk_underhold IS 'Per-source indicator relation for `fhi-mediebruk-underhold` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=fhi-mediebruk-underhold.';
+COMMENT ON COLUMN api_v1.indicators__fhi_mediebruk_underhold.source_id IS 'Atlas source identifier.';
+COMMENT ON COLUMN api_v1.indicators__fhi_mediebruk_underhold.region_code IS 'FHI GEO verbatim — kommune, fylke, bydel or national.';
+COMMENT ON COLUMN api_v1.indicators__fhi_mediebruk_underhold.kommune_nr IS '4-digit kommune code, via region_code_to_kommune_nr — NULL for every region that is not a municipality. Not a bare four-digit regex; that is what called Svalbard a kommune.';
+COMMENT ON COLUMN api_v1.indicators__fhi_mediebruk_underhold.region_kind IS 'What the GEO code is; joins ref_region_kind.';
+COMMENT ON COLUMN api_v1.indicators__fhi_mediebruk_underhold.fylke_nr IS '2-digit fylke code where GEO is a fylke, else NULL.';
+COMMENT ON COLUMN api_v1.indicators__fhi_mediebruk_underhold.year IS 'First year of the period.';
+COMMENT ON COLUMN api_v1.indicators__fhi_mediebruk_underhold.period IS 'FHI AAR verbatim, e.g. "2024_2024".';
+COMMENT ON COLUMN api_v1.indicators__fhi_mediebruk_underhold.period_start_year IS 'Parsed first year of the period.';
+COMMENT ON COLUMN api_v1.indicators__fhi_mediebruk_underhold.period_end_year IS 'Parsed last year of the period.';
+COMMENT ON COLUMN api_v1.indicators__fhi_mediebruk_underhold.sex IS 'all / male / female, decoded from FHI KJONN.';
+COMMENT ON COLUMN api_v1.indicators__fhi_mediebruk_underhold.ungdata_cohort IS 'FHI ALDER verbatim, always "1_6". ⚠️ An Ungdata survey-cohort identifier, NOT ages 1 to 6. Unverified against Ungdata methodology — carried rather than interpreted.';
+COMMENT ON COLUMN api_v1.indicators__fhi_mediebruk_underhold.threshold IS 'The degenerate topic slice FHI reports for this table.';
+COMMENT ON COLUMN api_v1.indicators__fhi_mediebruk_underhold.socioeconomic_status IS 'FHI SOES. "0" is combined; only fhi-depresjon carries the 1/2/3 breakdown.';
+COMMENT ON COLUMN api_v1.indicators__fhi_mediebruk_underhold.contents_code IS 'SMR or MEIS.';
+COMMENT ON COLUMN api_v1.indicators__fhi_mediebruk_underhold.contents_label IS 'Human-readable gloss for contents_code.';
+COMMENT ON COLUMN api_v1.indicators__fhi_mediebruk_underhold.value IS 'The measured value. NULL where FHI suppressed the cell.';
+COMMENT ON COLUMN api_v1.indicators__fhi_mediebruk_underhold.status IS 'FHI suppression marker.';
+COMMENT ON COLUMN api_v1.indicators__fhi_mediebruk_underhold.updated_at IS 'When the raw row was loaded.';
+
+-- indicators__fhi_mobbing  ←  marts.mart_indicators__fhi_mobbing
+CREATE OR REPLACE VIEW api_v1.indicators__fhi_mobbing AS SELECT * FROM marts.mart_indicators__fhi_mobbing;
+COMMENT ON VIEW api_v1.indicators__fhi_mobbing IS 'Per-source indicator relation for `fhi-mobbing` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=fhi-mobbing.';
+COMMENT ON COLUMN api_v1.indicators__fhi_mobbing.source_id IS 'Atlas source identifier for the upstream table this row came from — the same id used by meta_sources and meta_dimensions.';
+COMMENT ON COLUMN api_v1.indicators__fhi_mobbing.region_code IS 'The publisher''s own region code, verbatim. It may be a kommune, fylke, bydel or national code depending on what that publisher emits; region_kind says which.';
+COMMENT ON COLUMN api_v1.indicators__fhi_mobbing.kommune_nr IS '4-digit kommune code, derived via region_code_to_kommune_nr. NULL for every region that is not a municipality. ⚠️ Not a bare four-digit match — that is what once called Svalbard, Jan Mayen and the continental shelf municipalities.';
+COMMENT ON COLUMN api_v1.indicators__fhi_mobbing.fylke_nr IS '2-digit fylke code where the region is a fylke, else NULL.';
+COMMENT ON COLUMN api_v1.indicators__fhi_mobbing.year IS 'First year of the period this row covers. ⚠️ For a multi-year window this is the FIRST year, not the only one — read period_start_year and period_end_year for the span.';
+COMMENT ON COLUMN api_v1.indicators__fhi_mobbing.period IS 'The publisher''s own period code, verbatim (e.g. "2024_2024").';
+COMMENT ON COLUMN api_v1.indicators__fhi_mobbing.period_start_year IS 'Parsed first year of the period.';
+COMMENT ON COLUMN api_v1.indicators__fhi_mobbing.period_end_year IS 'Parsed last year of the period.';
+COMMENT ON COLUMN api_v1.indicators__fhi_mobbing.sex IS 'all / male / female, decoded from the publisher''s sex dimension.';
+COMMENT ON COLUMN api_v1.indicators__fhi_mobbing.grade IS 'School-grade code (upstream TRINN) as the publisher emits it.';
+COMMENT ON COLUMN api_v1.indicators__fhi_mobbing.question_id IS 'The survey question this row reports, as the publisher''s own question id.';
+COMMENT ON COLUMN api_v1.indicators__fhi_mobbing.contents_code IS 'The publisher''s code for WHICH measure this row reports. Decode it through meta_dimensions for this source_id.';
+COMMENT ON COLUMN api_v1.indicators__fhi_mobbing.contents_label IS 'Human-readable gloss for contents_code.';
+COMMENT ON COLUMN api_v1.indicators__fhi_mobbing.value IS 'The measured value. NULL where the publisher suppressed the cell — see status.';
+COMMENT ON COLUMN api_v1.indicators__fhi_mobbing.status IS 'The publisher''s own suppression or quality marker for this cell, passed through verbatim.';
+COMMENT ON COLUMN api_v1.indicators__fhi_mobbing.updated_at IS 'When Atlas last loaded this row from the upstream.';
+
+-- indicators__fhi_neet  ←  marts.mart_indicators__fhi_neet
+CREATE OR REPLACE VIEW api_v1.indicators__fhi_neet AS SELECT * FROM marts.mart_indicators__fhi_neet;
+COMMENT ON VIEW api_v1.indicators__fhi_neet IS 'Per-source indicator relation for `fhi-neet` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=fhi-neet.';
+COMMENT ON COLUMN api_v1.indicators__fhi_neet.source_id IS 'Atlas source identifier.';
+COMMENT ON COLUMN api_v1.indicators__fhi_neet.region_code IS 'FHI GEO verbatim — kommune, fylke, bydel or national.';
+COMMENT ON COLUMN api_v1.indicators__fhi_neet.kommune_nr IS '4-digit kommune code via region_code_to_kommune_nr — NULL for every region that is not a municipality.';
+COMMENT ON COLUMN api_v1.indicators__fhi_neet.region_kind IS 'What the GEO code is; joins ref_region_kind.';
+COMMENT ON COLUMN api_v1.indicators__fhi_neet.fylke_nr IS '2-digit fylke code where GEO is a fylke, else NULL.';
+COMMENT ON COLUMN api_v1.indicators__fhi_neet.year IS 'First year of the period.';
+COMMENT ON COLUMN api_v1.indicators__fhi_neet.period IS 'FHI AAR verbatim.';
+COMMENT ON COLUMN api_v1.indicators__fhi_neet.period_start_year IS 'Parsed first year of the period.';
+COMMENT ON COLUMN api_v1.indicators__fhi_neet.period_end_year IS 'Parsed last year of the period.';
+COMMENT ON COLUMN api_v1.indicators__fhi_neet.sex IS 'all / male / female, decoded from FHI KJONN.';
+COMMENT ON COLUMN api_v1.indicators__fhi_neet.age_band IS 'FHI ALDER, a "min_max" band string. Bands OVERLAP — 0_120 is everyone, so summing bands double-counts.';
+COMMENT ON COLUMN api_v1.indicators__fhi_neet.education_level IS 'Parental education level. "0" is all levels.';
+COMMENT ON COLUMN api_v1.indicators__fhi_neet.contents_code IS 'TELLER, RATE, SMR or MEIS — which exist varies by table.';
+COMMENT ON COLUMN api_v1.indicators__fhi_neet.contents_label IS 'Human-readable gloss for contents_code.';
+COMMENT ON COLUMN api_v1.indicators__fhi_neet.value IS 'The measured value. NULL where FHI suppressed the cell.';
+COMMENT ON COLUMN api_v1.indicators__fhi_neet.status IS 'FHI suppression marker.';
+COMMENT ON COLUMN api_v1.indicators__fhi_neet.updated_at IS 'When the raw row was loaded.';
+
+-- indicators__fhi_prognose  ←  marts.mart_indicators__fhi_prognose
+CREATE OR REPLACE VIEW api_v1.indicators__fhi_prognose AS SELECT * FROM marts.mart_indicators__fhi_prognose;
+COMMENT ON VIEW api_v1.indicators__fhi_prognose IS 'Per-source indicator relation for `fhi-prognose` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=fhi-prognose.';
+COMMENT ON COLUMN api_v1.indicators__fhi_prognose.source_id IS 'Atlas source identifier.';
+COMMENT ON COLUMN api_v1.indicators__fhi_prognose.region_code IS 'FHI GEO verbatim — kommune, fylke, bydel or national.';
+COMMENT ON COLUMN api_v1.indicators__fhi_prognose.kommune_nr IS '4-digit kommune code via region_code_to_kommune_nr — NULL for every region that is not a municipality.';
+COMMENT ON COLUMN api_v1.indicators__fhi_prognose.region_kind IS 'What the GEO code is; joins ref_region_kind.';
+COMMENT ON COLUMN api_v1.indicators__fhi_prognose.fylke_nr IS '2-digit fylke code where GEO is a fylke, else NULL.';
+COMMENT ON COLUMN api_v1.indicators__fhi_prognose.year IS 'First year of the period.';
+COMMENT ON COLUMN api_v1.indicators__fhi_prognose.period IS 'FHI AAR verbatim.';
+COMMENT ON COLUMN api_v1.indicators__fhi_prognose.period_start_year IS 'Parsed first year of the period.';
+COMMENT ON COLUMN api_v1.indicators__fhi_prognose.period_end_year IS 'Parsed last year of the period.';
+COMMENT ON COLUMN api_v1.indicators__fhi_prognose.sex IS 'all / male / female, decoded from FHI KJONN.';
+COMMENT ON COLUMN api_v1.indicators__fhi_prognose.age_band IS 'FHI ALDER, a "min_max" band string. Bands OVERLAP — 0_120 is everyone, so summing bands double-counts.';
+COMMENT ON COLUMN api_v1.indicators__fhi_prognose.projection_year IS 'Forecast horizon: 2030, 2040 or 2050. A SECOND time axis alongside year.';
+COMMENT ON COLUMN api_v1.indicators__fhi_prognose.contents_code IS 'TELLER, RATE, SMR or MEIS — which exist varies by table.';
+COMMENT ON COLUMN api_v1.indicators__fhi_prognose.contents_label IS 'Human-readable gloss for contents_code.';
+COMMENT ON COLUMN api_v1.indicators__fhi_prognose.value IS 'The measured value. NULL where FHI suppressed the cell.';
+COMMENT ON COLUMN api_v1.indicators__fhi_prognose.status IS 'FHI suppression marker.';
+COMMENT ON COLUMN api_v1.indicators__fhi_prognose.updated_at IS 'When the raw row was loaded.';
+
+-- indicators__fhi_selvmord  ←  marts.mart_indicators__fhi_selvmord
+CREATE OR REPLACE VIEW api_v1.indicators__fhi_selvmord AS SELECT * FROM marts.mart_indicators__fhi_selvmord;
+COMMENT ON VIEW api_v1.indicators__fhi_selvmord IS 'Per-source indicator relation for `fhi-selvmord` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=fhi-selvmord.';
+COMMENT ON COLUMN api_v1.indicators__fhi_selvmord.source_id IS 'Atlas source identifier.';
+COMMENT ON COLUMN api_v1.indicators__fhi_selvmord.region_code IS 'FHI GEO verbatim — kommune, fylke, bydel or national.';
+COMMENT ON COLUMN api_v1.indicators__fhi_selvmord.kommune_nr IS '4-digit kommune code via region_code_to_kommune_nr — NULL for every region that is not a municipality.';
+COMMENT ON COLUMN api_v1.indicators__fhi_selvmord.region_kind IS 'What the GEO code is; joins ref_region_kind.';
+COMMENT ON COLUMN api_v1.indicators__fhi_selvmord.fylke_nr IS '2-digit fylke code where GEO is a fylke, else NULL.';
+COMMENT ON COLUMN api_v1.indicators__fhi_selvmord.year IS 'First year of the period.';
+COMMENT ON COLUMN api_v1.indicators__fhi_selvmord.period IS 'FHI AAR verbatim.';
+COMMENT ON COLUMN api_v1.indicators__fhi_selvmord.period_start_year IS 'Parsed first year of the period.';
+COMMENT ON COLUMN api_v1.indicators__fhi_selvmord.period_end_year IS 'Parsed last year of the period.';
+COMMENT ON COLUMN api_v1.indicators__fhi_selvmord.sex IS 'all / male / female, decoded from FHI KJONN.';
+COMMENT ON COLUMN api_v1.indicators__fhi_selvmord.age_band IS 'FHI ALDER, a "min_max" band string. Bands OVERLAP — 0_120 is everyone, so summing bands double-counts.';
+COMMENT ON COLUMN api_v1.indicators__fhi_selvmord.cause IS 'FHI AARSAK code.';
+COMMENT ON COLUMN api_v1.indicators__fhi_selvmord.contents_code IS 'TELLER, RATE, SMR or MEIS — which exist varies by table.';
+COMMENT ON COLUMN api_v1.indicators__fhi_selvmord.contents_label IS 'Human-readable gloss for contents_code.';
+COMMENT ON COLUMN api_v1.indicators__fhi_selvmord.value IS 'The measured value. NULL where FHI suppressed the cell.';
+COMMENT ON COLUMN api_v1.indicators__fhi_selvmord.status IS 'FHI suppression marker.';
+COMMENT ON COLUMN api_v1.indicators__fhi_selvmord.updated_at IS 'When the raw row was loaded.';
+
+-- indicators__fhi_smertestillende  ←  marts.mart_indicators__fhi_smertestillende
+CREATE OR REPLACE VIEW api_v1.indicators__fhi_smertestillende AS SELECT * FROM marts.mart_indicators__fhi_smertestillende;
+COMMENT ON VIEW api_v1.indicators__fhi_smertestillende IS 'Per-source indicator relation for `fhi-smertestillende` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=fhi-smertestillende.';
+COMMENT ON COLUMN api_v1.indicators__fhi_smertestillende.source_id IS 'Atlas source identifier.';
+COMMENT ON COLUMN api_v1.indicators__fhi_smertestillende.region_code IS 'FHI GEO verbatim — kommune, fylke, bydel or national.';
+COMMENT ON COLUMN api_v1.indicators__fhi_smertestillende.kommune_nr IS '4-digit kommune code, via region_code_to_kommune_nr — NULL for every region that is not a municipality. Not a bare four-digit regex; that is what called Svalbard a kommune.';
+COMMENT ON COLUMN api_v1.indicators__fhi_smertestillende.region_kind IS 'What the GEO code is; joins ref_region_kind.';
+COMMENT ON COLUMN api_v1.indicators__fhi_smertestillende.fylke_nr IS '2-digit fylke code where GEO is a fylke, else NULL.';
+COMMENT ON COLUMN api_v1.indicators__fhi_smertestillende.year IS 'First year of the period.';
+COMMENT ON COLUMN api_v1.indicators__fhi_smertestillende.period IS 'FHI AAR verbatim, e.g. "2024_2024".';
+COMMENT ON COLUMN api_v1.indicators__fhi_smertestillende.period_start_year IS 'Parsed first year of the period.';
+COMMENT ON COLUMN api_v1.indicators__fhi_smertestillende.period_end_year IS 'Parsed last year of the period.';
+COMMENT ON COLUMN api_v1.indicators__fhi_smertestillende.sex IS 'all / male / female, decoded from FHI KJONN.';
+COMMENT ON COLUMN api_v1.indicators__fhi_smertestillende.ungdata_cohort IS 'FHI ALDER verbatim, always "1_6". ⚠️ An Ungdata survey-cohort identifier, NOT ages 1 to 6. Unverified against Ungdata methodology — carried rather than interpreted.';
+COMMENT ON COLUMN api_v1.indicators__fhi_smertestillende.frequency_band IS 'The degenerate topic slice FHI reports for this table.';
+COMMENT ON COLUMN api_v1.indicators__fhi_smertestillende.socioeconomic_status IS 'FHI SOES. "0" is combined; only fhi-depresjon carries the 1/2/3 breakdown.';
+COMMENT ON COLUMN api_v1.indicators__fhi_smertestillende.contents_code IS 'SMR or MEIS.';
+COMMENT ON COLUMN api_v1.indicators__fhi_smertestillende.contents_label IS 'Human-readable gloss for contents_code.';
+COMMENT ON COLUMN api_v1.indicators__fhi_smertestillende.value IS 'The measured value. NULL where FHI suppressed the cell.';
+COMMENT ON COLUMN api_v1.indicators__fhi_smertestillende.status IS 'FHI suppression marker.';
+COMMENT ON COLUMN api_v1.indicators__fhi_smertestillende.updated_at IS 'When the raw row was loaded.';
+
+-- indicators__fhi_trangbodd  ←  marts.mart_indicators__fhi_trangbodd
+CREATE OR REPLACE VIEW api_v1.indicators__fhi_trangbodd AS SELECT * FROM marts.mart_indicators__fhi_trangbodd;
+COMMENT ON VIEW api_v1.indicators__fhi_trangbodd IS 'Per-source indicator relation for `fhi-trangbodd` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=fhi-trangbodd.';
+COMMENT ON COLUMN api_v1.indicators__fhi_trangbodd.source_id IS 'Atlas source identifier for the upstream table this row came from — the same id used by meta_sources and meta_dimensions.';
+COMMENT ON COLUMN api_v1.indicators__fhi_trangbodd.region_code IS 'The publisher''s own region code, verbatim. It may be a kommune, fylke, bydel or national code depending on what that publisher emits; region_kind says which.';
+COMMENT ON COLUMN api_v1.indicators__fhi_trangbodd.kommune_nr IS '4-digit kommune code, derived via region_code_to_kommune_nr. NULL for every region that is not a municipality. ⚠️ Not a bare four-digit match — that is what once called Svalbard, Jan Mayen and the continental shelf municipalities.';
+COMMENT ON COLUMN api_v1.indicators__fhi_trangbodd.fylke_nr IS '2-digit fylke code where the region is a fylke, else NULL.';
+COMMENT ON COLUMN api_v1.indicators__fhi_trangbodd.year IS 'First year of the period this row covers. ⚠️ For a multi-year window this is the FIRST year, not the only one — read period_start_year and period_end_year for the span.';
+COMMENT ON COLUMN api_v1.indicators__fhi_trangbodd.period IS 'The publisher''s own period code, verbatim (e.g. "2024_2024").';
+COMMENT ON COLUMN api_v1.indicators__fhi_trangbodd.period_start_year IS 'Parsed first year of the period.';
+COMMENT ON COLUMN api_v1.indicators__fhi_trangbodd.period_end_year IS 'Parsed last year of the period.';
+COMMENT ON COLUMN api_v1.indicators__fhi_trangbodd.age_group IS 'The publisher''s age-band dimension, verbatim. Bands are not always disjoint — an "all ages" bucket usually sits alongside the slices, so summing without filtering double-counts.';
+COMMENT ON COLUMN api_v1.indicators__fhi_trangbodd.age_group_min IS 'Numeric floor of age_group, parsed from the band''s "min_max" form. NULL where the band has no finite floor.';
+COMMENT ON COLUMN api_v1.indicators__fhi_trangbodd.age_group_max IS 'Numeric ceiling of age_group, parsed from the band''s "min_max" form. NULL for an open-ended band.';
+COMMENT ON COLUMN api_v1.indicators__fhi_trangbodd.parents_education IS '🔴 The PARENTS'' education level, not the pupil''s — this table breaks completion down by parental education. Upstream''s UTDANN code; decode through ref_fhi_utdann.';
+COMMENT ON COLUMN api_v1.indicators__fhi_trangbodd.parents_education_label_no IS 'Norwegian label for parents_education, joined from ref_fhi_utdann. NULL where the code has no entry there.';
+COMMENT ON COLUMN api_v1.indicators__fhi_trangbodd.housing_status IS 'Housing-status code (upstream BODD) as the publisher emits it.';
+COMMENT ON COLUMN api_v1.indicators__fhi_trangbodd.contents_code IS 'The publisher''s code for WHICH measure this row reports. Decode it through meta_dimensions for this source_id.';
+COMMENT ON COLUMN api_v1.indicators__fhi_trangbodd.contents_label IS 'Human-readable gloss for contents_code.';
+COMMENT ON COLUMN api_v1.indicators__fhi_trangbodd.value IS 'The measured value. NULL where the publisher suppressed the cell — see status.';
+COMMENT ON COLUMN api_v1.indicators__fhi_trangbodd.status IS 'The publisher''s own suppression or quality marker for this cell, passed through verbatim.';
+COMMENT ON COLUMN api_v1.indicators__fhi_trangbodd.updated_at IS 'When Atlas last loaded this row from the upstream.';
+
+-- indicators__fhi_vgs_gjennomforing  ←  marts.mart_indicators__fhi_vgs_gjennomforing
+CREATE OR REPLACE VIEW api_v1.indicators__fhi_vgs_gjennomforing AS SELECT * FROM marts.mart_indicators__fhi_vgs_gjennomforing;
+COMMENT ON VIEW api_v1.indicators__fhi_vgs_gjennomforing IS 'Per-source indicator relation for `fhi-vgs-gjennomforing` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=fhi-vgs-gjennomforing.';
+COMMENT ON COLUMN api_v1.indicators__fhi_vgs_gjennomforing.source_id IS 'Atlas source identifier for the upstream table this row came from — the same id used by meta_sources and meta_dimensions.';
+COMMENT ON COLUMN api_v1.indicators__fhi_vgs_gjennomforing.region_code IS 'The publisher''s own region code, verbatim. It may be a kommune, fylke, bydel or national code depending on what that publisher emits; region_kind says which.';
+COMMENT ON COLUMN api_v1.indicators__fhi_vgs_gjennomforing.kommune_nr IS '4-digit kommune code, derived via region_code_to_kommune_nr. NULL for every region that is not a municipality. ⚠️ Not a bare four-digit match — that is what once called Svalbard, Jan Mayen and the continental shelf municipalities.';
+COMMENT ON COLUMN api_v1.indicators__fhi_vgs_gjennomforing.fylke_nr IS '2-digit fylke code where the region is a fylke, else NULL.';
+COMMENT ON COLUMN api_v1.indicators__fhi_vgs_gjennomforing.year IS 'First year of the period this row covers. ⚠️ For a multi-year window this is the FIRST year, not the only one — read period_start_year and period_end_year for the span.';
+COMMENT ON COLUMN api_v1.indicators__fhi_vgs_gjennomforing.period IS 'The publisher''s own period code, verbatim (e.g. "2024_2024").';
+COMMENT ON COLUMN api_v1.indicators__fhi_vgs_gjennomforing.period_start_year IS 'Parsed first year of the period.';
+COMMENT ON COLUMN api_v1.indicators__fhi_vgs_gjennomforing.period_end_year IS 'Parsed last year of the period.';
+COMMENT ON COLUMN api_v1.indicators__fhi_vgs_gjennomforing.sex IS 'all / male / female, decoded from the publisher''s sex dimension.';
+COMMENT ON COLUMN api_v1.indicators__fhi_vgs_gjennomforing.parents_education IS '🔴 The PARENTS'' education level, not the pupil''s — this table breaks completion down by parental education. Upstream''s UTDANN code; decode through ref_fhi_utdann.';
+COMMENT ON COLUMN api_v1.indicators__fhi_vgs_gjennomforing.parents_education_label_no IS 'Norwegian label for parents_education, joined from ref_fhi_utdann. NULL where the code has no entry there.';
+COMMENT ON COLUMN api_v1.indicators__fhi_vgs_gjennomforing.immigration_category IS 'Immigrant-category code as the publisher emits it. ⚠️ Decode through meta_dimensions for this source_id — ref_fhi_innvkat decodes FHI table 360 only, where the dimension is always ''0'', and will not decode table 932''s ''2'', ''3'' and ''23''.';
+COMMENT ON COLUMN api_v1.indicators__fhi_vgs_gjennomforing.immigration_category_label_no IS 'Norwegian label for immigration_category where one could be joined; NULL where the code has no entry in the reference list.';
+COMMENT ON COLUMN api_v1.indicators__fhi_vgs_gjennomforing.contents_code IS 'The publisher''s code for WHICH measure this row reports. Decode it through meta_dimensions for this source_id.';
+COMMENT ON COLUMN api_v1.indicators__fhi_vgs_gjennomforing.contents_label IS 'Human-readable gloss for contents_code.';
+COMMENT ON COLUMN api_v1.indicators__fhi_vgs_gjennomforing.value IS 'The measured value. NULL where the publisher suppressed the cell — see status.';
+COMMENT ON COLUMN api_v1.indicators__fhi_vgs_gjennomforing.status IS 'The publisher''s own suppression or quality marker for this cell, passed through verbatim.';
+COMMENT ON COLUMN api_v1.indicators__fhi_vgs_gjennomforing.updated_at IS 'When Atlas last loaded this row from the upstream.';
+
+-- indicators__ssb_06083  ←  marts.mart_indicators__ssb_06083
+CREATE OR REPLACE VIEW api_v1.indicators__ssb_06083 AS SELECT * FROM marts.mart_indicators__ssb_06083;
+COMMENT ON VIEW api_v1.indicators__ssb_06083 IS 'Per-source indicator relation for `ssb-06083` (Statistisk sentralbyrå), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Statistisk sentralbyrå, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=ssb-06083.';
+COMMENT ON COLUMN api_v1.indicators__ssb_06083.source_id IS 'Atlas source identifier for the upstream table this row came from — the same id used by meta_sources and meta_dimensions.';
+COMMENT ON COLUMN api_v1.indicators__ssb_06083.region_code IS 'The publisher''s own region code, verbatim. It may be a kommune, fylke, bydel or national code depending on what that publisher emits; region_kind says which.';
+COMMENT ON COLUMN api_v1.indicators__ssb_06083.kommune_nr IS '4-digit kommune code, derived via region_code_to_kommune_nr. NULL for every region that is not a municipality. ⚠️ Not a bare four-digit match — that is what once called Svalbard, Jan Mayen and the continental shelf municipalities.';
+COMMENT ON COLUMN api_v1.indicators__ssb_06083.fylke_nr IS '2-digit fylke code where the region is a fylke, else NULL.';
+COMMENT ON COLUMN api_v1.indicators__ssb_06083.family_type IS 'Family-type code as SSB emits it. ⚠️ Family type and household type are different classifications with similar-looking codes; do not join one to the other. Decode through ref_ssb_family_type.';
+COMMENT ON COLUMN api_v1.indicators__ssb_06083.family_type_label_no IS 'Norwegian label for family_type, joined from ref_ssb_family_type.';
+COMMENT ON COLUMN api_v1.indicators__ssb_06083.family_type_label_en IS 'English label for family_type, joined from ref_ssb_family_type.';
+COMMENT ON COLUMN api_v1.indicators__ssb_06083.year IS 'First year of the period this row covers. ⚠️ For a multi-year window this is the FIRST year, not the only one — read period_start_year and period_end_year for the span.';
+COMMENT ON COLUMN api_v1.indicators__ssb_06083.contents_code IS 'The publisher''s code for WHICH measure this row reports. Decode it through meta_dimensions for this source_id.';
+COMMENT ON COLUMN api_v1.indicators__ssb_06083.contents_label IS 'Human-readable gloss for contents_code.';
+COMMENT ON COLUMN api_v1.indicators__ssb_06083.value IS 'The measured value. NULL where the publisher suppressed the cell — see status.';
+COMMENT ON COLUMN api_v1.indicators__ssb_06083.status IS 'The publisher''s own suppression or quality marker for this cell, passed through verbatim.';
+COMMENT ON COLUMN api_v1.indicators__ssb_06083.updated_at IS 'When Atlas last loaded this row from the upstream.';
+
+-- indicators__ssb_06913  ←  marts.mart_indicators__ssb_06913
+CREATE OR REPLACE VIEW api_v1.indicators__ssb_06913 AS SELECT * FROM marts.mart_indicators__ssb_06913;
+COMMENT ON VIEW api_v1.indicators__ssb_06913 IS 'Per-source indicator relation for `ssb-06913` (Statistisk sentralbyrå), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Statistisk sentralbyrå, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=ssb-06913.';
+COMMENT ON COLUMN api_v1.indicators__ssb_06913.source_id IS 'Atlas source identifier for the upstream table this row came from — the same id used by meta_sources and meta_dimensions.';
+COMMENT ON COLUMN api_v1.indicators__ssb_06913.region_code IS 'The publisher''s own region code, verbatim. It may be a kommune, fylke, bydel or national code depending on what that publisher emits; region_kind says which.';
+COMMENT ON COLUMN api_v1.indicators__ssb_06913.kommune_nr IS '4-digit kommune code, derived via region_code_to_kommune_nr. NULL for every region that is not a municipality. ⚠️ Not a bare four-digit match — that is what once called Svalbard, Jan Mayen and the continental shelf municipalities.';
+COMMENT ON COLUMN api_v1.indicators__ssb_06913.fylke_nr IS '2-digit fylke code where the region is a fylke, else NULL.';
+COMMENT ON COLUMN api_v1.indicators__ssb_06913.year IS 'First year of the period this row covers. ⚠️ For a multi-year window this is the FIRST year, not the only one — read period_start_year and period_end_year for the span.';
+COMMENT ON COLUMN api_v1.indicators__ssb_06913.contents_code IS 'The publisher''s code for WHICH measure this row reports. Decode it through meta_dimensions for this source_id.';
+COMMENT ON COLUMN api_v1.indicators__ssb_06913.contents_label IS 'Human-readable gloss for contents_code.';
+COMMENT ON COLUMN api_v1.indicators__ssb_06913.value IS 'The measured value. NULL where the publisher suppressed the cell — see status.';
+COMMENT ON COLUMN api_v1.indicators__ssb_06913.status IS 'The publisher''s own suppression or quality marker for this cell, passed through verbatim.';
+COMMENT ON COLUMN api_v1.indicators__ssb_06913.updated_at IS 'When Atlas last loaded this row from the upstream.';
+COMMENT ON COLUMN api_v1.indicators__ssb_06913.region_kind IS 'What the region code is, from classify_region_code: kommune · fylke · svalbard · jan_mayen · continental_shelf · unspecified_within_fylke · unspecified_national · unknown. Joins ref_region_kind.
+🔴 ADDED 2026-09-21 WITH THE FIX THAT MADE THIS MODEL DELIVER ANYTHING. It previously matched `^K_[0-9]{4}$` against bare digits, so all 783,104 rows were dropped downstream.
+⚠️ 61 codes ending in `u` (37,088 rows, e.g. 0432u) classify as `unknown` and get a null kommune_nr. This is a 1951-2026 series, so a suffixed four-digit code is most likely historical or unspecified — but nothing here documents what SSB means by the suffix, so it is classified rather than interpreted. They keep their region_code; they do not gain a claim to be a kommune.';
+
+-- indicators__ssb_06944  ←  marts.mart_indicators__ssb_06944
+CREATE OR REPLACE VIEW api_v1.indicators__ssb_06944 AS SELECT * FROM marts.mart_indicators__ssb_06944;
+COMMENT ON VIEW api_v1.indicators__ssb_06944 IS 'Per-source indicator relation for `ssb-06944` (Statistisk sentralbyrå), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Statistisk sentralbyrå, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=ssb-06944.';
+COMMENT ON COLUMN api_v1.indicators__ssb_06944.source_id IS 'Atlas source identifier for the upstream table this row came from — the same id used by meta_sources and meta_dimensions.';
+COMMENT ON COLUMN api_v1.indicators__ssb_06944.region_code IS 'The publisher''s own region code, verbatim. It may be a kommune, fylke, bydel or national code depending on what that publisher emits; region_kind says which.';
+COMMENT ON COLUMN api_v1.indicators__ssb_06944.kommune_nr IS '4-digit kommune code, derived via region_code_to_kommune_nr. NULL for every region that is not a municipality. ⚠️ Not a bare four-digit match — that is what once called Svalbard, Jan Mayen and the continental shelf municipalities.';
+COMMENT ON COLUMN api_v1.indicators__ssb_06944.fylke_nr IS '2-digit fylke code where the region is a fylke, else NULL.';
+COMMENT ON COLUMN api_v1.indicators__ssb_06944.household_type IS 'Household-type code as SSB emits it. ⚠️ ''0000'' is ALL HOUSEHOLDS and sits alongside the individual types, so summing without filtering double-counts. Decode through ref_ssb_household_type.';
+COMMENT ON COLUMN api_v1.indicators__ssb_06944.household_type_label_no IS 'Norwegian label for household_type, joined from ref_ssb_household_type.';
+COMMENT ON COLUMN api_v1.indicators__ssb_06944.household_type_label_en IS 'English label for household_type, joined from ref_ssb_household_type.';
+COMMENT ON COLUMN api_v1.indicators__ssb_06944.year IS 'First year of the period this row covers. ⚠️ For a multi-year window this is the FIRST year, not the only one — read period_start_year and period_end_year for the span.';
+COMMENT ON COLUMN api_v1.indicators__ssb_06944.contents_code IS 'The publisher''s code for WHICH measure this row reports. Decode it through meta_dimensions for this source_id.';
+COMMENT ON COLUMN api_v1.indicators__ssb_06944.contents_label IS 'Human-readable gloss for contents_code.';
+COMMENT ON COLUMN api_v1.indicators__ssb_06944.value IS 'The measured value. NULL where the publisher suppressed the cell — see status.';
+COMMENT ON COLUMN api_v1.indicators__ssb_06944.status IS 'The publisher''s own suppression or quality marker for this cell, passed through verbatim.';
+COMMENT ON COLUMN api_v1.indicators__ssb_06944.updated_at IS 'When Atlas last loaded this row from the upstream.';
+
+-- indicators__ssb_06947  ←  marts.mart_indicators__ssb_06947
+CREATE OR REPLACE VIEW api_v1.indicators__ssb_06947 AS SELECT * FROM marts.mart_indicators__ssb_06947;
+COMMENT ON VIEW api_v1.indicators__ssb_06947 IS 'Per-source indicator relation for `ssb-06947` (Statistisk sentralbyrå), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Statistisk sentralbyrå, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=ssb-06947.';
+COMMENT ON COLUMN api_v1.indicators__ssb_06947.source_id IS 'Atlas source identifier for the upstream table this row came from — the same id used by meta_sources and meta_dimensions.';
+COMMENT ON COLUMN api_v1.indicators__ssb_06947.region_code IS 'The publisher''s own region code, verbatim. It may be a kommune, fylke, bydel or national code depending on what that publisher emits; region_kind says which.';
+COMMENT ON COLUMN api_v1.indicators__ssb_06947.kommune_nr IS '4-digit kommune code, derived via region_code_to_kommune_nr. NULL for every region that is not a municipality. ⚠️ Not a bare four-digit match — that is what once called Svalbard, Jan Mayen and the continental shelf municipalities.';
+COMMENT ON COLUMN api_v1.indicators__ssb_06947.fylke_nr IS '2-digit fylke code where the region is a fylke, else NULL.';
+COMMENT ON COLUMN api_v1.indicators__ssb_06947.year IS 'First year of the period this row covers. ⚠️ For a multi-year window this is the FIRST year, not the only one — read period_start_year and period_end_year for the span.';
+COMMENT ON COLUMN api_v1.indicators__ssb_06947.contents_code IS 'The publisher''s code for WHICH measure this row reports. Decode it through meta_dimensions for this source_id.';
+COMMENT ON COLUMN api_v1.indicators__ssb_06947.contents_label IS 'Human-readable gloss for contents_code.';
+COMMENT ON COLUMN api_v1.indicators__ssb_06947.value IS 'The measured value. NULL where the publisher suppressed the cell — see status.';
+COMMENT ON COLUMN api_v1.indicators__ssb_06947.status IS 'The publisher''s own suppression or quality marker for this cell, passed through verbatim.';
+COMMENT ON COLUMN api_v1.indicators__ssb_06947.updated_at IS 'When Atlas last loaded this row from the upstream.';
+
+-- indicators__ssb_07459  ←  marts.mart_indicators__ssb_07459
+CREATE OR REPLACE VIEW api_v1.indicators__ssb_07459 AS SELECT * FROM marts.mart_indicators__ssb_07459;
+COMMENT ON VIEW api_v1.indicators__ssb_07459 IS 'Per-source indicator relation for `ssb-07459` (Statistisk sentralbyrå), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Statistisk sentralbyrå, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=ssb-07459.';
+COMMENT ON COLUMN api_v1.indicators__ssb_07459.source_id IS 'Atlas source identifier for the upstream table this row came from — the same id used by meta_sources and meta_dimensions.';
+COMMENT ON COLUMN api_v1.indicators__ssb_07459.region_code IS 'The publisher''s own region code, verbatim. It may be a kommune, fylke, bydel or national code depending on what that publisher emits; region_kind says which.';
+COMMENT ON COLUMN api_v1.indicators__ssb_07459.kommune_nr IS '4-digit kommune code, derived via region_code_to_kommune_nr. NULL for every region that is not a municipality. ⚠️ Not a bare four-digit match — that is what once called Svalbard, Jan Mayen and the continental shelf municipalities.';
+COMMENT ON COLUMN api_v1.indicators__ssb_07459.region_kind IS 'What the region code is, from classify_region_code: kommune · fylke · svalbard · jan_mayen · continental_shelf · unspecified_within_fylke · unspecified_national · unknown. Joins ref_region_kind.
+🔵 kommune_nr is now null for every kind except `kommune`, which is what resolves this model''s permanent referential warning — the assertion became true rather than the test being relaxed (urb-agents #700).';
+COMMENT ON COLUMN api_v1.indicators__ssb_07459.fylke_nr IS '2-digit fylke code where the region is a fylke, else NULL.';
+COMMENT ON COLUMN api_v1.indicators__ssb_07459.sex IS 'SSB Kjonn — ''1'' (Menn) or ''2'' (Kvinner).';
+COMMENT ON COLUMN api_v1.indicators__ssb_07459.age IS 'SSB Alder — ''000''..''104'' or ''105+''.';
+COMMENT ON COLUMN api_v1.indicators__ssb_07459.age_int IS 'age as an integer where it is finite; NULL for an open-ended bucket such as "105+".';
+COMMENT ON COLUMN api_v1.indicators__ssb_07459.age_min IS 'A sortable floor for age: the integer itself when finite, and the number before the "+" for an open-ended bucket (105 for "105+"). Use this to order, and age_int to filter on an exact age.';
+COMMENT ON COLUMN api_v1.indicators__ssb_07459.year IS 'First year of the period this row covers. ⚠️ For a multi-year window this is the FIRST year, not the only one — read period_start_year and period_end_year for the span.';
+COMMENT ON COLUMN api_v1.indicators__ssb_07459.contents_code IS 'The publisher''s code for WHICH measure this row reports. Decode it through meta_dimensions for this source_id.';
+COMMENT ON COLUMN api_v1.indicators__ssb_07459.contents_label IS 'Human-readable gloss for contents_code.';
+COMMENT ON COLUMN api_v1.indicators__ssb_07459.value IS 'The measured value. NULL where the publisher suppressed the cell — see status.';
+COMMENT ON COLUMN api_v1.indicators__ssb_07459.status IS 'The publisher''s own suppression or quality marker for this cell, passed through verbatim.';
+COMMENT ON COLUMN api_v1.indicators__ssb_07459.updated_at IS 'When Atlas last loaded this row from the upstream.';
+
+-- indicators__ssb_08484  ←  marts.mart_indicators__ssb_08484
+CREATE OR REPLACE VIEW api_v1.indicators__ssb_08484 AS SELECT * FROM marts.mart_indicators__ssb_08484;
+COMMENT ON VIEW api_v1.indicators__ssb_08484 IS 'Per-source indicator relation for `ssb-08484`, published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows the publisher, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=ssb-08484.';
+COMMENT ON COLUMN api_v1.indicators__ssb_08484.source_id IS 'Canonical catalogue identifier for this Px bundle — always ssb-crime-tables.';
+COMMENT ON COLUMN api_v1.indicators__ssb_08484.kommune_nr IS 'Always NULL — national geography only for this Px table.';
+COMMENT ON COLUMN api_v1.indicators__ssb_08484.fylke_nr IS 'Always NULL — no fylke dimension on 08484.';
+COMMENT ON COLUMN api_v1.indicators__ssb_08484.year IS 'Calendar observation year from SSB''s Tid dimension.';
+COMMENT ON COLUMN api_v1.indicators__ssb_08484.contents_code IS 'Composite key — LovbruddKrim offence code concatenated with SSB ContentsCode.';
+COMMENT ON COLUMN api_v1.indicators__ssb_08484.contents_label IS 'Concatenated Norwegian labels for offence hierarchy and statistic variable.';
+COMMENT ON COLUMN api_v1.indicators__ssb_08484.value IS 'Count or rate per Px cell. NULL when SSB withheld the statistic (small counts / suppression marker in status).';
+COMMENT ON COLUMN api_v1.indicators__ssb_08484.status IS 'PxWebAPI cell-status character when value is withheld; otherwise NULL.';
+COMMENT ON COLUMN api_v1.indicators__ssb_08484.updated_at IS 'ingest `loaded_at` from raw.ssb_08484 (landing write time).';
+
+-- indicators__ssb_08487  ←  marts.mart_indicators__ssb_08487
+CREATE OR REPLACE VIEW api_v1.indicators__ssb_08487 AS SELECT * FROM marts.mart_indicators__ssb_08487;
+COMMENT ON VIEW api_v1.indicators__ssb_08487 IS 'Per-source indicator relation for `ssb-08487`, published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows the publisher, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=ssb-08487.';
+COMMENT ON COLUMN api_v1.indicators__ssb_08487.source_id IS 'Canonical catalogue identifier — always ssb-crime-tables for this Px bundle.';
+COMMENT ON COLUMN api_v1.indicators__ssb_08487.kommune_nr IS 'Derived 4-digit kommune code when Gjerningssted is exactly one active kommune row; otherwise NULL for higher aggregates / historical codes ending in 99.';
+COMMENT ON COLUMN api_v1.indicators__ssb_08487.region_code IS 'Raw SSB region identifier for the row — kommune, fylke, police district or country. Kept as its own column because 08487 mixes those levels and the last two fit neither kommune_nr nor fylke_nr. Part of the model''s natural key.';
+COMMENT ON COLUMN api_v1.indicators__ssb_08487.fylke_nr IS 'Derived 2-digit fylkesnummer only when region_code matches a fylke code pattern.';
+COMMENT ON COLUMN api_v1.indicators__ssb_08487.year IS 'End calendar year parsed from Px two-year Tid code (YYYY-YYYY), used as fact-layer year.';
+COMMENT ON COLUMN api_v1.indicators__ssb_08487.contents_code IS 'Composite key — region × offence × statistic × two-year interval (see SQL).';
+COMMENT ON COLUMN api_v1.indicators__ssb_08487.contents_label IS 'Place label, offence label, metric label, and interval label concatenated for display.';
+COMMENT ON COLUMN api_v1.indicators__ssb_08487.value IS 'Two-year average count or per-1-000 rate; NULL when suppressed upstream.';
+COMMENT ON COLUMN api_v1.indicators__ssb_08487.status IS 'PxWebAPI cell-status character when value is withheld.';
+COMMENT ON COLUMN api_v1.indicators__ssb_08487.updated_at IS 'ingest `loaded_at` from raw.ssb_08487.';
+
+-- indicators__ssb_08764  ←  marts.mart_indicators__ssb_08764
+CREATE OR REPLACE VIEW api_v1.indicators__ssb_08764 AS SELECT * FROM marts.mart_indicators__ssb_08764;
+COMMENT ON VIEW api_v1.indicators__ssb_08764 IS 'Per-source indicator relation for `ssb-08764` (Statistisk sentralbyrå), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Statistisk sentralbyrå, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=ssb-08764.';
+COMMENT ON COLUMN api_v1.indicators__ssb_08764.source_id IS 'Atlas source identifier for the upstream table this row came from — the same id used by meta_sources and meta_dimensions.';
+COMMENT ON COLUMN api_v1.indicators__ssb_08764.region_code IS 'SSB region code — kommune, fylke, nasjon, or historical variant.';
+COMMENT ON COLUMN api_v1.indicators__ssb_08764.kommune_nr IS '4-digit kommune code, derived via region_code_to_kommune_nr. NULL for every region that is not a municipality. ⚠️ Not a bare four-digit match — that is what once called Svalbard, Jan Mayen and the continental shelf municipalities.';
+COMMENT ON COLUMN api_v1.indicators__ssb_08764.fylke_nr IS '2-digit fylke code where the region is a fylke, else NULL.';
+COMMENT ON COLUMN api_v1.indicators__ssb_08764.year IS 'Calendar year (from SSB''s Tid dimension).';
+COMMENT ON COLUMN api_v1.indicators__ssb_08764.contents_code IS 'SSB ContentsCode — one of Personer / EUskala50 / EUskala60 / OECDskala50 / OECDskala60.';
+COMMENT ON COLUMN api_v1.indicators__ssb_08764.contents_label IS 'Human-readable gloss for contents_code.';
+COMMENT ON COLUMN api_v1.indicators__ssb_08764.value IS 'The measured value. NULL where the publisher suppressed the cell — see status.';
+COMMENT ON COLUMN api_v1.indicators__ssb_08764.status IS 'The publisher''s own suppression or quality marker for this cell, passed through verbatim.';
+COMMENT ON COLUMN api_v1.indicators__ssb_08764.updated_at IS 'When Atlas last loaded this row from the upstream.';
+
+-- indicators__ssb_09405  ←  marts.mart_indicators__ssb_09405
+CREATE OR REPLACE VIEW api_v1.indicators__ssb_09405 AS SELECT * FROM marts.mart_indicators__ssb_09405;
+COMMENT ON VIEW api_v1.indicators__ssb_09405 IS 'Per-source indicator relation for `ssb-09405`, published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows the publisher, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=ssb-09405.';
+COMMENT ON COLUMN api_v1.indicators__ssb_09405.source_id IS 'Canonical catalogue identifier — ssb-crime-tables Px bundle row.';
+COMMENT ON COLUMN api_v1.indicators__ssb_09405.kommune_nr IS 'Always NULL — Px table publishes national aggregates only.';
+COMMENT ON COLUMN api_v1.indicators__ssb_09405.fylke_nr IS 'Always NULL.';
+COMMENT ON COLUMN api_v1.indicators__ssb_09405.year IS 'Observation year from SSB Tid dimension.';
+COMMENT ON COLUMN api_v1.indicators__ssb_09405.contents_code IS 'Composite offence code × Politiet disposition × Px ContentsCode identifier.';
+COMMENT ON COLUMN api_v1.indicators__ssb_09405.contents_label IS 'Norwegian labels for offence, disposition, and measure concatenated for display.';
+COMMENT ON COLUMN api_v1.indicators__ssb_09405.value IS 'Investigative-outcome counts; NULL when suppressed.';
+COMMENT ON COLUMN api_v1.indicators__ssb_09405.status IS 'PxWebAPI cell-status when value withheld.';
+COMMENT ON COLUMN api_v1.indicators__ssb_09405.updated_at IS 'ingest `loaded_at` from raw.ssb_09405.';
+
+-- indicators__ssb_09406  ←  marts.mart_indicators__ssb_09406
+CREATE OR REPLACE VIEW api_v1.indicators__ssb_09406 AS SELECT * FROM marts.mart_indicators__ssb_09406;
+COMMENT ON VIEW api_v1.indicators__ssb_09406 IS 'Per-source indicator relation for `ssb-09406`, published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows the publisher, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=ssb-09406.';
+COMMENT ON COLUMN api_v1.indicators__ssb_09406.source_id IS 'Canonical catalogue identifier — ssb-crime-tables Px bundle row.';
+COMMENT ON COLUMN api_v1.indicators__ssb_09406.kommune_nr IS 'Always NULL —Px table publishes national aggregates only.';
+COMMENT ON COLUMN api_v1.indicators__ssb_09406.fylke_nr IS 'Always NULL.';
+COMMENT ON COLUMN api_v1.indicators__ssb_09406.year IS 'Observation year from SSB Tid dimension.';
+COMMENT ON COLUMN api_v1.indicators__ssb_09406.contents_code IS 'Concatenates LovbruddKrim Px code and ContentsCode statistic identifier.';
+COMMENT ON COLUMN api_v1.indicators__ssb_09406.contents_label IS 'Concatenates offence taxonomy label with statistic label from Px metadata.';
+COMMENT ON COLUMN api_v1.indicators__ssb_09406.value IS 'Offence counts or oppklaringsprosent; unit depends on contents_code; NULL when suppressed.';
+COMMENT ON COLUMN api_v1.indicators__ssb_09406.status IS 'PxWebAPI cell-status when value withheld.';
+COMMENT ON COLUMN api_v1.indicators__ssb_09406.updated_at IS 'ingest `loaded_at` from raw.ssb_09406.';
+
+-- indicators__ssb_09429  ←  marts.mart_indicators__ssb_09429
+CREATE OR REPLACE VIEW api_v1.indicators__ssb_09429 AS SELECT * FROM marts.mart_indicators__ssb_09429;
+COMMENT ON VIEW api_v1.indicators__ssb_09429 IS 'Per-source indicator relation for `ssb-09429` (Statistisk sentralbyrå), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Statistisk sentralbyrå, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=ssb-09429.';
+COMMENT ON COLUMN api_v1.indicators__ssb_09429.source_id IS 'Atlas source identifier for the upstream table this row came from — the same id used by meta_sources and meta_dimensions.';
+COMMENT ON COLUMN api_v1.indicators__ssb_09429.region_code IS 'The publisher''s own region code, verbatim. It may be a kommune, fylke, bydel or national code depending on what that publisher emits; region_kind says which.';
+COMMENT ON COLUMN api_v1.indicators__ssb_09429.kommune_nr IS '4-digit kommune code, derived via region_code_to_kommune_nr. NULL for every region that is not a municipality. ⚠️ Not a bare four-digit match — that is what once called Svalbard, Jan Mayen and the continental shelf municipalities.';
+COMMENT ON COLUMN api_v1.indicators__ssb_09429.fylke_nr IS '2-digit fylke code where the region is a fylke, else NULL.';
+COMMENT ON COLUMN api_v1.indicators__ssb_09429.education_level IS 'Education-level code as the publisher emits it.';
+COMMENT ON COLUMN api_v1.indicators__ssb_09429.education_level_label_no IS 'Norwegian label for education_level, joined from ref_ssb_nivaa.';
+COMMENT ON COLUMN api_v1.indicators__ssb_09429.education_level_label_en IS 'English label for education_level, joined from ref_ssb_nivaa.';
+COMMENT ON COLUMN api_v1.indicators__ssb_09429.sex IS 'all / male / female, decoded from the publisher''s sex dimension.';
+COMMENT ON COLUMN api_v1.indicators__ssb_09429.year IS 'First year of the period this row covers. ⚠️ For a multi-year window this is the FIRST year, not the only one — read period_start_year and period_end_year for the span.';
+COMMENT ON COLUMN api_v1.indicators__ssb_09429.contents_code IS 'The publisher''s code for WHICH measure this row reports. Decode it through meta_dimensions for this source_id.';
+COMMENT ON COLUMN api_v1.indicators__ssb_09429.contents_label IS 'Human-readable gloss for contents_code.';
+COMMENT ON COLUMN api_v1.indicators__ssb_09429.value IS 'The measured value. NULL where the publisher suppressed the cell — see status.';
+COMMENT ON COLUMN api_v1.indicators__ssb_09429.status IS 'The publisher''s own suppression or quality marker for this cell, passed through verbatim.';
+COMMENT ON COLUMN api_v1.indicators__ssb_09429.updated_at IS 'When Atlas last loaded this row from the upstream.';
+
+-- indicators__ssb_10826  ←  marts.mart_indicators__ssb_10826
+CREATE OR REPLACE VIEW api_v1.indicators__ssb_10826 AS SELECT * FROM marts.mart_indicators__ssb_10826;
+COMMENT ON VIEW api_v1.indicators__ssb_10826 IS 'Per-source indicator relation for `ssb-10826` (Statistisk sentralbyrå), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Statistisk sentralbyrå, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=ssb-10826.';
+COMMENT ON COLUMN api_v1.indicators__ssb_10826.source_id IS 'Atlas source identifier for the upstream table this row came from — the same id used by meta_sources and meta_dimensions.';
+COMMENT ON COLUMN api_v1.indicators__ssb_10826.region_code IS 'SSB Region code for city-total, bydel, unknown-bydel, and historical-bydel rows.';
+COMMENT ON COLUMN api_v1.indicators__ssb_10826.region_label IS 'Human-readable SSB Region label.';
+COMMENT ON COLUMN api_v1.indicators__ssb_10826.kommune_nr IS '4-digit kommune code, derived via region_code_to_kommune_nr. NULL for every region that is not a municipality. ⚠️ Not a bare four-digit match — that is what once called Svalbard, Jan Mayen and the continental shelf municipalities.';
+COMMENT ON COLUMN api_v1.indicators__ssb_10826.bydel_code IS '6-digit city-district (bydel) code, present only where the region is a real bydel. ⚠️ NULL when the last two digits are ''00'' or ''99'' — those are the whole-kommune and unspecified buckets, not districts.';
+COMMENT ON COLUMN api_v1.indicators__ssb_10826.bydel_name IS 'City-district name with upstream''s trailing parenthetical stripped. NULL wherever bydel_code is NULL.';
+COMMENT ON COLUMN api_v1.indicators__ssb_10826.sex IS 'SSB Kjonn — ''1'' (Menn) or ''2'' (Kvinner).';
+COMMENT ON COLUMN api_v1.indicators__ssb_10826.age IS 'SSB Alder — ''000''..''104'' or ''105+''.';
+COMMENT ON COLUMN api_v1.indicators__ssb_10826.age_int IS 'age as an integer where it is finite; NULL for an open-ended bucket such as "105+".';
+COMMENT ON COLUMN api_v1.indicators__ssb_10826.age_min IS 'A sortable floor for age: the integer itself when finite, and the number before the "+" for an open-ended bucket (105 for "105+"). Use this to order, and age_int to filter on an exact age.';
+COMMENT ON COLUMN api_v1.indicators__ssb_10826.year IS 'Calendar year (from SSB''s Tid dimension).';
+COMMENT ON COLUMN api_v1.indicators__ssb_10826.contents_code IS 'SSB ContentsCode — Personer.';
+COMMENT ON COLUMN api_v1.indicators__ssb_10826.contents_label IS 'Human-readable label for contents_code, verbatim from upstream.';
+COMMENT ON COLUMN api_v1.indicators__ssb_10826.value IS 'Numeric resident count. NULL when upstream suppresses the cell.';
+COMMENT ON COLUMN api_v1.indicators__ssb_10826.status IS 'Upstream suppression / quality marker. NULL when value is present.';
+COMMENT ON COLUMN api_v1.indicators__ssb_10826.updated_at IS 'When Atlas last loaded this row from the upstream.';
+
+-- indicators__ssb_12063  ←  marts.mart_indicators__ssb_12063
+CREATE OR REPLACE VIEW api_v1.indicators__ssb_12063 AS SELECT * FROM marts.mart_indicators__ssb_12063;
+COMMENT ON VIEW api_v1.indicators__ssb_12063 IS 'Per-source indicator relation for `ssb-12063` (Statistisk sentralbyrå), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Statistisk sentralbyrå, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=ssb-12063.';
+COMMENT ON COLUMN api_v1.indicators__ssb_12063.source_id IS 'Atlas source identifier for the upstream table this row came from — the same id used by meta_sources and meta_dimensions.';
+COMMENT ON COLUMN api_v1.indicators__ssb_12063.region_code IS 'The publisher''s own region code, verbatim. It may be a kommune, fylke, bydel or national code depending on what that publisher emits; region_kind says which.';
+COMMENT ON COLUMN api_v1.indicators__ssb_12063.kommune_nr IS '4-digit kommune code, derived via region_code_to_kommune_nr. NULL for every region that is not a municipality. ⚠️ Not a bare four-digit match — that is what once called Svalbard, Jan Mayen and the continental shelf municipalities.';
+COMMENT ON COLUMN api_v1.indicators__ssb_12063.fylke_nr IS '2-digit fylke code where the region is a fylke, else NULL.';
+COMMENT ON COLUMN api_v1.indicators__ssb_12063.year IS 'First year of the period this row covers. ⚠️ For a multi-year window this is the FIRST year, not the only one — read period_start_year and period_end_year for the span.';
+COMMENT ON COLUMN api_v1.indicators__ssb_12063.contents_code IS 'The publisher''s code for WHICH measure this row reports. Decode it through meta_dimensions for this source_id.';
+COMMENT ON COLUMN api_v1.indicators__ssb_12063.contents_label IS 'Human-readable gloss for contents_code.';
+COMMENT ON COLUMN api_v1.indicators__ssb_12063.value IS 'The measured value. NULL where the publisher suppressed the cell — see status.';
+COMMENT ON COLUMN api_v1.indicators__ssb_12063.status IS 'The publisher''s own suppression or quality marker for this cell, passed through verbatim.';
+COMMENT ON COLUMN api_v1.indicators__ssb_12063.updated_at IS 'When Atlas last loaded this row from the upstream.';
+
+-- indicators__ssb_12131  ←  marts.mart_indicators__ssb_12131
+CREATE OR REPLACE VIEW api_v1.indicators__ssb_12131 AS SELECT * FROM marts.mart_indicators__ssb_12131;
+COMMENT ON VIEW api_v1.indicators__ssb_12131 IS 'Per-source indicator relation for `ssb-12131` (Statistisk sentralbyrå), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Statistisk sentralbyrå, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=ssb-12131.';
+COMMENT ON COLUMN api_v1.indicators__ssb_12131.source_id IS 'Atlas source identifier for the upstream table this row came from — the same id used by meta_sources and meta_dimensions.';
+COMMENT ON COLUMN api_v1.indicators__ssb_12131.region_code IS 'The publisher''s own region code, verbatim. It may be a kommune, fylke, bydel or national code depending on what that publisher emits; region_kind says which.';
+COMMENT ON COLUMN api_v1.indicators__ssb_12131.kommune_nr IS '4-digit kommune code, derived via region_code_to_kommune_nr. NULL for every region that is not a municipality. ⚠️ Not a bare four-digit match — that is what once called Svalbard, Jan Mayen and the continental shelf municipalities.';
+COMMENT ON COLUMN api_v1.indicators__ssb_12131.fylke_nr IS '2-digit fylke code where the region is a fylke, else NULL.';
+COMMENT ON COLUMN api_v1.indicators__ssb_12131.year IS 'First year of the period this row covers. ⚠️ For a multi-year window this is the FIRST year, not the only one — read period_start_year and period_end_year for the span.';
+COMMENT ON COLUMN api_v1.indicators__ssb_12131.contents_code IS 'The publisher''s code for WHICH measure this row reports. Decode it through meta_dimensions for this source_id.';
+COMMENT ON COLUMN api_v1.indicators__ssb_12131.contents_label IS 'Human-readable gloss for contents_code.';
+COMMENT ON COLUMN api_v1.indicators__ssb_12131.value IS 'The measured value. NULL where the publisher suppressed the cell — see status.';
+COMMENT ON COLUMN api_v1.indicators__ssb_12131.status IS 'The publisher''s own suppression or quality marker for this cell, passed through verbatim.';
+COMMENT ON COLUMN api_v1.indicators__ssb_12131.updated_at IS 'When Atlas last loaded this row from the upstream.';
+
+-- indicators__ssb_12132  ←  marts.mart_indicators__ssb_12132
+CREATE OR REPLACE VIEW api_v1.indicators__ssb_12132 AS SELECT * FROM marts.mart_indicators__ssb_12132;
+COMMENT ON VIEW api_v1.indicators__ssb_12132 IS 'Per-source indicator relation for `ssb-12132` (Statistisk sentralbyrå), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Statistisk sentralbyrå, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=ssb-12132.';
+COMMENT ON COLUMN api_v1.indicators__ssb_12132.source_id IS 'Atlas source identifier for the upstream table this row came from — the same id used by meta_sources and meta_dimensions.';
+COMMENT ON COLUMN api_v1.indicators__ssb_12132.region_code IS 'The publisher''s own region code, verbatim. It may be a kommune, fylke, bydel or national code depending on what that publisher emits; region_kind says which.';
+COMMENT ON COLUMN api_v1.indicators__ssb_12132.kommune_nr IS '4-digit kommune code, derived via region_code_to_kommune_nr. NULL for every region that is not a municipality. ⚠️ Not a bare four-digit match — that is what once called Svalbard, Jan Mayen and the continental shelf municipalities.';
+COMMENT ON COLUMN api_v1.indicators__ssb_12132.fylke_nr IS '2-digit fylke code where the region is a fylke, else NULL.';
+COMMENT ON COLUMN api_v1.indicators__ssb_12132.year IS 'First year of the period this row covers. ⚠️ For a multi-year window this is the FIRST year, not the only one — read period_start_year and period_end_year for the span.';
+COMMENT ON COLUMN api_v1.indicators__ssb_12132.contents_code IS 'The publisher''s code for WHICH measure this row reports. Decode it through meta_dimensions for this source_id.';
+COMMENT ON COLUMN api_v1.indicators__ssb_12132.contents_label IS 'Human-readable gloss for contents_code.';
+COMMENT ON COLUMN api_v1.indicators__ssb_12132.value IS 'The measured value. NULL where the publisher suppressed the cell — see status.';
+COMMENT ON COLUMN api_v1.indicators__ssb_12132.status IS 'The publisher''s own suppression or quality marker for this cell, passed through verbatim.';
+COMMENT ON COLUMN api_v1.indicators__ssb_12132.updated_at IS 'When Atlas last loaded this row from the upstream.';
+
+-- indicators__ssb_12292  ←  marts.mart_indicators__ssb_12292
+CREATE OR REPLACE VIEW api_v1.indicators__ssb_12292 AS SELECT * FROM marts.mart_indicators__ssb_12292;
+COMMENT ON VIEW api_v1.indicators__ssb_12292 IS 'Per-source indicator relation for `ssb-12292` (Statistisk sentralbyrå), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Statistisk sentralbyrå, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=ssb-12292.';
+COMMENT ON COLUMN api_v1.indicators__ssb_12292.source_id IS 'Atlas source identifier for the upstream table this row came from — the same id used by meta_sources and meta_dimensions.';
+COMMENT ON COLUMN api_v1.indicators__ssb_12292.region_code IS 'The publisher''s own region code, verbatim. It may be a kommune, fylke, bydel or national code depending on what that publisher emits; region_kind says which.';
+COMMENT ON COLUMN api_v1.indicators__ssb_12292.kommune_nr IS '4-digit kommune code, derived via region_code_to_kommune_nr. NULL for every region that is not a municipality. ⚠️ Not a bare four-digit match — that is what once called Svalbard, Jan Mayen and the continental shelf municipalities.';
+COMMENT ON COLUMN api_v1.indicators__ssb_12292.fylke_nr IS '2-digit fylke code where the region is a fylke, else NULL.';
+COMMENT ON COLUMN api_v1.indicators__ssb_12292.year IS 'First year of the period this row covers. ⚠️ For a multi-year window this is the FIRST year, not the only one — read period_start_year and period_end_year for the span.';
+COMMENT ON COLUMN api_v1.indicators__ssb_12292.contents_code IS 'The publisher''s code for WHICH measure this row reports. Decode it through meta_dimensions for this source_id.';
+COMMENT ON COLUMN api_v1.indicators__ssb_12292.contents_label IS 'Human-readable gloss for contents_code.';
+COMMENT ON COLUMN api_v1.indicators__ssb_12292.value IS 'The measured value. NULL where the publisher suppressed the cell — see status.';
+COMMENT ON COLUMN api_v1.indicators__ssb_12292.status IS 'The publisher''s own suppression or quality marker for this cell, passed through verbatim.';
+COMMENT ON COLUMN api_v1.indicators__ssb_12292.updated_at IS 'When Atlas last loaded this row from the upstream.';
+
+-- indicators__ssb_12944  ←  marts.mart_indicators__ssb_12944
+CREATE OR REPLACE VIEW api_v1.indicators__ssb_12944 AS SELECT * FROM marts.mart_indicators__ssb_12944;
+COMMENT ON VIEW api_v1.indicators__ssb_12944 IS 'Per-source indicator relation for `ssb-12944` (Statistisk sentralbyrå), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Statistisk sentralbyrå, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=ssb-12944.';
+COMMENT ON COLUMN api_v1.indicators__ssb_12944.region_code IS 'SSB region code.';
+COMMENT ON COLUMN api_v1.indicators__ssb_12944.source_id IS 'Atlas source identifier for the upstream table this row came from — the same id used by meta_sources and meta_dimensions.';
+COMMENT ON COLUMN api_v1.indicators__ssb_12944.kommune_nr IS '4-digit kommune code, derived via region_code_to_kommune_nr. NULL for every region that is not a municipality. ⚠️ Not a bare four-digit match — that is what once called Svalbard, Jan Mayen and the continental shelf municipalities.';
+COMMENT ON COLUMN api_v1.indicators__ssb_12944.fylke_nr IS '2-digit fylke code where the region is a fylke, else NULL.';
+COMMENT ON COLUMN api_v1.indicators__ssb_12944.age_group IS 'SSB Alder dimension — 999A (all ages), 00-17, 18-34, 35-49, 50-66, 067+.';
+COMMENT ON COLUMN api_v1.indicators__ssb_12944.age_group_min IS 'Numeric floor of age_group, parsed from the band''s "min_max" form. NULL where the band has no finite floor.';
+COMMENT ON COLUMN api_v1.indicators__ssb_12944.age_group_max IS 'Numeric ceiling of age_group, parsed from the band''s "min_max" form. NULL for an open-ended band.';
+COMMENT ON COLUMN api_v1.indicators__ssb_12944.period IS 'Three-year rolling period, e.g. 2022-2024. Stored verbatim from upstream Tid.';
+COMMENT ON COLUMN api_v1.indicators__ssb_12944.period_start_year IS 'Parsed first year of the period.';
+COMMENT ON COLUMN api_v1.indicators__ssb_12944.period_end_year IS 'Parsed last year of the period.';
+COMMENT ON COLUMN api_v1.indicators__ssb_12944.contents_code IS 'SSB ContentsCode — PersonerSeksti (count) or EUskalaSeksti (percent EU-60).';
+COMMENT ON COLUMN api_v1.indicators__ssb_12944.contents_label IS 'Human-readable gloss for contents_code.';
+COMMENT ON COLUMN api_v1.indicators__ssb_12944.value IS 'The measured value. NULL where the publisher suppressed the cell — see status.';
+COMMENT ON COLUMN api_v1.indicators__ssb_12944.status IS 'The publisher''s own suppression or quality marker for this cell, passed through verbatim.';
+COMMENT ON COLUMN api_v1.indicators__ssb_12944.updated_at IS 'When Atlas last loaded this row from the upstream.';
+
+-- indicators__ssb_13995  ←  marts.mart_indicators__ssb_13995
+CREATE OR REPLACE VIEW api_v1.indicators__ssb_13995 AS SELECT * FROM marts.mart_indicators__ssb_13995;
+COMMENT ON VIEW api_v1.indicators__ssb_13995 IS 'Per-source indicator relation for `ssb-13995` (Statistisk sentralbyrå), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Statistisk sentralbyrå, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=ssb-13995.';
+COMMENT ON COLUMN api_v1.indicators__ssb_13995.source_id IS 'Atlas source identifier for the upstream table this row came from — the same id used by meta_sources and meta_dimensions.';
+COMMENT ON COLUMN api_v1.indicators__ssb_13995.region_code IS 'The publisher''s own region code, verbatim. It may be a kommune, fylke, bydel or national code depending on what that publisher emits; region_kind says which.';
+COMMENT ON COLUMN api_v1.indicators__ssb_13995.kommune_nr IS '4-digit kommune code, derived via region_code_to_kommune_nr. NULL for every region that is not a municipality. ⚠️ Not a bare four-digit match — that is what once called Svalbard, Jan Mayen and the continental shelf municipalities.';
+COMMENT ON COLUMN api_v1.indicators__ssb_13995.fylke_nr IS '2-digit fylke code where the region is a fylke, else NULL.';
+COMMENT ON COLUMN api_v1.indicators__ssb_13995.year IS 'First year of the period this row covers. ⚠️ For a multi-year window this is the FIRST year, not the only one — read period_start_year and period_end_year for the span.';
+COMMENT ON COLUMN api_v1.indicators__ssb_13995.contents_code IS 'The publisher''s code for WHICH measure this row reports. Decode it through meta_dimensions for this source_id.';
+COMMENT ON COLUMN api_v1.indicators__ssb_13995.contents_label IS 'Human-readable gloss for contents_code.';
+COMMENT ON COLUMN api_v1.indicators__ssb_13995.value IS 'The measured value. NULL where the publisher suppressed the cell — see status.';
+COMMENT ON COLUMN api_v1.indicators__ssb_13995.status IS 'The publisher''s own suppression or quality marker for this cell, passed through verbatim.';
+COMMENT ON COLUMN api_v1.indicators__ssb_13995.updated_at IS 'When Atlas last loaded this row from the upstream.';
 
 -- ingest_health  ←  marts.mart_ingest_health
 CREATE OR REPLACE VIEW api_v1.ingest_health AS SELECT * FROM marts.mart_ingest_health;

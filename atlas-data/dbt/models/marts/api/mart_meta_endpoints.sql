@@ -34,6 +34,10 @@
 --
 -- Tag derivation:
 --   - layer:<schema>      — derived from table_schema. Universal.
+--   - stability:<source|curated> — api_v1.* ONLY. Whose shape this is:
+--     `source` follows an upstream publisher and changes when they change it;
+--     `curated` is Atlas's own and changes only as a contract change. Declared
+--     per model, never inferred; the generator refuses an undeclared relation.
 --   - provider/topic/geo/cadence/eu_theme — inherited from the source(s)
 --     each model derives from, via the lineage seed (Phase 3.3). Multiple
 --     sources contribute one tag each per namespace; the result is the
@@ -139,7 +143,30 @@ select
   -- already deduped/sorted in marts_lineage / api_v1_lineage / raw_lineage;
   -- prepending layer: yields the final filterable tag array PostgREST
   -- consumers see.
-  array['layer:' || e.schema_name] || coalesce(
+  array['layer:' || e.schema_name]
+  -- 🔴 stability:<source|curated> — WHOSE SHAPE IS THIS, AND WHO CAN CHANGE IT.
+  --
+  --   source   the column set follows an upstream publisher. They add, rename
+  --            or drop a dimension and this relation changes with it. Atlas
+  --            cannot promise the shape and does not pretend to.
+  --   curated  Atlas defines the column set and treats a change to it as a
+  --            change to a published contract.
+  --
+  -- ⚠️ ONLY api_v1.* CARRIES IT, and that is deliberate rather than an
+  -- oversight: the tag is a promise to an external consumer about a published
+  -- relation. marts.* and raw.* are not promised to anyone, so tagging them
+  -- would extend a guarantee that does not exist.
+  --
+  -- 🔵 Declared per model as meta.stability and carried here through the
+  -- generated api_v1_relations seed — the same seed atlas_inventory reads, so
+  -- the two cannot disagree. generate_api_v1.py REFUSES to emit a relation
+  -- without one, so an untagged endpoint cannot reach this array.
+  || coalesce(
+    case when e.schema_name = 'api_v1' and st.stability is not null
+         then array['stability:' || st.stability] end,
+    '{}'::text[]
+  )
+  || coalesce(
     case e.schema_name
       when 'api_v1' then a.inherited_tags
       when 'marts' then m.inherited_tags
@@ -153,4 +180,6 @@ from raw_endpoints e
 left join marts_lineage m on m.model_name = e.table_name and e.schema_name = 'marts'
 left join api_v1_lineage a on a.endpoint_name = e.table_name and e.schema_name = 'api_v1'
 left join raw_lineage rl on rl.raw_table = e.table_name and e.schema_name = 'raw'
+left join {{ ref('api_v1_relations') }} st
+  on st.relation_name = e.table_name and e.schema_name = 'api_v1'
 order by e.schema_name, e.table_name
