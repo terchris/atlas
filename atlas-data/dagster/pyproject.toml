@@ -36,6 +36,29 @@ deploy = [
     # install first. Local dev then runs a different dbt than production.
     "dbt-core>=1.8,<1.9",
     "dbt-postgres>=1.8,<1.9",
+    # 🔴 SQLAlchemy 2.1 CHANGED THE DEFAULT POSTGRES DRIVER TO psycopg v3 AND
+    # BROKE EVERY RUN POD. It arrives transitively via dagster-postgres and was
+    # unpinned, so the first image built after 2026-09-24T20:36 picked it up and
+    # every run died at launch:
+    #
+    #     File "sqlalchemy/dialects/postgresql/psycopg.py", import_dbapi
+    #       import psycopg
+    #     ModuleNotFoundError: No module named 'psycopg'
+    #
+    # In 2.0 SQLAlchemy's `postgresql` extra resolved to psycopg2-binary; in 2.1
+    # it resolves to psycopg (v3), which is not installed here. The traceback
+    # shows SQLAlchemy selecting the v3 dialect for a URL that had always
+    # selected psycopg2. Local dev still has 2.0.52 and works.
+    #
+    # ⚠️ NOTHING IN THE CHANGED SOURCE CAUSED IT. The release that broke was
+    # twelve files of SQL and documentation. The rebuild was the trigger; an
+    # unpinned transitive dependency was the cause — the image installs with
+    # `uv pip install` from pyproject.toml and NEVER copies uv.lock, so every
+    # build re-resolves against PyPI.
+    #
+    # Lift this when psycopg v3 is deliberately adopted and tested, not because
+    # a resolver offered it.
+    "sqlalchemy<2.1",
 ]
 dev = [
     "dagster-webserver~=1.13",
