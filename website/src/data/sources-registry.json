@@ -18934,7 +18934,7 @@
         },
         {
           "name": "label_en",
-          "description": "The English label where the publisher provides one."
+          "description": "⚠️ EMPTY FOR EVERY ROW, and that is upstream's doing, not a loading fault. Brreg publishes these ICNPO category names in Norwegian only, and Atlas does not translate upstream values. Read label_no. 🔵 ICNPO is an international standard and official English names exist for it — but they are not what Brreg publishes here, so inventing them would put Atlas's translation behind a publisher's name."
         },
         {
           "name": "sort_order",

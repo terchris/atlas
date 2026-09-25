@@ -2504,7 +2504,7 @@ COMMENT ON VIEW api_v1.ref_brreg_icnpo IS 'ICNPO categories from Brreg''s Frivil
 COMMENT ON COLUMN api_v1.ref_brreg_icnpo.code IS 'The ICNPO code.';
 COMMENT ON COLUMN api_v1.ref_brreg_icnpo.parent_code IS 'Null on a main group; the group''s code on a subgroup. Lets a consumer walk the hierarchy without a second request.';
 COMMENT ON COLUMN api_v1.ref_brreg_icnpo.label_no IS 'The Norwegian label, as its publisher writes it. Atlas does not translate or normalise upstream label text.';
-COMMENT ON COLUMN api_v1.ref_brreg_icnpo.label_en IS 'The English label where the publisher provides one.';
+COMMENT ON COLUMN api_v1.ref_brreg_icnpo.label_en IS '⚠️ EMPTY FOR EVERY ROW, and that is upstream''s doing, not a loading fault. Brreg publishes these ICNPO category names in Norwegian only, and Atlas does not translate upstream values. Read label_no. 🔵 ICNPO is an international standard and official English names exist for it — but they are not what Brreg publishes here, so inventing them would put Atlas''s translation behind a publisher''s name.';
 COMMENT ON COLUMN api_v1.ref_brreg_icnpo.sort_order IS 'The publisher''s own display order. ⚠️ Sort by this, not by `code` — several of these lists do not sort into their intended sequence alphabetically.';
 
 -- ref_fhi_innvkat  ←  marts.mart_ref_fhi_innvkat
