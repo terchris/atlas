@@ -45,7 +45,17 @@ MANIFEST=target/manifest.json
 #   mart_distrikt_summary        grain is chapters. kommune_nr is a
 #   mart_kommune_local_chapters  dim_postnummer lookup on a chapter's postal
 #                                address and cannot be 9999.
-EXEMPT="mart_dim_kommune mart_unattributed_totals mart_brreg_enhet mart_distrikt_summary mart_kommune_local_chapters"
+#   mart_dim_postnummer          IT IS THE LOOKUP THE TWO ABOVE ARE EXEMPT FOR.
+#                                Grain is one row per postal code; kommune_nr
+#                                is the attribute, not the grain. Bring's
+#                                register contains ZERO 9999 rows (counted in
+#                                the seed, 2026-09-25) — so a filter here would
+#                                remove nothing today, and on the day upstream
+#                                did emit one it would silently DROP A POSTAL
+#                                CODE from a register Atlas republishes
+#                                verbatim. That is editing source data to
+#                                satisfy a gate.
+EXEMPT="mart_dim_kommune mart_unattributed_totals mart_brreg_enhet mart_distrikt_summary mart_kommune_local_chapters mart_dim_postnummer"
 
 CANDIDATES="$(./.venv/bin/python -c '
 import json, sys
