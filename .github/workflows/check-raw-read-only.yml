@@ -68,6 +68,13 @@ jobs:
           dbt parse
       - name: Every published per-kommune relation excludes the 9999 sentinel
         run: atlas-data/dbt/check-kommune-marts-exclude-sentinels.sh
+      # 🔴 A not_null on a column that is empty in its seed passes EVERY CI
+      # build, because CI builds from an empty database — there are no rows to
+      # violate it. It fails in production on real rows, which is where
+      # mart_ref_brreg_icnpo.label_en failed with 46 of 46 on 2026-09-25.
+      # Reads the committed CSV and schema.yml only; needs no database.
+      - name: Seed-backed not_null assertions hold in the committed CSVs
+        run: atlas-data/dbt/check-seed-not-null-matches-the-csv.sh
       # Regenerates the lineage seeds and diffs them; needs the manifest the
       # step above already produced. A stale seed makes a SERVED source report
       # as unserved, which is indistinguishable from the real thing.
