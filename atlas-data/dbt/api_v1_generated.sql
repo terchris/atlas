@@ -162,8 +162,37 @@ underneath move faster than that:
   edge cache TTL      about 60 minutes
 
 ⚠️ SO A CACHED 200 CAN BE OLDER THAN THE INTERVAL AT WHICH ITS ROWS CHANGE —
-up to two reconciliation cycles behind. If you need a value fresher than that,
-send `Cache-Control: no-cache` and check `cf-cache-status` on the response.
+up to two reconciliation cycles behind.
+
+🔴 AND YOU CANNOT GET PAST IT WITH A REQUEST HEADER. THIS DOCUMENT SAID YOU
+COULD, AND THAT WAS WRONG. Measured 2026-09-25 against one URL, first request
+`MISS` so the entry was known fresh, then the same URL again:
+
+  Cache-Control: no-cache    HIT, age 5
+  Cache-Control: no-store    HIT, age 5
+  Pragma: no-cache           HIT, age 5
+
+All three are ignored at the edge. An earlier version of this paragraph told
+you to send `Cache-Control: no-cache`; following it returns a cached answer
+while looking like a deliberate freshness check, which is worse than knowing
+you are reading cache.
+
+🔵 WHAT ACTUALLY WORKS: change the URL, because the cache key is the URL. Add
+a parameter PostgREST already accepts and that does not change the result —
+`&select=*`, or a `select=` naming the columns you want — and you get
+`cf-cache-status: BYPASS` and an origin read.
+
+⚠️ Do NOT add an arbitrary parameter like `&_cb=123`. PostgREST reads any
+unknown query parameter as a COLUMN FILTER and answers 400 PGRST100,
+"failed to parse filter" — measured the same day. The busting parameter has to
+be valid PostgREST.
+
+⚠️ AND CHECK `age` AND `cf-cache-status` ON EVERY READING YOU INTEND TO ACT
+ON. A pre-deploy baseline taken from the edge caches the PRE-deploy answer
+under that exact URL for the whole TTL — so the post-deploy check on the same
+URL returns the old state and reads as a completely failed deploy. That
+happened twice on 2026-09-25, to two different readers, before either of them
+looked at `age`.
 
 🔴 AND THE `cache-control: no-store` HEADER ON THIS API IS NOT ABOUT THE EDGE.
 It is addressed to your client, and the edge is configured to ignore it — that
