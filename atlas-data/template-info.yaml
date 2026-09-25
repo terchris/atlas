@@ -510,7 +510,7 @@ operational:
       separately. raw = distinct `create table raw.*` across atlas-data/migrations
       (52). marts = dbt models materialised table or incremental into schema marts,
       models=64 plus seeds, which are always tables, seeds=18; a further
-      views=19 are materialised as views instead and are the "10 marts views"
+      views=19 are materialised as views instead and are the "19 marts views"
       above.
       ⚠️ THIS SENTENCE HAS CONTRADICTED ITSELF THREE TIMES (#824, #1263, and
       #1353 on 2026-09-21, when it read 81 in the headline, "= 62" in the rule,
