@@ -153,6 +153,24 @@ today. Worse, they return PGRST205 — "Could not find the table
 name, so a client looking for the spec is told the API has no such TABLE rather
 than that it guessed the wrong URL. Ask for the base URL instead.
 
+🔴 THE RAW TABLES ARE NEVER PUBLIC, BY DESIGN — NOT MISSING, NOT PENDING.
+`raw` is verbatim upstream payload. Publishing it would make every upstream
+schema change a breaking API change, and the modelled layer above exists
+precisely so consumers do not depend on that shape.
+
+⚠️ THIS IS WRITTEN DOWN BECAUSE THE ALTERNATIVE IS 52 SILENT 404s. Atlas holds
+52 raw tables. A consumer who guesses one of their names gets the same PGRST205
+described above — "Could not find the table" — which reads as *this endpoint is
+broken or not built yet*, when it is a decision that will not be revisited. An
+absence cannot say why it is absent, so the reason is stated here rather than
+left to be inferred one failed request at a time.
+
+🔵 WHAT TO ASK FOR INSTEAD. Everything Atlas publishes is in the list below and
+in `meta_endpoints`. If you need a column that exists upstream and is not in a
+relation here, that is a modelling request, not a missing endpoint — and it is
+worth making, because a source that reaches no published relation is a defect
+in Atlas's terms, not a deliberate omission.
+
 ⚠️ `info.version` IN THIS DOCUMENT IS POSTGREST'S VERSION, NOT ATLAS'S. It
 reads 14.10 because PostgREST generates this spec and reports itself; Atlas
 cannot set it and there is no Atlas version in here at all. A client that reads
@@ -171,6 +189,14 @@ THE CATALOGUE:
                     (different columns), how many ingest attempts, and whether
                     the rows came from an ingest, a seed or the catalogue.
   meta_endpoints    every relation below, with tags. The index.
+                    ⚠️ READ ITS stability: TAG BEFORE YOU BUILD ON A RELATION.
+                    `stability:curated` means Atlas defines the column set and
+                    a change to it is a change to a published contract.
+                    `stability:source` means the column set follows an upstream
+                    publisher — they add, rename or drop a dimension and the
+                    relation changes with it, and Atlas does not promise
+                    otherwise. Every published relation carries exactly one;
+                    the generator refuses to publish one that does not.
   meta_sources      one row per ingested source: licence, publisher,
                     coverage, freshness, downstream model count.
   meta_dimensions   one row per source x upstream dimension: what that coded
@@ -210,11 +236,86 @@ SUPPLY — voluntary-sector presence:
   distrikt_summary             chapters by district.
   kommune_local_chapters       chapters resolved to a kommune.
 
+PER-SOURCE INDICATOR RELATIONS — 40 of them, one per upstream table, at the
+grain the publisher actually uses. The cross-source views above impose ONE
+shape on every source; these keep the source's own dimensions, so a breakdown
+those views flatten away (a sex, an age band, a household or family type, a
+parental-education split) is only answerable here.
+
+🔴 ALL 40 ARE stability:source. THE COLUMN SET FOLLOWS THE PUBLISHER, NOT
+ATLAS. If SSB, FHI or Bufdir adds, renames or drops a dimension, these change
+with it — that is the deliberate trade for getting the real grain. Filter
+`meta_endpoints?tags=cs.{{stability:curated}}` for the relations whose shape
+Atlas promises to hold still.
+
+🔵 Codes are codes here. Decode them through `meta_dimensions` filtered to the
+same source_id, and through the ref_* lists above where one exists.
+
+  bufdir (1):
+    indicators__bufdir_barnefattigdom
+  fhi (21):
+    indicators__fhi_alkohol indicators__fhi_befolkning
+    indicators__fhi_befolkningsvekst indicators__fhi_bor_alene
+    indicators__fhi_depresjon indicators__fhi_fortrolig_venn
+    indicators__fhi_hasj indicators__fhi_innvandrere
+    indicators__fhi_innvkat indicators__fhi_kpr_1aar
+    indicators__fhi_livskvalitet indicators__fhi_mediebruk_some
+    indicators__fhi_mediebruk_spill indicators__fhi_mediebruk_underhold
+    indicators__fhi_mobbing indicators__fhi_neet indicators__fhi_prognose
+    indicators__fhi_selvmord indicators__fhi_smertestillende
+    indicators__fhi_trangbodd indicators__fhi_vgs_gjennomforing
+  ssb (18):
+    indicators__ssb_06083 indicators__ssb_06913 indicators__ssb_06944
+    indicators__ssb_06947 indicators__ssb_07459 indicators__ssb_08484
+    indicators__ssb_08487 indicators__ssb_08764 indicators__ssb_09405
+    indicators__ssb_09406 indicators__ssb_09429 indicators__ssb_10826
+    indicators__ssb_12063 indicators__ssb_12131 indicators__ssb_12132
+    indicators__ssb_12292 indicators__ssb_12944 indicators__ssb_13995
+
 REFERENCE:
   dim_kommune                  the municipality dimension. Keeps SSB's 9999
                                'Uoppgitt' because Klass 131 publishes it; the
                                analytical relations exclude it.
+  dim_fylke                    the county dimension, dim_kommune's sibling.
+                               ⚠️ 16 codes are current; the rest are history.
+                               Filter ?is_active=eq.true, and note is_sentinel
+                               marks '99 Uoppgitt', which is not a county.
+  dim_postnummer               postal code -> primary kommune, 5 122 rows.
+                               ⚠️ A few postnummer span more than one kommune
+                               and this carries ONE of them, so a join through
+                               it is a good default, not a ground truth.
+                               ⚠️ From Bring's register via a seed refresh, so
+                               it has NO meta_sources row and NO recorded
+                               licence — check Bring's terms before
+                               redistributing rather than assuming NLOD.
   brreg_enhet                  the Bronnoysund register mirror.
+
+CODE LISTS — decode the coded columns the relations above already expose.
+Every one is small, stable, and safe to cache locally:
+  ref_brreg_icnpo              ICNPO categories, 14 groups + 32 subgroups.
+                               Decodes the code in kommune_ngo_summary.
+  ref_un_sdg                   the 17 UN Sustainable Development Goals.
+  ref_region_kind              what a region_code denotes, with the pattern
+                               Atlas classifies by and an is_kommune flag.
+  ref_ssb_nivaa                SSB NUS2000 education levels (table 09429).
+  ref_ssb_family_type          SSB family types.
+  ref_ssb_household_type       SSB household types. Codes are ZERO-PADDED
+                               TEXT; casting to int matches nothing.
+  ref_fhi_utdann               FHI education levels. In vgs_gjennomforing
+                               this is the PARENTS' education.
+  ref_fhi_innvkat              FHI immigrant categories AS USED BY TABLE 360
+                               — one row, '0'. ⚠️ It does NOT decode the
+                               immigrant_category column of the fhi-innvkat
+                               relation (table 932: '2', '3', '23'). For
+                               those, read
+                               /meta_dimensions?source_id=eq.fhi-innvkat
+  ref_atlas_service_category   ⚠️ ATLAS'S OWN vocabulary, not an upstream
+                               standard — the only list here that is Atlas's
+                               editorial judgement. Weigh it accordingly.
+
+⚠️ SORT A CODE LIST BY sort_order, NOT BY code. Several carry their
+publisher's ordering, which is not the alphabetical one — ref_ssb_nivaa
+interleaves '11' between '02a' and '03a'.
 
 HOW STALE CAN A 200 BE? UP TO ABOUT AN HOUR, AND THE HEADERS WILL NOT TELL YOU.
 A CDN sits in front of this API with an edge TTL of roughly 60 minutes —
@@ -226,8 +327,37 @@ underneath move faster than that:
   edge cache TTL      about 60 minutes
 
 ⚠️ SO A CACHED 200 CAN BE OLDER THAN THE INTERVAL AT WHICH ITS ROWS CHANGE —
-up to two reconciliation cycles behind. If you need a value fresher than that,
-send `Cache-Control: no-cache` and check `cf-cache-status` on the response.
+up to two reconciliation cycles behind.
+
+🔴 AND YOU CANNOT GET PAST IT WITH A REQUEST HEADER. THIS DOCUMENT SAID YOU
+COULD, AND THAT WAS WRONG. Measured 2026-09-25 against one URL, first request
+`MISS` so the entry was known fresh, then the same URL again:
+
+  Cache-Control: no-cache    HIT, age 5
+  Cache-Control: no-store    HIT, age 5
+  Pragma: no-cache           HIT, age 5
+
+All three are ignored at the edge. An earlier version of this paragraph told
+you to send `Cache-Control: no-cache`; following it returns a cached answer
+while looking like a deliberate freshness check, which is worse than knowing
+you are reading cache.
+
+🔵 WHAT ACTUALLY WORKS: change the URL, because the cache key is the URL. Add
+a parameter PostgREST already accepts and that does not change the result —
+`&select=*`, or a `select=` naming the columns you want — and you get
+`cf-cache-status: BYPASS` and an origin read.
+
+⚠️ Do NOT add an arbitrary parameter like `&_cb=123`. PostgREST reads any
+unknown query parameter as a COLUMN FILTER and answers 400 PGRST100,
+"failed to parse filter" — measured the same day. The busting parameter has to
+be valid PostgREST.
+
+⚠️ AND CHECK `age` AND `cf-cache-status` ON EVERY READING YOU INTEND TO ACT
+ON. A pre-deploy baseline taken from the edge caches the PRE-deploy answer
+under that exact URL for the whole TTL — so the post-deploy check on the same
+URL returns the old state and reads as a completely failed deploy. That
+happened twice on 2026-09-25, to two different readers, before either of them
+looked at `age`.
 
 🔴 AND THE `cache-control: no-store` HEADER ON THIS API IS NOT ABOUT THE EDGE.
 It is addressed to your client, and the edge is configured to ignore it — that
@@ -526,13 +656,84 @@ def render_relations_seed(manifest: dict, wrappers: "list[WrapperView]") -> str:
 
     by_name = {n["name"]: uid for uid, n in nodes.items()
                if n.get("resource_type") == "model"}
-    rows = ["relation_name,mart_name,derives_from_fact"]
+    # 🔴 stability — WHOSE SHAPE IS THIS, AND WHO CAN CHANGE IT.
+    #
+    #   source   the COLUMN SET follows an upstream publisher. They add, rename
+    #            or drop a dimension and this relation changes with it. Atlas
+    #            cannot promise the shape and does not pretend to.
+    #   curated  Atlas defines the column set and treats a change to it as a
+    #            change to a published contract.
+    #
+    # ⚠️ DECLARED IN THE MODEL, NOT INFERRED HERE. It is an editorial judgement
+    # about who owns a shape — a heuristic would get it wrong silently, and the
+    # whole value of the tag is that a consumer can trust it. It is read from
+    # `meta.stability` in models/marts/api/schema.yml.
+    #
+    # 🔴 AND AN UNDECLARED RELATION IS A HARD FAILURE, NOT A DEFAULT. Defaulting
+    # would publish "curated" for a relation nobody classified — an Atlas
+    # promise nobody made. Terje's condition on urb-agents #1547 was "same
+    # change or neither", precisely because a partially-tagged surface implies
+    # the untagged half was considered and found stable.
+    rows = ["relation_name,mart_name,derives_from_fact,stability"]
     for w in wrappers:
         mart = w.source_relation
         uid = by_name.get(mart)
         rows.append(f"{w.view_name},{mart},"
-                    f"{'true' if uid and reaches_fact(uid) else 'false'}")
+                    f"{'true' if uid and reaches_fact(uid) else 'false'},"
+                    f"{(nodes.get(uid, {}).get('meta') or {}).get('stability')}")
     return "\n".join(rows) + "\n"
+
+
+STABILITY_VALUES = {"source", "curated"}
+
+
+def assert_every_wrapper_declares_stability(manifest: dict, wrappers: "list[WrapperView]") -> None:
+    """Every published relation must declare meta.stability. No default.
+
+    🔴 WHOSE SHAPE IS THIS, AND WHO CAN CHANGE IT.
+
+      source   the COLUMN SET follows an upstream publisher. They add, rename
+               or drop a dimension and this relation changes with it. Atlas
+               cannot promise the shape and does not pretend to.
+      curated  Atlas defines the column set and treats a change to it as a
+               change to a published contract.
+
+    ⚠️ DECLARED, NOT INFERRED. It is an editorial judgement about who owns a
+    shape; a heuristic would get it wrong silently, and the only value the tag
+    has is that a consumer can trust it.
+
+    🔴 AN UNDECLARED RELATION IS A HARD FAILURE, NOT A DEFAULT. Defaulting to
+    "curated" would publish an Atlas promise nobody made. Terje's condition on
+    urb-agents #1547 was "same change or neither", precisely because a
+    partially tagged surface implies the untagged half was considered and found
+    stable.
+
+    ⚠️ THIS LIVES HERE, NOT IN render_relations_seed, AND THAT IS THE POINT.
+    It was in the seed writer first. check-api-v1.sh — the drift gate CI
+    actually runs — invokes this generator WITHOUT --relations-seed, so the
+    seed writer never executed and an unclassified relation passed CI while
+    ./regenerate-api-v1.sh rejected it. A check that only runs on the developer's
+    path is not a gate. Called from main(), so every invocation validates.
+    """
+    nodes = manifest.get("nodes", {})
+    by_name = {n["name"]: uid for uid, n in nodes.items()
+               if n.get("resource_type") == "model"}
+    missing = []
+    for w in wrappers:
+        uid = by_name.get(w.source_relation)
+        value = (nodes.get(uid, {}).get("meta") or {}).get("stability")
+        if value not in STABILITY_VALUES:
+            missing.append((w.view_name, value))
+    if missing:
+        detail = "\n".join(
+            f"    {name}  (meta.stability = {val!r})" for name, val in sorted(missing))
+        raise SystemExit(
+            "\u2717 published relation(s) without a valid meta.stability:\n"
+            f"{detail}\n"
+            "  Add `meta: {stability: source|curated}` to the model in\n"
+            "  models/marts/api/schema.yml. source = the column set follows an\n"
+            "  upstream publisher; curated = Atlas defines and owns the shape."
+        )
 
 
 def main() -> None:
@@ -559,6 +760,7 @@ def main() -> None:
 
     manifest = json.loads(args.manifest.read_text())
     wrappers = extract_wrappers(manifest, args.models_dir_prefix)
+    assert_every_wrapper_declares_stability(manifest, wrappers)
 
     prev_views = set(_read_state(args.state))
     current_views = {w.view_name for w in wrappers}

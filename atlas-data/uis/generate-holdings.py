@@ -214,11 +214,26 @@ def _rewrite_counts(text):
     """The two claims render-template-info.sh checks, written rather than typed."""
     tables, views, models, seeds = _marts_counts()
     text = re.sub(r"\d+ marts BASE TABLEs", f"{tables} marts BASE TABLEs", text)
-    text = re.sub(r"\(plus \d+\s*\n?\s*marts views\)",
-                  lambda m: m.group(0).replace(re.search(r"\d+", m.group(0)).group(0), str(views)),
-                  text)
-    text = re.sub(r"\(plus \d+ marts views\)", f"(plus {views} marts views)", text)
-    text = re.sub(r'the "\d+ marts views" above', f'the "{views} marts views" above', text)
+    # 🔴 EVERY "N marts views" CLAIM, WHEREVER A YAML FOLD PUT THE LINE BREAK.
+    #
+    # ⚠️ Fourth instance of one defect. These claims are written as folded YAML,
+    # so the renderer may break them at ANY space — and a regex with a literal
+    # space in it stops matching the moment that happens. The `(plus N marts
+    # views)` pattern had a `\s*\n?\s*` tolerance bolted in after an earlier
+    # round; `the "N marts views" above` did not, and on 2026-09-25 the fold
+    # landed before `above`, so item 1 of #1547 published `views=19` in one
+    # sentence and `the "10 marts views" above` in the next. The gate caught it.
+    #
+    # 🔵 Only the DIGITS are replaced and the surrounding whitespace is kept
+    # exactly, so re-running this never reflows the prose — a rewrite that
+    # normalised spacing would rewrap the file on every run and bury the real
+    # change in diff noise.
+    for pattern in (
+        r"(\(plus\s+)(\d+)(\s+marts\s+views\))",
+        r"(the\s+\")(\d+)(\s+marts\s+views\"\s+above)",
+    ):
+        text = re.sub(pattern, lambda m: m.group(1) + str(views) + m.group(3), text)
+
     # 🔴 THE COUNTING RULE'S OWN NUMBERS, which were typed and went stale three
     # times (#824, #1263, #1353). They are written in the form `models=46` so a
     # YAML fold cannot break the token apart — the 2026-09-21 failure included a

@@ -7,6 +7,7 @@ models:
       the forthcoming indicator_values union.
     columns:
       - name: source_id
+        description: "Atlas source identifier for the upstream table this row came from — the same id used by meta_sources and meta_dimensions."
         data_tests:
           - not_null
           - accepted_values:
@@ -18,12 +19,14 @@ models:
           - not_null
         data_type: text
       - name: kommune_nr
+        description: "4-digit kommune code, derived via region_code_to_kommune_nr. NULL for every region that is not a municipality. ⚠️ Not a bare four-digit match — that is what once called Svalbard, Jan Mayen and the continental shelf municipalities."
         data_tests:
           - relationships:
               to: ref('dim_kommune')
               field: kommune_nr
         data_type: text
       - name: fylke_nr
+        description: "2-digit fylke code where the region is a fylke, else NULL."
         data_tests:
           - relationships:
               to: ref('dim_fylke')
@@ -46,12 +49,16 @@ models:
               values: [Personer, EUskala50, EUskala60, OECDskala50, OECDskala60]
         data_type: text
       - name: contents_label
+        description: "Human-readable gloss for contents_code."
         data_type: text
       - name: value
+        description: "The measured value. NULL where the publisher suppressed the cell — see status."
         data_type: numeric
       - name: status
+        description: "The publisher's own suppression or quality marker for this cell, passed through verbatim."
         data_type: text
       - name: updated_at
+        description: "When Atlas last loaded this row from the upstream."
         data_tests:
           - not_null
         data_type: timestamp with time zone
@@ -82,15 +89,18 @@ models:
       transform (urb-agents #1345).
     columns:
       - name: source_id
+        description: "Atlas source identifier for the upstream table this row came from — the same id used by meta_sources and meta_dimensions."
         data_tests:
           - not_null
           - accepted_values:
               values: [ssb-06913]
         data_type: text
       - name: region_code
+        description: "The publisher's own region code, verbatim. It may be a kommune, fylke, bydel or national code depending on what that publisher emits; region_kind says which."
         data_tests: [not_null]
         data_type: text
       - name: kommune_nr
+        description: "4-digit kommune code, derived via region_code_to_kommune_nr. NULL for every region that is not a municipality. ⚠️ Not a bare four-digit match — that is what once called Svalbard, Jan Mayen and the continental shelf municipalities."
         data_tests:
           # SSB 06913 retains historical kommune codes in its Region dimension
           # (mergers 1960-2024). dim_kommune currently holds active-today codes
@@ -103,6 +113,7 @@ models:
                 severity: warn
         data_type: text
       - name: fylke_nr
+        description: "2-digit fylke code where the region is a fylke, else NULL."
         data_tests:
           # Historical fylker (pre-2020 01-20 numbering) may appear — warn.
           - relationships:
@@ -112,6 +123,7 @@ models:
                 severity: warn
         data_type: text
       - name: year
+        description: "First year of the period this row covers. ⚠️ For a multi-year window this is the FIRST year, not the only one — read period_start_year and period_end_year for the span."
         data_tests:
           - not_null
           - dbt_utils.accepted_range:
@@ -119,15 +131,20 @@ models:
               max_value: 2050
         data_type: integer
       - name: contents_code
+        description: "The publisher's code for WHICH measure this row reports. Decode it through meta_dimensions for this source_id."
         data_tests: [not_null]
         data_type: text
       - name: contents_label
+        description: "Human-readable gloss for contents_code."
         data_type: text
       - name: value
+        description: "The measured value. NULL where the publisher suppressed the cell — see status."
         data_type: numeric
       - name: status
+        description: "The publisher's own suppression or quality marker for this cell, passed through verbatim."
         data_type: text
       - name: updated_at
+        description: "When Atlas last loaded this row from the upstream."
         data_tests: [not_null]
         data_type: timestamp with time zone
       - name: region_kind
@@ -165,15 +182,18 @@ models:
       `household_type = '0000'` for the all-households headline.
     columns:
       - name: source_id
+        description: "Atlas source identifier for the upstream table this row came from — the same id used by meta_sources and meta_dimensions."
         data_tests:
           - not_null
           - accepted_values:
               values: [ssb-06944]
         data_type: text
       - name: region_code
+        description: "The publisher's own region code, verbatim. It may be a kommune, fylke, bydel or national code depending on what that publisher emits; region_kind says which."
         data_tests: [not_null]
         data_type: text
       - name: kommune_nr
+        description: "4-digit kommune code, derived via region_code_to_kommune_nr. NULL for every region that is not a municipality. ⚠️ Not a bare four-digit match — that is what once called Svalbard, Jan Mayen and the continental shelf municipalities."
         data_tests:
           # SSB 06944 includes Svalbard (21xx), Jan Mayen (22xx), continental
           # shelf (23xx) kommune-like codes that aren't in Klass 131 mainland.
@@ -185,6 +205,7 @@ models:
                 severity: warn
         data_type: text
       - name: fylke_nr
+        description: "2-digit fylke code where the region is a fylke, else NULL."
         data_tests:
           # SSB uses special 2-digit codes outside Klass 104 for Svalbard (21),
           # Jan Mayen (22), continental shelf (23), EU (25), abroad (26),
@@ -197,17 +218,21 @@ models:
                 severity: warn
         data_type: text
       - name: household_type
+        description: "Household-type code as SSB emits it. ⚠️ '0000' is ALL HOUSEHOLDS and sits alongside the individual types, so summing without filtering double-counts. Decode through ref_ssb_household_type."
         data_tests:
           - not_null
           - relationships: {to: ref('ref_ssb_household_type'), field: code}
         data_type: text
       - name: household_type_label_no
+        description: "Norwegian label for household_type, joined from ref_ssb_household_type."
         data_tests: [not_null]
         data_type: text
       - name: household_type_label_en
+        description: "English label for household_type, joined from ref_ssb_household_type."
         data_tests: [not_null]
         data_type: text
       - name: year
+        description: "First year of the period this row covers. ⚠️ For a multi-year window this is the FIRST year, not the only one — read period_start_year and period_end_year for the span."
         data_tests:
           - not_null
           - dbt_utils.accepted_range:
@@ -215,18 +240,23 @@ models:
               max_value: 2050
         data_type: integer
       - name: contents_code
+        description: "The publisher's code for WHICH measure this row reports. Decode it through meta_dimensions for this source_id."
         data_tests:
           - not_null
           - accepted_values:
               values: [SamletInntekt, InntSkatt, AntallHushold]
         data_type: text
       - name: contents_label
+        description: "Human-readable gloss for contents_code."
         data_type: text
       - name: value
+        description: "The measured value. NULL where the publisher suppressed the cell — see status."
         data_type: numeric
       - name: status
+        description: "The publisher's own suppression or quality marker for this cell, passed through verbatim."
         data_type: text
       - name: updated_at
+        description: "When Atlas last loaded this row from the upstream."
         data_tests: [not_null]
         data_type: timestamp with time zone
     data_tests:
@@ -242,14 +272,17 @@ models:
     description: Per-source indicator passthrough for SSB 09429 (education level by kommune + sex).
     columns:
       - name: source_id
+        description: "Atlas source identifier for the upstream table this row came from — the same id used by meta_sources and meta_dimensions."
         data_tests:
           - not_null
           - accepted_values: {values: [ssb-09429]}
         data_type: text
       - name: region_code
+        description: "The publisher's own region code, verbatim. It may be a kommune, fylke, bydel or national code depending on what that publisher emits; region_kind says which."
         data_tests: [not_null]
         data_type: text
       - name: kommune_nr
+        description: "4-digit kommune code, derived via region_code_to_kommune_nr. NULL for every region that is not a municipality. ⚠️ Not a bare four-digit match — that is what once called Svalbard, Jan Mayen and the continental shelf municipalities."
         data_tests:
           - relationships:
               to: ref('dim_kommune')
@@ -257,6 +290,7 @@ models:
               config: {severity: warn}
         data_type: text
       - name: fylke_nr
+        description: "2-digit fylke code where the region is a fylke, else NULL."
         data_tests:
           - relationships:
               to: ref('dim_fylke')
@@ -264,36 +298,46 @@ models:
               config: {severity: warn}
         data_type: text
       - name: education_level
+        description: "Education-level code as the publisher emits it."
         data_tests:
           - not_null
           - relationships: {to: ref('ref_ssb_nivaa'), field: code}
         data_type: text
       - name: education_level_label_no
+        description: "Norwegian label for education_level, joined from ref_ssb_nivaa."
         data_tests: [not_null]
         data_type: text
       - name: education_level_label_en
+        description: "English label for education_level, joined from ref_ssb_nivaa."
         data_tests: [not_null]
         data_type: text
       - name: sex
+        description: "all / male / female, decoded from the publisher's sex dimension."
         data_tests:
           - not_null
           - accepted_values: {values: [male, female, all]}
         data_type: text
       - name: year
+        description: "First year of the period this row covers. ⚠️ For a multi-year window this is the FIRST year, not the only one — read period_start_year and period_end_year for the span."
         data_tests:
           - not_null
           - dbt_utils.accepted_range: {min_value: 1970, max_value: 2050}
         data_type: integer
       - name: contents_code
+        description: "The publisher's code for WHICH measure this row reports. Decode it through meta_dimensions for this source_id."
         data_tests: [not_null]
         data_type: text
       - name: contents_label
+        description: "Human-readable gloss for contents_code."
         data_type: text
       - name: value
+        description: "The measured value. NULL where the publisher suppressed the cell — see status."
         data_type: numeric
       - name: status
+        description: "The publisher's own suppression or quality marker for this cell, passed through verbatim."
         data_type: text
       - name: updated_at
+        description: "When Atlas last loaded this row from the upstream."
         data_tests: [not_null]
         data_type: timestamp with time zone
     data_tests:
@@ -304,14 +348,17 @@ models:
     description: Per-source indicator passthrough for SSB KOSTRA 12063 (municipal leisure services).
     columns:
       - name: source_id
+        description: "Atlas source identifier for the upstream table this row came from — the same id used by meta_sources and meta_dimensions."
         data_tests:
           - not_null
           - accepted_values: {values: [ssb-12063]}
         data_type: text
       - name: region_code
+        description: "The publisher's own region code, verbatim. It may be a kommune, fylke, bydel or national code depending on what that publisher emits; region_kind says which."
         data_tests: [not_null]
         data_type: text
       - name: kommune_nr
+        description: "4-digit kommune code, derived via region_code_to_kommune_nr. NULL for every region that is not a municipality. ⚠️ Not a bare four-digit match — that is what once called Svalbard, Jan Mayen and the continental shelf municipalities."
         data_tests:
           - relationships:
               to: ref('dim_kommune')
@@ -319,6 +366,7 @@ models:
               config: {severity: warn}
         data_type: text
       - name: fylke_nr
+        description: "2-digit fylke code where the region is a fylke, else NULL."
         data_tests:
           - relationships:
               to: ref('dim_fylke')
@@ -326,20 +374,26 @@ models:
               config: {severity: warn}
         data_type: text
       - name: year
+        description: "First year of the period this row covers. ⚠️ For a multi-year window this is the FIRST year, not the only one — read period_start_year and period_end_year for the span."
         data_tests:
           - not_null
           - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
         data_type: integer
       - name: contents_code
+        description: "The publisher's code for WHICH measure this row reports. Decode it through meta_dimensions for this source_id."
         data_tests: [not_null]
         data_type: text
       - name: contents_label
+        description: "Human-readable gloss for contents_code."
         data_type: text
       - name: value
+        description: "The measured value. NULL where the publisher suppressed the cell — see status."
         data_type: numeric
       - name: status
+        description: "The publisher's own suppression or quality marker for this cell, passed through verbatim."
         data_type: text
       - name: updated_at
+        description: "When Atlas last loaded this row from the upstream."
         data_tests: [not_null]
         data_type: timestamp with time zone
     data_tests:
@@ -350,14 +404,17 @@ models:
     description: Per-source indicator passthrough for SSB KOSTRA 12131 (social-assistance rates).
     columns:
       - name: source_id
+        description: "Atlas source identifier for the upstream table this row came from — the same id used by meta_sources and meta_dimensions."
         data_tests:
           - not_null
           - accepted_values: {values: [ssb-12131]}
         data_type: text
       - name: region_code
+        description: "The publisher's own region code, verbatim. It may be a kommune, fylke, bydel or national code depending on what that publisher emits; region_kind says which."
         data_tests: [not_null]
         data_type: text
       - name: kommune_nr
+        description: "4-digit kommune code, derived via region_code_to_kommune_nr. NULL for every region that is not a municipality. ⚠️ Not a bare four-digit match — that is what once called Svalbard, Jan Mayen and the continental shelf municipalities."
         data_tests:
           - relationships:
               to: ref('dim_kommune')
@@ -365,6 +422,7 @@ models:
               config: {severity: warn}
         data_type: text
       - name: fylke_nr
+        description: "2-digit fylke code where the region is a fylke, else NULL."
         data_tests:
           - relationships:
               to: ref('dim_fylke')
@@ -372,20 +430,26 @@ models:
               config: {severity: warn}
         data_type: text
       - name: year
+        description: "First year of the period this row covers. ⚠️ For a multi-year window this is the FIRST year, not the only one — read period_start_year and period_end_year for the span."
         data_tests:
           - not_null
           - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
         data_type: integer
       - name: contents_code
+        description: "The publisher's code for WHICH measure this row reports. Decode it through meta_dimensions for this source_id."
         data_tests: [not_null]
         data_type: text
       - name: contents_label
+        description: "Human-readable gloss for contents_code."
         data_type: text
       - name: value
+        description: "The measured value. NULL where the publisher suppressed the cell — see status."
         data_type: numeric
       - name: status
+        description: "The publisher's own suppression or quality marker for this cell, passed through verbatim."
         data_type: text
       - name: updated_at
+        description: "When Atlas last loaded this row from the upstream."
         data_tests: [not_null]
         data_type: timestamp with time zone
     data_tests:
@@ -397,14 +461,17 @@ models:
       rules).
     columns:
       - name: source_id
+        description: "Atlas source identifier for the upstream table this row came from — the same id used by meta_sources and meta_dimensions."
         data_tests:
           - not_null
           - accepted_values: {values: [ssb-12132]}
         data_type: text
       - name: region_code
+        description: "The publisher's own region code, verbatim. It may be a kommune, fylke, bydel or national code depending on what that publisher emits; region_kind says which."
         data_tests: [not_null]
         data_type: text
       - name: kommune_nr
+        description: "4-digit kommune code, derived via region_code_to_kommune_nr. NULL for every region that is not a municipality. ⚠️ Not a bare four-digit match — that is what once called Svalbard, Jan Mayen and the continental shelf municipalities."
         data_tests:
           - relationships:
               to: ref('dim_kommune')
@@ -412,6 +479,7 @@ models:
               config: {severity: warn}
         data_type: text
       - name: fylke_nr
+        description: "2-digit fylke code where the region is a fylke, else NULL."
         data_tests:
           - relationships:
               to: ref('dim_fylke')
@@ -419,20 +487,26 @@ models:
               config: {severity: warn}
         data_type: text
       - name: year
+        description: "First year of the period this row covers. ⚠️ For a multi-year window this is the FIRST year, not the only one — read period_start_year and period_end_year for the span."
         data_tests:
           - not_null
           - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
         data_type: integer
       - name: contents_code
+        description: "The publisher's code for WHICH measure this row reports. Decode it through meta_dimensions for this source_id."
         data_tests: [not_null]
         data_type: text
       - name: contents_label
+        description: "Human-readable gloss for contents_code."
         data_type: text
       - name: value
+        description: "The measured value. NULL where the publisher suppressed the cell — see status."
         data_type: numeric
       - name: status
+        description: "The publisher's own suppression or quality marker for this cell, passed through verbatim."
         data_type: text
       - name: updated_at
+        description: "When Atlas last loaded this row from the upstream."
         data_tests: [not_null]
         data_type: timestamp with time zone
     data_tests:
@@ -443,14 +517,17 @@ models:
     description: Per-source indicator passthrough for SSB KOSTRA 12292 (omsorgstjenester).
     columns:
       - name: source_id
+        description: "Atlas source identifier for the upstream table this row came from — the same id used by meta_sources and meta_dimensions."
         data_tests:
           - not_null
           - accepted_values: {values: [ssb-12292]}
         data_type: text
       - name: region_code
+        description: "The publisher's own region code, verbatim. It may be a kommune, fylke, bydel or national code depending on what that publisher emits; region_kind says which."
         data_tests: [not_null]
         data_type: text
       - name: kommune_nr
+        description: "4-digit kommune code, derived via region_code_to_kommune_nr. NULL for every region that is not a municipality. ⚠️ Not a bare four-digit match — that is what once called Svalbard, Jan Mayen and the continental shelf municipalities."
         data_tests:
           - relationships:
               to: ref('dim_kommune')
@@ -458,6 +535,7 @@ models:
               config: {severity: warn}
         data_type: text
       - name: fylke_nr
+        description: "2-digit fylke code where the region is a fylke, else NULL."
         data_tests:
           - relationships:
               to: ref('dim_fylke')
@@ -465,20 +543,26 @@ models:
               config: {severity: warn}
         data_type: text
       - name: year
+        description: "First year of the period this row covers. ⚠️ For a multi-year window this is the FIRST year, not the only one — read period_start_year and period_end_year for the span."
         data_tests:
           - not_null
           - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
         data_type: integer
       - name: contents_code
+        description: "The publisher's code for WHICH measure this row reports. Decode it through meta_dimensions for this source_id."
         data_tests: [not_null]
         data_type: text
       - name: contents_label
+        description: "Human-readable gloss for contents_code."
         data_type: text
       - name: value
+        description: "The measured value. NULL where the publisher suppressed the cell — see status."
         data_type: numeric
       - name: status
+        description: "The publisher's own suppression or quality marker for this cell, passed through verbatim."
         data_type: text
       - name: updated_at
+        description: "When Atlas last loaded this row from the upstream."
         data_tests: [not_null]
         data_type: timestamp with time zone
     data_tests:
@@ -492,15 +576,18 @@ models:
       fact-layer picks the kommune-level headline ones.
     columns:
       - name: source_id
+        description: "Atlas source identifier for the upstream table this row came from — the same id used by meta_sources and meta_dimensions."
         data_tests:
           - not_null
           - accepted_values:
               values: [ssb-13995]
         data_type: text
       - name: region_code
+        description: "The publisher's own region code, verbatim. It may be a kommune, fylke, bydel or national code depending on what that publisher emits; region_kind says which."
         data_tests: [not_null]
         data_type: text
       - name: kommune_nr
+        description: "4-digit kommune code, derived via region_code_to_kommune_nr. NULL for every region that is not a municipality. ⚠️ Not a bare four-digit match — that is what once called Svalbard, Jan Mayen and the continental shelf municipalities."
         data_tests:
           - relationships:
               to: ref('dim_kommune')
@@ -509,6 +596,7 @@ models:
                 severity: warn
         data_type: text
       - name: fylke_nr
+        description: "2-digit fylke code where the region is a fylke, else NULL."
         data_tests:
           - relationships:
               to: ref('dim_fylke')
@@ -517,6 +605,7 @@ models:
                 severity: warn
         data_type: text
       - name: year
+        description: "First year of the period this row covers. ⚠️ For a multi-year window this is the FIRST year, not the only one — read period_start_year and period_end_year for the span."
         data_tests:
           - not_null
           - dbt_utils.accepted_range:
@@ -524,15 +613,20 @@ models:
               max_value: 2050
         data_type: integer
       - name: contents_code
+        description: "The publisher's code for WHICH measure this row reports. Decode it through meta_dimensions for this source_id."
         data_tests: [not_null]
         data_type: text
       - name: contents_label
+        description: "Human-readable gloss for contents_code."
         data_type: text
       - name: value
+        description: "The measured value. NULL where the publisher suppressed the cell — see status."
         data_type: numeric
       - name: status
+        description: "The publisher's own suppression or quality marker for this cell, passed through verbatim."
         data_type: text
       - name: updated_at
+        description: "When Atlas last loaded this row from the upstream."
         data_tests: [not_null]
         data_type: timestamp with time zone
     data_tests:
@@ -550,15 +644,18 @@ models:
       type they need (e.g. single-parent).
     columns:
       - name: source_id
+        description: "Atlas source identifier for the upstream table this row came from — the same id used by meta_sources and meta_dimensions."
         data_tests:
           - not_null
           - accepted_values:
               values: [ssb-06083]
         data_type: text
       - name: region_code
+        description: "The publisher's own region code, verbatim. It may be a kommune, fylke, bydel or national code depending on what that publisher emits; region_kind says which."
         data_tests: [not_null]
         data_type: text
       - name: kommune_nr
+        description: "4-digit kommune code, derived via region_code_to_kommune_nr. NULL for every region that is not a municipality. ⚠️ Not a bare four-digit match — that is what once called Svalbard, Jan Mayen and the continental shelf municipalities."
         data_tests:
           - relationships:
               to: ref('dim_kommune')
@@ -567,6 +664,7 @@ models:
                 severity: warn
         data_type: text
       - name: fylke_nr
+        description: "2-digit fylke code where the region is a fylke, else NULL."
         data_tests:
           - relationships:
               to: ref('dim_fylke')
@@ -575,31 +673,40 @@ models:
                 severity: warn
         data_type: text
       - name: family_type
+        description: "Family-type code as SSB emits it. ⚠️ Family type and household type are different classifications with similar-looking codes; do not join one to the other. Decode through ref_ssb_family_type."
         data_tests:
           - not_null
           - relationships: {to: ref('ref_ssb_family_type'), field: code}
         data_type: text
       - name: family_type_label_no
+        description: "Norwegian label for family_type, joined from ref_ssb_family_type."
         data_tests: [not_null]
         data_type: text
       - name: family_type_label_en
+        description: "English label for family_type, joined from ref_ssb_family_type."
         data_tests: [not_null]
         data_type: text
       - name: year
+        description: "First year of the period this row covers. ⚠️ For a multi-year window this is the FIRST year, not the only one — read period_start_year and period_end_year for the span."
         data_tests:
           - not_null
           - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
         data_type: integer
       - name: contents_code
+        description: "The publisher's code for WHICH measure this row reports. Decode it through meta_dimensions for this source_id."
         data_tests: [not_null]
         data_type: text
       - name: contents_label
+        description: "Human-readable gloss for contents_code."
         data_type: text
       - name: value
+        description: "The measured value. NULL where the publisher suppressed the cell — see status."
         data_type: numeric
       - name: status
+        description: "The publisher's own suppression or quality marker for this cell, passed through verbatim."
         data_type: text
       - name: updated_at
+        description: "When Atlas last loaded this row from the upstream."
         data_tests: [not_null]
         data_type: timestamp with time zone
     data_tests:
@@ -617,15 +724,18 @@ models:
       low income). Mirrors indicators__ssb_08764 structure.
     columns:
       - name: source_id
+        description: "Atlas source identifier for the upstream table this row came from — the same id used by meta_sources and meta_dimensions."
         data_tests:
           - not_null
           - accepted_values:
               values: [ssb-06947]
         data_type: text
       - name: region_code
+        description: "The publisher's own region code, verbatim. It may be a kommune, fylke, bydel or national code depending on what that publisher emits; region_kind says which."
         data_tests: [not_null]
         data_type: text
       - name: kommune_nr
+        description: "4-digit kommune code, derived via region_code_to_kommune_nr. NULL for every region that is not a municipality. ⚠️ Not a bare four-digit match — that is what once called Svalbard, Jan Mayen and the continental shelf municipalities."
         data_tests:
           # Same pattern as ssb-06944 — includes historical + Svalbard + offshore codes.
           - relationships:
@@ -635,6 +745,7 @@ models:
                 severity: warn
         data_type: text
       - name: fylke_nr
+        description: "2-digit fylke code where the region is a fylke, else NULL."
         data_tests:
           - relationships:
               to: ref('dim_fylke')
@@ -643,6 +754,7 @@ models:
                 severity: warn
         data_type: text
       - name: year
+        description: "First year of the period this row covers. ⚠️ For a multi-year window this is the FIRST year, not the only one — read period_start_year and period_end_year for the span."
         data_tests:
           - not_null
           - dbt_utils.accepted_range:
@@ -650,18 +762,23 @@ models:
               max_value: 2050
         data_type: integer
       - name: contents_code
+        description: "The publisher's code for WHICH measure this row reports. Decode it through meta_dimensions for this source_id."
         data_tests:
           - not_null
           - accepted_values:
               values: [Personer, EUskala50, EUskala60, OECDskala50, OECDskala60]
         data_type: text
       - name: contents_label
+        description: "Human-readable gloss for contents_code."
         data_type: text
       - name: value
+        description: "The measured value. NULL where the publisher suppressed the cell — see status."
         data_type: numeric
       - name: status
+        description: "The publisher's own suppression or quality marker for this cell, passed through verbatim."
         data_type: text
       - name: updated_at
+        description: "When Atlas last loaded this row from the upstream."
         data_tests: [not_null]
         data_type: timestamp with time zone
     data_tests:
@@ -678,15 +795,18 @@ models:
       sex, and single-year age). Preserves sex and age dimensions.
     columns:
       - name: source_id
+        description: "Atlas source identifier for the upstream table this row came from — the same id used by meta_sources and meta_dimensions."
         data_tests:
           - not_null
           - accepted_values:
               values: [ssb-07459]
         data_type: text
       - name: region_code
+        description: "The publisher's own region code, verbatim. It may be a kommune, fylke, bydel or national code depending on what that publisher emits; region_kind says which."
         data_tests: [not_null]
         data_type: text
       - name: kommune_nr
+        description: "4-digit kommune code, derived via region_code_to_kommune_nr. NULL for every region that is not a municipality. ⚠️ Not a bare four-digit match — that is what once called Svalbard, Jan Mayen and the continental shelf municipalities."
         data_tests:
           # 🔵 THIS WARNING HAD TWO CAUSES AND ONE IS NOW GONE.
           #
@@ -723,6 +843,7 @@ models:
           - relationships: {to: ref('ref_region_kind'), field: region_kind}
         data_type: text
       - name: fylke_nr
+        description: "2-digit fylke code where the region is a fylke, else NULL."
         data_tests:
           # Pre-2020 fylker (01-20 numbering) appear here with zero values.
           - relationships:
@@ -742,15 +863,18 @@ models:
         description: SSB Alder — '000'..'104' or '105+'.
         data_type: text
       - name: age_int
+        description: "age as an integer where it is finite; NULL for an open-ended bucket such as \"105+\"."
         data_tests:
           - dbt_utils.accepted_range: {min_value: 0, max_value: 110}
         data_type: integer
       - name: age_min
+        description: "A sortable floor for age: the integer itself when finite, and the number before the \"+\" for an open-ended bucket (105 for \"105+\"). Use this to order, and age_int to filter on an exact age."
         data_tests:
           - not_null
           - dbt_utils.accepted_range: {min_value: 0, max_value: 110}
         data_type: integer
       - name: year
+        description: "First year of the period this row covers. ⚠️ For a multi-year window this is the FIRST year, not the only one — read period_start_year and period_end_year for the span."
         data_tests:
           - not_null
           - dbt_utils.accepted_range:
@@ -758,18 +882,23 @@ models:
               max_value: 2050
         data_type: integer
       - name: contents_code
+        description: "The publisher's code for WHICH measure this row reports. Decode it through meta_dimensions for this source_id."
         data_tests:
           - not_null
           - accepted_values:
               values: [Personer1]
         data_type: text
       - name: contents_label
+        description: "Human-readable gloss for contents_code."
         data_type: text
       - name: value
+        description: "The measured value. NULL where the publisher suppressed the cell — see status."
         data_type: numeric
       - name: status
+        description: "The publisher's own suppression or quality marker for this cell, passed through verbatim."
         data_type: text
       - name: updated_at
+        description: "When Atlas last loaded this row from the upstream."
         data_tests: [not_null]
         data_type: timestamp with time zone
     data_tests:
@@ -789,6 +918,7 @@ models:
       codes while deriving parent kommune and bydel slots for downstream city reports.
     columns:
       - name: source_id
+        description: "Atlas source identifier for the upstream table this row came from — the same id used by meta_sources and meta_dimensions."
         data_tests:
           - not_null
           - accepted_values:
@@ -804,6 +934,7 @@ models:
         data_tests: [not_null]
         data_type: text
       - name: kommune_nr
+        description: "4-digit kommune code, derived via region_code_to_kommune_nr. NULL for every region that is not a municipality. ⚠️ Not a bare four-digit match — that is what once called Svalbard, Jan Mayen and the continental shelf municipalities."
         data_tests:
           - relationships:
               to: ref('dim_kommune')
@@ -812,8 +943,10 @@ models:
                 severity: warn
         data_type: text
       - name: bydel_code
+        description: "6-digit city-district (bydel) code, present only where the region is a real bydel. ⚠️ NULL when the last two digits are '00' or '99' — those are the whole-kommune and unspecified buckets, not districts."
         data_type: text
       - name: bydel_name
+        description: "City-district name with upstream's trailing parenthetical stripped. NULL wherever bydel_code is NULL."
         data_type: text
       - name: sex
         description: SSB Kjonn — '1' (Menn) or '2' (Kvinner).
@@ -826,10 +959,12 @@ models:
         data_tests: [not_null]
         data_type: text
       - name: age_int
+        description: "age as an integer where it is finite; NULL for an open-ended bucket such as \"105+\"."
         data_tests:
           - dbt_utils.accepted_range: {min_value: 0, max_value: 110}
         data_type: integer
       - name: age_min
+        description: "A sortable floor for age: the integer itself when finite, and the number before the \"+\" for an open-ended bucket (105 for \"105+\"). Use this to order, and age_int to filter on an exact age."
         data_tests:
           - not_null
           - dbt_utils.accepted_range: {min_value: 0, max_value: 110}
@@ -859,6 +994,7 @@ models:
         description: Upstream suppression / quality marker. NULL when value is present.
         data_type: text
       - name: updated_at
+        description: "When Atlas last loaded this row from the upstream."
         data_tests: [not_null]
         data_type: timestamp with time zone
     data_tests:
@@ -1063,14 +1199,17 @@ models:
     description: Per-source passthrough for FHI 377 (bullying 7./10. klasse).
     columns:
       - name: source_id
+        description: "Atlas source identifier for the upstream table this row came from — the same id used by meta_sources and meta_dimensions."
         data_tests:
           - not_null
           - accepted_values: {values: [fhi-mobbing]}
         data_type: text
       - name: region_code
+        description: "The publisher's own region code, verbatim. It may be a kommune, fylke, bydel or national code depending on what that publisher emits; region_kind says which."
         data_tests: [not_null]
         data_type: text
       - name: kommune_nr
+        description: "4-digit kommune code, derived via region_code_to_kommune_nr. NULL for every region that is not a municipality. ⚠️ Not a bare four-digit match — that is what once called Svalbard, Jan Mayen and the continental shelf municipalities."
         data_tests:
           - relationships:
               to: ref('dim_kommune')
@@ -1078,6 +1217,7 @@ models:
               config: {severity: warn}
         data_type: text
       - name: fylke_nr
+        description: "2-digit fylke code where the region is a fylke, else NULL."
         data_tests:
           - relationships:
               to: ref('dim_fylke')
@@ -1085,47 +1225,59 @@ models:
               config: {severity: warn}
         data_type: text
       - name: year
+        description: "First year of the period this row covers. ⚠️ For a multi-year window this is the FIRST year, not the only one — read period_start_year and period_end_year for the span."
         data_tests:
           - not_null
           - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
         data_type: integer
       - name: period
+        description: "The publisher's own period code, verbatim (e.g. \"2024_2024\")."
         data_tests: [not_null]
         data_type: text
       - name: period_start_year
+        description: "Parsed first year of the period."
         data_tests:
           - not_null
           - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
         data_type: integer
       - name: period_end_year
+        description: "Parsed last year of the period."
         data_tests:
           - not_null
           - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
         data_type: integer
       - name: sex
+        description: "all / male / female, decoded from the publisher's sex dimension."
         data_tests:
           - not_null
           - accepted_values: {values: [male, female, all]}
         data_type: text
       - name: grade
+        description: "School-grade code (upstream TRINN) as the publisher emits it."
         data_tests:
           - not_null
           - accepted_values: {values: ['7', '10']}
         data_type: text
       - name: question_id
+        description: "The survey question this row reports, as the publisher's own question id."
         data_type: text
       - name: contents_code
+        description: "The publisher's code for WHICH measure this row reports. Decode it through meta_dimensions for this source_id."
         data_tests:
           - not_null
           - accepted_values: {values: [RATE, SMR, MEIS]}
         data_type: text
       - name: contents_label
+        description: "Human-readable gloss for contents_code."
         data_type: text
       - name: value
+        description: "The measured value. NULL where the publisher suppressed the cell — see status."
         data_type: numeric
       - name: status
+        description: "The publisher's own suppression or quality marker for this cell, passed through verbatim."
         data_type: text
       - name: updated_at
+        description: "When Atlas last loaded this row from the upstream."
         data_tests: [not_null]
         data_type: timestamp with time zone
     data_tests:
@@ -1137,14 +1289,17 @@ models:
     description: Per-source passthrough for FHI 360 (VGS completion rate).
     columns:
       - name: source_id
+        description: "Atlas source identifier for the upstream table this row came from — the same id used by meta_sources and meta_dimensions."
         data_tests:
           - not_null
           - accepted_values: {values: [fhi-vgs-gjennomforing]}
         data_type: text
       - name: region_code
+        description: "The publisher's own region code, verbatim. It may be a kommune, fylke, bydel or national code depending on what that publisher emits; region_kind says which."
         data_tests: [not_null]
         data_type: text
       - name: kommune_nr
+        description: "4-digit kommune code, derived via region_code_to_kommune_nr. NULL for every region that is not a municipality. ⚠️ Not a bare four-digit match — that is what once called Svalbard, Jan Mayen and the continental shelf municipalities."
         data_tests:
           - relationships:
               to: ref('dim_kommune')
@@ -1152,6 +1307,7 @@ models:
               config: {severity: warn}
         data_type: text
       - name: fylke_nr
+        description: "2-digit fylke code where the region is a fylke, else NULL."
         data_tests:
           - relationships:
               to: ref('dim_fylke')
@@ -1159,56 +1315,70 @@ models:
               config: {severity: warn}
         data_type: text
       - name: year
+        description: "First year of the period this row covers. ⚠️ For a multi-year window this is the FIRST year, not the only one — read period_start_year and period_end_year for the span."
         data_tests:
           - not_null
           - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
         data_type: integer
       - name: period
+        description: "The publisher's own period code, verbatim (e.g. \"2024_2024\")."
         data_tests: [not_null]
         data_type: text
       - name: period_start_year
+        description: "Parsed first year of the period."
         data_tests:
           - not_null
           - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
         data_type: integer
       - name: period_end_year
+        description: "Parsed last year of the period."
         data_tests:
           - not_null
           - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
         data_type: integer
       - name: sex
+        description: "all / male / female, decoded from the publisher's sex dimension."
         data_tests:
           - not_null
           - accepted_values: {values: [male, female, all]}
         data_type: text
       - name: parents_education
+        description: "🔴 The PARENTS' education level, not the pupil's — this table breaks completion down by parental education. Upstream's UTDANN code; decode through ref_fhi_utdann."
         data_tests:
           - not_null
           - relationships: {to: ref('ref_fhi_utdann'), field: code}
         data_type: text
       - name: parents_education_label_no
+        description: "Norwegian label for parents_education, joined from ref_fhi_utdann. NULL where the code has no entry there."
         data_tests: [not_null]
         data_type: text
       - name: immigration_category
+        description: "Immigrant-category code as the publisher emits it. ⚠️ Decode through meta_dimensions for this source_id — ref_fhi_innvkat decodes FHI table 360 only, where the dimension is always '0', and will not decode table 932's '2', '3' and '23'."
         data_tests:
           - not_null
           - relationships: {to: ref('ref_fhi_innvkat'), field: code}
         data_type: text
       - name: immigration_category_label_no
+        description: "Norwegian label for immigration_category where one could be joined; NULL where the code has no entry in the reference list."
         data_tests: [not_null]
         data_type: text
       - name: contents_code
+        description: "The publisher's code for WHICH measure this row reports. Decode it through meta_dimensions for this source_id."
         data_tests:
           - not_null
           - accepted_values: {values: [RATE, SMR, MEIS, TELLER]}
         data_type: text
       - name: contents_label
+        description: "Human-readable gloss for contents_code."
         data_type: text
       - name: value
+        description: "The measured value. NULL where the publisher suppressed the cell — see status."
         data_type: numeric
       - name: status
+        description: "The publisher's own suppression or quality marker for this cell, passed through verbatim."
         data_type: text
       - name: updated_at
+        description: "When Atlas last loaded this row from the upstream."
         data_tests: [not_null]
         data_type: timestamp with time zone
     data_tests:
@@ -1222,14 +1392,17 @@ models:
       (UTDANN, parents' level) and housing_status (BODD) dims.
     columns:
       - name: source_id
+        description: "Atlas source identifier for the upstream table this row came from — the same id used by meta_sources and meta_dimensions."
         data_tests:
           - not_null
           - accepted_values: {values: [fhi-trangbodd]}
         data_type: text
       - name: region_code
+        description: "The publisher's own region code, verbatim. It may be a kommune, fylke, bydel or national code depending on what that publisher emits; region_kind says which."
         data_tests: [not_null]
         data_type: text
       - name: kommune_nr
+        description: "4-digit kommune code, derived via region_code_to_kommune_nr. NULL for every region that is not a municipality. ⚠️ Not a bare four-digit match — that is what once called Svalbard, Jan Mayen and the continental shelf municipalities."
         data_tests:
           - relationships:
               to: ref('dim_kommune')
@@ -1237,6 +1410,7 @@ models:
               config: {severity: warn}
         data_type: text
       - name: fylke_nr
+        description: "2-digit fylke code where the region is a fylke, else NULL."
         data_tests:
           - relationships:
               to: ref('dim_fylke')
@@ -1244,61 +1418,76 @@ models:
               config: {severity: warn}
         data_type: text
       - name: year
+        description: "First year of the period this row covers. ⚠️ For a multi-year window this is the FIRST year, not the only one — read period_start_year and period_end_year for the span."
         data_tests:
           - not_null
           - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
         data_type: integer
       - name: period
+        description: "The publisher's own period code, verbatim (e.g. \"2024_2024\")."
         data_tests: [not_null]
         data_type: text
       - name: period_start_year
+        description: "Parsed first year of the period."
         data_tests:
           - not_null
           - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
         data_type: integer
       - name: period_end_year
+        description: "Parsed last year of the period."
         data_tests:
           - not_null
           - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
         data_type: integer
       - name: age_group
+        description: "The publisher's age-band dimension, verbatim. Bands are not always disjoint — an \"all ages\" bucket usually sits alongside the slices, so summing without filtering double-counts."
         data_tests: [not_null]
         data_type: text
       - name: age_group_min
+        description: "Numeric floor of age_group, parsed from the band's \"min_max\" form. NULL where the band has no finite floor."
         data_tests:
           - not_null
           - dbt_utils.accepted_range: {min_value: 0, max_value: 120}
         data_type: integer
       - name: age_group_max
+        description: "Numeric ceiling of age_group, parsed from the band's \"min_max\" form. NULL for an open-ended band."
         data_tests:
           - not_null
           - dbt_utils.accepted_range: {min_value: 0, max_value: 120}
         data_type: integer
       - name: parents_education
+        description: "🔴 The PARENTS' education level, not the pupil's — this table breaks completion down by parental education. Upstream's UTDANN code; decode through ref_fhi_utdann."
         data_tests:
           - not_null
           - relationships: {to: ref('ref_fhi_utdann'), field: code}
         data_type: text
       - name: parents_education_label_no
+        description: "Norwegian label for parents_education, joined from ref_fhi_utdann. NULL where the code has no entry there."
         data_tests: [not_null]
         data_type: text
       - name: housing_status
+        description: "Housing-status code (upstream BODD) as the publisher emits it."
         data_tests:
           - not_null
           - accepted_values: {values: [trangt, uoppgitt]}
         data_type: text
       - name: contents_code
+        description: "The publisher's code for WHICH measure this row reports. Decode it through meta_dimensions for this source_id."
         data_tests:
           - not_null
           - accepted_values: {values: [RATE]}
         data_type: text
       - name: contents_label
+        description: "Human-readable gloss for contents_code."
         data_type: text
       - name: value
+        description: "The measured value. NULL where the publisher suppressed the cell — see status."
         data_type: numeric
       - name: status
+        description: "The publisher's own suppression or quality marker for this cell, passed through verbatim."
         data_type: text
       - name: updated_at
+        description: "When Atlas last loaded this row from the upstream."
         data_tests: [not_null]
         data_type: timestamp with time zone
     data_tests:
@@ -1314,27 +1503,32 @@ models:
       MEASURE_TYPE → contents_code).
     columns:
       - name: source_id
+        description: "Atlas source identifier for the upstream table this row came from — the same id used by meta_sources and meta_dimensions."
         data_tests:
           - not_null
           - accepted_values:
               values: [fhi-bor-alene]
         data_type: text
       - name: region_code
+        description: "The publisher's own region code, verbatim. It may be a kommune, fylke, bydel or national code depending on what that publisher emits; region_kind says which."
         data_tests: [not_null]
         data_type: text
       - name: kommune_nr
+        description: "4-digit kommune code, derived via region_code_to_kommune_nr. NULL for every region that is not a municipality. ⚠️ Not a bare four-digit match — that is what once called Svalbard, Jan Mayen and the continental shelf municipalities."
         data_tests:
           - relationships:
               to: ref('dim_kommune')
               field: kommune_nr
         data_type: text
       - name: fylke_nr
+        description: "2-digit fylke code where the region is a fylke, else NULL."
         data_tests:
           - relationships:
               to: ref('dim_fylke')
               field: fylke_nr
         data_type: text
       - name: year
+        description: "First year of the period this row covers. ⚠️ For a multi-year window this is the FIRST year, not the only one — read period_start_year and period_end_year for the span."
         data_tests:
           - not_null
           - dbt_utils.accepted_range:
@@ -1342,44 +1536,55 @@ models:
               max_value: 2050
         data_type: integer
       - name: period
+        description: "The publisher's own period code, verbatim (e.g. \"2024_2024\")."
         data_tests: [not_null]
         data_type: text
       - name: period_start_year
+        description: "Parsed first year of the period."
         data_tests:
           - not_null
           - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
         data_type: integer
       - name: period_end_year
+        description: "Parsed last year of the period."
         data_tests:
           - not_null
           - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
         data_type: integer
       - name: age_group
+        description: "The publisher's age-band dimension, verbatim. Bands are not always disjoint — an \"all ages\" bucket usually sits alongside the slices, so summing without filtering double-counts."
         data_tests: [not_null]
         data_type: text
       - name: age_group_min
+        description: "Numeric floor of age_group, parsed from the band's \"min_max\" form. NULL where the band has no finite floor."
         data_tests:
           - not_null
           - dbt_utils.accepted_range: {min_value: 0, max_value: 120}
         data_type: integer
       - name: age_group_max
+        description: "Numeric ceiling of age_group, parsed from the band's \"min_max\" form. NULL for an open-ended band."
         data_tests:
           - not_null
           - dbt_utils.accepted_range: {min_value: 0, max_value: 120}
         data_type: integer
       - name: contents_code
+        description: "The publisher's code for WHICH measure this row reports. Decode it through meta_dimensions for this source_id."
         data_tests:
           - not_null
           - accepted_values:
               values: [RATE, SMR, TELLER]
         data_type: text
       - name: contents_label
+        description: "Human-readable gloss for contents_code."
         data_type: text
       - name: value
+        description: "The measured value. NULL where the publisher suppressed the cell — see status."
         data_type: numeric
       - name: status
+        description: "The publisher's own suppression or quality marker for this cell, passed through verbatim."
         data_type: text
       - name: updated_at
+        description: "When Atlas last loaded this row from the upstream."
         data_tests: [not_null]
         data_type: timestamp with time zone
     data_tests:
@@ -1404,18 +1609,21 @@ models:
           - not_null
         data_type: text
       - name: source_id
+        description: "Atlas source identifier for the upstream table this row came from — the same id used by meta_sources and meta_dimensions."
         data_tests:
           - not_null
           - accepted_values:
               values: [ssb-12944]
         data_type: text
       - name: kommune_nr
+        description: "4-digit kommune code, derived via region_code_to_kommune_nr. NULL for every region that is not a municipality. ⚠️ Not a bare four-digit match — that is what once called Svalbard, Jan Mayen and the continental shelf municipalities."
         data_tests:
           - relationships:
               to: ref('dim_kommune')
               field: kommune_nr
         data_type: text
       - name: fylke_nr
+        description: "2-digit fylke code where the region is a fylke, else NULL."
         data_tests:
           - relationships:
               to: ref('dim_fylke')
@@ -1429,10 +1637,12 @@ models:
               values: [999A, 00-17, 18-34, 35-49, 50-66, 067+]
         data_type: text
       - name: age_group_min
+        description: "Numeric floor of age_group, parsed from the band's \"min_max\" form. NULL where the band has no finite floor."
         data_tests:
           - dbt_utils.accepted_range: {min_value: 0, max_value: 120}
         data_type: integer
       - name: age_group_max
+        description: "Numeric ceiling of age_group, parsed from the band's \"min_max\" form. NULL for an open-ended band."
         data_tests:
           - dbt_utils.accepted_range: {min_value: 0, max_value: 120}
         data_type: integer
@@ -1442,11 +1652,13 @@ models:
           - not_null
         data_type: text
       - name: period_start_year
+        description: "Parsed first year of the period."
         data_tests:
           - not_null
           - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
         data_type: integer
       - name: period_end_year
+        description: "Parsed last year of the period."
         data_tests:
           - not_null
           - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
@@ -1459,12 +1671,16 @@ models:
               values: [PersonerSeksti, EUskalaSeksti]
         data_type: text
       - name: contents_label
+        description: "Human-readable gloss for contents_code."
         data_type: text
       - name: value
+        description: "The measured value. NULL where the publisher suppressed the cell — see status."
         data_type: numeric
       - name: status
+        description: "The publisher's own suppression or quality marker for this cell, passed through verbatim."
         data_type: text
       - name: updated_at
+        description: "When Atlas last loaded this row from the upstream."
         data_tests:
           - not_null
         data_type: timestamp with time zone
