@@ -130,6 +130,64 @@ if git diff "$RANGE" -- 'atlas-data/dbt/models/**' | grep -qE '^\+.*indexes\s*=\
   echo "     It needs a --full-refresh, or the index belongs in a post-hook."
 fi
 
+# 🔴 THE SECOND CHANGE NO JOB LANDS: A SEED THAT GAINED OR LOST A COLUMN.
+#
+# dbt will NOT alter an existing seed table's schema on an ordinary build. It
+# issues the insert against the table that is already there and Postgres
+# refuses:
+#
+#     Database Error in seed api_v1_relations
+#       column "stability" of relation "api_v1_relations" does not exist
+#
+# ⚠️ WHY THIS IS WORTH A CHECK RATHER THAN A MEMORY. It happened on 2026-09-25
+# with `043b1ab`: `api_v1_relations` gained a `stability` column, the run died
+# at node 44 of 143, and its four dependants -- mart_atlas_inventory,
+# mart_meta_endpoints, mart_meta_sources, mart_indicator_summary -- were
+# SKIPped, so the publish never ran. 🔵 Nothing was half-applied and consumers
+# kept the previous release, which is the good failure mode; but it cost a
+# deploy round, and the release had already passed every CI gate because CI
+# builds against an EMPTY database where the column addition is invisible.
+#
+# 🔵 Only the HEADER matters. A seed whose rows changed is fine, and a seed
+# added in this range is fine too -- dbt creates that table from scratch.
+_lw_base="${RANGE%%..*}"
+_lw_head="${RANGE##*..}"
+[ -n "$_lw_base" ] || _lw_base="origin/main"
+[ -n "$_lw_head" ] || _lw_head="HEAD"
+_lw_seeds=""
+for _lw_f in $(git diff --name-only "$RANGE" -- 'atlas-data/dbt/seeds/**/*.csv' 'atlas-data/dbt/seeds/*.csv' 2>/dev/null); do
+  _lw_old="$(git show "$_lw_base:$_lw_f" 2>/dev/null | head -1 || true)"
+  _lw_new="$(git show "$_lw_head:$_lw_f" 2>/dev/null | head -1 || true)"
+  # Absent on either side = added or removed, not a schema change to an
+  # existing table.
+  [ -n "$_lw_old" ] && [ -n "$_lw_new" ] || continue
+  if [ "$_lw_old" != "$_lw_new" ]; then
+    _lw_name="$(basename "$_lw_f" .csv)"
+    _lw_seeds="$_lw_seeds $_lw_name"
+    echo
+    echo "  🔴 SEED SCHEMA CHANGE — $_lw_name. NO SCHEDULED JOB LANDS THIS."
+    echo "     before: $_lw_old"
+    echo "     after:  $_lw_new"
+    echo "     dbt cannot alter an existing seed table. transform_and_publish"
+    echo "     WILL FAIL on it and SKIP everything downstream."
+    echo "     Run ONCE, before the job:"
+    echo "       dbt seed --select $_lw_name --full-refresh"
+    echo "     Ordinary builds work again afterwards; it is not a standing flag."
+    echo
+    echo "     ⚠️ IT WILL NOT RUN AS WRITTEN IF YOU exec INTO THE POD."
+    echo "        dbt reads PGHOST/PGPORT/PGUSER/PGPASSWORD/PGDATABASE, and the"
+    echo "        pod carries only DATABASE_URL — the conversion happens inside"
+    echo "        the run path, which exec bypasses. You get:"
+    echo "          Env var required but not provided: 'PGHOST'"
+    echo "        Derive the five from DATABASE_URL inside the pod, without"
+    echo "        printing the password."
+    echo "     🔴 AND RUN IT AS \`atlas\`, NOT AS A SUPERUSER — a full refresh"
+    echo "        drops and recreates the table, and the owner it comes back"
+    echo "        with is the one that ran the command."
+  fi
+done
+unset _lw_base _lw_head _lw_f _lw_old _lw_new _lw_name _lw_seeds
+
 # 🔴 TERJE'S RULE, 2026-09-21 (urb-agents #1349): a deploy is not successful
 # until the data arrives. A release that adds or fixes a source is not landed
 # until that source returns ROWS through a published relation — job status, a
