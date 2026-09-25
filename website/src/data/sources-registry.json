@@ -13245,6 +13245,12 @@
         },
         {
           "parent_kind": "model",
+          "model_name": "mart_ingest_health",
+          "title": "Ingest health",
+          "description_short": "Per-source ingest-run health."
+        },
+        {
+          "parent_kind": "model",
           "model_name": "mart_kommune_befolkning_alder",
           "title": null,
           "description_short": "Population by kommune, year and age band — the denominator layer."
@@ -13296,6 +13302,12 @@
           "model_name": "mart_ngo_overview",
           "title": "NGO overview",
           "description_short": "One row per NGO in dim_ngo with the six count metrics shown on the per-NGO landing page (atlas-frontend /ngo/[slug])."
+        },
+        {
+          "parent_kind": "model",
+          "model_name": "mart_source_freshness",
+          "title": "Source freshness",
+          "description_short": "One row per raw source table that declares a `loaded_at_field`, saying whether it is inside the window its own declared cadence allows."
         },
         {
           "parent_kind": "model",
@@ -14105,7 +14117,7 @@
       "view_id": "ingest_health",
       "mart_name": "mart_ingest_health",
       "api_v1_name": "ingest_health",
-      "title": "api_v1.ingest_health",
+      "title": "Ingest health",
       "description_short": "Per-source ingest-run health.",
       "description_full": "Per-source ingest-run health. One row per scraper or API-source,\nshowing the most recent COMPLETED run (finished_at IS NOT NULL).\nMinimal v1 surface per Q14 of\nINVESTIGATE-ngo-scraping-infrastructure.md — just the three columns\nneeded to answer \"which sources are failing?\" and \"which sources\nhaven't refreshed recently?\". Empty until the first scraper writes\nto raw.ingest_runs.",
       "columns": [
@@ -14677,7 +14689,7 @@
       "view_id": "source_freshness",
       "mart_name": "mart_source_freshness",
       "api_v1_name": "source_freshness",
-      "title": "api_v1.source_freshness",
+      "title": "Source freshness",
       "description_short": "One row per raw source table that declares a `loaded_at_field`, saying whether it is inside the window its own declared cadence allows.",
       "description_full": "One row per raw source table that declares a `loaded_at_field`, saying\nwhether it is inside the window its own declared cadence allows.\n\nThis is the operator-readable half of the ingest-freshness signal. The\ncomparison used to live only inside the dbt test\n`raw_sources_were_refreshed_recently`, whose verdict exists only while the\nsuite is running — it lands in dbt's run results and Dagster's event log,\nand `atlas-status.py` can read neither. So `uis template check atlas`\nreported a 24-hour window instead, which cannot see a weekly or monthly\nsource go stale at all (urb-agents #1039).\n\nIt is a VIEW on purpose: evaluated when queried, so it is current whether\nor not the transform, the check suite or the Dagster daemon has run. A\ntable would carry the very staleness it is meant to report.\n\nThe test now selects its failing rows from here rather than recomputing\nthem, so the gate and the surface cannot disagree. Cadence bounds are\n`vars.ingest_cadence_max_age_days` in dbt_project.yml, read by both and\ndefaulted by neither.",
       "columns": [

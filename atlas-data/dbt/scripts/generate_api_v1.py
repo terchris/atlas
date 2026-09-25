@@ -177,6 +177,18 @@ THE CATALOGUE:
                     column MEANS and its value format. Read it before
                     interpreting a code, and before deriving a fact about a
                     dimension from prose.
+  source_freshness  per raw source that declares a loaded_at_field: is it
+                    inside the window its OWN declared cadence allows.
+  ingest_health     per source, the most recent COMPLETED ingest run and
+                    whether it succeeded or failed.
+
+⚠️ READ source_freshness AND ingest_health BEFORE TRUSTING meta_sources ON
+FRESHNESS. meta_sources derives its run columns from SUCCESSFUL runs only, so
+a source whose every recent run has FAILED reports the same thing as a source
+that has never run at all: no last-ingested timestamp and a zero run count.
+The failure is not visible in that relation — by construction, not by defect.
+These two carry it. If you are asking "is this data current?", they are the
+relations that can answer no.
 
 INDICATORS — municipal figures from SSB, FHI and Bufdir:
   indicator_summary            one row per (source, measure): latest year,
