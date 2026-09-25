@@ -132,6 +132,7 @@ mart_atlas_inventory,ssb-klass-kommuner
 mart_brreg_enhet,brreg-enheter-alle
 mart_brreg_enhet,brreg-frivillige
 mart_brreg_enhet,brreg-oppdateringer
+mart_chapter_kommune_coverage,redcross-branches
 mart_coverage_gap_barnefattigdom,fhi-alkohol
 mart_coverage_gap_barnefattigdom,fhi-befolkning
 mart_coverage_gap_barnefattigdom,fhi-befolkningsvekst
@@ -168,11 +169,14 @@ mart_coverage_gap_barnefattigdom,ssb-13995
 mart_coverage_gap_barnefattigdom,ssb-crime-tables
 mart_coverage_gap_barnefattigdom,ssb-klass-fylker
 mart_coverage_gap_barnefattigdom,ssb-klass-kommuner
+mart_dim_activity,redcross-branches
+mart_dim_chapter,redcross-branches
 mart_dim_fylke,ssb-klass-fylker
 mart_dim_kommune,ssb-klass-fylker
 mart_dim_kommune,ssb-klass-kommuner
 mart_distrikt_summary,redcross-branches
 mart_distrikt_summary,ssb-klass-kommuner
+mart_fact_chapter_activities,redcross-branches
 mart_indicator_latest_values,fhi-alkohol
 mart_indicator_latest_values,fhi-befolkning
 mart_indicator_latest_values,fhi-befolkningsvekst
@@ -407,6 +411,9 @@ mart_meta_sources,ssb-klass-fylker
 mart_meta_sources,ssb-klass-kommuner
 mart_ngo_index,redcross-branches
 mart_ngo_overview,redcross-branches
+mart_supply__redcross_branch_activities,redcross-branches
+mart_supply__redcross_branches,redcross-branches
+mart_supply__redcross_chapter_kommune_coverage,redcross-branches
 mart_unattributed_totals,brreg-enheter-alle
 mart_unattributed_totals,brreg-frivillige
 mart_unattributed_totals,brreg-oppdateringer

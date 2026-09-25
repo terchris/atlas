@@ -44,7 +44,19 @@ MANIFEST=target/manifest.json
 #                                which is the thing this repo does not do.
 #   mart_distrikt_summary        grain is chapters. kommune_nr is a
 #   mart_kommune_local_chapters  dim_postnummer lookup on a chapter's postal
-#                                address and cannot be 9999.
+#   mart_supply__redcross_branches               address and cannot be 9999.
+#   mart_supply__redcross_chapter_kommune_coverage
+#   mart_dim_chapter             ⚠️ The five added 2026-09-25 are the SAME
+#   mart_chapter_kommune_coverage   CHAIN, not a new claim: supply__redcross_
+#   mart_fact_chapter_activities    branches joins dim_postnummer, dim_chapter
+#                                inherits from it, and the rest inherit from
+#                                dim_chapter. Traced through the models, not
+#                                assumed from the names.
+#                                🔵 And the premise is now measured rather than
+#                                asserted: Bring's register contains ZERO rows
+#                                with kommune_nr = 9999 — counted in
+#                                seeds/dim_postnummer.csv, 0 of 5 122. The
+#                                sentinel cannot enter through this door.
 #   mart_dim_postnummer          IT IS THE LOOKUP THE TWO ABOVE ARE EXEMPT FOR.
 #                                Grain is one row per postal code; kommune_nr
 #                                is the attribute, not the grain. Bring's
@@ -87,7 +99,7 @@ MANIFEST=target/manifest.json
 # changes values in relations that are already published, which is a deploy
 # with its own acceptance checks -- not a side effect of a publish. Raised on
 # urb-agents #1547.
-EXEMPT="mart_dim_kommune mart_unattributed_totals mart_brreg_enhet mart_distrikt_summary mart_kommune_local_chapters mart_dim_postnummer mart_indicators__bufdir_barnefattigdom mart_indicators__fhi_bor_alene mart_indicators__fhi_mobbing mart_indicators__fhi_trangbodd mart_indicators__fhi_vgs_gjennomforing mart_indicators__ssb_08764 mart_indicators__ssb_10826"
+EXEMPT="mart_dim_kommune mart_unattributed_totals mart_brreg_enhet mart_distrikt_summary mart_kommune_local_chapters mart_dim_postnummer mart_supply__redcross_branches mart_supply__redcross_chapter_kommune_coverage mart_dim_chapter mart_chapter_kommune_coverage mart_fact_chapter_activities mart_indicators__bufdir_barnefattigdom mart_indicators__fhi_bor_alene mart_indicators__fhi_mobbing mart_indicators__fhi_trangbodd mart_indicators__fhi_vgs_gjennomforing mart_indicators__ssb_08764 mart_indicators__ssb_10826"
 
 CANDIDATES="$(./.venv/bin/python -c '
 import json, sys
