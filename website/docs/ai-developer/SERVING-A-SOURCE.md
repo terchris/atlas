@@ -323,6 +323,45 @@ as a regression.
 Two vocabularies in one dimension look identical through an API that returns codes, and the
 only thing distinguishing them is which years carry values.
 
+## 13. CI builds from an empty database, so state defects are invisible to it
+
+🔴 **A whole class of defect exists only where state already lives — and that is
+the one place CI is designed not to be.** Two shipped on 2026-09-25, both green
+through every gate, both failing in production on the same day:
+
+| what changed | why no gate could see it |
+|---|---|
+| a seed gained a column (`api_v1_relations` + `stability`) | dbt will not alter an existing seed table's schema. With no table there is nothing to conflict with, so CI simply creates the new shape and passes. In production it failed at node 44 of 143 and SKIPped four dependants, so the publish never ran. |
+| `not_null` on a column that is empty in its seed (`ref_brreg_icnpo.label_en`) | no rows exist to violate the constraint. In production it failed with 46 of 46 rows. |
+
+⚠️ **They are one class, not two incidents.** Both are claims about a
+*transition from a prior state*, and CI only ever exercises the transition from
+nothing. Adding a gate that builds from scratch cannot catch either — it will
+pass, which is worse than not having it.
+
+**Where the check belongs instead:**
+
+- **What a deploy needs** — `atlas-data/uis/lands-with.sh` derives the extra
+  step from the git range. It already flagged the one other change no scheduled
+  job lands (a changed `indexes=` on an incremental model); the seed-header
+  detector is its sibling, and prints the `--full-refresh` command with the
+  environment it has to run in.
+- **A claim about committed files** — `atlas-data/dbt/check-seed-not-null-matches-the-csv.sh`
+  compares every `not_null` on a seed-backed published column against the CSV in
+  the repo. No database, no dbt parse, no warehouse: the claim is about two
+  files that are already checked in, so it is checkable where they are.
+
+🔵 **The question to ask** when a change touches anything with persistent state —
+a seed's columns, an incremental model, an index, a constraint:
+**"what does this look like where the old version already ran?"**
+
+⚠️ And one more from the same day, about the checks themselves: a **control that
+silently does not run is indistinguishable from a control that passed.** A
+known-bad control broken by a quoting error printed green on an unmodified file;
+a wait loop polling a truncated run id printed success having measured nothing.
+After breaking something deliberately, verify the breakage *took* before reading
+the result.
+
 ---
 
 ## The shape behind most of these
