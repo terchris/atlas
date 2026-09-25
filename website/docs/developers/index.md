@@ -6,7 +6,7 @@ This section is for **anyone consuming Atlas's public PostgREST API** to build t
 
 <!-- BEGIN holdings (generated) -->
 
-**43 upstream sources** from **5 publishers**, served as **73 read-only relations**.
+**43 upstream sources** from **5 publishers**, served as **80 read-only relations**.
 
 | publisher | sources | broadly |
 |---|---|---|
@@ -28,11 +28,15 @@ Licences: **NLOD** for 42 of 43 — Norwegian public data, free to reuse with at
 | `atlas_inventory` | What Atlas publishes, one row per queryable endpoint: how many records it serves, when its data last arrived, and where those rows came from. |
 | `brreg_enhet` | Every organisation registered in Norway — the whole of Brønnøysundregistrene's Enhetsregisteret, around 1.17 million rows, current as of the last change-feed run. |
 | `bufdir_indicator_alias` | Cross-release alias table for `bufdir-barnefattigdom` `indicator_api_id` renumbers. |
+| `chapter_kommune_coverage` | Per-kommune rollup of which chapters cover it — Atlas's shape, built so coverage questions do not require walking branch addresses. |
 | `coverage_gap_barnefattigdom` | One row per active kommune for the latest year of SSB 08764 child poverty data, combining the EUskala60 share (% of children in low-income households) with the Personer count (number of children). |
+| `dim_activity` | Atlas's canonical activity dimension, each row pointing at a ref_atlas_service_category code. |
+| `dim_chapter` | Atlas's canonical local-chapter dimension. |
 | `dim_fylke` | The county dimension — the sibling of dim_kommune that was not published, so a consumer joining at fylke level was rebuilding this mapping, each slightly differently. |
 | `dim_kommune` | The canonical municipality registry — SSB Klass 131, with fylke name joined. |
 | `dim_postnummer` | Norwegian postal codes resolved to a primary kommune, 5 122 rows — the lookup that turns an address into a kommune_nr without the municipal-merger ambiguity that names carry. |
 | `distrikt_summary` | 🔵 EXPECTED EMPTY TODAY, AND THAT IS NOT A DEFECT. |
+| `fact_chapter_activities` | The analytical grain for chapter activity: one row per chapter × activity, joined to Atlas's dimensions so it reconciles with the rest of the supply layer. |
 | `indicator_latest_values` | One row per (source_id, contents_code, kommune_nr) at each indicator's latest_year, restricted to active kommuner. |
 | `indicator_missing_kommuner` | 🔴 A ROW HERE IS NOT EVIDENCE OF LOW NEED. |
 | `indicator_summary` | One row per (source_id, contents_code) summarising the latest-year coverage and value range for every indicator in fact_kommune_indicators. |
@@ -96,6 +100,9 @@ Licences: **NLOD** for 42 of 43 — Norwegian public data, free to reuse with at
 | `ref_ssb_nivaa` | SSB NUS2000 education-level labels for table 09429. |
 | `ref_un_sdg` | The 17 UN Sustainable Development Goals. |
 | `source_freshness` | One row per raw source table that declares a `loaded_at_field`, saying whether it is inside the window its own declared cadence allows. |
+| `supply__redcross_branch_activities` | What each Røde Kors branch does, one row per branch × activity. |
+| `supply__redcross_branches` | Norges Røde Kors's own branch list — national office, districts and local chapters — typed out of the Red Cross Organizations API export. |
+| `supply__redcross_chapter_kommune_coverage` | Which kommuner each Røde Kors chapter covers, resolved from the branch's postal address through dim_postnummer. |
 | `unattributed_totals` | The part of a published quantity that belongs to no municipality. |
 
 Every relation, with its columns and their descriptions:

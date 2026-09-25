@@ -224,6 +224,7 @@ models:
         description: Denormalised from dim_activity for query convenience.
         data_tests: [not_null]
       - name: source_id
+        description: "Atlas source identifier — constant 'redcross-branches' for every row, since this fact derives from that one source."
         data_tests: [not_null]
       - name: updated_at
         data_tests: [not_null]

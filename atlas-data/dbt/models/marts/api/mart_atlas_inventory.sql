@@ -61,11 +61,15 @@
 -- depends_on: {{ ref('mart_activity_catalog') }}
 -- depends_on: {{ ref('mart_brreg_enhet') }}
 -- depends_on: {{ ref('mart_bufdir_indicator_alias') }}
+-- depends_on: {{ ref('mart_chapter_kommune_coverage') }}
 -- depends_on: {{ ref('mart_coverage_gap_barnefattigdom') }}
+-- depends_on: {{ ref('mart_dim_activity') }}
+-- depends_on: {{ ref('mart_dim_chapter') }}
 -- depends_on: {{ ref('mart_dim_fylke') }}
 -- depends_on: {{ ref('mart_dim_kommune') }}
 -- depends_on: {{ ref('mart_dim_postnummer') }}
 -- depends_on: {{ ref('mart_distrikt_summary') }}
+-- depends_on: {{ ref('mart_fact_chapter_activities') }}
 -- depends_on: {{ ref('mart_indicator_latest_values') }}
 -- depends_on: {{ ref('mart_indicator_missing_kommuner') }}
 -- depends_on: {{ ref('mart_indicator_summary') }}
@@ -129,6 +133,9 @@
 -- depends_on: {{ ref('mart_ref_ssb_nivaa') }}
 -- depends_on: {{ ref('mart_ref_un_sdg') }}
 -- depends_on: {{ ref('mart_source_freshness') }}
+-- depends_on: {{ ref('mart_supply__redcross_branch_activities') }}
+-- depends_on: {{ ref('mart_supply__redcross_branches') }}
+-- depends_on: {{ ref('mart_supply__redcross_chapter_kommune_coverage') }}
 -- depends_on: {{ ref('mart_unattributed_totals') }}
 
 {# 🔴 A LITERAL LIST, GENERATED FROM seeds/sources/api_v1_relations.csv AND GATED.
@@ -146,11 +153,15 @@
   {'relation': 'activity_catalog', 'mart': 'mart_activity_catalog'},
   {'relation': 'brreg_enhet', 'mart': 'mart_brreg_enhet'},
   {'relation': 'bufdir_indicator_alias', 'mart': 'mart_bufdir_indicator_alias'},
+  {'relation': 'chapter_kommune_coverage', 'mart': 'mart_chapter_kommune_coverage'},
   {'relation': 'coverage_gap_barnefattigdom', 'mart': 'mart_coverage_gap_barnefattigdom'},
+  {'relation': 'dim_activity', 'mart': 'mart_dim_activity'},
+  {'relation': 'dim_chapter', 'mart': 'mart_dim_chapter'},
   {'relation': 'dim_fylke', 'mart': 'mart_dim_fylke'},
   {'relation': 'dim_kommune', 'mart': 'mart_dim_kommune'},
   {'relation': 'dim_postnummer', 'mart': 'mart_dim_postnummer'},
   {'relation': 'distrikt_summary', 'mart': 'mart_distrikt_summary'},
+  {'relation': 'fact_chapter_activities', 'mart': 'mart_fact_chapter_activities'},
   {'relation': 'indicator_latest_values', 'mart': 'mart_indicator_latest_values'},
   {'relation': 'indicator_missing_kommuner', 'mart': 'mart_indicator_missing_kommuner'},
   {'relation': 'indicator_summary', 'mart': 'mart_indicator_summary'},
@@ -214,6 +225,9 @@
   {'relation': 'ref_ssb_nivaa', 'mart': 'mart_ref_ssb_nivaa'},
   {'relation': 'ref_un_sdg', 'mart': 'mart_ref_un_sdg'},
   {'relation': 'source_freshness', 'mart': 'mart_source_freshness'},
+  {'relation': 'supply__redcross_branch_activities', 'mart': 'mart_supply__redcross_branch_activities'},
+  {'relation': 'supply__redcross_branches', 'mart': 'mart_supply__redcross_branches'},
+  {'relation': 'supply__redcross_chapter_kommune_coverage', 'mart': 'mart_supply__redcross_chapter_kommune_coverage'},
   {'relation': 'unattributed_totals', 'mart': 'mart_unattributed_totals'},
 ] %}
 

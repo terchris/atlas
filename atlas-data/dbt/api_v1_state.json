@@ -5,11 +5,15 @@
     "atlas_inventory",
     "brreg_enhet",
     "bufdir_indicator_alias",
+    "chapter_kommune_coverage",
     "coverage_gap_barnefattigdom",
+    "dim_activity",
+    "dim_chapter",
     "dim_fylke",
     "dim_kommune",
     "dim_postnummer",
     "distrikt_summary",
+    "fact_chapter_activities",
     "indicator_latest_values",
     "indicator_missing_kommuner",
     "indicator_summary",
@@ -73,6 +77,9 @@
     "ref_ssb_nivaa",
     "ref_un_sdg",
     "source_freshness",
+    "supply__redcross_branch_activities",
+    "supply__redcross_branches",
+    "supply__redcross_chapter_kommune_coverage",
     "unattributed_totals"
   ]
 }

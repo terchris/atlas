@@ -16,6 +16,7 @@ models:
           - not_null
           - relationships: {to: ref('dim_ngo'), field: orgnr}
       - name: chapter_level
+        description: "Atlas's three-level normalisation of Red Cross's branch_type: 'national' (Nasjonalkontoret), 'regional' (Distrikt), 'local' (Lokalforening, and 'Ukjent' folded in). ⚠️ Derived by Atlas, not a Red Cross field — 'Ukjent' is mapped to local because it behaves like one, which is a judgement."
         data_tests:
           - not_null
           - accepted_values: {values: [national, regional, local]}
@@ -41,6 +42,7 @@ models:
               field: kommune_nr
               config: {severity: warn}
       - name: is_active
+        description: "Whether the chapter is operating. ⚠️ Not a straight copy of the upstream flag: a branch is forced false when branch_type is 'Ukjent' or when is_terminated is set, and otherwise takes the upstream is_active. Atlas's derivation."
         data_tests:
           - not_null
           - accepted_values: {values: [true, false]}
@@ -88,6 +90,7 @@ models:
           - not_null
           - relationships: {to: ref('dim_chapter'), field: chapter_id}
       - name: ngo_orgnr
+        description: "Organisation number of the owning NGO — constant '864139442' (Norges Røde Kors) for every row in this relation, since it carries one organisation's branches."
         data_tests:
           - not_null
           - relationships: {to: ref('dim_ngo'), field: orgnr}
@@ -111,6 +114,7 @@ models:
               field: code
               config: {where: service_category_code is not null}
       - name: is_service
+        description: "🔴 ATLAS'S EDITORIAL JUDGEMENT, not a Red Cross field. False for internal, governance and recruitment activities (Distriktsråd*, Døråpner, EVA, Blodgiververving, Arrangement og reise, Internasjonalt distriktsamarbeid); true otherwise. It answers \"is this something a member of the public can receive\", and a consumer who disagrees with a particular call should read the list in the model rather than treat the flag as the owner's own classification."
         data_tests:
           - not_null
           - accepted_values: {values: [true, false]}

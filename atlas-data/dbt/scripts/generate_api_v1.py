@@ -227,6 +227,33 @@ INDICATORS — municipal figures from SSB, FHI and Bufdir:
   kommune_befolkning_alder     population by age band and sex.
   bufdir_indicator_alias       Bufdir indicator naming.
 
+🔴 NORGES RØDE KORS'S OWN DATA — READ THIS BEFORE USING THE SEVEN BELOW.
+Everything else in this API is Norwegian public data under NLOD, which anyone
+may redistribute. These seven are not. They are Røde Kors's own operational
+record of its branches and what they do, published on the OWNER'S STATED WISH
+— "the consumer must be able to query all datasets" — and a wish is not a
+licence. ⚠️ NLOD does not cover them. Ask Røde Kors before redistributing.
+
+  supply__redcross_branches                  the branch list
+  supply__redcross_branch_activities         what each branch does
+  supply__redcross_chapter_kommune_coverage  which kommuner a chapter covers
+  dim_chapter                                Atlas's chapter dimension
+  dim_activity                               Atlas's activity dimension
+  chapter_kommune_coverage                   per-kommune chapter rollup
+  fact_chapter_activities                    chapter x activity, analytical
+
+⚠️ A STATIC DUMP, NOT A LIVE FEED. The upstream is a one-off export of
+2026-04-21 — 392 branches and about 2 400 activities. Nothing refreshes it. A
+figure here describes April 2026 and will not move on its own.
+
+🔴 AND THEY SERVE ZERO ROWS TODAY. THAT IS EXPECTED, NOT A BROKEN ENDPOINT.
+The dump has never been loaded: the ingest is held on a credential, so the raw
+tables are empty and everything below them is empty too — including
+activity_catalog, distrikt_summary and kommune_local_chapters, which have read
+`*/0` since long before this. When the hold lifts the rows appear with no
+further change. ⚠️ Do not read an empty result here as an outage or a failed
+deploy.
+
 SUPPLY — voluntary-sector presence:
   ngo_index, ngo_overview      organisations and their summary.
   activity_catalog             what each organisation does.

@@ -106,6 +106,33 @@ INDICATORS — municipal figures from SSB, FHI and Bufdir:
   kommune_befolkning_alder     population by age band and sex.
   bufdir_indicator_alias       Bufdir indicator naming.
 
+🔴 NORGES RØDE KORS''S OWN DATA — READ THIS BEFORE USING THE SEVEN BELOW.
+Everything else in this API is Norwegian public data under NLOD, which anyone
+may redistribute. These seven are not. They are Røde Kors''s own operational
+record of its branches and what they do, published on the OWNER''S STATED WISH
+— "the consumer must be able to query all datasets" — and a wish is not a
+licence. ⚠️ NLOD does not cover them. Ask Røde Kors before redistributing.
+
+  supply__redcross_branches                  the branch list
+  supply__redcross_branch_activities         what each branch does
+  supply__redcross_chapter_kommune_coverage  which kommuner a chapter covers
+  dim_chapter                                Atlas''s chapter dimension
+  dim_activity                               Atlas''s activity dimension
+  chapter_kommune_coverage                   per-kommune chapter rollup
+  fact_chapter_activities                    chapter x activity, analytical
+
+⚠️ A STATIC DUMP, NOT A LIVE FEED. The upstream is a one-off export of
+2026-04-21 — 392 branches and about 2 400 activities. Nothing refreshes it. A
+figure here describes April 2026 and will not move on its own.
+
+🔴 AND THEY SERVE ZERO ROWS TODAY. THAT IS EXPECTED, NOT A BROKEN ENDPOINT.
+The dump has never been loaded: the ingest is held on a credential, so the raw
+tables are empty and everything below them is empty too — including
+activity_catalog, distrikt_summary and kommune_local_chapters, which have read
+`*/0` since long before this. When the hold lifts the rows appear with no
+further change. ⚠️ Do not read an empty result here as an outage or a failed
+deploy.
+
 SUPPLY — voluntary-sector presence:
   ngo_index, ngo_overview      organisations and their summary.
   activity_catalog             what each organisation does.
@@ -614,6 +641,14 @@ COMMENT ON COLUMN api_v1.bufdir_indicator_alias.note IS 'Editorial explanation o
 historical id maps to this canonical id, or why no successor
 exists. One sentence; read by humans, not parsers.';
 
+-- chapter_kommune_coverage  ←  marts.mart_chapter_kommune_coverage
+CREATE OR REPLACE VIEW api_v1.chapter_kommune_coverage AS SELECT * FROM marts.mart_chapter_kommune_coverage;
+COMMENT ON VIEW api_v1.chapter_kommune_coverage IS 'Per-kommune rollup of which chapters cover it — Atlas''s shape, built so coverage questions do not require walking branch addresses. 🔴 A STATIC DUMP, NOT A LIVE FEED — a one-off export of 2026-04-21 (392 branches, ~2 400 activities per migration 022). Nothing refreshes it. 🔴 SERVING ZERO ROWS TODAY and that is expected, not a broken endpoint: the redcross-branches ingest is held on a credential, so raw is empty and so is this. ⚠️ Atlas holds NO republication licence here. This is Norges Røde Kors''s own operational data, published on the owner''s stated wish — and a wish is not a licence. NLOD does not cover it; ask Røde Kors before redistributing. That instruction reached Atlas relayed through the demo consumer, not directly.';
+COMMENT ON COLUMN api_v1.chapter_kommune_coverage.chapter_id IS 'Composite slug, namespaced by NGO. Stable across refreshes.';
+COMMENT ON COLUMN api_v1.chapter_kommune_coverage.kommune_nr IS 'Resolved via dim_postnummer. NULL for branches that span multiple kommuner (regional, national).';
+COMMENT ON COLUMN api_v1.chapter_kommune_coverage.source IS 'How this (chapter, kommune) link was established. ''declared'' = the NGO publishes the kommune list directly for this regional chapter; ''inferred'' = derived by Atlas from child-chapter coverage (e.g. union of local kommuner under the regional parent).';
+COMMENT ON COLUMN api_v1.chapter_kommune_coverage.updated_at IS 'When the row was last loaded from the upstream supply staging model.';
+
 -- coverage_gap_barnefattigdom  ←  marts.mart_coverage_gap_barnefattigdom
 CREATE OR REPLACE VIEW api_v1.coverage_gap_barnefattigdom AS SELECT * FROM marts.mart_coverage_gap_barnefattigdom;
 COMMENT ON VIEW api_v1.coverage_gap_barnefattigdom IS 'One row per active kommune for the latest year of SSB 08764 child
@@ -685,6 +720,35 @@ children for Oslo, ±4 for a kommune of 7 000. Do not present
 it as SSB''s own figure.
 
 NULL when either input was suppressed upstream.';
+
+-- dim_activity  ←  marts.mart_dim_activity
+CREATE OR REPLACE VIEW api_v1.dim_activity AS SELECT * FROM marts.mart_dim_activity;
+COMMENT ON VIEW api_v1.dim_activity IS 'Atlas''s canonical activity dimension, each row pointing at a ref_atlas_service_category code. ⚠️ That category mapping is Atlas''s editorial judgement, not the owner''s classification. 🔴 A STATIC DUMP, NOT A LIVE FEED — a one-off export of 2026-04-21 (392 branches, ~2 400 activities per migration 022). Nothing refreshes it. 🔴 SERVING ZERO ROWS TODAY and that is expected, not a broken endpoint: the redcross-branches ingest is held on a credential, so raw is empty and so is this. ⚠️ Atlas holds NO republication licence here. This is Norges Røde Kors''s own operational data, published on the owner''s stated wish — and a wish is not a licence. NLOD does not cover it; ask Røde Kors before redistributing. That instruction reached Atlas relayed through the demo consumer, not directly.';
+COMMENT ON COLUMN api_v1.dim_activity.activity_id IS 'Composite slug, namespaced by NGO (e.g. ''redcross-besokstjeneste''). Stable across refreshes. Unique within this table.';
+COMMENT ON COLUMN api_v1.dim_activity.ngo_orgnr IS '9-digit Brreg organisasjonsnummer of the NGO that owns the activity. FK to dim_ngo.';
+COMMENT ON COLUMN api_v1.dim_activity.canonical_name IS 'Red Cross''s globalActivityName, verbatim.';
+COMMENT ON COLUMN api_v1.dim_activity.service_category_code IS 'From the 50→22 CASE WHEN. NULL only if a new globalActivityName appeared in raw that the CASE doesn''t cover (catches drift loudly via the not_null filter applied at dim_activity/fact_chapter_activities — those filter is_service = true; a new unmapped service-type activity would still be is_service = true with NULL category, surfacing the gap).';
+COMMENT ON COLUMN api_v1.dim_activity.is_active IS 'Whether this NGO still offers the activity. False for retired activities kept in the catalog so historical fact_chapter_activities rows can still resolve activity_id.';
+
+-- dim_chapter  ←  marts.mart_dim_chapter
+CREATE OR REPLACE VIEW api_v1.dim_chapter AS SELECT * FROM marts.mart_dim_chapter;
+COMMENT ON VIEW api_v1.dim_chapter IS 'Atlas''s canonical local-chapter dimension. Today every row is Røde Kors''s; the shape is Atlas''s and is meant to hold other NGOs'' chapters unchanged. 🔴 A STATIC DUMP, NOT A LIVE FEED — a one-off export of 2026-04-21 (392 branches, ~2 400 activities per migration 022). Nothing refreshes it. 🔴 SERVING ZERO ROWS TODAY and that is expected, not a broken endpoint: the redcross-branches ingest is held on a credential, so raw is empty and so is this. ⚠️ Atlas holds NO republication licence here. This is Norges Røde Kors''s own operational data, published on the owner''s stated wish — and a wish is not a licence. NLOD does not cover it; ask Røde Kors before redistributing. That instruction reached Atlas relayed through the demo consumer, not directly.';
+COMMENT ON COLUMN api_v1.dim_chapter.chapter_id IS 'Composite slug, namespaced by NGO. Stable across refreshes.';
+COMMENT ON COLUMN api_v1.dim_chapter.ngo_orgnr IS 'FK to dim_ngo.orgnr.';
+COMMENT ON COLUMN api_v1.dim_chapter.chapter_level IS 'national / regional / local per Q46. Coverage-gap supply queries filter to local.';
+COMMENT ON COLUMN api_v1.dim_chapter.parent_chapter_id IS 'Self-FK to chapter_id (e.g. local → regional → national). NULL for top-level (national) and orphan (Ukjent) rows.';
+COMMENT ON COLUMN api_v1.dim_chapter.chapter_orgnr IS 'Brreg orgnr if the chapter is separately registered (e.g. Red Cross local branches each have their own). NULL otherwise.';
+COMMENT ON COLUMN api_v1.dim_chapter.name IS 'Display name for the chapter, verbatim from upstream (Red Cross''s localBranchName etc.). Not normalised — preserves casing, diacritics, and embedded NGO prefixes if upstream publishes them.';
+COMMENT ON COLUMN api_v1.dim_chapter.kommune_nr IS 'Resolved via dim_postnummer. NULL for branches that span multiple kommuner (regional, national).';
+COMMENT ON COLUMN api_v1.dim_chapter.is_active IS 'Whether the chapter is currently operational. False for dormant or merged chapters that upstream still publishes for historical continuity. Coverage-gap supply queries filter to is_active = true.';
+COMMENT ON COLUMN api_v1.dim_chapter.postal_address_line1 IS 'Street address (first line). Used together with postal_code + post_office to resolve to a kommune_nr via dim_postnummer. NULL for chapters that don''t publish a physical address.';
+COMMENT ON COLUMN api_v1.dim_chapter.postal_code IS '4-digit Norwegian postal code (postnummer), leading zeros preserved. Drives the kommune_nr resolution; FK to dim_postnummer.';
+COMMENT ON COLUMN api_v1.dim_chapter.post_office IS 'Post-office name, ALLCAPS as published by Bring.';
+COMMENT ON COLUMN api_v1.dim_chapter.phone IS 'Public contact phone number for the chapter, verbatim from upstream (no normalisation, may include country code or local formatting). NULL when not published.';
+COMMENT ON COLUMN api_v1.dim_chapter.email IS 'Public contact email for the chapter. NULL when not published. Not validated for RFC compliance.';
+COMMENT ON COLUMN api_v1.dim_chapter.web IS 'Public website URL for the chapter. NULL when not published. May be a chapter sub-page on the NGO''s national site rather than a dedicated domain.';
+COMMENT ON COLUMN api_v1.dim_chapter.chapter_subtype IS 'Optional subtype for non-geographic or structurally distinct chapters. NULL = normal geographic chapter. Vocabulary (free-text in v1): ''youth-political'' (e.g. NF Solidaritetsungdom), ''youth-health'' (NF Sanitetsungdom when separately registered, RC RØFF), ''student'' (NF Studentgruppe), ''hospital'' (NF Sanitet Haukeland), ''umbrella'' (NF Sentralt). Promoted to an accepted_values test once 3+ NGOs populate it consistently (per INVESTIGATE-multi-ngo-supply-model-extensions Q1).';
+COMMENT ON COLUMN api_v1.dim_chapter.updated_at IS 'When the row was last loaded from the upstream supply staging model.';
 
 -- dim_fylke  ←  marts.mart_dim_fylke
 CREATE OR REPLACE VIEW api_v1.dim_fylke AS SELECT * FROM marts.mart_dim_fylke;
@@ -821,6 +885,19 @@ COMMENT ON COLUMN api_v1.distrikt_summary.kommune_coverage_count IS 'Count of di
 children (kommune_nr IS NOT NULL). The operational footprint;
 may be smaller than child_count when multiple children share
 a kommune.';
+
+-- fact_chapter_activities  ←  marts.mart_fact_chapter_activities
+CREATE OR REPLACE VIEW api_v1.fact_chapter_activities AS SELECT * FROM marts.mart_fact_chapter_activities;
+COMMENT ON VIEW api_v1.fact_chapter_activities IS 'The analytical grain for chapter activity: one row per chapter × activity, joined to Atlas''s dimensions so it reconciles with the rest of the supply layer. 🔴 A STATIC DUMP, NOT A LIVE FEED — a one-off export of 2026-04-21 (392 branches, ~2 400 activities per migration 022). Nothing refreshes it. 🔴 SERVING ZERO ROWS TODAY and that is expected, not a broken endpoint: the redcross-branches ingest is held on a credential, so raw is empty and so is this. ⚠️ Atlas holds NO republication licence here. This is Norges Røde Kors''s own operational data, published on the owner''s stated wish — and a wish is not a licence. NLOD does not cover it; ask Røde Kors before redistributing. That instruction reached Atlas relayed through the demo consumer, not directly.';
+COMMENT ON COLUMN api_v1.fact_chapter_activities.chapter_id IS 'Composite slug, namespaced by NGO. Stable across refreshes.';
+COMMENT ON COLUMN api_v1.fact_chapter_activities.activity_id IS 'Composite slug, e.g. ''redcross-besokstjeneste''. Stable across refreshes.';
+COMMENT ON COLUMN api_v1.fact_chapter_activities.ngo_orgnr IS 'Denormalised from dim_chapter for query convenience.';
+COMMENT ON COLUMN api_v1.fact_chapter_activities.kommune_nr IS 'Denormalised from dim_chapter. NULL for non-local chapters (regional, national).';
+COMMENT ON COLUMN api_v1.fact_chapter_activities.local_activity_name IS 'NGO''s local display string for the activity at this chapter (e.g. ''Modum Røde Kors Hjelpekorps'').';
+COMMENT ON COLUMN api_v1.fact_chapter_activities.is_active IS 'Whether this NGO still offers the activity. False for retired activities kept in the catalog so historical fact_chapter_activities rows can still resolve activity_id.';
+COMMENT ON COLUMN api_v1.fact_chapter_activities.canonical_name IS 'Denormalised from dim_activity for query convenience.';
+COMMENT ON COLUMN api_v1.fact_chapter_activities.source_id IS 'Atlas source identifier — constant ''redcross-branches'' for every row, since this fact derives from that one source.';
+COMMENT ON COLUMN api_v1.fact_chapter_activities.updated_at IS 'When the row was last loaded from the upstream supply staging model.';
 
 -- indicator_latest_values  ←  marts.mart_indicator_latest_values
 CREATE OR REPLACE VIEW api_v1.indicator_latest_values AS SELECT * FROM marts.mart_indicator_latest_values;
@@ -2610,6 +2687,45 @@ indistinguishable from a source nobody ever added. `undeclared` and
 `unknown_cadence` are kept apart: one is a source nobody finished
 adding, the other a cadence somebody invented, and they need different
 fixes.';
+
+-- supply__redcross_branch_activities  ←  marts.mart_supply__redcross_branch_activities
+CREATE OR REPLACE VIEW api_v1.supply__redcross_branch_activities AS SELECT * FROM marts.mart_supply__redcross_branch_activities;
+COMMENT ON VIEW api_v1.supply__redcross_branch_activities IS 'What each Røde Kors branch does, one row per branch × activity. `global_activity_name` is Red Cross''s own canonical term; `local_activity_name` is the per-chapter display string. 🔴 A STATIC DUMP, NOT A LIVE FEED — a one-off export of 2026-04-21 (392 branches, ~2 400 activities per migration 022). Nothing refreshes it. 🔴 SERVING ZERO ROWS TODAY and that is expected, not a broken endpoint: the redcross-branches ingest is held on a credential, so raw is empty and so is this. ⚠️ Atlas holds NO republication licence here. This is Norges Røde Kors''s own operational data, published on the owner''s stated wish — and a wish is not a licence. NLOD does not cover it; ask Røde Kors before redistributing. That instruction reached Atlas relayed through the demo consumer, not directly.';
+COMMENT ON COLUMN api_v1.supply__redcross_branch_activities.chapter_id IS '''redcross-'' || branch_id.';
+COMMENT ON COLUMN api_v1.supply__redcross_branch_activities.ngo_orgnr IS 'Organisation number of the owning NGO — constant ''864139442'' (Norges Røde Kors) for every row in this relation, since it carries one organisation''s branches.';
+COMMENT ON COLUMN api_v1.supply__redcross_branch_activities.canonical_name IS 'Red Cross''s globalActivityName, verbatim.';
+COMMENT ON COLUMN api_v1.supply__redcross_branch_activities.local_activity_name IS 'Red Cross''s local-branch display string for the activity (e.g. ''Modum Røde Kors Hjelpekorps''). Free-text; preserved verbatim. NULL when upstream didn''t supply one.';
+COMMENT ON COLUMN api_v1.supply__redcross_branch_activities.service_category_code IS 'From the 50→22 CASE WHEN. NULL only if a new globalActivityName appeared in raw that the CASE doesn''t cover (catches drift loudly via the not_null filter applied at dim_activity/fact_chapter_activities — those filter is_service = true; a new unmapped service-type activity would still be is_service = true with NULL category, surfacing the gap).';
+COMMENT ON COLUMN api_v1.supply__redcross_branch_activities.is_service IS '🔴 ATLAS''S EDITORIAL JUDGEMENT, not a Red Cross field. False for internal, governance and recruitment activities (Distriktsråd*, Døråpner, EVA, Blodgiververving, Arrangement og reise, Internasjonalt distriktsamarbeid); true otherwise. It answers "is this something a member of the public can receive", and a consumer who disagrees with a particular call should read the list in the model rather than treat the flag as the owner''s own classification.';
+COMMENT ON COLUMN api_v1.supply__redcross_branch_activities.updated_at IS 'When the row was last loaded from the upstream raw table.';
+
+-- supply__redcross_branches  ←  marts.mart_supply__redcross_branches
+CREATE OR REPLACE VIEW api_v1.supply__redcross_branches AS SELECT * FROM marts.mart_supply__redcross_branches;
+COMMENT ON VIEW api_v1.supply__redcross_branches IS 'Norges Røde Kors''s own branch list — national office, districts and local chapters — typed out of the Red Cross Organizations API export. 🔴 A STATIC DUMP, NOT A LIVE FEED — a one-off export of 2026-04-21 (392 branches, ~2 400 activities per migration 022). Nothing refreshes it. 🔴 SERVING ZERO ROWS TODAY and that is expected, not a broken endpoint: the redcross-branches ingest is held on a credential, so raw is empty and so is this. ⚠️ Atlas holds NO republication licence here. This is Norges Røde Kors''s own operational data, published on the owner''s stated wish — and a wish is not a licence. NLOD does not cover it; ask Røde Kors before redistributing. That instruction reached Atlas relayed through the demo consumer, not directly.';
+COMMENT ON COLUMN api_v1.supply__redcross_branches.chapter_id IS '''redcross-'' || branch_id; namespaced for cross-NGO uniqueness.';
+COMMENT ON COLUMN api_v1.supply__redcross_branches.ngo_orgnr IS 'Hardcoded ''864139442'' (Norges Røde Kors).';
+COMMENT ON COLUMN api_v1.supply__redcross_branches.chapter_level IS 'Atlas''s three-level normalisation of Red Cross''s branch_type: ''national'' (Nasjonalkontoret), ''regional'' (Distrikt), ''local'' (Lokalforening, and ''Ukjent'' folded in). ⚠️ Derived by Atlas, not a Red Cross field — ''Ukjent'' is mapped to local because it behaves like one, which is a judgement.';
+COMMENT ON COLUMN api_v1.supply__redcross_branches.parent_chapter_id IS 'Self-FK to chapter_id. NULL for HQ and Ukjent.';
+COMMENT ON COLUMN api_v1.supply__redcross_branches.chapter_orgnr IS 'Brreg orgnr if the branch is separately registered (every Red Cross local branch has its own). NULL otherwise. Distinct from ngo_orgnr — see dim_chapter.chapter_orgnr.';
+COMMENT ON COLUMN api_v1.supply__redcross_branches.name IS 'Display name for the chapter, verbatim from upstream (Red Cross''s localBranchName etc.). Not normalised — preserves casing, diacritics, and embedded prefixes.';
+COMMENT ON COLUMN api_v1.supply__redcross_branches.kommune_nr IS 'Resolved via dim_postnummer.postnummer → kommune_nr lookup. NULL for branches without a postal code (HQ, some Distrikt, Ukjent).';
+COMMENT ON COLUMN api_v1.supply__redcross_branches.is_active IS 'Whether the chapter is operating. ⚠️ Not a straight copy of the upstream flag: a branch is forced false when branch_type is ''Ukjent'' or when is_terminated is set, and otherwise takes the upstream is_active. Atlas''s derivation.';
+COMMENT ON COLUMN api_v1.supply__redcross_branches.postal_address_line1 IS 'Street address (first line) from upstream. Drives the kommune_nr resolution via dim_postnummer. NULL when the branch doesn''t publish a physical address.';
+COMMENT ON COLUMN api_v1.supply__redcross_branches.postal_code IS '4-digit Norwegian postal code (postnummer), leading zeros preserved. FK to dim_postnummer; the join produces kommune_nr.';
+COMMENT ON COLUMN api_v1.supply__redcross_branches.post_office IS 'Post-office name, ALLCAPS as published by Bring.';
+COMMENT ON COLUMN api_v1.supply__redcross_branches.phone IS 'Public contact phone for the branch, verbatim from upstream (no normalisation). NULL when not published.';
+COMMENT ON COLUMN api_v1.supply__redcross_branches.email IS 'Public contact email for the branch. NULL when not published.';
+COMMENT ON COLUMN api_v1.supply__redcross_branches.web IS 'Public website URL for the branch. NULL when not published. May be a sub-page on the NGO''s national site.';
+COMMENT ON COLUMN api_v1.supply__redcross_branches.chapter_subtype IS 'Optional subtype tag for non-geographic / structurally distinct branches. Always NULL for Red Cross today; populated by other NGO supply models — see dim_chapter for the vocabulary.';
+COMMENT ON COLUMN api_v1.supply__redcross_branches.updated_at IS 'When the row was last loaded from the upstream raw table.';
+
+-- supply__redcross_chapter_kommune_coverage  ←  marts.mart_supply__redcross_chapter_kommune_coverage
+CREATE OR REPLACE VIEW api_v1.supply__redcross_chapter_kommune_coverage AS SELECT * FROM marts.mart_supply__redcross_chapter_kommune_coverage;
+COMMENT ON VIEW api_v1.supply__redcross_chapter_kommune_coverage IS 'Which kommuner each Røde Kors chapter covers, resolved from the branch''s postal address through dim_postnummer. 🔴 A STATIC DUMP, NOT A LIVE FEED — a one-off export of 2026-04-21 (392 branches, ~2 400 activities per migration 022). Nothing refreshes it. 🔴 SERVING ZERO ROWS TODAY and that is expected, not a broken endpoint: the redcross-branches ingest is held on a credential, so raw is empty and so is this. ⚠️ Atlas holds NO republication licence here. This is Norges Røde Kors''s own operational data, published on the owner''s stated wish — and a wish is not a licence. NLOD does not cover it; ask Røde Kors before redistributing. That instruction reached Atlas relayed through the demo consumer, not directly.';
+COMMENT ON COLUMN api_v1.supply__redcross_chapter_kommune_coverage.chapter_id IS 'Composite slug, namespaced by NGO. Stable across refreshes.';
+COMMENT ON COLUMN api_v1.supply__redcross_chapter_kommune_coverage.kommune_nr IS 'Resolved via dim_postnummer. NULL for branches that span multiple kommuner (regional, national).';
+COMMENT ON COLUMN api_v1.supply__redcross_chapter_kommune_coverage.source IS 'How this (chapter, kommune) link was established. ''declared'' = the NGO publishes the kommune list directly; ''inferred'' = derived by Atlas from child-chapter coverage. All rows are ''inferred'' in v1.';
+COMMENT ON COLUMN api_v1.supply__redcross_chapter_kommune_coverage.updated_at IS 'When the row was last loaded from the upstream supply staging model.';
 
 -- unattributed_totals  ←  marts.mart_unattributed_totals
 CREATE OR REPLACE VIEW api_v1.unattributed_totals AS SELECT * FROM marts.mart_unattributed_totals;
