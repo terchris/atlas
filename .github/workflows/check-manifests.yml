@@ -122,9 +122,55 @@ jobs:
       - name: Every published relation has a dataset page
         run: node scripts/check-dataset-page-coverage.mjs
 
+      # 🔴 generated_at IS EXCLUDED, AND THAT IS THE POINT OF THIS STEP.
+      #
+      # sources-registry.json carries a top-level `generated_at` written from
+      # wall-clock time. This step regenerates the catalogue and diffs it
+      # against the committed copy — so the FIRST PR AFTER MIDNIGHT UTC failed
+      # here regardless of what it changed. On 2026-09-26 a PR touching only
+      # models/supply/schema.yml (which does not feed the catalogue at all) was
+      # failed by exactly one line: the date.
+      #
+      # ⚠️ The cost was never the noise. A real catalogue drift and a date
+      # rollover produced the SAME RED X, and the false one teaches
+      # "regenerate, commit, don't read the diff" — the habit that makes the
+      # real one invisible. A gate that cries wolf does not just waste a
+      # morning; it trains the reflex that makes the true alarm unreadable.
+      #
+      # 🔵 Safe by CONSUMPTION, not just by grep (ops-dev verified, #1558):
+      # website/src/utils/postgrest.ts and utils/sources.ts both import the
+      # registry and neither reads generated_at; types/sources.ts only types
+      # it. The one component that reads a `.generated_at` reads it off the
+      # sample SNAPSHOT, a different object.
+      #
+      # ⚠️ Scoped to the registry deliberately. There are THREE generated_at
+      # fields under website/src/data/ — the registry's (date-only) and two
+      # snapshots' (full ISO timestamps). The snapshots are not regenerated
+      # here and must keep drifting if they change.
+      #
+      # 🔵 The deeper fix is to stop embedding wall-clock time in a generated
+      # artifact at all, so it is a pure function of its inputs. That needs a
+      # RENAME to stay honest — derived-from-inputs means "when the content
+      # last changed", which is not what `generated_at` says — so it is a
+      # published-field change with a migration, not a gate tweak. Deferred
+      # deliberately, not forgotten (#1558).
       - name: Check for catalog drift
         run: |
-          if ! git diff --exit-code src/data/sources-registry.json docs/datasets/ docs/topics/ docs/publishers/; then
+          # The registry, compared with generated_at removed from both sides.
+          git show HEAD:website/src/data/sources-registry.json > /tmp/reg-head.json
+          node -e '
+            const fs = require("fs");
+            const strip = (src, out) => {
+              const d = JSON.parse(fs.readFileSync(src, "utf8"));
+              delete d.generated_at;
+              fs.writeFileSync(out, JSON.stringify(d, null, 2) + "\n");
+            };
+            strip("/tmp/reg-head.json", "/tmp/reg-a.json");
+            strip("src/data/sources-registry.json", "/tmp/reg-b.json");
+          '
+          registry_drift=0
+          diff -u /tmp/reg-a.json /tmp/reg-b.json || registry_drift=1
+          if [ "$registry_drift" -ne 0 ] || ! git diff --exit-code docs/datasets/ docs/topics/ docs/publishers/; then
             echo ""
             echo "::error::Catalog is out of date with manifests."
             echo "::error::Fix: cd website && npm run sources:generate && git add src/data/sources-registry.json docs/datasets/ docs/topics/ docs/publishers/"
