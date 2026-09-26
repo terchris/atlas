@@ -133,13 +133,21 @@ models:
       local children's kommune_nr values. All rows are source='inferred' in
       v1 (no declared coverage scraped yet). Materialised as a view; the
       real tests live on the marts.chapter_kommune_coverage union target.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [chapter_id, kommune_nr]
     columns:
       - name: chapter_id
+        data_tests: [not_null]
         description: Composite slug, namespaced by NGO. Stable across refreshes.
       - name: kommune_nr
+        data_tests: [not_null]
         description: >-
           Resolved via dim_postnummer. NULL for branches that span multiple kommuner (regional, national).
       - name: source
+        data_tests:
+          - not_null
+          - accepted_values: {values: ['inferred']}
         description: |
           How this (chapter, kommune) link was established.
           'declared' = the NGO publishes the kommune list directly;
