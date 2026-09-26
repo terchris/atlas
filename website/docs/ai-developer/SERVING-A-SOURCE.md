@@ -362,6 +362,45 @@ a wait loop polling a truncated run id printed success having measured nothing.
 After breaking something deliberately, verify the breakage *took* before reading
 the result.
 
+## 14. A gate that cries wolf trains the reflex that hides the real alarm
+
+`check-catalog` regenerates the source catalogue and diffs it against the
+committed copy. `sources-registry.json` carried a top-level `generated_at`
+written from **wall-clock time** — so the first PR after midnight UTC failed it
+**regardless of what the PR changed.** On 2026-09-26 a change touching only
+`models/supply/schema.yml`, which does not feed the catalogue at all, was failed
+by exactly one line: the date.
+
+It self-healed every time — whoever hit it committed the new date — which is why
+it was never worth anyone's morning to chase.
+
+🔴 **The cost was never the wasted minutes.** A real catalogue drift and a date
+rollover produced the **same red X**, and the false one teaches *"regenerate,
+commit, don't read the diff"*. That is precisely the habit that makes the real
+one invisible. **A gate that fires for a reason unrelated to what it detects
+does not merely waste time; it trains the reflex that makes the true alarm
+unreadable.**
+
+**Two ways to fix one of these, and they are not equivalent:**
+
+- **Exclude the volatile field from the comparison.** `generated_at` is not
+  catalogue *content*, and the gate's job is drift in content. Safe here because
+  it was verified **by consumption** — two site modules import the registry and
+  neither reads the field — rather than by grep alone.
+- **Stop generating the volatile value**, so the artifact is a pure function of
+  its inputs. ⚠️ This one needs a **rename** to stay honest: derived-from-inputs
+  means *"when the content last changed"*, which is not what `generated_at`
+  says. A consumer asking *"how fresh is this publication?"* would read a
+  correct value for the wrong question — **a field whose name does not match
+  what it measures**, which is most of this document. So it is a published-field
+  change with a migration, not a generator tweak.
+
+🔵 The first was done; the second was deferred **deliberately and written down**,
+which is the only difference between deferring and forgetting.
+
+⚠️ **Before regenerating anything to clear a drift gate, read the diff.** If the
+only line that moved is a timestamp, the gate is telling you the time.
+
 ---
 
 ## The shape behind most of these
