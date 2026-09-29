@@ -1,6 +1,6 @@
 ---
 title: "Ingest health"
-description: "Per-source ingest-run health."
+description: "One row per source: its most recent completed ingest run, and whether that run succeeded."
 slug: /datasets/ingest_health
 sidebar_label: "ingest_health"
 ---
@@ -40,4 +40,4 @@ Live PostgREST query that returns the first 5 rows. URL adapts to the current ho
 
 ## About this view
 
-<div style={{whiteSpace: 'pre-wrap'}}>{"Per-source ingest-run health. One row per scraper or API-source,\nshowing the most recent COMPLETED run (finished_at IS NOT NULL).\nMinimal v1 surface per Q14 of\nINVESTIGATE-ngo-scraping-infrastructure.md — just the three columns\nneeded to answer \"which sources are failing?\" and \"which sources\nhaven't refreshed recently?\". Empty until the first scraper writes\nto raw.ingest_runs."}</div>
+<div style={{whiteSpace: 'pre-wrap'}}>{"One row per source: its most recent completed ingest run, and whether that run succeeded.\n\nPer-source ingest-run health. One row per scraper or API-source,\nshowing the most recent COMPLETED run (finished_at IS NOT NULL).\nMinimal v1 surface per Q14 of\nINVESTIGATE-ngo-scraping-infrastructure.md — just the three columns\nneeded to answer \"which sources are failing?\" and \"which sources\nhaven't refreshed recently?\". Empty until the first scraper writes\nto raw.ingest_runs."}</div>

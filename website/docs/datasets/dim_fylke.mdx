@@ -1,6 +1,6 @@
 ---
 title: "Fylke dimension"
-description: "The county dimension — the sibling of dim_kommune that was not published, so a consumer joining at fylke level was rebuilding this mapping, each slightly dif…"
+description: "The county dimension: one row per fylke code, current and historical."
 slug: /datasets/dim_fylke
 sidebar_label: "dim_fylke"
 ---
@@ -40,4 +40,4 @@ Live PostgREST query that returns the first 5 rows. URL adapts to the current ho
 
 ## About this view
 
-<div style={{whiteSpace: 'pre-wrap'}}>{"The county dimension — the sibling of dim_kommune that was not published, so a consumer joining at fylke level was rebuilding this mapping, each slightly differently. ⚠️ 35 distinct codes resolve here; 16 appear on at least one ACTIVE kommune (15 real fylker + residual '99 Uoppgitt'). Filter ?is_active=eq.true for today's set rather than reading a row count. Sourced from SSB Klass classification 104 (NLOD)."}</div>
+<div style={{whiteSpace: 'pre-wrap'}}>{"The county dimension: one row per fylke code, current and historical.\n\nThe county dimension — the sibling of dim_kommune that was not published, so a consumer\njoining at fylke level was rebuilding this mapping, each slightly differently.\n⚠️ 35 distinct codes resolve here; 16 appear on at least one ACTIVE kommune (15 real\nfylker + residual '99 Uoppgitt'). Filter ?is_active=eq.true for today's set rather than\nreading a row count. Sourced from SSB Klass classification 104 (NLOD)."}</div>

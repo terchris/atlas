@@ -5,19 +5,19 @@ models:
       stability: curated
       title: "Indicator coverage summary"
     description: |
+      One row per indicator and source: latest year, kommune coverage and value range.
+
       One row per (source_id, contents_code) summarising the latest-year
       coverage and value range for every indicator in
       fact_kommune_indicators. This is the backing dataset for the data
       explorer index page (atlas-frontend /data) and is the equivalent of
       the listIndicators() inline query that PostgREST projects as
       /mart_indicator_summary on the public API.
-
       Query shape: latest-year-per-indicator + group-by + value/null counts
       filtered to active kommuner only. Inactive kommuner (historical
       codes retained by upstream) are excluded from the counts so consumers
       see "how many of today's kommuner have data?" not "how many rows
       exist?".
-
       Refreshed nightly together with fact_kommune_indicators. The
       upstream_updated column carries the most recent raw load timestamp
       across the rows that contributed to this summary, so freshness can
@@ -244,33 +244,30 @@ models:
       stability: curated
       title: "Latest indicator values per kommune"
     description: |
+      The latest value of every indicator for every active kommune, in long format.
+
       One row per (source_id, contents_code, kommune_nr) at each
       indicator's latest_year, restricted to active kommuner. Backs the
       data explorer's per-indicator detail page (atlas-frontend
       /data/[source_id]/[contents_code]) and is the equivalent of the
       loadIndicatorValues() inline query.
-
       🔴 ROW COUNT IS NOT COVERAGE. A row exists for every active kommune
       the source publishes at all, INCLUDING those where `value` is null.
       So a series returns ~357 rows whether 357 kommuner have a number or
       66 do, and counting rows overstates coverage by up to five times.
-
       ⚠️ This has always been true and became dangerous on 2026-09-21,
       when nine Ungdata sources published at 18-43 % kommune coverage
       against SSB register sources at nearly 100 %. `fhi-hasj` returns
       357 rows carrying 66 values.
-
       ✅ `indicator_summary.kommuner_with_value` is the live count and the
       only thing to trust. It is not restated here on purpose — a number
       copied into a description goes stale, which is the defect that made
       `fhi-depresjon` advertise fourteen years of data it never held.
-
       PostgREST consumers filter via
       ?source_id=eq.X&contents_code=eq.Y. The full table is the
       cross-product of every indicator with every active kommune that
       has a row at latest_year, so the unfiltered row count is large
       (~360 active kommuner × ~70 indicators in v1).
-
       Inactive kommuner (kommune_is_active = false) are excluded so the
       output reflects today's kommune set, not historical codes that
       upstream still emits.
@@ -349,29 +346,27 @@ models:
       stability: curated
       title: "Indicator coverage gaps per kommune"
     description: |
+      One row per indicator and kommune that the indicator does not cover.
+
       🔴 A ROW HERE IS NOT EVIDENCE OF LOW NEED. For `fhi-*` sources it is
       usually FHI's disclosure suppression: it hides numbers based on fewer
       than ~6 cases, and hides a whole series when more than 20% of it is
       hidden, "for ikke å skape et skjevt inntrykk av situasjonen i
       kommunen" — to avoid a skewed impression of that kommune.
-
       ⚠️ Measured: 105 kommuner are missing from 10+ `fhi-*` series, median
       population 1,452, monotonic in population, and EVERY kommune is absent
       from at least three. Treating absence as zero in a ranked index
       inverts the signal for the smallest kommuner (urb-agents #1379). See
       `indicator_summary.kommuners_with_null`.
-
       One row per (source_id, contents_code, kommune_nr) for every
       active kommune that has *no* non-NULL value at the indicator's
       latest_year. The "coverage gap" sidebar on the data explorer
       detail page; equivalent to the listMissingKommuner() inline query.
-
       PostgREST consumers filter via
       ?source_id=eq.X&contents_code=eq.Y. Membership semantics: a
       kommune is considered "missing" if it either has no row at
       latest_year, or has a row with value IS NULL. Status markers (':',
       'X') do not count as a value.
-
       The full table is the cross-product of every indicator with every
       active kommune that lacks data. Most cells are present, so the
       unfiltered row count is the per-indicator gap-list aggregated
@@ -409,19 +404,19 @@ models:
       stability: curated
       title: "Child-poverty coverage gap (kommune)"
     description: |
+      Child poverty per kommune for the latest year of SSB 08764, as a share and as counts.
+
       One row per active kommune for the latest year of SSB 08764 child
       poverty data, combining the EUskala60 share (% of children in
       low-income households) with the Personer count (number of
       children). Backs the barnefattigdom map page (atlas-frontend
       /coverage-gap/barnefattigdom).
-
       First member of the mart_coverage_gap_<topic> family. Future
       coverage-gap maps follow the same shape: latest year per kommune,
       one row per kommune, value(s) pivoted out of contents_code into
       named columns. PostgREST projects this view as a single endpoint;
       consumers don't filter, they read the whole map dataset in one
       request.
-
       Inactive kommuner are excluded so the map renders today's
       kommune set. NULL values are kept in place — Map.tsx renders
       them as "no data".
@@ -515,31 +510,28 @@ models:
       stability: curated
       title: "NGO registry"
     description: |
+      One row per voluntary organisation Atlas tracks, with its identity, branding and focus.
+
       🔴 WHAT THIS RELATION DELIBERATELY DOES NOT CARRY. The demo consumer
       matches an organisation's local units in Brønnøysundregistrene by a
       name SUBSTRING it maintains itself, and it asked Atlas explicitly NOT
       to publish that (urb-agents #1387):
-
         "That is a heuristic we invented and are answerable for;
          ngo_index has no such column and should not."
-
       🔵 The split it drew, and it is the right one: the ROSTER is ours —
       orgnr, canonical name, primary_focus, tier — and the MATCHING RULE is
       theirs. A published pattern column would make Atlas answerable for a
       guess it did not make, and would make one consumer's heuristic look
       like a property of the organisation.
-
       ⚠️ THIS NOTE EXISTS BECAUSE THE OBVIOUS RESPONSE IS THE WRONG ONE.
       That consumer has now deleted three hardcoded copies of Atlas data in
       two days, and each time the right fix was to publish what it was
       copying — served_as for the unserved list, window_years for the
       windowed-years map. The reflex "it keeps a copy, so publish it" is
       correct twice and wrong here. It keeps this copy on purpose.
-
       One row per NGO in dim_ngo with chapter_count and has_supply
       decorations. Backs the NGO landing page (atlas-frontend /ngo) and
       is equivalent to the listNgos() inline query.
-
       chapter_count counts only active chapters (dim_chapter.is_active),
       so a defunct NGO sits at 0 even if its historical chapters are
       retained. has_supply is the convenience boolean (chapter_count > 0).
@@ -665,12 +657,13 @@ models:
       stability: curated
       title: "NGO overview"
     description: |
+      One row per NGO with its six headline counts, precomputed for the per-NGO page.
+
       One row per NGO in dim_ngo with the six count metrics shown on
       the per-NGO landing page (atlas-frontend /ngo/[slug]).
       Equivalent to the getNgoOverview() inline query, but precomputed
       for all NGOs so PostgREST projects it as a single endpoint
       consumers filter via ?orgnr=eq.X.
-
       Counts include both active and inactive chapters in the
       level-specific buckets (national/regional/local). kommune_count
       counts distinct kommune_nr only across *active* local chapters,
@@ -719,22 +712,21 @@ models:
       stability: curated
       title: "Activity catalogue (cross-NGO)"
     description: |
+      One row per organisation and activity, with its Atlas service category. Empty today.
+
       🔵 EXPECTED EMPTY TODAY, AND THAT IS NOT A DEFECT. Its one row per (NGO, activity), so it is empty until Red Cross activity data is loaded.
       Terje's position, 2026-09-21: the Red Cross data is not coming now, it
       will be there later. The relation is published and answers so a consumer
       can build against its shape before the rows arrive.
-
       ⚠️ A consumer cannot tell "empty by design" from "broken" without being
       told, and two of these three were asked about on the day someone noticed
       (urb-agents #1351). If this relation is still empty and this note is
       gone, something regressed.
-
       One row per (NGO, activity) joining dim_activity to the
       service-category seed for the human-readable label, plus a count
       of active chapters offering each activity. Backs the per-NGO
       activity catalogue page (atlas-frontend
       /ngo/[slug]/aktiviteter); equivalent to listActivities().
-
       The full table is small (~35 rows for Red Cross alone in v1) and
       grows as new NGOs land. PostgREST consumers filter via
       ?ngo_orgnr=eq.X.
@@ -792,16 +784,16 @@ models:
       stability: curated
       title: "Distrikt summary"
     description: |
+      One row per district chapter, with its child chapters and kommune coverage. Empty today.
+
       🔵 EXPECTED EMPTY TODAY, AND THAT IS NOT A DEFECT. Its grain is Red Cross districts, so it is empty until that data is loaded.
       Terje's position, 2026-09-21: the Red Cross data is not coming now, it
       will be there later. The relation is published and answers so a consumer
       can build against its shape before the rows arrive.
-
       ⚠️ A consumer cannot tell "empty by design" from "broken" without being
       told, and two of these three were asked about on the day someone noticed
       (urb-agents #1351). If this relation is still empty and this note is
       gone, something regressed.
-
       One row per regional chapter (Red Cross "distrikt" level, and the
       equivalent regional tier for any other NGO with a hierarchy).
       Each row carries denormalised counts of how many child chapters
@@ -809,7 +801,6 @@ models:
       cover. Backs atlas-frontend /ngo/[slug]/distrikter and the
       individual /distrikt/[id] pages; equivalent to the listDistrikter()
       inline query.
-
       Counts come from dim_chapter joined back to itself by
       parent_chapter_id, filtered to active children. PostgREST
       consumers filter via ?ngo_orgnr=eq.X (or ?chapter_id=eq.Y for the
@@ -867,21 +858,20 @@ models:
       stability: curated
       title: "Local NGO chapters per kommune"
     description: |
+      One row per local chapter resolved to a kommune, with its NGO and category. Empty today.
+
       🔵 EXPECTED EMPTY TODAY, AND THAT IS NOT A DEFECT. Its one row per local chapter, so it is empty until Red Cross chapter data is loaded.
       Terje's position, 2026-09-21: the Red Cross data is not coming now, it
       will be there later. The relation is published and answers so a consumer
       can build against its shape before the rows arrive.
-
       ⚠️ A consumer cannot tell "empty by design" from "broken" without being
       told, and two of these three were asked about on the day someone noticed
       (urb-agents #1351). If this relation is still empty and this note is
       gone, something regressed.
-
       Active local chapters in each kommune, decorated with the NGO
       name/brand and the service-category labels offered. Backs the
       kommune detail page (atlas-frontend /kommuner/[kommune_nr]);
       equivalent to listChaptersInKommune().
-
       **Important:** this view returns *multiple rows per chapter* —
       one per service category the chapter offers. A chapter that
       provides three service categories appears as three rows for the
@@ -889,13 +879,11 @@ models:
       service_category_code values. Consumers that want unique chapters
       should distinct on chapter_id (or aggregate service categories
       into an array client-side).
-
       GRAIN: one row per (kommune_nr, chapter_id,
       service_category_code), asserted by a test rather than only
       described here. It is neither one row per chapter nor one row per
       chapter-kommune coverage relation — a consumer told us those were
       the two shapes it would guess between (urb-agents #1289).
-
       PostgREST consumers filter via ?kommune_nr=eq.X. Inactive
       chapters, non-local chapters (regional, national), and chapters
       with NULL kommune_nr are excluded. ⚠️ Excluding regional chapters
@@ -1016,18 +1004,18 @@ models:
     meta:
       stability: curated
     description: |
+      Maps Bufdir indicator ids across releases, so a renumbered indicator still resolves.
+
       Cross-release alias table for `bufdir-barnefattigdom`
       `indicator_api_id` renumbers. One row per (historical_id,
       canonical_id) mapping consumers join on for cross-time-series
       continuity when Bufdir splits, retires, or renumbers a workbook
       upstream — e.g. the observed `Indikator 9` → `9a` / `9b` split,
       and `Indikator 10` retired without successor.
-
       Thin republish of the editorial seed `bufdir_indicator_alias` so
       the PLAN-004 generator auto-emits `api_v1.bufdir_indicator_alias`
       (the leading `mart_` is stripped per `models/marts/api/README.md`
       § Naming).
-
       See `website/docs/ai-developer/plans/active/PLAN-bufdir-surrogate-id-migration.md`
       for design rationale + the maintenance ritual that appends rows
       when a new Bufdir bundle release surfaces additional renumbering.
@@ -1068,19 +1056,18 @@ models:
     meta:
       stability: curated
     description: |
+      What Atlas publishes: one row per endpoint with its row count, freshness and origin.
+
       What Atlas publishes, one row per queryable endpoint: how many records it
       serves, when its data last arrived, and where those rows came from.
-
       Asked for by Røde Kors — "validate that all datasets that are ingested has
       an endpoint and it can be queried … count the number of records each
       endpoint has and update the last time it ingested data."
-
       ⚠️ THE GRAIN IS PER ENDPOINT, NOT PER SOURCE. meta_sources answers "what
       did Atlas ingest"; this answers "what can I query, and is there anything
       in it". One source can feed several endpoints and one endpoint can draw on
       several sources, so the two row counts are not comparable and summing
       sources will not reproduce an endpoint's count.
-
       ⚠️ atlas_inventory does not list ITSELF. It is built from the same seed it
       reports on, so counting itself would be circular and the number would be
       whatever the table held mid-build. 19 endpoints are listed; 20 are
@@ -1175,18 +1162,18 @@ models:
     meta:
       stability: curated
     description: |
+      One row per ingested source: publisher, licence, coverage, freshness and what it feeds.
+
       Per-source catalogue row — one per ingest source in
       `_sources_manifest`, joined to `raw.ingest_runs` aggregates so
       consumers see freshness alongside the static metadata. Wraps to
       `api_v1.meta_sources` and backs `/data/sources` in the customer
       frontend (PLAN-007 phase 4).
-
       🔴 THIS RELATION DESCRIBES A SOURCE, NOT ITS COLUMNS. For what an
       upstream dimension MEANS — what `AAR` is, whether a code is a
       kommune, whether a year is a single year or a window — read
       `meta_dimensions`, one row per source × dimension with the
       upstream's own words and the value format.
-
       ⚠️ THIS POINTER EXISTS BECAUSE ITS ABSENCE COST A DAY. On
       2026-09-21 a consumer read all 21 descriptions here, concluded
       "exactly two sources use multi-year windows", and shipped a wrong
@@ -1194,20 +1181,17 @@ models:
       cohort"` for a third the whole time. Reading every row of this
       relation is thorough and structurally incapable of answering a
       question about a dimension (urb-agents #1335).
-
       Tags column is a Postgres `text[]` carrying the four declared
       namespaces (`provider:`, `topic:`, `geo:`, `cadence:`) plus the
       `eu_theme:` namespace. The customer frontend renders each as a
       filter pill; PostgREST consumers filter via `?tags=cs.{"provider:ssb"}`
       — the quotes are required, because the value contains a colon.
-
       `last_ingested_at` and `last_upstream_update_at` come from
       `raw.ingest_runs` aggregated over successful (`exit_code = 0`)
       runs. Sources whose ingest module hasn't yet captured the
       upstream's "updated" field leave `last_upstream_update_at` NULL —
       that's the design (`raw.ingest_runs.upstream_updated_at` is
       nullable per migration 028).
-
       `downstream_model_count` is the number of distinct dbt models
       that derive from this source via the `lineage` seed (Phase 3.3).
       0 for sources whose data hasn't yet been wired into a mart.
@@ -1417,12 +1401,13 @@ models:
     meta:
       stability: curated
     description: |
+      One row per queryable endpoint, with filterable tags. The index of this API.
+
       One row per queryable Atlas endpoint, with tags inherited from
       upstream sources via the lineage graph and a `layer:<schema>` tag
       from the schema. Wraps to `api_v1.meta_endpoints` and backs the
       tag-filter catalogue at `/data` in the customer frontend
       (PLAN-007 phase 4).
-
       🔵 THIS IS THE INDEX, SO IT SAYS WHERE THE OTHER TWO CATALOGUES
       ARE: `meta_sources` for one row per ingest source (licence,
       publisher, freshness), and `meta_dimensions` for one row per
@@ -1430,13 +1415,11 @@ models:
       its value format. A consumer enumerating relations here should
       not have to read 19 descriptions to discover the second one
       (urb-agents #1335).
-
       Includes endpoints from `api_v1.*`, `marts.*`, and `raw.*`
       (Atlas's three open-by-default schemas; `private_marts.*` stays
       auth-gated and is excluded). Skips internal seeds prefixed `_`
       (`_sources_manifest`, `_sources_dimensions`) and any `dbt_*`
       diagnostic tables.
-
       Tag inheritance uses the **union** rule: a `mart_*` derived from
       many sources picks up every source's `provider:`, `topic:`,
       `geo:`, `cadence:`, and `eu_theme:` tag, deduped. Filter
@@ -1520,12 +1503,13 @@ models:
     meta:
       stability: curated
     description: |
+      One row per source and coded dimension, explaining what that column's codes mean.
+
       Per-source × per-dimension catalogue. Backs the "what does this
       column mean" panel on `/data/sources/[source_id]` (customer
       frontend, PLAN-007 phase 4) and exposes editorial semantics
       shoppers would otherwise have to leave Atlas to find on the
       upstream's docs site.
-
       v1 scope (this PR): editorial pass-through over the
       `_sources_dimensions` seed (4 columns: `meaning`, `value_format`,
       `notes`). The `cardinality`, `example_values`, and `null_count`
@@ -1534,7 +1518,6 @@ models:
       to a follow-up PR. See `mart_meta_dimensions.sql` header for the
       open question (Jinja loop vs separate Python extract script vs
       per-source `column_name:` field in manifest.yml).
-
       Row count = same as `_sources_dimensions` (~216, growing with
       every new source × upstream-dimension).
     columns:
@@ -1577,45 +1560,38 @@ models:
     meta:
       stability: source
     description: |
+      Every organisation registered in Norway, mirrored from Brønnøysundregistrene's Enhetsregisteret.
+
       Every organisation registered in Norway — the whole of Brønnøysundregistrene's
       Enhetsregisteret, around 1.17 million rows, current as of the last change-feed run.
       Companies, foundations, associations, public bodies and sole proprietorships.
-
       🔵 CHECK WHETHER YOUR RESULT WAS TRUNCATED, AND DO NOT CHECK IT
       AGAINST YOUR OWN `limit`. Send `Prefer: count=exact` and compare the
       total in the `Content-Range` response header against the number of
       rows you actually received:
-
           Content-Range: 0-4/1175169   with 5 rows  ->  truncated
-
       Comparing `rows.length` against your own `limit=N` cannot see the cap
       that matters. A server-side `db-max-rows` applies BELOW your limit, so
       a cap of 1 000 against `limit=20000` returns 1 000 rows and the
       comparison passes. It measures your intent, not the server's answer.
       (The recipe is a consumer's, relayed on urb-agents #1410.)
-
       🔵 Nobody can read `db-max-rows` from outside — PostgREST exposes no
       endpoint for its effective settings, so "unset" and "set above N" are
       indistinguishable. A cap is only ever discoverable by exceeding it.
       Atlas has it UNSET today; this check keeps you correct if that changes.
-
       🔴 THE COUNT IS WHAT COSTS, AND ONLY WHEN YOUR FILTER CANNOT USE AN
       INDEX. Measured against this relation 2026-09-23:
-
           kommune_nr=eq.1103  + count=exact      0.10 s   27 765 rows
           navn=ilike.*...*    + count=exact     10.87 s      428 rows
           navn=ilike.*...*    without the count  0.16 s      428 rows
           no filter           + count=exact      0.50 s   1 175 169
-
       ⚠️ Adding the count to that pattern query cost 70x on a result of 428
       rows. `count=exact` cannot stop at your limit — it counts every
       matching row — so an unindexed predicate scans all 1.17 million.
-
       ⚠️ AN EARLIER VERSION OF THIS NOTE SAID "DO NOT SEND count=exact WITH
       A FILTER". That is too broad — an equality filter on `kommune_nr` came
       back in 0.10 s above — and the advice would have pushed consumers off a
       cheap, correct call.
-
       🔵 MEASURE YOUR OWN PREDICATE RATHER THAN TRUSTING A LIST OF COLUMNS.
       `organisasjonsnummer` carries a unique index. `kommune_nr` appears only
       inside a PARTIAL index restricted to voluntary, active rows, so whether
@@ -1624,46 +1600,37 @@ models:
       relation is not introspectable from outside, and the cheap experiment
       is to send your real query twice, once with the count and once
       without.
-
       ⚠️ INSIDE A BROWSER FETCH A SLOW COUNT IS A TIMEOUT, NOT A SLOW
       ANSWER. A consumer diagnosed one as a CORS failure, because a request
       that never completes is indistinguishable from a blocked one on the
       fetch side. CORS is fine (urb-agents #1361).
-
       🔴 AND DO NOT SUBSTITUTE `count=planned` AS THE DETECTOR. It is fast
       (0.16 s on the pattern above) and its error is unbounded in BOTH
       directions. Measured 2026-09-23:
-
           navn ilike *zzzzqqq*   planned    118   exact         0
           navn ilike *frivillig* planned    118
           navn ilike *røde*      planned    118
           navn ilike *as*        planned 570 606
           no filter              planned 1 176 875  exact 1 175 169
-
       ⚠️ 118 for a pattern that matches NOTHING, and the same 118 for three
       unrelated patterns — for those it is not an estimate of your query at
       all, it is the planner's fallback guess. `*as*` gets a real estimate,
       so it is not a constant either; you cannot tell which you got.
-
       🔴 And unfiltered it reports 1 706 MORE rows than exist. A detector
       built on it would raise a FALSE TRUNCATION ALARM on a complete answer
       — the opposite failure to the one you were guarding against, and just
       as silent.
-
       `count=estimated` does not help — measured 10.99 s, because it falls
       back to an exact count when the planner's estimate is small. Use
       `planned` only where an order of magnitude will do, never to decide
       completeness.
-
       Kilde: Brønnøysundregistrene. Inneholder data under norsk lisens for offentlige data
       (NLOD) tilgjengeliggjort av Brønnøysundregistrene — https://data.norge.no/nlod/no/2.0.
       Re-users must carry this attribution onward; it is a condition of the licence, not a
       courtesy.
-
       Deleted organisations are excluded. Brreg reports deletions through its change feed and
       Atlas applies them, so an organisation removed upstream disappears from here — but the
       version history is kept, so what it looked like before removal remains answerable.
-
       Completeness caveat: this reflects deletions Brreg REPORTS. A row Atlas holds that Brreg
       never had would not be removed by any automatic path, because no change event would ever
       mention it.
@@ -2104,9 +2071,10 @@ models:
       stability: curated
       title: "Kommune dimension"
     description: |
+      The canonical municipality registry from SSB Klass 131, with fylke name joined.
+
       The canonical municipality registry — SSB Klass 131, with fylke
       name joined. Published as api_v1.dim_kommune.
-
       Fourteen references in this file already pointed at dim_kommune —
       five column descriptions saying "FK to dim_kommune" and the rest
       `relationships` tests — while it was not published. A consumer
@@ -2114,11 +2082,9 @@ models:
       single highest-leverage small addition on this list — every
       consumer is currently rebuilding it, and each of us is rebuilding
       it slightly differently" (urb-agents #1250, finding 4).
-
       Historical codes are included with is_active = false, because a
       consumer joining older data needs them to resolve. Filter
       ?is_active=is.true for today's 357.
-
       Population and centroids are deliberately absent — see the model
       for why; both would be wrong in a dimension rather than merely
       missing.
@@ -2202,39 +2168,35 @@ models:
       stability: curated
       title: "Voluntary organisations per kommune"
     description: |
+      Active voluntary organisations per kommune and ICNPO category.
+
       Active voluntary organisations per kommune and ICNPO category —
       the number a consumer previously had to download the whole
       register to compute. Published as api_v1.kommune_ngo_summary.
-
       PostgREST has aggregates disabled, so `?select=count()` returns
       400 and the only alternatives were ~15 minutes of per-kommune
       probes or a 2.8 MB CSV on every page load. One consumer shipped
       the download (urb-agents #1250, finding 1); this replaces it with
       ~12 000 rows.
-
       ⚠️ Counts here will NOT match a count over brreg_enhet. 7 488 of
       72 792 active voluntary units (10.3 %) carry no kommune_nr — that
       is what Brreg publishes — and cannot be attributed to a
       municipality. A handful more sit on codes outside the 357 active
       kommuner and are dropped by the join.
-
       A (kommune, category) pair absent from this view has zero
       organisations; rows are not emitted for empty combinations.
-
       ⚠️ CHANGED 2026-09-21: SSB's 9999 'Uoppgitt' is no longer
       included. It is a current code, so `is_active` never excluded it,
       and this relation had been reporting a place that does not exist.
       Counts drop by that row. `dim_kommune` still carries 9999 — the
       dimension mirrors SSB's list — and the value is published in
       `unattributed_totals` (urb-agents #1301).
-
       ⚠️ COST, AND ONE LOAD-BEARING DEPENDENCY. Measured end-to-end
       against the live API: 0.12 s filtered by kommune_nr, 0.205-0.326 s
       unfiltered for all rows. Before the covering index on
       dim_brreg_enhet it was 25 s cold for a 24 kB response and one
       request timed out. That index is not an optimisation — drop it and
       this relation is unusable rather than slow.
-
     data_tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns:
@@ -2275,34 +2237,31 @@ models:
       stability: curated
       title: "Voluntary organisations per kommune, total"
     description: |
+      One row per kommune: how many active voluntary organisations are registered there.
+
       One row per kommune: how many active voluntary organisations are
       registered there. 357 rows instead of the ~5 400 in
       kommune_ngo_summary. Published as api_v1.kommune_ngo_totals.
-
       Exists because PostgREST cannot sum — `?select=active_count.sum()`
       returns PGRST123, aggregates are disabled — so a consumer wanting
       one number per kommune otherwise fetches every category row and
       adds them client-side. That was most of a cold page load
       (urb-agents #1265).
-
       ⚠️ Counts exclude the 10.3 % of active voluntary units carrying no
       kommune_nr, exactly as kommune_ngo_summary does. Summing this gives
       the placed total, not the register total.
-
       ⚠️ CHANGED 2026-09-21: SSB's 9999 'Uoppgitt' is no longer
       included. It is a current code, so `is_active` never excluded it,
       and this relation had been reporting a place that does not exist.
       Counts drop by that row. `dim_kommune` still carries 9999 — the
       dimension mirrors SSB's list — and the value is published in
       `unattributed_totals` (urb-agents #1301).
-
       ⚠️ COST, AND ONE LOAD-BEARING DEPENDENCY. Measured end-to-end
       against the live API: 0.12 s filtered by kommune_nr, 0.205-0.326 s
       unfiltered for all rows. Before the covering index on
       dim_brreg_enhet it was 25 s cold for a 24 kB response and one
       request timed out. That index is not an optimisation — drop it and
       this relation is unusable rather than slow.
-
     columns:
       - name: kommune_nr
         description: 4-digit kommune code. FK to dim_kommune.
@@ -2329,9 +2288,10 @@ models:
     meta:
       stability: curated
     description: |
+      Population by kommune, year and age band — the denominator layer for rates.
+
       Population by kommune, year and age band — the denominator layer.
       Published as api_v1.kommune_befolkning_alder.
-
       Built from SSB table 07459 (age and sex distribution), which Atlas
       has ingested and refreshed nightly for months while serving it to
       nobody: nothing downstream of raw read it, so `GET /ssb-07459`
@@ -2339,20 +2299,16 @@ models:
       USERS rather than elderly RESIDENTS and wrote a README section
       apologising for it, noting the substitution flatters a kommune with
       a high threshold for granting services (urb-agents #1281).
-
       ⚠️ SIX BANDS SUM TO befolkning_total. TWO DO NOT — they are
       roll-ups of the six, provided because PostgREST has aggregates
       disabled and a consumer would otherwise add them client-side:
-
           sum to the total:  0_5 · 6_15 · 16_17 · 18_66 · 67_79 · 80_plus
           roll-ups:          0_17     = 0_5 + 6_15 + 16_17
                              67_plus  = 67_79 + 80_plus
-
       Bands rather than a single "elderly" threshold on purpose. 67 is
       defensible and it is still an editorial claim; publishing the bands
       leaves that claim with whoever makes it, and the same rows serve as
       the denominator for child poverty and working-age dependency.
-
       ⚠️ Counts are residents, not care recipients, and they are SSB's
       register population at the start of the year — not an average over
       it. Historical kommune codes are excluded: only kommuner active
@@ -2439,8 +2395,9 @@ models:
       stability: curated
     description: |
       The part of a published quantity that belongs to no municipality.
-      Published as api_v1.unattributed_totals.
 
+      The part of a published quantity that belongs to no municipality.
+      Published as api_v1.unattributed_totals.
       🔴 Atlas had no convention for this, and the two surfaces that met
       it chose opposite wrong answers: SSB's 9999 'Uoppgitt' sits INSIDE
       a per-kommune relation and corrupts any sum over it, while 7 488
@@ -2448,35 +2405,29 @@ models:
       vanish silently. One smuggles the remainder in as a row, the other
       discards it, and a consumer summing either gets a number that is
       wrong in a direction it cannot see (urb-agents #700, #1250, #1265).
-
       ✅ The rule this establishes: the VALUE belongs, the ROW does not.
       A per-kommune relation carries only kommuner; the remainder lives
       here, named, so reconciling to a national total is a deliberate
       act rather than an accident of whether a sentinel survived a
       filter.
-
       ⚠️ It does NOT remove the 9999 rows from dim_kommune or
       coverage_gap_barnefattigdom. That is a breaking contract change —
       `?is_active=eq.true` would return 357 instead of 358 with no
       warning — and it is deliberately not bundled with an additive
       change. `is_sentinel` remains a stopgap and this view does not
       make the trap gone.
-
       🔵 A zero is a result. Where the remainder is genuinely nothing
       this emits 0 rather than omitting the row: "we checked, none" and
       "nobody checked" are different answers, and a missing row cannot
       tell them apart.
-
       ✅ THE ARITHMETIC CLOSES, AND A TEST SAYS SO. Summing a per-kommune
       relation and adding every `unattributed_value` for it must equal
       `total_value`:
-
           kommune_ngo_totals   65 270
           no_kommune_nr         7 489
           kommune_nr_not_current   43
           ---------------------------
           total_value          72 802
-
       ⚠️ It did not close on the day this shipped. It named 7 489 of
       7 532 and the 43 Svalbard organisations were counted by neither
       relation — silent, self-consistent, and visible only by doing the
@@ -2551,9 +2502,10 @@ models:
       stability: curated
       title: "Source freshness"
     description: |
+      One row per raw source declaring a loaded_at_field: whether it is inside its own declared cadence.
+
       One row per raw source table that declares a `loaded_at_field`, saying
       whether it is inside the window its own declared cadence allows.
-
       This is the operator-readable half of the ingest-freshness signal. The
       comparison used to live only inside the dbt test
       `raw_sources_were_refreshed_recently`, whose verdict exists only while the
@@ -2561,11 +2513,9 @@ models:
       and `atlas-status.py` can read neither. So `uis template check atlas`
       reported a 24-hour window instead, which cannot see a weekly or monthly
       source go stale at all (urb-agents #1039).
-
       It is a VIEW on purpose: evaluated when queried, so it is current whether
       or not the transform, the check suite or the Dagster daemon has run. A
       table would carry the very staleness it is meant to report.
-
       The test now selects its failing rows from here rather than recomputing
       them, so the gate and the surface cannot disagree. Cadence bounds are
       `vars.ingest_cadence_max_age_days` in dbt_project.yml, read by both and
@@ -2623,6 +2573,8 @@ models:
       stability: curated
       title: "Ingest health"
     description: |
+      One row per source: its most recent completed ingest run, and whether that run succeeded.
+
       Per-source ingest-run health. One row per scraper or API-source,
       showing the most recent COMPLETED run (finished_at IS NOT NULL).
       Minimal v1 surface per Q14 of
@@ -2660,7 +2612,9 @@ models:
     meta:
       stability: source
       title: "UN Sustainable Development Goals"
-    description: >-
+    description: |
+      The 17 UN Sustainable Development Goals, with Norwegian and English labels.
+
       The 17 UN Sustainable Development Goals. Hand-curated and pinned — the goals do not
       change. The 169 sub-targets are not included; nothing in Atlas references them yet.
     columns:
@@ -2688,7 +2642,9 @@ models:
     meta:
       stability: source
       title: "ICNPO categories"
-    description: >-
+    description: |
+      Decoder for the ICNPO category codes in kommune_ngo_summary: 14 groups and 32 subgroups.
+
       ICNPO categories from Brreg's Frivillighetsregister: 14 main groups + 32 subgroups =
       46 rows. 🔵 This is the decoder for the ICNPO code a consumer can already read out of
       kommune_ngo_summary and, until now, could not turn into a name.
@@ -2723,7 +2679,9 @@ models:
     meta:
       stability: curated
       title: "Atlas service categories"
-    description: >-
+    description: |
+      Atlas's own cross-NGO service vocabulary, 22 categories. Not an upstream standard.
+
       ⚠️ ATLAS'S OWN VOCABULARY, NOT AN UPSTREAM STANDARD — the only list here that is
       Atlas's editorial judgement rather than another body's published standard. It exists
       because no Norwegian authority publishes a cross-NGO service taxonomy. The other eight
@@ -2756,7 +2714,9 @@ models:
     meta:
       stability: curated
       title: "Region kinds"
-    description: >-
+    description: |
+      Decoder for region_kind: what a region code denotes, and whether it is a real kommune.
+
       What kind of region a region_code denotes — the decoder for the `region_kind` column
       that several indicator relations already expose.
     columns:
@@ -2792,7 +2752,9 @@ models:
     meta:
       stability: source
       title: "SSB family types"
-    description: >-
+    description: |
+      Decoder for SSB's family-type codes.
+
       SSB family-type codes. ⚠️ Family type and household type are different classifications
       with similar-looking codes — see ref_ssb_household_type, and do not join one to the other.
     columns:
@@ -2819,7 +2781,9 @@ models:
     meta:
       stability: source
       title: "SSB household types"
-    description: >-
+    description: |
+      Decoder for SSB's household-type codes, which are zero-padded text.
+
       SSB household-type codes. ⚠️ Codes are ZERO-PADDED TEXT ('0000', '0001'), not integers:
       a consumer casting them to int and back loses the padding and matches nothing.
     columns:
@@ -2846,7 +2810,9 @@ models:
     meta:
       stability: source
       title: "SSB education levels"
-    description: >-
+    description: |
+      Decoder for SSB's NUS2000 education levels. Sort by sort_order, not by code.
+
       SSB NUS2000 education-level labels for table 09429. 7 codes.
       ⚠️ Sort by sort_order, not by code: upstream's own ordering interleaves '11' (Fagskole)
       between '02a' and '03a', so the codes do not sort into the sequence they represent.
@@ -2874,7 +2840,9 @@ models:
     meta:
       stability: source
       title: "FHI education levels"
-    description: >-
+    description: |
+      Decoder for FHI's education-level codes; in vgs_gjennomforing this is the parents' education.
+
       FHI UTDANN (education-level) labels. ⚠️ In fhi_vgs_gjennomforing this dimension is the
       PARENTS' education, not the pupil's — that relation aliases it `parents_education`.
     columns:
@@ -2901,7 +2869,9 @@ models:
     meta:
       stability: source
       title: "FHI immigrant categories (table 360)"
-    description: >-
+    description: |
+      Decoder for FHI table 360's INNVKAT dimension, which holds only '0'. Not for table 932.
+
       🔴 ONE ROW — code '0', 'totalt' — and that is correct. It decodes INNVKAT as it appears
       in FHI table 360 (fhi_vgs_gjennomforing), where the dimension is collapsed and always
       '0'; a relationships test on indicators__fhi_vgs_gjennomforing enforces that.
@@ -2933,7 +2903,9 @@ models:
     meta:
       stability: curated
       title: "Fylke dimension"
-    description: >-
+    description: |
+      The county dimension: one row per fylke code, current and historical.
+
       The county dimension — the sibling of dim_kommune that was not published, so a consumer
       joining at fylke level was rebuilding this mapping, each slightly differently.
       ⚠️ 35 distinct codes resolve here; 16 appear on at least one ACTIVE kommune (15 real
@@ -2975,7 +2947,9 @@ models:
     meta:
       stability: source
       title: "Postnummer to kommune"
-    description: >-
+    description: |
+      Norwegian postal codes resolved to a primary kommune, 5 122 rows.
+
       Norwegian postal codes resolved to a primary kommune, 5 122 rows — the lookup that turns an
       address into a kommune_nr without the municipal-merger ambiguity that names carry.
       ⚠️ Upstream is Bring's free weekly Postnummerregister, fetched by a seed-refresh script
@@ -3005,7 +2979,9 @@ models:
     meta:
       title: "Barnefattigdom kommunemonitor"
       stability: source
-    description: >-
+    description: |
+      Per-source indicator data for bufdir-barnefattigdom, at the publisher's own grain.
+
       Per-source indicator relation for `bufdir-barnefattigdom` (Barne-, ungdoms- og familiedirektoratet), published at the grain the publisher
       actually uses rather than flattened into the cross-source views.
       🔴 stability:source — the column set here follows Barne-, ungdoms- og familiedirektoratet, not Atlas. If the
@@ -3056,7 +3032,9 @@ category axes joined with `__`, so each measure is filter-stable in the catalogu
     meta:
       title: "Alkohol_Ungdata_KH"
       stability: source
-    description: >-
+    description: |
+      Per-source indicator data for fhi-alkohol (Folkehelseinstituttet), at the publisher's own grain.
+
       Per-source indicator relation for `fhi-alkohol` (Folkehelseinstituttet), published at the grain the publisher
       actually uses rather than flattened into the cross-source views.
       🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the
@@ -3106,7 +3084,9 @@ category axes joined with `__`, so each measure is filter-stable in the catalogu
     meta:
       title: "Befolkningssammensetning_antall_andel"
       stability: source
-    description: >-
+    description: |
+      Per-source indicator data for fhi-befolkning (Folkehelseinstituttet), at the publisher's own grain.
+
       Per-source indicator relation for `fhi-befolkning` (Folkehelseinstituttet), published at the grain the publisher
       actually uses rather than flattened into the cross-source views.
       🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the
@@ -3152,7 +3132,9 @@ category axes joined with `__`, so each measure is filter-stable in the catalogu
     meta:
       title: "Befolkningsvekst"
       stability: source
-    description: >-
+    description: |
+      Per-source indicator data for fhi-befolkningsvekst (Folkehelseinstituttet), at the publisher's own grain.
+
       Per-source indicator relation for `fhi-befolkningsvekst` (Folkehelseinstituttet), published at the grain the publisher
       actually uses rather than flattened into the cross-source views.
       🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the
@@ -3198,7 +3180,9 @@ category axes joined with `__`, so each measure is filter-stable in the catalogu
     meta:
       title: "Personer som bor alene"
       stability: source
-    description: >-
+    description: |
+      Per-source indicator data for fhi-bor-alene (Folkehelseinstituttet), at the publisher's own grain.
+
       Per-source indicator relation for `fhi-bor-alene` (Folkehelseinstituttet), published at the grain the publisher
       actually uses rather than flattened into the cross-source views.
       🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the
@@ -3244,7 +3228,9 @@ category axes joined with `__`, so each measure is filter-stable in the catalogu
     meta:
       title: "Depressive symptomer_Ungdata_KH"
       stability: source
-    description: >-
+    description: |
+      Per-source indicator data for fhi-depresjon (Folkehelseinstituttet), at the publisher's own grain.
+
       Per-source indicator relation for `fhi-depresjon` (Folkehelseinstituttet), published at the grain the publisher
       actually uses rather than flattened into the cross-source views.
       🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the
@@ -3294,7 +3280,9 @@ category axes joined with `__`, so each measure is filter-stable in the catalogu
     meta:
       title: "FORTROLIGVENN_Ungdata_KH"
       stability: source
-    description: >-
+    description: |
+      Per-source indicator data for fhi-fortrolig-venn (Folkehelseinstituttet), at the publisher's own grain.
+
       Per-source indicator relation for `fhi-fortrolig-venn` (Folkehelseinstituttet), published at the grain the publisher
       actually uses rather than flattened into the cross-source views.
       🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the
@@ -3344,7 +3332,9 @@ category axes joined with `__`, so each measure is filter-stable in the catalogu
     meta:
       title: "Hasjbruk_Ungdata_KH"
       stability: source
-    description: >-
+    description: |
+      Per-source indicator data for fhi-hasj (Folkehelseinstituttet), at the publisher's own grain.
+
       Per-source indicator relation for `fhi-hasj` (Folkehelseinstituttet), published at the grain the publisher
       actually uses rather than flattened into the cross-source views.
       🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the
@@ -3394,7 +3384,9 @@ category axes joined with `__`, so each measure is filter-stable in the catalogu
     meta:
       title: "Innvandrere og norskfødte med innv.foreldre _LANDBAK"
       stability: source
-    description: >-
+    description: |
+      Per-source indicator data for fhi-innvandrere (Folkehelseinstituttet), at the publisher's own grain.
+
       Per-source indicator relation for `fhi-innvandrere` (Folkehelseinstituttet), published at the grain the publisher
       actually uses rather than flattened into the cross-source views.
       🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the
@@ -3440,7 +3432,9 @@ category axes joined with `__`, so each measure is filter-stable in the catalogu
     meta:
       title: "INNVAND_INNVKAT"
       stability: source
-    description: >-
+    description: |
+      Per-source indicator data for fhi-innvkat (Folkehelseinstituttet), at the publisher's own grain.
+
       Per-source indicator relation for `fhi-innvkat` (Folkehelseinstituttet), published at the grain the publisher
       actually uses rather than flattened into the cross-source views.
       🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the
@@ -3488,7 +3482,9 @@ category axes joined with `__`, so each measure is filter-stable in the catalogu
     meta:
       title: "KPR_1"
       stability: source
-    description: >-
+    description: |
+      Per-source indicator data for fhi-kpr-1aar (Folkehelseinstituttet), at the publisher's own grain.
+
       Per-source indicator relation for `fhi-kpr-1aar` (Folkehelseinstituttet), published at the grain the publisher
       actually uses rather than flattened into the cross-source views.
       🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the
@@ -3536,7 +3532,9 @@ category axes joined with `__`, so each measure is filter-stable in the catalogu
     meta:
       title: "Livskvalitet_Ungdata_KH"
       stability: source
-    description: >-
+    description: |
+      Per-source indicator data for fhi-livskvalitet (Folkehelseinstituttet), at the publisher's own grain.
+
       Per-source indicator relation for `fhi-livskvalitet` (Folkehelseinstituttet), published at the grain the publisher
       actually uses rather than flattened into the cross-source views.
       🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the
@@ -3586,7 +3584,9 @@ category axes joined with `__`, so each measure is filter-stable in the catalogu
     meta:
       title: "Mediebruk_SOME_Ungdata_KH"
       stability: source
-    description: >-
+    description: |
+      Per-source indicator data for fhi-mediebruk-some (Folkehelseinstituttet), at the publisher's own grain.
+
       Per-source indicator relation for `fhi-mediebruk-some` (Folkehelseinstituttet), published at the grain the publisher
       actually uses rather than flattened into the cross-source views.
       🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the
@@ -3636,7 +3636,9 @@ category axes joined with `__`, so each measure is filter-stable in the catalogu
     meta:
       title: "Mediebruk_DataTVspill_Ungdata_KH"
       stability: source
-    description: >-
+    description: |
+      Per-source indicator data for fhi-mediebruk-spill (Folkehelseinstituttet), at the publisher's own grain.
+
       Per-source indicator relation for `fhi-mediebruk-spill` (Folkehelseinstituttet), published at the grain the publisher
       actually uses rather than flattened into the cross-source views.
       🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the
@@ -3686,7 +3688,9 @@ category axes joined with `__`, so each measure is filter-stable in the catalogu
     meta:
       title: "Mediebruk_underhold_ungdata"
       stability: source
-    description: >-
+    description: |
+      Per-source indicator data for fhi-mediebruk-underhold (Folkehelseinstituttet), at the publisher's own grain.
+
       Per-source indicator relation for `fhi-mediebruk-underhold` (Folkehelseinstituttet), published at the grain the publisher
       actually uses rather than flattened into the cross-source views.
       🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the
@@ -3736,7 +3740,9 @@ category axes joined with `__`, so each measure is filter-stable in the catalogu
     meta:
       title: "Mobbing, 7. og 10. klasse, 3-årige tall"
       stability: source
-    description: >-
+    description: |
+      Per-source indicator data for fhi-mobbing (Folkehelseinstituttet), at the publisher's own grain.
+
       Per-source indicator relation for `fhi-mobbing` (Folkehelseinstituttet), published at the grain the publisher
       actually uses rather than flattened into the cross-source views.
       🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the
@@ -3782,7 +3788,9 @@ category axes joined with `__`, so each measure is filter-stable in the catalogu
     meta:
       title: "NEET_UTDANN"
       stability: source
-    description: >-
+    description: |
+      Per-source indicator data for fhi-neet (Folkehelseinstituttet), at the publisher's own grain.
+
       Per-source indicator relation for `fhi-neet` (Folkehelseinstituttet), published at the grain the publisher
       actually uses rather than flattened into the cross-source views.
       🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the
@@ -3830,7 +3838,9 @@ category axes joined with `__`, so each measure is filter-stable in the catalogu
     meta:
       title: "Befolkningsframskriving"
       stability: source
-    description: >-
+    description: |
+      Per-source indicator data for fhi-prognose (Folkehelseinstituttet), at the publisher's own grain.
+
       Per-source indicator relation for `fhi-prognose` (Folkehelseinstituttet), published at the grain the publisher
       actually uses rather than flattened into the cross-source views.
       🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the
@@ -3878,7 +3888,9 @@ category axes joined with `__`, so each measure is filter-stable in the catalogu
     meta:
       title: "Selvmord femårig"
       stability: source
-    description: >-
+    description: |
+      Per-source indicator data for fhi-selvmord (Folkehelseinstituttet), at the publisher's own grain.
+
       Per-source indicator relation for `fhi-selvmord` (Folkehelseinstituttet), published at the grain the publisher
       actually uses rather than flattened into the cross-source views.
       🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the
@@ -3926,7 +3938,9 @@ category axes joined with `__`, so each measure is filter-stable in the catalogu
     meta:
       title: "Smertestillende_ungdata"
       stability: source
-    description: >-
+    description: |
+      Per-source indicator data for fhi-smertestillende (Folkehelseinstituttet), at the publisher's own grain.
+
       Per-source indicator relation for `fhi-smertestillende` (Folkehelseinstituttet), published at the grain the publisher
       actually uses rather than flattened into the cross-source views.
       🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the
@@ -3976,7 +3990,9 @@ category axes joined with `__`, so each measure is filter-stable in the catalogu
     meta:
       title: "Trangbodd_UTDANN"
       stability: source
-    description: >-
+    description: |
+      Per-source indicator data for fhi-trangbodd (Folkehelseinstituttet), at the publisher's own grain.
+
       Per-source indicator relation for `fhi-trangbodd` (Folkehelseinstituttet), published at the grain the publisher
       actually uses rather than flattened into the cross-source views.
       🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the
@@ -4028,7 +4044,9 @@ category axes joined with `__`, so each measure is filter-stable in the catalogu
     meta:
       title: "Gjennomforing i videregående skole (utdann_3)"
       stability: source
-    description: >-
+    description: |
+      Per-source indicator data for fhi-vgs-gjennomforing (Folkehelseinstituttet), at the publisher's own grain.
+
       Per-source indicator relation for `fhi-vgs-gjennomforing` (Folkehelseinstituttet), published at the grain the publisher
       actually uses rather than flattened into the cross-source views.
       🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the
@@ -4078,7 +4096,9 @@ category axes joined with `__`, so each measure is filter-stable in the catalogu
     meta:
       title: "06083: Familier, etter familietype (K) (B) 2005-2025"
       stability: source
-    description: >-
+    description: |
+      Per-source indicator data for ssb-06083 (Statistisk sentralbyrå), at the publisher's own grain.
+
       Per-source indicator relation for `ssb-06083` (Statistisk sentralbyrå), published at the grain the publisher
       actually uses rather than flattened into the cross-source views.
       🔴 stability:source — the column set here follows Statistisk sentralbyrå, not Atlas. If the
@@ -4118,7 +4138,9 @@ category axes joined with `__`, so each measure is filter-stable in the catalogu
     meta:
       title: "06913: Endringer i kommuner, fylker og hele landets befolkning (K) …"
       stability: source
-    description: >-
+    description: |
+      Per-source indicator data for ssb-06913 (Statistisk sentralbyrå), at the publisher's own grain.
+
       Per-source indicator relation for `ssb-06913` (Statistisk sentralbyrå), published at the grain the publisher
       actually uses rather than flattened into the cross-source views.
       🔴 stability:source — the column set here follows Statistisk sentralbyrå, not Atlas. If the
@@ -4168,7 +4190,9 @@ their region_code; they do not gain a claim to be a kommune."
     meta:
       title: "06944: Inntekt for husholdninger, etter husholdningstype. Antall og…"
       stability: source
-    description: >-
+    description: |
+      Per-source indicator data for ssb-06944 (Statistisk sentralbyrå), at the publisher's own grain.
+
       Per-source indicator relation for `ssb-06944` (Statistisk sentralbyrå), published at the grain the publisher
       actually uses rather than flattened into the cross-source views.
       🔴 stability:source — the column set here follows Statistisk sentralbyrå, not Atlas. If the
@@ -4208,7 +4232,9 @@ their region_code; they do not gain a claim to be a kommune."
     meta:
       title: "06947: Personer i husholdninger med lavinntekt (EU- og OECD-skala).…"
       stability: source
-    description: >-
+    description: |
+      Per-source indicator data for ssb-06947 (Statistisk sentralbyrå), at the publisher's own grain.
+
       Per-source indicator relation for `ssb-06947` (Statistisk sentralbyrå), published at the grain the publisher
       actually uses rather than flattened into the cross-source views.
       🔴 stability:source — the column set here follows Statistisk sentralbyrå, not Atlas. If the
@@ -4242,7 +4268,9 @@ their region_code; they do not gain a claim to be a kommune."
     meta:
       title: "07459: Alders- og kjønnsfordeling i kommuner, fylker og hele landet…"
       stability: source
-    description: >-
+    description: |
+      Per-source indicator data for ssb-07459 (Statistisk sentralbyrå), at the publisher's own grain.
+
       Per-source indicator relation for `ssb-07459` (Statistisk sentralbyrå), published at the grain the publisher
       actually uses rather than flattened into the cross-source views.
       🔴 stability:source — the column set here follows Statistisk sentralbyrå, not Atlas. If the
@@ -4294,7 +4322,9 @@ the assertion became true rather than the test being relaxed
     meta:
       title: "ssb-08484"
       stability: source
-    description: >-
+    description: |
+      Per-source indicator data for ssb-08484, at the publisher's own grain.
+
       Per-source indicator relation for `ssb-08484`, published at the grain the publisher
       actually uses rather than flattened into the cross-source views.
       🔴 stability:source — the column set here follows the publisher, not Atlas. If the
@@ -4326,7 +4356,9 @@ the assertion became true rather than the test being relaxed
     meta:
       title: "ssb-08487"
       stability: source
-    description: >-
+    description: |
+      Per-source indicator data for ssb-08487, at the publisher's own grain.
+
       Per-source indicator relation for `ssb-08487`, published at the grain the publisher
       actually uses rather than flattened into the cross-source views.
       🔴 stability:source — the column set here follows the publisher, not Atlas. If the
@@ -4360,7 +4392,9 @@ the assertion became true rather than the test being relaxed
     meta:
       title: "08764: Personer under 18 år i husholdninger med lavinntekt (EU- og …"
       stability: source
-    description: >-
+    description: |
+      Per-source indicator data for ssb-08764 (Statistisk sentralbyrå), at the publisher's own grain.
+
       Per-source indicator relation for `ssb-08764` (Statistisk sentralbyrå), published at the grain the publisher
       actually uses rather than flattened into the cross-source views.
       🔴 stability:source — the column set here follows Statistisk sentralbyrå, not Atlas. If the
@@ -4394,7 +4428,9 @@ the assertion became true rather than the test being relaxed
     meta:
       title: "ssb-09405"
       stability: source
-    description: >-
+    description: |
+      Per-source indicator data for ssb-09405, at the publisher's own grain.
+
       Per-source indicator relation for `ssb-09405`, published at the grain the publisher
       actually uses rather than flattened into the cross-source views.
       🔴 stability:source — the column set here follows the publisher, not Atlas. If the
@@ -4426,7 +4462,9 @@ the assertion became true rather than the test being relaxed
     meta:
       title: "ssb-09406"
       stability: source
-    description: >-
+    description: |
+      Per-source indicator data for ssb-09406, at the publisher's own grain.
+
       Per-source indicator relation for `ssb-09406`, published at the grain the publisher
       actually uses rather than flattened into the cross-source views.
       🔴 stability:source — the column set here follows the publisher, not Atlas. If the
@@ -4458,7 +4496,9 @@ the assertion became true rather than the test being relaxed
     meta:
       title: "09429: Utdanningsnivå, etter kommune og kjønn (K) 1970-2024"
       stability: source
-    description: >-
+    description: |
+      Per-source indicator data for ssb-09429 (Statistisk sentralbyrå), at the publisher's own grain.
+
       Per-source indicator relation for `ssb-09429` (Statistisk sentralbyrå), published at the grain the publisher
       actually uses rather than flattened into the cross-source views.
       🔴 stability:source — the column set here follows Statistisk sentralbyrå, not Atlas. If the
@@ -4500,7 +4540,9 @@ the assertion became true rather than the test being relaxed
     meta:
       title: "10826: Alders- og kjønnsfordeling for befolkningen i bydeler (B) 20…"
       stability: source
-    description: >-
+    description: |
+      Per-source indicator data for ssb-10826 (Statistisk sentralbyrå), at the publisher's own grain.
+
       Per-source indicator relation for `ssb-10826` (Statistisk sentralbyrå), published at the grain the publisher
       actually uses rather than flattened into the cross-source views.
       🔴 stability:source — the column set here follows Statistisk sentralbyrå, not Atlas. If the
@@ -4546,7 +4588,9 @@ the assertion became true rather than the test being relaxed
     meta:
       title: "12063: Kommunale fritidstilbud (K) 2015-2024"
       stability: source
-    description: >-
+    description: |
+      Per-source indicator data for ssb-12063 (Statistisk sentralbyrå), at the publisher's own grain.
+
       Per-source indicator relation for `ssb-12063` (Statistisk sentralbyrå), published at the grain the publisher
       actually uses rather than flattened into the cross-source views.
       🔴 stability:source — the column set here follows Statistisk sentralbyrå, not Atlas. If the
@@ -4580,7 +4624,9 @@ the assertion became true rather than the test being relaxed
     meta:
       title: "12131: Stønadssatser for sosialhjelp og vedtakstidspunkt (K) 2015-2024"
       stability: source
-    description: >-
+    description: |
+      Per-source indicator data for ssb-12131 (Statistisk sentralbyrå), at the publisher's own grain.
+
       Per-source indicator relation for `ssb-12131` (Statistisk sentralbyrå), published at the grain the publisher
       actually uses rather than flattened into the cross-source views.
       🔴 stability:source — the column set here follows Statistisk sentralbyrå, not Atlas. If the
@@ -4614,7 +4660,9 @@ the assertion became true rather than the test being relaxed
     meta:
       title: "12132: Utgifter som inngår i stønadssatsene for økonomisk sosialhje…"
       stability: source
-    description: >-
+    description: |
+      Per-source indicator data for ssb-12132 (Statistisk sentralbyrå), at the publisher's own grain.
+
       Per-source indicator relation for `ssb-12132` (Statistisk sentralbyrå), published at the grain the publisher
       actually uses rather than flattened into the cross-source views.
       🔴 stability:source — the column set here follows Statistisk sentralbyrå, not Atlas. If the
@@ -4648,7 +4696,9 @@ the assertion became true rather than the test being relaxed
     meta:
       title: "12292: Omsorgstjenester - supplerende grunnlagstall (K) 2015-2024"
       stability: source
-    description: >-
+    description: |
+      Per-source indicator data for ssb-12292 (Statistisk sentralbyrå), at the publisher's own grain.
+
       Per-source indicator relation for `ssb-12292` (Statistisk sentralbyrå), published at the grain the publisher
       actually uses rather than flattened into the cross-source views.
       🔴 stability:source — the column set here follows Statistisk sentralbyrå, not Atlas. If the
@@ -4682,7 +4732,9 @@ the assertion became true rather than the test being relaxed
     meta:
       title: "12944: Personer i husholdninger med vedvarende lavinntekt (EU-skala…"
       stability: source
-    description: >-
+    description: |
+      Per-source indicator data for ssb-12944 (Statistisk sentralbyrå), at the publisher's own grain.
+
       Per-source indicator relation for `ssb-12944` (Statistisk sentralbyrå), published at the grain the publisher
       actually uses rather than flattened into the cross-source views.
       🔴 stability:source — the column set here follows Statistisk sentralbyrå, not Atlas. If the
@@ -4726,7 +4778,9 @@ the assertion became true rather than the test being relaxed
     meta:
       title: "13995: Sosialhjelpstilfeller, utbetalt beløp og stønadstid (K) 2022…"
       stability: source
-    description: >-
+    description: |
+      Per-source indicator data for ssb-13995 (Statistisk sentralbyrå), at the publisher's own grain.
+
       Per-source indicator relation for `ssb-13995` (Statistisk sentralbyrå), published at the grain the publisher
       actually uses rather than flattened into the cross-source views.
       🔴 stability:source — the column set here follows Statistisk sentralbyrå, not Atlas. If the
@@ -4760,7 +4814,9 @@ the assertion became true rather than the test being relaxed
     meta:
       title: "Røde Kors branches"
       stability: source
-    description: >-
+    description: |
+      One row per Norges Røde Kors branch, from a static 2026-04-21 export. Empty today.
+
       Norges Røde Kors's own branch list — national office, districts and local chapters — typed out of the Red Cross Organizations API export.
       🔴 A STATIC DUMP, NOT A LIVE FEED — a one-off export of 2026-04-21 (392 branches,
       ~2 400 activities per migration 022). Nothing refreshes it.
@@ -4820,7 +4876,9 @@ the vocabulary."
     meta:
       title: "Røde Kors branch activities"
       stability: source
-    description: >-
+    description: |
+      One row per Røde Kors branch and activity, from a static 2026-04-21 export. Empty today.
+
       What each Røde Kors branch does, one row per branch × activity. `global_activity_name` is Red Cross's own canonical term; `local_activity_name` is the per-chapter display string.
       🔴 A STATIC DUMP, NOT A LIVE FEED — a one-off export of 2026-04-21 (392 branches,
       ~2 400 activities per migration 022). Nothing refreshes it.
@@ -4852,7 +4910,9 @@ verbatim. NULL when upstream didn't supply one."
     meta:
       title: "Røde Kors chapter coverage"
       stability: source
-    description: >-
+    description: |
+      Which kommuner each Røde Kors chapter covers, inferred from its local branches. Empty today.
+
       Which kommuner each Røde Kors chapter covers, resolved from the branch's postal address through dim_postnummer.
       🔴 A STATIC DUMP, NOT A LIVE FEED — a one-off export of 2026-04-21 (392 branches,
       ~2 400 activities per migration 022). Nothing refreshes it.
@@ -4879,7 +4939,9 @@ All rows are 'inferred' in v1."
     meta:
       title: "Chapter dimension"
       stability: curated
-    description: >-
+    description: |
+      Atlas's canonical local-chapter dimension. Empty today.
+
       Atlas's canonical local-chapter dimension. Today every row is Røde Kors's; the shape is Atlas's and is meant to hold other NGOs' chapters unchanged.
       🔴 A STATIC DUMP, NOT A LIVE FEED — a one-off export of 2026-04-21 (392 branches,
       ~2 400 activities per migration 022). Nothing refreshes it.
@@ -4948,7 +5010,9 @@ it consistently (per INVESTIGATE-multi-ngo-supply-model-extensions Q1)."
     meta:
       title: "Activity dimension"
       stability: curated
-    description: >-
+    description: |
+      Atlas's canonical activity dimension, each row mapped to a service category. Empty today.
+
       Atlas's canonical activity dimension, each row pointing at a ref_atlas_service_category code. ⚠️ That category mapping is Atlas's editorial judgement, not the owner's classification.
       🔴 A STATIC DUMP, NOT A LIVE FEED — a one-off export of 2026-04-21 (392 branches,
       ~2 400 activities per migration 022). Nothing refreshes it.
@@ -4979,7 +5043,9 @@ fact_chapter_activities rows can still resolve activity_id."
     meta:
       title: "Chapter coverage by kommune"
       stability: curated
-    description: >-
+    description: |
+      Per-kommune rollup of which chapters cover it. Empty today.
+
       Per-kommune rollup of which chapters cover it — Atlas's shape, built so coverage questions do not require walking branch addresses.
       🔴 A STATIC DUMP, NOT A LIVE FEED — a one-off export of 2026-04-21 (392 branches,
       ~2 400 activities per migration 022). Nothing refreshes it.
@@ -5007,7 +5073,9 @@ the regional parent)."
     meta:
       title: "Chapter activities fact"
       stability: curated
-    description: >-
+    description: |
+      One row per chapter and activity, joined to Atlas's dimensions. Empty today.
+
       The analytical grain for chapter activity: one row per chapter × activity, joined to Atlas's dimensions so it reconciles with the rest of the supply layer.
       🔴 A STATIC DUMP, NOT A LIVE FEED — a one-off export of 2026-04-21 (392 branches,
       ~2 400 activities per migration 022). Nothing refreshes it.

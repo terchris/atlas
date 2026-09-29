@@ -1,6 +1,6 @@
 ---
 title: "NGO overview"
-description: "One row per NGO in dim_ngo with the six count metrics shown on the per-NGO landing page (atlas-frontend /ngo/[slug])."
+description: "One row per NGO with its six headline counts, precomputed for the per-NGO page."
 slug: /datasets/ngo_overview
 sidebar_label: "ngo_overview"
 ---
@@ -40,4 +40,4 @@ Live PostgREST query that returns the first 5 rows. URL adapts to the current ho
 
 ## About this view
 
-<div style={{whiteSpace: 'pre-wrap'}}>{"One row per NGO in dim_ngo with the six count metrics shown on\nthe per-NGO landing page (atlas-frontend /ngo/[slug]).\nEquivalent to the getNgoOverview() inline query, but precomputed\nfor all NGOs so PostgREST projects it as a single endpoint\nconsumers filter via ?orgnr=eq.X.\n\nCounts include both active and inactive chapters in the\nlevel-specific buckets (national/regional/local). kommune_count\ncounts distinct kommune_nr only across *active* local chapters,\nmatching the original query's behaviour."}</div>
+<div style={{whiteSpace: 'pre-wrap'}}>{"One row per NGO with its six headline counts, precomputed for the per-NGO page.\n\nOne row per NGO in dim_ngo with the six count metrics shown on\nthe per-NGO landing page (atlas-frontend /ngo/[slug]).\nEquivalent to the getNgoOverview() inline query, but precomputed\nfor all NGOs so PostgREST projects it as a single endpoint\nconsumers filter via ?orgnr=eq.X.\nCounts include both active and inactive chapters in the\nlevel-specific buckets (national/regional/local). kommune_count\ncounts distinct kommune_nr only across *active* local chapters,\nmatching the original query's behaviour."}</div>

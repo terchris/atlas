@@ -1,6 +1,6 @@
 ---
 title: "api_v1.bufdir_indicator_alias"
-description: "Cross-release alias table for `bufdir-barnefattigdom` `indicator_api_id` renumbers."
+description: "Maps Bufdir indicator ids across releases, so a renumbered indicator still resolves."
 slug: /datasets/bufdir_indicator_alias
 sidebar_label: "bufdir_indicator_alias"
 ---
@@ -40,4 +40,4 @@ Live PostgREST query that returns the first 5 rows. URL adapts to the current ho
 
 ## About this view
 
-<div style={{whiteSpace: 'pre-wrap'}}>{"Cross-release alias table for `bufdir-barnefattigdom`\n`indicator_api_id` renumbers. One row per (historical_id,\ncanonical_id) mapping consumers join on for cross-time-series\ncontinuity when Bufdir splits, retires, or renumbers a workbook\nupstream — e.g. the observed `Indikator 9` → `9a` / `9b` split,\nand `Indikator 10` retired without successor.\n\nThin republish of the editorial seed `bufdir_indicator_alias` so\nthe PLAN-004 generator auto-emits `api_v1.bufdir_indicator_alias`\n(the leading `mart_` is stripped per `models/marts/api/README.md`\n§ Naming).\n\nSee `website/docs/ai-developer/plans/active/PLAN-bufdir-surrogate-id-migration.md`\nfor design rationale + the maintenance ritual that appends rows\nwhen a new Bufdir bundle release surfaces additional renumbering."}</div>
+<div style={{whiteSpace: 'pre-wrap'}}>{"Maps Bufdir indicator ids across releases, so a renumbered indicator still resolves.\n\nCross-release alias table for `bufdir-barnefattigdom`\n`indicator_api_id` renumbers. One row per (historical_id,\ncanonical_id) mapping consumers join on for cross-time-series\ncontinuity when Bufdir splits, retires, or renumbers a workbook\nupstream — e.g. the observed `Indikator 9` → `9a` / `9b` split,\nand `Indikator 10` retired without successor.\nThin republish of the editorial seed `bufdir_indicator_alias` so\nthe PLAN-004 generator auto-emits `api_v1.bufdir_indicator_alias`\n(the leading `mart_` is stripped per `models/marts/api/README.md`\n§ Naming).\nSee `website/docs/ai-developer/plans/active/PLAN-bufdir-surrogate-id-migration.md`\nfor design rationale + the maintenance ritual that appends rows\nwhen a new Bufdir bundle release surfaces additional renumbering."}</div>
