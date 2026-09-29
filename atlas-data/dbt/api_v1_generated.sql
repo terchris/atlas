@@ -306,22 +306,21 @@ answer.';
 
 -- activity_catalog  ←  marts.mart_activity_catalog
 CREATE OR REPLACE VIEW api_v1.activity_catalog AS SELECT * FROM marts.mart_activity_catalog;
-COMMENT ON VIEW api_v1.activity_catalog IS '🔵 EXPECTED EMPTY TODAY, AND THAT IS NOT A DEFECT. Its one row per (NGO, activity), so it is empty until Red Cross activity data is loaded.
+COMMENT ON VIEW api_v1.activity_catalog IS 'One row per organisation and activity, with its Atlas service category. Empty today.
+
+🔵 EXPECTED EMPTY TODAY, AND THAT IS NOT A DEFECT. Its one row per (NGO, activity), so it is empty until Red Cross activity data is loaded.
 Terje''s position, 2026-09-21: the Red Cross data is not coming now, it
 will be there later. The relation is published and answers so a consumer
 can build against its shape before the rows arrive.
-
 ⚠️ A consumer cannot tell "empty by design" from "broken" without being
 told, and two of these three were asked about on the day someone noticed
 (urb-agents #1351). If this relation is still empty and this note is
 gone, something regressed.
-
 One row per (NGO, activity) joining dim_activity to the
 service-category seed for the human-readable label, plus a count
 of active chapters offering each activity. Backs the per-NGO
 activity catalogue page (atlas-frontend
 /ngo/[slug]/aktiviteter); equivalent to listActivities().
-
 The full table is small (~35 rows for Red Cross alone in v1) and
 grows as new NGOs land. PostgREST consumers filter via
 ?ngo_orgnr=eq.X.';
@@ -342,19 +341,18 @@ provides it (rare but possible during transitions).';
 
 -- atlas_inventory  ←  marts.mart_atlas_inventory
 CREATE OR REPLACE VIEW api_v1.atlas_inventory AS SELECT * FROM marts.mart_atlas_inventory;
-COMMENT ON VIEW api_v1.atlas_inventory IS 'What Atlas publishes, one row per queryable endpoint: how many records it
-serves, when its data last arrived, and where those rows came from.
+COMMENT ON VIEW api_v1.atlas_inventory IS 'What Atlas publishes: one row per endpoint with its row count, freshness and origin.
 
+What Atlas publishes, one row per queryable endpoint: how many records it
+serves, when its data last arrived, and where those rows came from.
 Asked for by Røde Kors — "validate that all datasets that are ingested has
 an endpoint and it can be queried … count the number of records each
 endpoint has and update the last time it ingested data."
-
 ⚠️ THE GRAIN IS PER ENDPOINT, NOT PER SOURCE. meta_sources answers "what
 did Atlas ingest"; this answers "what can I query, and is there anything
 in it". One source can feed several endpoints and one endpoint can draw on
 several sources, so the two row counts are not comparable and summing
 sources will not reproduce an endpoint''s count.
-
 ⚠️ atlas_inventory does not list ITSELF. It is built from the same seed it
 reports on, so counting itself would be circular and the number would be
 whatever the table held mid-build. 19 endpoints are listed; 20 are
@@ -420,45 +418,38 @@ runs_succeeded` is the number of failures.';
 
 -- brreg_enhet  ←  marts.mart_brreg_enhet
 CREATE OR REPLACE VIEW api_v1.brreg_enhet AS SELECT * FROM marts.mart_brreg_enhet;
-COMMENT ON VIEW api_v1.brreg_enhet IS 'Every organisation registered in Norway — the whole of Brønnøysundregistrene''s
+COMMENT ON VIEW api_v1.brreg_enhet IS 'Every organisation registered in Norway, mirrored from Brønnøysundregistrene''s Enhetsregisteret.
+
+Every organisation registered in Norway — the whole of Brønnøysundregistrene''s
 Enhetsregisteret, around 1.17 million rows, current as of the last change-feed run.
 Companies, foundations, associations, public bodies and sole proprietorships.
-
 🔵 CHECK WHETHER YOUR RESULT WAS TRUNCATED, AND DO NOT CHECK IT
 AGAINST YOUR OWN `limit`. Send `Prefer: count=exact` and compare the
 total in the `Content-Range` response header against the number of
 rows you actually received:
-
     Content-Range: 0-4/1175169   with 5 rows  ->  truncated
-
 Comparing `rows.length` against your own `limit=N` cannot see the cap
 that matters. A server-side `db-max-rows` applies BELOW your limit, so
 a cap of 1 000 against `limit=20000` returns 1 000 rows and the
 comparison passes. It measures your intent, not the server''s answer.
 (The recipe is a consumer''s, relayed on urb-agents #1410.)
-
 🔵 Nobody can read `db-max-rows` from outside — PostgREST exposes no
 endpoint for its effective settings, so "unset" and "set above N" are
 indistinguishable. A cap is only ever discoverable by exceeding it.
 Atlas has it UNSET today; this check keeps you correct if that changes.
-
 🔴 THE COUNT IS WHAT COSTS, AND ONLY WHEN YOUR FILTER CANNOT USE AN
 INDEX. Measured against this relation 2026-09-23:
-
     kommune_nr=eq.1103  + count=exact      0.10 s   27 765 rows
     navn=ilike.*...*    + count=exact     10.87 s      428 rows
     navn=ilike.*...*    without the count  0.16 s      428 rows
     no filter           + count=exact      0.50 s   1 175 169
-
 ⚠️ Adding the count to that pattern query cost 70x on a result of 428
 rows. `count=exact` cannot stop at your limit — it counts every
 matching row — so an unindexed predicate scans all 1.17 million.
-
 ⚠️ AN EARLIER VERSION OF THIS NOTE SAID "DO NOT SEND count=exact WITH
 A FILTER". That is too broad — an equality filter on `kommune_nr` came
 back in 0.10 s above — and the advice would have pushed consumers off a
 cheap, correct call.
-
 🔵 MEASURE YOUR OWN PREDICATE RATHER THAN TRUSTING A LIST OF COLUMNS.
 `organisasjonsnummer` carries a unique index. `kommune_nr` appears only
 inside a PARTIAL index restricted to voluntary, active rows, so whether
@@ -467,46 +458,37 @@ query. The timings above are measurements, not query plans — this
 relation is not introspectable from outside, and the cheap experiment
 is to send your real query twice, once with the count and once
 without.
-
 ⚠️ INSIDE A BROWSER FETCH A SLOW COUNT IS A TIMEOUT, NOT A SLOW
 ANSWER. A consumer diagnosed one as a CORS failure, because a request
 that never completes is indistinguishable from a blocked one on the
 fetch side. CORS is fine (urb-agents #1361).
-
 🔴 AND DO NOT SUBSTITUTE `count=planned` AS THE DETECTOR. It is fast
 (0.16 s on the pattern above) and its error is unbounded in BOTH
 directions. Measured 2026-09-23:
-
     navn ilike *zzzzqqq*   planned    118   exact         0
     navn ilike *frivillig* planned    118
     navn ilike *røde*      planned    118
     navn ilike *as*        planned 570 606
     no filter              planned 1 176 875  exact 1 175 169
-
 ⚠️ 118 for a pattern that matches NOTHING, and the same 118 for three
 unrelated patterns — for those it is not an estimate of your query at
 all, it is the planner''s fallback guess. `*as*` gets a real estimate,
 so it is not a constant either; you cannot tell which you got.
-
 🔴 And unfiltered it reports 1 706 MORE rows than exist. A detector
 built on it would raise a FALSE TRUNCATION ALARM on a complete answer
 — the opposite failure to the one you were guarding against, and just
 as silent.
-
 `count=estimated` does not help — measured 10.99 s, because it falls
 back to an exact count when the planner''s estimate is small. Use
 `planned` only where an order of magnitude will do, never to decide
 completeness.
-
 Kilde: Brønnøysundregistrene. Inneholder data under norsk lisens for offentlige data
 (NLOD) tilgjengeliggjort av Brønnøysundregistrene — https://data.norge.no/nlod/no/2.0.
 Re-users must carry this attribution onward; it is a condition of the licence, not a
 courtesy.
-
 Deleted organisations are excluded. Brreg reports deletions through its change feed and
 Atlas applies them, so an organisation removed upstream disappears from here — but the
 version history is kept, so what it looked like before removal remains answerable.
-
 Completeness caveat: this reflects deletions Brreg REPORTS. A row Atlas holds that Brreg
 never had would not be removed by any automatic path, because no change event would ever
 mention it.';
@@ -610,18 +592,18 @@ COMMENT ON COLUMN api_v1.brreg_enhet.doc IS 'The complete upstream record as Brr
 
 -- bufdir_indicator_alias  ←  marts.mart_bufdir_indicator_alias
 CREATE OR REPLACE VIEW api_v1.bufdir_indicator_alias AS SELECT * FROM marts.mart_bufdir_indicator_alias;
-COMMENT ON VIEW api_v1.bufdir_indicator_alias IS 'Cross-release alias table for `bufdir-barnefattigdom`
+COMMENT ON VIEW api_v1.bufdir_indicator_alias IS 'Maps Bufdir indicator ids across releases, so a renumbered indicator still resolves.
+
+Cross-release alias table for `bufdir-barnefattigdom`
 `indicator_api_id` renumbers. One row per (historical_id,
 canonical_id) mapping consumers join on for cross-time-series
 continuity when Bufdir splits, retires, or renumbers a workbook
 upstream — e.g. the observed `Indikator 9` → `9a` / `9b` split,
 and `Indikator 10` retired without successor.
-
 Thin republish of the editorial seed `bufdir_indicator_alias` so
 the PLAN-004 generator auto-emits `api_v1.bufdir_indicator_alias`
 (the leading `mart_` is stripped per `models/marts/api/README.md`
 § Naming).
-
 See `website/docs/ai-developer/plans/active/PLAN-bufdir-surrogate-id-migration.md`
 for design rationale + the maintenance ritual that appends rows
 when a new Bufdir bundle release surfaces additional renumbering.';
@@ -643,7 +625,17 @@ exists. One sentence; read by humans, not parsers.';
 
 -- chapter_kommune_coverage  ←  marts.mart_chapter_kommune_coverage
 CREATE OR REPLACE VIEW api_v1.chapter_kommune_coverage AS SELECT * FROM marts.mart_chapter_kommune_coverage;
-COMMENT ON VIEW api_v1.chapter_kommune_coverage IS 'Per-kommune rollup of which chapters cover it — Atlas''s shape, built so coverage questions do not require walking branch addresses. 🔴 A STATIC DUMP, NOT A LIVE FEED — a one-off export of 2026-04-21 (392 branches, ~2 400 activities per migration 022). Nothing refreshes it. 🔴 SERVING ZERO ROWS TODAY and that is expected, not a broken endpoint: the redcross-branches ingest is held on a credential, so raw is empty and so is this. ⚠️ Atlas holds NO republication licence here. This is Norges Røde Kors''s own operational data, published on the owner''s stated wish — and a wish is not a licence. NLOD does not cover it; ask Røde Kors before redistributing. That instruction reached Atlas relayed through the demo consumer, not directly.';
+COMMENT ON VIEW api_v1.chapter_kommune_coverage IS 'Per-kommune rollup of which chapters cover it. Empty today.
+
+Per-kommune rollup of which chapters cover it — Atlas''s shape, built so coverage questions do not require walking branch addresses.
+🔴 A STATIC DUMP, NOT A LIVE FEED — a one-off export of 2026-04-21 (392 branches,
+~2 400 activities per migration 022). Nothing refreshes it.
+🔴 SERVING ZERO ROWS TODAY and that is expected, not a broken endpoint: the
+redcross-branches ingest is held on a credential, so raw is empty and so is this.
+⚠️ Atlas holds NO republication licence here. This is Norges Røde Kors''s own
+operational data, published on the owner''s stated wish — and a wish is not a
+licence. NLOD does not cover it; ask Røde Kors before redistributing. That
+instruction reached Atlas relayed through the demo consumer, not directly.';
 COMMENT ON COLUMN api_v1.chapter_kommune_coverage.chapter_id IS 'Composite slug, namespaced by NGO. Stable across refreshes.';
 COMMENT ON COLUMN api_v1.chapter_kommune_coverage.kommune_nr IS 'Resolved via dim_postnummer. NULL for branches that span multiple kommuner (regional, national).';
 COMMENT ON COLUMN api_v1.chapter_kommune_coverage.source IS 'How this (chapter, kommune) link was established. ''declared'' = the NGO publishes the kommune list directly for this regional chapter; ''inferred'' = derived by Atlas from child-chapter coverage (e.g. union of local kommuner under the regional parent).';
@@ -651,19 +643,19 @@ COMMENT ON COLUMN api_v1.chapter_kommune_coverage.updated_at IS 'When the row wa
 
 -- coverage_gap_barnefattigdom  ←  marts.mart_coverage_gap_barnefattigdom
 CREATE OR REPLACE VIEW api_v1.coverage_gap_barnefattigdom AS SELECT * FROM marts.mart_coverage_gap_barnefattigdom;
-COMMENT ON VIEW api_v1.coverage_gap_barnefattigdom IS 'One row per active kommune for the latest year of SSB 08764 child
+COMMENT ON VIEW api_v1.coverage_gap_barnefattigdom IS 'Child poverty per kommune for the latest year of SSB 08764, as a share and as counts.
+
+One row per active kommune for the latest year of SSB 08764 child
 poverty data, combining the EUskala60 share (% of children in
 low-income households) with the Personer count (number of
 children). Backs the barnefattigdom map page (atlas-frontend
 /coverage-gap/barnefattigdom).
-
 First member of the mart_coverage_gap_<topic> family. Future
 coverage-gap maps follow the same shape: latest year per kommune,
 one row per kommune, value(s) pivoted out of contents_code into
 named columns. PostgREST projects this view as a single endpoint;
 consumers don''t filter, they read the whole map dataset in one
 request.
-
 Inactive kommuner are excluded so the map renders today''s
 kommune set. NULL values are kept in place — Map.tsx renders
 them as "no data".';
@@ -723,7 +715,17 @@ NULL when either input was suppressed upstream.';
 
 -- dim_activity  ←  marts.mart_dim_activity
 CREATE OR REPLACE VIEW api_v1.dim_activity AS SELECT * FROM marts.mart_dim_activity;
-COMMENT ON VIEW api_v1.dim_activity IS 'Atlas''s canonical activity dimension, each row pointing at a ref_atlas_service_category code. ⚠️ That category mapping is Atlas''s editorial judgement, not the owner''s classification. 🔴 A STATIC DUMP, NOT A LIVE FEED — a one-off export of 2026-04-21 (392 branches, ~2 400 activities per migration 022). Nothing refreshes it. 🔴 SERVING ZERO ROWS TODAY and that is expected, not a broken endpoint: the redcross-branches ingest is held on a credential, so raw is empty and so is this. ⚠️ Atlas holds NO republication licence here. This is Norges Røde Kors''s own operational data, published on the owner''s stated wish — and a wish is not a licence. NLOD does not cover it; ask Røde Kors before redistributing. That instruction reached Atlas relayed through the demo consumer, not directly.';
+COMMENT ON VIEW api_v1.dim_activity IS 'Atlas''s canonical activity dimension, each row mapped to a service category. Empty today.
+
+Atlas''s canonical activity dimension, each row pointing at a ref_atlas_service_category code. ⚠️ That category mapping is Atlas''s editorial judgement, not the owner''s classification.
+🔴 A STATIC DUMP, NOT A LIVE FEED — a one-off export of 2026-04-21 (392 branches,
+~2 400 activities per migration 022). Nothing refreshes it.
+🔴 SERVING ZERO ROWS TODAY and that is expected, not a broken endpoint: the
+redcross-branches ingest is held on a credential, so raw is empty and so is this.
+⚠️ Atlas holds NO republication licence here. This is Norges Røde Kors''s own
+operational data, published on the owner''s stated wish — and a wish is not a
+licence. NLOD does not cover it; ask Røde Kors before redistributing. That
+instruction reached Atlas relayed through the demo consumer, not directly.';
 COMMENT ON COLUMN api_v1.dim_activity.activity_id IS 'Composite slug, namespaced by NGO (e.g. ''redcross-besokstjeneste''). Stable across refreshes. Unique within this table.';
 COMMENT ON COLUMN api_v1.dim_activity.ngo_orgnr IS '9-digit Brreg organisasjonsnummer of the NGO that owns the activity. FK to dim_ngo.';
 COMMENT ON COLUMN api_v1.dim_activity.canonical_name IS 'Red Cross''s globalActivityName, verbatim.';
@@ -732,7 +734,17 @@ COMMENT ON COLUMN api_v1.dim_activity.is_active IS 'Whether this NGO still offer
 
 -- dim_chapter  ←  marts.mart_dim_chapter
 CREATE OR REPLACE VIEW api_v1.dim_chapter AS SELECT * FROM marts.mart_dim_chapter;
-COMMENT ON VIEW api_v1.dim_chapter IS 'Atlas''s canonical local-chapter dimension. Today every row is Røde Kors''s; the shape is Atlas''s and is meant to hold other NGOs'' chapters unchanged. 🔴 A STATIC DUMP, NOT A LIVE FEED — a one-off export of 2026-04-21 (392 branches, ~2 400 activities per migration 022). Nothing refreshes it. 🔴 SERVING ZERO ROWS TODAY and that is expected, not a broken endpoint: the redcross-branches ingest is held on a credential, so raw is empty and so is this. ⚠️ Atlas holds NO republication licence here. This is Norges Røde Kors''s own operational data, published on the owner''s stated wish — and a wish is not a licence. NLOD does not cover it; ask Røde Kors before redistributing. That instruction reached Atlas relayed through the demo consumer, not directly.';
+COMMENT ON VIEW api_v1.dim_chapter IS 'Atlas''s canonical local-chapter dimension. Empty today.
+
+Atlas''s canonical local-chapter dimension. Today every row is Røde Kors''s; the shape is Atlas''s and is meant to hold other NGOs'' chapters unchanged.
+🔴 A STATIC DUMP, NOT A LIVE FEED — a one-off export of 2026-04-21 (392 branches,
+~2 400 activities per migration 022). Nothing refreshes it.
+🔴 SERVING ZERO ROWS TODAY and that is expected, not a broken endpoint: the
+redcross-branches ingest is held on a credential, so raw is empty and so is this.
+⚠️ Atlas holds NO republication licence here. This is Norges Røde Kors''s own
+operational data, published on the owner''s stated wish — and a wish is not a
+licence. NLOD does not cover it; ask Røde Kors before redistributing. That
+instruction reached Atlas relayed through the demo consumer, not directly.';
 COMMENT ON COLUMN api_v1.dim_chapter.chapter_id IS 'Composite slug, namespaced by NGO. Stable across refreshes.';
 COMMENT ON COLUMN api_v1.dim_chapter.ngo_orgnr IS 'FK to dim_ngo.orgnr.';
 COMMENT ON COLUMN api_v1.dim_chapter.chapter_level IS 'national / regional / local per Q46. Coverage-gap supply queries filter to local.';
@@ -752,7 +764,13 @@ COMMENT ON COLUMN api_v1.dim_chapter.updated_at IS 'When the row was last loaded
 
 -- dim_fylke  ←  marts.mart_dim_fylke
 CREATE OR REPLACE VIEW api_v1.dim_fylke AS SELECT * FROM marts.mart_dim_fylke;
-COMMENT ON VIEW api_v1.dim_fylke IS 'The county dimension — the sibling of dim_kommune that was not published, so a consumer joining at fylke level was rebuilding this mapping, each slightly differently. ⚠️ 35 distinct codes resolve here; 16 appear on at least one ACTIVE kommune (15 real fylker + residual ''99 Uoppgitt''). Filter ?is_active=eq.true for today''s set rather than reading a row count. Sourced from SSB Klass classification 104 (NLOD).';
+COMMENT ON VIEW api_v1.dim_fylke IS 'The county dimension: one row per fylke code, current and historical.
+
+The county dimension — the sibling of dim_kommune that was not published, so a consumer
+joining at fylke level was rebuilding this mapping, each slightly differently.
+⚠️ 35 distinct codes resolve here; 16 appear on at least one ACTIVE kommune (15 real
+fylker + residual ''99 Uoppgitt''). Filter ?is_active=eq.true for today''s set rather than
+reading a row count. Sourced from SSB Klass classification 104 (NLOD).';
 COMMENT ON COLUMN api_v1.dim_fylke.fylke_nr IS '2-digit zero-padded fylke code, e.g. ''03'' = Oslo. Text, not integer — the padding is significant.';
 COMMENT ON COLUMN api_v1.dim_fylke.fylke_name IS 'The county name as SSB Klass publishes it.';
 COMMENT ON COLUMN api_v1.dim_fylke.fylke_name_alt IS 'The Sámi variant where there is one, split out of upstream''s combined "Name - Nama" string exactly as dim_kommune does it. Null where upstream publishes no variant.';
@@ -765,9 +783,10 @@ COMMENT ON COLUMN api_v1.dim_fylke.is_sentinel IS '🔴 True for the ''99 Uoppgi
 
 -- dim_kommune  ←  marts.mart_dim_kommune
 CREATE OR REPLACE VIEW api_v1.dim_kommune AS SELECT * FROM marts.mart_dim_kommune;
-COMMENT ON VIEW api_v1.dim_kommune IS 'The canonical municipality registry — SSB Klass 131, with fylke
-name joined. Published as api_v1.dim_kommune.
+COMMENT ON VIEW api_v1.dim_kommune IS 'The canonical municipality registry from SSB Klass 131, with fylke name joined.
 
+The canonical municipality registry — SSB Klass 131, with fylke
+name joined. Published as api_v1.dim_kommune.
 Fourteen references in this file already pointed at dim_kommune —
 five column descriptions saying "FK to dim_kommune" and the rest
 `relationships` tests — while it was not published. A consumer
@@ -775,11 +794,9 @@ building on the API found the gap and called publishing it "the
 single highest-leverage small addition on this list — every
 consumer is currently rebuilding it, and each of us is rebuilding
 it slightly differently" (urb-agents #1250, finding 4).
-
 Historical codes are included with is_active = false, because a
 consumer joining older data needs them to resolve. Filter
 ?is_active=is.true for today''s 357.
-
 Population and centroids are deliberately absent — see the model
 for why; both would be wrong in a dimension rather than merely
 missing.';
@@ -837,7 +854,15 @@ The unattributable value it represented is published in
 
 -- dim_postnummer  ←  marts.mart_dim_postnummer
 CREATE OR REPLACE VIEW api_v1.dim_postnummer AS SELECT * FROM marts.mart_dim_postnummer;
-COMMENT ON VIEW api_v1.dim_postnummer IS 'Norwegian postal codes resolved to a primary kommune, 5 122 rows — the lookup that turns an address into a kommune_nr without the municipal-merger ambiguity that names carry. ⚠️ Upstream is Bring''s free weekly Postnummerregister, fetched by a seed-refresh script rather than an ingested source — so this relation has NO row in meta_sources and NO recorded licence, unlike Atlas''s 42 ingested sources. That is a gap in Atlas''s records, not a claim the data is unlicensed; a consumer redistributing it should check Bring''s own terms rather than infer NLOD from the rest of the catalogue.';
+COMMENT ON VIEW api_v1.dim_postnummer IS 'Norwegian postal codes resolved to a primary kommune, 5 122 rows.
+
+Norwegian postal codes resolved to a primary kommune, 5 122 rows — the lookup that turns an
+address into a kommune_nr without the municipal-merger ambiguity that names carry.
+⚠️ Upstream is Bring''s free weekly Postnummerregister, fetched by a seed-refresh script
+rather than an ingested source — so this relation has NO row in meta_sources and NO recorded
+licence, unlike Atlas''s 42 ingested sources. That is a gap in Atlas''s records, not a claim
+the data is unlicensed; a consumer redistributing it should check Bring''s own terms rather
+than infer NLOD from the rest of the catalogue.';
 COMMENT ON COLUMN api_v1.dim_postnummer.postnummer IS '4-digit postal code, leading zeros preserved (e.g. ''0150'' Oslo). Text — casting to int loses the padding.';
 COMMENT ON COLUMN api_v1.dim_postnummer.post_office IS 'Post-office name, ALLCAPS as Bring publishes it. Not normalised.';
 COMMENT ON COLUMN api_v1.dim_postnummer.kommune_nr IS '🔴 The PRIMARY kommune for the postnummer, and a simplification. A few postnummer span more than one kommune; this column carries one of them, so a join through it is a good default and not a ground truth. Atlas cannot say which rows are affected — Bring''s register as fetched does not mark them.';
@@ -845,16 +870,16 @@ COMMENT ON COLUMN api_v1.dim_postnummer.sort_order IS 'Bring''s own ordering of 
 
 -- distrikt_summary  ←  marts.mart_distrikt_summary
 CREATE OR REPLACE VIEW api_v1.distrikt_summary AS SELECT * FROM marts.mart_distrikt_summary;
-COMMENT ON VIEW api_v1.distrikt_summary IS '🔵 EXPECTED EMPTY TODAY, AND THAT IS NOT A DEFECT. Its grain is Red Cross districts, so it is empty until that data is loaded.
+COMMENT ON VIEW api_v1.distrikt_summary IS 'One row per district chapter, with its child chapters and kommune coverage. Empty today.
+
+🔵 EXPECTED EMPTY TODAY, AND THAT IS NOT A DEFECT. Its grain is Red Cross districts, so it is empty until that data is loaded.
 Terje''s position, 2026-09-21: the Red Cross data is not coming now, it
 will be there later. The relation is published and answers so a consumer
 can build against its shape before the rows arrive.
-
 ⚠️ A consumer cannot tell "empty by design" from "broken" without being
 told, and two of these three were asked about on the day someone noticed
 (urb-agents #1351). If this relation is still empty and this note is
 gone, something regressed.
-
 One row per regional chapter (Red Cross "distrikt" level, and the
 equivalent regional tier for any other NGO with a hierarchy).
 Each row carries denormalised counts of how many child chapters
@@ -862,7 +887,6 @@ the distrikt has and how many distinct kommuner those children
 cover. Backs atlas-frontend /ngo/[slug]/distrikter and the
 individual /distrikt/[id] pages; equivalent to the listDistrikter()
 inline query.
-
 Counts come from dim_chapter joined back to itself by
 parent_chapter_id, filtered to active children. PostgREST
 consumers filter via ?ngo_orgnr=eq.X (or ?chapter_id=eq.Y for the
@@ -888,7 +912,17 @@ a kommune.';
 
 -- fact_chapter_activities  ←  marts.mart_fact_chapter_activities
 CREATE OR REPLACE VIEW api_v1.fact_chapter_activities AS SELECT * FROM marts.mart_fact_chapter_activities;
-COMMENT ON VIEW api_v1.fact_chapter_activities IS 'The analytical grain for chapter activity: one row per chapter × activity, joined to Atlas''s dimensions so it reconciles with the rest of the supply layer. 🔴 A STATIC DUMP, NOT A LIVE FEED — a one-off export of 2026-04-21 (392 branches, ~2 400 activities per migration 022). Nothing refreshes it. 🔴 SERVING ZERO ROWS TODAY and that is expected, not a broken endpoint: the redcross-branches ingest is held on a credential, so raw is empty and so is this. ⚠️ Atlas holds NO republication licence here. This is Norges Røde Kors''s own operational data, published on the owner''s stated wish — and a wish is not a licence. NLOD does not cover it; ask Røde Kors before redistributing. That instruction reached Atlas relayed through the demo consumer, not directly.';
+COMMENT ON VIEW api_v1.fact_chapter_activities IS 'One row per chapter and activity, joined to Atlas''s dimensions. Empty today.
+
+The analytical grain for chapter activity: one row per chapter × activity, joined to Atlas''s dimensions so it reconciles with the rest of the supply layer.
+🔴 A STATIC DUMP, NOT A LIVE FEED — a one-off export of 2026-04-21 (392 branches,
+~2 400 activities per migration 022). Nothing refreshes it.
+🔴 SERVING ZERO ROWS TODAY and that is expected, not a broken endpoint: the
+redcross-branches ingest is held on a credential, so raw is empty and so is this.
+⚠️ Atlas holds NO republication licence here. This is Norges Røde Kors''s own
+operational data, published on the owner''s stated wish — and a wish is not a
+licence. NLOD does not cover it; ask Røde Kors before redistributing. That
+instruction reached Atlas relayed through the demo consumer, not directly.';
 COMMENT ON COLUMN api_v1.fact_chapter_activities.chapter_id IS 'Composite slug, namespaced by NGO. Stable across refreshes.';
 COMMENT ON COLUMN api_v1.fact_chapter_activities.activity_id IS 'Composite slug, e.g. ''redcross-besokstjeneste''. Stable across refreshes.';
 COMMENT ON COLUMN api_v1.fact_chapter_activities.ngo_orgnr IS 'Denormalised from dim_chapter for query convenience.';
@@ -901,33 +935,30 @@ COMMENT ON COLUMN api_v1.fact_chapter_activities.updated_at IS 'When the row was
 
 -- indicator_latest_values  ←  marts.mart_indicator_latest_values
 CREATE OR REPLACE VIEW api_v1.indicator_latest_values AS SELECT * FROM marts.mart_indicator_latest_values;
-COMMENT ON VIEW api_v1.indicator_latest_values IS 'One row per (source_id, contents_code, kommune_nr) at each
+COMMENT ON VIEW api_v1.indicator_latest_values IS 'The latest value of every indicator for every active kommune, in long format.
+
+One row per (source_id, contents_code, kommune_nr) at each
 indicator''s latest_year, restricted to active kommuner. Backs the
 data explorer''s per-indicator detail page (atlas-frontend
 /data/[source_id]/[contents_code]) and is the equivalent of the
 loadIndicatorValues() inline query.
-
 🔴 ROW COUNT IS NOT COVERAGE. A row exists for every active kommune
 the source publishes at all, INCLUDING those where `value` is null.
 So a series returns ~357 rows whether 357 kommuner have a number or
 66 do, and counting rows overstates coverage by up to five times.
-
 ⚠️ This has always been true and became dangerous on 2026-09-21,
 when nine Ungdata sources published at 18-43 % kommune coverage
 against SSB register sources at nearly 100 %. `fhi-hasj` returns
 357 rows carrying 66 values.
-
 ✅ `indicator_summary.kommuner_with_value` is the live count and the
 only thing to trust. It is not restated here on purpose — a number
 copied into a description goes stale, which is the defect that made
 `fhi-depresjon` advertise fourteen years of data it never held.
-
 PostgREST consumers filter via
 ?source_id=eq.X&contents_code=eq.Y. The full table is the
 cross-product of every indicator with every active kommune that
 has a row at latest_year, so the unfiltered row count is large
 (~360 active kommuner × ~70 indicators in v1).
-
 Inactive kommuner (kommune_is_active = false) are excluded so the
 output reflects today''s kommune set, not historical codes that
 upstream still emits.';
@@ -961,29 +992,27 @@ is a column rather than prose.';
 
 -- indicator_missing_kommuner  ←  marts.mart_indicator_missing_kommuner
 CREATE OR REPLACE VIEW api_v1.indicator_missing_kommuner AS SELECT * FROM marts.mart_indicator_missing_kommuner;
-COMMENT ON VIEW api_v1.indicator_missing_kommuner IS '🔴 A ROW HERE IS NOT EVIDENCE OF LOW NEED. For `fhi-*` sources it is
+COMMENT ON VIEW api_v1.indicator_missing_kommuner IS 'One row per indicator and kommune that the indicator does not cover.
+
+🔴 A ROW HERE IS NOT EVIDENCE OF LOW NEED. For `fhi-*` sources it is
 usually FHI''s disclosure suppression: it hides numbers based on fewer
 than ~6 cases, and hides a whole series when more than 20% of it is
 hidden, "for ikke å skape et skjevt inntrykk av situasjonen i
 kommunen" — to avoid a skewed impression of that kommune.
-
 ⚠️ Measured: 105 kommuner are missing from 10+ `fhi-*` series, median
 population 1,452, monotonic in population, and EVERY kommune is absent
 from at least three. Treating absence as zero in a ranked index
 inverts the signal for the smallest kommuner (urb-agents #1379). See
 `indicator_summary.kommuners_with_null`.
-
 One row per (source_id, contents_code, kommune_nr) for every
 active kommune that has *no* non-NULL value at the indicator''s
 latest_year. The "coverage gap" sidebar on the data explorer
 detail page; equivalent to the listMissingKommuner() inline query.
-
 PostgREST consumers filter via
 ?source_id=eq.X&contents_code=eq.Y. Membership semantics: a
 kommune is considered "missing" if it either has no row at
 latest_year, or has a row with value IS NULL. Status markers ('':'',
 ''X'') do not count as a value.
-
 The full table is the cross-product of every indicator with every
 active kommune that lacks data. Most cells are present, so the
 unfiltered row count is the per-indicator gap-list aggregated
@@ -997,19 +1026,19 @@ COMMENT ON COLUMN api_v1.indicator_missing_kommuner.kommune_name IS 'Joined from
 
 -- indicator_summary  ←  marts.mart_indicator_summary
 CREATE OR REPLACE VIEW api_v1.indicator_summary AS SELECT * FROM marts.mart_indicator_summary;
-COMMENT ON VIEW api_v1.indicator_summary IS 'One row per (source_id, contents_code) summarising the latest-year
+COMMENT ON VIEW api_v1.indicator_summary IS 'One row per indicator and source: latest year, kommune coverage and value range.
+
+One row per (source_id, contents_code) summarising the latest-year
 coverage and value range for every indicator in
 fact_kommune_indicators. This is the backing dataset for the data
 explorer index page (atlas-frontend /data) and is the equivalent of
 the listIndicators() inline query that PostgREST projects as
 /mart_indicator_summary on the public API.
-
 Query shape: latest-year-per-indicator + group-by + value/null counts
 filtered to active kommuner only. Inactive kommuner (historical
 codes retained by upstream) are excluded from the counts so consumers
 see "how many of today''s kommuner have data?" not "how many rows
 exist?".
-
 Refreshed nightly together with fact_kommune_indicators. The
 upstream_updated column carries the most recent raw load timestamp
 across the rows that contributed to this summary, so freshness can
@@ -1161,7 +1190,15 @@ per indicator without joining to raw.*.';
 
 -- indicators__bufdir_barnefattigdom  ←  marts.mart_indicators__bufdir_barnefattigdom
 CREATE OR REPLACE VIEW api_v1.indicators__bufdir_barnefattigdom AS SELECT * FROM marts.mart_indicators__bufdir_barnefattigdom;
-COMMENT ON VIEW api_v1.indicators__bufdir_barnefattigdom IS 'Per-source indicator relation for `bufdir-barnefattigdom` (Barne-, ungdoms- og familiedirektoratet), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Barne-, ungdoms- og familiedirektoratet, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=bufdir-barnefattigdom.';
+COMMENT ON VIEW api_v1.indicators__bufdir_barnefattigdom IS 'Per-source indicator data for bufdir-barnefattigdom, at the publisher''s own grain.
+
+Per-source indicator relation for `bufdir-barnefattigdom` (Barne-, ungdoms- og familiedirektoratet), published at the grain the publisher
+actually uses rather than flattened into the cross-source views.
+🔴 stability:source — the column set here follows Barne-, ungdoms- og familiedirektoratet, not Atlas. If the
+publisher adds, renames or drops a dimension, this relation changes with it. That is
+the deliberate trade for getting the real grain; prefer a stability:curated relation
+if you need a shape Atlas promises to hold still. Decode codes through
+meta_dimensions filtered to source_id=bufdir-barnefattigdom.';
 COMMENT ON COLUMN api_v1.indicators__bufdir_barnefattigdom.source_id IS 'Atlas catalogue id for this ingest — always bufdir-barnefattigdom.';
 COMMENT ON COLUMN api_v1.indicators__bufdir_barnefattigdom.indicator_api_id IS 'Stable surrogate workbook id — bf_zip_<24 hex fingerprint of the XLSX filename stem>.';
 COMMENT ON COLUMN api_v1.indicators__bufdir_barnefattigdom.indicator_slug IS 'Normalised slug from the upstream indicator name; used as part of contents_code.';
@@ -1183,7 +1220,15 @@ COMMENT ON COLUMN api_v1.indicators__bufdir_barnefattigdom.updated_at IS 'Timest
 
 -- indicators__fhi_alkohol  ←  marts.mart_indicators__fhi_alkohol
 CREATE OR REPLACE VIEW api_v1.indicators__fhi_alkohol AS SELECT * FROM marts.mart_indicators__fhi_alkohol;
-COMMENT ON VIEW api_v1.indicators__fhi_alkohol IS 'Per-source indicator relation for `fhi-alkohol` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=fhi-alkohol.';
+COMMENT ON VIEW api_v1.indicators__fhi_alkohol IS 'Per-source indicator data for fhi-alkohol (Folkehelseinstituttet), at the publisher''s own grain.
+
+Per-source indicator relation for `fhi-alkohol` (Folkehelseinstituttet), published at the grain the publisher
+actually uses rather than flattened into the cross-source views.
+🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the
+publisher adds, renames or drops a dimension, this relation changes with it. That is
+the deliberate trade for getting the real grain; prefer a stability:curated relation
+if you need a shape Atlas promises to hold still. Decode codes through
+meta_dimensions filtered to source_id=fhi-alkohol.';
 COMMENT ON COLUMN api_v1.indicators__fhi_alkohol.source_id IS 'Atlas source identifier.';
 COMMENT ON COLUMN api_v1.indicators__fhi_alkohol.region_code IS 'FHI GEO verbatim — kommune, fylke, bydel or national.';
 COMMENT ON COLUMN api_v1.indicators__fhi_alkohol.kommune_nr IS '4-digit kommune code, via region_code_to_kommune_nr — NULL for every region that is not a municipality. Not a bare four-digit regex; that is what called Svalbard a kommune.';
@@ -1205,7 +1250,15 @@ COMMENT ON COLUMN api_v1.indicators__fhi_alkohol.updated_at IS 'When the raw row
 
 -- indicators__fhi_befolkning  ←  marts.mart_indicators__fhi_befolkning
 CREATE OR REPLACE VIEW api_v1.indicators__fhi_befolkning AS SELECT * FROM marts.mart_indicators__fhi_befolkning;
-COMMENT ON VIEW api_v1.indicators__fhi_befolkning IS 'Per-source indicator relation for `fhi-befolkning` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=fhi-befolkning.';
+COMMENT ON VIEW api_v1.indicators__fhi_befolkning IS 'Per-source indicator data for fhi-befolkning (Folkehelseinstituttet), at the publisher''s own grain.
+
+Per-source indicator relation for `fhi-befolkning` (Folkehelseinstituttet), published at the grain the publisher
+actually uses rather than flattened into the cross-source views.
+🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the
+publisher adds, renames or drops a dimension, this relation changes with it. That is
+the deliberate trade for getting the real grain; prefer a stability:curated relation
+if you need a shape Atlas promises to hold still. Decode codes through
+meta_dimensions filtered to source_id=fhi-befolkning.';
 COMMENT ON COLUMN api_v1.indicators__fhi_befolkning.source_id IS 'Atlas source identifier.';
 COMMENT ON COLUMN api_v1.indicators__fhi_befolkning.region_code IS 'FHI GEO verbatim — kommune, fylke, bydel or national.';
 COMMENT ON COLUMN api_v1.indicators__fhi_befolkning.kommune_nr IS '4-digit kommune code via region_code_to_kommune_nr — NULL for every region that is not a municipality.';
@@ -1225,7 +1278,15 @@ COMMENT ON COLUMN api_v1.indicators__fhi_befolkning.updated_at IS 'When the raw 
 
 -- indicators__fhi_befolkningsvekst  ←  marts.mart_indicators__fhi_befolkningsvekst
 CREATE OR REPLACE VIEW api_v1.indicators__fhi_befolkningsvekst AS SELECT * FROM marts.mart_indicators__fhi_befolkningsvekst;
-COMMENT ON VIEW api_v1.indicators__fhi_befolkningsvekst IS 'Per-source indicator relation for `fhi-befolkningsvekst` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=fhi-befolkningsvekst.';
+COMMENT ON VIEW api_v1.indicators__fhi_befolkningsvekst IS 'Per-source indicator data for fhi-befolkningsvekst (Folkehelseinstituttet), at the publisher''s own grain.
+
+Per-source indicator relation for `fhi-befolkningsvekst` (Folkehelseinstituttet), published at the grain the publisher
+actually uses rather than flattened into the cross-source views.
+🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the
+publisher adds, renames or drops a dimension, this relation changes with it. That is
+the deliberate trade for getting the real grain; prefer a stability:curated relation
+if you need a shape Atlas promises to hold still. Decode codes through
+meta_dimensions filtered to source_id=fhi-befolkningsvekst.';
 COMMENT ON COLUMN api_v1.indicators__fhi_befolkningsvekst.source_id IS 'Atlas source identifier.';
 COMMENT ON COLUMN api_v1.indicators__fhi_befolkningsvekst.region_code IS 'FHI GEO verbatim — kommune, fylke, bydel or national.';
 COMMENT ON COLUMN api_v1.indicators__fhi_befolkningsvekst.kommune_nr IS '4-digit kommune code via region_code_to_kommune_nr — NULL for every region that is not a municipality.';
@@ -1245,7 +1306,15 @@ COMMENT ON COLUMN api_v1.indicators__fhi_befolkningsvekst.updated_at IS 'When th
 
 -- indicators__fhi_bor_alene  ←  marts.mart_indicators__fhi_bor_alene
 CREATE OR REPLACE VIEW api_v1.indicators__fhi_bor_alene AS SELECT * FROM marts.mart_indicators__fhi_bor_alene;
-COMMENT ON VIEW api_v1.indicators__fhi_bor_alene IS 'Per-source indicator relation for `fhi-bor-alene` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=fhi-bor-alene.';
+COMMENT ON VIEW api_v1.indicators__fhi_bor_alene IS 'Per-source indicator data for fhi-bor-alene (Folkehelseinstituttet), at the publisher''s own grain.
+
+Per-source indicator relation for `fhi-bor-alene` (Folkehelseinstituttet), published at the grain the publisher
+actually uses rather than flattened into the cross-source views.
+🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the
+publisher adds, renames or drops a dimension, this relation changes with it. That is
+the deliberate trade for getting the real grain; prefer a stability:curated relation
+if you need a shape Atlas promises to hold still. Decode codes through
+meta_dimensions filtered to source_id=fhi-bor-alene.';
 COMMENT ON COLUMN api_v1.indicators__fhi_bor_alene.source_id IS 'Atlas source identifier for the upstream table this row came from — the same id used by meta_sources and meta_dimensions.';
 COMMENT ON COLUMN api_v1.indicators__fhi_bor_alene.region_code IS 'The publisher''s own region code, verbatim. It may be a kommune, fylke, bydel or national code depending on what that publisher emits; region_kind says which.';
 COMMENT ON COLUMN api_v1.indicators__fhi_bor_alene.kommune_nr IS '4-digit kommune code, derived via region_code_to_kommune_nr. NULL for every region that is not a municipality. ⚠️ Not a bare four-digit match — that is what once called Svalbard, Jan Mayen and the continental shelf municipalities.';
@@ -1265,7 +1334,15 @@ COMMENT ON COLUMN api_v1.indicators__fhi_bor_alene.updated_at IS 'When Atlas las
 
 -- indicators__fhi_depresjon  ←  marts.mart_indicators__fhi_depresjon
 CREATE OR REPLACE VIEW api_v1.indicators__fhi_depresjon AS SELECT * FROM marts.mart_indicators__fhi_depresjon;
-COMMENT ON VIEW api_v1.indicators__fhi_depresjon IS 'Per-source indicator relation for `fhi-depresjon` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=fhi-depresjon.';
+COMMENT ON VIEW api_v1.indicators__fhi_depresjon IS 'Per-source indicator data for fhi-depresjon (Folkehelseinstituttet), at the publisher''s own grain.
+
+Per-source indicator relation for `fhi-depresjon` (Folkehelseinstituttet), published at the grain the publisher
+actually uses rather than flattened into the cross-source views.
+🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the
+publisher adds, renames or drops a dimension, this relation changes with it. That is
+the deliberate trade for getting the real grain; prefer a stability:curated relation
+if you need a shape Atlas promises to hold still. Decode codes through
+meta_dimensions filtered to source_id=fhi-depresjon.';
 COMMENT ON COLUMN api_v1.indicators__fhi_depresjon.source_id IS 'Atlas source identifier.';
 COMMENT ON COLUMN api_v1.indicators__fhi_depresjon.region_code IS 'FHI GEO verbatim — kommune, fylke, bydel or national.';
 COMMENT ON COLUMN api_v1.indicators__fhi_depresjon.kommune_nr IS '4-digit kommune code, via region_code_to_kommune_nr — NULL for every region that is not a municipality. Not a bare four-digit regex; that is what called Svalbard a kommune.';
@@ -1287,7 +1364,15 @@ COMMENT ON COLUMN api_v1.indicators__fhi_depresjon.updated_at IS 'When the raw r
 
 -- indicators__fhi_fortrolig_venn  ←  marts.mart_indicators__fhi_fortrolig_venn
 CREATE OR REPLACE VIEW api_v1.indicators__fhi_fortrolig_venn AS SELECT * FROM marts.mart_indicators__fhi_fortrolig_venn;
-COMMENT ON VIEW api_v1.indicators__fhi_fortrolig_venn IS 'Per-source indicator relation for `fhi-fortrolig-venn` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=fhi-fortrolig-venn.';
+COMMENT ON VIEW api_v1.indicators__fhi_fortrolig_venn IS 'Per-source indicator data for fhi-fortrolig-venn (Folkehelseinstituttet), at the publisher''s own grain.
+
+Per-source indicator relation for `fhi-fortrolig-venn` (Folkehelseinstituttet), published at the grain the publisher
+actually uses rather than flattened into the cross-source views.
+🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the
+publisher adds, renames or drops a dimension, this relation changes with it. That is
+the deliberate trade for getting the real grain; prefer a stability:curated relation
+if you need a shape Atlas promises to hold still. Decode codes through
+meta_dimensions filtered to source_id=fhi-fortrolig-venn.';
 COMMENT ON COLUMN api_v1.indicators__fhi_fortrolig_venn.source_id IS 'Atlas source identifier.';
 COMMENT ON COLUMN api_v1.indicators__fhi_fortrolig_venn.region_code IS 'FHI GEO verbatim — kommune, fylke, bydel or national.';
 COMMENT ON COLUMN api_v1.indicators__fhi_fortrolig_venn.kommune_nr IS '4-digit kommune code, via region_code_to_kommune_nr — NULL for every region that is not a municipality. Not a bare four-digit regex; that is what called Svalbard a kommune.';
@@ -1309,7 +1394,15 @@ COMMENT ON COLUMN api_v1.indicators__fhi_fortrolig_venn.updated_at IS 'When the 
 
 -- indicators__fhi_hasj  ←  marts.mart_indicators__fhi_hasj
 CREATE OR REPLACE VIEW api_v1.indicators__fhi_hasj AS SELECT * FROM marts.mart_indicators__fhi_hasj;
-COMMENT ON VIEW api_v1.indicators__fhi_hasj IS 'Per-source indicator relation for `fhi-hasj` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=fhi-hasj.';
+COMMENT ON VIEW api_v1.indicators__fhi_hasj IS 'Per-source indicator data for fhi-hasj (Folkehelseinstituttet), at the publisher''s own grain.
+
+Per-source indicator relation for `fhi-hasj` (Folkehelseinstituttet), published at the grain the publisher
+actually uses rather than flattened into the cross-source views.
+🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the
+publisher adds, renames or drops a dimension, this relation changes with it. That is
+the deliberate trade for getting the real grain; prefer a stability:curated relation
+if you need a shape Atlas promises to hold still. Decode codes through
+meta_dimensions filtered to source_id=fhi-hasj.';
 COMMENT ON COLUMN api_v1.indicators__fhi_hasj.source_id IS 'Atlas source identifier.';
 COMMENT ON COLUMN api_v1.indicators__fhi_hasj.region_code IS 'FHI GEO verbatim — kommune, fylke, bydel or national.';
 COMMENT ON COLUMN api_v1.indicators__fhi_hasj.kommune_nr IS '4-digit kommune code, via region_code_to_kommune_nr — NULL for every region that is not a municipality. Not a bare four-digit regex; that is what called Svalbard a kommune.';
@@ -1331,7 +1424,15 @@ COMMENT ON COLUMN api_v1.indicators__fhi_hasj.updated_at IS 'When the raw row wa
 
 -- indicators__fhi_innvandrere  ←  marts.mart_indicators__fhi_innvandrere
 CREATE OR REPLACE VIEW api_v1.indicators__fhi_innvandrere AS SELECT * FROM marts.mart_indicators__fhi_innvandrere;
-COMMENT ON VIEW api_v1.indicators__fhi_innvandrere IS 'Per-source indicator relation for `fhi-innvandrere` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=fhi-innvandrere.';
+COMMENT ON VIEW api_v1.indicators__fhi_innvandrere IS 'Per-source indicator data for fhi-innvandrere (Folkehelseinstituttet), at the publisher''s own grain.
+
+Per-source indicator relation for `fhi-innvandrere` (Folkehelseinstituttet), published at the grain the publisher
+actually uses rather than flattened into the cross-source views.
+🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the
+publisher adds, renames or drops a dimension, this relation changes with it. That is
+the deliberate trade for getting the real grain; prefer a stability:curated relation
+if you need a shape Atlas promises to hold still. Decode codes through
+meta_dimensions filtered to source_id=fhi-innvandrere.';
 COMMENT ON COLUMN api_v1.indicators__fhi_innvandrere.source_id IS 'Atlas source identifier.';
 COMMENT ON COLUMN api_v1.indicators__fhi_innvandrere.region_code IS 'FHI GEO verbatim — kommune, fylke, bydel or national.';
 COMMENT ON COLUMN api_v1.indicators__fhi_innvandrere.kommune_nr IS '4-digit kommune code via region_code_to_kommune_nr — NULL for every region that is not a municipality.';
@@ -1351,7 +1452,15 @@ COMMENT ON COLUMN api_v1.indicators__fhi_innvandrere.updated_at IS 'When the raw
 
 -- indicators__fhi_innvkat  ←  marts.mart_indicators__fhi_innvkat
 CREATE OR REPLACE VIEW api_v1.indicators__fhi_innvkat AS SELECT * FROM marts.mart_indicators__fhi_innvkat;
-COMMENT ON VIEW api_v1.indicators__fhi_innvkat IS 'Per-source indicator relation for `fhi-innvkat` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=fhi-innvkat.';
+COMMENT ON VIEW api_v1.indicators__fhi_innvkat IS 'Per-source indicator data for fhi-innvkat (Folkehelseinstituttet), at the publisher''s own grain.
+
+Per-source indicator relation for `fhi-innvkat` (Folkehelseinstituttet), published at the grain the publisher
+actually uses rather than flattened into the cross-source views.
+🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the
+publisher adds, renames or drops a dimension, this relation changes with it. That is
+the deliberate trade for getting the real grain; prefer a stability:curated relation
+if you need a shape Atlas promises to hold still. Decode codes through
+meta_dimensions filtered to source_id=fhi-innvkat.';
 COMMENT ON COLUMN api_v1.indicators__fhi_innvkat.source_id IS 'Atlas source identifier.';
 COMMENT ON COLUMN api_v1.indicators__fhi_innvkat.region_code IS 'FHI GEO verbatim — kommune, fylke, bydel or national.';
 COMMENT ON COLUMN api_v1.indicators__fhi_innvkat.kommune_nr IS '4-digit kommune code via region_code_to_kommune_nr — NULL for every region that is not a municipality.';
@@ -1372,7 +1481,15 @@ COMMENT ON COLUMN api_v1.indicators__fhi_innvkat.updated_at IS 'When the raw row
 
 -- indicators__fhi_kpr_1aar  ←  marts.mart_indicators__fhi_kpr_1aar
 CREATE OR REPLACE VIEW api_v1.indicators__fhi_kpr_1aar AS SELECT * FROM marts.mart_indicators__fhi_kpr_1aar;
-COMMENT ON VIEW api_v1.indicators__fhi_kpr_1aar IS 'Per-source indicator relation for `fhi-kpr-1aar` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=fhi-kpr-1aar.';
+COMMENT ON VIEW api_v1.indicators__fhi_kpr_1aar IS 'Per-source indicator data for fhi-kpr-1aar (Folkehelseinstituttet), at the publisher''s own grain.
+
+Per-source indicator relation for `fhi-kpr-1aar` (Folkehelseinstituttet), published at the grain the publisher
+actually uses rather than flattened into the cross-source views.
+🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the
+publisher adds, renames or drops a dimension, this relation changes with it. That is
+the deliberate trade for getting the real grain; prefer a stability:curated relation
+if you need a shape Atlas promises to hold still. Decode codes through
+meta_dimensions filtered to source_id=fhi-kpr-1aar.';
 COMMENT ON COLUMN api_v1.indicators__fhi_kpr_1aar.source_id IS 'Atlas source identifier.';
 COMMENT ON COLUMN api_v1.indicators__fhi_kpr_1aar.region_code IS 'FHI GEO verbatim — kommune, fylke, bydel or national.';
 COMMENT ON COLUMN api_v1.indicators__fhi_kpr_1aar.kommune_nr IS '4-digit kommune code via region_code_to_kommune_nr — NULL for every region that is not a municipality.';
@@ -1393,7 +1510,15 @@ COMMENT ON COLUMN api_v1.indicators__fhi_kpr_1aar.updated_at IS 'When the raw ro
 
 -- indicators__fhi_livskvalitet  ←  marts.mart_indicators__fhi_livskvalitet
 CREATE OR REPLACE VIEW api_v1.indicators__fhi_livskvalitet AS SELECT * FROM marts.mart_indicators__fhi_livskvalitet;
-COMMENT ON VIEW api_v1.indicators__fhi_livskvalitet IS 'Per-source indicator relation for `fhi-livskvalitet` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=fhi-livskvalitet.';
+COMMENT ON VIEW api_v1.indicators__fhi_livskvalitet IS 'Per-source indicator data for fhi-livskvalitet (Folkehelseinstituttet), at the publisher''s own grain.
+
+Per-source indicator relation for `fhi-livskvalitet` (Folkehelseinstituttet), published at the grain the publisher
+actually uses rather than flattened into the cross-source views.
+🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the
+publisher adds, renames or drops a dimension, this relation changes with it. That is
+the deliberate trade for getting the real grain; prefer a stability:curated relation
+if you need a shape Atlas promises to hold still. Decode codes through
+meta_dimensions filtered to source_id=fhi-livskvalitet.';
 COMMENT ON COLUMN api_v1.indicators__fhi_livskvalitet.source_id IS 'Atlas source identifier.';
 COMMENT ON COLUMN api_v1.indicators__fhi_livskvalitet.region_code IS 'FHI GEO verbatim — kommune, fylke, bydel or national.';
 COMMENT ON COLUMN api_v1.indicators__fhi_livskvalitet.kommune_nr IS '4-digit kommune code, via region_code_to_kommune_nr — NULL for every region that is not a municipality. Not a bare four-digit regex; that is what called Svalbard a kommune.';
@@ -1415,7 +1540,15 @@ COMMENT ON COLUMN api_v1.indicators__fhi_livskvalitet.updated_at IS 'When the ra
 
 -- indicators__fhi_mediebruk_some  ←  marts.mart_indicators__fhi_mediebruk_some
 CREATE OR REPLACE VIEW api_v1.indicators__fhi_mediebruk_some AS SELECT * FROM marts.mart_indicators__fhi_mediebruk_some;
-COMMENT ON VIEW api_v1.indicators__fhi_mediebruk_some IS 'Per-source indicator relation for `fhi-mediebruk-some` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=fhi-mediebruk-some.';
+COMMENT ON VIEW api_v1.indicators__fhi_mediebruk_some IS 'Per-source indicator data for fhi-mediebruk-some (Folkehelseinstituttet), at the publisher''s own grain.
+
+Per-source indicator relation for `fhi-mediebruk-some` (Folkehelseinstituttet), published at the grain the publisher
+actually uses rather than flattened into the cross-source views.
+🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the
+publisher adds, renames or drops a dimension, this relation changes with it. That is
+the deliberate trade for getting the real grain; prefer a stability:curated relation
+if you need a shape Atlas promises to hold still. Decode codes through
+meta_dimensions filtered to source_id=fhi-mediebruk-some.';
 COMMENT ON COLUMN api_v1.indicators__fhi_mediebruk_some.source_id IS 'Atlas source identifier.';
 COMMENT ON COLUMN api_v1.indicators__fhi_mediebruk_some.region_code IS 'FHI GEO verbatim — kommune, fylke, bydel or national.';
 COMMENT ON COLUMN api_v1.indicators__fhi_mediebruk_some.kommune_nr IS '4-digit kommune code, via region_code_to_kommune_nr — NULL for every region that is not a municipality. Not a bare four-digit regex; that is what called Svalbard a kommune.';
@@ -1437,7 +1570,15 @@ COMMENT ON COLUMN api_v1.indicators__fhi_mediebruk_some.updated_at IS 'When the 
 
 -- indicators__fhi_mediebruk_spill  ←  marts.mart_indicators__fhi_mediebruk_spill
 CREATE OR REPLACE VIEW api_v1.indicators__fhi_mediebruk_spill AS SELECT * FROM marts.mart_indicators__fhi_mediebruk_spill;
-COMMENT ON VIEW api_v1.indicators__fhi_mediebruk_spill IS 'Per-source indicator relation for `fhi-mediebruk-spill` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=fhi-mediebruk-spill.';
+COMMENT ON VIEW api_v1.indicators__fhi_mediebruk_spill IS 'Per-source indicator data for fhi-mediebruk-spill (Folkehelseinstituttet), at the publisher''s own grain.
+
+Per-source indicator relation for `fhi-mediebruk-spill` (Folkehelseinstituttet), published at the grain the publisher
+actually uses rather than flattened into the cross-source views.
+🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the
+publisher adds, renames or drops a dimension, this relation changes with it. That is
+the deliberate trade for getting the real grain; prefer a stability:curated relation
+if you need a shape Atlas promises to hold still. Decode codes through
+meta_dimensions filtered to source_id=fhi-mediebruk-spill.';
 COMMENT ON COLUMN api_v1.indicators__fhi_mediebruk_spill.source_id IS 'Atlas source identifier.';
 COMMENT ON COLUMN api_v1.indicators__fhi_mediebruk_spill.region_code IS 'FHI GEO verbatim — kommune, fylke, bydel or national.';
 COMMENT ON COLUMN api_v1.indicators__fhi_mediebruk_spill.kommune_nr IS '4-digit kommune code, via region_code_to_kommune_nr — NULL for every region that is not a municipality. Not a bare four-digit regex; that is what called Svalbard a kommune.';
@@ -1459,7 +1600,15 @@ COMMENT ON COLUMN api_v1.indicators__fhi_mediebruk_spill.updated_at IS 'When the
 
 -- indicators__fhi_mediebruk_underhold  ←  marts.mart_indicators__fhi_mediebruk_underhold
 CREATE OR REPLACE VIEW api_v1.indicators__fhi_mediebruk_underhold AS SELECT * FROM marts.mart_indicators__fhi_mediebruk_underhold;
-COMMENT ON VIEW api_v1.indicators__fhi_mediebruk_underhold IS 'Per-source indicator relation for `fhi-mediebruk-underhold` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=fhi-mediebruk-underhold.';
+COMMENT ON VIEW api_v1.indicators__fhi_mediebruk_underhold IS 'Per-source indicator data for fhi-mediebruk-underhold (Folkehelseinstituttet), at the publisher''s own grain.
+
+Per-source indicator relation for `fhi-mediebruk-underhold` (Folkehelseinstituttet), published at the grain the publisher
+actually uses rather than flattened into the cross-source views.
+🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the
+publisher adds, renames or drops a dimension, this relation changes with it. That is
+the deliberate trade for getting the real grain; prefer a stability:curated relation
+if you need a shape Atlas promises to hold still. Decode codes through
+meta_dimensions filtered to source_id=fhi-mediebruk-underhold.';
 COMMENT ON COLUMN api_v1.indicators__fhi_mediebruk_underhold.source_id IS 'Atlas source identifier.';
 COMMENT ON COLUMN api_v1.indicators__fhi_mediebruk_underhold.region_code IS 'FHI GEO verbatim — kommune, fylke, bydel or national.';
 COMMENT ON COLUMN api_v1.indicators__fhi_mediebruk_underhold.kommune_nr IS '4-digit kommune code, via region_code_to_kommune_nr — NULL for every region that is not a municipality. Not a bare four-digit regex; that is what called Svalbard a kommune.';
@@ -1481,7 +1630,15 @@ COMMENT ON COLUMN api_v1.indicators__fhi_mediebruk_underhold.updated_at IS 'When
 
 -- indicators__fhi_mobbing  ←  marts.mart_indicators__fhi_mobbing
 CREATE OR REPLACE VIEW api_v1.indicators__fhi_mobbing AS SELECT * FROM marts.mart_indicators__fhi_mobbing;
-COMMENT ON VIEW api_v1.indicators__fhi_mobbing IS 'Per-source indicator relation for `fhi-mobbing` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=fhi-mobbing.';
+COMMENT ON VIEW api_v1.indicators__fhi_mobbing IS 'Per-source indicator data for fhi-mobbing (Folkehelseinstituttet), at the publisher''s own grain.
+
+Per-source indicator relation for `fhi-mobbing` (Folkehelseinstituttet), published at the grain the publisher
+actually uses rather than flattened into the cross-source views.
+🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the
+publisher adds, renames or drops a dimension, this relation changes with it. That is
+the deliberate trade for getting the real grain; prefer a stability:curated relation
+if you need a shape Atlas promises to hold still. Decode codes through
+meta_dimensions filtered to source_id=fhi-mobbing.';
 COMMENT ON COLUMN api_v1.indicators__fhi_mobbing.source_id IS 'Atlas source identifier for the upstream table this row came from — the same id used by meta_sources and meta_dimensions.';
 COMMENT ON COLUMN api_v1.indicators__fhi_mobbing.region_code IS 'The publisher''s own region code, verbatim. It may be a kommune, fylke, bydel or national code depending on what that publisher emits; region_kind says which.';
 COMMENT ON COLUMN api_v1.indicators__fhi_mobbing.kommune_nr IS '4-digit kommune code, derived via region_code_to_kommune_nr. NULL for every region that is not a municipality. ⚠️ Not a bare four-digit match — that is what once called Svalbard, Jan Mayen and the continental shelf municipalities.';
@@ -1501,7 +1658,15 @@ COMMENT ON COLUMN api_v1.indicators__fhi_mobbing.updated_at IS 'When Atlas last 
 
 -- indicators__fhi_neet  ←  marts.mart_indicators__fhi_neet
 CREATE OR REPLACE VIEW api_v1.indicators__fhi_neet AS SELECT * FROM marts.mart_indicators__fhi_neet;
-COMMENT ON VIEW api_v1.indicators__fhi_neet IS 'Per-source indicator relation for `fhi-neet` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=fhi-neet.';
+COMMENT ON VIEW api_v1.indicators__fhi_neet IS 'Per-source indicator data for fhi-neet (Folkehelseinstituttet), at the publisher''s own grain.
+
+Per-source indicator relation for `fhi-neet` (Folkehelseinstituttet), published at the grain the publisher
+actually uses rather than flattened into the cross-source views.
+🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the
+publisher adds, renames or drops a dimension, this relation changes with it. That is
+the deliberate trade for getting the real grain; prefer a stability:curated relation
+if you need a shape Atlas promises to hold still. Decode codes through
+meta_dimensions filtered to source_id=fhi-neet.';
 COMMENT ON COLUMN api_v1.indicators__fhi_neet.source_id IS 'Atlas source identifier.';
 COMMENT ON COLUMN api_v1.indicators__fhi_neet.region_code IS 'FHI GEO verbatim — kommune, fylke, bydel or national.';
 COMMENT ON COLUMN api_v1.indicators__fhi_neet.kommune_nr IS '4-digit kommune code via region_code_to_kommune_nr — NULL for every region that is not a municipality.';
@@ -1522,7 +1687,15 @@ COMMENT ON COLUMN api_v1.indicators__fhi_neet.updated_at IS 'When the raw row wa
 
 -- indicators__fhi_prognose  ←  marts.mart_indicators__fhi_prognose
 CREATE OR REPLACE VIEW api_v1.indicators__fhi_prognose AS SELECT * FROM marts.mart_indicators__fhi_prognose;
-COMMENT ON VIEW api_v1.indicators__fhi_prognose IS 'Per-source indicator relation for `fhi-prognose` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=fhi-prognose.';
+COMMENT ON VIEW api_v1.indicators__fhi_prognose IS 'Per-source indicator data for fhi-prognose (Folkehelseinstituttet), at the publisher''s own grain.
+
+Per-source indicator relation for `fhi-prognose` (Folkehelseinstituttet), published at the grain the publisher
+actually uses rather than flattened into the cross-source views.
+🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the
+publisher adds, renames or drops a dimension, this relation changes with it. That is
+the deliberate trade for getting the real grain; prefer a stability:curated relation
+if you need a shape Atlas promises to hold still. Decode codes through
+meta_dimensions filtered to source_id=fhi-prognose.';
 COMMENT ON COLUMN api_v1.indicators__fhi_prognose.source_id IS 'Atlas source identifier.';
 COMMENT ON COLUMN api_v1.indicators__fhi_prognose.region_code IS 'FHI GEO verbatim — kommune, fylke, bydel or national.';
 COMMENT ON COLUMN api_v1.indicators__fhi_prognose.kommune_nr IS '4-digit kommune code via region_code_to_kommune_nr — NULL for every region that is not a municipality.';
@@ -1543,7 +1716,15 @@ COMMENT ON COLUMN api_v1.indicators__fhi_prognose.updated_at IS 'When the raw ro
 
 -- indicators__fhi_selvmord  ←  marts.mart_indicators__fhi_selvmord
 CREATE OR REPLACE VIEW api_v1.indicators__fhi_selvmord AS SELECT * FROM marts.mart_indicators__fhi_selvmord;
-COMMENT ON VIEW api_v1.indicators__fhi_selvmord IS 'Per-source indicator relation for `fhi-selvmord` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=fhi-selvmord.';
+COMMENT ON VIEW api_v1.indicators__fhi_selvmord IS 'Per-source indicator data for fhi-selvmord (Folkehelseinstituttet), at the publisher''s own grain.
+
+Per-source indicator relation for `fhi-selvmord` (Folkehelseinstituttet), published at the grain the publisher
+actually uses rather than flattened into the cross-source views.
+🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the
+publisher adds, renames or drops a dimension, this relation changes with it. That is
+the deliberate trade for getting the real grain; prefer a stability:curated relation
+if you need a shape Atlas promises to hold still. Decode codes through
+meta_dimensions filtered to source_id=fhi-selvmord.';
 COMMENT ON COLUMN api_v1.indicators__fhi_selvmord.source_id IS 'Atlas source identifier.';
 COMMENT ON COLUMN api_v1.indicators__fhi_selvmord.region_code IS 'FHI GEO verbatim — kommune, fylke, bydel or national.';
 COMMENT ON COLUMN api_v1.indicators__fhi_selvmord.kommune_nr IS '4-digit kommune code via region_code_to_kommune_nr — NULL for every region that is not a municipality.';
@@ -1564,7 +1745,15 @@ COMMENT ON COLUMN api_v1.indicators__fhi_selvmord.updated_at IS 'When the raw ro
 
 -- indicators__fhi_smertestillende  ←  marts.mart_indicators__fhi_smertestillende
 CREATE OR REPLACE VIEW api_v1.indicators__fhi_smertestillende AS SELECT * FROM marts.mart_indicators__fhi_smertestillende;
-COMMENT ON VIEW api_v1.indicators__fhi_smertestillende IS 'Per-source indicator relation for `fhi-smertestillende` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=fhi-smertestillende.';
+COMMENT ON VIEW api_v1.indicators__fhi_smertestillende IS 'Per-source indicator data for fhi-smertestillende (Folkehelseinstituttet), at the publisher''s own grain.
+
+Per-source indicator relation for `fhi-smertestillende` (Folkehelseinstituttet), published at the grain the publisher
+actually uses rather than flattened into the cross-source views.
+🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the
+publisher adds, renames or drops a dimension, this relation changes with it. That is
+the deliberate trade for getting the real grain; prefer a stability:curated relation
+if you need a shape Atlas promises to hold still. Decode codes through
+meta_dimensions filtered to source_id=fhi-smertestillende.';
 COMMENT ON COLUMN api_v1.indicators__fhi_smertestillende.source_id IS 'Atlas source identifier.';
 COMMENT ON COLUMN api_v1.indicators__fhi_smertestillende.region_code IS 'FHI GEO verbatim — kommune, fylke, bydel or national.';
 COMMENT ON COLUMN api_v1.indicators__fhi_smertestillende.kommune_nr IS '4-digit kommune code, via region_code_to_kommune_nr — NULL for every region that is not a municipality. Not a bare four-digit regex; that is what called Svalbard a kommune.';
@@ -1586,7 +1775,15 @@ COMMENT ON COLUMN api_v1.indicators__fhi_smertestillende.updated_at IS 'When the
 
 -- indicators__fhi_trangbodd  ←  marts.mart_indicators__fhi_trangbodd
 CREATE OR REPLACE VIEW api_v1.indicators__fhi_trangbodd AS SELECT * FROM marts.mart_indicators__fhi_trangbodd;
-COMMENT ON VIEW api_v1.indicators__fhi_trangbodd IS 'Per-source indicator relation for `fhi-trangbodd` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=fhi-trangbodd.';
+COMMENT ON VIEW api_v1.indicators__fhi_trangbodd IS 'Per-source indicator data for fhi-trangbodd (Folkehelseinstituttet), at the publisher''s own grain.
+
+Per-source indicator relation for `fhi-trangbodd` (Folkehelseinstituttet), published at the grain the publisher
+actually uses rather than flattened into the cross-source views.
+🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the
+publisher adds, renames or drops a dimension, this relation changes with it. That is
+the deliberate trade for getting the real grain; prefer a stability:curated relation
+if you need a shape Atlas promises to hold still. Decode codes through
+meta_dimensions filtered to source_id=fhi-trangbodd.';
 COMMENT ON COLUMN api_v1.indicators__fhi_trangbodd.source_id IS 'Atlas source identifier for the upstream table this row came from — the same id used by meta_sources and meta_dimensions.';
 COMMENT ON COLUMN api_v1.indicators__fhi_trangbodd.region_code IS 'The publisher''s own region code, verbatim. It may be a kommune, fylke, bydel or national code depending on what that publisher emits; region_kind says which.';
 COMMENT ON COLUMN api_v1.indicators__fhi_trangbodd.kommune_nr IS '4-digit kommune code, derived via region_code_to_kommune_nr. NULL for every region that is not a municipality. ⚠️ Not a bare four-digit match — that is what once called Svalbard, Jan Mayen and the continental shelf municipalities.';
@@ -1609,7 +1806,15 @@ COMMENT ON COLUMN api_v1.indicators__fhi_trangbodd.updated_at IS 'When Atlas las
 
 -- indicators__fhi_vgs_gjennomforing  ←  marts.mart_indicators__fhi_vgs_gjennomforing
 CREATE OR REPLACE VIEW api_v1.indicators__fhi_vgs_gjennomforing AS SELECT * FROM marts.mart_indicators__fhi_vgs_gjennomforing;
-COMMENT ON VIEW api_v1.indicators__fhi_vgs_gjennomforing IS 'Per-source indicator relation for `fhi-vgs-gjennomforing` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=fhi-vgs-gjennomforing.';
+COMMENT ON VIEW api_v1.indicators__fhi_vgs_gjennomforing IS 'Per-source indicator data for fhi-vgs-gjennomforing (Folkehelseinstituttet), at the publisher''s own grain.
+
+Per-source indicator relation for `fhi-vgs-gjennomforing` (Folkehelseinstituttet), published at the grain the publisher
+actually uses rather than flattened into the cross-source views.
+🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. If the
+publisher adds, renames or drops a dimension, this relation changes with it. That is
+the deliberate trade for getting the real grain; prefer a stability:curated relation
+if you need a shape Atlas promises to hold still. Decode codes through
+meta_dimensions filtered to source_id=fhi-vgs-gjennomforing.';
 COMMENT ON COLUMN api_v1.indicators__fhi_vgs_gjennomforing.source_id IS 'Atlas source identifier for the upstream table this row came from — the same id used by meta_sources and meta_dimensions.';
 COMMENT ON COLUMN api_v1.indicators__fhi_vgs_gjennomforing.region_code IS 'The publisher''s own region code, verbatim. It may be a kommune, fylke, bydel or national code depending on what that publisher emits; region_kind says which.';
 COMMENT ON COLUMN api_v1.indicators__fhi_vgs_gjennomforing.kommune_nr IS '4-digit kommune code, derived via region_code_to_kommune_nr. NULL for every region that is not a municipality. ⚠️ Not a bare four-digit match — that is what once called Svalbard, Jan Mayen and the continental shelf municipalities.';
@@ -1631,7 +1836,15 @@ COMMENT ON COLUMN api_v1.indicators__fhi_vgs_gjennomforing.updated_at IS 'When A
 
 -- indicators__ssb_06083  ←  marts.mart_indicators__ssb_06083
 CREATE OR REPLACE VIEW api_v1.indicators__ssb_06083 AS SELECT * FROM marts.mart_indicators__ssb_06083;
-COMMENT ON VIEW api_v1.indicators__ssb_06083 IS 'Per-source indicator relation for `ssb-06083` (Statistisk sentralbyrå), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Statistisk sentralbyrå, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=ssb-06083.';
+COMMENT ON VIEW api_v1.indicators__ssb_06083 IS 'Per-source indicator data for ssb-06083 (Statistisk sentralbyrå), at the publisher''s own grain.
+
+Per-source indicator relation for `ssb-06083` (Statistisk sentralbyrå), published at the grain the publisher
+actually uses rather than flattened into the cross-source views.
+🔴 stability:source — the column set here follows Statistisk sentralbyrå, not Atlas. If the
+publisher adds, renames or drops a dimension, this relation changes with it. That is
+the deliberate trade for getting the real grain; prefer a stability:curated relation
+if you need a shape Atlas promises to hold still. Decode codes through
+meta_dimensions filtered to source_id=ssb-06083.';
 COMMENT ON COLUMN api_v1.indicators__ssb_06083.source_id IS 'Atlas source identifier for the upstream table this row came from — the same id used by meta_sources and meta_dimensions.';
 COMMENT ON COLUMN api_v1.indicators__ssb_06083.region_code IS 'The publisher''s own region code, verbatim. It may be a kommune, fylke, bydel or national code depending on what that publisher emits; region_kind says which.';
 COMMENT ON COLUMN api_v1.indicators__ssb_06083.kommune_nr IS '4-digit kommune code, derived via region_code_to_kommune_nr. NULL for every region that is not a municipality. ⚠️ Not a bare four-digit match — that is what once called Svalbard, Jan Mayen and the continental shelf municipalities.';
@@ -1648,7 +1861,15 @@ COMMENT ON COLUMN api_v1.indicators__ssb_06083.updated_at IS 'When Atlas last lo
 
 -- indicators__ssb_06913  ←  marts.mart_indicators__ssb_06913
 CREATE OR REPLACE VIEW api_v1.indicators__ssb_06913 AS SELECT * FROM marts.mart_indicators__ssb_06913;
-COMMENT ON VIEW api_v1.indicators__ssb_06913 IS 'Per-source indicator relation for `ssb-06913` (Statistisk sentralbyrå), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Statistisk sentralbyrå, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=ssb-06913.';
+COMMENT ON VIEW api_v1.indicators__ssb_06913 IS 'Per-source indicator data for ssb-06913 (Statistisk sentralbyrå), at the publisher''s own grain.
+
+Per-source indicator relation for `ssb-06913` (Statistisk sentralbyrå), published at the grain the publisher
+actually uses rather than flattened into the cross-source views.
+🔴 stability:source — the column set here follows Statistisk sentralbyrå, not Atlas. If the
+publisher adds, renames or drops a dimension, this relation changes with it. That is
+the deliberate trade for getting the real grain; prefer a stability:curated relation
+if you need a shape Atlas promises to hold still. Decode codes through
+meta_dimensions filtered to source_id=ssb-06913.';
 COMMENT ON COLUMN api_v1.indicators__ssb_06913.source_id IS 'Atlas source identifier for the upstream table this row came from — the same id used by meta_sources and meta_dimensions.';
 COMMENT ON COLUMN api_v1.indicators__ssb_06913.region_code IS 'The publisher''s own region code, verbatim. It may be a kommune, fylke, bydel or national code depending on what that publisher emits; region_kind says which.';
 COMMENT ON COLUMN api_v1.indicators__ssb_06913.kommune_nr IS '4-digit kommune code, derived via region_code_to_kommune_nr. NULL for every region that is not a municipality. ⚠️ Not a bare four-digit match — that is what once called Svalbard, Jan Mayen and the continental shelf municipalities.';
@@ -1665,7 +1886,15 @@ COMMENT ON COLUMN api_v1.indicators__ssb_06913.region_kind IS 'What the region c
 
 -- indicators__ssb_06944  ←  marts.mart_indicators__ssb_06944
 CREATE OR REPLACE VIEW api_v1.indicators__ssb_06944 AS SELECT * FROM marts.mart_indicators__ssb_06944;
-COMMENT ON VIEW api_v1.indicators__ssb_06944 IS 'Per-source indicator relation for `ssb-06944` (Statistisk sentralbyrå), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Statistisk sentralbyrå, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=ssb-06944.';
+COMMENT ON VIEW api_v1.indicators__ssb_06944 IS 'Per-source indicator data for ssb-06944 (Statistisk sentralbyrå), at the publisher''s own grain.
+
+Per-source indicator relation for `ssb-06944` (Statistisk sentralbyrå), published at the grain the publisher
+actually uses rather than flattened into the cross-source views.
+🔴 stability:source — the column set here follows Statistisk sentralbyrå, not Atlas. If the
+publisher adds, renames or drops a dimension, this relation changes with it. That is
+the deliberate trade for getting the real grain; prefer a stability:curated relation
+if you need a shape Atlas promises to hold still. Decode codes through
+meta_dimensions filtered to source_id=ssb-06944.';
 COMMENT ON COLUMN api_v1.indicators__ssb_06944.source_id IS 'Atlas source identifier for the upstream table this row came from — the same id used by meta_sources and meta_dimensions.';
 COMMENT ON COLUMN api_v1.indicators__ssb_06944.region_code IS 'The publisher''s own region code, verbatim. It may be a kommune, fylke, bydel or national code depending on what that publisher emits; region_kind says which.';
 COMMENT ON COLUMN api_v1.indicators__ssb_06944.kommune_nr IS '4-digit kommune code, derived via region_code_to_kommune_nr. NULL for every region that is not a municipality. ⚠️ Not a bare four-digit match — that is what once called Svalbard, Jan Mayen and the continental shelf municipalities.';
@@ -1682,7 +1911,15 @@ COMMENT ON COLUMN api_v1.indicators__ssb_06944.updated_at IS 'When Atlas last lo
 
 -- indicators__ssb_06947  ←  marts.mart_indicators__ssb_06947
 CREATE OR REPLACE VIEW api_v1.indicators__ssb_06947 AS SELECT * FROM marts.mart_indicators__ssb_06947;
-COMMENT ON VIEW api_v1.indicators__ssb_06947 IS 'Per-source indicator relation for `ssb-06947` (Statistisk sentralbyrå), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Statistisk sentralbyrå, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=ssb-06947.';
+COMMENT ON VIEW api_v1.indicators__ssb_06947 IS 'Per-source indicator data for ssb-06947 (Statistisk sentralbyrå), at the publisher''s own grain.
+
+Per-source indicator relation for `ssb-06947` (Statistisk sentralbyrå), published at the grain the publisher
+actually uses rather than flattened into the cross-source views.
+🔴 stability:source — the column set here follows Statistisk sentralbyrå, not Atlas. If the
+publisher adds, renames or drops a dimension, this relation changes with it. That is
+the deliberate trade for getting the real grain; prefer a stability:curated relation
+if you need a shape Atlas promises to hold still. Decode codes through
+meta_dimensions filtered to source_id=ssb-06947.';
 COMMENT ON COLUMN api_v1.indicators__ssb_06947.source_id IS 'Atlas source identifier for the upstream table this row came from — the same id used by meta_sources and meta_dimensions.';
 COMMENT ON COLUMN api_v1.indicators__ssb_06947.region_code IS 'The publisher''s own region code, verbatim. It may be a kommune, fylke, bydel or national code depending on what that publisher emits; region_kind says which.';
 COMMENT ON COLUMN api_v1.indicators__ssb_06947.kommune_nr IS '4-digit kommune code, derived via region_code_to_kommune_nr. NULL for every region that is not a municipality. ⚠️ Not a bare four-digit match — that is what once called Svalbard, Jan Mayen and the continental shelf municipalities.';
@@ -1696,7 +1933,15 @@ COMMENT ON COLUMN api_v1.indicators__ssb_06947.updated_at IS 'When Atlas last lo
 
 -- indicators__ssb_07459  ←  marts.mart_indicators__ssb_07459
 CREATE OR REPLACE VIEW api_v1.indicators__ssb_07459 AS SELECT * FROM marts.mart_indicators__ssb_07459;
-COMMENT ON VIEW api_v1.indicators__ssb_07459 IS 'Per-source indicator relation for `ssb-07459` (Statistisk sentralbyrå), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Statistisk sentralbyrå, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=ssb-07459.';
+COMMENT ON VIEW api_v1.indicators__ssb_07459 IS 'Per-source indicator data for ssb-07459 (Statistisk sentralbyrå), at the publisher''s own grain.
+
+Per-source indicator relation for `ssb-07459` (Statistisk sentralbyrå), published at the grain the publisher
+actually uses rather than flattened into the cross-source views.
+🔴 stability:source — the column set here follows Statistisk sentralbyrå, not Atlas. If the
+publisher adds, renames or drops a dimension, this relation changes with it. That is
+the deliberate trade for getting the real grain; prefer a stability:curated relation
+if you need a shape Atlas promises to hold still. Decode codes through
+meta_dimensions filtered to source_id=ssb-07459.';
 COMMENT ON COLUMN api_v1.indicators__ssb_07459.source_id IS 'Atlas source identifier for the upstream table this row came from — the same id used by meta_sources and meta_dimensions.';
 COMMENT ON COLUMN api_v1.indicators__ssb_07459.region_code IS 'The publisher''s own region code, verbatim. It may be a kommune, fylke, bydel or national code depending on what that publisher emits; region_kind says which.';
 COMMENT ON COLUMN api_v1.indicators__ssb_07459.kommune_nr IS '4-digit kommune code, derived via region_code_to_kommune_nr. NULL for every region that is not a municipality. ⚠️ Not a bare four-digit match — that is what once called Svalbard, Jan Mayen and the continental shelf municipalities.';
@@ -1716,7 +1961,15 @@ COMMENT ON COLUMN api_v1.indicators__ssb_07459.updated_at IS 'When Atlas last lo
 
 -- indicators__ssb_08484  ←  marts.mart_indicators__ssb_08484
 CREATE OR REPLACE VIEW api_v1.indicators__ssb_08484 AS SELECT * FROM marts.mart_indicators__ssb_08484;
-COMMENT ON VIEW api_v1.indicators__ssb_08484 IS 'Per-source indicator relation for `ssb-08484`, published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows the publisher, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=ssb-08484.';
+COMMENT ON VIEW api_v1.indicators__ssb_08484 IS 'Per-source indicator data for ssb-08484, at the publisher''s own grain.
+
+Per-source indicator relation for `ssb-08484`, published at the grain the publisher
+actually uses rather than flattened into the cross-source views.
+🔴 stability:source — the column set here follows the publisher, not Atlas. If the
+publisher adds, renames or drops a dimension, this relation changes with it. That is
+the deliberate trade for getting the real grain; prefer a stability:curated relation
+if you need a shape Atlas promises to hold still. Decode codes through
+meta_dimensions filtered to source_id=ssb-08484.';
 COMMENT ON COLUMN api_v1.indicators__ssb_08484.source_id IS 'Canonical catalogue identifier for this Px bundle — always ssb-crime-tables.';
 COMMENT ON COLUMN api_v1.indicators__ssb_08484.kommune_nr IS 'Always NULL — national geography only for this Px table.';
 COMMENT ON COLUMN api_v1.indicators__ssb_08484.fylke_nr IS 'Always NULL — no fylke dimension on 08484.';
@@ -1729,7 +1982,15 @@ COMMENT ON COLUMN api_v1.indicators__ssb_08484.updated_at IS 'ingest `loaded_at`
 
 -- indicators__ssb_08487  ←  marts.mart_indicators__ssb_08487
 CREATE OR REPLACE VIEW api_v1.indicators__ssb_08487 AS SELECT * FROM marts.mart_indicators__ssb_08487;
-COMMENT ON VIEW api_v1.indicators__ssb_08487 IS 'Per-source indicator relation for `ssb-08487`, published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows the publisher, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=ssb-08487.';
+COMMENT ON VIEW api_v1.indicators__ssb_08487 IS 'Per-source indicator data for ssb-08487, at the publisher''s own grain.
+
+Per-source indicator relation for `ssb-08487`, published at the grain the publisher
+actually uses rather than flattened into the cross-source views.
+🔴 stability:source — the column set here follows the publisher, not Atlas. If the
+publisher adds, renames or drops a dimension, this relation changes with it. That is
+the deliberate trade for getting the real grain; prefer a stability:curated relation
+if you need a shape Atlas promises to hold still. Decode codes through
+meta_dimensions filtered to source_id=ssb-08487.';
 COMMENT ON COLUMN api_v1.indicators__ssb_08487.source_id IS 'Canonical catalogue identifier — always ssb-crime-tables for this Px bundle.';
 COMMENT ON COLUMN api_v1.indicators__ssb_08487.kommune_nr IS 'Derived 4-digit kommune code when Gjerningssted is exactly one active kommune row; otherwise NULL for higher aggregates / historical codes ending in 99.';
 COMMENT ON COLUMN api_v1.indicators__ssb_08487.region_code IS 'Raw SSB region identifier for the row — kommune, fylke, police district or country. Kept as its own column because 08487 mixes those levels and the last two fit neither kommune_nr nor fylke_nr. Part of the model''s natural key.';
@@ -1743,7 +2004,15 @@ COMMENT ON COLUMN api_v1.indicators__ssb_08487.updated_at IS 'ingest `loaded_at`
 
 -- indicators__ssb_08764  ←  marts.mart_indicators__ssb_08764
 CREATE OR REPLACE VIEW api_v1.indicators__ssb_08764 AS SELECT * FROM marts.mart_indicators__ssb_08764;
-COMMENT ON VIEW api_v1.indicators__ssb_08764 IS 'Per-source indicator relation for `ssb-08764` (Statistisk sentralbyrå), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Statistisk sentralbyrå, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=ssb-08764.';
+COMMENT ON VIEW api_v1.indicators__ssb_08764 IS 'Per-source indicator data for ssb-08764 (Statistisk sentralbyrå), at the publisher''s own grain.
+
+Per-source indicator relation for `ssb-08764` (Statistisk sentralbyrå), published at the grain the publisher
+actually uses rather than flattened into the cross-source views.
+🔴 stability:source — the column set here follows Statistisk sentralbyrå, not Atlas. If the
+publisher adds, renames or drops a dimension, this relation changes with it. That is
+the deliberate trade for getting the real grain; prefer a stability:curated relation
+if you need a shape Atlas promises to hold still. Decode codes through
+meta_dimensions filtered to source_id=ssb-08764.';
 COMMENT ON COLUMN api_v1.indicators__ssb_08764.source_id IS 'Atlas source identifier for the upstream table this row came from — the same id used by meta_sources and meta_dimensions.';
 COMMENT ON COLUMN api_v1.indicators__ssb_08764.region_code IS 'SSB region code — kommune, fylke, nasjon, or historical variant.';
 COMMENT ON COLUMN api_v1.indicators__ssb_08764.kommune_nr IS '4-digit kommune code, derived via region_code_to_kommune_nr. NULL for every region that is not a municipality. ⚠️ Not a bare four-digit match — that is what once called Svalbard, Jan Mayen and the continental shelf municipalities.';
@@ -1757,7 +2026,15 @@ COMMENT ON COLUMN api_v1.indicators__ssb_08764.updated_at IS 'When Atlas last lo
 
 -- indicators__ssb_09405  ←  marts.mart_indicators__ssb_09405
 CREATE OR REPLACE VIEW api_v1.indicators__ssb_09405 AS SELECT * FROM marts.mart_indicators__ssb_09405;
-COMMENT ON VIEW api_v1.indicators__ssb_09405 IS 'Per-source indicator relation for `ssb-09405`, published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows the publisher, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=ssb-09405.';
+COMMENT ON VIEW api_v1.indicators__ssb_09405 IS 'Per-source indicator data for ssb-09405, at the publisher''s own grain.
+
+Per-source indicator relation for `ssb-09405`, published at the grain the publisher
+actually uses rather than flattened into the cross-source views.
+🔴 stability:source — the column set here follows the publisher, not Atlas. If the
+publisher adds, renames or drops a dimension, this relation changes with it. That is
+the deliberate trade for getting the real grain; prefer a stability:curated relation
+if you need a shape Atlas promises to hold still. Decode codes through
+meta_dimensions filtered to source_id=ssb-09405.';
 COMMENT ON COLUMN api_v1.indicators__ssb_09405.source_id IS 'Canonical catalogue identifier — ssb-crime-tables Px bundle row.';
 COMMENT ON COLUMN api_v1.indicators__ssb_09405.kommune_nr IS 'Always NULL — Px table publishes national aggregates only.';
 COMMENT ON COLUMN api_v1.indicators__ssb_09405.fylke_nr IS 'Always NULL.';
@@ -1770,7 +2047,15 @@ COMMENT ON COLUMN api_v1.indicators__ssb_09405.updated_at IS 'ingest `loaded_at`
 
 -- indicators__ssb_09406  ←  marts.mart_indicators__ssb_09406
 CREATE OR REPLACE VIEW api_v1.indicators__ssb_09406 AS SELECT * FROM marts.mart_indicators__ssb_09406;
-COMMENT ON VIEW api_v1.indicators__ssb_09406 IS 'Per-source indicator relation for `ssb-09406`, published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows the publisher, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=ssb-09406.';
+COMMENT ON VIEW api_v1.indicators__ssb_09406 IS 'Per-source indicator data for ssb-09406, at the publisher''s own grain.
+
+Per-source indicator relation for `ssb-09406`, published at the grain the publisher
+actually uses rather than flattened into the cross-source views.
+🔴 stability:source — the column set here follows the publisher, not Atlas. If the
+publisher adds, renames or drops a dimension, this relation changes with it. That is
+the deliberate trade for getting the real grain; prefer a stability:curated relation
+if you need a shape Atlas promises to hold still. Decode codes through
+meta_dimensions filtered to source_id=ssb-09406.';
 COMMENT ON COLUMN api_v1.indicators__ssb_09406.source_id IS 'Canonical catalogue identifier — ssb-crime-tables Px bundle row.';
 COMMENT ON COLUMN api_v1.indicators__ssb_09406.kommune_nr IS 'Always NULL —Px table publishes national aggregates only.';
 COMMENT ON COLUMN api_v1.indicators__ssb_09406.fylke_nr IS 'Always NULL.';
@@ -1783,7 +2068,15 @@ COMMENT ON COLUMN api_v1.indicators__ssb_09406.updated_at IS 'ingest `loaded_at`
 
 -- indicators__ssb_09429  ←  marts.mart_indicators__ssb_09429
 CREATE OR REPLACE VIEW api_v1.indicators__ssb_09429 AS SELECT * FROM marts.mart_indicators__ssb_09429;
-COMMENT ON VIEW api_v1.indicators__ssb_09429 IS 'Per-source indicator relation for `ssb-09429` (Statistisk sentralbyrå), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Statistisk sentralbyrå, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=ssb-09429.';
+COMMENT ON VIEW api_v1.indicators__ssb_09429 IS 'Per-source indicator data for ssb-09429 (Statistisk sentralbyrå), at the publisher''s own grain.
+
+Per-source indicator relation for `ssb-09429` (Statistisk sentralbyrå), published at the grain the publisher
+actually uses rather than flattened into the cross-source views.
+🔴 stability:source — the column set here follows Statistisk sentralbyrå, not Atlas. If the
+publisher adds, renames or drops a dimension, this relation changes with it. That is
+the deliberate trade for getting the real grain; prefer a stability:curated relation
+if you need a shape Atlas promises to hold still. Decode codes through
+meta_dimensions filtered to source_id=ssb-09429.';
 COMMENT ON COLUMN api_v1.indicators__ssb_09429.source_id IS 'Atlas source identifier for the upstream table this row came from — the same id used by meta_sources and meta_dimensions.';
 COMMENT ON COLUMN api_v1.indicators__ssb_09429.region_code IS 'The publisher''s own region code, verbatim. It may be a kommune, fylke, bydel or national code depending on what that publisher emits; region_kind says which.';
 COMMENT ON COLUMN api_v1.indicators__ssb_09429.kommune_nr IS '4-digit kommune code, derived via region_code_to_kommune_nr. NULL for every region that is not a municipality. ⚠️ Not a bare four-digit match — that is what once called Svalbard, Jan Mayen and the continental shelf municipalities.';
@@ -1801,7 +2094,15 @@ COMMENT ON COLUMN api_v1.indicators__ssb_09429.updated_at IS 'When Atlas last lo
 
 -- indicators__ssb_10826  ←  marts.mart_indicators__ssb_10826
 CREATE OR REPLACE VIEW api_v1.indicators__ssb_10826 AS SELECT * FROM marts.mart_indicators__ssb_10826;
-COMMENT ON VIEW api_v1.indicators__ssb_10826 IS 'Per-source indicator relation for `ssb-10826` (Statistisk sentralbyrå), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Statistisk sentralbyrå, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=ssb-10826.';
+COMMENT ON VIEW api_v1.indicators__ssb_10826 IS 'Per-source indicator data for ssb-10826 (Statistisk sentralbyrå), at the publisher''s own grain.
+
+Per-source indicator relation for `ssb-10826` (Statistisk sentralbyrå), published at the grain the publisher
+actually uses rather than flattened into the cross-source views.
+🔴 stability:source — the column set here follows Statistisk sentralbyrå, not Atlas. If the
+publisher adds, renames or drops a dimension, this relation changes with it. That is
+the deliberate trade for getting the real grain; prefer a stability:curated relation
+if you need a shape Atlas promises to hold still. Decode codes through
+meta_dimensions filtered to source_id=ssb-10826.';
 COMMENT ON COLUMN api_v1.indicators__ssb_10826.source_id IS 'Atlas source identifier for the upstream table this row came from — the same id used by meta_sources and meta_dimensions.';
 COMMENT ON COLUMN api_v1.indicators__ssb_10826.region_code IS 'SSB Region code for city-total, bydel, unknown-bydel, and historical-bydel rows.';
 COMMENT ON COLUMN api_v1.indicators__ssb_10826.region_label IS 'Human-readable SSB Region label.';
@@ -1821,7 +2122,15 @@ COMMENT ON COLUMN api_v1.indicators__ssb_10826.updated_at IS 'When Atlas last lo
 
 -- indicators__ssb_12063  ←  marts.mart_indicators__ssb_12063
 CREATE OR REPLACE VIEW api_v1.indicators__ssb_12063 AS SELECT * FROM marts.mart_indicators__ssb_12063;
-COMMENT ON VIEW api_v1.indicators__ssb_12063 IS 'Per-source indicator relation for `ssb-12063` (Statistisk sentralbyrå), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Statistisk sentralbyrå, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=ssb-12063.';
+COMMENT ON VIEW api_v1.indicators__ssb_12063 IS 'Per-source indicator data for ssb-12063 (Statistisk sentralbyrå), at the publisher''s own grain.
+
+Per-source indicator relation for `ssb-12063` (Statistisk sentralbyrå), published at the grain the publisher
+actually uses rather than flattened into the cross-source views.
+🔴 stability:source — the column set here follows Statistisk sentralbyrå, not Atlas. If the
+publisher adds, renames or drops a dimension, this relation changes with it. That is
+the deliberate trade for getting the real grain; prefer a stability:curated relation
+if you need a shape Atlas promises to hold still. Decode codes through
+meta_dimensions filtered to source_id=ssb-12063.';
 COMMENT ON COLUMN api_v1.indicators__ssb_12063.source_id IS 'Atlas source identifier for the upstream table this row came from — the same id used by meta_sources and meta_dimensions.';
 COMMENT ON COLUMN api_v1.indicators__ssb_12063.region_code IS 'The publisher''s own region code, verbatim. It may be a kommune, fylke, bydel or national code depending on what that publisher emits; region_kind says which.';
 COMMENT ON COLUMN api_v1.indicators__ssb_12063.kommune_nr IS '4-digit kommune code, derived via region_code_to_kommune_nr. NULL for every region that is not a municipality. ⚠️ Not a bare four-digit match — that is what once called Svalbard, Jan Mayen and the continental shelf municipalities.';
@@ -1835,7 +2144,15 @@ COMMENT ON COLUMN api_v1.indicators__ssb_12063.updated_at IS 'When Atlas last lo
 
 -- indicators__ssb_12131  ←  marts.mart_indicators__ssb_12131
 CREATE OR REPLACE VIEW api_v1.indicators__ssb_12131 AS SELECT * FROM marts.mart_indicators__ssb_12131;
-COMMENT ON VIEW api_v1.indicators__ssb_12131 IS 'Per-source indicator relation for `ssb-12131` (Statistisk sentralbyrå), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Statistisk sentralbyrå, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=ssb-12131.';
+COMMENT ON VIEW api_v1.indicators__ssb_12131 IS 'Per-source indicator data for ssb-12131 (Statistisk sentralbyrå), at the publisher''s own grain.
+
+Per-source indicator relation for `ssb-12131` (Statistisk sentralbyrå), published at the grain the publisher
+actually uses rather than flattened into the cross-source views.
+🔴 stability:source — the column set here follows Statistisk sentralbyrå, not Atlas. If the
+publisher adds, renames or drops a dimension, this relation changes with it. That is
+the deliberate trade for getting the real grain; prefer a stability:curated relation
+if you need a shape Atlas promises to hold still. Decode codes through
+meta_dimensions filtered to source_id=ssb-12131.';
 COMMENT ON COLUMN api_v1.indicators__ssb_12131.source_id IS 'Atlas source identifier for the upstream table this row came from — the same id used by meta_sources and meta_dimensions.';
 COMMENT ON COLUMN api_v1.indicators__ssb_12131.region_code IS 'The publisher''s own region code, verbatim. It may be a kommune, fylke, bydel or national code depending on what that publisher emits; region_kind says which.';
 COMMENT ON COLUMN api_v1.indicators__ssb_12131.kommune_nr IS '4-digit kommune code, derived via region_code_to_kommune_nr. NULL for every region that is not a municipality. ⚠️ Not a bare four-digit match — that is what once called Svalbard, Jan Mayen and the continental shelf municipalities.';
@@ -1849,7 +2166,15 @@ COMMENT ON COLUMN api_v1.indicators__ssb_12131.updated_at IS 'When Atlas last lo
 
 -- indicators__ssb_12132  ←  marts.mart_indicators__ssb_12132
 CREATE OR REPLACE VIEW api_v1.indicators__ssb_12132 AS SELECT * FROM marts.mart_indicators__ssb_12132;
-COMMENT ON VIEW api_v1.indicators__ssb_12132 IS 'Per-source indicator relation for `ssb-12132` (Statistisk sentralbyrå), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Statistisk sentralbyrå, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=ssb-12132.';
+COMMENT ON VIEW api_v1.indicators__ssb_12132 IS 'Per-source indicator data for ssb-12132 (Statistisk sentralbyrå), at the publisher''s own grain.
+
+Per-source indicator relation for `ssb-12132` (Statistisk sentralbyrå), published at the grain the publisher
+actually uses rather than flattened into the cross-source views.
+🔴 stability:source — the column set here follows Statistisk sentralbyrå, not Atlas. If the
+publisher adds, renames or drops a dimension, this relation changes with it. That is
+the deliberate trade for getting the real grain; prefer a stability:curated relation
+if you need a shape Atlas promises to hold still. Decode codes through
+meta_dimensions filtered to source_id=ssb-12132.';
 COMMENT ON COLUMN api_v1.indicators__ssb_12132.source_id IS 'Atlas source identifier for the upstream table this row came from — the same id used by meta_sources and meta_dimensions.';
 COMMENT ON COLUMN api_v1.indicators__ssb_12132.region_code IS 'The publisher''s own region code, verbatim. It may be a kommune, fylke, bydel or national code depending on what that publisher emits; region_kind says which.';
 COMMENT ON COLUMN api_v1.indicators__ssb_12132.kommune_nr IS '4-digit kommune code, derived via region_code_to_kommune_nr. NULL for every region that is not a municipality. ⚠️ Not a bare four-digit match — that is what once called Svalbard, Jan Mayen and the continental shelf municipalities.';
@@ -1863,7 +2188,15 @@ COMMENT ON COLUMN api_v1.indicators__ssb_12132.updated_at IS 'When Atlas last lo
 
 -- indicators__ssb_12292  ←  marts.mart_indicators__ssb_12292
 CREATE OR REPLACE VIEW api_v1.indicators__ssb_12292 AS SELECT * FROM marts.mart_indicators__ssb_12292;
-COMMENT ON VIEW api_v1.indicators__ssb_12292 IS 'Per-source indicator relation for `ssb-12292` (Statistisk sentralbyrå), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Statistisk sentralbyrå, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=ssb-12292.';
+COMMENT ON VIEW api_v1.indicators__ssb_12292 IS 'Per-source indicator data for ssb-12292 (Statistisk sentralbyrå), at the publisher''s own grain.
+
+Per-source indicator relation for `ssb-12292` (Statistisk sentralbyrå), published at the grain the publisher
+actually uses rather than flattened into the cross-source views.
+🔴 stability:source — the column set here follows Statistisk sentralbyrå, not Atlas. If the
+publisher adds, renames or drops a dimension, this relation changes with it. That is
+the deliberate trade for getting the real grain; prefer a stability:curated relation
+if you need a shape Atlas promises to hold still. Decode codes through
+meta_dimensions filtered to source_id=ssb-12292.';
 COMMENT ON COLUMN api_v1.indicators__ssb_12292.source_id IS 'Atlas source identifier for the upstream table this row came from — the same id used by meta_sources and meta_dimensions.';
 COMMENT ON COLUMN api_v1.indicators__ssb_12292.region_code IS 'The publisher''s own region code, verbatim. It may be a kommune, fylke, bydel or national code depending on what that publisher emits; region_kind says which.';
 COMMENT ON COLUMN api_v1.indicators__ssb_12292.kommune_nr IS '4-digit kommune code, derived via region_code_to_kommune_nr. NULL for every region that is not a municipality. ⚠️ Not a bare four-digit match — that is what once called Svalbard, Jan Mayen and the continental shelf municipalities.';
@@ -1877,7 +2210,15 @@ COMMENT ON COLUMN api_v1.indicators__ssb_12292.updated_at IS 'When Atlas last lo
 
 -- indicators__ssb_12944  ←  marts.mart_indicators__ssb_12944
 CREATE OR REPLACE VIEW api_v1.indicators__ssb_12944 AS SELECT * FROM marts.mart_indicators__ssb_12944;
-COMMENT ON VIEW api_v1.indicators__ssb_12944 IS 'Per-source indicator relation for `ssb-12944` (Statistisk sentralbyrå), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Statistisk sentralbyrå, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=ssb-12944.';
+COMMENT ON VIEW api_v1.indicators__ssb_12944 IS 'Per-source indicator data for ssb-12944 (Statistisk sentralbyrå), at the publisher''s own grain.
+
+Per-source indicator relation for `ssb-12944` (Statistisk sentralbyrå), published at the grain the publisher
+actually uses rather than flattened into the cross-source views.
+🔴 stability:source — the column set here follows Statistisk sentralbyrå, not Atlas. If the
+publisher adds, renames or drops a dimension, this relation changes with it. That is
+the deliberate trade for getting the real grain; prefer a stability:curated relation
+if you need a shape Atlas promises to hold still. Decode codes through
+meta_dimensions filtered to source_id=ssb-12944.';
 COMMENT ON COLUMN api_v1.indicators__ssb_12944.region_code IS 'SSB region code.';
 COMMENT ON COLUMN api_v1.indicators__ssb_12944.source_id IS 'Atlas source identifier for the upstream table this row came from — the same id used by meta_sources and meta_dimensions.';
 COMMENT ON COLUMN api_v1.indicators__ssb_12944.kommune_nr IS '4-digit kommune code, derived via region_code_to_kommune_nr. NULL for every region that is not a municipality. ⚠️ Not a bare four-digit match — that is what once called Svalbard, Jan Mayen and the continental shelf municipalities.';
@@ -1896,7 +2237,15 @@ COMMENT ON COLUMN api_v1.indicators__ssb_12944.updated_at IS 'When Atlas last lo
 
 -- indicators__ssb_13995  ←  marts.mart_indicators__ssb_13995
 CREATE OR REPLACE VIEW api_v1.indicators__ssb_13995 AS SELECT * FROM marts.mart_indicators__ssb_13995;
-COMMENT ON VIEW api_v1.indicators__ssb_13995 IS 'Per-source indicator relation for `ssb-13995` (Statistisk sentralbyrå), published at the grain the publisher actually uses rather than flattened into the cross-source views. 🔴 stability:source — the column set here follows Statistisk sentralbyrå, not Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it. That is the deliberate trade for getting the real grain; prefer a stability:curated relation if you need a shape Atlas promises to hold still. Decode codes through meta_dimensions filtered to source_id=ssb-13995.';
+COMMENT ON VIEW api_v1.indicators__ssb_13995 IS 'Per-source indicator data for ssb-13995 (Statistisk sentralbyrå), at the publisher''s own grain.
+
+Per-source indicator relation for `ssb-13995` (Statistisk sentralbyrå), published at the grain the publisher
+actually uses rather than flattened into the cross-source views.
+🔴 stability:source — the column set here follows Statistisk sentralbyrå, not Atlas. If the
+publisher adds, renames or drops a dimension, this relation changes with it. That is
+the deliberate trade for getting the real grain; prefer a stability:curated relation
+if you need a shape Atlas promises to hold still. Decode codes through
+meta_dimensions filtered to source_id=ssb-13995.';
 COMMENT ON COLUMN api_v1.indicators__ssb_13995.source_id IS 'Atlas source identifier for the upstream table this row came from — the same id used by meta_sources and meta_dimensions.';
 COMMENT ON COLUMN api_v1.indicators__ssb_13995.region_code IS 'The publisher''s own region code, verbatim. It may be a kommune, fylke, bydel or national code depending on what that publisher emits; region_kind says which.';
 COMMENT ON COLUMN api_v1.indicators__ssb_13995.kommune_nr IS '4-digit kommune code, derived via region_code_to_kommune_nr. NULL for every region that is not a municipality. ⚠️ Not a bare four-digit match — that is what once called Svalbard, Jan Mayen and the continental shelf municipalities.';
@@ -1910,7 +2259,9 @@ COMMENT ON COLUMN api_v1.indicators__ssb_13995.updated_at IS 'When Atlas last lo
 
 -- ingest_health  ←  marts.mart_ingest_health
 CREATE OR REPLACE VIEW api_v1.ingest_health AS SELECT * FROM marts.mart_ingest_health;
-COMMENT ON VIEW api_v1.ingest_health IS 'Per-source ingest-run health. One row per scraper or API-source,
+COMMENT ON VIEW api_v1.ingest_health IS 'One row per source: its most recent completed ingest run, and whether that run succeeded.
+
+Per-source ingest-run health. One row per scraper or API-source,
 showing the most recent COMPLETED run (finished_at IS NOT NULL).
 Minimal v1 surface per Q14 of
 INVESTIGATE-ngo-scraping-infrastructure.md — just the three columns
@@ -1929,9 +2280,10 @@ with the expected output shape missing.';
 
 -- kommune_befolkning_alder  ←  marts.mart_kommune_befolkning_alder
 CREATE OR REPLACE VIEW api_v1.kommune_befolkning_alder AS SELECT * FROM marts.mart_kommune_befolkning_alder;
-COMMENT ON VIEW api_v1.kommune_befolkning_alder IS 'Population by kommune, year and age band — the denominator layer.
-Published as api_v1.kommune_befolkning_alder.
+COMMENT ON VIEW api_v1.kommune_befolkning_alder IS 'Population by kommune, year and age band — the denominator layer for rates.
 
+Population by kommune, year and age band — the denominator layer.
+Published as api_v1.kommune_befolkning_alder.
 Built from SSB table 07459 (age and sex distribution), which Atlas
 has ingested and refreshed nightly for months while serving it to
 nobody: nothing downstream of raw read it, so `GET /ssb-07459`
@@ -1939,20 +2291,16 @@ returned 404. A consumer built its elderly-care view around care
 USERS rather than elderly RESIDENTS and wrote a README section
 apologising for it, noting the substitution flatters a kommune with
 a high threshold for granting services (urb-agents #1281).
-
 ⚠️ SIX BANDS SUM TO befolkning_total. TWO DO NOT — they are
 roll-ups of the six, provided because PostgREST has aggregates
 disabled and a consumer would otherwise add them client-side:
-
     sum to the total:  0_5 · 6_15 · 16_17 · 18_66 · 67_79 · 80_plus
     roll-ups:          0_17     = 0_5 + 6_15 + 16_17
                        67_plus  = 67_79 + 80_plus
-
 Bands rather than a single "elderly" threshold on purpose. 67 is
 defensible and it is still an editorial claim; publishing the bands
 leaves that claim with whoever makes it, and the same rows serve as
 the denominator for child poverty and working-age dependency.
-
 ⚠️ Counts are residents, not care recipients, and they are SSB''s
 register population at the start of the year — not an average over
 it. Historical kommune codes are excluded: only kommuner active
@@ -1988,21 +2336,20 @@ catch it if that ever stopped being true.';
 
 -- kommune_local_chapters  ←  marts.mart_kommune_local_chapters
 CREATE OR REPLACE VIEW api_v1.kommune_local_chapters AS SELECT * FROM marts.mart_kommune_local_chapters;
-COMMENT ON VIEW api_v1.kommune_local_chapters IS '🔵 EXPECTED EMPTY TODAY, AND THAT IS NOT A DEFECT. Its one row per local chapter, so it is empty until Red Cross chapter data is loaded.
+COMMENT ON VIEW api_v1.kommune_local_chapters IS 'One row per local chapter resolved to a kommune, with its NGO and category. Empty today.
+
+🔵 EXPECTED EMPTY TODAY, AND THAT IS NOT A DEFECT. Its one row per local chapter, so it is empty until Red Cross chapter data is loaded.
 Terje''s position, 2026-09-21: the Red Cross data is not coming now, it
 will be there later. The relation is published and answers so a consumer
 can build against its shape before the rows arrive.
-
 ⚠️ A consumer cannot tell "empty by design" from "broken" without being
 told, and two of these three were asked about on the day someone noticed
 (urb-agents #1351). If this relation is still empty and this note is
 gone, something regressed.
-
 Active local chapters in each kommune, decorated with the NGO
 name/brand and the service-category labels offered. Backs the
 kommune detail page (atlas-frontend /kommuner/[kommune_nr]);
 equivalent to listChaptersInKommune().
-
 **Important:** this view returns *multiple rows per chapter* —
 one per service category the chapter offers. A chapter that
 provides three service categories appears as three rows for the
@@ -2010,13 +2357,11 @@ same kommune_nr / chapter_id, with different
 service_category_code values. Consumers that want unique chapters
 should distinct on chapter_id (or aggregate service categories
 into an array client-side).
-
 GRAIN: one row per (kommune_nr, chapter_id,
 service_category_code), asserted by a test rather than only
 described here. It is neither one row per chapter nor one row per
 chapter-kommune coverage relation — a consumer told us those were
 the two shapes it would guess between (urb-agents #1289).
-
 PostgREST consumers filter via ?kommune_nr=eq.X. Inactive
 chapters, non-local chapters (regional, national), and chapters
 with NULL kommune_nr are excluded. ⚠️ Excluding regional chapters
@@ -2074,32 +2419,29 @@ on the row so consumers can sort without a separate query.';
 
 -- kommune_ngo_summary  ←  marts.mart_kommune_ngo_summary
 CREATE OR REPLACE VIEW api_v1.kommune_ngo_summary AS SELECT * FROM marts.mart_kommune_ngo_summary;
-COMMENT ON VIEW api_v1.kommune_ngo_summary IS 'Active voluntary organisations per kommune and ICNPO category —
+COMMENT ON VIEW api_v1.kommune_ngo_summary IS 'Active voluntary organisations per kommune and ICNPO category.
+
+Active voluntary organisations per kommune and ICNPO category —
 the number a consumer previously had to download the whole
 register to compute. Published as api_v1.kommune_ngo_summary.
-
 PostgREST has aggregates disabled, so `?select=count()` returns
 400 and the only alternatives were ~15 minutes of per-kommune
 probes or a 2.8 MB CSV on every page load. One consumer shipped
 the download (urb-agents #1250, finding 1); this replaces it with
 ~12 000 rows.
-
 ⚠️ Counts here will NOT match a count over brreg_enhet. 7 488 of
 72 792 active voluntary units (10.3 %) carry no kommune_nr — that
 is what Brreg publishes — and cannot be attributed to a
 municipality. A handful more sit on codes outside the 357 active
 kommuner and are dropped by the join.
-
 A (kommune, category) pair absent from this view has zero
 organisations; rows are not emitted for empty combinations.
-
 ⚠️ CHANGED 2026-09-21: SSB''s 9999 ''Uoppgitt'' is no longer
 included. It is a current code, so `is_active` never excluded it,
 and this relation had been reporting a place that does not exist.
 Counts drop by that row. `dim_kommune` still carries 9999 — the
 dimension mirrors SSB''s list — and the value is published in
 `unattributed_totals` (urb-agents #1301).
-
 ⚠️ COST, AND ONE LOAD-BEARING DEPENDENCY. Measured end-to-end
 against the live API: 0.12 s filtered by kommune_nr, 0.205-0.326 s
 unfiltered for all rows. Before the covering index on
@@ -2119,27 +2461,25 @@ Always >= 1; absent combinations mean zero.';
 
 -- kommune_ngo_totals  ←  marts.mart_kommune_ngo_totals
 CREATE OR REPLACE VIEW api_v1.kommune_ngo_totals AS SELECT * FROM marts.mart_kommune_ngo_totals;
-COMMENT ON VIEW api_v1.kommune_ngo_totals IS 'One row per kommune: how many active voluntary organisations are
+COMMENT ON VIEW api_v1.kommune_ngo_totals IS 'One row per kommune: how many active voluntary organisations are registered there.
+
+One row per kommune: how many active voluntary organisations are
 registered there. 357 rows instead of the ~5 400 in
 kommune_ngo_summary. Published as api_v1.kommune_ngo_totals.
-
 Exists because PostgREST cannot sum — `?select=active_count.sum()`
 returns PGRST123, aggregates are disabled — so a consumer wanting
 one number per kommune otherwise fetches every category row and
 adds them client-side. That was most of a cold page load
 (urb-agents #1265).
-
 ⚠️ Counts exclude the 10.3 % of active voluntary units carrying no
 kommune_nr, exactly as kommune_ngo_summary does. Summing this gives
 the placed total, not the register total.
-
 ⚠️ CHANGED 2026-09-21: SSB''s 9999 ''Uoppgitt'' is no longer
 included. It is a current code, so `is_active` never excluded it,
 and this relation had been reporting a place that does not exist.
 Counts drop by that row. `dim_kommune` still carries 9999 — the
 dimension mirrors SSB''s list — and the value is published in
 `unattributed_totals` (urb-agents #1301).
-
 ⚠️ COST, AND ONE LOAD-BEARING DEPENDENCY. Measured end-to-end
 against the live API: 0.12 s filtered by kommune_nr, 0.205-0.326 s
 unfiltered for all rows. Before the covering index on
@@ -2154,12 +2494,13 @@ no row.';
 
 -- meta_dimensions  ←  marts.mart_meta_dimensions
 CREATE OR REPLACE VIEW api_v1.meta_dimensions AS SELECT * FROM marts.mart_meta_dimensions;
-COMMENT ON VIEW api_v1.meta_dimensions IS 'Per-source × per-dimension catalogue. Backs the "what does this
+COMMENT ON VIEW api_v1.meta_dimensions IS 'One row per source and coded dimension, explaining what that column''s codes mean.
+
+Per-source × per-dimension catalogue. Backs the "what does this
 column mean" panel on `/data/sources/[source_id]` (customer
 frontend, PLAN-007 phase 4) and exposes editorial semantics
 shoppers would otherwise have to leave Atlas to find on the
 upstream''s docs site.
-
 v1 scope (this PR): editorial pass-through over the
 `_sources_dimensions` seed (4 columns: `meaning`, `value_format`,
 `notes`). The `cardinality`, `example_values`, and `null_count`
@@ -2168,7 +2509,6 @@ columns from PLAN-007 phase 3.4''s full spec require introspecting
 to a follow-up PR. See `mart_meta_dimensions.sql` header for the
 open question (Jinja loop vs separate Python extract script vs
 per-source `column_name:` field in manifest.yml).
-
 Row count = same as `_sources_dimensions` (~216, growing with
 every new source × upstream-dimension).';
 COMMENT ON COLUMN api_v1.meta_dimensions.source_id IS 'Source the dimension belongs to. Joins to
@@ -2188,12 +2528,13 @@ filtering decisions. Empty string when no notes apply.';
 
 -- meta_endpoints  ←  marts.mart_meta_endpoints
 CREATE OR REPLACE VIEW api_v1.meta_endpoints AS SELECT * FROM marts.mart_meta_endpoints;
-COMMENT ON VIEW api_v1.meta_endpoints IS 'One row per queryable Atlas endpoint, with tags inherited from
+COMMENT ON VIEW api_v1.meta_endpoints IS 'One row per queryable endpoint, with filterable tags. The index of this API.
+
+One row per queryable Atlas endpoint, with tags inherited from
 upstream sources via the lineage graph and a `layer:<schema>` tag
 from the schema. Wraps to `api_v1.meta_endpoints` and backs the
 tag-filter catalogue at `/data` in the customer frontend
 (PLAN-007 phase 4).
-
 🔵 THIS IS THE INDEX, SO IT SAYS WHERE THE OTHER TWO CATALOGUES
 ARE: `meta_sources` for one row per ingest source (licence,
 publisher, freshness), and `meta_dimensions` for one row per
@@ -2201,13 +2542,11 @@ source × upstream dimension — what each coded column means and
 its value format. A consumer enumerating relations here should
 not have to read 19 descriptions to discover the second one
 (urb-agents #1335).
-
 Includes endpoints from `api_v1.*`, `marts.*`, and `raw.*`
 (Atlas''s three open-by-default schemas; `private_marts.*` stays
 auth-gated and is excluded). Skips internal seeds prefixed `_`
 (`_sources_manifest`, `_sources_dimensions`) and any `dbt_*`
 diagnostic tables.
-
 Tag inheritance uses the **union** rule: a `mart_*` derived from
 many sources picks up every source''s `provider:`, `topic:`,
 `geo:`, `cadence:`, and `eu_theme:` tag, deduped. Filter
@@ -2268,18 +2607,18 @@ was wrong (urb-agents #1288).';
 
 -- meta_sources  ←  marts.mart_meta_sources
 CREATE OR REPLACE VIEW api_v1.meta_sources AS SELECT * FROM marts.mart_meta_sources;
-COMMENT ON VIEW api_v1.meta_sources IS 'Per-source catalogue row — one per ingest source in
+COMMENT ON VIEW api_v1.meta_sources IS 'One row per ingested source: publisher, licence, coverage, freshness and what it feeds.
+
+Per-source catalogue row — one per ingest source in
 `_sources_manifest`, joined to `raw.ingest_runs` aggregates so
 consumers see freshness alongside the static metadata. Wraps to
 `api_v1.meta_sources` and backs `/data/sources` in the customer
 frontend (PLAN-007 phase 4).
-
 🔴 THIS RELATION DESCRIBES A SOURCE, NOT ITS COLUMNS. For what an
 upstream dimension MEANS — what `AAR` is, whether a code is a
 kommune, whether a year is a single year or a window — read
 `meta_dimensions`, one row per source × dimension with the
 upstream''s own words and the value format.
-
 ⚠️ THIS POINTER EXISTS BECAUSE ITS ABSENCE COST A DAY. On
 2026-09-21 a consumer read all 21 descriptions here, concluded
 "exactly two sources use multi-year windows", and shipped a wrong
@@ -2287,20 +2626,17 @@ year on a front page. `meta_dimensions` said `"3-year rolling
 cohort"` for a third the whole time. Reading every row of this
 relation is thorough and structurally incapable of answering a
 question about a dimension (urb-agents #1335).
-
 Tags column is a Postgres `text[]` carrying the four declared
 namespaces (`provider:`, `topic:`, `geo:`, `cadence:`) plus the
 `eu_theme:` namespace. The customer frontend renders each as a
 filter pill; PostgREST consumers filter via `?tags=cs.{"provider:ssb"}`
 — the quotes are required, because the value contains a colon.
-
 `last_ingested_at` and `last_upstream_update_at` come from
 `raw.ingest_runs` aggregated over successful (`exit_code = 0`)
 runs. Sources whose ingest module hasn''t yet captured the
 upstream''s "updated" field leave `last_upstream_update_at` NULL —
 that''s the design (`raw.ingest_runs.upstream_updated_at` is
 nullable per migration 028).
-
 `downstream_model_count` is the number of distinct dbt models
 that derive from this source via the `lineage` seed (Phase 3.3).
 0 for sources whose data hasn''t yet been wired into a mart.';
@@ -2457,31 +2793,28 @@ why this column had to be written at all.';
 
 -- ngo_index  ←  marts.mart_ngo_index
 CREATE OR REPLACE VIEW api_v1.ngo_index AS SELECT * FROM marts.mart_ngo_index;
-COMMENT ON VIEW api_v1.ngo_index IS '🔴 WHAT THIS RELATION DELIBERATELY DOES NOT CARRY. The demo consumer
+COMMENT ON VIEW api_v1.ngo_index IS 'One row per voluntary organisation Atlas tracks, with its identity, branding and focus.
+
+🔴 WHAT THIS RELATION DELIBERATELY DOES NOT CARRY. The demo consumer
 matches an organisation''s local units in Brønnøysundregistrene by a
 name SUBSTRING it maintains itself, and it asked Atlas explicitly NOT
 to publish that (urb-agents #1387):
-
   "That is a heuristic we invented and are answerable for;
    ngo_index has no such column and should not."
-
 🔵 The split it drew, and it is the right one: the ROSTER is ours —
 orgnr, canonical name, primary_focus, tier — and the MATCHING RULE is
 theirs. A published pattern column would make Atlas answerable for a
 guess it did not make, and would make one consumer''s heuristic look
 like a property of the organisation.
-
 ⚠️ THIS NOTE EXISTS BECAUSE THE OBVIOUS RESPONSE IS THE WRONG ONE.
 That consumer has now deleted three hardcoded copies of Atlas data in
 two days, and each time the right fix was to publish what it was
 copying — served_as for the unserved list, window_years for the
 windowed-years map. The reflex "it keeps a copy, so publish it" is
 correct twice and wrong here. It keeps this copy on purpose.
-
 One row per NGO in dim_ngo with chapter_count and has_supply
 decorations. Backs the NGO landing page (atlas-frontend /ngo) and
 is equivalent to the listNgos() inline query.
-
 chapter_count counts only active chapters (dim_chapter.is_active),
 so a defunct NGO sits at 0 even if its historical chapters are
 retained. has_supply is the convenience boolean (chapter_count > 0).
@@ -2545,12 +2878,13 @@ side of Atlas.';
 
 -- ngo_overview  ←  marts.mart_ngo_overview
 CREATE OR REPLACE VIEW api_v1.ngo_overview AS SELECT * FROM marts.mart_ngo_overview;
-COMMENT ON VIEW api_v1.ngo_overview IS 'One row per NGO in dim_ngo with the six count metrics shown on
+COMMENT ON VIEW api_v1.ngo_overview IS 'One row per NGO with its six headline counts, precomputed for the per-NGO page.
+
+One row per NGO in dim_ngo with the six count metrics shown on
 the per-NGO landing page (atlas-frontend /ngo/[slug]).
 Equivalent to the getNgoOverview() inline query, but precomputed
 for all NGOs so PostgREST projects it as a single endpoint
 consumers filter via ?orgnr=eq.X.
-
 Counts include both active and inactive chapters in the
 level-specific buckets (national/regional/local). kommune_count
 counts distinct kommune_nr only across *active* local chapters,
@@ -2568,7 +2902,12 @@ questions.';
 
 -- ref_atlas_service_category  ←  marts.mart_ref_atlas_service_category
 CREATE OR REPLACE VIEW api_v1.ref_atlas_service_category AS SELECT * FROM marts.mart_ref_atlas_service_category;
-COMMENT ON VIEW api_v1.ref_atlas_service_category IS '⚠️ ATLAS''S OWN VOCABULARY, NOT AN UPSTREAM STANDARD — the only list here that is Atlas''s editorial judgement rather than another body''s published standard. It exists because no Norwegian authority publishes a cross-NGO service taxonomy. The other eight lists are citable to their publisher; this one is citable to Atlas. 22 rows.';
+COMMENT ON VIEW api_v1.ref_atlas_service_category IS 'Atlas''s own cross-NGO service vocabulary, 22 categories. Not an upstream standard.
+
+⚠️ ATLAS''S OWN VOCABULARY, NOT AN UPSTREAM STANDARD — the only list here that is
+Atlas''s editorial judgement rather than another body''s published standard. It exists
+because no Norwegian authority publishes a cross-NGO service taxonomy. The other eight
+lists are citable to their publisher; this one is citable to Atlas. 22 rows.';
 COMMENT ON COLUMN api_v1.ref_atlas_service_category.code IS 'Atlas''s category code. Referenced by each NGO''s dim_activity row.';
 COMMENT ON COLUMN api_v1.ref_atlas_service_category.label_no IS 'The Norwegian label, as its publisher writes it. Atlas does not translate or normalise upstream label text.';
 COMMENT ON COLUMN api_v1.ref_atlas_service_category.label_en IS 'The English label where the publisher provides one.';
@@ -2577,7 +2916,11 @@ COMMENT ON COLUMN api_v1.ref_atlas_service_category.sort_order IS 'The publisher
 
 -- ref_brreg_icnpo  ←  marts.mart_ref_brreg_icnpo
 CREATE OR REPLACE VIEW api_v1.ref_brreg_icnpo AS SELECT * FROM marts.mart_ref_brreg_icnpo;
-COMMENT ON VIEW api_v1.ref_brreg_icnpo IS 'ICNPO categories from Brreg''s Frivillighetsregister: 14 main groups + 32 subgroups = 46 rows. 🔵 This is the decoder for the ICNPO code a consumer can already read out of kommune_ngo_summary and, until now, could not turn into a name.';
+COMMENT ON VIEW api_v1.ref_brreg_icnpo IS 'Decoder for the ICNPO category codes in kommune_ngo_summary: 14 groups and 32 subgroups.
+
+ICNPO categories from Brreg''s Frivillighetsregister: 14 main groups + 32 subgroups =
+46 rows. 🔵 This is the decoder for the ICNPO code a consumer can already read out of
+kommune_ngo_summary and, until now, could not turn into a name.';
 COMMENT ON COLUMN api_v1.ref_brreg_icnpo.code IS 'The ICNPO code.';
 COMMENT ON COLUMN api_v1.ref_brreg_icnpo.parent_code IS 'Null on a main group; the group''s code on a subgroup. Lets a consumer walk the hierarchy without a second request.';
 COMMENT ON COLUMN api_v1.ref_brreg_icnpo.label_no IS 'The Norwegian label, as its publisher writes it. Atlas does not translate or normalise upstream label text.';
@@ -2586,7 +2929,15 @@ COMMENT ON COLUMN api_v1.ref_brreg_icnpo.sort_order IS 'The publisher''s own dis
 
 -- ref_fhi_innvkat  ←  marts.mart_ref_fhi_innvkat
 CREATE OR REPLACE VIEW api_v1.ref_fhi_innvkat AS SELECT * FROM marts.mart_ref_fhi_innvkat;
-COMMENT ON VIEW api_v1.ref_fhi_innvkat IS '🔴 ONE ROW — code ''0'', ''totalt'' — and that is correct. It decodes INNVKAT as it appears in FHI table 360 (fhi_vgs_gjennomforing), where the dimension is collapsed and always ''0''; a relationships test on indicators__fhi_vgs_gjennomforing enforces that. ⚠️ IT DOES NOT DECODE indicators__fhi_innvkat, which comes from FHI table 932 and holds ''2'', ''3'' and ''23''. Joining it to that column returns nothing. Those three codes are published at /meta_dimensions?source_id=eq.fhi-innvkat&code=eq.INNVKAT (verified 2026-09-25). Said here because the two names differ by nothing a consumer would notice.';
+COMMENT ON VIEW api_v1.ref_fhi_innvkat IS 'Decoder for FHI table 360''s INNVKAT dimension, which holds only ''0''. Not for table 932.
+
+🔴 ONE ROW — code ''0'', ''totalt'' — and that is correct. It decodes INNVKAT as it appears
+in FHI table 360 (fhi_vgs_gjennomforing), where the dimension is collapsed and always
+''0''; a relationships test on indicators__fhi_vgs_gjennomforing enforces that.
+⚠️ IT DOES NOT DECODE indicators__fhi_innvkat, which comes from FHI table 932 and holds
+''2'', ''3'' and ''23''. Joining it to that column returns nothing. Those three codes are
+published at /meta_dimensions?source_id=eq.fhi-innvkat&code=eq.INNVKAT (verified
+2026-09-25). Said here because the two names differ by nothing a consumer would notice.';
 COMMENT ON COLUMN api_v1.ref_fhi_innvkat.code IS 'FHI''s INNVKAT code as used by table 360 — ''0'' only.';
 COMMENT ON COLUMN api_v1.ref_fhi_innvkat.label_no IS 'The Norwegian label, as its publisher writes it. Atlas does not translate or normalise upstream label text.';
 COMMENT ON COLUMN api_v1.ref_fhi_innvkat.label_en IS 'The English label where the publisher provides one. ⚠️ Empty: FHI publishes this label in Norwegian only.';
@@ -2594,7 +2945,10 @@ COMMENT ON COLUMN api_v1.ref_fhi_innvkat.sort_order IS 'The publisher''s own dis
 
 -- ref_fhi_utdann  ←  marts.mart_ref_fhi_utdann
 CREATE OR REPLACE VIEW api_v1.ref_fhi_utdann AS SELECT * FROM marts.mart_ref_fhi_utdann;
-COMMENT ON VIEW api_v1.ref_fhi_utdann IS 'FHI UTDANN (education-level) labels. ⚠️ In fhi_vgs_gjennomforing this dimension is the PARENTS'' education, not the pupil''s — that relation aliases it `parents_education`.';
+COMMENT ON VIEW api_v1.ref_fhi_utdann IS 'Decoder for FHI''s education-level codes; in vgs_gjennomforing this is the parents'' education.
+
+FHI UTDANN (education-level) labels. ⚠️ In fhi_vgs_gjennomforing this dimension is the
+PARENTS'' education, not the pupil''s — that relation aliases it `parents_education`.';
 COMMENT ON COLUMN api_v1.ref_fhi_utdann.code IS 'FHI''s UTDANN code.';
 COMMENT ON COLUMN api_v1.ref_fhi_utdann.label_no IS 'The Norwegian label, as its publisher writes it. Atlas does not translate or normalise upstream label text.';
 COMMENT ON COLUMN api_v1.ref_fhi_utdann.label_en IS 'The English label where the publisher provides one. ⚠️ Empty for every row: FHI publishes these in Norwegian only, and Atlas does not translate upstream values.';
@@ -2602,7 +2956,10 @@ COMMENT ON COLUMN api_v1.ref_fhi_utdann.sort_order IS 'The publisher''s own disp
 
 -- ref_region_kind  ←  marts.mart_ref_region_kind
 CREATE OR REPLACE VIEW api_v1.ref_region_kind AS SELECT * FROM marts.mart_ref_region_kind;
-COMMENT ON VIEW api_v1.ref_region_kind IS 'What kind of region a region_code denotes — the decoder for the `region_kind` column that several indicator relations already expose.';
+COMMENT ON VIEW api_v1.ref_region_kind IS 'Decoder for region_kind: what a region code denotes, and whether it is a real kommune.
+
+What kind of region a region_code denotes — the decoder for the `region_kind` column
+that several indicator relations already expose.';
 COMMENT ON COLUMN api_v1.ref_region_kind.region_kind IS 'The kind value as it appears in the indicator relations.';
 COMMENT ON COLUMN api_v1.ref_region_kind.code_pattern IS 'The regular expression Atlas classifies by, published so a consumer can read the rule rather than infer it from examples.';
 COMMENT ON COLUMN api_v1.ref_region_kind.is_kommune IS 'Whether this kind is a real municipality. 🔴 Not the same question as ''does the code look like a kommune_nr'' — the pseudo-codes are the reason this column exists.';
@@ -2612,7 +2969,10 @@ COMMENT ON COLUMN api_v1.ref_region_kind.sort_order IS 'The publisher''s own dis
 
 -- ref_ssb_family_type  ←  marts.mart_ref_ssb_family_type
 CREATE OR REPLACE VIEW api_v1.ref_ssb_family_type AS SELECT * FROM marts.mart_ref_ssb_family_type;
-COMMENT ON VIEW api_v1.ref_ssb_family_type IS 'SSB family-type codes. ⚠️ Family type and household type are different classifications with similar-looking codes — see ref_ssb_household_type, and do not join one to the other.';
+COMMENT ON VIEW api_v1.ref_ssb_family_type IS 'Decoder for SSB''s family-type codes.
+
+SSB family-type codes. ⚠️ Family type and household type are different classifications
+with similar-looking codes — see ref_ssb_household_type, and do not join one to the other.';
 COMMENT ON COLUMN api_v1.ref_ssb_family_type.code IS 'SSB''s family-type code, as published.';
 COMMENT ON COLUMN api_v1.ref_ssb_family_type.label_no IS 'The Norwegian label, as its publisher writes it. Atlas does not translate or normalise upstream label text.';
 COMMENT ON COLUMN api_v1.ref_ssb_family_type.label_en IS 'The English label where the publisher provides one.';
@@ -2620,7 +2980,10 @@ COMMENT ON COLUMN api_v1.ref_ssb_family_type.sort_order IS 'The publisher''s own
 
 -- ref_ssb_household_type  ←  marts.mart_ref_ssb_household_type
 CREATE OR REPLACE VIEW api_v1.ref_ssb_household_type AS SELECT * FROM marts.mart_ref_ssb_household_type;
-COMMENT ON VIEW api_v1.ref_ssb_household_type IS 'SSB household-type codes. ⚠️ Codes are ZERO-PADDED TEXT (''0000'', ''0001''), not integers: a consumer casting them to int and back loses the padding and matches nothing.';
+COMMENT ON VIEW api_v1.ref_ssb_household_type IS 'Decoder for SSB''s household-type codes, which are zero-padded text.
+
+SSB household-type codes. ⚠️ Codes are ZERO-PADDED TEXT (''0000'', ''0001''), not integers:
+a consumer casting them to int and back loses the padding and matches nothing.';
 COMMENT ON COLUMN api_v1.ref_ssb_household_type.code IS 'SSB''s household-type code, zero-padded text exactly as published.';
 COMMENT ON COLUMN api_v1.ref_ssb_household_type.label_no IS 'The Norwegian label, as its publisher writes it. Atlas does not translate or normalise upstream label text.';
 COMMENT ON COLUMN api_v1.ref_ssb_household_type.label_en IS 'The English label where the publisher provides one.';
@@ -2628,7 +2991,11 @@ COMMENT ON COLUMN api_v1.ref_ssb_household_type.sort_order IS 'The publisher''s 
 
 -- ref_ssb_nivaa  ←  marts.mart_ref_ssb_nivaa
 CREATE OR REPLACE VIEW api_v1.ref_ssb_nivaa AS SELECT * FROM marts.mart_ref_ssb_nivaa;
-COMMENT ON VIEW api_v1.ref_ssb_nivaa IS 'SSB NUS2000 education-level labels for table 09429. 7 codes. ⚠️ Sort by sort_order, not by code: upstream''s own ordering interleaves ''11'' (Fagskole) between ''02a'' and ''03a'', so the codes do not sort into the sequence they represent.';
+COMMENT ON VIEW api_v1.ref_ssb_nivaa IS 'Decoder for SSB''s NUS2000 education levels. Sort by sort_order, not by code.
+
+SSB NUS2000 education-level labels for table 09429. 7 codes.
+⚠️ Sort by sort_order, not by code: upstream''s own ordering interleaves ''11'' (Fagskole)
+between ''02a'' and ''03a'', so the codes do not sort into the sequence they represent.';
 COMMENT ON COLUMN api_v1.ref_ssb_nivaa.code IS 'The NUS2000 level code, e.g. ''02a'', ''11'', ''03a''.';
 COMMENT ON COLUMN api_v1.ref_ssb_nivaa.label_no IS 'The Norwegian label, as its publisher writes it. Atlas does not translate or normalise upstream label text.';
 COMMENT ON COLUMN api_v1.ref_ssb_nivaa.label_en IS 'The English label where the publisher provides one.';
@@ -2636,7 +3003,10 @@ COMMENT ON COLUMN api_v1.ref_ssb_nivaa.sort_order IS 'The publisher''s own displ
 
 -- ref_un_sdg  ←  marts.mart_ref_un_sdg
 CREATE OR REPLACE VIEW api_v1.ref_un_sdg AS SELECT * FROM marts.mart_ref_un_sdg;
-COMMENT ON VIEW api_v1.ref_un_sdg IS 'The 17 UN Sustainable Development Goals. Hand-curated and pinned — the goals do not change. The 169 sub-targets are not included; nothing in Atlas references them yet.';
+COMMENT ON VIEW api_v1.ref_un_sdg IS 'The 17 UN Sustainable Development Goals, with Norwegian and English labels.
+
+The 17 UN Sustainable Development Goals. Hand-curated and pinned — the goals do not
+change. The 169 sub-targets are not included; nothing in Atlas references them yet.';
 COMMENT ON COLUMN api_v1.ref_un_sdg.code IS 'SDG number as text, ''1'' to ''17''. Text rather than integer for consistency with every other ref_* list, whose codes are not all numeric.';
 COMMENT ON COLUMN api_v1.ref_un_sdg.label_no IS 'The Norwegian label, as its publisher writes it. Atlas does not translate or normalise upstream label text.';
 COMMENT ON COLUMN api_v1.ref_un_sdg.label_en IS 'The English label where the publisher provides one.';
@@ -2644,9 +3014,10 @@ COMMENT ON COLUMN api_v1.ref_un_sdg.sort_order IS 'The publisher''s own display 
 
 -- source_freshness  ←  marts.mart_source_freshness
 CREATE OR REPLACE VIEW api_v1.source_freshness AS SELECT * FROM marts.mart_source_freshness;
-COMMENT ON VIEW api_v1.source_freshness IS 'One row per raw source table that declares a `loaded_at_field`, saying
-whether it is inside the window its own declared cadence allows.
+COMMENT ON VIEW api_v1.source_freshness IS 'One row per raw source declaring a loaded_at_field: whether it is inside its own declared cadence.
 
+One row per raw source table that declares a `loaded_at_field`, saying
+whether it is inside the window its own declared cadence allows.
 This is the operator-readable half of the ingest-freshness signal. The
 comparison used to live only inside the dbt test
 `raw_sources_were_refreshed_recently`, whose verdict exists only while the
@@ -2654,11 +3025,9 @@ suite is running — it lands in dbt''s run results and Dagster''s event log,
 and `atlas-status.py` can read neither. So `uis template check atlas`
 reported a 24-hour window instead, which cannot see a weekly or monthly
 source go stale at all (urb-agents #1039).
-
 It is a VIEW on purpose: evaluated when queried, so it is current whether
 or not the transform, the check suite or the Dagster daemon has run. A
 table would carry the very staleness it is meant to report.
-
 The test now selects its failing rows from here rather than recomputing
 them, so the gate and the surface cannot disagree. Cadence bounds are
 `vars.ingest_cadence_max_age_days` in dbt_project.yml, read by both and
@@ -2690,7 +3059,17 @@ fixes.';
 
 -- supply__redcross_branch_activities  ←  marts.mart_supply__redcross_branch_activities
 CREATE OR REPLACE VIEW api_v1.supply__redcross_branch_activities AS SELECT * FROM marts.mart_supply__redcross_branch_activities;
-COMMENT ON VIEW api_v1.supply__redcross_branch_activities IS 'What each Røde Kors branch does, one row per branch × activity. `global_activity_name` is Red Cross''s own canonical term; `local_activity_name` is the per-chapter display string. 🔴 A STATIC DUMP, NOT A LIVE FEED — a one-off export of 2026-04-21 (392 branches, ~2 400 activities per migration 022). Nothing refreshes it. 🔴 SERVING ZERO ROWS TODAY and that is expected, not a broken endpoint: the redcross-branches ingest is held on a credential, so raw is empty and so is this. ⚠️ Atlas holds NO republication licence here. This is Norges Røde Kors''s own operational data, published on the owner''s stated wish — and a wish is not a licence. NLOD does not cover it; ask Røde Kors before redistributing. That instruction reached Atlas relayed through the demo consumer, not directly.';
+COMMENT ON VIEW api_v1.supply__redcross_branch_activities IS 'One row per Røde Kors branch and activity, from a static 2026-04-21 export. Empty today.
+
+What each Røde Kors branch does, one row per branch × activity. `global_activity_name` is Red Cross''s own canonical term; `local_activity_name` is the per-chapter display string.
+🔴 A STATIC DUMP, NOT A LIVE FEED — a one-off export of 2026-04-21 (392 branches,
+~2 400 activities per migration 022). Nothing refreshes it.
+🔴 SERVING ZERO ROWS TODAY and that is expected, not a broken endpoint: the
+redcross-branches ingest is held on a credential, so raw is empty and so is this.
+⚠️ Atlas holds NO republication licence here. This is Norges Røde Kors''s own
+operational data, published on the owner''s stated wish — and a wish is not a
+licence. NLOD does not cover it; ask Røde Kors before redistributing. That
+instruction reached Atlas relayed through the demo consumer, not directly.';
 COMMENT ON COLUMN api_v1.supply__redcross_branch_activities.chapter_id IS '''redcross-'' || branch_id.';
 COMMENT ON COLUMN api_v1.supply__redcross_branch_activities.ngo_orgnr IS 'Organisation number of the owning NGO — constant ''864139442'' (Norges Røde Kors) for every row in this relation, since it carries one organisation''s branches.';
 COMMENT ON COLUMN api_v1.supply__redcross_branch_activities.canonical_name IS 'Red Cross''s globalActivityName, verbatim.';
@@ -2701,7 +3080,17 @@ COMMENT ON COLUMN api_v1.supply__redcross_branch_activities.updated_at IS 'When 
 
 -- supply__redcross_branches  ←  marts.mart_supply__redcross_branches
 CREATE OR REPLACE VIEW api_v1.supply__redcross_branches AS SELECT * FROM marts.mart_supply__redcross_branches;
-COMMENT ON VIEW api_v1.supply__redcross_branches IS 'Norges Røde Kors''s own branch list — national office, districts and local chapters — typed out of the Red Cross Organizations API export. 🔴 A STATIC DUMP, NOT A LIVE FEED — a one-off export of 2026-04-21 (392 branches, ~2 400 activities per migration 022). Nothing refreshes it. 🔴 SERVING ZERO ROWS TODAY and that is expected, not a broken endpoint: the redcross-branches ingest is held on a credential, so raw is empty and so is this. ⚠️ Atlas holds NO republication licence here. This is Norges Røde Kors''s own operational data, published on the owner''s stated wish — and a wish is not a licence. NLOD does not cover it; ask Røde Kors before redistributing. That instruction reached Atlas relayed through the demo consumer, not directly.';
+COMMENT ON VIEW api_v1.supply__redcross_branches IS 'One row per Norges Røde Kors branch, from a static 2026-04-21 export. Empty today.
+
+Norges Røde Kors''s own branch list — national office, districts and local chapters — typed out of the Red Cross Organizations API export.
+🔴 A STATIC DUMP, NOT A LIVE FEED — a one-off export of 2026-04-21 (392 branches,
+~2 400 activities per migration 022). Nothing refreshes it.
+🔴 SERVING ZERO ROWS TODAY and that is expected, not a broken endpoint: the
+redcross-branches ingest is held on a credential, so raw is empty and so is this.
+⚠️ Atlas holds NO republication licence here. This is Norges Røde Kors''s own
+operational data, published on the owner''s stated wish — and a wish is not a
+licence. NLOD does not cover it; ask Røde Kors before redistributing. That
+instruction reached Atlas relayed through the demo consumer, not directly.';
 COMMENT ON COLUMN api_v1.supply__redcross_branches.chapter_id IS '''redcross-'' || branch_id; namespaced for cross-NGO uniqueness.';
 COMMENT ON COLUMN api_v1.supply__redcross_branches.ngo_orgnr IS 'Hardcoded ''864139442'' (Norges Røde Kors).';
 COMMENT ON COLUMN api_v1.supply__redcross_branches.chapter_level IS 'Atlas''s three-level normalisation of Red Cross''s branch_type: ''national'' (Nasjonalkontoret), ''regional'' (Distrikt), ''local'' (Lokalforening, and ''Ukjent'' folded in). ⚠️ Derived by Atlas, not a Red Cross field — ''Ukjent'' is mapped to local because it behaves like one, which is a judgement.';
@@ -2721,7 +3110,17 @@ COMMENT ON COLUMN api_v1.supply__redcross_branches.updated_at IS 'When the row w
 
 -- supply__redcross_chapter_kommune_coverage  ←  marts.mart_supply__redcross_chapter_kommune_coverage
 CREATE OR REPLACE VIEW api_v1.supply__redcross_chapter_kommune_coverage AS SELECT * FROM marts.mart_supply__redcross_chapter_kommune_coverage;
-COMMENT ON VIEW api_v1.supply__redcross_chapter_kommune_coverage IS 'Which kommuner each Røde Kors chapter covers, resolved from the branch''s postal address through dim_postnummer. 🔴 A STATIC DUMP, NOT A LIVE FEED — a one-off export of 2026-04-21 (392 branches, ~2 400 activities per migration 022). Nothing refreshes it. 🔴 SERVING ZERO ROWS TODAY and that is expected, not a broken endpoint: the redcross-branches ingest is held on a credential, so raw is empty and so is this. ⚠️ Atlas holds NO republication licence here. This is Norges Røde Kors''s own operational data, published on the owner''s stated wish — and a wish is not a licence. NLOD does not cover it; ask Røde Kors before redistributing. That instruction reached Atlas relayed through the demo consumer, not directly.';
+COMMENT ON VIEW api_v1.supply__redcross_chapter_kommune_coverage IS 'Which kommuner each Røde Kors chapter covers, inferred from its local branches. Empty today.
+
+Which kommuner each Røde Kors chapter covers, resolved from the branch''s postal address through dim_postnummer.
+🔴 A STATIC DUMP, NOT A LIVE FEED — a one-off export of 2026-04-21 (392 branches,
+~2 400 activities per migration 022). Nothing refreshes it.
+🔴 SERVING ZERO ROWS TODAY and that is expected, not a broken endpoint: the
+redcross-branches ingest is held on a credential, so raw is empty and so is this.
+⚠️ Atlas holds NO republication licence here. This is Norges Røde Kors''s own
+operational data, published on the owner''s stated wish — and a wish is not a
+licence. NLOD does not cover it; ask Røde Kors before redistributing. That
+instruction reached Atlas relayed through the demo consumer, not directly.';
 COMMENT ON COLUMN api_v1.supply__redcross_chapter_kommune_coverage.chapter_id IS 'Composite slug, namespaced by NGO. Stable across refreshes.';
 COMMENT ON COLUMN api_v1.supply__redcross_chapter_kommune_coverage.kommune_nr IS 'Resolved via dim_postnummer. NULL for branches that span multiple kommuner (regional, national).';
 COMMENT ON COLUMN api_v1.supply__redcross_chapter_kommune_coverage.source IS 'How this (chapter, kommune) link was established. ''declared'' = the NGO publishes the kommune list directly; ''inferred'' = derived by Atlas from child-chapter coverage. All rows are ''inferred'' in v1.';
@@ -2730,8 +3129,9 @@ COMMENT ON COLUMN api_v1.supply__redcross_chapter_kommune_coverage.updated_at IS
 -- unattributed_totals  ←  marts.mart_unattributed_totals
 CREATE OR REPLACE VIEW api_v1.unattributed_totals AS SELECT * FROM marts.mart_unattributed_totals;
 COMMENT ON VIEW api_v1.unattributed_totals IS 'The part of a published quantity that belongs to no municipality.
-Published as api_v1.unattributed_totals.
 
+The part of a published quantity that belongs to no municipality.
+Published as api_v1.unattributed_totals.
 🔴 Atlas had no convention for this, and the two surfaces that met
 it chose opposite wrong answers: SSB''s 9999 ''Uoppgitt'' sits INSIDE
 a per-kommune relation and corrupts any sum over it, while 7 488
@@ -2739,35 +3139,29 @@ active voluntary units with no kommune_nr fall OUT of one and
 vanish silently. One smuggles the remainder in as a row, the other
 discards it, and a consumer summing either gets a number that is
 wrong in a direction it cannot see (urb-agents #700, #1250, #1265).
-
 ✅ The rule this establishes: the VALUE belongs, the ROW does not.
 A per-kommune relation carries only kommuner; the remainder lives
 here, named, so reconciling to a national total is a deliberate
 act rather than an accident of whether a sentinel survived a
 filter.
-
 ⚠️ It does NOT remove the 9999 rows from dim_kommune or
 coverage_gap_barnefattigdom. That is a breaking contract change —
 `?is_active=eq.true` would return 357 instead of 358 with no
 warning — and it is deliberately not bundled with an additive
 change. `is_sentinel` remains a stopgap and this view does not
 make the trap gone.
-
 🔵 A zero is a result. Where the remainder is genuinely nothing
 this emits 0 rather than omitting the row: "we checked, none" and
 "nobody checked" are different answers, and a missing row cannot
 tell them apart.
-
 ✅ THE ARITHMETIC CLOSES, AND A TEST SAYS SO. Summing a per-kommune
 relation and adding every `unattributed_value` for it must equal
 `total_value`:
-
     kommune_ngo_totals   65 270
     no_kommune_nr         7 489
     kommune_nr_not_current   43
     ---------------------------
     total_value          72 802
-
 ⚠️ It did not close on the day this shipped. It named 7 489 of
 7 532 and the 43 Svalbard organisations were counted by neither
 relation — silent, self-consistent, and visible only by doing the

@@ -24,85 +24,85 @@ Licences: **NLOD** for 42 of 43 — Norwegian public data, free to reuse with at
 
 | relation | what it holds |
 |---|---|
-| `activity_catalog` | 🔵 EXPECTED EMPTY TODAY, AND THAT IS NOT A DEFECT. |
-| `atlas_inventory` | What Atlas publishes, one row per queryable endpoint: how many records it serves, when its data last arrived, and where those rows came from. |
-| `brreg_enhet` | Every organisation registered in Norway — the whole of Brønnøysundregistrene's Enhetsregisteret, around 1.17 million rows, current as of the last change-feed run. |
-| `bufdir_indicator_alias` | Cross-release alias table for `bufdir-barnefattigdom` `indicator_api_id` renumbers. |
-| `chapter_kommune_coverage` | Per-kommune rollup of which chapters cover it — Atlas's shape, built so coverage questions do not require walking branch addresses. |
-| `coverage_gap_barnefattigdom` | One row per active kommune for the latest year of SSB 08764 child poverty data, combining the EUskala60 share (% of children in low-income households) with the Personer count (number of children). |
-| `dim_activity` | Atlas's canonical activity dimension, each row pointing at a ref_atlas_service_category code. |
+| `activity_catalog` | One row per organisation and activity, with its Atlas service category. |
+| `atlas_inventory` | What Atlas publishes: one row per endpoint with its row count, freshness and origin. |
+| `brreg_enhet` | Every organisation registered in Norway, mirrored from Brønnøysundregistrene's Enhetsregisteret. |
+| `bufdir_indicator_alias` | Maps Bufdir indicator ids across releases, so a renumbered indicator still resolves. |
+| `chapter_kommune_coverage` | Per-kommune rollup of which chapters cover it. |
+| `coverage_gap_barnefattigdom` | Child poverty per kommune for the latest year of SSB 08764, as a share and as counts. |
+| `dim_activity` | Atlas's canonical activity dimension, each row mapped to a service category. |
 | `dim_chapter` | Atlas's canonical local-chapter dimension. |
-| `dim_fylke` | The county dimension — the sibling of dim_kommune that was not published, so a consumer joining at fylke level was rebuilding this mapping, each slightly differently. |
-| `dim_kommune` | The canonical municipality registry — SSB Klass 131, with fylke name joined. |
-| `dim_postnummer` | Norwegian postal codes resolved to a primary kommune, 5 122 rows — the lookup that turns an address into a kommune_nr without the municipal-merger ambiguity that names carry. |
-| `distrikt_summary` | 🔵 EXPECTED EMPTY TODAY, AND THAT IS NOT A DEFECT. |
-| `fact_chapter_activities` | The analytical grain for chapter activity: one row per chapter × activity, joined to Atlas's dimensions so it reconciles with the rest of the supply layer. |
-| `indicator_latest_values` | One row per (source_id, contents_code, kommune_nr) at each indicator's latest_year, restricted to active kommuner. |
-| `indicator_missing_kommuner` | 🔴 A ROW HERE IS NOT EVIDENCE OF LOW NEED. |
-| `indicator_summary` | One row per (source_id, contents_code) summarising the latest-year coverage and value range for every indicator in fact_kommune_indicators. |
-| `indicators__bufdir_barnefattigdom` | Per-source indicator relation for `bufdir-barnefattigdom` (Barne-, ungdoms- og familiedirektoratet), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
-| `indicators__fhi_alkohol` | Per-source indicator relation for `fhi-alkohol` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
-| `indicators__fhi_befolkning` | Per-source indicator relation for `fhi-befolkning` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
-| `indicators__fhi_befolkningsvekst` | Per-source indicator relation for `fhi-befolkningsvekst` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
-| `indicators__fhi_bor_alene` | Per-source indicator relation for `fhi-bor-alene` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
-| `indicators__fhi_depresjon` | Per-source indicator relation for `fhi-depresjon` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
-| `indicators__fhi_fortrolig_venn` | Per-source indicator relation for `fhi-fortrolig-venn` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
-| `indicators__fhi_hasj` | Per-source indicator relation for `fhi-hasj` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
-| `indicators__fhi_innvandrere` | Per-source indicator relation for `fhi-innvandrere` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
-| `indicators__fhi_innvkat` | Per-source indicator relation for `fhi-innvkat` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
-| `indicators__fhi_kpr_1aar` | Per-source indicator relation for `fhi-kpr-1aar` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
-| `indicators__fhi_livskvalitet` | Per-source indicator relation for `fhi-livskvalitet` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
-| `indicators__fhi_mediebruk_some` | Per-source indicator relation for `fhi-mediebruk-some` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
-| `indicators__fhi_mediebruk_spill` | Per-source indicator relation for `fhi-mediebruk-spill` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
-| `indicators__fhi_mediebruk_underhold` | Per-source indicator relation for `fhi-mediebruk-underhold` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
-| `indicators__fhi_mobbing` | Per-source indicator relation for `fhi-mobbing` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
-| `indicators__fhi_neet` | Per-source indicator relation for `fhi-neet` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
-| `indicators__fhi_prognose` | Per-source indicator relation for `fhi-prognose` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
-| `indicators__fhi_selvmord` | Per-source indicator relation for `fhi-selvmord` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
-| `indicators__fhi_smertestillende` | Per-source indicator relation for `fhi-smertestillende` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
-| `indicators__fhi_trangbodd` | Per-source indicator relation for `fhi-trangbodd` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
-| `indicators__fhi_vgs_gjennomforing` | Per-source indicator relation for `fhi-vgs-gjennomforing` (Folkehelseinstituttet), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
-| `indicators__ssb_06083` | Per-source indicator relation for `ssb-06083` (Statistisk sentralbyrå), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
-| `indicators__ssb_06913` | Per-source indicator relation for `ssb-06913` (Statistisk sentralbyrå), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
-| `indicators__ssb_06944` | Per-source indicator relation for `ssb-06944` (Statistisk sentralbyrå), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
-| `indicators__ssb_06947` | Per-source indicator relation for `ssb-06947` (Statistisk sentralbyrå), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
-| `indicators__ssb_07459` | Per-source indicator relation for `ssb-07459` (Statistisk sentralbyrå), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
-| `indicators__ssb_08484` | Per-source indicator relation for `ssb-08484`, published at the grain the publisher actually uses rather than flattened into the cross-source views. |
-| `indicators__ssb_08487` | Per-source indicator relation for `ssb-08487`, published at the grain the publisher actually uses rather than flattened into the cross-source views. |
-| `indicators__ssb_08764` | Per-source indicator relation for `ssb-08764` (Statistisk sentralbyrå), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
-| `indicators__ssb_09405` | Per-source indicator relation for `ssb-09405`, published at the grain the publisher actually uses rather than flattened into the cross-source views. |
-| `indicators__ssb_09406` | Per-source indicator relation for `ssb-09406`, published at the grain the publisher actually uses rather than flattened into the cross-source views. |
-| `indicators__ssb_09429` | Per-source indicator relation for `ssb-09429` (Statistisk sentralbyrå), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
-| `indicators__ssb_10826` | Per-source indicator relation for `ssb-10826` (Statistisk sentralbyrå), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
-| `indicators__ssb_12063` | Per-source indicator relation for `ssb-12063` (Statistisk sentralbyrå), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
-| `indicators__ssb_12131` | Per-source indicator relation for `ssb-12131` (Statistisk sentralbyrå), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
-| `indicators__ssb_12132` | Per-source indicator relation for `ssb-12132` (Statistisk sentralbyrå), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
-| `indicators__ssb_12292` | Per-source indicator relation for `ssb-12292` (Statistisk sentralbyrå), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
-| `indicators__ssb_12944` | Per-source indicator relation for `ssb-12944` (Statistisk sentralbyrå), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
-| `indicators__ssb_13995` | Per-source indicator relation for `ssb-13995` (Statistisk sentralbyrå), published at the grain the publisher actually uses rather than flattened into the cross-source views. |
-| `ingest_health` | Per-source ingest-run health. |
-| `kommune_befolkning_alder` | Population by kommune, year and age band — the denominator layer. |
-| `kommune_local_chapters` | 🔵 EXPECTED EMPTY TODAY, AND THAT IS NOT A DEFECT. |
-| `kommune_ngo_summary` | Active voluntary organisations per kommune and ICNPO category — the number a consumer previously had to download the whole register to compute. |
+| `dim_fylke` | The county dimension: one row per fylke code, current and historical. |
+| `dim_kommune` | The canonical municipality registry from SSB Klass 131, with fylke name joined. |
+| `dim_postnummer` | Norwegian postal codes resolved to a primary kommune, 5 122 rows. |
+| `distrikt_summary` | One row per district chapter, with its child chapters and kommune coverage. |
+| `fact_chapter_activities` | One row per chapter and activity, joined to Atlas's dimensions. |
+| `indicator_latest_values` | The latest value of every indicator for every active kommune, in long format. |
+| `indicator_missing_kommuner` | One row per indicator and kommune that the indicator does not cover. |
+| `indicator_summary` | One row per indicator and source: latest year, kommune coverage and value range. |
+| `indicators__bufdir_barnefattigdom` | Per-source indicator data for bufdir-barnefattigdom, at the publisher's own grain. |
+| `indicators__fhi_alkohol` | Per-source indicator data for fhi-alkohol (Folkehelseinstituttet), at the publisher's own grain. |
+| `indicators__fhi_befolkning` | Per-source indicator data for fhi-befolkning (Folkehelseinstituttet), at the publisher's own grain. |
+| `indicators__fhi_befolkningsvekst` | Per-source indicator data for fhi-befolkningsvekst (Folkehelseinstituttet), at the publisher's own grain. |
+| `indicators__fhi_bor_alene` | Per-source indicator data for fhi-bor-alene (Folkehelseinstituttet), at the publisher's own grain. |
+| `indicators__fhi_depresjon` | Per-source indicator data for fhi-depresjon (Folkehelseinstituttet), at the publisher's own grain. |
+| `indicators__fhi_fortrolig_venn` | Per-source indicator data for fhi-fortrolig-venn (Folkehelseinstituttet), at the publisher's own grain. |
+| `indicators__fhi_hasj` | Per-source indicator data for fhi-hasj (Folkehelseinstituttet), at the publisher's own grain. |
+| `indicators__fhi_innvandrere` | Per-source indicator data for fhi-innvandrere (Folkehelseinstituttet), at the publisher's own grain. |
+| `indicators__fhi_innvkat` | Per-source indicator data for fhi-innvkat (Folkehelseinstituttet), at the publisher's own grain. |
+| `indicators__fhi_kpr_1aar` | Per-source indicator data for fhi-kpr-1aar (Folkehelseinstituttet), at the publisher's own grain. |
+| `indicators__fhi_livskvalitet` | Per-source indicator data for fhi-livskvalitet (Folkehelseinstituttet), at the publisher's own grain. |
+| `indicators__fhi_mediebruk_some` | Per-source indicator data for fhi-mediebruk-some (Folkehelseinstituttet), at the publisher's own grain. |
+| `indicators__fhi_mediebruk_spill` | Per-source indicator data for fhi-mediebruk-spill (Folkehelseinstituttet), at the publisher's own grain. |
+| `indicators__fhi_mediebruk_underhold` | Per-source indicator data for fhi-mediebruk-underhold (Folkehelseinstituttet), at the publisher's own grain. |
+| `indicators__fhi_mobbing` | Per-source indicator data for fhi-mobbing (Folkehelseinstituttet), at the publisher's own grain. |
+| `indicators__fhi_neet` | Per-source indicator data for fhi-neet (Folkehelseinstituttet), at the publisher's own grain. |
+| `indicators__fhi_prognose` | Per-source indicator data for fhi-prognose (Folkehelseinstituttet), at the publisher's own grain. |
+| `indicators__fhi_selvmord` | Per-source indicator data for fhi-selvmord (Folkehelseinstituttet), at the publisher's own grain. |
+| `indicators__fhi_smertestillende` | Per-source indicator data for fhi-smertestillende (Folkehelseinstituttet), at the publisher's own grain. |
+| `indicators__fhi_trangbodd` | Per-source indicator data for fhi-trangbodd (Folkehelseinstituttet), at the publisher's own grain. |
+| `indicators__fhi_vgs_gjennomforing` | Per-source indicator data for fhi-vgs-gjennomforing (Folkehelseinstituttet), at the publisher's own grain. |
+| `indicators__ssb_06083` | Per-source indicator data for ssb-06083 (Statistisk sentralbyrå), at the publisher's own grain. |
+| `indicators__ssb_06913` | Per-source indicator data for ssb-06913 (Statistisk sentralbyrå), at the publisher's own grain. |
+| `indicators__ssb_06944` | Per-source indicator data for ssb-06944 (Statistisk sentralbyrå), at the publisher's own grain. |
+| `indicators__ssb_06947` | Per-source indicator data for ssb-06947 (Statistisk sentralbyrå), at the publisher's own grain. |
+| `indicators__ssb_07459` | Per-source indicator data for ssb-07459 (Statistisk sentralbyrå), at the publisher's own grain. |
+| `indicators__ssb_08484` | Per-source indicator data for ssb-08484, at the publisher's own grain. |
+| `indicators__ssb_08487` | Per-source indicator data for ssb-08487, at the publisher's own grain. |
+| `indicators__ssb_08764` | Per-source indicator data for ssb-08764 (Statistisk sentralbyrå), at the publisher's own grain. |
+| `indicators__ssb_09405` | Per-source indicator data for ssb-09405, at the publisher's own grain. |
+| `indicators__ssb_09406` | Per-source indicator data for ssb-09406, at the publisher's own grain. |
+| `indicators__ssb_09429` | Per-source indicator data for ssb-09429 (Statistisk sentralbyrå), at the publisher's own grain. |
+| `indicators__ssb_10826` | Per-source indicator data for ssb-10826 (Statistisk sentralbyrå), at the publisher's own grain. |
+| `indicators__ssb_12063` | Per-source indicator data for ssb-12063 (Statistisk sentralbyrå), at the publisher's own grain. |
+| `indicators__ssb_12131` | Per-source indicator data for ssb-12131 (Statistisk sentralbyrå), at the publisher's own grain. |
+| `indicators__ssb_12132` | Per-source indicator data for ssb-12132 (Statistisk sentralbyrå), at the publisher's own grain. |
+| `indicators__ssb_12292` | Per-source indicator data for ssb-12292 (Statistisk sentralbyrå), at the publisher's own grain. |
+| `indicators__ssb_12944` | Per-source indicator data for ssb-12944 (Statistisk sentralbyrå), at the publisher's own grain. |
+| `indicators__ssb_13995` | Per-source indicator data for ssb-13995 (Statistisk sentralbyrå), at the publisher's own grain. |
+| `ingest_health` | One row per source: its most recent completed ingest run, and whether that run succeeded. |
+| `kommune_befolkning_alder` | Population by kommune, year and age band — the denominator layer for rates. |
+| `kommune_local_chapters` | One row per local chapter resolved to a kommune, with its NGO and category. |
+| `kommune_ngo_summary` | Active voluntary organisations per kommune and ICNPO category. |
 | `kommune_ngo_totals` | One row per kommune: how many active voluntary organisations are registered there. |
-| `meta_dimensions` | Per-source × per-dimension catalogue. |
-| `meta_endpoints` | One row per queryable Atlas endpoint, with tags inherited from upstream sources via the lineage graph and a `layer:<schema>` tag from the schema. |
-| `meta_sources` | Per-source catalogue row — one per ingest source in `_sources_manifest`, joined to `raw.ingest_runs` aggregates so consumers see freshness alongside the static metadata. |
-| `ngo_index` | 🔴 WHAT THIS RELATION DELIBERATELY DOES NOT CARRY. |
-| `ngo_overview` | One row per NGO in dim_ngo with the six count metrics shown on the per-NGO landing page (atlas-frontend /ngo/[slug]). |
-| `ref_atlas_service_category` | ⚠️ ATLAS'S OWN VOCABULARY, NOT AN UPSTREAM STANDARD — the only list here that is Atlas's editorial judgement rather than another body's published standard. |
-| `ref_brreg_icnpo` | ICNPO categories from Brreg's Frivillighetsregister: 14 main groups + 32 subgroups = 46 rows. |
-| `ref_fhi_innvkat` | 🔴 ONE ROW — code '0', 'totalt' — and that is correct. |
-| `ref_fhi_utdann` | FHI UTDANN (education-level) labels. |
-| `ref_region_kind` | What kind of region a region_code denotes — the decoder for the `region_kind` column that several indicator relations already expose. |
-| `ref_ssb_family_type` | SSB family-type codes. |
-| `ref_ssb_household_type` | SSB household-type codes. |
-| `ref_ssb_nivaa` | SSB NUS2000 education-level labels for table 09429. |
-| `ref_un_sdg` | The 17 UN Sustainable Development Goals. |
-| `source_freshness` | One row per raw source table that declares a `loaded_at_field`, saying whether it is inside the window its own declared cadence allows. |
-| `supply__redcross_branch_activities` | What each Røde Kors branch does, one row per branch × activity. |
-| `supply__redcross_branches` | Norges Røde Kors's own branch list — national office, districts and local chapters — typed out of the Red Cross Organizations API export. |
-| `supply__redcross_chapter_kommune_coverage` | Which kommuner each Røde Kors chapter covers, resolved from the branch's postal address through dim_postnummer. |
+| `meta_dimensions` | One row per source and coded dimension, explaining what that column's codes mean. |
+| `meta_endpoints` | One row per queryable endpoint, with filterable tags. |
+| `meta_sources` | One row per ingested source: publisher, licence, coverage, freshness and what it feeds. |
+| `ngo_index` | One row per voluntary organisation Atlas tracks, with its identity, branding and focus. |
+| `ngo_overview` | One row per NGO with its six headline counts, precomputed for the per-NGO page. |
+| `ref_atlas_service_category` | Atlas's own cross-NGO service vocabulary, 22 categories. |
+| `ref_brreg_icnpo` | Decoder for the ICNPO category codes in kommune_ngo_summary: 14 groups and 32 subgroups. |
+| `ref_fhi_innvkat` | Decoder for FHI table 360's INNVKAT dimension, which holds only '0'. |
+| `ref_fhi_utdann` | Decoder for FHI's education-level codes; in vgs_gjennomforing this is the parents' education. |
+| `ref_region_kind` | Decoder for region_kind: what a region code denotes, and whether it is a real kommune. |
+| `ref_ssb_family_type` | Decoder for SSB's family-type codes. |
+| `ref_ssb_household_type` | Decoder for SSB's household-type codes, which are zero-padded text. |
+| `ref_ssb_nivaa` | Decoder for SSB's NUS2000 education levels. |
+| `ref_un_sdg` | The 17 UN Sustainable Development Goals, with Norwegian and English labels. |
+| `source_freshness` | One row per raw source declaring a loaded_at_field: whether it is inside its own declared cadence. |
+| `supply__redcross_branch_activities` | One row per Røde Kors branch and activity, from a static 2026-04-21 export. |
+| `supply__redcross_branches` | One row per Norges Røde Kors branch, from a static 2026-04-21 export. |
+| `supply__redcross_chapter_kommune_coverage` | Which kommuner each Røde Kors chapter covers, inferred from its local branches. |
 | `unattributed_totals` | The part of a published quantity that belongs to no municipality. |
 
 Every relation, with its columns and their descriptions:

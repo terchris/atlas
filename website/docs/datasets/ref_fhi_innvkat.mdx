@@ -1,6 +1,6 @@
 ---
 title: "FHI immigrant categories (table 360)"
-description: "🔴 ONE ROW — code '0', 'totalt' — and that is correct."
+description: "Decoder for FHI table 360's INNVKAT dimension, which holds only '0'."
 slug: /datasets/ref_fhi_innvkat
 sidebar_label: "ref_fhi_innvkat"
 ---
@@ -40,4 +40,4 @@ Live PostgREST query that returns the first 5 rows. URL adapts to the current ho
 
 ## About this view
 
-<div style={{whiteSpace: 'pre-wrap'}}>{"🔴 ONE ROW — code '0', 'totalt' — and that is correct. It decodes INNVKAT as it appears in FHI table 360 (fhi_vgs_gjennomforing), where the dimension is collapsed and always '0'; a relationships test on indicators__fhi_vgs_gjennomforing enforces that. ⚠️ IT DOES NOT DECODE indicators__fhi_innvkat, which comes from FHI table 932 and holds '2', '3' and '23'. Joining it to that column returns nothing. Those three codes are published at /meta_dimensions?source_id=eq.fhi-innvkat&code=eq.INNVKAT (verified 2026-09-25). Said here because the two names differ by nothing a consumer would notice."}</div>
+<div style={{whiteSpace: 'pre-wrap'}}>{"Decoder for FHI table 360's INNVKAT dimension, which holds only '0'. Not for table 932.\n\n🔴 ONE ROW — code '0', 'totalt' — and that is correct. It decodes INNVKAT as it appears\nin FHI table 360 (fhi_vgs_gjennomforing), where the dimension is collapsed and always\n'0'; a relationships test on indicators__fhi_vgs_gjennomforing enforces that.\n⚠️ IT DOES NOT DECODE indicators__fhi_innvkat, which comes from FHI table 932 and holds\n'2', '3' and '23'. Joining it to that column returns nothing. Those three codes are\npublished at /meta_dimensions?source_id=eq.fhi-innvkat&code=eq.INNVKAT (verified\n2026-09-25). Said here because the two names differ by nothing a consumer would notice."}</div>
