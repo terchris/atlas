@@ -27,6 +27,16 @@
  *
  * Usage:  node scripts/generate-kommune-geometry.mjs [--tolerance 0.0003]
  */
+// DRIFT-GATE: none — re-running this is 357 requests and ~38 MB pulled from
+// Kartverket, which is not something to do on every CI run, and the output is
+// EXPECTED to differ from the committed file whenever Kartverket revises a
+// boundary. A drift gate here would either hammer a public service or fail for
+// the one reason that is not a defect. It is re-run deliberately, when
+// municipalities merge — which is announced in advance and rare — and the
+// committed file records its own `built_at`. What IS gated is the thing that
+// can silently rot: the generator refuses to write unless every kommune in
+// dim_kommune came back, so the file cannot drift out of key-alignment with
+// the API without failing loudly at build time.
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
