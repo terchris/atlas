@@ -196,6 +196,22 @@ REFERENCE:
                                redistributing rather than assuming NLOD.
   brreg_enhet                  the Bronnoysund register mirror.
 
+MAPS — BOUNDARIES ARE NOT IN THIS API, AND THAT IS ON PURPOSE.
+Full-resolution kommune boundaries are about 38 MB; serving them here would be
+worse than not having them. A SIMPLIFIED boundary file is published on the
+documentation site instead, keyed so it joins straight onto dim_kommune:
+
+  https://atlas.sovereignsky.no/geo/kommuner.geojson
+
+  357 kommuner, 1.7 MB, EPSG:4326. properties.kommune_nr is the same
+  zero-padded text as dim_kommune.kommune_nr, so a join needs no cleanup.
+
+⚠️ IT IS SIMPLIFIED TO ABOUT 33 m AND KEEPS 8.5% OF THE ORIGINAL POINTS. Fit
+for a choropleth at national scale; NOT fit for area calculation, cadastral
+work, or deciding which side of a border a point falls on. The authoritative
+geometry is Kartverket''s and the file names where to get it. Source:
+Kartverket / Geonorge, open data — attribute Kartverket.
+
 CODE LISTS — decode the coded columns the relations above already expose.
 Every one is small, stable, and safe to cache locally:
   ref_brreg_icnpo              ICNPO categories, 14 groups + 32 subgroups.
