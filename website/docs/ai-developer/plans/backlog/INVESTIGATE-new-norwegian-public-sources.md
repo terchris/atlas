@@ -159,7 +159,7 @@ drafting `PLAN-004-nav-uforetrygd.md`:**
 
 **Source-specific quirks**:
 - **[Q14]** Pure HTML/Excel scrape. Goes through [`INVESTIGATE-ngo-scraping-infrastructure`](../completed/INVESTIGATE-ngo-scraping-infrastructure.md) (already shipped) — sitemap discovery + per-page parser + golden-file fixtures. Cost roughly comparable to the Folkehjelp scrape PLAN.
-- **[Q15]** Sensitivity. Per-kommune refugee-arrival counts are politically charged in small kommuner; same `presentation_policy: 'sensitive'` flag as the integration-outcomes report.
+- **[Q15]** Sensitivity. Per-kommune refugee-arrival counts are politically charged in small kommuner. ⚠️ **`presentation_policy` is not a real field — corrected 2026-10-01, same finding as the Phase 0 correction above.** No sensitivity-flagging column or convention exists anywhere in the schema today. This isn't a blocker: IMDi's own small-cell suppression (the published `:` marker, not an Atlas derivation) already carries the privacy protection the data needs — Atlas represents what IMDi published, including the suppression. A presentation-layer sensitivity flag, if ever wanted, is a decision the PLAN introducing it makes locally, not a prerequisite.
 - **[Q16]** Methodology drift. IMDi's "introduksjonsprogram" definition and 1/3/5-year follow-up cohorts have evolved; pin a methodology version per refresh.
 
 ---
@@ -388,7 +388,10 @@ Phase 1 — Tier-1 ingests (parallelisable; no Phase 0 — see 2026-10-01 correc
   PLAN-006-nav-sykefravaer.md
   PLAN-007-nav-helt-ledige.md          ← NEW (Samfunnspuls cross-check)
   PLAN-008-husbanken-statistikkbank.md
-  PLAN-009-imdi-bosetting.md           ← scrape; fold imdi-innvandringsgrunn + imdi-landbakgrunn into the same source family
+  PLAN-009-imdi-bosetting.md           ← drafted 2026-10-01; does NOT fold in imdi-innvandringsgrunn
+                                           /imdi-landbakgrunn — their real data source (IMDikator)
+                                           wasn't confirmed, see the plan's own Implementation Notes.
+                                           Blocked on licence verification [Q1].
   PLAN-010-udir-gsi.md                 ← settles dim_school; folds udir-grunnskoler in
   PLAN-011-udir-elevundersokelsen.md
   PLAN-012-udir-nasjonale-prover.md
@@ -498,6 +501,12 @@ The current enum already covers all needed values: `JUST` (crime), `HEAL` (Helfo
 
 ## Sequencing recommendation
 
+⚠️ **The numbered Phase 1 list immediately below is stale** — it predates the Samfunnspuls
+cross-check's renumbering (§D above) and still says `PLAN-008-imdi-bosettingstall.md` /
+`PLAN-009-udir-gsi.md`. The code block in **§D "What this means for sequencing"** is the current
+one: `PLAN-009-imdi-bosetting.md`, `PLAN-010-udir-gsi.md`. Confirmed 2026-10-01 while drafting the
+IMDi plan — use that block's numbers, not this section's.
+
 Atlas's [PLANS.md `Splitting Investigations into Multiple Plans`](../../PLANS.md#splitting-investigations-into-multiple-plans) section says: group by dependency and risk, group by completeness, keep optional/deferred work separate. Applied here:
 
 **Phase 0 — none.** Dropped 2026-10-01: `PLAN-001-new-provider-enum-and-period-monthly.md` assumed a closed `provider` enum and existing `dim_period`/`dim_indicator` tables, none of which exist (see correction above). The provider half is satisfied per-source via `publishers.yaml` (NAV/IMDi/Udir/Husbanken entries landed in #486); the period-grain and sensitivity-flag halves are per-source modelling decisions, not prerequisites. Nothing to prep — go straight to Phase 1.
@@ -508,7 +517,7 @@ Atlas's [PLANS.md `Splitting Investigations into Multiple Plans`](../../PLANS.md
 3. `PLAN-004-nav-uforetrygd.md` — drafted 2026-10-01, in `backlog/`. First monthly source; adds a plain `month` column, no `dim_period` built (there's nothing to "settle in practice" — the 2026-10-01 correction already established no such infrastructure is needed).
 4. `PLAN-005-nav-aap.md` and `PLAN-006-nav-sykefravaer.md` (parallel after PLAN-004)
 5. `PLAN-007-husbanken-statistikkbank.md`
-6. `PLAN-008-imdi-bosettingstall.md` (uses scraping infra)
+6. `PLAN-008-imdi-bosettingstall.md` — superseded by `PLAN-009-imdi-bosetting.md` (correct current number, see the warning at the top of this section)
 7. `PLAN-009-udir-gsi.md` (first sub-kommune resolution; settles `dim_school`)
 8. `PLAN-010-udir-elevundersokelsen.md` and `PLAN-011-udir-nasjonale-prover.md` (after PLAN-009 lands `dim_school`)
 
@@ -533,7 +542,15 @@ Each PLAN follows the standard Atlas pattern (per-source folder under `atlas-dat
 - [ ] ~~Draft `PLAN-001-new-provider-enum-and-period-monthly.md`~~ — dropped, see the 2026-10-01 correction above. Nothing to prep.
 - [x] ✅ **Shipped end to end, 2026-10-01.** [`PLAN-003-bufdir-barnevern.md`](../completed/PLAN-003-bufdir-barnevern.md) — all four phases done: ingest (23 workbooks, 191,673 rows, zero dropped), dbt staging + api_v1 publication, deployed to the live cluster by imac, and independently re-verified against the public API (not taken on trust) — `GET /indicators__bufdir_barnevern?limit=1` returns real rows, `Content-Range` confirms 191,673. Caught two real data defects by validating against real ingested data rather than an empty schema: Barnevern's own `andel`/`prosent` vocabulary mismatch (silently dropped 9 of 23 workbooks before being caught), and a Svalbard-as-kommune/fylke misclassification (the exact class of bug `classify_region_code` was built to fix, urb-agents #700). Full exchange: [urb-agents#1796](https://github.com/terchris/urb-agents/issues/1796).
 - [x] Draft [`PLAN-004-nav-uforetrygd.md`](../active/PLAN-004-nav-uforetrygd.md) — drafted 2026-10-01, Phase 2 (ingest) and Phase 3 (dbt/api_v1) shipped, moved to `active/`. Found and corrected two more wrong investigation claims before drafting: licence is CC BY 4.0, not NLOD; the file is a nested pivot table (fylke→kommune→bydel blocks), not a flat table. Resolved [Q5]/[Q32] directly: a plain `month` integer column, no `dim_period` built. Phase 4 (deploy + verify) not started.
-- [ ] Draft one of the IMDi/Udir/Husbanken PLANs, or `PLAN-005-nav-aap.md`/`PLAN-006-nav-sykefravaer.md` once `PLAN-004` ships and its ingest pattern is proven.
+- [x] Draft [`PLAN-009-imdi-bosetting.md`](PLAN-009-imdi-bosetting.md) — drafted 2026-10-01, in
+  `backlog/`. Confirmed live: no kommune codes (names only, resolved via the existing
+  `crosswalk_kommune_name` model), suppression marker `:` with IMDi's own inline explanation, and a
+  real alternative API lead (IMDikator) that didn't pan out within reasonable effort — chased far
+  enough to decide not to depend on it, not abandoned on a guess. **Blocked on [Q1]: licence
+  genuinely could not be verified anywhere** (unlike NAV, where it was found directly) — needs a
+  human answer before implementation, not a default.
+- [ ] Draft one of the Udir/Husbanken PLANs, or `PLAN-005-nav-aap.md`/`PLAN-006-nav-sykefravaer.md`
+  once `PLAN-004` ships and its ingest pattern is proven.
 - [ ] Optionally: pre-write outreach emails to Bufdir, NAV, IMDi, Helsedirektoratet asking whether richer machine-readable distributions exist than what's surfaced publicly. (Pattern reused from [`INVESTIGATE-folkehjelp-supply` § A.4](./INVESTIGATE-folkehjelp-supply.md#a4-craft-cms-graphql-probe--q2-outreach-worth-pursuing) — non-blocking; we ship around the public surface either way.)
 
 ---
