@@ -17,6 +17,7 @@ import AdmZip from "adm-zip";
 import { recordIngestRun } from "../../lib/ingest_run.js";
 import { logger } from "../../lib/logger.js";
 import { ndjsonStreamingWriter } from "../../lib/output.js";
+import { fetchWithRetry } from "./fetch_retry.js";
 import { getSql, upsert } from "../../lib/postgres.js";
 import {
   basenameOnly,
@@ -66,7 +67,9 @@ const UA_HEADERS = {
 
 async function fetchText(url: string, label: string): Promise<string> {
   const started = Date.now();
-  const res = await fetch(url, { headers: UA_HEADERS });
+  const res = await fetchWithRetry(url, { headers: UA_HEADERS }, label, {
+    onRetry: (wait) => logger.warn("bufdir.fetch.retry", { label, url, wait_ms: wait }),
+  });
   if (!res.ok) {
     const body = await res.text().catch(() => "");
     throw new Error(
@@ -83,7 +86,9 @@ async function fetchZip(
   label: string,
 ): Promise<{ buffer: Buffer; lastModified: Date | null }> {
   const started = Date.now();
-  const res = await fetch(url, { headers: UA_HEADERS });
+  const res = await fetchWithRetry(url, { headers: UA_HEADERS }, label, {
+    onRetry: (wait) => logger.warn("bufdir.fetch.retry", { label, url, wait_ms: wait }),
+  });
   if (!res.ok) {
     const body = await res.text().catch(() => "");
     throw new Error(
