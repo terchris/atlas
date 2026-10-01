@@ -1819,6 +1819,141 @@ models:
             - category_format
             - year
 
+  - name: indicators__bufdir_barnevern
+    description: |-
+      Per-source passthrough for Bufdir Barnevern kommunemonitor. One row per
+      (indicator, region_code, category_format, year) parsed from ZIP indicator workbook Sheet1
+      sheets. Sibling of indicators__bufdir_barnefattigdom — no category_unit dimension, and
+      category_format uses "andel" (this source's own vocabulary, not the sibling's "prosent").
+    columns:
+      - name: source_id
+        description: Atlas catalogue id for this ingest — always bufdir-barnevern.
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: [bufdir-barnevern]
+        data_type: text
+      - name: indicator_api_id
+        description: Stable surrogate workbook id — bv_zip_ind_<code> (e.g. bv_zip_ind_1a) or
+          bv_zip_<24 hex SHA-256 fallback>.
+        data_tests:
+          - not_null
+        data_type: text
+      - name: indicator_slug
+        description: Normalised slug from the upstream indicator name; used as part of
+          contents_code.
+        data_tests:
+          - not_null
+        data_type: text
+      - name: indicator_group_slug
+        description: >-
+          Fixed literal barnevern_zip for ZIP-ingested rows.
+        data_tests:
+          - not_null
+        data_type: text
+      - name: indicator_name
+        description: Workbook-derived indicator title concatenated above the Region header rows.
+        data_tests:
+          - not_null
+        data_type: text
+      - name: indicator_title
+        description: Same human-facing title chain as indicator_name after ZIP parsing.
+        data_tests:
+          - not_null
+        data_type: text
+      - name: link_text
+        description: NULL for workbook-backed rows.
+        data_type: text
+      - name: region_code
+        description: >-
+          Geographic code string from workbook column Region, verbatim from upstream. It may be a
+          kommune, fylke, bydel, Svalbard, or national code; region_kind says which.
+        data_tests:
+          - not_null
+        data_type: text
+      - name: region_kind
+        description: |
+          What region_code is, from classify_region_code: kommune · fylke · svalbard ·
+          bydel · nasjon · unknown. Confirmed live 2026-10-01: region_code 2111 (Svalbard,
+          all 23 indicators, 394 rows, every value null) failed dim_kommune's relationship
+          test until kommune_nr was derived through region_code_to_kommune_nr instead of a
+          bare `^[0-9]{4}$` regex — the exact defect urb-agents #700 fixed elsewhere, found
+          here by building against real ingested data rather than an empty schema.
+        data_tests:
+          - not_null
+          - relationships: {to: ref('ref_region_kind'), field: region_kind}
+        data_type: text
+      - name: kommune_nr
+        description: >-
+          Four-digit kommune code, derived through region_code_to_kommune_nr so Svalbard-shaped
+          codes (region_kind = svalbard) correctly get NULL rather than being misclassified as a
+          kommune. NULL for every non-kommune geography level.
+        data_tests:
+          - relationships:
+              to: ref('dim_kommune')
+              field: kommune_nr
+        data_type: text
+      - name: fylke_nr
+        description: Two-digit fylke code when region_code is exactly two digits; NULL otherwise.
+        data_tests:
+          - relationships:
+              to: ref('dim_fylke')
+              field: fylke_nr
+        data_type: text
+      - name: category_format
+        description: >-
+          Tallformat column — andel (share/decimal-formatted, not limited to 0-100) or antall
+          (count). Barnevern's own vocabulary — the sibling bufdir_barnefattigdom source uses
+          "prosent" for the equivalent concept. There is no category_unit column for this source.
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: [andel, antall]
+        data_type: text
+      - name: year
+        description: Calendar year of the observation.
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 2000
+              max_value: 2050
+        data_type: integer
+      - name: contents_code
+        description: |
+          Atlas-normalised variable code: prefix `bv_`, the indicator slug, and category_format
+          joined with `__`, so each measure is filter-stable in the catalogue.
+        data_tests:
+          - not_null
+        data_type: text
+      - name: contents_label
+        description: >-
+          Human-readable label combining the workbook title with the andel/antall format.
+        data_tests:
+          - not_null
+        data_type: text
+      - name: value
+        description: Numeric value for this year; NULL when the upstream series omits this year.
+        data_type: numeric
+      - name: values_json
+        description: >-
+          Parse of Sheet1 rows into year keys (spreadsheet blanks / suppression → JSON null values).
+        data_tests:
+          - not_null
+        data_type: jsonb
+      - name: updated_at
+        description: Timestamp when the row was last written by ingest (from raw.loaded_at).
+        data_tests:
+          - not_null
+        data_type: timestamp with time zone
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - source_id
+            - indicator_api_id
+            - region_code
+            - category_format
+            - year
+
   - name: indicators__fhi_alkohol
     description: |
       Per-source indicator passthrough for FHI Folkehelsestatistikk (Ungdata):

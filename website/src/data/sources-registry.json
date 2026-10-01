@@ -43,7 +43,7 @@
       "description": "Social assistance use, household composition, overcrowded housing,\nand integration indicators. The bridge between need and the services\nthat respond to it.\n",
       "emoji": "🏘️",
       "order": 50,
-      "source_count": 4
+      "source_count": 5
     },
     {
       "id": "ngo-supply",
@@ -87,7 +87,7 @@
       "logo": "/img/publishers/bufdir.png",
       "feedback_url": "https://www.bufdir.no/kontakt/",
       "notes": "Directorate for Children, Youth and Family Affairs. Publishes the\nBarnefattigdom kommunemonitor and related family / child-welfare\nindicators at kommune and bydel resolution. Data released under NLOD.\n",
-      "source_count": 1
+      "source_count": 2
     },
     {
       "id": "fhi",
@@ -991,6 +991,12 @@
           ]
         },
         {
+          "source_id": "bufdir-barnevern",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
           "source_id": "fhi-alkohol",
           "shared_models": [
             "mart_atlas_inventory"
@@ -1013,18 +1019,190 @@
           "shared_models": [
             "mart_atlas_inventory"
           ]
-        },
-        {
-          "source_id": "fhi-depresjon",
-          "shared_models": [
-            "mart_atlas_inventory"
-          ]
         }
       ],
       "last_ingested_at": "2026-09-22T20:33:58.185556+00:00",
       "latest_row_count": 81568,
       "total_runs": 5,
       "downstream_model_count": 1
+    },
+    {
+      "kind": "source",
+      "source_id": "bufdir-barnevern",
+      "upstream_id": "barnevern-monitor",
+      "upstream_url": "https://www.bufdir.no/statistikk-og-analyse/monitor/barnevern/",
+      "upstream_landing_page": "https://www.bufdir.no/statistikk-og-analyse/monitor/barnevern/",
+      "upstream_title": "Barnevern kommunemonitor",
+      "description": "Barne-, ungdoms- og familiedirektoratet (Bufdir) publishes the Barnevern kommunemonitor on\nbufdir.no and ships a single bulk ZIP of indicator workbooks (\"last ned hele datasettet\"),\nthe same mechanism as the sibling Barnefattigdom monitor. Atlas downloads that ZIP (URL\ndiscovered from the monitor page), parses sheet `Sheet1` in each standard-coded workbook, and\nloads kommune- and sub-kommune-level child-welfare time series into `raw.bufdir_barnevern` —\ncontact with, and removal into, the child-welfare system, alongside spending, staffing, and\ndeadline-compliance indicators. Plugs the barnevern axis Report #2 (Child Welfare /\nVulnerability Composite) is missing today. One of 24 workbooks in the live bundle\n(`Turnover_kommunalt barnevern_2016-2024.xlsx`) has a structurally different layout and is\nexcluded — see `parse.ts`'s `isStandardIndicatorWorkbook`.\n",
+      "atlas_summary": null,
+      "publisher": {
+        "id": "bufdir",
+        "display_name": "Barne-, ungdoms- og familiedirektoratet",
+        "homepage": "https://www.bufdir.no/",
+        "logo": "/img/publishers/bufdir.png"
+      },
+      "category": {
+        "id": "social",
+        "name": "Social & housing",
+        "emoji": "🏘️"
+      },
+      "license": "NLOD",
+      "license_url": "https://data.norge.no/nlod/no/2.0",
+      "periodicity": "P1Y",
+      "eu_theme": "SOCI",
+      "attribution": "Kilde: Barne-, ungdoms- og familiedirektoratet, Barnevern kommunemonitor",
+      "tags": {
+        "provider": "bufdir",
+        "topic": "social",
+        "geo": "kommune",
+        "cadence": "annual"
+      },
+      "keywords": [
+        "child-welfare",
+        "barnevern",
+        "kommune",
+        "families"
+      ],
+      "lifecycle": "stable",
+      "time_coverage": {
+        "start": null,
+        "end": null
+      },
+      "methodology_notes": "Kommune-level child-welfare register indicators: undersøkelser (investigations), tiltak\n(interventions, in-home and out-of-home), fosterhjem i familie/nære nettverk, spending per\nchild, staffing per 1000 children, deadline-compliance (\"fristbrudd\"), and turnover among\nsaksbehandlere. Spines differ per indicator. Complements the sibling Barnefattigdom source's\nincome-based poverty lens with a contact-with-the-system lens.\n",
+      "suggested_joins": [
+        "bufdir-barnefattigdom"
+      ],
+      "related_by_topic": [
+        "ssb-12131",
+        "ssb-12132",
+        "ssb-13995",
+        "ssb-crime-tables"
+      ],
+      "dimensions": [
+        {
+          "code": "indicator_api_id",
+          "meaning": "Stable surrogate indicator key for ZIP workbook rows (not Strapi)",
+          "value_format": "bv_zip_ind_<code> (e.g. bv_zip_ind_1a), or bv_zip_<24 lowercase hex> fallback",
+          "notes": "Derived from the workbook filename's leading alphanumeric code (1a, 3m, 4f, ...) — Barnevern's indicator codes are alphanumeric, never purely numeric like the sibling Barnefattigdom source's Indikator_<n>. Hash fallback for any non-conforming filename.\n"
+        },
+        {
+          "code": "region_code",
+          "meaning": "Geographic code from workbook column Region",
+          "value_format": "0 (land), 2-digit fylke, 4-digit kommune, or 6-digit codes for bydel rows",
+          "notes": "Rows follow whatever geography levels each indicator publishes."
+        },
+        {
+          "code": "category_format",
+          "meaning": "Workbook column Tallformat, normalised lowercase",
+          "value_format": "antall or andel",
+          "notes": "Barnevern's own vocabulary — \"andel\" (share), not the sibling Barnefattigdom source's \"prosent\", verified live 2026-10-01 across all 23 standard workbooks. Despite the name, \"andel\" values are not all 0-100 percentages (e.g. kroner-per-child expenditure figures also use it) — treat it as \"Norwegian-decimal formatted\", not \"is a percentage\". Also: Barnevern's workbooks have no Enhet column (unlike the sibling Barnefattigdom source) — there is no category_unit dimension here.\n"
+        },
+        {
+          "code": "year",
+          "meaning": "Calendar year column from workbook header row",
+          "value_format": "4-digit integer",
+          "notes": "Spines differ by indicator — observed range 2015-2025 across sampled workbooks."
+        },
+        {
+          "code": "values_json",
+          "meaning": "Parsed year→value map for the geography and category_format slice",
+          "value_format": "JSON object with string year keys; suppressed cells as null",
+          "notes": "Matches the sibling source's raw semantics (full spine per slice)."
+        }
+      ],
+      "raw_tables": null,
+      "sample_query": null,
+      "citation": {
+        "text": "Barne-, ungdoms- og familiedirektoratet. (n.d.). Barnevern kommunemonitor. Retrieved from https://www.bufdir.no/statistikk-og-analyse/monitor/barnevern/. Available in Atlas at https://atlas.sovereignsky.no/datasets/bufdir-barnevern.",
+        "bibtex": "@misc{atlas_bufdir_barnevern,\n  author = {Barne-, ungdoms- og familiedirektoratet},\n  title  = {Barnevern kommunemonitor},\n  year   = {n.d.},\n  url    = {https://www.bufdir.no/statistikk-og-analyse/monitor/barnevern/},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/bufdir-barnevern}\n}"
+      },
+      "feedback_url": "https://www.bufdir.no/kontakt/",
+      "consuming_marts": [
+        {
+          "mart_name": "mart_atlas_inventory",
+          "api_v1_name": "atlas_inventory",
+          "title": null,
+          "description_short": "What Atlas publishes: one row per endpoint with its row count, freshness and origin.",
+          "description_full": "What Atlas publishes: one row per endpoint with its row count, freshness and origin.\n\nWhat Atlas publishes, one row per queryable endpoint: how many records it\nserves, when its data last arrived, and where those rows came from.\nAsked for by Røde Kors — \"validate that all datasets that are ingested has\nan endpoint and it can be queried … count the number of records each\nendpoint has and update the last time it ingested data.\"\n⚠️ THE GRAIN IS PER ENDPOINT, NOT PER SOURCE. meta_sources answers \"what\ndid Atlas ingest\"; this answers \"what can I query, and is there anything\nin it\". One source can feed several endpoints and one endpoint can draw on\nseveral sources, so the two row counts are not comparable and summing\nsources will not reproduce an endpoint's count.\n⚠️ atlas_inventory does not list ITSELF. It is built from the same seed it\nreports on, so counting itself would be circular and the number would be\nwhatever the table held mid-build. 19 endpoints are listed; 20 are\npublished.",
+          "sample_query": "https://api-atlas.urbalurba.com/atlas_inventory?limit=5"
+        },
+        {
+          "mart_name": "mart_indicators__bufdir_barnevern",
+          "api_v1_name": "indicators__bufdir_barnevern",
+          "title": "Barnevern kommunemonitor",
+          "description_short": "Per-source indicator data for bufdir-barnevern, at the publisher's own grain.",
+          "description_full": "Per-source indicator data for bufdir-barnevern, at the publisher's own grain.\n\nPer-source indicator relation for `bufdir-barnevern` (Barne-, ungdoms- og familiedirektoratet), published at the grain the publisher\nactually uses rather than flattened into the cross-source views.\n🔴 stability:source — the column set here follows Barne-, ungdoms- og familiedirektoratet, not Atlas. If the\npublisher adds, renames or drops a dimension, this relation changes with it. That is\nthe deliberate trade for getting the real grain; prefer a stability:curated relation\nif you need a shape Atlas promises to hold still. Decode codes through\nmeta_dimensions filtered to source_id=bufdir-barnevern. Sibling of\nmart_indicators__bufdir_barnefattigdom — no category_unit column here, and\ncategory_format uses \"andel\" (this source's own vocabulary), not \"prosent\".",
+          "sample_query": "https://api-atlas.urbalurba.com/indicators__bufdir_barnevern?limit=5"
+        }
+      ],
+      "consuming_models": [
+        {
+          "name": "indicators__bufdir_barnevern",
+          "kind": "indicators"
+        },
+        {
+          "name": "mart_atlas_inventory",
+          "kind": "mart"
+        },
+        {
+          "name": "mart_indicators__bufdir_barnevern",
+          "kind": "mart"
+        }
+      ],
+      "joined_with": [
+        {
+          "source_id": "brreg-enheter-alle",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "brreg-frivillige",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "brreg-oppdateringer",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "bufdir-barnefattigdom",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "fhi-alkohol",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "fhi-befolkning",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "fhi-befolkningsvekst",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "fhi-bor-alene",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        }
+      ],
+      "last_ingested_at": null,
+      "latest_row_count": null,
+      "total_runs": null,
+      "downstream_model_count": null
     },
     {
       "kind": "source",
@@ -8445,6 +8623,12 @@
           ]
         },
         {
+          "source_id": "bufdir-barnevern",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
           "source_id": "fhi-alkohol",
           "shared_models": [
             "mart_atlas_inventory"
@@ -8452,12 +8636,6 @@
         },
         {
           "source_id": "fhi-befolkning",
-          "shared_models": [
-            "mart_atlas_inventory"
-          ]
-        },
-        {
-          "source_id": "fhi-befolkningsvekst",
           "shared_models": [
             "mart_atlas_inventory"
           ]
@@ -9939,13 +10117,13 @@
           ]
         },
         {
-          "source_id": "fhi-alkohol",
+          "source_id": "bufdir-barnevern",
           "shared_models": [
             "mart_atlas_inventory"
           ]
         },
         {
-          "source_id": "fhi-befolkning",
+          "source_id": "fhi-alkohol",
           "shared_models": [
             "mart_atlas_inventory"
           ]
@@ -10758,6 +10936,12 @@
           ]
         },
         {
+          "source_id": "bufdir-barnevern",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
           "source_id": "fhi-alkohol",
           "shared_models": [
             "mart_atlas_inventory"
@@ -10771,12 +10955,6 @@
         },
         {
           "source_id": "fhi-befolkningsvekst",
-          "shared_models": [
-            "mart_atlas_inventory"
-          ]
-        },
-        {
-          "source_id": "fhi-bor-alene",
           "shared_models": [
             "mart_atlas_inventory"
           ]
@@ -11146,6 +11324,7 @@
       "methodology_notes": null,
       "suggested_joins": [],
       "related_by_topic": [
+        "bufdir-barnevern",
         "ssb-12132",
         "ssb-13995",
         "ssb-crime-tables"
@@ -11461,6 +11640,7 @@
       "methodology_notes": null,
       "suggested_joins": [],
       "related_by_topic": [
+        "bufdir-barnevern",
         "ssb-12131",
         "ssb-13995",
         "ssb-crime-tables"
@@ -12421,6 +12601,7 @@
       "methodology_notes": null,
       "suggested_joins": [],
       "related_by_topic": [
+        "bufdir-barnevern",
         "ssb-12131",
         "ssb-12132",
         "ssb-crime-tables"
@@ -12736,6 +12917,7 @@
       "methodology_notes": null,
       "suggested_joins": [],
       "related_by_topic": [
+        "bufdir-barnevern",
         "ssb-12131",
         "ssb-12132",
         "ssb-13995"
@@ -14020,6 +14202,12 @@
           "model_name": "mart_indicators__bufdir_barnefattigdom",
           "title": "Barnefattigdom kommunemonitor",
           "description_short": "Per-source indicator data for bufdir-barnefattigdom, at the publisher's own grain."
+        },
+        {
+          "parent_kind": "model",
+          "model_name": "mart_indicators__bufdir_barnevern",
+          "title": "Barnevern kommunemonitor",
+          "description_short": "Per-source indicator data for bufdir-barnevern, at the publisher's own grain."
         },
         {
           "parent_kind": "model",
@@ -15595,6 +15783,99 @@
       ],
       "sample_query": "https://api-atlas.urbalurba.com/indicators__bufdir_barnefattigdom?limit=5",
       "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__bufdir_barnefattigdom"
+    },
+    {
+      "kind": "view",
+      "view_id": "indicators__bufdir_barnevern",
+      "mart_name": "mart_indicators__bufdir_barnevern",
+      "api_v1_name": "indicators__bufdir_barnevern",
+      "title": "Barnevern kommunemonitor",
+      "description_short": "Per-source indicator data for bufdir-barnevern, at the publisher's own grain.",
+      "description_full": "Per-source indicator data for bufdir-barnevern, at the publisher's own grain.\n\nPer-source indicator relation for `bufdir-barnevern` (Barne-, ungdoms- og familiedirektoratet), published at the grain the publisher\nactually uses rather than flattened into the cross-source views.\n🔴 stability:source — the column set here follows Barne-, ungdoms- og familiedirektoratet, not Atlas. If the\npublisher adds, renames or drops a dimension, this relation changes with it. That is\nthe deliberate trade for getting the real grain; prefer a stability:curated relation\nif you need a shape Atlas promises to hold still. Decode codes through\nmeta_dimensions filtered to source_id=bufdir-barnevern. Sibling of\nmart_indicators__bufdir_barnefattigdom — no category_unit column here, and\ncategory_format uses \"andel\" (this source's own vocabulary), not \"prosent\".",
+      "columns": [
+        {
+          "name": "source_id",
+          "description": "Atlas catalogue id for this ingest — always bufdir-barnevern."
+        },
+        {
+          "name": "indicator_api_id",
+          "description": "Stable surrogate workbook id — bv_zip_ind_<code> (e.g. bv_zip_ind_1a), or bv_zip_<24 hex SHA-256> fallback."
+        },
+        {
+          "name": "indicator_slug",
+          "description": "Normalised slug from the upstream indicator name; used as part of contents_code."
+        },
+        {
+          "name": "indicator_group_slug",
+          "description": "Fixed literal barnevern_zip for ZIP-ingested rows."
+        },
+        {
+          "name": "indicator_name",
+          "description": "Workbook-derived indicator title concatenated above the Region header rows."
+        },
+        {
+          "name": "indicator_title",
+          "description": "Same human-facing title chain as indicator_name after ZIP parsing."
+        },
+        {
+          "name": "link_text",
+          "description": "NULL for workbook-backed rows."
+        },
+        {
+          "name": "region_code",
+          "description": "Geographic code string from workbook column Region, verbatim from upstream. It may be a kommune, fylke, bydel, Svalbard, or national code; region_kind says which."
+        },
+        {
+          "name": "region_kind",
+          "description": "What region_code is, from classify_region_code: kommune · fylke · svalbard · bydel · nasjon · unknown."
+        },
+        {
+          "name": "kommune_nr",
+          "description": "Four-digit kommune code, derived through region_code_to_kommune_nr so Svalbard-shaped codes are correctly NULL rather than misclassified as a kommune. NULL for other geography levels."
+        },
+        {
+          "name": "fylke_nr",
+          "description": "Two-digit fylke code when region_code is exactly two digits; NULL otherwise."
+        },
+        {
+          "name": "category_format",
+          "description": "Tallformat column — andel (share/decimal-formatted, not limited to 0-100) or antall (count). There is no category_unit column for this source."
+        },
+        {
+          "name": "year",
+          "description": "Calendar year of the observation."
+        },
+        {
+          "name": "contents_code",
+          "description": "Atlas-normalised variable code: prefix `bv_`, the indicator slug, and category_format joined with `__`, so each measure is filter-stable in the catalogue."
+        },
+        {
+          "name": "contents_label",
+          "description": "Human-readable label combining the workbook title with the andel/antall format."
+        },
+        {
+          "name": "value",
+          "description": "Numeric value for this year; NULL when the upstream series omits this year."
+        },
+        {
+          "name": "values_json",
+          "description": "Parse of Sheet1 rows into year keys (spreadsheet blanks / suppression → JSON null values)."
+        },
+        {
+          "name": "updated_at",
+          "description": "Timestamp when the row was last written by ingest (from raw.loaded_at)."
+        }
+      ],
+      "built_from": [
+        {
+          "parent_kind": "model",
+          "model_name": "indicators__bufdir_barnevern",
+          "title": null,
+          "description_short": "Per-source passthrough for Bufdir Barnevern kommunemonitor."
+        }
+      ],
+      "sample_query": "https://api-atlas.urbalurba.com/indicators__bufdir_barnevern?limit=5",
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__bufdir_barnevern"
     },
     {
       "kind": "view",
@@ -19984,6 +20265,12 @@
                 ]
               },
               {
+                "source_id": "bufdir-barnevern",
+                "shared_models": [
+                  "mart_atlas_inventory"
+                ]
+              },
+              {
                 "source_id": "fhi-alkohol",
                 "shared_models": [
                   "mart_atlas_inventory"
@@ -20003,12 +20290,6 @@
               },
               {
                 "source_id": "fhi-bor-alene",
-                "shared_models": [
-                  "mart_atlas_inventory"
-                ]
-              },
-              {
-                "source_id": "fhi-depresjon",
                 "shared_models": [
                   "mart_atlas_inventory"
                 ]

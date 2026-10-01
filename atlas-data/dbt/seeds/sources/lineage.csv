@@ -46,6 +46,7 @@ fact_kommune_indicators,ssb-crime-tables
 fact_kommune_indicators,ssb-klass-fylker
 fact_kommune_indicators,ssb-klass-kommuner
 indicators__bufdir_barnefattigdom,bufdir-barnefattigdom
+indicators__bufdir_barnevern,bufdir-barnevern
 indicators__fhi_alkohol,fhi-alkohol
 indicators__fhi_befolkning,fhi-befolkning
 indicators__fhi_befolkningsvekst,fhi-befolkningsvekst
@@ -90,6 +91,7 @@ mart_atlas_inventory,brreg-enheter-alle
 mart_atlas_inventory,brreg-frivillige
 mart_atlas_inventory,brreg-oppdateringer
 mart_atlas_inventory,bufdir-barnefattigdom
+mart_atlas_inventory,bufdir-barnevern
 mart_atlas_inventory,fhi-alkohol
 mart_atlas_inventory,fhi-befolkning
 mart_atlas_inventory,fhi-befolkningsvekst
@@ -286,6 +288,7 @@ mart_indicator_summary,ssb-crime-tables
 mart_indicator_summary,ssb-klass-fylker
 mart_indicator_summary,ssb-klass-kommuner
 mart_indicators__bufdir_barnefattigdom,bufdir-barnefattigdom
+mart_indicators__bufdir_barnevern,bufdir-barnevern
 mart_indicators__fhi_alkohol,fhi-alkohol
 mart_indicators__fhi_befolkning,fhi-befolkning
 mart_indicators__fhi_befolkningsvekst,fhi-befolkningsvekst

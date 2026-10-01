@@ -195,6 +195,7 @@ _ANNUAL_SOURCE_IDS = [
     *raw_ssb.SSB_CRIME_SOURCES,
     *raw_fhi.FHI_SOURCES,
     "bufdir-barnefattigdom",
+    "bufdir-barnevern",
 ]
 
 _KLASS_SOURCE_IDS = list(raw_ssb.SSB_KLASS_SOURCES)

@@ -6,19 +6,19 @@ This section is for **anyone consuming Atlas's public PostgREST API** to build t
 
 <!-- BEGIN holdings (generated) -->
 
-**43 upstream sources** from **5 publishers**, served as **80 read-only relations**.
+**44 upstream sources** from **5 publishers**, served as **81 read-only relations**.
 
 | publisher | sources | broadly |
 |---|---|---|
 | Folkehelseinstituttet | 21 | public health, and the Ungdata youth surveys |
 | Statistisk sentralbyrå | 17 | population, income, families, housing, education, crime |
 | Brønnøysundregistrene | 3 | the company and voluntary-organisation registers |
-| Barne-, ungdoms- og familiedirektoratet | 1 | child poverty |
+| Barne-, ungdoms- og familiedirektoratet | 2 | child poverty |
 | Norges Røde Kors | 1 | local chapters and their activities |
 
-By EU data theme: **SOCI** 20 (society) · **HEAL** 12 (health) · **GOVE** 5 (government) · **EDUC** 5 (education) · **JUST** 1 (justice).
+By EU data theme: **SOCI** 21 (society) · **HEAL** 12 (health) · **GOVE** 5 (government) · **EDUC** 5 (education) · **JUST** 1 (justice).
 
-Licences: **NLOD** for 42 of 43 — Norwegian public data, free to reuse with attribution. The exceptions are `redcross-branches` (permissive) — Red Cross's own data rather than the state's.
+Licences: **NLOD** for 43 of 44 — Norwegian public data, free to reuse with attribution. The exceptions are `redcross-branches` (permissive) — Red Cross's own data rather than the state's.
 
 ### What you can query
 
@@ -41,6 +41,7 @@ Licences: **NLOD** for 42 of 43 — Norwegian public data, free to reuse with at
 | `indicator_missing_kommuner` | One row per indicator and kommune that the indicator does not cover. |
 | `indicator_summary` | One row per indicator and source: latest year, kommune coverage and value range. |
 | `indicators__bufdir_barnefattigdom` | Per-source indicator data for bufdir-barnefattigdom, at the publisher's own grain. |
+| `indicators__bufdir_barnevern` | Per-source indicator data for bufdir-barnevern, at the publisher's own grain. |
 | `indicators__fhi_alkohol` | Per-source indicator data for fhi-alkohol (Folkehelseinstituttet), at the publisher's own grain. |
 | `indicators__fhi_befolkning` | Per-source indicator data for fhi-befolkning (Folkehelseinstituttet), at the publisher's own grain. |
 | `indicators__fhi_befolkningsvekst` | Per-source indicator data for fhi-befolkningsvekst (Folkehelseinstituttet), at the publisher's own grain. |

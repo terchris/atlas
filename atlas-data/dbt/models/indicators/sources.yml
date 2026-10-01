@@ -1376,6 +1376,80 @@ sources:
               - not_null
           - name: loaded_at
             data_type: timestamp with time zone
+      - name: bufdir_barnevern
+        description: |
+          Bufdir Barnevern kommunemonitor — annual indicator time series from the official bulk
+          ZIP of indicator workbooks (monitor page resolves the CDN ZIP URL). Sibling of
+          bufdir_barnefattigdom with a different internal workbook shape — no category_unit
+          dimension, and category_format uses the literal "andel" (not "prosent").
+          Populated by atlas-data/ingest/src/sources/bufdir-barnevern.
+        loaded_at_field: loaded_at
+        meta:
+          ingest_cadence: weekly
+        freshness:
+          warn_after: {count: 400, period: day}
+          error_after: {count: 800, period: day}
+        columns:
+          - name: indicator_api_id
+            description: |-
+              Stable surrogate bv_zip_ind_<code> keyed on the workbook filename's leading
+              alphanumeric indicator code (e.g. 1a, 3m); bv_zip_<24 hex SHA-256> fallback for a
+              non-conforming filename.
+            data_tests:
+              - not_null
+          - name: indicator_slug
+            description: >-
+              Normalised slug derived from the upstream indicator name for stable contents_code construction
+              in dbt.
+            data_tests:
+              - not_null
+          - name: indicator_group_slug
+            description: >-
+              Zip ingest uses the fixed literal barnevern_zip.
+            data_tests:
+              - not_null
+          - name: indicator_name
+            description: Concatenated title text from workbook rows above the Sheet1 header
+              (Norwegian).
+            data_tests:
+              - not_null
+          - name: indicator_title
+            description: Same as indicator_name — derived from the workbook title rows.
+            data_tests:
+              - not_null
+          - name: link_text
+            description: Unused for ZIP ingest; always NULL.
+            data_type: text
+          - name: region_code
+            description: >-
+              Geographic code from workbook column Region (land, fylke, kommune, or bydel).
+            data_tests:
+              - not_null
+          - name: category_format
+            description: >-
+              Column Tallformat (andel or antall), normalised lowercase in ingest. "andel" is this
+              source's own vocabulary (not the sibling's "prosent") and is not limited to 0-100
+              percentages. There is no category_unit column — Barnevern's workbooks carry no Enhet
+              column.
+            data_tests:
+              - not_null
+          - name: year
+            description: Calendar year keyed from workbook header columns (same row as scalar
+              value).
+            data_tests:
+              - not_null
+          - name: value
+            description: Numeric value for this year from the upstream time series; NULL when
+              absent.
+            data_type: numeric
+          - name: values_json
+            description: >-
+              Parsed year-to-value pairs for this Region × category_format slice (spreadsheet
+              blanks / .. → JSON null).
+            data_tests:
+              - not_null
+          - name: loaded_at
+            data_type: timestamp with time zone
       - name: ssb_12944
         description: |
           SSB statistikkbanktabell 12944 — Personer i husholdninger med vedvarende

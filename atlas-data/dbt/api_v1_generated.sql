@@ -142,13 +142,13 @@ SUPPLY — voluntary-sector presence:
   distrikt_summary             chapters by district.
   kommune_local_chapters       chapters resolved to a kommune.
 
-PER-SOURCE INDICATOR RELATIONS — 40 of them, one per upstream table, at the
+PER-SOURCE INDICATOR RELATIONS — 41 of them, one per upstream table, at the
 grain the publisher actually uses. The cross-source views above impose ONE
 shape on every source; these keep the source''s own dimensions, so a breakdown
 those views flatten away (a sex, an age band, a household or family type, a
 parental-education split) is only answerable here.
 
-🔴 ALL 40 ARE stability:source. THE COLUMN SET FOLLOWS THE PUBLISHER, NOT
+🔴 ALL 41 ARE stability:source. THE COLUMN SET FOLLOWS THE PUBLISHER, NOT
 ATLAS. If SSB, FHI or Bufdir adds, renames or drops a dimension, these change
 with it — that is the deliberate trade for getting the real grain. Filter
 `meta_endpoints?tags=cs.{stability:curated}` for the relations whose shape
@@ -157,8 +157,8 @@ Atlas promises to hold still.
 🔵 Codes are codes here. Decode them through `meta_dimensions` filtered to the
 same source_id, and through the ref_* lists above where one exists.
 
-  bufdir (1):
-    indicators__bufdir_barnefattigdom
+  bufdir (2):
+    indicators__bufdir_barnefattigdom indicators__bufdir_barnevern
   fhi (21):
     indicators__fhi_alkohol indicators__fhi_befolkning
     indicators__fhi_befolkningsvekst indicators__fhi_bor_alene
@@ -1233,6 +1233,38 @@ COMMENT ON COLUMN api_v1.indicators__bufdir_barnefattigdom.contents_label IS 'Hu
 COMMENT ON COLUMN api_v1.indicators__bufdir_barnefattigdom.value IS 'Numeric value for this year; NULL when the upstream series omits this year.';
 COMMENT ON COLUMN api_v1.indicators__bufdir_barnefattigdom.values_json IS 'Parse of Data sheet rows into year keys (spreadsheet blanks / suppression → JSON null values).';
 COMMENT ON COLUMN api_v1.indicators__bufdir_barnefattigdom.updated_at IS 'Timestamp when the row was last written by ingest (from raw.loaded_at).';
+
+-- indicators__bufdir_barnevern  ←  marts.mart_indicators__bufdir_barnevern
+CREATE OR REPLACE VIEW api_v1.indicators__bufdir_barnevern AS SELECT * FROM marts.mart_indicators__bufdir_barnevern;
+COMMENT ON VIEW api_v1.indicators__bufdir_barnevern IS 'Per-source indicator data for bufdir-barnevern, at the publisher''s own grain.
+
+Per-source indicator relation for `bufdir-barnevern` (Barne-, ungdoms- og familiedirektoratet), published at the grain the publisher
+actually uses rather than flattened into the cross-source views.
+🔴 stability:source — the column set here follows Barne-, ungdoms- og familiedirektoratet, not Atlas. If the
+publisher adds, renames or drops a dimension, this relation changes with it. That is
+the deliberate trade for getting the real grain; prefer a stability:curated relation
+if you need a shape Atlas promises to hold still. Decode codes through
+meta_dimensions filtered to source_id=bufdir-barnevern. Sibling of
+mart_indicators__bufdir_barnefattigdom — no category_unit column here, and
+category_format uses "andel" (this source''s own vocabulary), not "prosent".';
+COMMENT ON COLUMN api_v1.indicators__bufdir_barnevern.source_id IS 'Atlas catalogue id for this ingest — always bufdir-barnevern.';
+COMMENT ON COLUMN api_v1.indicators__bufdir_barnevern.indicator_api_id IS 'Stable surrogate workbook id — bv_zip_ind_<code> (e.g. bv_zip_ind_1a), or bv_zip_<24 hex SHA-256> fallback.';
+COMMENT ON COLUMN api_v1.indicators__bufdir_barnevern.indicator_slug IS 'Normalised slug from the upstream indicator name; used as part of contents_code.';
+COMMENT ON COLUMN api_v1.indicators__bufdir_barnevern.indicator_group_slug IS 'Fixed literal barnevern_zip for ZIP-ingested rows.';
+COMMENT ON COLUMN api_v1.indicators__bufdir_barnevern.indicator_name IS 'Workbook-derived indicator title concatenated above the Region header rows.';
+COMMENT ON COLUMN api_v1.indicators__bufdir_barnevern.indicator_title IS 'Same human-facing title chain as indicator_name after ZIP parsing.';
+COMMENT ON COLUMN api_v1.indicators__bufdir_barnevern.link_text IS 'NULL for workbook-backed rows.';
+COMMENT ON COLUMN api_v1.indicators__bufdir_barnevern.region_code IS 'Geographic code string from workbook column Region, verbatim from upstream. It may be a kommune, fylke, bydel, Svalbard, or national code; region_kind says which.';
+COMMENT ON COLUMN api_v1.indicators__bufdir_barnevern.region_kind IS 'What region_code is, from classify_region_code: kommune · fylke · svalbard · bydel · nasjon · unknown.';
+COMMENT ON COLUMN api_v1.indicators__bufdir_barnevern.kommune_nr IS 'Four-digit kommune code, derived through region_code_to_kommune_nr so Svalbard-shaped codes are correctly NULL rather than misclassified as a kommune. NULL for other geography levels.';
+COMMENT ON COLUMN api_v1.indicators__bufdir_barnevern.fylke_nr IS 'Two-digit fylke code when region_code is exactly two digits; NULL otherwise.';
+COMMENT ON COLUMN api_v1.indicators__bufdir_barnevern.category_format IS 'Tallformat column — andel (share/decimal-formatted, not limited to 0-100) or antall (count). There is no category_unit column for this source.';
+COMMENT ON COLUMN api_v1.indicators__bufdir_barnevern.year IS 'Calendar year of the observation.';
+COMMENT ON COLUMN api_v1.indicators__bufdir_barnevern.contents_code IS 'Atlas-normalised variable code: prefix `bv_`, the indicator slug, and category_format joined with `__`, so each measure is filter-stable in the catalogue.';
+COMMENT ON COLUMN api_v1.indicators__bufdir_barnevern.contents_label IS 'Human-readable label combining the workbook title with the andel/antall format.';
+COMMENT ON COLUMN api_v1.indicators__bufdir_barnevern.value IS 'Numeric value for this year; NULL when the upstream series omits this year.';
+COMMENT ON COLUMN api_v1.indicators__bufdir_barnevern.values_json IS 'Parse of Sheet1 rows into year keys (spreadsheet blanks / suppression → JSON null values).';
+COMMENT ON COLUMN api_v1.indicators__bufdir_barnevern.updated_at IS 'Timestamp when the row was last written by ingest (from raw.loaded_at).';
 
 -- indicators__fhi_alkohol  ←  marts.mart_indicators__fhi_alkohol
 CREATE OR REPLACE VIEW api_v1.indicators__fhi_alkohol AS SELECT * FROM marts.mart_indicators__fhi_alkohol;

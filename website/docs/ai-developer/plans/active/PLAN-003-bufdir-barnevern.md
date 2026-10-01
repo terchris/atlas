@@ -8,14 +8,14 @@ workbooks are shaped differently (verified below).
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Backlog
+## Status: Active — Phases 1-3 DONE, Phase 4 (deploy + verify) not started
 
 **Goal**: Add `bufdir-barnevern` as a served Atlas source, plugging the barnevern axis that Report
 #2 (Child Welfare / Vulnerability Composite) is missing today.
 
 **Last Updated**: 2026-10-01
 
-**Investigation**: [INVESTIGATE-new-norwegian-public-sources.md](INVESTIGATE-new-norwegian-public-sources.md) §Tier 1 #1 ([Q1]–[Q3])
+**Investigation**: [INVESTIGATE-new-norwegian-public-sources.md](../backlog/INVESTIGATE-new-norwegian-public-sources.md) §Tier 1 #1 ([Q1]–[Q3])
 
 **Prerequisites**: None. The "Phase 0 schema prep" this investigation originally pointed to was a
 phantom (no `provider` enum, no `dim_period`/`dim_indicator` tables exist) — see the investigation's
@@ -117,11 +117,46 @@ mechanism; it does not follow the same internal shape.
 
 ---
 
-## Phase 2: Ingest module + raw table
+## Phase 2: Ingest module + raw table — DONE
+
+⚠️ **Caught during this phase's own live validation, not by the plan's Phase 1 research**: every
+standard workbook's `Tallformat` column uses the literal value **`Andel`** for decimal-formatted
+figures, not the sibling Barnefattigdom source's `Prosent`. A first draft copied the sibling's
+`prosent` check without re-verifying it against Barnevern's own data; running the real ingest
+against the live ZIP (not just the unit tests) showed 9 of 23 workbooks returning **zero rows**
+and the rest returning roughly half their true row count — 70,899 rows instead of the correct
+191,673. Fixed by checking for `andel` instead of `prosent` throughout `parse.ts`. Also: `andel`
+is not limited to 0–100 percentages — some `andel`-formatted indicators are kroner-per-child
+figures, so it means "Norwegian-decimal formatted", not "is a percentage". See `parse.ts`'s
+`parseCell` doc and the manifest's `category_format` dimension note.
+
+Also added during this phase, not originally listed in the task breakdown below: **Dagster asset
+registration** (`atlas-data/dagster/atlas_data/assets/raw_other.py` and `schedules.py`'s
+`_ANNUAL_SOURCE_IDS`). Required by the standing "every ingested source appears in a scheduling
+grouping or `cadence.UNSCHEDULED_SOURCES`" invariant (`schedules.py`'s own comment) — without it,
+`bufdir-barnevern` would need a human to trigger it by hand, exactly the failure mode
+`PLAN-zero-touch-ingest-automation` (#1793) fixed for every other source this session.
+
+⚠️ **CI caught three more generated-artifact drift gates on first push (PR #489)**, none anticipated
+by the task list — recorded so the next new-source PLAN budgets for them:
+- `tags.topic: child-welfare` isn't a registered category — `atlas-data/ingest/src/sources/topics.yaml`
+  is a short, curated, editorially-maintained list (`check-manifests.sh` + the website's
+  `generate-sources-registry.mjs` both enforce it), not free text. Changed to `topic: social` ("the
+  bridge between need and the services that respond to it" — the existing category description
+  already fits barnevern without adding a new one for a single source).
+- `atlas-data/dbt/seeds/sources/_sources_manifest.csv` / `_sources_dimensions.csv` are generated from
+  every `manifest.yml` by `scripts/build_sources_seed.py` and must be regenerated and committed in
+  the same PR as any manifest change — `check-sources-seed-is-current.sh` diffs the committed seed
+  against a fresh regeneration. Ran it; committed the regenerated seed.
+- `atlas-data/template-info.yaml`'s `first_data.takes` / `first_data.first_load` state the raw-table
+  count in prose (`"~4.1M rows across 52 raw BASE TABLEs..."`) and `render-template-info.sh` checks
+  that number against `grep -c 'create table raw\.'` across `migrations/*.sql`. Bumped `52` → `53`
+  in both occurrences — the row-count/timing narrative around it is a real prior measurement
+  (urb-agents #1027) and was left untouched; only the table-count fact changed.
 
 ### Tasks
 
-- [ ] 2.1 Create `atlas-data/ingest/src/sources/bufdir-barnevern/`:
+- [x] 2.1 Create `atlas-data/ingest/src/sources/bufdir-barnevern/`:
   - `fetch_retry.ts` — copy verbatim from `bufdir-barnefattigdom` (generic retry wrapper, no
     barnefattigdom-specific logic; the file's own header already notes this pattern is duplicated
     per-source rather than shared, so a fourth copy matches existing convention).
@@ -154,65 +189,96 @@ mechanism; it does not follow the same internal shape.
     eu_theme: SOCI
     tags:
       provider: bufdir
-      topic: child-welfare
+      topic: social
       geo: kommune
       cadence: annual
     suggested_joins:
       - bufdir-barnefattigdom
     ```
-    `dimensions:` block to be filled in once 1.4's sampling confirms the final column set —
-    expect `indicator_api_id`, `region_code`, `category_format` (Tallformat — no `category_unit`),
-    `year`, `values_json`.
-  - `README.md` — short, matching sibling's structure.
-  - `__tests__/` — golden-file tests for discovery (barnevern URL shapes, ambiguous-ZIP refusal) and
-    the parser (at minimum the `1A` shape and the `Turnover` outlier shape), mirroring the 29 tests
-    PR #67 added for the sibling.
+    `dimensions:` block uses the final confirmed column set: `indicator_api_id`, `region_code`,
+    `category_format` (Tallformat — values `antall`/`andel`, no `category_unit`), `year`,
+    `values_json`.
+  - `README.md` — written, matching sibling's structure, documenting the `andel` vocabulary finding.
+  - `__tests__/` — 33 tests: discovery tiers (barnevern URL shapes, ambiguous-ZIP refusal),
+    `isStandardIndicatorWorkbook` filter, `parseCell` (including the `andel`-is-not-always-a-
+    percentage case), surrogate id, and an end-to-end parse of the real `1A` fixture plus a test
+    that the non-conforming `Turnover` fixture throws rather than silently mis-parsing.
+  - Also registered in `atlas-data/ingest/package.json` (`ingest:bufdir-barnevern` script) and in
+    the Dagster asset groupings (see Phase 2 header note above) — not originally itemized here.
 
-- [ ] 2.2 `atlas-data/migrations/056_raw_bufdir_barnevern.sql` — `create table raw.bufdir_barnevern`
+- [x] 2.2 `atlas-data/migrations/056_raw_bufdir_barnevern.sql` — `create table raw.bufdir_barnevern`
   with primary key `(indicator_api_id, region_code, category_format, year)` (no `category_unit` —
-  see Phase 1.3), plus `comment on table/column` following the sibling's style, written fresh for
-  the actual Barnevern shape rather than copied (the sibling's own migration comments are already
-  slightly stale relative to its current ZIP-era columns — don't propagate that).
+  see Phase 1.3), plus `comment on table/column` written fresh for the actual Barnevern shape
+  (including the `andel` vocabulary note) rather than copied from the sibling's slightly-stale
+  comments.
 
 ### Validation
 
 ```bash
-cd atlas-data/ingest && npm test -- bufdir-barnevern
+cd atlas-data/ingest && npm test -- bufdir-barnevern   # 33 passed
+cd atlas-data/ingest && npm test                        # 181 passed, whole package — no regressions
+cd atlas-data/ingest && npm run typecheck                # clean
+env -u DATABASE_URL node_modules/.bin/tsx src/sources/bufdir-barnevern/index.ts  # live run, NDJSON-only
 ```
-Golden-file tests pass; a manual run against the live ZIP produces a plausible row count (24
-workbooks × kommune/fylke/national rows × ~10 years) with zero rows silently dropped (cross-check
-sheet row count vs. ingested row count per workbook, the same completeness check PR #67 did for the
-sibling).
+✅ Done 2026-10-01. Live run against the real upstream ZIP: 23 workbooks, 0 `workbook.no_rows`
+warnings, 191,673 rows, 489 distinct region codes. (First live run, before the `andel` fix, produced
+70,899 rows with 9 workbooks at zero — exactly the "zero rows silently dropped" failure mode this
+validation step exists to catch; not caught by the unit tests alone, only by running the real
+ingest.) Needs Node ≥22 (`engines` in `package.json`) — Node 20.11 fails at vitest startup
+(`styleText` not exported from `node:util`).
 
 ---
 
-## Phase 3: dbt staging and marts
+## Phase 3: dbt staging and marts — DONE
+
+⚠️ **A second real defect caught by building against real ingested data, not an empty schema** —
+the same class of bug as Phase 2's `andel`/`prosent` miss, one layer deeper: the bare
+`region_code ~ '^[0-9]{4}$'` / `'^[0-9]{2}$'` pattern (copied from the sibling model, matching its
+current code) calls Svalbard a kommune/fylke. Barnevern's own ZIP carries a Svalbard placeholder
+row at BOTH levels — `region_code = '2111'` (4-digit, 394 rows) and a bare `'21'` (2-digit, 394
+rows), every value null across all 23 indicators. This is exactly the defect
+`macros/classify_region_code.sql` was built to fix (urb-agents #700) — confirmed live, not
+inferred, via a local Postgres loaded with the real 191,673-row ingest. Fixed `kommune_nr` via the
+existing `region_code_to_kommune_nr` macro and added a `region_kind` column (matching the
+established `indicators__ssb_07459.sql` convention). `fylke_nr` needed a narrow, local exclusion
+of `region_code = '21'` instead — `classify_region_code`'s own `fylke` branch is a bare
+`^\d{2}$` catch-all with the identical latent gap, but fixing that macro site-wide is a bigger
+blast radius than this PLAN's scope; noted in the model's own comment for whoever investigates
+the macro next.
 
 ### Tasks
 
-- [ ] 3.1 Add `raw.bufdir_barnevern` to `atlas-data/dbt/models/indicators/sources.yml`.
-- [ ] 3.2 `atlas-data/dbt/models/indicators/indicators__bufdir_barnevern.sql` — same shape as
-  `indicators__bufdir_barnefattigdom.sql` (kommune_nr/fylke_nr split from `region_code`,
-  `contents_code`/`contents_label` synthesized), **minus `category_unit`** — the sibling's
-  `contents_code` formula (`'bf_' || indicator_slug || '__' || category_unit || '__' || category_format`)
-  has no `category_unit` to join into for this source; use
-  `'bv_' || indicator_slug || '__' || category_format`.
-- [ ] 3.3 Document the new model's columns in `atlas-data/dbt/models/indicators/schema.yml` (run
-  `check-osmosis.sh` against a local Postgres with `raw.bufdir_barnevern` loaded — per
-  [`local-postgres-for-real-dbt-evidence`], no Docker needed, TCP socket, short path).
-- [ ] 3.4 `atlas-data/dbt/models/marts/api/mart_indicators__bufdir_barnevern.sql` — api passthrough,
-  mirroring `mart_indicators__bufdir_barnefattigdom.sql`. Document in
-  `atlas-data/dbt/models/marts/api/schema.yml`.
-- [ ] 3.5 Run `dbt build` locally against the loaded fixture and confirm `dbt test` is clean —
-  relationship test against `dim_kommune` for `kommune_nr`, `not_null` on the primary-key columns.
+- [x] 3.1 Added `raw.bufdir_barnevern` to `atlas-data/dbt/models/indicators/sources.yml`.
+- [x] 3.2 `atlas-data/dbt/models/indicators/indicators__bufdir_barnevern.sql` — same shape as
+  `indicators__bufdir_barnefattigdom.sql`, minus `category_unit`, using `'bv_' || indicator_slug
+  || '__' || category_format` for `contents_code`. `kommune_nr` goes through
+  `region_code_to_kommune_nr`, not a bare regex (see defect note above); `region_kind` added.
+- [x] 3.3 Documented the model's columns in `atlas-data/dbt/models/indicators/schema.yml` — ran
+  `check-osmosis.sh` against a local throwaway Postgres (initdb, TCP, short `/tmp` socket path —
+  the scratchpad directory's own path was too long for a unix socket) with `raw.bufdir_barnevern`
+  actually loaded via the real ingest. All columns documented, 566 total in that file.
+- [x] 3.4 `atlas-data/dbt/models/marts/api/mart_indicators__bufdir_barnevern.sql` — api passthrough,
+  mirroring the sibling. Documented in `atlas-data/dbt/models/marts/api/schema.yml`.
+- [x] 3.5 `dbt build` against the real loaded data: 1 table model, 21 data tests, 1 view model, all
+  green (23/23) after the `region_kind`/`fylke_nr` fix.
+
+Also regenerated, not originally itemized: `api_v1_generated.sql` / `api_v1_state.json`
+(`regenerate-api-v1.sh`), `lineage.csv` / `lineage_direct.csv` (`extract_lineage.py`),
+`api_v1_relations.csv`, the website's `sources-registry.json` and new per-view dataset page, and
+`template-info.yaml`'s raw/marts table-count prose (53 raw / 83 marts tables / 69 marts views —
+each bumped and re-verified via `render-template-info.sh` and `generate-holdings.py --check`).
 
 ### Validation
 
 ```bash
-cd atlas-data/dbt && dbt build --select indicators__bufdir_barnevern+ && dbt test --select indicators__bufdir_barnevern+
+cd atlas-data/dbt && dbt build --select indicators__bufdir_barnevern mart_indicators__bufdir_barnevern
+# against a local Postgres loaded via: npm run migrate && tsx src/sources/bufdir-barnevern/index.ts
 ```
-All green against a local Postgres loaded from a real ingest run (not an empty schema — an empty
-build passes checks that prove nothing, per `[[ci-builds-from-empty-so-state-defects-are-invisible]]`).
+✅ Done 2026-10-01. 23/23 pass against 191,673 real rows (not an empty schema — an empty build
+passes checks that prove nothing, per `[[ci-builds-from-empty-so-state-defects-are-invisible]]`).
+`check-osmosis.sh`, `check-api-v1.sh`, `check-lineage-is-current.sh`,
+`check-every-source-is-served.sh`, `check-sources-seed-is-current.sh`, `check-manifests.sh`,
+`render-template-info.sh`, and `generate-holdings.py --check` all green.
 
 ---
 
@@ -241,15 +307,20 @@ Live `curl` against the public API returns real Barnevern rows through
 
 ## Acceptance Criteria
 
-- [ ] `bufdir-barnevern` ingests cleanly from the live ZIP with zero rows silently dropped.
-- [ ] `raw.bufdir_barnevern` correctly has no `category_unit` column (verified against Phase 1's
+- [x] `bufdir-barnevern` ingests cleanly from the live ZIP with zero rows silently dropped — 23
+  workbooks, 191,673 rows, verified by running the real ingest, not just unit tests.
+- [x] `raw.bufdir_barnevern` correctly has no `category_unit` column (verified against Phase 1's
   finding, not assumed).
-- [ ] `indicators__bufdir_barnevern` and `mart_indicators__bufdir_barnevern` build and test clean.
+- [x] `indicators__bufdir_barnevern` and `mart_indicators__bufdir_barnevern` build and test clean
+  (23/23 data tests, against real loaded data).
 - [ ] `bufdir-barnevern` appears in `meta_sources.served_as` **after a real deploy**, with rows
-  confirmed via a live `curl`, not inferred from CI.
-- [ ] Golden-file tests cover both the `1A`-style shape and the `Turnover_...` outlier shape.
+  confirmed via a live `curl`, not inferred from CI. **Not done — this agent has no cluster access;
+  Phase 4 is the deploy request.**
+- [x] Golden-file tests cover both the `1A`-style shape and the `Turnover_...` outlier shape (33
+  tests total, including an end-to-end parse of the real `1A` fixture).
 - [ ] The investigation (`INVESTIGATE-new-norwegian-public-sources.md`) and `1PRIORITY.md` are updated
-  to mark this candidate shipped, same as the other three corrections made 2026-10-01.
+  to mark this candidate shipped, same as the other three corrections made 2026-10-01. **Not yet
+  done — do this once Phase 4 confirms rows actually arrived, not before.**
 
 ---
 
@@ -278,10 +349,17 @@ Live `curl` against the public API returns real Barnevern rows through
 - `atlas-data/ingest/src/sources/bufdir-barnevern/README.md` (new)
 - `atlas-data/ingest/src/sources/bufdir-barnevern/__tests__/` (new)
 - `atlas-data/migrations/056_raw_bufdir_barnevern.sql` (new)
+- `atlas-data/ingest/package.json` (`ingest:bufdir-barnevern` script)
+- `atlas-data/dagster/atlas_data/assets/raw_other.py` (asset registration, weekly-polled cadence)
+- `atlas-data/dagster/atlas_data/schedules.py` (`_ANNUAL_SOURCE_IDS`)
 - `atlas-data/dbt/models/indicators/sources.yml`
 - `atlas-data/dbt/models/indicators/indicators__bufdir_barnevern.sql` (new)
 - `atlas-data/dbt/models/indicators/schema.yml`
 - `atlas-data/dbt/models/marts/api/mart_indicators__bufdir_barnevern.sql` (new)
 - `atlas-data/dbt/models/marts/api/schema.yml`
+- `atlas-data/dbt/api_v1_generated.sql`, `atlas-data/dbt/api_v1_state.json` (regenerated)
+- `atlas-data/dbt/seeds/sources/lineage.csv`, `lineage_direct.csv`, `api_v1_relations.csv` (regenerated)
+- `atlas-data/template-info.yaml` (raw/marts table counts), `website/docs/developers/index.md` (regenerated)
+- `website/src/data/sources-registry.json`, `website/docs/datasets/indicators__bufdir_barnevern.mdx` (regenerated)
 - `website/docs/ai-developer/plans/backlog/INVESTIGATE-new-norwegian-public-sources.md` (mark shipped)
 - `website/docs/ai-developer/plans/backlog/1PRIORITY.md` (mark shipped)
