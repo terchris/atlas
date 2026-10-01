@@ -542,17 +542,18 @@ Each PLAN follows the standard Atlas pattern (per-source folder under `atlas-dat
 - [ ] ~~Draft `PLAN-001-new-provider-enum-and-period-monthly.md`~~ — dropped, see the 2026-10-01 correction above. Nothing to prep.
 - [x] ✅ **Shipped end to end, 2026-10-01.** [`PLAN-003-bufdir-barnevern.md`](../completed/PLAN-003-bufdir-barnevern.md) — all four phases done: ingest (23 workbooks, 191,673 rows, zero dropped), dbt staging + api_v1 publication, deployed to the live cluster by imac, and independently re-verified against the public API (not taken on trust) — `GET /indicators__bufdir_barnevern?limit=1` returns real rows, `Content-Range` confirms 191,673. Caught two real data defects by validating against real ingested data rather than an empty schema: Barnevern's own `andel`/`prosent` vocabulary mismatch (silently dropped 9 of 23 workbooks before being caught), and a Svalbard-as-kommune/fylke misclassification (the exact class of bug `classify_region_code` was built to fix, urb-agents #700). Full exchange: [urb-agents#1796](https://github.com/terchris/urb-agents/issues/1796).
 - [x] ✅ **Shipped end to end, 2026-10-01.** [`PLAN-004-nav-uforetrygd.md`](../completed/PLAN-004-nav-uforetrygd.md) — all four phases done: ingest (1 workbook, 6,560 rows, zero dropped), dbt staging + api_v1 publication, deployed to the live cluster by imac, independently re-verified against the public API — `GET /indicators__nav_uforetrygd?limit=1` returns real rows, `Content-Range` confirms 6,560. Found and corrected two more wrong investigation claims before drafting: licence is CC BY 4.0, not NLOD; the file is a nested pivot table (fylke→kommune→bydel blocks), not a flat table. Resolved [Q5]/[Q32] directly: a plain `month` integer column, no `dim_period` built. Full exchange: [urb-agents#1797](https://github.com/terchris/urb-agents/issues/1797).
-- [x] Draft [`PLAN-009-imdi-bosetting.md`](../active/PLAN-009-imdi-bosetting.md) — drafted 2026-10-01, moved to
-  `active/`, **Phase 2 in progress**. Confirmed live: no kommune codes (names only, resolved via the
-  existing `crosswalk_kommune_name` model), suppression marker `:` with IMDi's own inline explanation, and a
-  real alternative API lead (IMDikator) that didn't pan out within reasonable effort — chased far
-  enough to decide not to depend on it, not abandoned on a guess. **[Q1] (licence) resolved by
-  authorization, 2026-10-01** — Terje: *"IMDI is ok. we can use it."* `manifest.yml` records
-  `license: NLOD` as Atlas's own default for an unstated licence, applied under that authorization,
-  not found on IMDi's own site — kept visibly distinct, not conflated with a verified citation.
-  Phase 2 also found the real column count varies by year/kommune (IMDi piloted 2 extra "avtalt"
-  metrics on Oslo's 2024 table before rolling them out everywhere in 2026) — parser resolves
-  metrics by header text, not position, to represent this rather than normalize it away.
+- [x] ✅ **Shipped end to end, 2026-10-01.** [`PLAN-009-imdi-bosetting.md`](../completed/PLAN-009-imdi-bosetting.md) — all four phases done: ingest (5 pages, 7,848 rows, zero dropped), dbt staging + api_v1 publication, deployed to the live cluster by imac, independently re-verified against the public API — `GET /indicators__imdi_bosetting?kommune_name=eq.Oslo&year=eq.2024` returns real rows, `Content-Range` confirms 7,848. Confirmed live: no kommune codes (names only, resolved via the
+  existing `crosswalk_kommune_name` model restricted to active-only rows — 352/359 matched with zero
+  ambiguity, vs. 259/359 ambiguous unrestricted), suppression marker `:` with IMDi's own inline
+  explanation, and a real alternative API lead (IMDikator) that didn't pan out within reasonable
+  effort — chased far enough to decide not to depend on it, not abandoned on a guess. **[Q1]
+  (licence) resolved by authorization, 2026-10-01** — Terje: *"IMDI is ok. we can use it."*
+  `manifest.yml` records `license: NLOD` as Atlas's own default for an unstated licence, applied
+  under that authorization, not found on IMDi's own site — kept visibly distinct, not conflated
+  with a verified citation. Also found the real column count varies by year/kommune (IMDi piloted
+  2 extra "avtalt" metrics on Oslo's 2024 table before rolling them out everywhere in 2026) —
+  parser resolves metrics by header text, not position, to represent this rather than normalize it
+  away. Full exchange: [urb-agents#1799](https://github.com/terchris/urb-agents/issues/1799).
 - [ ] Draft one of the Udir/Husbanken PLANs, or `PLAN-005-nav-aap.md`/`PLAN-006-nav-sykefravaer.md`.
 - [ ] Optionally: pre-write outreach emails to Bufdir, NAV, IMDi, Helsedirektoratet asking whether richer machine-readable distributions exist than what's surfaced publicly. (Pattern reused from [`INVESTIGATE-folkehjelp-supply` § A.4](./INVESTIGATE-folkehjelp-supply.md#a4-craft-cms-graphql-probe--q2-outreach-worth-pursuing) — non-blocking; we ship around the public surface either way.)
 
