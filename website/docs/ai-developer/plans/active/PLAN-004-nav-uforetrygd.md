@@ -8,7 +8,7 @@ of this candidate was wrong on licence and file shape; both verified live below 
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Active — Phase 2 IN PROGRESS
+## Status: Active — Phases 1-3 DONE, Phase 4 deploy request filed (urb-agents#1797), awaiting imac
 
 **Goal**: Add `nav-uforetrygd` as a served Atlas source — the first monthly-cadence source, and the
 first registry-side welfare-system signal in Report #4 (Mental-Health Triangulation) and Report #5
@@ -159,138 +159,137 @@ inferred from the page's own description.
 
 ---
 
-## Phase 2: Ingest module + raw table
+## Phase 2: Ingest module + raw table — DONE
 
 ### Tasks
 
-- [ ] 2.1 Create `atlas-data/ingest/src/sources/nav-uforetrygd/`:
-  - `parse.ts`:
-    - `discoverWorkbookUrl(html)` — multi-tier, same shape as the Bufdir sources' discovery
-      (canonical: `/_/attachment/download/` + URL-encoded `PST302` in the path; looser fallbacks
-      dropping the exact encoding; a `sole-upload`-style last resort only when there is exactly one
-      `/_/attachment/download/` link on the page). Source host is `www.nav.no` itself.
-    - `classifyRowLabel(label)` — returns `{code, kind: 'fylke'|'kommune'|'bydel', name}` or `null`
-      for a non-data label, purely from the leading digit count (2/4/6) — **not** from row position
-      or the `"i alt"` suffix (see Phase 1.3's inconsistency finding).
-    - `MONTH_NUMBERS` — Norwegian month-name → 1-12 map (`Januar`→1 … `Desember`→12), case-sensitive
-      match against the header row as published; no abbreviations observed.
-    - `parseCell(raw)` — `*` → null; numeric cells pass through as-is (no comma handling needed,
-      per Phase 1.4).
-    - `parseSheet(wb, sheetName, categoryFormat, year)` — walks every row, classifies the label cell,
-      skips header/section rows (zero data cells), emits one row per (region_code, month) pair for
-      every row that classifies as fylke/kommune/bydel. Year comes from the sheet's own year cell
-      (`B6`-equivalent — confirm it is always there and always the row above the first fylke
-      header), not assumed from "today".
-  - `index.ts` — fetch monitor page → `discoverWorkbookUrl` → download xlsx → read both
-    `Kommune-bydel. Antall` and `Kommune-bydel. Andel` sheets via `parseSheet` → upsert
-    `raw.nav_uforetrygd`. Full-table replace per run (same convention as the Bufdir sources) — v1
-    only tracks the live current-year file, so there's no multi-year accumulation to preserve
-    across runs yet (see Phase 1.5).
-  - `fetch_retry.ts` — copy, adapted header comment, same as every other source in this family.
-  - `manifest.yml` — `source_id: nav-uforetrygd`, `provider: nav`, `license: CC BY 4.0`,
-    `license_url: https://creativecommons.org/licenses/by/4.0/deed.no`, `periodicity: P1M`,
-    `eu_theme: SOCI`. **[Q2]** `tags.topic` — recommend `social` (NAV's own institutional framing,
-    matches `SOCI`), but `income` is a defensible alternative given Report #5's income-trajectory
-    framing; confirm against `topics.yaml`'s curated list before merging — `child-welfare` wasn't a
-    valid value last time and failed CI, don't repeat that mistake blind.
-  - `README.md` and `__tests__/` (golden-file tests against a real downloaded fixture workbook, same
-    pattern as the Bufdir sources — fixture needs trimming to a few fylke blocks given the full file
-    is ~500 rows; keep at least one ordinary kommune, one Oslo-shaped bydel block, and one
-    Stavanger-shaped bydel block in the fixture so the row-order inconsistency is actually tested).
-
-- [ ] 2.2 Migration `raw.nav_uforetrygd` — columns `region_code`, `category_format`
-  (`antall`/`andel`, derived from which sheet the row came from, not a column within the sheet —
-  genuinely different from every Bufdir/SSB source so far), `year`, `month`, `value`, `values_json`,
-  `loaded_at`. PK `(region_code, category_format, year, month)`.
-
-- [ ] 2.3 Dagster registration (`raw_other.py`, `schedules.py`) — **do not skip this, it was missed
-  on the first `bufdir-barnevern` push and caught by the zero-touch-automation invariant.** First
-  real use of `cadence.monthly_polled()` for anything outside KLASS — confirm its freshness-policy
-  pairing (`WEEKLY_FRESHNESS` is wrong for a monthly source; check whether a `MONTHLY_FRESHNESS`
-  constant already exists in `cadence.py` or needs adding).
+- [x] 2.1 Created `atlas-data/ingest/src/sources/nav-uforetrygd/`. Deviated from this task's own
+  draft in a few places, each for a reason found while implementing, not a shortcut:
+  - `discoverWorkbookPath` (named `*Path` not `*Url` — NAV's links are relative, the caller
+    prepends `https://www.nav.no`), same multi-tier shape as planned.
+  - No separate `classifyRowLabel` returning a `kind` — simplified to `extractRegionCode(label)`
+    returning just the code string. `region_kind` was already planned to be dbt's job
+    (`classify_region_code`); giving the ingest layer its own fylke/kommune/bydel classification
+    too would have duplicated that logic in two places for no benefit, since the ingest layer
+    never needed to branch on kind — only on "does this row have a code and does it have data."
+  - `MONTH_NUMBERS`, `parseCell` as planned — confirmed live, no abbreviations, no comma-formatted
+    cells (defensive comma handling kept anyway, per Phase 1.4).
+  - `parseSheet(wb, sheetName, categoryFormat)` — no `year` parameter; year is read from the
+    sheet's own year cell as planned, but discovered inline rather than passed in, since the
+    sheet IS the only source of truth for its own year.
+  - `topics.yaml`: **[Q2] resolved — `social`**, validated against the real file before writing
+    the manifest (not after, unlike `child-welfare`'s CI failure on the prior source).
+  - `__tests__/fixtures/`: kept the **full real workbook**, not trimmed — same precedent as the
+    Bufdir sources' fixtures, and trimming risked silently removing the exact row-order
+    inconsistency (Oslo vs. Stavanger) the tests exist to catch.
+- [x] 2.2 Migration `057_raw_nav_uforetrygd.sql` — exactly as planned.
+- [x] 2.3 Dagster registration. **Needed more than `raw_other.py`/`schedules.py` registration
+  alone** — `MONTHLY_FRESHNESS` did already exist (used by KLASS/seeds), but no existing *job*
+  fit a genuinely-monthly data source: `annual_sources_refresh` is explicitly scoped to P1Y
+  sources (its own docstring says so), `klass_refresh`/`seed_sources_refresh` are annual/irregular
+  data merely polled monthly. Added a new `monthly_sources_refresh` job rather than misrepresent
+  what an existing job runs. Validated the whole Dagster `Definitions` object with
+  `dagster definitions validate -m atlas_data.definitions`, not just an import check.
 
 ### Validation
 
 ```bash
-cd atlas-data/ingest && npm test -- nav-uforetrygd
+cd atlas-data/ingest && npm test -- nav-uforetrygd   # 31 passed
+cd atlas-data/ingest && npm test                      # 212 passed, whole package — no regressions
+cd atlas-data/ingest && npm run typecheck              # clean
+dagster definitions validate -m atlas_data.definitions # clean, including the new job
 ```
-Golden-file tests pass; a manual run against the live workbook produces a plausible row count
-(≈356 kommuner + ~38 bydeler + 15 fylke-totals) × (`antall`+`andel`) × however many months the
-current file covers, with zero rows silently dropped — including a direct check that the row-order
-inconsistency (Oslo vs. Stavanger) doesn't drop either city's kommune-level rollup row.
+✅ Done 2026-10-01. Live dry-run and a real local-Postgres ingest both produced **6,560 rows**
+(3,280 antall + 3,280 andel across 410 distinct region codes × up to 8 months), zero dropped —
+including a direct check that the row-order inconsistency (Oslo vs. Stavanger) didn't drop either
+city's kommune-level rollup row.
 
 ---
 
-## Phase 3: dbt staging and marts
+## Phase 3: dbt staging and marts — DONE
 
 ### Tasks
 
-- [ ] 3.1 Add `raw.nav_uforetrygd` to `atlas-data/dbt/models/indicators/sources.yml`, with
-  `ingest_cadence: monthly` and a freshness window matched to "updates early in the following
-  month" (NAV's own stated cadence) — a `warn_after`/`error_after` tighter than the Bufdir sources'
-  400/800-day annual window would be wrong for a monthly source; derive from the monthly cadence,
-  don't copy the annual constant.
-- [ ] 3.2 `indicators__nav_uforetrygd.sql` — `kommune_nr` via `region_code_to_kommune_nr`,
-  `region_kind` via `classify_region_code` (same convention `bufdir-barnevern` established, not the
-  bare-regex pattern it replaced). `contents_code` = `'nav_uforetrygd__' || category_format` — no
-  per-indicator slug needed, since this source is exactly one table, not ~23 workbooks.
-- [ ] 3.3 Document columns in `schema.yml`; validate against a local Postgres loaded with the real
-  ingest (per `[[local-postgres-for-real-dbt-evidence]]`), not an empty schema.
-- [ ] 3.4 `mart_indicators__nav_uforetrygd.sql` api passthrough + `marts/api/schema.yml` entry.
-- [ ] 3.5 `dbt build` + `dbt test` against the real loaded data — relationship tests against
-  `dim_kommune`/`dim_fylke` for `kommune_nr`/`fylke_nr`, `not_null` on the PK columns, `region_kind`
-  relationship to `ref_region_kind`.
+- [x] 3.1 Added `raw.nav_uforetrygd` to `sources.yml` — `ingest_cadence: monthly`,
+  `warn_after: 45 days` / `error_after: 90 days` (matching `cadence.MONTHLY_FRESHNESS`'s own bounds
+  exactly, rather than inventing separate numbers for the dbt-side and Dagster-side freshness
+  policies).
+- [x] 3.2 `indicators__nav_uforetrygd.sql` — `kommune_nr`/`region_kind` via
+  `region_code_to_kommune_nr`/`classify_region_code` **from the first commit**, not added after a
+  relationship-test failure the way `bufdir-barnevern`'s bare-regex draft needed fixing. All 20
+  data tests passed on the first `dbt build` against real loaded data.
+- [x] 3.3 Documented in `schema.yml`; `check-osmosis.sh` clean (579 columns documented, 0 bare).
+- [x] 3.4 `mart_indicators__nav_uforetrygd.sql` + `marts/api/schema.yml` entry — done.
+- [x] 3.5 `dbt build --select indicators__nav_uforetrygd mart_indicators__nav_uforetrygd` — 20/20
+  pass against real loaded data (1 table model, 18 data tests, 1 view model).
 
 ### Validation
 
 ```bash
 cd atlas-data/dbt && dbt build --select indicators__nav_uforetrygd mart_indicators__nav_uforetrygd
 ```
-Against a local Postgres loaded via the real ingest, not an empty schema.
+✅ Done 2026-10-01. Against a local Postgres loaded via the real ingest (6,560 rows), not an empty
+schema. Every drift-gated artifact this phase touches — `api_v1_generated.sql`, lineage csvs,
+sources seed, `api_v1_relations.csv`, `mart_atlas_inventory.sql`'s depends_on + counted list,
+`generate_api_v1.py`'s `SCHEMA_COMMENT`, `sources-registry.json`, and `template-info.yaml`
+(including `first_data.jobs` needing the new `monthly_sources_refresh` job, which in turn
+invalidated the "six jobs, 1772s" measured cold-install figure — flagged explicitly rather than
+silently re-stated) — regenerated up front and verified green on the **first** CI push. Zero
+follow-up fix commits needed this time, unlike `bufdir-barnevern`'s eight.
 
 ---
 
-## Phase 4: Deploy and verify arrival
+## Phase 4: Deploy and verify arrival — IN PROGRESS (deploy request filed, awaiting imac)
 
 ### Tasks
 
-- [ ] 4.1 Regenerate every drift-gated artifact `bufdir-barnevern`'s Phase 2/3 needed —
-  `check-sources-seed-is-current.sh`, `check-manifests.sh`, `check-lineage-is-current.sh`,
-  `check-api-v1.sh`, `check-inventory-depends-on.sh`, `check-root-document-indexes-every-relation.sh`,
-  `check-every-source-is-served.sh`, `render-template-info.sh`, `generate-holdings.py`,
-  `website/scripts/generate-sources-registry.mjs`. Budget for this up front this time — it was 8
-  separate follow-up commits last time, every one predictable in retrospect.
-- [ ] 4.2 File the deploy/verification request to **imac** (not `ops-dev`, not a `for-ops-*.md`
-  file — confirmed via the actual bus task history before `bufdir-barnevern`'s Phase 4). Name the
-  exact relations, the code-location image digest (labelled as such), the derived `LANDS WITH`, and
-  an explicit row-count prediction from the local validation run.
-- [ ] 4.3 **After the deploy**, verify arrival independently against the live public API — not the
+- [x] 4.1 Regenerated every drift-gated artifact up front, as planned — see Phase 3's validation
+  note. All green on the **first** CI push (PR #494); none of the 8 follow-up fix commits
+  `bufdir-barnevern` needed were necessary here.
+- [x] 4.2 Filed the deploy request to **imac**, as **[urb-agents#1797](https://github.com/terchris/urb-agents/issues/1797)**.
+  Named the exact relations (`raw.nav_uforetrygd`, `api_v1.indicators__nav_uforetrygd`/
+  `mart_indicators__nav_uforetrygd`), **both** image digests this time — the code-location digest
+  (`ghcr.io/terchris/atlas-data:v20261001-bbabfef`) and the UIS install-artifact digest
+  (`ghcr.io/terchris/atlas-data/uis:v20261001-bbabfef`, published as a GitHub release) — correcting
+  an error in the `bufdir-barnevern` request (#1796), which claimed no UIS artifact digest was
+  available from here; it is, the build workflow publishes it on every main push via
+  `uis/render-template-info.sh` + `oras push`, I just hadn't read far enough into that log before.
+  Named the derived `LANDS WITH` (`monthly_sources_refresh` then `transform_and_publish` —
+  `atlas-data/uis/lands-with.sh ccd1f51..bbabfef`) and an expected row count (6,560, stated
+  explicitly as today's prediction — NAV's live file grows a column every month, so a run landing
+  in a different month than this validation would legitimately see a different count, same
+  region/category coverage). Flagged the new `monthly_sources_refresh` job's cron (1st of the
+  month, 01:00) won't self-fire for potentially weeks, more pointedly than the equivalent caveat on
+  `bufdir-barnevern` (weekly, not monthly) — the refresh needs triggering deliberately if this
+  should land sooner.
+- [ ] 4.3 **After imac's run**, verify arrival independently against the live public API — not the
   deploy report alone. `GET /meta_sources?source_id=eq.nav-uforetrygd&select=served_as` non-empty,
-  `GET /indicators__nav_uforetrygd?limit=1` returns a real row (note the `indicators__`-prefixed
-  name on the public API, not `mart_indicators__` — the naming gotcha imac already caught once).
+  `GET /indicators__nav_uforetrygd?limit=1` returns a real row. **Not yet done — waiting on #1797.**
 
 ### Validation
 
 Live `curl` against the public API returns real rows, independently checked, not inferred from a
-green Dagster run.
+green Dagster run. **Pending imac's response on urb-agents#1797.**
 
 ---
 
 ## Acceptance Criteria
 
-- [ ] `nav-uforetrygd` ingests cleanly from the live workbook with zero rows silently dropped,
-  including both the Oslo-shaped and Stavanger-shaped kommune-rollup row orderings.
-- [ ] `raw.nav_uforetrygd` correctly has no `category_unit`-style column — `category_format` is
+- [x] `nav-uforetrygd` ingests cleanly from the live workbook with zero rows silently dropped,
+  including both the Oslo-shaped and Stavanger-shaped kommune-rollup row orderings — 6,560 rows,
+  verified by running the real ingest, not just unit tests.
+- [x] `raw.nav_uforetrygd` correctly has no `category_unit`-style column — `category_format` is
   derived from the sheet, not a column within it.
-- [ ] `indicators__nav_uforetrygd` and `mart_indicators__nav_uforetrygd` build and test clean
-  against real loaded data.
+- [x] `indicators__nav_uforetrygd` and `mart_indicators__nav_uforetrygd` build and test clean
+  against real loaded data (20/20 data tests).
 - [ ] `nav-uforetrygd` appears in `meta_sources.served_as` after a real deploy, independently
-  verified via live `curl`.
-- [ ] Golden-file tests cover: an ordinary kommune row, an Oslo-shaped bydel block (rollup row
+  verified via live `curl`. **Not done — Phase 4 deploy request filed (urb-agents#1797), awaiting
+  imac.**
+- [x] Golden-file tests cover: an ordinary kommune row, an Oslo-shaped bydel block (rollup row
   after its children, no `"i alt"` suffix), a Stavanger-shaped bydel block (rollup row before its
-  children, `"i alt"` suffix), and the all-suppressed `0301 Oslo` row.
+  children, `"i alt"` suffix), and the all-suppressed `0301 Oslo` row (31 tests total).
 - [ ] The investigation and `1PRIORITY.md` are updated to mark this candidate shipped, only once
-  Phase 4 confirms rows actually arrived.
+  Phase 4 confirms rows actually arrived. **Not yet done.**
 
 ---
 
