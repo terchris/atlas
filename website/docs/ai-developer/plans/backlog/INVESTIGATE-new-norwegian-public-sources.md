@@ -511,7 +511,8 @@ Each PLAN follows the standard Atlas pattern (per-source folder under `atlas-dat
 - [x] `ssb-10826` and `ssb-crime-tables` — shipped (outside this file's original numbering, confirmed 2026-10-01).
 - [x] Publisher metadata for NAV/IMDi/Udir/Husbanken — landed 2026-10-01 (#486), unblocking their PLANs.
 - [ ] ~~Draft `PLAN-001-new-provider-enum-and-period-monthly.md`~~ — dropped, see the 2026-10-01 correction above. Nothing to prep.
-- [ ] Draft `PLAN-003-bufdir-barnevern.md` — next lowest-risk (reuses PLAN-002's Bufdir plumbing), or start one of the NAV/IMDi/Udir/Husbanken PLANs now that their publisher metadata is in place.
+- [x] Draft [`PLAN-003-bufdir-barnevern.md`](PLAN-003-bufdir-barnevern.md) — drafted 2026-10-01, in `backlog/` awaiting approval. Its own Phase 1 already found the two monitors' workbooks are shaped differently (no `Enhet` column, alphanumeric indicator codes, `Sheet1`/row-3 header vs. the sibling's `Data`/row-1) — don't copy `bufdir-barnefattigdom`'s code literally when implementing.
+- [ ] Draft one of the NAV/IMDi/Udir/Husbanken PLANs now that their publisher metadata is in place.
 - [ ] Resolve the `dim_period`/monthly question ([Q5] / [Q32]) *inside* `PLAN-004-nav-uforetrygd.md` when it's drafted — it's that PLAN's own decision, not a separate prerequisite.
 - [ ] Optionally: pre-write outreach emails to Bufdir, NAV, IMDi, Helsedirektoratet asking whether richer machine-readable distributions exist than what's surfaced publicly. (Pattern reused from [`INVESTIGATE-folkehjelp-supply` § A.4](./INVESTIGATE-folkehjelp-supply.md#a4-craft-cms-graphql-probe--q2-outreach-worth-pursuing) — non-blocking; we ship around the public surface either way.)
 
