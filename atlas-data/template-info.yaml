@@ -35,14 +35,14 @@ params:
 
 # BEGIN holdings (generated)
 data:
-  sources: 43
+  sources: 44
   publishers: 5
   public_relations: 80
   holds: >-
     Norwegian public data at kommune level, joined into one semantic layer:
-    Folkehelseinstituttet (21); Statistisk sentralbyrå (17); Brønnøysundregistrene (3); Barne-, ungdoms- og familiedirektoratet (1); Norges Røde Kors (1).
+    Folkehelseinstituttet (21); Statistisk sentralbyrå (17); Brønnøysundregistrene (3); Barne-, ungdoms- og familiedirektoratet (2); Norges Røde Kors (1).
     Published as read-only PostgREST relations under api_v1. NLOD for
-    42 of 43 — Norwegian public data, free to reuse with
+    43 of 44 — Norwegian public data, free to reuse with
     attribution. The exceptions are `redcross-branches` (permissive) — Red Cross's own data rather than the state's.
   discover: >-
     GET /meta_endpoints for what is queryable, /meta_sources for every upstream
