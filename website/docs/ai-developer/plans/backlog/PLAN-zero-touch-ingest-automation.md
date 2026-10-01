@@ -117,46 +117,45 @@ here so zero-touch's acceptance bar names this gap rather than silently excludin
 
 ---
 
-## Phase 4 — annual_sources_refresh: investigated, root cause not yet found; two hypotheses ruled out with evidence
+## Phase 4 — DONE: the real cause was transient, not any of the three hypotheses ruled out
 
-**Gap #5**: `annual_sources_refresh` has been reporting job-level FAILURE because one step
-(`raw__bufdir_barnefattigdom`) fails every run, masking that the other ~36 sources in the same job
-succeeded.
+**Gap #5**: `annual_sources_refresh` reported job-level FAILURE because `raw__bufdir_barnefattigdom`
+failed, masking that the other ~36 sources in the same job succeeded.
 
-🔵 **I went looking for the obvious upstream-restructuring cause and it is NOT there.** Bufdir did
-genuinely restructure the ZIP's filename (`YYYYMMDD_barnefattigdom_monitor_<hash>.zip` →
-`Filer_publisert_DD-MM-YY_og_YYYY_<hash>.zip`) and roughly half the internal workbook filenames
-(`Indikator_<N>_*.xlsx` → `omfang-<N>-*.xlsx` / `risiko-<N>-*.xlsx` for about 14 of 22 files).
-**Neither restructuring actually breaks the ingest module, measured directly:**
+✅ **Resolved by ops-dev pulling the actual run-pod log** — the three hypotheses this plan ruled
+out (zip-filename restructuring, xlsx filter, sheet structure) were correctly ruled out; the
+failure never reached any of them. It died on the FIRST network call:
 
 ```
-discoverZipUrl()     all 4 named tiers correctly miss the new filename, AS EXPECTED --
-                     but the existing "sole-upload" fallback finds the one .zip under
-                     /uploads/ and would succeed. Tested against the live page today.
-zip entry filter     filters on `.endsWith(".xlsx")` only, no "Indikator_" requirement --
-                     finds all 22 files regardless of naming convention. Read the code,
-                     confirmed by downloading and listing the real archive.
-Data sheet structure identical in an old-convention file (Indikator_15) and a new-convention
-                     file (omfang-1) -- same header row, same column layout. Parsed both
-                     with the project's own `xlsx` (SheetJS) dependency, not a substitute.
+TypeError: fetch failed
+  at fetchText (bufdir-barnefattigdom/index.ts:69:15)   <- the monitor-page fetch, before
+                                                            discoverZipUrl sees any HTML at all
 ```
 
-**So the fix is not "widen the regex."** Everything I can test from outside the cluster works.
-The actual failure is either something environmental (network egress, timeout, a cluster-specific
-condition) or happens at a step I cannot reach without the real error. **Needs the actual
-stack trace from a failed `annual_sources_refresh` run** — that is the one measurement that
-decides where this goes next, and I am not guessing further without it.
+**Not currently reproducible** — ops-dev hit the same URL from tecMacDev and from inside the
+actual run pod, both 200, hours after the failure. A transient network blip at
+`2026-09-30T14:02:23Z` (DNS, a dropped TLS handshake, or Bufdir's own server — undici's generic
+wrapper does not say which) failed the whole asset because `fetchText`/`fetchZip` had **no retry
+at all**.
 
-### The structural half, answerable regardless of the root cause
+**Fixed in PR #483**: `fetch_retry.ts`, matching the retry pattern already used (and independently
+duplicated three times, never shared) in `lib/pxweb.ts`, `lib/klass.ts`, `lib/fhi.ts`. Retries
+thrown network exceptions as well as 429/5xx — a naive wrapper that only retries HTTP error
+statuses would have done nothing for this exact failure. 6 tests cover the retry logic directly,
+including the exact exception-then-recovery shape of the real incident.
+
+⚠️ **Consolidating the now-four-way duplication into one shared `lib/http.ts` is a worthwhile
+follow-up, not done here** — touching three already-working source files is bigger and riskier
+than the fix that was actually needed.
+
+### The structural half — mostly moot now, left open for a genuinely non-transient failure
 
 Terje's framing: *"zero-touch means this can't need a human's judgment call to not be alarming."*
-Even once the underlying Bufdir failure is fixed, one brittle source should not be able to make
-~36 successful ingests look like a failed job. **Open question, not yet resolved**: whether
-`define_asset_job`'s per-asset failure reporting can be made to surface success/failure
-per-source rather than collapsing to one job-level boolean, and whether that is a job-config
-change or requires restructuring `annual_sources_job`'s selection. Deferred until the real error is
-in hand — fixing the visibility problem before knowing the actual failure risks solving the wrong
-thing.
+A retry removes most of the practical case for this — the transient blip that triggered gap #5
+would simply not have failed with the fix in place. **Still open, not addressed**: whether
+`define_asset_job`'s per-asset failure reporting can surface success/failure per-source rather
+than one job-level boolean, for the day a source fails for a real, non-transient reason. Not
+pursued now because there is no longer a live failure motivating it.
 
 ---
 
@@ -171,7 +170,7 @@ thing.
 - [ ] Phase 2: imac confirms whether `.uis.extend`/`uis deploy` needs its own change, or whether
       Phase 1 alone is sufficient
 - [ ] Phase 3: no action here — tracked at F1, cross-referenced
-- [ ] Phase 4: the real `annual_sources_refresh` error obtained and the Bufdir root cause found
+- [x] Phase 4: the real `annual_sources_refresh` error obtained (ops-dev) and fixed — transient network failure, retry added (PR #483)
 - [ ] 🔴 Deploy request names the expected state per source, per this repo's standing rule — not
       "schedules enabled," but which `raw.*` tables should show a `last_ingested_at` from the day
       of deploy, and the exact row-count floor each should clear
