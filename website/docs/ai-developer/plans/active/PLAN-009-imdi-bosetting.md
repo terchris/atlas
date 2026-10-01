@@ -233,11 +233,25 @@ set for itself.
 
 ## Phase 4: Deploy and verify arrival
 
-Same shape as every prior source's Phase 4 this session: regenerate every drift-gated artifact up
-front (budgeted, not discovered via failed CI this time); file the deploy/verification request to
-**imac** with both image digests, the derived `LANDS WITH`, and a row-count prediction from the
-local validation run; verify arrival independently against the live public API afterward, not the
-deploy report alone.
+### Tasks
+
+- [x] 4.1 Regenerated every drift-gated artifact up front — see Phase 3's validation note. One real
+  gap found on the first CI push: `template-info.yaml` still said 54 raw tables after
+  `058_raw_imdi_bosetting.sql` made it 55 — `render-template-info.sh` caught it, fixed in a
+  follow-up commit, all 8 CI checks green after that.
+- [x] 4.2 Filed the deploy request to **imac**, as
+  **[urb-agents#1799](https://github.com/terchris/urb-agents/issues/1799)**. Named the exact
+  relations (`raw.imdi_bosetting`, `api_v1.indicators__imdi_bosetting`/
+  `mart_indicators__imdi_bosetting`), both image digests labelled by object
+  (`ghcr.io/terchris/atlas-data:v20261001-8e672cf` code-location,
+  `ghcr.io/terchris/atlas-data/uis:v20261001-8e672cf` artifact), and the derived `LANDS WITH`
+  (`atlas-data/uis/lands-with.sh bbabfef..8e672cf`: `annual_sources_refresh` then
+  `transform_and_publish` — `imdi-bosetting` was added to the existing `annual_sources_refresh`
+  job, no new job needed unlike `nav-uforetrygd`'s monthly one). Row-count prediction: 7,848
+  (measured locally 2026-10-01), with the same "2026 is still open, a republish could move it"
+  caveat class as NAV's monthly file, and the `kommune_nr` match rate (352/359, 7 expected-NULL
+  names listed) so a non-zero null count isn't mistaken for a new defect.
+- [ ] 4.3 Verify arrival independently against the live public API — not the deploy report alone.
 
 ---
 
