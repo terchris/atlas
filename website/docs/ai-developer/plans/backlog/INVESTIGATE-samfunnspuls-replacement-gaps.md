@@ -107,6 +107,10 @@ The prototype therefore shows *"Median for kommunene"* where the original says *
 
 **12 of 33** Samfunnspuls graphs are covered, **6 partial**, **15 not covered at all**: DSB (3), IMDi (2), NAV (1), Udir (4), Ungdata (3), SSB 10137 (1). Further SSB tables used by Samfunnspuls and absent from Atlas: **10137, 10539, 11042, 12203, 12767, 13006**.
 
+🔴 **Correction, 2026-10-01 — `13006` is wrong; it does not exist.** I filed it here without checking, from the same source the report did. [`INVESTIGATE-new-norwegian-public-sources.md` §C.1 \[Q38\]](INVESTIGATE-new-norwegian-public-sources.md) resolved this in **May**: `13006` returns nothing from SSB's PxWebApi in any version, and the data it would hold is already in `ssb-13995`'s `ContentsCode` dimension (`KOSsosgjantmnd0000` and five age-banded siblings). **A second consumer — the Lovable-built UI — made the identical wrong claim independently**, which is why this is worth stating plainly rather than quietly fixing: the number is a tooling-side artefact (likely from the same Power BI dataset list both consumers read), not a real SSB table, and will keep surfacing until Samfunnspuls's own source list is corrected.
+
+🔵 **And G4 is mostly already answered.** [`INVESTIGATE-new-norwegian-public-sources.md`](INVESTIGATE-new-norwegian-public-sources.md) fully specified NAV, IMDi and Udir as Tier-1 candidates in May 2026 — verified URLs, licences, open questions, a PLAN sequence. 🔴 **None of it was built.** Of ~14 Tier-1 candidates, only `bufdir-barnefattigdom` and `ssb-10826` shipped; not even the schema-prep PLAN that unblocks the rest was started. **The acquisition path for G4 is "execute that investigation", not "write a new one."**
+
 🔴 **This is the only gap that leaves whole topics empty** — "Beredskap" (DSB) has nothing, "Flyktninger og asylsøkere" has one total.
 
 **Suggested order from the report, which matches Atlas's own cost curve:** the SSB tables first (same ingest pattern Atlas already runs), then IMDi and NAV (open APIs), then Udir, then DSB.
@@ -169,3 +173,58 @@ derivation recorded beside the source column, which the rule allows.
 reasonable from outside — the character looks like an encoding fault, and nothing published says
 otherwise. That it is not one is a gap in ATLAS's documentation, not an error by the consumer:
 `meta_dimensions` does not explain it, and neither did any relation description until now.
+
+---
+
+## [Q7] FHI tables 175 and 932 — genuinely never ingested, confirmed
+
+A third consumer (a Lovable-built UI) reported these as *"registered as loaded but return no
+rows when queried"*. More precisely, measured 2026-10-01:
+
+```
+meta_sources: fhi-innvandrere   total_runs=0   last_ingested_at=null
+meta_sources: fhi-innvkat       total_runs=0   last_ingested_at=null
+indicators__fhi_innvandrere     Content-Range: */0
+indicators__fhi_innvkat         Content-Range: */0
+```
+
+Both are **modelled** (`served_as` lists a relation, dbt built it) but have **never run a single
+ingest** — `total_runs = 0`, not "ran and returned nothing". This is the mirror image of the
+`fhi-neet` pattern CLAUDE.md already documents (ingested weekly, modelled nowhere): here the model
+exists and the source behind it has never executed at all. Needs an ops-dev task to check why the
+scheduled job for these two has 0 runs — not a data question, a job-registration question.
+
+## [Q8] The bespoke extract: resolved — no public table substitutes, order is necessary
+
+The original ask behind this whole report — *"Aldersgrupper og bosted (barn og unge)"*, children
+0–18 by age band × tettbygd/spredtbygd × household type — is `ssb-spesialbestilt-bosted-husholdning`
+in [`INVESTIGATE-new-norwegian-public-sources.md` §C.5 [Q46]](INVESTIGATE-new-norwegian-public-sources.md),
+which had proposed two public tables as possible substitutes and left them unchecked. **Checked
+2026-10-01: neither works.** `17376` does not exist (matches a deliberately-bogus table id's error
+signature); `12578` exists but is vehicle mileage by fuel type. A keyword search against SSB's own
+statbank surfaces only discontinued series from over a decade ago.
+
+**So this one cannot be self-served.** Røde Kors needs to supply the data — either by locating the
+original SSB order (the live Samfunnspuls page states *"Innhenting: spesialbestilt fra SSB"*, so
+one already exists) or placing a new one via `bestilling@ssb.no`. The exact specification is in
+the linked file's §C.5. Once a file exists, Atlas ingests it the same way `redcross-branches` was
+ingested: a private, dated, static extract, documented as such.
+
+## [Q9] Two corrections to the report's own claims
+
+- **Housing crowding is FHI, not Bufdir.** The report says *"Atlas har bare «bor trangt» fra
+  Bufdir"*. Atlas's `fhi-trangbodd` (FHI table 794) carries it, not Bufdir — `bufdir-barnefattigdom`
+  is child poverty, a different source entirely. 🔴 **And "romslig" does not exist to add**: the
+  manifest's own dimension notes say `BODD` is *"2 codes: trangt (overcrowded), uoppgitt
+  (unknown)"* — FHI table 794 does not publish a third, spacious category. A genuine
+  trangt/romslig/uoppgitt split needs a different source (SSB housing/ownership — see
+  [Q46]/11042 in the sibling investigation), not a change to this one.
+- **`ssb-13995` (sosialhjelpsmottakere) is not "2022–2024 only" — it is 2025 only.** Measured:
+  30,294 rows, every one `year = 2025`. The manifest declares `time_coverage: 2022–2025`. Either
+  way, the report's number was wrong and the real gap is the opposite direction — the manifest
+  promises four years and the pipeline has delivered one.
+- **Confirmed, not new: no volunteer/member count field.** `ngo_overview`'s columns are
+  `chapter_count, national_count, regional_count, local_count, activity_count, kommune_count` —
+  no people-count of any kind. Matches [`INVESTIGATE-new-norwegian-public-sources.md` §C.5
+  [Q47]](INVESTIGATE-new-norwegian-public-sources.md), already correctly scoped there as internal
+  Røde Kors data belonging to the multi-NGO supply investigation, not a public-data gap.

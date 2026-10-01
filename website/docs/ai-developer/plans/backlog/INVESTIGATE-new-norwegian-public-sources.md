@@ -10,6 +10,8 @@
 
 **Last Updated**: 2026-05-04 (added §"Cross-check against Samfunnspuls" — confirmed 6 candidates, surfaced 5 brand-new gap-fills incl. ssb-10826 bydel-level population, deferred 2, resolved 1 discontinued series)
 
+🔴 **2026-10-01 — a THIRD independent consumer (a Lovable-built UI, recreating samfunnspuls.rodekors.no) re-asked almost every question this investigation already answered in May, five months ago.** Checked what actually got built since then: **2 of ~14 Tier-1 candidates were ingested** (`bufdir-barnefattigdom`, `ssb-10826`). None of NAV (4 families), IMDi, Udir (5 families) or Husbanken were started — not even `PLAN-001-new-provider-enum-and-period-monthly.md`, the schema-prep step everything else depends on. ⚠️ **This is not a case of the work being lost — it is filed, correctly, in exactly the detail this file already has.** It simply was never executed. A fully-specified plan rotting unexecuted is a different failure from a report never being filed at all, and arguably a more wasteful one: the investigation cost already happened.
+
 ---
 
 ## Companion documents
@@ -273,6 +275,10 @@ The 37 reports collapse to **24 unique upstream sources**; the reconciliation ag
 
 The 12 SSB tables Samfunnspuls cites that Atlas already ingests: `ssb-08764`, `ssb-12944`, `ssb-06947`, `ssb-07459`, `ssb-06913`, `ssb-06083`, `ssb-09429`, `ssb-12292`, `ssb-12063`, `ssb-13995`, `ssb-12131`, `ssb-12132`.
 
+🔵 **Of the Tier-1 gap-fill candidates below, 2 have actually shipped since this file was written**: `bufdir-barnefattigdom` and `ssb-10826` (bydel population, [Q48]). Confirmed 2026-10-01 by checking `atlas-data/ingest/src/sources/` directly, not by trusting this file's own status markers — **none of the `bufdir-barnevern` / `nav-*` / `imdi-*` / `udir-*` / `husbanken-*` families exist**, including the Phase-0 schema-prep PLAN that was supposed to unblock all of them.
+
+⚠️ **`ssb-13995` is in Atlas, but not for every year it claims to cover.** The manifest declares `time_coverage: 2022–2025`; the served relation (`indicators__ssb_13995`) has rows for **2025 only** — 30,294 rows, zero for 2022–2024. Not previously caught by this investigation.
+
 Plus: every Folkehelseprofil / Oppvekstprofil indicator Samfunnspuls cites in the "Andre ressurser" external-resources page is already covered by Atlas's 17 FHI Folkehelsestatistikk sources (Atlas has *more* FHI granularity than Samfunnspuls — `fhi-livskvalitet`, `fhi-depresjon`, `fhi-alkohol`, `fhi-hasj`, `fhi-fortrolig-venn`, `fhi-smertestillende`, three `fhi-mediebruk-*`, etc. — Samfunnspuls itself has zero direct Ungdata coverage and points users to ungdata.no instead).
 
 ### B. Already in this investigation's candidates — confirmed by Samfunnspuls
@@ -290,6 +296,8 @@ The crawl validates 6 of the Tier-1/2 picks above:
 These extend the existing Tier-1 family entries above, plus one fully-new candidate (rk-internal). Q-IDs are allocated in document order from Q38 onward.
 
 #### C.1 SSB-extension family
+
+🔵 **Confirmed again 2026-10-01**: a third independent consumer (Lovable-built UI) re-listed `13006` as a table to ingest, not knowing [Q38] below had already resolved it as a phantom in May. The answer is unchanged — query `ssb-13995`'s `ContentsCode` dimension instead.
 
 - **[Q38] `ssb-13006` — Sosialhjelp, gjennomsnittlig stønadstid.** **Resolved 2026-05-05 — phantom table; data already in `ssb-13995`.** A Cursor BG onboarding attempt (PR #56, issue #55) confirmed `13006` is **not exposed via SSB's PxWebApi v2-beta** (metadata 404, search 0 hits, v0 metadata 400). The statbank UI URL returns 200 but that's the SPA shell, not a working data endpoint. Direct SSB API search for `stønadstid` returns four tables — `08856`, `08857`, `13995`, `12404` — **not 13006**. Atlas's existing `ssb-13995` ingest already carries the same data: its `ContentsCode` dimension exposes 8+ stønadstid codes including `KOSsosgjantmnd0000` (overall mean duration), `KOSgjsnitt18240000` (18–24 yrs), `KOSgj25290000` / `30390000` / `40490000` / `50670000` per age band, and `KOSgjsnittvklo0000` (mean duration when sosialhjelp is the main income). Anyone wanting "duration on welfare" should query `marts.indicators__ssb_13995` filtered by those content codes. **No PLAN required; no separate folder.** [Q50]'s 2026-05-04 wording said `13138` was split into `13995 + 13006`; the actual SSB restructure consolidated the duration data into `13995`'s ContentsCode dimension, so `13006` was never created (or never re-published) as a standalone table.
 
@@ -310,7 +318,26 @@ These extend the existing Tier-1 family entries above, plus one fully-new candid
 
 #### C.5 Bespoke / cooperative — flag, defer
 
-- **[Q46] `ssb-spesialbestilt-bosted-husholdning` — Population by age × tettbygd/spredtbygd × household-type**. Samfunnspuls notes this is a *bespoke* SSB extract, not a public statistikkbank table; the trangbodd component is covered by Atlas's `fhi-trangbodd`, but the urban-rural × household-type cut is genuinely unique. **Recommendation**: don't pursue the bespoke order; instead identify whether SSB tables 17376 / 12578 (boforhold register-based statistikk) cover the same ground in publicly-queryable form. Defer pending that lookup.
+- **[Q46] `ssb-spesialbestilt-bosted-husholdning` — Population by age × tettbygd/spredtbygd × household-type**. Samfunnspuls notes this is a *bespoke* SSB extract, not a public statistikkbank table; the trangbodd component is covered by Atlas's `fhi-trangbodd`, but the urban-rural × household-type cut is genuinely unique.
+
+  🔴 **RESOLVED 2026-10-01 — the lookup was finally done, and it closes the question the other way.** Both candidates checked live:
+  - **`ssb-17376`** returns `{"error":"Parameter error"}` on the v1 API — the **identical signature** a deliberately-bogus table id (`99999999`) returns. It does not exist, or at minimum is not reachable the way every real table is.
+  - **`ssb-12578`** exists and returns 200 — but it is *"Kjørelengder, etter kjøretøytype, drivstofftype..."* (**vehicle mileage by vehicle and fuel type**). Wrong domain entirely; the May note's guess was wrong.
+  - A keyword search (`tettbygd husholdning`, `boforhold barn`) against SSB's own statbank search returns only **discontinued series from 1999–2012 and 2005–2012** — nothing current.
+
+  **So: no public SSB table covers this cross-tabulation today.** The bespoke-order path is confirmed correct, not merely assumed. **Recommendation, now final**: this is not an Atlas ingest task. Røde Kors needs to either locate its original SSB order reference (the live Samfunnspuls page literally states *"Innhenting: spesialbestilt fra SSB"*, so an order already exists and may be reusable) or place a new order via `bestilling@ssb.no` with the specification below, then hand Atlas the resulting file. Atlas ingests it the same way `redcross-branches` was ingested — a private, dated, static extract, documented as such rather than as a live feed.
+
+  **Specification to hand SSB or Røde Kors**, as given by the agent that found the need:
+
+  | field | content |
+  |---|---|
+  | population | persons 0–18 |
+  | dimension 1 | age group (0–5, 6–12, 13–18) |
+  | dimension 2 | bostedsstrøk — tettbygd / spredtbygd (SSB's tettsted definition, ≥200 persons) |
+  | dimension 3 | household type — enehusholdning / flerpersonhusholdning (institution counts as flerperson) |
+  | geography | kommune (+ fylke, national) |
+  | time | per year |
+  | columns on arrival | `kommune_nr, year, age_group, bosted, husholdningstype, value` — Atlas's standard shape |
 - **[Q47] `rk-internal-medlemmer-frivillige` — Røde Kors annual member + volunteer counts per lokalforening**. Internal data; not a public API. Adjacent to Atlas's existing `redcross-branches` ingest. Atlas's parallel ambition is generalising NGO supply (see [`INVESTIGATE-multi-ngo-supply-model-extensions.md`](./INVESTIGATE-multi-ngo-supply-model-extensions.md) and the Folkehjelp investigation), so a per-NGO members/volunteers register fits the same supply layer. **Recommendation**: track separately under the multi-NGO supply investigation, not this one — it's a supply-side ingestion needing org-level cooperation, not a demand-side public-data dataset.
 
 #### C.6 SSB-companion tables flagged by the prior research (verified live 2026-05-04)
@@ -318,7 +345,7 @@ These extend the existing Tier-1 family entries above, plus one fully-new candid
 The prior Samfunnspuls research file flagged three table-ID open questions that were never resolved. Verified against the SSB PxWebApi v2 `/metadata` endpoint:
 
 - **[Q48] `ssb-10826` — Alders- og kjønnsfordeling for befolkningen i bydeler (B), 2001–2026**. Verified live: bydel-level companion to `ssb-07459` (which Atlas already ingests at kommune/fylke/national). Covers Oslo (17 bydeler), Stavanger (7 + Finnøy/Rennesøy), Bergen (8 bydeler), Trondheim (4 bydeler) — single-year ages 0–105+, both sexes. **Genuine net-new value**: Atlas currently has zero bydel-resolution population denominator. With FHI sources at bydel level (per `crosswalk_geo_to_kommune` which already handles 6-digit bydel codes) and Bufdir at bydel level for Oslo (per [Q3]), a bydel population denominator unlocks per-capita normalisation for every existing bydel-resolved indicator. **Recommendation**: Tier-1, ingest immediately after `ssb-07459` plumbing is verified to extend cleanly. ~3h PLAN.
-- **[Q49] `ssb-04362` — companion to `ssb-07459`** (cited jointly in Samfunnspuls's Om tallene block per the field notes, but never separately catalogued). The prior research's open question was: "Atlas should decide whether to consolidate on 07459 only or treat the trio as one logical 'population' source." **Recommendation**: leave as deferred — verify during the `ssb-10826` PLAN whether `ssb-04362` adds a temporal extension (older years), an alternative grouping, or is fully redundant with `ssb-07459`. If redundant, document as superseded; if not, fold as a sibling table in the same `ssb-07459` source folder rather than a new folder.
+- **[Q49] `ssb-04362` — companion to `ssb-07459`** (cited jointly in Samfunnspuls's Om tallene block per the field notes, but never separately catalogued). The prior research's open question was: "Atlas should decide whether to consolidate on 07459 only or treat the trio as one logical 'population' source." **Recommendation**: leave as deferred — verify during the `ssb-10826` PLAN whether `ssb-04362` adds a temporal extension (older years), an alternative grouping, or is fully redundant with `ssb-07459`. If redundant, document as superseded; if not, fold as a sibling table in the same `ssb-07459` source folder rather than a new folder. ⚠️ **Still unresolved 2026-10-01** — attempted during the Lovable cross-check; SSB's v2-beta metadata API returned 503 for `04362` AND for `07459` (a table Atlas already ingests successfully), so the 503 is an SSB-side outage, not evidence either way. Not re-attempted after the outage cleared. Still open.
 - **[Q50] `ssb-13138` — Sosialhjelpstilfeller, utbetalt beløp og stønadstid (K) (avslutta serie) 2015–2021**. **Resolved by metadata fetch 2026-05-04**: this is a *discontinued series* (`avslutta serie`, last year 2021). SSB consolidated the data into `ssb-13995` (cases + amounts + duration as ContentsCode entries) when the welfare statistikk was restructured. Atlas's existing `ssb-13995` ingest covers everything from the predecessor. Samfunnspuls's Power BI dataset name "ssb-13138" is therefore stale tooling-side metadata referring to the predecessor — no action needed beyond resolving the open question that flagged the mismatch. **No PLAN required.** *(2026-05-05 footnote: this entry originally said `13138` was split into `13995` + `13006`; that was wrong — only `13995` exists as a successor. See [Q38] resolution for the full story.)*
 
 ### D. What this means for sequencing
