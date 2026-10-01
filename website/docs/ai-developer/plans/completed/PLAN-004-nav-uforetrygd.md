@@ -8,7 +8,9 @@ of this candidate was wrong on licence and file shape; both verified live below 
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Active — Phases 1-3 DONE, Phase 4 deploy request filed (urb-agents#1797), awaiting imac
+## Status: Completed
+
+**Completed**: 2026-10-01
 
 **Goal**: Add `nav-uforetrygd` as a served Atlas source — the first monthly-cadence source, and the
 first registry-side welfare-system signal in Report #4 (Mental-Health Triangulation) and Report #5
@@ -239,7 +241,7 @@ follow-up fix commits needed this time, unlike `bufdir-barnevern`'s eight.
 
 ---
 
-## Phase 4: Deploy and verify arrival — IN PROGRESS (deploy request filed, awaiting imac)
+## Phase 4: Deploy and verify arrival — DONE
 
 ### Tasks
 
@@ -262,14 +264,46 @@ follow-up fix commits needed this time, unlike `bufdir-barnevern`'s eight.
   month, 01:00) won't self-fire for potentially weeks, more pointedly than the equivalent caveat on
   `bufdir-barnevern` (weekly, not monthly) — the refresh needs triggering deliberately if this
   should land sooner.
-- [ ] 4.3 **After imac's run**, verify arrival independently against the live public API — not the
-  deploy report alone. `GET /meta_sources?source_id=eq.nav-uforetrygd&select=served_as` non-empty,
-  `GET /indicators__nav_uforetrygd?limit=1` returns a real row. **Not yet done — waiting on #1797.**
+- [x] 4.3 **Verified arrival, 2026-10-01** — not just imac's green run report, independently
+  re-checked against the live public API myself before closing the task:
+  ```
+  GET /meta_sources?source_id=eq.nav-uforetrygd&select=served_as
+  -> [{"served_as":["indicators__nav_uforetrygd"]}]
+
+  GET /indicators__nav_uforetrygd?limit=1
+  -> 200, a real row (region_code "03", region_kind "fylke", category_format "antall",
+     year 2026, month 1, value 32071, values_json carries all 8 months)
+
+  HEAD with Prefer: count=exact
+  -> content-range: 0-0/6560, cf-cache-status: BYPASS (not a stale cached read)
+  ```
+  **6,560 rows — an exact match to both this plan's own local prediction and imac's independent
+  cluster-side measurement**, same month-count (1–8), confirming no NAV republish happened between
+  the local validation run and the live deploy. imac also independently re-verified the
+  `region_kind`/`kommune_nr` relationship specifically (since this plan flagged it as the one
+  falsification worth checking carefully): `bydel=608, kommune=5712, fylke=240` summing to 6,560,
+  zero unmatched `kommune_nr` values against `dim_kommune`. No regression elsewhere
+  (`bufdir-barnevern`, `bufdir-barnefattigdom`, FHI sources all unchanged). Full exchange:
+  [urb-agents#1797](https://github.com/terchris/urb-agents/issues/1797), closed `completed`.
 
 ### Validation
 
-Live `curl` against the public API returns real rows, independently checked, not inferred from a
-green Dagster run. **Pending imac's response on urb-agents#1797.**
+✅ Done 2026-10-01, verified independently, not taken on trust. Live `curl` against the public API
+returns real rows through `indicators__nav_uforetrygd` (6,560, confirmed via `Content-Range`, not a
+cached response), and `meta_sources.served_as` for `nav-uforetrygd` is non-empty.
+
+---
+
+## Outcome
+
+Shipped end to end, 2026-10-01: ingest (1 workbook, 6,560 rows, zero dropped) → dbt staging and
+api_v1 publication → live cluster deploy → independently verified arrival. Atlas's first
+monthly-cadence source, requiring a new Dagster job (`monthly_sources_refresh`) since no existing
+job fit genuinely-monthly data. Unlike `bufdir-barnevern`, no data defects were found during
+validation — `kommune_nr`/`region_kind` used the established macros from the first commit, and
+every drift-gated artifact was regenerated up front, landing clean on the first CI push. Plugs the
+registry-side welfare-claim signal Report #4 (Mental-Health Triangulation) and Report #5 (Income &
+Welfare Trajectory) were missing.
 
 ---
 
@@ -282,14 +316,14 @@ green Dagster run. **Pending imac's response on urb-agents#1797.**
   derived from the sheet, not a column within it.
 - [x] `indicators__nav_uforetrygd` and `mart_indicators__nav_uforetrygd` build and test clean
   against real loaded data (20/20 data tests).
-- [ ] `nav-uforetrygd` appears in `meta_sources.served_as` after a real deploy, independently
-  verified via live `curl`. **Not done — Phase 4 deploy request filed (urb-agents#1797), awaiting
-  imac.**
+- [x] `nav-uforetrygd` appears in `meta_sources.served_as` after a real deploy, independently
+  verified via live `curl`. Deployed by imac (urb-agents#1797), verified independently by this
+  agent against the live public API: 6,560 rows, non-empty `served_as`.
 - [x] Golden-file tests cover: an ordinary kommune row, an Oslo-shaped bydel block (rollup row
   after its children, no `"i alt"` suffix), a Stavanger-shaped bydel block (rollup row before its
   children, `"i alt"` suffix), and the all-suppressed `0301 Oslo` row (31 tests total).
-- [ ] The investigation and `1PRIORITY.md` are updated to mark this candidate shipped, only once
-  Phase 4 confirms rows actually arrived. **Not yet done.**
+- [x] The investigation and `1PRIORITY.md` are updated to mark this candidate shipped, same as the
+  prior corrections made 2026-10-01.
 
 ---
 
