@@ -10,7 +10,7 @@ API lead that turned out not to pan out within reasonable effort. All recorded b
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Backlog — licence unverified, see [Q1]; do not implement before it is resolved
+## Status: Backlog — unblocked, ready for Phase 2
 
 **Goal**: Add `imdi-bosetting` as a served Atlas source, giving Report #8 (Integration Outcomes
 Gradient) the inflow signal it is currently missing — how many refugees a kommune actually
@@ -20,10 +20,14 @@ received per year, not just who already lives there.
 
 **Investigation**: [INVESTIGATE-new-norwegian-public-sources.md](INVESTIGATE-new-norwegian-public-sources.md) §Tier 1 #5 ([Q14]–[Q16], [Q42]–[Q44])
 
-**Prerequisites**: None structurally — `imdi` is already a valid `publishers.yaml` provider (#486).
-**One real prerequisite, not structural**: [Q1] below (licence) needs a human answer before this
-plan can move past Phase 1, per the investigation's own selection criteria: *"restrictive or
-unclear licences disqualify or need explicit approval."*
+**Prerequisites**: None — `imdi` is already a valid `publishers.yaml` provider (#486). **[Q1]
+(licence) is resolved**: Terje, 2026-10-01 — *"IMDI is ok. we can use it."* That is an
+authorization to proceed, not a citation of a specific licence IMDi itself states (this agent still
+could not find one on IMDi's own site). `manifest.yml` uses `NLOD` — Atlas's documented default for
+Norwegian public-sector sources with no stated licence (`manifest.schema.json`'s own field
+description: *"NLOD for Norwegian public-sector sources by default"*) — labelled in the manifest as
+an applied default under this authorization, not as something verified on IMDi's page. If IMDi ever
+states a different licence, correct the manifest then; don't treat this as settled research.
 
 ---
 
@@ -152,8 +156,9 @@ Norwegian source for this, published annually per kommune since at least 2022.
     diff).
   - `fetch_retry.ts` — copy, adapted header comment.
   - `manifest.yml` — `source_id: imdi-bosetting`, `provider: imdi`, `periodicity: P1Y`,
-    `eu_theme: SOCI`, `tags.topic: social`. **Licence: see [Q1] — do not merge with a guessed
-    value.**
+    `eu_theme: SOCI`, `tags.topic: social`, `license: NLOD` (Atlas's documented default for an
+    unstated Norwegian public-sector licence, applied under Terje's 2026-10-01 authorization — see
+    **[Q1]** — not a citation of a licence IMDi itself states).
   - `README.md` and `__tests__/` — golden-file tests against real downloaded fixture pages (at least
     one page per fylke-naming era: one pre-2024-reform fylke page like 2022, one post-reform like
     2025/2026, so the fylke-instability finding from Phase 1.5 is actually exercised even though
@@ -236,22 +241,25 @@ deploy report alone.
   verified via live `curl`.
 - [ ] The investigation and `1PRIORITY.md` are updated to mark this candidate shipped, only once
   Phase 4 confirms rows actually arrived.
-- [ ] **[Q1] (licence) is resolved with a real answer, not a guess, before any of the above ships.**
+- [x] **[Q1] (licence) is resolved — Terje, 2026-10-01: "IMDI is ok. we can use it."** Recorded as
+  an authorization, not a citation; see Implementation Notes.
 
 ---
 
 ## Implementation Notes
 
-- **[Q1] Licence is unverified — this blocks implementation, not just a detail to fill in later.**
+- **[Q1] Licence — resolved by authorization, 2026-10-01, not by finding IMDi's own statement.**
   Checked IMDi's bosettingstall page itself (nothing), the page footer (only privacy/accessibility
   links, no data-licence link), a broad web search, and the `data.norge.no` catalogue record for
   IMDi's one registered dataset (`isOpenData: true`, but no licence field present at all). Unlike
   NAV (CC BY 4.0, found on NAV's own stated-terms page) this agent could not find an equivalent
-  statement for IMDi. The investigation's "NLOD (per IMDi's terms; verify per-page)" was itself
-  flagged as unverified five months ago and still is. **Recommendation: ask Terje, or email IMDi
-  directly** — don't default to NLOD just because it's the government-sector default; this
-  investigation's own selection criteria say an unclear licence needs explicit approval, not a
-  guess.
+  statement for IMDi, and did not find one afterward either. **Terje: *"IMDI is ok. we can use
+  it."*** That authorizes proceeding; it is not a citation of a specific licence IMDi states.
+  `manifest.yml` records `license: NLOD` as Atlas's own documented default for an unstated
+  Norwegian public-sector licence (per `manifest.schema.json`'s field description), applied under
+  this authorization — keep that distinction visible in the manifest's own text (not just here),
+  so a future reader doesn't mistake "NLOD" for something verified on IMDi's page. If IMDi
+  publishes an explicit licence statement later, correct the manifest then.
 - **[Q2] Four distinct metrics, not a count/share pair — modelled as a `metric` long-format
   dimension, matching Atlas's established per-source-indicator convention** (the Bufdir sources
   have 22-24 genuinely distinct indicators and are still modelled long, one row per
