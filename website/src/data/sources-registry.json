@@ -99,6 +99,33 @@
       "source_count": 21
     },
     {
+      "id": "husbanken",
+      "display_name": "Husbanken",
+      "homepage": "https://www.husbanken.no/",
+      "logo": "/img/publishers/husbanken.svg",
+      "feedback_url": "https://www.husbanken.no/om-husbanken/kontakt/",
+      "notes": "The Norwegian State Housing Bank. Publishes housing-support\nstatistikkbank data (bostøtte, startlån) per kommune — the housing\nhalf of the income/welfare picture Atlas's SSB and NAV sources do not\ncarry on their own.\n",
+      "source_count": 0
+    },
+    {
+      "id": "imdi",
+      "display_name": "Integrerings- og mangfoldsdirektoratet",
+      "homepage": "https://www.imdi.no/",
+      "logo": "/img/publishers/imdi.png",
+      "feedback_url": "https://www.imdi.no/om-imdi/kontakt-oss/",
+      "notes": "The Directorate of Integration and Diversity. Publishes refugee\nresettlement figures (bosettingstall) and immigration statistics by\nreason and country background, per kommune and year. Atlas's existing\nFHI-mediated immigration figures (innvkat, innvandrere) describe *who*;\nIMDi's data is the *when/where* resettlement-flow signal neither of\nthose carries.\n",
+      "source_count": 0
+    },
+    {
+      "id": "nav",
+      "display_name": "Arbeids- og velferdsdirektoratet",
+      "homepage": "https://www.nav.no/",
+      "logo": "/img/publishers/nav.svg",
+      "feedback_url": "https://www.nav.no/kontaktoss",
+      "notes": "The Norwegian Labour and Welfare Administration. Publishes open\nlabour-market and benefits statistics — registered unemployment,\ndisability benefit (uføretrygd), work-assessment allowance (AAP) and\nsick-leave figures — mostly as monthly Excel releases per kommune.\n`display_name` is the formal directorate name; the public brand is\n\"NAV\", used in `publisher:` on every NAV manifest to match.\n",
+      "source_count": 0
+    },
+    {
       "id": "redcross",
       "display_name": "Norges Røde Kors",
       "homepage": "https://www.rodekors.no/",
@@ -115,6 +142,15 @@
       "feedback_url": "https://www.ssb.no/omssb/kontakt-oss",
       "notes": "Norway's national statistics office. Maintains the StatBank\n(statistikkbanken) — the canonical source of demographic, economic,\nand social indicators at kommune, fylke, and national resolution.\nData released under NLOD; tables identified by numeric IDs preserved\nwith leading zeros (e.g. table 07459).\n",
       "source_count": 17
+    },
+    {
+      "id": "udir",
+      "display_name": "Utdanningsdirektoratet",
+      "homepage": "https://www.udir.no/",
+      "logo": "/img/publishers/udir.png",
+      "feedback_url": "https://www.udir.no/om-udir/kontakt-oss/",
+      "notes": "The Directorate for Education and Training. Publishes school-level\nregister data (GSI — Grunnskolens Informasjonssystem), the annual\npupil survey (Elevundersøkelsen: trivsel, mobbing) and absence\nstatistics, at a sharper resolution than Atlas's existing FHI-mediated\nbullying figure (`fhi-mobbing`, a 3-year rolling 7th+10th-grade\naggregate).\n",
+      "source_count": 0
     }
   ],
   "sources": [
