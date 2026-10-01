@@ -4,6 +4,9 @@
 See _factory.make_raw_ingest_asset. Currently:
 
 - bufdir-barnefattigdom: zip download from Bufdir's child poverty surface.
+- bufdir-barnevern: zip download from Bufdir's child welfare surface. Same
+  delivery mechanism as the sibling above, different internal workbook shape
+  — see atlas-data/ingest/src/sources/bufdir-barnevern/README.md.
 - redcross-branches: Crawlee-based scraper of Red Cross chapter pages.
   Heavier resource profile (per UIS Dagster INVESTIGATE — headless browser
   state, ~512MiB working set).
@@ -27,6 +30,7 @@ from atlas_data import cadence
 
 OTHER_SOURCES = [
     "bufdir-barnefattigdom",
+    "bufdir-barnevern",
     "redcross-branches",
 ]
 
@@ -34,7 +38,7 @@ OTHER_SOURCES = [
 # cadence and no freshness policy. See cadence.UNSCHEDULED_SOURCES for why.
 assets = [
     *make_raw_ingest_assets(
-        ["bufdir-barnefattigdom"],
+        ["bufdir-barnefattigdom", "bufdir-barnevern"],
         group_name="raw_other",
         automation_condition=cadence.weekly_polled(),
         freshness_policy=cadence.WEEKLY_FRESHNESS,

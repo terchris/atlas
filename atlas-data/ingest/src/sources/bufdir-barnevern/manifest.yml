@@ -1,0 +1,80 @@
+# Hand-authored catalogue metadata for Bufdir Barnevern kommunemonitor.
+# Ingest runs do not modify this file.
+
+source_id: bufdir-barnevern
+upstream_id: barnevern-monitor
+upstream_url: https://www.bufdir.no/statistikk-og-analyse/monitor/barnevern/
+upstream_landing_page: https://www.bufdir.no/statistikk-og-analyse/monitor/barnevern/
+upstream_title: "Barnevern kommunemonitor"
+description: |
+  Barne-, ungdoms- og familiedirektoratet (Bufdir) publishes the Barnevern kommunemonitor on
+  bufdir.no and ships a single bulk ZIP of indicator workbooks ("last ned hele datasettet"),
+  the same mechanism as the sibling Barnefattigdom monitor. Atlas downloads that ZIP (URL
+  discovered from the monitor page), parses sheet `Sheet1` in each standard-coded workbook, and
+  loads kommune- and sub-kommune-level child-welfare time series into `raw.bufdir_barnevern` —
+  contact with, and removal into, the child-welfare system, alongside spending, staffing, and
+  deadline-compliance indicators. Plugs the barnevern axis Report #2 (Child Welfare /
+  Vulnerability Composite) is missing today. One of 24 workbooks in the live bundle
+  (`Turnover_kommunalt barnevern_2016-2024.xlsx`) has a structurally different layout and is
+  excluded — see `parse.ts`'s `isStandardIndicatorWorkbook`.
+publisher: Barne-, ungdoms- og familiedirektoratet
+license: NLOD
+license_url: https://data.norge.no/nlod/no/2.0
+periodicity: P1Y
+eu_theme: SOCI
+attribution: "Kilde: Barne-, ungdoms- og familiedirektoratet, Barnevern kommunemonitor"
+
+tags:
+  provider: bufdir
+  topic: child-welfare
+  geo: kommune
+  cadence: annual
+
+dimensions:
+  - code: indicator_api_id
+    meaning: Stable surrogate indicator key for ZIP workbook rows (not Strapi)
+    value_format: bv_zip_ind_<code> (e.g. bv_zip_ind_1a), or bv_zip_<24 lowercase hex> fallback
+    notes: >
+      Derived from the workbook filename's leading alphanumeric code (1a, 3m, 4f, ...) —
+      Barnevern's indicator codes are alphanumeric, never purely numeric like the sibling
+      Barnefattigdom source's Indikator_<n>. Hash fallback for any non-conforming filename.
+  - code: region_code
+    meaning: Geographic code from workbook column Region
+    value_format: "0 (land), 2-digit fylke, 4-digit kommune, or 6-digit codes for bydel rows"
+    notes: Rows follow whatever geography levels each indicator publishes.
+  - code: category_format
+    meaning: Workbook column Tallformat, normalised lowercase
+    value_format: antall or andel
+    notes: >
+      Barnevern's own vocabulary — "andel" (share), not the sibling Barnefattigdom source's
+      "prosent", verified live 2026-10-01 across all 23 standard workbooks. Despite the name,
+      "andel" values are not all 0-100 percentages (e.g. kroner-per-child expenditure figures
+      also use it) — treat it as "Norwegian-decimal formatted", not "is a percentage". Also:
+      Barnevern's workbooks have no Enhet column (unlike the sibling Barnefattigdom source) —
+      there is no category_unit dimension here.
+  - code: year
+    meaning: Calendar year column from workbook header row
+    value_format: 4-digit integer
+    notes: Spines differ by indicator — observed range 2015-2025 across sampled workbooks.
+  - code: values_json
+    meaning: Parsed year→value map for the geography and category_format slice
+    value_format: JSON object with string year keys; suppressed cells as null
+    notes: Matches the sibling source's raw semantics (full spine per slice).
+
+lifecycle: stable
+time_coverage:
+  start: null
+  end: null
+keywords:
+  - child-welfare
+  - barnevern
+  - kommune
+  - families
+methodology_notes: |
+  Kommune-level child-welfare register indicators: undersøkelser (investigations), tiltak
+  (interventions, in-home and out-of-home), fosterhjem i familie/nære nettverk, spending per
+  child, staffing per 1000 children, deadline-compliance ("fristbrudd"), and turnover among
+  saksbehandlere. Spines differ per indicator. Complements the sibling Barnefattigdom source's
+  income-based poverty lens with a contact-with-the-system lens.
+suggested_joins:
+  - bufdir-barnefattigdom

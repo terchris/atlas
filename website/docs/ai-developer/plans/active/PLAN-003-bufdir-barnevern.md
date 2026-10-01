@@ -8,14 +8,14 @@ workbooks are shaped differently (verified below).
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Backlog
+## Status: Active — Phase 2 IN PROGRESS
 
 **Goal**: Add `bufdir-barnevern` as a served Atlas source, plugging the barnevern axis that Report
 #2 (Child Welfare / Vulnerability Composite) is missing today.
 
 **Last Updated**: 2026-10-01
 
-**Investigation**: [INVESTIGATE-new-norwegian-public-sources.md](INVESTIGATE-new-norwegian-public-sources.md) §Tier 1 #1 ([Q1]–[Q3])
+**Investigation**: [INVESTIGATE-new-norwegian-public-sources.md](../backlog/INVESTIGATE-new-norwegian-public-sources.md) §Tier 1 #1 ([Q1]–[Q3])
 
 **Prerequisites**: None. The "Phase 0 schema prep" this investigation originally pointed to was a
 phantom (no `provider` enum, no `dim_period`/`dim_indicator` tables exist) — see the investigation's
@@ -117,11 +117,29 @@ mechanism; it does not follow the same internal shape.
 
 ---
 
-## Phase 2: Ingest module + raw table
+## Phase 2: Ingest module + raw table — DONE
+
+⚠️ **Caught during this phase's own live validation, not by the plan's Phase 1 research**: every
+standard workbook's `Tallformat` column uses the literal value **`Andel`** for decimal-formatted
+figures, not the sibling Barnefattigdom source's `Prosent`. A first draft copied the sibling's
+`prosent` check without re-verifying it against Barnevern's own data; running the real ingest
+against the live ZIP (not just the unit tests) showed 9 of 23 workbooks returning **zero rows**
+and the rest returning roughly half their true row count — 70,899 rows instead of the correct
+191,673. Fixed by checking for `andel` instead of `prosent` throughout `parse.ts`. Also: `andel`
+is not limited to 0–100 percentages — some `andel`-formatted indicators are kroner-per-child
+figures, so it means "Norwegian-decimal formatted", not "is a percentage". See `parse.ts`'s
+`parseCell` doc and the manifest's `category_format` dimension note.
+
+Also added during this phase, not originally listed in the task breakdown below: **Dagster asset
+registration** (`atlas-data/dagster/atlas_data/assets/raw_other.py` and `schedules.py`'s
+`_ANNUAL_SOURCE_IDS`). Required by the standing "every ingested source appears in a scheduling
+grouping or `cadence.UNSCHEDULED_SOURCES`" invariant (`schedules.py`'s own comment) — without it,
+`bufdir-barnevern` would need a human to trigger it by hand, exactly the failure mode
+`PLAN-zero-touch-ingest-automation` (#1793) fixed for every other source this session.
 
 ### Tasks
 
-- [ ] 2.1 Create `atlas-data/ingest/src/sources/bufdir-barnevern/`:
+- [x] 2.1 Create `atlas-data/ingest/src/sources/bufdir-barnevern/`:
   - `fetch_retry.ts` — copy verbatim from `bufdir-barnefattigdom` (generic retry wrapper, no
     barnefattigdom-specific logic; the file's own header already notes this pattern is duplicated
     per-source rather than shared, so a fourth copy matches existing convention).
@@ -160,29 +178,37 @@ mechanism; it does not follow the same internal shape.
     suggested_joins:
       - bufdir-barnefattigdom
     ```
-    `dimensions:` block to be filled in once 1.4's sampling confirms the final column set —
-    expect `indicator_api_id`, `region_code`, `category_format` (Tallformat — no `category_unit`),
-    `year`, `values_json`.
-  - `README.md` — short, matching sibling's structure.
-  - `__tests__/` — golden-file tests for discovery (barnevern URL shapes, ambiguous-ZIP refusal) and
-    the parser (at minimum the `1A` shape and the `Turnover` outlier shape), mirroring the 29 tests
-    PR #67 added for the sibling.
+    `dimensions:` block uses the final confirmed column set: `indicator_api_id`, `region_code`,
+    `category_format` (Tallformat — values `antall`/`andel`, no `category_unit`), `year`,
+    `values_json`.
+  - `README.md` — written, matching sibling's structure, documenting the `andel` vocabulary finding.
+  - `__tests__/` — 33 tests: discovery tiers (barnevern URL shapes, ambiguous-ZIP refusal),
+    `isStandardIndicatorWorkbook` filter, `parseCell` (including the `andel`-is-not-always-a-
+    percentage case), surrogate id, and an end-to-end parse of the real `1A` fixture plus a test
+    that the non-conforming `Turnover` fixture throws rather than silently mis-parsing.
+  - Also registered in `atlas-data/ingest/package.json` (`ingest:bufdir-barnevern` script) and in
+    the Dagster asset groupings (see Phase 2 header note above) — not originally itemized here.
 
-- [ ] 2.2 `atlas-data/migrations/056_raw_bufdir_barnevern.sql` — `create table raw.bufdir_barnevern`
+- [x] 2.2 `atlas-data/migrations/056_raw_bufdir_barnevern.sql` — `create table raw.bufdir_barnevern`
   with primary key `(indicator_api_id, region_code, category_format, year)` (no `category_unit` —
-  see Phase 1.3), plus `comment on table/column` following the sibling's style, written fresh for
-  the actual Barnevern shape rather than copied (the sibling's own migration comments are already
-  slightly stale relative to its current ZIP-era columns — don't propagate that).
+  see Phase 1.3), plus `comment on table/column` written fresh for the actual Barnevern shape
+  (including the `andel` vocabulary note) rather than copied from the sibling's slightly-stale
+  comments.
 
 ### Validation
 
 ```bash
-cd atlas-data/ingest && npm test -- bufdir-barnevern
+cd atlas-data/ingest && npm test -- bufdir-barnevern   # 33 passed
+cd atlas-data/ingest && npm test                        # 181 passed, whole package — no regressions
+cd atlas-data/ingest && npm run typecheck                # clean
+env -u DATABASE_URL node_modules/.bin/tsx src/sources/bufdir-barnevern/index.ts  # live run, NDJSON-only
 ```
-Golden-file tests pass; a manual run against the live ZIP produces a plausible row count (24
-workbooks × kommune/fylke/national rows × ~10 years) with zero rows silently dropped (cross-check
-sheet row count vs. ingested row count per workbook, the same completeness check PR #67 did for the
-sibling).
+✅ Done 2026-10-01. Live run against the real upstream ZIP: 23 workbooks, 0 `workbook.no_rows`
+warnings, 191,673 rows, 489 distinct region codes. (First live run, before the `andel` fix, produced
+70,899 rows with 9 workbooks at zero — exactly the "zero rows silently dropped" failure mode this
+validation step exists to catch; not caught by the unit tests alone, only by running the real
+ingest.) Needs Node ≥22 (`engines` in `package.json`) — Node 20.11 fails at vitest startup
+(`styleText` not exported from `node:util`).
 
 ---
 
@@ -278,6 +304,9 @@ Live `curl` against the public API returns real Barnevern rows through
 - `atlas-data/ingest/src/sources/bufdir-barnevern/README.md` (new)
 - `atlas-data/ingest/src/sources/bufdir-barnevern/__tests__/` (new)
 - `atlas-data/migrations/056_raw_bufdir_barnevern.sql` (new)
+- `atlas-data/ingest/package.json` (`ingest:bufdir-barnevern` script)
+- `atlas-data/dagster/atlas_data/assets/raw_other.py` (asset registration, weekly-polled cadence)
+- `atlas-data/dagster/atlas_data/schedules.py` (`_ANNUAL_SOURCE_IDS`)
 - `atlas-data/dbt/models/indicators/sources.yml`
 - `atlas-data/dbt/models/indicators/indicators__bufdir_barnevern.sql` (new)
 - `atlas-data/dbt/models/indicators/schema.yml`
