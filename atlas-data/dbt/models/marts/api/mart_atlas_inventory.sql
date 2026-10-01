@@ -74,6 +74,7 @@
 -- depends_on: {{ ref('mart_indicator_missing_kommuner') }}
 -- depends_on: {{ ref('mart_indicator_summary') }}
 -- depends_on: {{ ref('mart_indicators__bufdir_barnefattigdom') }}
+-- depends_on: {{ ref('mart_indicators__bufdir_barnevern') }}
 -- depends_on: {{ ref('mart_indicators__fhi_alkohol') }}
 -- depends_on: {{ ref('mart_indicators__fhi_befolkning') }}
 -- depends_on: {{ ref('mart_indicators__fhi_befolkningsvekst') }}
@@ -166,6 +167,7 @@
   {'relation': 'indicator_missing_kommuner', 'mart': 'mart_indicator_missing_kommuner'},
   {'relation': 'indicator_summary', 'mart': 'mart_indicator_summary'},
   {'relation': 'indicators__bufdir_barnefattigdom', 'mart': 'mart_indicators__bufdir_barnefattigdom'},
+  {'relation': 'indicators__bufdir_barnevern', 'mart': 'mart_indicators__bufdir_barnevern'},
   {'relation': 'indicators__fhi_alkohol', 'mart': 'mart_indicators__fhi_alkohol'},
   {'relation': 'indicators__fhi_befolkning', 'mart': 'mart_indicators__fhi_befolkning'},
   {'relation': 'indicators__fhi_befolkningsvekst', 'mart': 'mart_indicators__fhi_befolkningsvekst'},
