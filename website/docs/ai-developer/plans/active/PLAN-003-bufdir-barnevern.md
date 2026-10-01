@@ -137,6 +137,23 @@ grouping or `cadence.UNSCHEDULED_SOURCES`" invariant (`schedules.py`'s own comme
 `bufdir-barnevern` would need a human to trigger it by hand, exactly the failure mode
 `PLAN-zero-touch-ingest-automation` (#1793) fixed for every other source this session.
 
+⚠️ **CI caught three more generated-artifact drift gates on first push (PR #489)**, none anticipated
+by the task list — recorded so the next new-source PLAN budgets for them:
+- `tags.topic: child-welfare` isn't a registered category — `atlas-data/ingest/src/sources/topics.yaml`
+  is a short, curated, editorially-maintained list (`check-manifests.sh` + the website's
+  `generate-sources-registry.mjs` both enforce it), not free text. Changed to `topic: social` ("the
+  bridge between need and the services that respond to it" — the existing category description
+  already fits barnevern without adding a new one for a single source).
+- `atlas-data/dbt/seeds/sources/_sources_manifest.csv` / `_sources_dimensions.csv` are generated from
+  every `manifest.yml` by `scripts/build_sources_seed.py` and must be regenerated and committed in
+  the same PR as any manifest change — `check-sources-seed-is-current.sh` diffs the committed seed
+  against a fresh regeneration. Ran it; committed the regenerated seed.
+- `atlas-data/template-info.yaml`'s `first_data.takes` / `first_data.first_load` state the raw-table
+  count in prose (`"~4.1M rows across 52 raw BASE TABLEs..."`) and `render-template-info.sh` checks
+  that number against `grep -c 'create table raw\.'` across `migrations/*.sql`. Bumped `52` → `53`
+  in both occurrences — the row-count/timing narrative around it is a real prior measurement
+  (urb-agents #1027) and was left untouched; only the table-count fact changed.
+
 ### Tasks
 
 - [x] 2.1 Create `atlas-data/ingest/src/sources/bufdir-barnevern/`:
@@ -172,7 +189,7 @@ grouping or `cadence.UNSCHEDULED_SOURCES`" invariant (`schedules.py`'s own comme
     eu_theme: SOCI
     tags:
       provider: bufdir
-      topic: child-welfare
+      topic: social
       geo: kommune
       cadence: annual
     suggested_joins:
