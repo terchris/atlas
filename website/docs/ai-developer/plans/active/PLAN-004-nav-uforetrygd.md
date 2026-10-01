@@ -8,7 +8,7 @@ of this candidate was wrong on licence and file shape; both verified live below 
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Backlog
+## Status: Active — Phase 2 IN PROGRESS
 
 **Goal**: Add `nav-uforetrygd` as a served Atlas source — the first monthly-cadence source, and the
 first registry-side welfare-system signal in Report #4 (Mental-Health Triangulation) and Report #5
@@ -16,7 +16,7 @@ first registry-side welfare-system signal in Report #4 (Mental-Health Triangulat
 
 **Last Updated**: 2026-10-01
 
-**Investigation**: [INVESTIGATE-new-norwegian-public-sources.md](INVESTIGATE-new-norwegian-public-sources.md) §Tier 1 #2 ([Q4]–[Q7], [Q32])
+**Investigation**: [INVESTIGATE-new-norwegian-public-sources.md](../backlog/INVESTIGATE-new-norwegian-public-sources.md) §Tier 1 #2 ([Q4]–[Q7], [Q32])
 
 **Prerequisites**: None. `nav` is already a valid `publishers.yaml` provider (added in #486, no new
 publisher work needed). There is no `dim_period` table and no prerequisite schema bump — see

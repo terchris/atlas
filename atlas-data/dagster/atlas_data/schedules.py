@@ -200,6 +200,15 @@ _ANNUAL_SOURCE_IDS = [
 
 _KLASS_SOURCE_IDS = list(raw_ssb.SSB_KLASS_SOURCES)
 
+# Sources whose manifest declares periodicity P1M — genuinely monthly data,
+# not an annual source merely polled monthly like KLASS. Does not belong in
+# _ANNUAL_SOURCE_IDS (that job's own docstring says "P1Y"; mixing cadences
+# into one job misrepresents what it runs). First member: nav-uforetrygd,
+# Atlas's first monthly-cadence source outside KLASS/seeds.
+_MONTHLY_SOURCE_IDS = [
+    "nav-uforetrygd",
+]
+
 
 def _asset_selection(source_ids: list[str]) -> AssetSelection:
     """
@@ -243,6 +252,24 @@ klass_job = define_asset_job(
         "they are kept on their own schedule rather than buried in the weekly "
         "wave — a bad Klass refresh is a wide blast radius and worth being able "
         "to point at."
+    ),
+)
+
+monthly_sources_job = define_asset_job(
+    name="monthly_sources_refresh",
+    selection=_asset_selection(_MONTHLY_SOURCE_IDS),
+    executor_def=_ingest_executor(),
+    description=(
+        "Sources whose manifest declares periodicity P1M — genuinely monthly "
+        "data (nav-uforetrygd: NAV republishes PST302 once a month, early in "
+        "the following month). Distinct from klass_refresh and "
+        "seed_sources_refresh, which are also monthly-polled but for annual- "
+        "or irregular-cadence data; this job is for data that is actually "
+        "monthly. No dedicated cron schedule — automatic materialisation "
+        "comes from each asset's own cadence.monthly_polled() automation "
+        "condition, same as klass_refresh and seed_sources_refresh. This job "
+        "exists for manual/bulk runs and so these sources are discoverable "
+        "in exactly one named grouping, per this module's own invariant."
     ),
 )
 
@@ -777,6 +804,7 @@ schedules = [
 jobs = [
     annual_sources_job,
     klass_job,
+    monthly_sources_job,
     seed_sources_job,
     brreg_bootstrap_job,
     brreg_feed_job,

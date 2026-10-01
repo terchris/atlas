@@ -43,7 +43,7 @@
       "description": "Social assistance use, household composition, overcrowded housing,\nand integration indicators. The bridge between need and the services\nthat respond to it.\n",
       "emoji": "🏘️",
       "order": 50,
-      "source_count": 5
+      "source_count": 6
     },
     {
       "id": "ngo-supply",
@@ -123,7 +123,7 @@
       "logo": "/img/publishers/nav.svg",
       "feedback_url": "https://www.nav.no/kontaktoss",
       "notes": "The Norwegian Labour and Welfare Administration. Publishes open\nlabour-market and benefits statistics — registered unemployment,\ndisability benefit (uføretrygd), work-assessment allowance (AAP) and\nsick-leave figures — mostly as monthly Excel releases per kommune.\n`display_name` is the formal directorate name; the public brand is\n\"NAV\", used in `publisher:` on every NAV manifest to match.\n",
-      "source_count": 0
+      "source_count": 1
     },
     {
       "id": "redcross",
@@ -1073,6 +1073,7 @@
         "bufdir-barnefattigdom"
       ],
       "related_by_topic": [
+        "nav-uforetrygd",
         "ssb-12131",
         "ssb-12132",
         "ssb-13995",
@@ -8301,6 +8302,184 @@
     },
     {
       "kind": "source",
+      "source_id": "nav-uforetrygd",
+      "upstream_id": "PST302",
+      "upstream_url": "https://www.nav.no/no/nav-og-samfunn/statistikk/aap-nedsatt-arbeidsevne-og-uforetrygd-statistikk/uforetrygd/uforetrygd-manedsstatistikk",
+      "upstream_landing_page": "https://www.nav.no/no/nav-og-samfunn/statistikk/aap-nedsatt-arbeidsevne-og-uforetrygd-statistikk/uforetrygd/uforetrygd-manedsstatistikk",
+      "upstream_title": "PST302 Mottakere av uføretrygd. Antall og andel av befolkningen 18-67 år. Fylke. Kommune.",
+      "description": "NAV (Arbeids- og velferdsetaten) publishes PST302 on its monthly uføretrygd (disability benefit)\nstatistics page: the count and share of the population aged 18-67 receiving uføretrygd, per\nkommune and fylke, as one xlsx workbook covering every month of the current calendar year to\ndate. Atlas downloads that workbook (URL discovered from the monitor page — a relative\n`/_/attachment/download/...` link, re-resolved each run since it changes with every release) and\nloads the `Kommune-bydel. Antall` and `Kommune-bydel. Andel` sheets into `raw.nav_uforetrygd`.\nAtlas's first monthly-cadence source — a plain `month` column, no `dim_period` infrastructure\n(none exists in the codebase; see INVESTIGATE-new-norwegian-public-sources.md's 2026-10-01\ncorrection). v1 tracks the live current-year file only; historical backfill (NAV publishes\none archive file per past calendar year) is explicitly deferred.\n",
+      "atlas_summary": null,
+      "publisher": {
+        "id": "nav",
+        "display_name": "Arbeids- og velferdsdirektoratet",
+        "homepage": "https://www.nav.no/",
+        "logo": "/img/publishers/nav.svg"
+      },
+      "category": {
+        "id": "social",
+        "name": "Social & housing",
+        "emoji": "🏘️"
+      },
+      "license": "CC BY 4.0",
+      "license_url": "https://creativecommons.org/licenses/by/4.0/deed.no",
+      "periodicity": "P1M",
+      "eu_theme": "SOCI",
+      "attribution": "Kilde: NAV, PST302 Mottakere av uføretrygd",
+      "tags": {
+        "provider": "nav",
+        "topic": "social",
+        "geo": "kommune",
+        "cadence": "monthly"
+      },
+      "keywords": [
+        "uføretrygd",
+        "disability-benefit",
+        "welfare",
+        "kommune",
+        "monthly"
+      ],
+      "lifecycle": "stable",
+      "time_coverage": {
+        "start": null,
+        "end": null
+      },
+      "methodology_notes": "Count and share (of population aged 18-67) of people receiving uføretrygd per kommune, counted\nby NAV's Pesys decision system and population data warehouse. NAV counts 11/12 of 18-year-olds\nand 1/12 of 67-year-olds (eligibility starts the month after turning 18, ends the month after\nturning 67). A break in the population-share denominator source occurred in March 2014 (NAV's own\nnote: minor effect). Small cells are suppressed with `*`.\n",
+      "suggested_joins": [],
+      "related_by_topic": [
+        "bufdir-barnevern",
+        "ssb-12131",
+        "ssb-12132",
+        "ssb-13995",
+        "ssb-crime-tables"
+      ],
+      "dimensions": [
+        {
+          "code": "region_code",
+          "meaning": "Geographic code from the workbook row label (NAV's own kommune/fylke/bydel numbering)",
+          "value_format": "2-digit fylke, 4-digit kommune, or 6-digit bydel code (Oslo, Bergen, Stavanger, Trondheim only)",
+          "notes": "region_kind (fylke/kommune/bydel) is derived downstream via classify_region_code, not stored here — same convention as every other Atlas source. Oslo's own kommune-level rollup row (region_code 0301) is suppressed for every month in the live file sampled 2026-10-01, despite the fylke-level total for the same population being unsuppressed — recorded as observed upstream behaviour, not explained or corrected.\n"
+        },
+        {
+          "code": "category_format",
+          "meaning": "Which sheet the row came from, not a column within a sheet",
+          "value_format": "antall or andel",
+          "notes": "Structurally different from every prior Atlas source — NAV publishes count and share as two separate sheets rather than a Tallformat-style column. No category_unit dimension exists for this source.\n"
+        },
+        {
+          "code": "year",
+          "meaning": "Calendar year, read from the sheet's own year-label cell (e.g. '2026 :')",
+          "value_format": "4-digit integer",
+          "notes": "One year per file — the live file is replaced in place as the year progresses."
+        },
+        {
+          "code": "month",
+          "meaning": "Calendar month, from the sheet's own Norwegian month-name header row",
+          "value_format": "1-12 integer",
+          "notes": "Atlas's first monthly-cadence dimension. A plain integer column, not a dim_period reference — no such table exists anywhere in the codebase to reference.\n"
+        },
+        {
+          "code": "values_json",
+          "meaning": "Parsed month->value map for the region and category_format slice, for this sheet's year",
+          "value_format": "JSON object with string month-number keys; suppressed cells (NAV's own `*` marker) as null",
+          "notes": "Matches the full month spine present in the live file (partial-year, growing monthly)."
+        }
+      ],
+      "raw_tables": null,
+      "sample_query": null,
+      "citation": {
+        "text": "Arbeids- og velferdsdirektoratet. (n.d.). PST302 Mottakere av uføretrygd. Antall og andel av befolkningen 18-67 år. Fylke. Kommune.. Retrieved from https://www.nav.no/no/nav-og-samfunn/statistikk/aap-nedsatt-arbeidsevne-og-uforetrygd-statistikk/uforetrygd/uforetrygd-manedsstatistikk. Available in Atlas at https://atlas.sovereignsky.no/datasets/nav-uforetrygd.",
+        "bibtex": "@misc{atlas_nav_uforetrygd,\n  author = {Arbeids- og velferdsdirektoratet},\n  title  = {PST302 Mottakere av uføretrygd. Antall og andel av befolkningen 18-67 år. Fylke. Kommune.},\n  year   = {n.d.},\n  url    = {https://www.nav.no/no/nav-og-samfunn/statistikk/aap-nedsatt-arbeidsevne-og-uforetrygd-statistikk/uforetrygd/uforetrygd-manedsstatistikk},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/nav-uforetrygd}\n}"
+      },
+      "feedback_url": "https://www.nav.no/kontaktoss",
+      "consuming_marts": [
+        {
+          "mart_name": "mart_atlas_inventory",
+          "api_v1_name": "atlas_inventory",
+          "title": null,
+          "description_short": "What Atlas publishes: one row per endpoint with its row count, freshness and origin.",
+          "description_full": "What Atlas publishes: one row per endpoint with its row count, freshness and origin.\n\nWhat Atlas publishes, one row per queryable endpoint: how many records it\nserves, when its data last arrived, and where those rows came from.\nAsked for by Røde Kors — \"validate that all datasets that are ingested has\nan endpoint and it can be queried … count the number of records each\nendpoint has and update the last time it ingested data.\"\n⚠️ THE GRAIN IS PER ENDPOINT, NOT PER SOURCE. meta_sources answers \"what\ndid Atlas ingest\"; this answers \"what can I query, and is there anything\nin it\". One source can feed several endpoints and one endpoint can draw on\nseveral sources, so the two row counts are not comparable and summing\nsources will not reproduce an endpoint's count.\n⚠️ atlas_inventory does not list ITSELF. It is built from the same seed it\nreports on, so counting itself would be circular and the number would be\nwhatever the table held mid-build. 19 endpoints are listed; 20 are\npublished.",
+          "sample_query": "https://api-atlas.urbalurba.com/atlas_inventory?limit=5"
+        },
+        {
+          "mart_name": "mart_indicators__nav_uforetrygd",
+          "api_v1_name": "indicators__nav_uforetrygd",
+          "title": "Uføretrygd månedsstatistikk (PST302)",
+          "description_short": "Per-source indicator data for nav-uforetrygd (Arbeids- og velferdsdirektoratet), at the publisher's own grain.",
+          "description_full": "Per-source indicator data for nav-uforetrygd (Arbeids- og velferdsdirektoratet), at the publisher's own grain.\n\nPer-source indicator relation for `nav-uforetrygd` (Arbeids- og velferdsdirektoratet), published at the grain the publisher\nactually uses rather than flattened into the cross-source views. Atlas's first monthly-cadence\nsource.\n🔴 stability:source — the column set here follows Arbeids- og velferdsdirektoratet, not Atlas. If the\npublisher adds, renames or drops a dimension, this relation changes with it. That is\nthe deliberate trade for getting the real grain; prefer a stability:curated relation\nif you need a shape Atlas promises to hold still. Decode codes through\nmeta_dimensions filtered to source_id=nav-uforetrygd.",
+          "sample_query": "https://api-atlas.urbalurba.com/indicators__nav_uforetrygd?limit=5"
+        }
+      ],
+      "consuming_models": [
+        {
+          "name": "indicators__nav_uforetrygd",
+          "kind": "indicators"
+        },
+        {
+          "name": "mart_atlas_inventory",
+          "kind": "mart"
+        },
+        {
+          "name": "mart_indicators__nav_uforetrygd",
+          "kind": "mart"
+        }
+      ],
+      "joined_with": [
+        {
+          "source_id": "brreg-enheter-alle",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "brreg-frivillige",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "brreg-oppdateringer",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "bufdir-barnefattigdom",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "bufdir-barnevern",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "fhi-alkohol",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "fhi-befolkning",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "fhi-befolkningsvekst",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        }
+      ],
+      "last_ingested_at": null,
+      "latest_row_count": null,
+      "total_runs": null,
+      "downstream_model_count": null
+    },
+    {
+      "kind": "source",
       "source_id": "redcross-branches",
       "upstream_id": "organizations-api",
       "upstream_url": "https://api.redcross.no/nrx/v1/organizations",
@@ -11325,6 +11504,7 @@
       "suggested_joins": [],
       "related_by_topic": [
         "bufdir-barnevern",
+        "nav-uforetrygd",
         "ssb-12132",
         "ssb-13995",
         "ssb-crime-tables"
@@ -11641,6 +11821,7 @@
       "suggested_joins": [],
       "related_by_topic": [
         "bufdir-barnevern",
+        "nav-uforetrygd",
         "ssb-12131",
         "ssb-13995",
         "ssb-crime-tables"
@@ -12602,6 +12783,7 @@
       "suggested_joins": [],
       "related_by_topic": [
         "bufdir-barnevern",
+        "nav-uforetrygd",
         "ssb-12131",
         "ssb-12132",
         "ssb-crime-tables"
@@ -12918,6 +13100,7 @@
       "suggested_joins": [],
       "related_by_topic": [
         "bufdir-barnevern",
+        "nav-uforetrygd",
         "ssb-12131",
         "ssb-12132",
         "ssb-13995"
@@ -14334,6 +14517,12 @@
           "model_name": "mart_indicators__fhi_vgs_gjennomforing",
           "title": "Gjennomforing i videregående skole (utdann_3)",
           "description_short": "Per-source indicator data for fhi-vgs-gjennomforing (Folkehelseinstituttet), at the publisher's own grain."
+        },
+        {
+          "parent_kind": "model",
+          "model_name": "mart_indicators__nav_uforetrygd",
+          "title": "Uføretrygd månedsstatistikk (PST302)",
+          "description_short": "Per-source indicator data for nav-uforetrygd (Arbeids- og velferdsdirektoratet), at the publisher's own grain."
         },
         {
           "parent_kind": "model",
@@ -17773,6 +17962,79 @@
       ],
       "sample_query": "https://api-atlas.urbalurba.com/indicators__fhi_vgs_gjennomforing?limit=5",
       "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__fhi_vgs_gjennomforing"
+    },
+    {
+      "kind": "view",
+      "view_id": "indicators__nav_uforetrygd",
+      "mart_name": "mart_indicators__nav_uforetrygd",
+      "api_v1_name": "indicators__nav_uforetrygd",
+      "title": "Uføretrygd månedsstatistikk (PST302)",
+      "description_short": "Per-source indicator data for nav-uforetrygd (Arbeids- og velferdsdirektoratet), at the publisher's own grain.",
+      "description_full": "Per-source indicator data for nav-uforetrygd (Arbeids- og velferdsdirektoratet), at the publisher's own grain.\n\nPer-source indicator relation for `nav-uforetrygd` (Arbeids- og velferdsdirektoratet), published at the grain the publisher\nactually uses rather than flattened into the cross-source views. Atlas's first monthly-cadence\nsource.\n🔴 stability:source — the column set here follows Arbeids- og velferdsdirektoratet, not Atlas. If the\npublisher adds, renames or drops a dimension, this relation changes with it. That is\nthe deliberate trade for getting the real grain; prefer a stability:curated relation\nif you need a shape Atlas promises to hold still. Decode codes through\nmeta_dimensions filtered to source_id=nav-uforetrygd.",
+      "columns": [
+        {
+          "name": "source_id",
+          "description": "Atlas catalogue id for this ingest — always nav-uforetrygd."
+        },
+        {
+          "name": "region_code",
+          "description": "NAV's own region code, verbatim from the workbook row label. May be a kommune, fylke, or bydel code; region_kind says which."
+        },
+        {
+          "name": "kommune_nr",
+          "description": "Four-digit kommune code, derived through region_code_to_kommune_nr. NULL for other geography levels."
+        },
+        {
+          "name": "region_kind",
+          "description": "What region_code is, from classify_region_code: kommune · fylke · bydel · unknown."
+        },
+        {
+          "name": "fylke_nr",
+          "description": "Two-digit fylke code when region_code is exactly two digits; NULL otherwise."
+        },
+        {
+          "name": "category_format",
+          "description": "Which sheet the row came from — antall (count) or andel (share) — not a column within a sheet. There is no category_unit dimension for this source."
+        },
+        {
+          "name": "year",
+          "description": "Calendar year of the observation."
+        },
+        {
+          "name": "month",
+          "description": "Calendar month (1-12) of the observation. Atlas's first monthly-cadence dimension — a plain integer, not a dim_period reference."
+        },
+        {
+          "name": "contents_code",
+          "description": "Atlas-normalised variable code: fixed prefix `nav_uforetrygd__` joined with category_format, so each measure is filter-stable in the catalogue."
+        },
+        {
+          "name": "contents_label",
+          "description": "Human-readable label combining \"Uføretrygd\" with the antall/andel format."
+        },
+        {
+          "name": "value",
+          "description": "Numeric value for this year/month; NULL when NAV suppresses the cell (*)."
+        },
+        {
+          "name": "values_json",
+          "description": "Parse of the sheet's rows into month keys for this region/category_format/year slice (NAV's suppression marker * and blanks → JSON null values)."
+        },
+        {
+          "name": "updated_at",
+          "description": "Timestamp when the row was last written by ingest (from raw.loaded_at)."
+        }
+      ],
+      "built_from": [
+        {
+          "parent_kind": "model",
+          "model_name": "indicators__nav_uforetrygd",
+          "title": null,
+          "description_short": "Per-source passthrough for NAV PST302 (uføretrygd — disability benefit recipients, count and share of population 18-67, per kommune, monthly)."
+        }
+      ],
+      "sample_query": "https://api-atlas.urbalurba.com/indicators__nav_uforetrygd?limit=5",
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__nav_uforetrygd"
     },
     {
       "kind": "view",

@@ -263,13 +263,13 @@ SUPPLY — voluntary-sector presence:
   distrikt_summary             chapters by district.
   kommune_local_chapters       chapters resolved to a kommune.
 
-PER-SOURCE INDICATOR RELATIONS — 41 of them, one per upstream table, at the
+PER-SOURCE INDICATOR RELATIONS — 42 of them, one per upstream table, at the
 grain the publisher actually uses. The cross-source views above impose ONE
 shape on every source; these keep the source's own dimensions, so a breakdown
 those views flatten away (a sex, an age band, a household or family type, a
 parental-education split) is only answerable here.
 
-🔴 ALL 41 ARE stability:source. THE COLUMN SET FOLLOWS THE PUBLISHER, NOT
+🔴 ALL 42 ARE stability:source. THE COLUMN SET FOLLOWS THE PUBLISHER, NOT
 ATLAS. If SSB, FHI or Bufdir adds, renames or drops a dimension, these change
 with it — that is the deliberate trade for getting the real grain. Filter
 `meta_endpoints?tags=cs.{{stability:curated}}` for the relations whose shape
@@ -291,6 +291,8 @@ same source_id, and through the ref_* lists above where one exists.
     indicators__fhi_mobbing indicators__fhi_neet indicators__fhi_prognose
     indicators__fhi_selvmord indicators__fhi_smertestillende
     indicators__fhi_trangbodd indicators__fhi_vgs_gjennomforing
+  nav (1):
+    indicators__nav_uforetrygd
   ssb (18):
     indicators__ssb_06083 indicators__ssb_06913 indicators__ssb_06944
     indicators__ssb_06947 indicators__ssb_07459 indicators__ssb_08484

@@ -142,13 +142,13 @@ SUPPLY — voluntary-sector presence:
   distrikt_summary             chapters by district.
   kommune_local_chapters       chapters resolved to a kommune.
 
-PER-SOURCE INDICATOR RELATIONS — 41 of them, one per upstream table, at the
+PER-SOURCE INDICATOR RELATIONS — 42 of them, one per upstream table, at the
 grain the publisher actually uses. The cross-source views above impose ONE
 shape on every source; these keep the source''s own dimensions, so a breakdown
 those views flatten away (a sex, an age band, a household or family type, a
 parental-education split) is only answerable here.
 
-🔴 ALL 41 ARE stability:source. THE COLUMN SET FOLLOWS THE PUBLISHER, NOT
+🔴 ALL 42 ARE stability:source. THE COLUMN SET FOLLOWS THE PUBLISHER, NOT
 ATLAS. If SSB, FHI or Bufdir adds, renames or drops a dimension, these change
 with it — that is the deliberate trade for getting the real grain. Filter
 `meta_endpoints?tags=cs.{stability:curated}` for the relations whose shape
@@ -170,6 +170,8 @@ same source_id, and through the ref_* lists above where one exists.
     indicators__fhi_mobbing indicators__fhi_neet indicators__fhi_prognose
     indicators__fhi_selvmord indicators__fhi_smertestillende
     indicators__fhi_trangbodd indicators__fhi_vgs_gjennomforing
+  nav (1):
+    indicators__nav_uforetrygd
   ssb (18):
     indicators__ssb_06083 indicators__ssb_06913 indicators__ssb_06944
     indicators__ssb_06947 indicators__ssb_07459 indicators__ssb_08484
@@ -1881,6 +1883,32 @@ COMMENT ON COLUMN api_v1.indicators__fhi_vgs_gjennomforing.contents_label IS 'Hu
 COMMENT ON COLUMN api_v1.indicators__fhi_vgs_gjennomforing.value IS 'The measured value. NULL where the publisher suppressed the cell — see status.';
 COMMENT ON COLUMN api_v1.indicators__fhi_vgs_gjennomforing.status IS 'The publisher''s own suppression or quality marker for this cell, passed through verbatim.';
 COMMENT ON COLUMN api_v1.indicators__fhi_vgs_gjennomforing.updated_at IS 'When Atlas last loaded this row from the upstream.';
+
+-- indicators__nav_uforetrygd  ←  marts.mart_indicators__nav_uforetrygd
+CREATE OR REPLACE VIEW api_v1.indicators__nav_uforetrygd AS SELECT * FROM marts.mart_indicators__nav_uforetrygd;
+COMMENT ON VIEW api_v1.indicators__nav_uforetrygd IS 'Per-source indicator data for nav-uforetrygd (Arbeids- og velferdsdirektoratet), at the publisher''s own grain.
+
+Per-source indicator relation for `nav-uforetrygd` (Arbeids- og velferdsdirektoratet), published at the grain the publisher
+actually uses rather than flattened into the cross-source views. Atlas''s first monthly-cadence
+source.
+🔴 stability:source — the column set here follows Arbeids- og velferdsdirektoratet, not Atlas. If the
+publisher adds, renames or drops a dimension, this relation changes with it. That is
+the deliberate trade for getting the real grain; prefer a stability:curated relation
+if you need a shape Atlas promises to hold still. Decode codes through
+meta_dimensions filtered to source_id=nav-uforetrygd.';
+COMMENT ON COLUMN api_v1.indicators__nav_uforetrygd.source_id IS 'Atlas catalogue id for this ingest — always nav-uforetrygd.';
+COMMENT ON COLUMN api_v1.indicators__nav_uforetrygd.region_code IS 'NAV''s own region code, verbatim from the workbook row label. May be a kommune, fylke, or bydel code; region_kind says which.';
+COMMENT ON COLUMN api_v1.indicators__nav_uforetrygd.kommune_nr IS 'Four-digit kommune code, derived through region_code_to_kommune_nr. NULL for other geography levels.';
+COMMENT ON COLUMN api_v1.indicators__nav_uforetrygd.region_kind IS 'What region_code is, from classify_region_code: kommune · fylke · bydel · unknown.';
+COMMENT ON COLUMN api_v1.indicators__nav_uforetrygd.fylke_nr IS 'Two-digit fylke code when region_code is exactly two digits; NULL otherwise.';
+COMMENT ON COLUMN api_v1.indicators__nav_uforetrygd.category_format IS 'Which sheet the row came from — antall (count) or andel (share) — not a column within a sheet. There is no category_unit dimension for this source.';
+COMMENT ON COLUMN api_v1.indicators__nav_uforetrygd.year IS 'Calendar year of the observation.';
+COMMENT ON COLUMN api_v1.indicators__nav_uforetrygd.month IS 'Calendar month (1-12) of the observation. Atlas''s first monthly-cadence dimension — a plain integer, not a dim_period reference.';
+COMMENT ON COLUMN api_v1.indicators__nav_uforetrygd.contents_code IS 'Atlas-normalised variable code: fixed prefix `nav_uforetrygd__` joined with category_format, so each measure is filter-stable in the catalogue.';
+COMMENT ON COLUMN api_v1.indicators__nav_uforetrygd.contents_label IS 'Human-readable label combining "Uføretrygd" with the antall/andel format.';
+COMMENT ON COLUMN api_v1.indicators__nav_uforetrygd.value IS 'Numeric value for this year/month; NULL when NAV suppresses the cell (*).';
+COMMENT ON COLUMN api_v1.indicators__nav_uforetrygd.values_json IS 'Parse of the sheet''s rows into month keys for this region/category_format/year slice (NAV''s suppression marker * and blanks → JSON null values).';
+COMMENT ON COLUMN api_v1.indicators__nav_uforetrygd.updated_at IS 'Timestamp when the row was last written by ingest (from raw.loaded_at).';
 
 -- indicators__ssb_06083  ←  marts.mart_indicators__ssb_06083
 CREATE OR REPLACE VIEW api_v1.indicators__ssb_06083 AS SELECT * FROM marts.mart_indicators__ssb_06083;

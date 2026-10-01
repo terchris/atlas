@@ -153,6 +153,11 @@ fhi-vgs-gjennomforing,KJONN,Sex,3 codes,"""0"" both, ""1"" men, ""2"" women"
 fhi-vgs-gjennomforing,UTDANN,Parents' education level,5 codes,Highest parental education at child's birth — proxy for socioeconomic context
 fhi-vgs-gjennomforing,INNVKAT,Immigration category,1 code,Single category (collapsed in this slice)
 fhi-vgs-gjennomforing,MEASURE_TYPE,Which number,4 codes,"TELLER (count), RATE (completion %), SMR (standardised ratio), MEIS"
+nav-uforetrygd,region_code,Geographic code from the workbook row label (NAV's own kommune/fylke/bydel numbering),"2-digit fylke, 4-digit kommune, or 6-digit bydel code (Oslo, Bergen, Stavanger, Trondheim only)","region_kind (fylke/kommune/bydel) is derived downstream via classify_region_code, not stored here — same convention as every other Atlas source. Oslo's own kommune-level rollup row (region_code 0301) is suppressed for every month in the live file sampled 2026-10-01, despite the fylke-level total for the same population being unsuppressed — recorded as observed upstream behaviour, not explained or corrected."
+nav-uforetrygd,category_format,"Which sheet the row came from, not a column within a sheet",antall or andel,Structurally different from every prior Atlas source — NAV publishes count and share as two separate sheets rather than a Tallformat-style column. No category_unit dimension exists for this source.
+nav-uforetrygd,year,"Calendar year, read from the sheet's own year-label cell (e.g. '2026 :')",4-digit integer,One year per file — the live file is replaced in place as the year progresses.
+nav-uforetrygd,month,"Calendar month, from the sheet's own Norwegian month-name header row",1-12 integer,"Atlas's first monthly-cadence dimension. A plain integer column, not a dim_period reference — no such table exists anywhere in the codebase to reference."
+nav-uforetrygd,values_json,"Parsed month->value map for the region and category_format slice, for this sheet's year",JSON object with string month-number keys; suppressed cells (NAV's own `*` marker) as null,"Matches the full month spine present in the live file (partial-year, growing monthly)."
 redcross-branches,branch_id,Branch UUID,text,Stable identifier across snapshots
 redcross-branches,branch_type,Branch type,3 codes,"HQ (national), Distrikt (regional), Lokalforening (local chapter)"
 redcross-branches,branch_name,Branch name,text,
