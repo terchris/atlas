@@ -10,7 +10,7 @@ API lead that turned out not to pan out within reasonable effort. All recorded b
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Active — Phases 2-3 done (ingest, dbt, api_v1 publication), ready for Phase 4 (deploy)
+## Status: Completed
 
 **Goal**: Add `imdi-bosetting` as a served Atlas source, giving Report #8 (Integration Outcomes
 Gradient) the inflow signal it is currently missing — how many refugees a kommune actually
@@ -251,7 +251,31 @@ set for itself.
   (measured locally 2026-10-01), with the same "2026 is still open, a republish could move it"
   caveat class as NAV's monthly file, and the `kommune_nr` match rate (352/359, 7 expected-NULL
   names listed) so a non-zero null count isn't mistaken for a new defect.
-- [ ] 4.3 Verify arrival independently against the live public API — not the deploy report alone.
+- [x] 4.3 **Verified arrival, 2026-10-01** — imac ran `annual_sources_refresh`
+  (run `3d694a6a`, 978.3s) then `transform_and_publish` (run `2de94244`, 623.3s), both SUCCESS,
+  `raw.imdi_bosetting` landed exactly 7,848 rows matching this plan's own prediction. Not taken on
+  trust — independently re-checked against the live public API myself before closing:
+  ```
+  GET /meta_sources?source_id=eq.imdi-bosetting&select=served_as
+  -> [{"served_as":["indicators__imdi_bosetting"]}]
+
+  GET /indicators__imdi_bosetting?kommune_name=eq.Oslo&year=eq.2024&order=metric
+  -> 6 rows: anmodet=1650, avtalt=105, avtalt_kollektiv_beskyttelse=67,
+     bosatte=1539, bosatte_kollektiv_beskyttelse=1203, vedtatt=1648
+
+  HEAD with Prefer: count=exact
+  -> content-range 0-7847/7848 (cf-cache-status: MISS — a fresh server read, not stale cache)
+  ```
+  **7,848 rows — an exact match to both this plan's local prediction and imac's independent
+  cluster-side measurement.** One real discrepancy surfaced and was traced rather than waved
+  through: `kommune_nr=is.null` returned **134** rows, not this plan's own ~42 estimate. imac
+  traced it — the ~42 figure was `7 names × 6 metrics` for a single year; the real count sums each
+  of the same 7 names across every year it actually appears in (`22×5 + 12×2 = 134`, matching
+  exactly) — a single-year arithmetic shortcut in the original estimate, not a new defect, and the
+  underlying 7 names and the "6 metrics max" shape were exactly as predicted. No regression in
+  `nav-uforetrygd` (6,560), `bufdir-barnevern` (191,673) or `fhi-innvandrere` (123,680). Full
+  exchange: [urb-agents#1799](https://github.com/terchris/urb-agents/issues/1799), closed
+  `completed`.
 
 ---
 
@@ -265,10 +289,9 @@ set for itself.
   assumed to be 100%. 352/359 (98%), zero ambiguity, 7 unmatched named explicitly.
 - [x] `indicators__imdi_bosetting` and `mart_indicators__imdi_bosetting` build and test clean
   against real loaded data.
-- [ ] `imdi-bosetting` appears in `meta_sources.served_as` after a real deploy, independently
-  verified via live `curl`. **Pending Phase 4.**
-- [ ] The investigation and `1PRIORITY.md` are updated to mark this candidate shipped, only once
-  Phase 4 confirms rows actually arrived.
+- [x] `imdi-bosetting` appears in `meta_sources.served_as` after a real deploy, independently
+  verified via live `curl`. `served_as: ["indicators__imdi_bosetting"]`.
+- [x] The investigation and `1PRIORITY.md` are updated to mark this candidate shipped.
 - [x] **[Q1] (licence) is resolved — Terje, 2026-10-01: "IMDI is ok. we can use it."** Recorded as
   an authorization, not a citation; see Implementation Notes.
 
@@ -333,6 +356,21 @@ set for itself.
   free-text non-numeric cell found the same way (Moskenes 2024: `"avventer vedtak"`, not the `:`
   suppression marker — `parseCell` already handled it correctly as a side effect of mapping any
   unparseable text to null).
+
+---
+
+## Outcome
+
+Shipped end to end, 2026-10-01: ingest (5 pages, 7,848 rows, zero dropped) → dbt staging and
+api_v1 publication → live cluster deploy → independently verified arrival. Two real findings
+during implementation that Phase 1's single-year sample didn't anticipate: IMDi's own metric
+column count isn't fixed (Oslo's 2024 table piloted 2 extra "avtalt" metrics before they rolled
+out everywhere in 2026 — `parse.ts` resolves metrics by header text rather than position to
+represent this), and `crosswalk_kommune_name` is far more ambiguous than assumed unrestricted
+(259 of 359 names matched 2+ codes) but resolves completely once restricted to active-only rows
+(352/359, zero ambiguity). Plugs the inflow signal Report #8 (Integration Outcomes Gradient) was
+missing — how many refugees a kommune actually received per year, not just who already lives
+there.
 
 ---
 
