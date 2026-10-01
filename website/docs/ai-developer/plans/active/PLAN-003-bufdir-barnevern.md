@@ -8,7 +8,7 @@ workbooks are shaped differently (verified below).
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Active — Phase 2 IN PROGRESS
+## Status: Active — Phases 1-3 DONE, Phase 4 (deploy + verify) not started
 
 **Goal**: Add `bufdir-barnevern` as a served Atlas source, plugging the barnevern axis that Report
 #2 (Child Welfare / Vulnerability Composite) is missing today.
@@ -229,33 +229,56 @@ ingest.) Needs Node ≥22 (`engines` in `package.json`) — Node 20.11 fails at 
 
 ---
 
-## Phase 3: dbt staging and marts
+## Phase 3: dbt staging and marts — DONE
+
+⚠️ **A second real defect caught by building against real ingested data, not an empty schema** —
+the same class of bug as Phase 2's `andel`/`prosent` miss, one layer deeper: the bare
+`region_code ~ '^[0-9]{4}$'` / `'^[0-9]{2}$'` pattern (copied from the sibling model, matching its
+current code) calls Svalbard a kommune/fylke. Barnevern's own ZIP carries a Svalbard placeholder
+row at BOTH levels — `region_code = '2111'` (4-digit, 394 rows) and a bare `'21'` (2-digit, 394
+rows), every value null across all 23 indicators. This is exactly the defect
+`macros/classify_region_code.sql` was built to fix (urb-agents #700) — confirmed live, not
+inferred, via a local Postgres loaded with the real 191,673-row ingest. Fixed `kommune_nr` via the
+existing `region_code_to_kommune_nr` macro and added a `region_kind` column (matching the
+established `indicators__ssb_07459.sql` convention). `fylke_nr` needed a narrow, local exclusion
+of `region_code = '21'` instead — `classify_region_code`'s own `fylke` branch is a bare
+`^\d{2}$` catch-all with the identical latent gap, but fixing that macro site-wide is a bigger
+blast radius than this PLAN's scope; noted in the model's own comment for whoever investigates
+the macro next.
 
 ### Tasks
 
-- [ ] 3.1 Add `raw.bufdir_barnevern` to `atlas-data/dbt/models/indicators/sources.yml`.
-- [ ] 3.2 `atlas-data/dbt/models/indicators/indicators__bufdir_barnevern.sql` — same shape as
-  `indicators__bufdir_barnefattigdom.sql` (kommune_nr/fylke_nr split from `region_code`,
-  `contents_code`/`contents_label` synthesized), **minus `category_unit`** — the sibling's
-  `contents_code` formula (`'bf_' || indicator_slug || '__' || category_unit || '__' || category_format`)
-  has no `category_unit` to join into for this source; use
-  `'bv_' || indicator_slug || '__' || category_format`.
-- [ ] 3.3 Document the new model's columns in `atlas-data/dbt/models/indicators/schema.yml` (run
-  `check-osmosis.sh` against a local Postgres with `raw.bufdir_barnevern` loaded — per
-  [`local-postgres-for-real-dbt-evidence`], no Docker needed, TCP socket, short path).
-- [ ] 3.4 `atlas-data/dbt/models/marts/api/mart_indicators__bufdir_barnevern.sql` — api passthrough,
-  mirroring `mart_indicators__bufdir_barnefattigdom.sql`. Document in
-  `atlas-data/dbt/models/marts/api/schema.yml`.
-- [ ] 3.5 Run `dbt build` locally against the loaded fixture and confirm `dbt test` is clean —
-  relationship test against `dim_kommune` for `kommune_nr`, `not_null` on the primary-key columns.
+- [x] 3.1 Added `raw.bufdir_barnevern` to `atlas-data/dbt/models/indicators/sources.yml`.
+- [x] 3.2 `atlas-data/dbt/models/indicators/indicators__bufdir_barnevern.sql` — same shape as
+  `indicators__bufdir_barnefattigdom.sql`, minus `category_unit`, using `'bv_' || indicator_slug
+  || '__' || category_format` for `contents_code`. `kommune_nr` goes through
+  `region_code_to_kommune_nr`, not a bare regex (see defect note above); `region_kind` added.
+- [x] 3.3 Documented the model's columns in `atlas-data/dbt/models/indicators/schema.yml` — ran
+  `check-osmosis.sh` against a local throwaway Postgres (initdb, TCP, short `/tmp` socket path —
+  the scratchpad directory's own path was too long for a unix socket) with `raw.bufdir_barnevern`
+  actually loaded via the real ingest. All columns documented, 566 total in that file.
+- [x] 3.4 `atlas-data/dbt/models/marts/api/mart_indicators__bufdir_barnevern.sql` — api passthrough,
+  mirroring the sibling. Documented in `atlas-data/dbt/models/marts/api/schema.yml`.
+- [x] 3.5 `dbt build` against the real loaded data: 1 table model, 21 data tests, 1 view model, all
+  green (23/23) after the `region_kind`/`fylke_nr` fix.
+
+Also regenerated, not originally itemized: `api_v1_generated.sql` / `api_v1_state.json`
+(`regenerate-api-v1.sh`), `lineage.csv` / `lineage_direct.csv` (`extract_lineage.py`),
+`api_v1_relations.csv`, the website's `sources-registry.json` and new per-view dataset page, and
+`template-info.yaml`'s raw/marts table-count prose (53 raw / 83 marts tables / 69 marts views —
+each bumped and re-verified via `render-template-info.sh` and `generate-holdings.py --check`).
 
 ### Validation
 
 ```bash
-cd atlas-data/dbt && dbt build --select indicators__bufdir_barnevern+ && dbt test --select indicators__bufdir_barnevern+
+cd atlas-data/dbt && dbt build --select indicators__bufdir_barnevern mart_indicators__bufdir_barnevern
+# against a local Postgres loaded via: npm run migrate && tsx src/sources/bufdir-barnevern/index.ts
 ```
-All green against a local Postgres loaded from a real ingest run (not an empty schema — an empty
-build passes checks that prove nothing, per `[[ci-builds-from-empty-so-state-defects-are-invisible]]`).
+✅ Done 2026-10-01. 23/23 pass against 191,673 real rows (not an empty schema — an empty build
+passes checks that prove nothing, per `[[ci-builds-from-empty-so-state-defects-are-invisible]]`).
+`check-osmosis.sh`, `check-api-v1.sh`, `check-lineage-is-current.sh`,
+`check-every-source-is-served.sh`, `check-sources-seed-is-current.sh`, `check-manifests.sh`,
+`render-template-info.sh`, and `generate-holdings.py --check` all green.
 
 ---
 
@@ -284,15 +307,20 @@ Live `curl` against the public API returns real Barnevern rows through
 
 ## Acceptance Criteria
 
-- [ ] `bufdir-barnevern` ingests cleanly from the live ZIP with zero rows silently dropped.
-- [ ] `raw.bufdir_barnevern` correctly has no `category_unit` column (verified against Phase 1's
+- [x] `bufdir-barnevern` ingests cleanly from the live ZIP with zero rows silently dropped — 23
+  workbooks, 191,673 rows, verified by running the real ingest, not just unit tests.
+- [x] `raw.bufdir_barnevern` correctly has no `category_unit` column (verified against Phase 1's
   finding, not assumed).
-- [ ] `indicators__bufdir_barnevern` and `mart_indicators__bufdir_barnevern` build and test clean.
+- [x] `indicators__bufdir_barnevern` and `mart_indicators__bufdir_barnevern` build and test clean
+  (23/23 data tests, against real loaded data).
 - [ ] `bufdir-barnevern` appears in `meta_sources.served_as` **after a real deploy**, with rows
-  confirmed via a live `curl`, not inferred from CI.
-- [ ] Golden-file tests cover both the `1A`-style shape and the `Turnover_...` outlier shape.
+  confirmed via a live `curl`, not inferred from CI. **Not done — this agent has no cluster access;
+  Phase 4 is the deploy request.**
+- [x] Golden-file tests cover both the `1A`-style shape and the `Turnover_...` outlier shape (33
+  tests total, including an end-to-end parse of the real `1A` fixture).
 - [ ] The investigation (`INVESTIGATE-new-norwegian-public-sources.md`) and `1PRIORITY.md` are updated
-  to mark this candidate shipped, same as the other three corrections made 2026-10-01.
+  to mark this candidate shipped, same as the other three corrections made 2026-10-01. **Not yet
+  done — do this once Phase 4 confirms rows actually arrived, not before.**
 
 ---
 
@@ -329,5 +357,9 @@ Live `curl` against the public API returns real Barnevern rows through
 - `atlas-data/dbt/models/indicators/schema.yml`
 - `atlas-data/dbt/models/marts/api/mart_indicators__bufdir_barnevern.sql` (new)
 - `atlas-data/dbt/models/marts/api/schema.yml`
+- `atlas-data/dbt/api_v1_generated.sql`, `atlas-data/dbt/api_v1_state.json` (regenerated)
+- `atlas-data/dbt/seeds/sources/lineage.csv`, `lineage_direct.csv`, `api_v1_relations.csv` (regenerated)
+- `atlas-data/template-info.yaml` (raw/marts table counts), `website/docs/developers/index.md` (regenerated)
+- `website/src/data/sources-registry.json`, `website/docs/datasets/indicators__bufdir_barnevern.mdx` (regenerated)
 - `website/docs/ai-developer/plans/backlog/INVESTIGATE-new-norwegian-public-sources.md` (mark shipped)
 - `website/docs/ai-developer/plans/backlog/1PRIORITY.md` (mark shipped)
