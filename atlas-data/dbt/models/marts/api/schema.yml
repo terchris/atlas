@@ -3083,6 +3083,49 @@ category_format joined with `__`, so each measure is filter-stable in the catalo
       - name: updated_at
         description: "Timestamp when the row was last written by ingest (from raw.loaded_at)."
 
+  - name: mart_indicators__nav_uforetrygd
+    meta:
+      title: "Uføretrygd månedsstatistikk (PST302)"
+      stability: source
+    description: |
+      Per-source indicator data for nav-uforetrygd (Arbeids- og velferdsdirektoratet), at the publisher's own grain.
+
+      Per-source indicator relation for `nav-uforetrygd` (Arbeids- og velferdsdirektoratet), published at the grain the publisher
+      actually uses rather than flattened into the cross-source views. Atlas's first monthly-cadence
+      source.
+      🔴 stability:source — the column set here follows Arbeids- og velferdsdirektoratet, not Atlas. If the
+      publisher adds, renames or drops a dimension, this relation changes with it. That is
+      the deliberate trade for getting the real grain; prefer a stability:curated relation
+      if you need a shape Atlas promises to hold still. Decode codes through
+      meta_dimensions filtered to source_id=nav-uforetrygd.
+    columns:
+      - name: source_id
+        description: "Atlas catalogue id for this ingest — always nav-uforetrygd."
+      - name: region_code
+        description: "NAV's own region code, verbatim from the workbook row label. May be a kommune, fylke, or bydel code; region_kind says which."
+      - name: kommune_nr
+        description: "Four-digit kommune code, derived through region_code_to_kommune_nr. NULL for other geography levels."
+      - name: region_kind
+        description: "What region_code is, from classify_region_code: kommune · fylke · bydel · unknown."
+      - name: fylke_nr
+        description: "Two-digit fylke code when region_code is exactly two digits; NULL otherwise."
+      - name: category_format
+        description: "Which sheet the row came from — antall (count) or andel (share) — not a column within a sheet. There is no category_unit dimension for this source."
+      - name: year
+        description: "Calendar year of the observation."
+      - name: month
+        description: "Calendar month (1-12) of the observation. Atlas's first monthly-cadence dimension — a plain integer, not a dim_period reference."
+      - name: contents_code
+        description: "Atlas-normalised variable code: fixed prefix `nav_uforetrygd__` joined with category_format, so each measure is filter-stable in the catalogue."
+      - name: contents_label
+        description: "Human-readable label combining \"Uføretrygd\" with the antall/andel format."
+      - name: value
+        description: "Numeric value for this year/month; NULL when NAV suppresses the cell (*)."
+      - name: values_json
+        description: "Parse of the sheet's rows into month keys for this region/category_format/year slice (NAV's suppression marker * and blanks → JSON null values)."
+      - name: updated_at
+        description: "Timestamp when the row was last written by ingest (from raw.loaded_at)."
+
   - name: mart_indicators__fhi_alkohol
     meta:
       title: "Alkohol_Ungdata_KH"
