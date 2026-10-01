@@ -124,6 +124,34 @@ Phase 1 corrected its own investigation entry.
   there's a real consumer need, per this investigation's own standing bias against speculative
   building.
 
+- [x] 1.6 **Checked whether `data.norge.no` offers a cleaner distribution than scraping `nav.no`
+  directly — it does not, for this table.** The investigation's own text claimed "bulk open data is
+  published on data.norge.no" without checking; that claim is also wrong. Queried the real backing
+  search API directly (`search.api.fellesdatakatalog.digdir.no/search`, found via its own
+  documentation at `data.norge.no/en/technical/api/search` — not a generic web search, which only
+  returns the client-rendered app shell for this site, nothing indexable):
+  - `PST302` (NAV's own table id): **zero hits**, anywhere in the catalogue.
+  - `uføretrygd statistikk`, scoped to NAV's org (`orgPath=/STAT/983887457/889640782`, 1,084
+    registered entries total — found by resolving the org path from a real hit, not guessed):
+    **exactly one match**, *"Statistikk - utbetalinger av ytelser kommune år"*
+    (`data.norge.no/node/2047`). It is **not PST302** — it's a different, broader NAV product
+    (aggregate kroner paid out across every benefit type combined: uføretrygd, foreldrepenger,
+    dagpenger, barnetrygd, alderspensjon, …, not uføretrygd-recipient counts/shares specifically).
+    It is explicitly flagged `"isOpenData": false` in the catalogue's own metadata, carries no
+    `distribution` field in the harvested record, and was last modified 2023-11-13 — three years
+    stale against today. The other 1,084 NAV entries sampled are almost entirely Altinn
+    `resourceRegistry` entries (service/application definitions — sick-leave applications,
+    summer-job agreements), not statistics tables; data.norge.no's own DCAT harvester apparently
+    counts every registered Altinn resource as a "dataset", which is why the org shows 1,084 of them
+    and essentially none are what a person means by "a downloadable table."
+
+  **Conclusion: `www.nav.no` itself is the actual, current, only publication surface for PST302.**
+  data.norge.no is a metadata catalogue pointing back to nav.no for the few NAV products it does
+  index, not an alternate hosting location with its own distribution — the same "no stabler route
+  than the publisher's own site" conclusion `INVESTIGATE-bufdir-upstream-restructure.md` reached for
+  Bufdir. Scraping `nav.no` directly, as this plan already specifies, is correct — not a shortcut
+  taken without checking the alternative first.
+
 ### Validation
 
 ✅ Confirmed 2026-10-01. Phase 1 is DONE — real file downloaded and inspected directly, not
