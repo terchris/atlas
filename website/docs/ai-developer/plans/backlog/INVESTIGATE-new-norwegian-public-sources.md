@@ -71,7 +71,7 @@ These are the highest-leverage adds: each one upgrades a specific report from "i
 
 ### 2. NAV statistikk — uføretrygd, sykefravær, AAP per kommune
 
-🔴 **Corrected 2026-10-01, for uføretrygd specifically — two claims below were wrong, found while
+🔴 **Corrected 2026-10-01, for uføretrygd specifically — three claims below were wrong, found while
 drafting `PLAN-004-nav-uforetrygd.md`:**
 - **Licence is CC BY 4.0, not NLOD.** Verified directly against NAV's own statement:
   `nav.no/.../praksis-rutiner-og-retningslinjer-rundt-offisiell-og-offentlig-statistikk-fra-nav` —
@@ -82,8 +82,16 @@ drafting `PLAN-004-nav-uforetrygd.md`:**
   repeating fylke-header → fylke-total → kommune-rows structure, with Oslo/Bergen/Stavanger/
   Trondheim additionally nested one level deeper into bydel rows under their own kommune-total row.
   See `PLAN-004-nav-uforetrygd.md` Phase 1 for the full verified shape.
+- **"Bulk open data is published on data.norge.no" is also wrong, for this table.** Queried the
+  real backing search API directly (not a web search, which only sees the client-rendered app
+  shell): `PST302` returns zero hits anywhere in the catalogue; NAV's one registered dataset that
+  does match "uføretrygd statistikk" is a *different* product (aggregate kroner paid out across
+  every NAV benefit combined, not uføretrygd-recipient counts), explicitly flagged
+  `isOpenData: false`, with no distribution and three years stale. `www.nav.no` is the actual,
+  current, only publication surface. See `PLAN-004-nav-uforetrygd.md` Phase 1.6 for the full
+  verification.
 
-- **URL (verified live 2026-05-04 — research catalogue's older URL is stale)**: index at `https://www.nav.no/no/nav-og-samfunn/statistikk`; uføretrygd month-by-month at `https://www.nav.no/no/nav-og-samfunn/statistikk/aap-nedsatt-arbeidsevne-og-uforetrygd-statistikk/uforetrygd/uforetrygd-manedsstatistikk`. Bulk open data is published on `https://data.norge.no/` (DCAT-AP catalogue, where NAV registers its datasets).
+- **URL (verified live 2026-05-04 — research catalogue's older URL is stale)**: index at `https://www.nav.no/no/nav-og-samfunn/statistikk`; uføretrygd month-by-month at `https://www.nav.no/no/nav-og-samfunn/statistikk/aap-nedsatt-arbeidsevne-og-uforetrygd-statistikk/uforetrygd/uforetrygd-manedsstatistikk`. ~~Bulk open data is published on `https://data.norge.no/` (DCAT-AP catalogue, where NAV registers its datasets).~~ **Wrong for uføretrygd — see the 2026-10-01 correction above.**
 - **Format**: Excel + CSV; some datasets exposed as JSON via data.norge.no's distribution links
 - **Auth**: none for aggregate kommune statistics. (`pam-stilling-feed` for vacancies needs Bearer auth — out of scope for this candidate.)
 - **Licence**: ~~NLOD~~ **CC BY 4.0** (corrected above; unverified for AAP/sykefravær — re-check per source)
