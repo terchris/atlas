@@ -3126,6 +3126,41 @@ category_format joined with `__`, so each measure is filter-stable in the catalo
       - name: updated_at
         description: "Timestamp when the row was last written by ingest (from raw.loaded_at)."
 
+  - name: mart_indicators__imdi_bosetting
+    meta:
+      title: "Bosettingstall"
+      stability: source
+    description: |
+      Per-source indicator data for imdi-bosetting (Integrerings- og mangfoldsdirektoratet), at the publisher's own grain.
+
+      Per-source indicator relation for `imdi-bosetting` (Integrerings- og mangfoldsdirektoratet), published at the grain
+      the publisher actually uses rather than flattened into the cross-source views. One row per
+      (kommune_name, year, metric).
+      🔴 stability:source — the column set here follows Integrerings- og mangfoldsdirektoratet, not Atlas. If the
+      publisher adds, renames or drops a dimension, this relation changes with it. That is
+      the deliberate trade for getting the real grain; prefer a stability:curated relation
+      if you need a shape Atlas promises to hold still. Decode codes through
+      meta_dimensions filtered to source_id=imdi-bosetting.
+    columns:
+      - name: source_id
+        description: "Atlas catalogue id for this ingest — always imdi-bosetting."
+      - name: kommune_name
+        description: "Kommune name verbatim from IMDi's own table row label — IMDi publishes no kommune code."
+      - name: kommune_nr
+        description: "Four-digit kommune code, resolved via crosswalk_kommune_name restricted to active kommune names. NULL when IMDi's spelling doesn't match (measured live 2026-10-01: 7 of 359 distinct names, all fylke-disambiguation-suffix or spelling differences — see indicators__imdi_bosetting.sql)."
+      - name: year
+        description: "Calendar year, from the page's own section heading and the discovered URL."
+      - name: metric
+        description: "Which stage of the resettlement pipeline: anmodet (requested), vedtatt (decided), bosatte (settled), bosatte_kollektiv_beskyttelse (settled, collective protection), avtalt (agreed — not present for every kommune-year), or avtalt_kollektiv_beskyttelse (agreed, collective protection)."
+      - name: contents_code
+        description: "Atlas-normalised variable code: fixed prefix `imdi_bosetting__` joined with metric, so each measure is filter-stable in the catalogue."
+      - name: contents_label
+        description: "Human-readable Norwegian label for the metric."
+      - name: value
+        description: "The metric's value for this kommune and year. NULL when IMDi suppressed the cell (its own marker, the literal character \":\") or published free text instead of a number."
+      - name: updated_at
+        description: "Timestamp when the row was last written by ingest (from raw.loaded_at)."
+
   - name: mart_indicators__fhi_alkohol
     meta:
       title: "Alkohol_Ungdata_KH"

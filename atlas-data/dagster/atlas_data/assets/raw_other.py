@@ -10,6 +10,9 @@ See _factory.make_raw_ingest_asset. Currently:
 - nav-uforetrygd: one xlsx download from NAV's PST302 uføretrygd monthly
   statistics page. Atlas's first monthly-polled source outside SSB/KLASS —
   see atlas-data/ingest/src/sources/nav-uforetrygd/README.md.
+- imdi-bosetting: static HTML scrape of IMDi's bosettingstall hub + one page
+  per discovered year. Annual data, polled weekly like the Bufdir sources —
+  see atlas-data/ingest/src/sources/imdi-bosetting/README.md.
 - redcross-branches: Crawlee-based scraper of Red Cross chapter pages.
   Heavier resource profile (per UIS Dagster INVESTIGATE — headless browser
   state, ~512MiB working set).
@@ -34,6 +37,7 @@ from atlas_data import cadence
 OTHER_SOURCES = [
     "bufdir-barnefattigdom",
     "bufdir-barnevern",
+    "imdi-bosetting",
     "nav-uforetrygd",
     "redcross-branches",
 ]
@@ -42,7 +46,7 @@ OTHER_SOURCES = [
 # cadence and no freshness policy. See cadence.UNSCHEDULED_SOURCES for why.
 assets = [
     *make_raw_ingest_assets(
-        ["bufdir-barnefattigdom", "bufdir-barnevern"],
+        ["bufdir-barnefattigdom", "bufdir-barnevern", "imdi-bosetting"],
         group_name="raw_other",
         automation_condition=cadence.weekly_polled(),
         freshness_policy=cadence.WEEKLY_FRESHNESS,
