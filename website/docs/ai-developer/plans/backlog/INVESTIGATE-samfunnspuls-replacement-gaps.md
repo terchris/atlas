@@ -176,23 +176,38 @@ otherwise. That it is not one is a gap in ATLAS's documentation, not an error by
 
 ---
 
-## [Q7] FHI tables 175 and 932 — genuinely never ingested, confirmed
+## [Q7] RESOLVED — not an ingest gap. The mart reporting it has been stale since before the
+data arrived, for every source, not just these two
 
-A third consumer (a Lovable-built UI) reported these as *"registered as loaded but return no
-rows when queried"*. More precisely, measured 2026-10-01:
+A third consumer (a Lovable-built UI) reported FHI tables 175/932 as *"registered as loaded but
+return no rows when queried"*. I measured the same thing and concluded worse — *"never ingested,
+total_runs=0, confirmed"* — and filed it to ops-dev as urb-agents #1787 assuming a job-registration
+bug. 🔴 **That conclusion was wrong, and the real cause is more interesting than either guess.**
+
+ops-dev checked Dagster's event log directly, then the raw Postgres tables themselves, bypassing
+`api_v1`/`marts` entirely:
 
 ```
-meta_sources: fhi-innvandrere   total_runs=0   last_ingested_at=null
-meta_sources: fhi-innvkat       total_runs=0   last_ingested_at=null
-indicators__fhi_innvandrere     Content-Range: */0
-indicators__fhi_innvkat         Content-Range: */0
+raw.fhi_innvandrere   1 materialization, 2026-09-30T14:04:34Z,  123,680 rows — exact match in Postgres
+raw.fhi_innvkat       1 materialization, 2026-09-30T14:04:39Z,  139,140 rows — exact match in Postgres
 ```
 
-Both are **modelled** (`served_as` lists a relation, dbt built it) but have **never run a single
-ingest** — `total_runs = 0`, not "ran and returned nothing". This is the mirror image of the
-`fhi-neet` pattern CLAUDE.md already documents (ingested weekly, modelled nowhere): here the model
-exists and the source behind it has never executed at all. Needs an ops-dev task to check why the
-scheduled job for these two has 0 runs — not a data question, a job-registration question.
+**Both ingested successfully, once, the afternoon before I checked.** The `meta_sources` row
+reading `total_runs=0` is a **stale dbt mart**, not an ingest gap — proven by comparing against
+`fhi-neet`, a working sibling that materialized *twice* that day (12:11 and again at 14:05 in the
+same run as these two) while the mart still shows only the first. **The mart has not rebuilt since
+before 12:11 UTC on 2026-09-30, for every source it covers, not only these two.**
+
+🔴 **The actual cause: every Dagster schedule and sensor on the cluster is currently stopped** —
+suspected side effect of a `rdctl reset --vm` the day before. Nothing is running on autopilot.
+ops-dev correctly did not re-enable schedules themselves (a cluster action, held pending the
+talk) and filed it as its own item.
+
+⚠️ **Practical consequence for everything else in this file and its sibling investigation**: any
+claim here measured through `api_v1`/`marts` **on or after 2026-09-30** is reading whatever state
+existed at the last successful build, not necessarily current `raw`. The `ssb-13995` year-coverage
+finding below is flagged accordingly. Claims about *structure* (column names, label text, schema)
+are unaffected; claims about *row content* measured during this window are not yet verified fresh.
 
 ## [Q8] The bespoke extract: resolved — no public table substitutes, order is necessary
 
@@ -219,10 +234,17 @@ ingested: a private, dated, static extract, documented as such.
   (unknown)"* — FHI table 794 does not publish a third, spacious category. A genuine
   trangt/romslig/uoppgitt split needs a different source (SSB housing/ownership — see
   [Q46]/11042 in the sibling investigation), not a change to this one.
-- **`ssb-13995` (sosialhjelpsmottakere) is not "2022–2024 only" — it is 2025 only.** Measured:
-  30,294 rows, every one `year = 2025`. The manifest declares `time_coverage: 2022–2025`. Either
-  way, the report's number was wrong and the real gap is the opposite direction — the manifest
-  promises four years and the pipeline has delivered one.
+- **`ssb-13995` (sosialhjelpsmottakere) is not "2022–2024 only" — the SERVED relation shows
+  2025 only.** Measured: 30,294 rows, every one `year = 2025`. The manifest declares
+  `time_coverage: 2022–2025`.
+
+  🔴 **⚠️ UNVERIFIED as of 2026-10-01, do not treat as settled.** ops-dev found (urb-agents #1787,
+  checking the [Q7] finding below) that `mart_meta_sources` — and by the same mechanism, every
+  dbt mart including this one — has not rebuilt since before 2026-09-30 12:11 UTC: every Dagster
+  schedule and sensor on the cluster is currently stopped. **What I measured through `api_v1` is
+  whatever `raw.ssb_13995` looked like as of that last successful build, not necessarily what is in
+  `raw` right now.** The gap (one year served vs. four declared) may be real, or may close itself
+  once the mart rebuilds. Re-measure after schedules resume before acting on this.
 - **Confirmed, not new: no volunteer/member count field.** `ngo_overview`'s columns are
   `chapter_count, national_count, regional_count, local_count, activity_count, kommune_count` —
   no people-count of any kind. Matches [`INVESTIGATE-new-norwegian-public-sources.md` §C.5
