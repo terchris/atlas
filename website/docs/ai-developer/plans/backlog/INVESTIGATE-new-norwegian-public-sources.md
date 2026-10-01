@@ -17,7 +17,7 @@
 - **No `dim_period` table exists** (`find atlas-data/dbt/models -iname '*dim_period*'` → nothing). Every existing indicator model just carries a plain `year` column (e.g. `indicators__ssb_06944.sql`). "Add a `period_grain` column to `dim_period`" assumes a dimension that was never built — it's not a prerequisite, it's a per-source modelling decision the *first* monthly source's own PLAN makes (add a `period_grain`/`month` column on that one model, same way `year` already works), exactly as [Q32]'s own recommendation (b) already said, just without a dimension table to extend first.
 - **No `dim_indicator` table exists either**, and no `presentation_policy`/sensitivity convention exists anywhere in the schema or models today. Same shape of correction: sensitivity flagging is a column/convention the first sensitive source's PLAN introduces, not a prerequisite schema bump.
 
-**So there is no Phase 0 to execute.** The provider half is already done (publisher metadata, #486). The `dim_period`/`presentation_policy` half isn't a blocker at all — it's a decision each of `PLAN-004-nav-uforetrygd` (first monthly) and whichever PLAN first carries a politically-sensitive per-kommune figure makes locally. **`PLAN-001-new-provider-enum-and-period-monthly.md` should not be drafted.** The real next item, per this file's own risk ranking, is `PLAN-003-bufdir-barnevern.md` (reuses `bufdir-barnefattigdom`'s ingest plumbing, zero new provider/logo work) — or, since publisher metadata for NAV/IMDi/Udir/Husbanken just landed, any of `PLAN-004` (nav-uforetrygd), `PLAN-008` (husbanken) or `PLAN-009` (imdi-bosetting) are equally unblocked now.
+**So there is no Phase 0 to execute.** The provider half is already done (publisher metadata, #486). The `dim_period`/`presentation_policy` half isn't a blocker at all — it's a decision each of `PLAN-004-nav-uforetrygd` (first monthly) and whichever PLAN first carries a politically-sensitive per-kommune figure makes locally. **`PLAN-001-new-provider-enum-and-period-monthly.md` should not be drafted.** `PLAN-003-bufdir-barnevern.md` (reused `bufdir-barnefattigdom`'s ingest plumbing) has since shipped end to end (2026-10-01) — next up, since publisher metadata for NAV/IMDi/Udir/Husbanken already landed, is any of `PLAN-004` (nav-uforetrygd), `PLAN-008` (husbanken) or `PLAN-009` (imdi-bosetting).
 
 ---
 
@@ -362,7 +362,7 @@ The Phase 1 PLAN sequence in the section above expands by 3 PLANs (`udir-fravar`
 ```
 Phase 1 — Tier-1 ingests (parallelisable; no Phase 0 — see 2026-10-01 correction above, there was nothing to prep)
   PLAN-002-bufdir-barnefattigdom.md    ← shipped
-  PLAN-003-bufdir-barnevern.md
+  PLAN-003-bufdir-barnevern.md         ← shipped 2026-10-01
   PLAN-004-nav-uforetrygd.md           ← settles dim_period monthly
   PLAN-005-nav-aap.md
   PLAN-006-nav-sykefravaer.md
@@ -484,7 +484,7 @@ Atlas's [PLANS.md `Splitting Investigations into Multiple Plans`](../../PLANS.md
 
 **Phase 1 — Tier-1 ingests (one PLAN per source family, ~6–8h each, parallelisable)**
 1. `PLAN-002-bufdir-barnefattigdom.md` — ✅ shipped
-2. `PLAN-003-bufdir-barnevern.md` (next lowest risk; reuses Bufdir ingest plumbing from PLAN-002, zero new provider/logo work)
+2. `PLAN-003-bufdir-barnevern.md` — ✅ shipped (2026-10-01)
 3. `PLAN-004-nav-uforetrygd.md` (first monthly source; settles `dim_period` monthly handling in practice)
 4. `PLAN-005-nav-aap.md` and `PLAN-006-nav-sykefravaer.md` (parallel after PLAN-004)
 5. `PLAN-007-husbanken-statistikkbank.md`
@@ -511,7 +511,7 @@ Each PLAN follows the standard Atlas pattern (per-source folder under `atlas-dat
 - [x] `ssb-10826` and `ssb-crime-tables` — shipped (outside this file's original numbering, confirmed 2026-10-01).
 - [x] Publisher metadata for NAV/IMDi/Udir/Husbanken — landed 2026-10-01 (#486), unblocking their PLANs.
 - [ ] ~~Draft `PLAN-001-new-provider-enum-and-period-monthly.md`~~ — dropped, see the 2026-10-01 correction above. Nothing to prep.
-- [x] Draft [`PLAN-003-bufdir-barnevern.md`](../active/PLAN-003-bufdir-barnevern.md) — drafted 2026-10-01, Phases 1-3 shipped, moved to `active/`. Its own Phase 1 found the two monitors' workbooks are shaped differently (no `Enhet` column, alphanumeric indicator codes, `Sheet1`/row-3 header vs. the sibling's `Data`/row-1) — the implementation adapted the pattern rather than copying `bufdir-barnefattigdom`'s code literally, and caught two real data defects (the `andel`/`prosent` vocabulary mismatch, and a Svalbard-as-kommune misclassification) by validating against real ingested data rather than an empty schema. Phase 4 (deploy + verify arrival) not started.
+- [x] ✅ **Shipped end to end, 2026-10-01.** [`PLAN-003-bufdir-barnevern.md`](../completed/PLAN-003-bufdir-barnevern.md) — all four phases done: ingest (23 workbooks, 191,673 rows, zero dropped), dbt staging + api_v1 publication, deployed to the live cluster by imac, and independently re-verified against the public API (not taken on trust) — `GET /indicators__bufdir_barnevern?limit=1` returns real rows, `Content-Range` confirms 191,673. Caught two real data defects by validating against real ingested data rather than an empty schema: Barnevern's own `andel`/`prosent` vocabulary mismatch (silently dropped 9 of 23 workbooks before being caught), and a Svalbard-as-kommune/fylke misclassification (the exact class of bug `classify_region_code` was built to fix, urb-agents #700). Full exchange: [urb-agents#1796](https://github.com/terchris/urb-agents/issues/1796).
 - [ ] Draft one of the NAV/IMDi/Udir/Husbanken PLANs now that their publisher metadata is in place.
 - [ ] Resolve the `dim_period`/monthly question ([Q5] / [Q32]) *inside* `PLAN-004-nav-uforetrygd.md` when it's drafted — it's that PLAN's own decision, not a separate prerequisite.
 - [ ] Optionally: pre-write outreach emails to Bufdir, NAV, IMDi, Helsedirektoratet asking whether richer machine-readable distributions exist than what's surfaced publicly. (Pattern reused from [`INVESTIGATE-folkehjelp-supply` § A.4](./INVESTIGATE-folkehjelp-supply.md#a4-craft-cms-graphql-probe--q2-outreach-worth-pursuing) — non-blocking; we ship around the public surface either way.)
