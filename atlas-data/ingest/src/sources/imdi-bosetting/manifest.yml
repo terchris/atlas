@@ -1,0 +1,90 @@
+# Hand-authored catalogue metadata for IMDi's bosettingstall (refugee resettlement) statistics.
+# Ingest runs do not modify this file.
+
+source_id: imdi-bosetting
+upstream_id: bosettingstall
+upstream_url: https://www.imdi.no/bosetting/bosettingstall/
+upstream_landing_page: https://www.imdi.no/bosetting/bosettingstall/
+upstream_title: "Bosettingstall"
+description: |
+  Integrerings- og mangfoldsdirektoratet (IMDi) publishes kommune-level refugee resettlement
+  figures — how many people a kommune was asked to resettle, agreed to resettle, actually
+  resettled, and resettled under collective protection — one page per year, linked from the
+  bosettingstall hub page. Atlas discovers every year currently linked (2022 through 2026 as of
+  this source's introduction) and loads the "Oversikt over bosettingen i kommunene i <year>"
+  section of each into raw.imdi_bosetting. IMDi publishes kommune names only, no codes — kommune_nr
+  resolution happens downstream via the existing crosswalk_kommune_name model, not in ingest.
+publisher: Integrerings- og mangfoldsdirektoratet
+license: NLOD
+license_url: https://data.norge.no/nlod/no/2.0
+periodicity: P1Y
+eu_theme: SOCI
+attribution: "Kilde: IMDi, Bosettingstall"
+
+# ⚠️ Licence note, 2026-10-01: this agent could not find a licence statement anywhere on IMDi's
+# own site (the bosettingstall page, its footer, or IMDi's one data.norge.no catalogue entry).
+# `license: NLOD` above is Atlas's own documented default for an unstated Norwegian public-sector
+# licence (see manifest.schema.json's `license` field description), not a citation of something
+# IMDi itself states. Terje authorized proceeding regardless — "IMDI is ok. we can use it."
+# (2026-10-01). If IMDi ever publishes an explicit licence statement, correct this entry to match
+# it rather than leave the default standing as if it were verified.
+
+tags:
+  provider: imdi
+  topic: social
+  geo: kommune
+  cadence: annual
+
+dimensions:
+  - code: kommune_name
+    meaning: Kommune name, verbatim from the workbook row label — IMDi publishes no kommune code
+    value_format: Norwegian kommune name as IMDi spells it
+    notes: >
+      No upstream code exists to carry; kommune_nr is resolved downstream via
+      crosswalk_kommune_name on name alone. IMDi's own fylke groupings are not stable across the
+      years this source covers (pre- vs post-2024-reform names), so fylke is deliberately not
+      captured as a column here — see PLAN-009-imdi-bosetting.md Phase 1.5.
+  - code: metric
+    meaning: Which stage of the resettlement pipeline this row's value is, not a format variant
+    value_format: >-
+      anmodet | vedtatt | bosatte | bosatte_kollektiv_beskyttelse | avtalt |
+      avtalt_kollektiv_beskyttelse
+    notes: >
+      Six genuinely distinct quantities (requested, decided, settled, settled-under-collective-
+      protection, agreed, agreed-under-collective-protection), not a count/share pair — named
+      `metric`, not `category_format`, to avoid implying they're format variants of one indicator
+      the way the Bufdir/NAV sources' format columns are. The last two ("avtalt" / agreed) are not
+      present for every kommune-year: verified live 2026-10-01, IMDi piloted them on Oslo's table
+      only in 2024, then rolled them out to every fylke table from 2026 on — years/kommuner
+      without them simply have no rows for those two metric values, not a null placeholder.
+  - code: year
+    meaning: Calendar year, from the page's own section heading and the discovered URL
+    value_format: 4-digit integer
+    notes: >
+      One page per year, discovered dynamically from the hub page's own links rather than a
+      hardcoded range — a new year appearing on the hub is picked up automatically.
+  - code: value
+    meaning: The metric's numeric value for this kommune and year
+    value_format: Integer count; null when suppressed
+    notes: >
+      IMDi's own suppression marker is the literal character `:` — explained inline on every
+      year's page: "Dette betyr at tallet er fjernet av personvernhensyn. Det betyr som regel at
+      det er under fem personer i feltet eller at totalsum på bosatte minus bosatte fra Ukraina er
+      under fem." (the number was removed for privacy; usually fewer than 5 people in that cell).
+
+lifecycle: stable
+time_coverage:
+  start: null
+  end: null
+keywords:
+  - bosetting
+  - flyktninger
+  - integrering
+  - kommune
+methodology_notes: |
+  Kommune-level counts across four stages of Norway's refugee resettlement process: how many
+  people IMDi asked a kommune to resettle, how many the kommune agreed to resettle, how many were
+  actually resettled, and how many of those were resettled under collective protection (the
+  expedited status used for, among others, people fleeing the war in Ukraine). Cells with fewer
+  than ~5 people are suppressed by IMDi itself before publication.
+suggested_joins: []

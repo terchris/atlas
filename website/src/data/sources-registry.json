@@ -43,7 +43,7 @@
       "description": "Social assistance use, household composition, overcrowded housing,\nand integration indicators. The bridge between need and the services\nthat respond to it.\n",
       "emoji": "🏘️",
       "order": 50,
-      "source_count": 6
+      "source_count": 7
     },
     {
       "id": "ngo-supply",
@@ -114,7 +114,7 @@
       "logo": "/img/publishers/imdi.png",
       "feedback_url": "https://www.imdi.no/om-imdi/kontakt-oss/",
       "notes": "The Directorate of Integration and Diversity. Publishes refugee\nresettlement figures (bosettingstall) and immigration statistics by\nreason and country background, per kommune and year. Atlas's existing\nFHI-mediated immigration figures (innvkat, innvandrere) describe *who*;\nIMDi's data is the *when/where* resettlement-flow signal neither of\nthose carries.\n",
-      "source_count": 0
+      "source_count": 1
     },
     {
       "id": "nav",
@@ -1073,6 +1073,7 @@
         "bufdir-barnefattigdom"
       ],
       "related_by_topic": [
+        "imdi-bosetting",
         "nav-uforetrygd",
         "ssb-12131",
         "ssb-12132",
@@ -8302,6 +8303,180 @@
     },
     {
       "kind": "source",
+      "source_id": "imdi-bosetting",
+      "upstream_id": "bosettingstall",
+      "upstream_url": "https://www.imdi.no/bosetting/bosettingstall/",
+      "upstream_landing_page": "https://www.imdi.no/bosetting/bosettingstall/",
+      "upstream_title": "Bosettingstall",
+      "description": "Integrerings- og mangfoldsdirektoratet (IMDi) publishes kommune-level refugee resettlement\nfigures — how many people a kommune was asked to resettle, agreed to resettle, actually\nresettled, and resettled under collective protection — one page per year, linked from the\nbosettingstall hub page. Atlas discovers every year currently linked (2022 through 2026 as of\nthis source's introduction) and loads the \"Oversikt over bosettingen i kommunene i <year>\"\nsection of each into raw.imdi_bosetting. IMDi publishes kommune names only, no codes — kommune_nr\nresolution happens downstream via the existing crosswalk_kommune_name model, not in ingest.\n",
+      "atlas_summary": null,
+      "publisher": {
+        "id": "imdi",
+        "display_name": "Integrerings- og mangfoldsdirektoratet",
+        "homepage": "https://www.imdi.no/",
+        "logo": "/img/publishers/imdi.png"
+      },
+      "category": {
+        "id": "social",
+        "name": "Social & housing",
+        "emoji": "🏘️"
+      },
+      "license": "NLOD",
+      "license_url": "https://data.norge.no/nlod/no/2.0",
+      "periodicity": "P1Y",
+      "eu_theme": "SOCI",
+      "attribution": "Kilde: IMDi, Bosettingstall",
+      "tags": {
+        "provider": "imdi",
+        "topic": "social",
+        "geo": "kommune",
+        "cadence": "annual"
+      },
+      "keywords": [
+        "bosetting",
+        "flyktninger",
+        "integrering",
+        "kommune"
+      ],
+      "lifecycle": "stable",
+      "time_coverage": {
+        "start": null,
+        "end": null
+      },
+      "methodology_notes": "Kommune-level counts across four stages of Norway's refugee resettlement process: how many\npeople IMDi asked a kommune to resettle, how many the kommune agreed to resettle, how many were\nactually resettled, and how many of those were resettled under collective protection (the\nexpedited status used for, among others, people fleeing the war in Ukraine). Cells with fewer\nthan ~5 people are suppressed by IMDi itself before publication.\n",
+      "suggested_joins": [],
+      "related_by_topic": [
+        "bufdir-barnevern",
+        "nav-uforetrygd",
+        "ssb-12131",
+        "ssb-12132",
+        "ssb-13995",
+        "ssb-crime-tables"
+      ],
+      "dimensions": [
+        {
+          "code": "kommune_name",
+          "meaning": "Kommune name, verbatim from the workbook row label — IMDi publishes no kommune code",
+          "value_format": "Norwegian kommune name as IMDi spells it",
+          "notes": "No upstream code exists to carry; kommune_nr is resolved downstream via crosswalk_kommune_name on name alone. IMDi's own fylke groupings are not stable across the years this source covers (pre- vs post-2024-reform names), so fylke is deliberately not captured as a column here — see PLAN-009-imdi-bosetting.md Phase 1.5.\n"
+        },
+        {
+          "code": "metric",
+          "meaning": "Which stage of the resettlement pipeline this row's value is, not a format variant",
+          "value_format": "anmodet | vedtatt | bosatte | bosatte_kollektiv_beskyttelse | avtalt | avtalt_kollektiv_beskyttelse",
+          "notes": "Six genuinely distinct quantities (requested, decided, settled, settled-under-collective- protection, agreed, agreed-under-collective-protection), not a count/share pair — named `metric`, not `category_format`, to avoid implying they're format variants of one indicator the way the Bufdir/NAV sources' format columns are. The last two (\"avtalt\" / agreed) are not present for every kommune-year: verified live 2026-10-01, IMDi piloted them on Oslo's table only in 2024, then rolled them out to every fylke table from 2026 on — years/kommuner without them simply have no rows for those two metric values, not a null placeholder.\n"
+        },
+        {
+          "code": "year",
+          "meaning": "Calendar year, from the page's own section heading and the discovered URL",
+          "value_format": "4-digit integer",
+          "notes": "One page per year, discovered dynamically from the hub page's own links rather than a hardcoded range — a new year appearing on the hub is picked up automatically.\n"
+        },
+        {
+          "code": "value",
+          "meaning": "The metric's numeric value for this kommune and year",
+          "value_format": "Integer count; null when suppressed",
+          "notes": "IMDi's own suppression marker is the literal character `:` — explained inline on every year's page: \"Dette betyr at tallet er fjernet av personvernhensyn. Det betyr som regel at det er under fem personer i feltet eller at totalsum på bosatte minus bosatte fra Ukraina er under fem.\" (the number was removed for privacy; usually fewer than 5 people in that cell).\n"
+        }
+      ],
+      "raw_tables": null,
+      "sample_query": null,
+      "citation": {
+        "text": "Integrerings- og mangfoldsdirektoratet. (n.d.). Bosettingstall. Retrieved from https://www.imdi.no/bosetting/bosettingstall/. Available in Atlas at https://atlas.sovereignsky.no/datasets/imdi-bosetting.",
+        "bibtex": "@misc{atlas_imdi_bosetting,\n  author = {Integrerings- og mangfoldsdirektoratet},\n  title  = {Bosettingstall},\n  year   = {n.d.},\n  url    = {https://www.imdi.no/bosetting/bosettingstall/},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/imdi-bosetting}\n}"
+      },
+      "feedback_url": "https://www.imdi.no/om-imdi/kontakt-oss/",
+      "consuming_marts": [
+        {
+          "mart_name": "mart_atlas_inventory",
+          "api_v1_name": "atlas_inventory",
+          "title": null,
+          "description_short": "What Atlas publishes: one row per endpoint with its row count, freshness and origin.",
+          "description_full": "What Atlas publishes: one row per endpoint with its row count, freshness and origin.\n\nWhat Atlas publishes, one row per queryable endpoint: how many records it\nserves, when its data last arrived, and where those rows came from.\nAsked for by Røde Kors — \"validate that all datasets that are ingested has\nan endpoint and it can be queried … count the number of records each\nendpoint has and update the last time it ingested data.\"\n⚠️ THE GRAIN IS PER ENDPOINT, NOT PER SOURCE. meta_sources answers \"what\ndid Atlas ingest\"; this answers \"what can I query, and is there anything\nin it\". One source can feed several endpoints and one endpoint can draw on\nseveral sources, so the two row counts are not comparable and summing\nsources will not reproduce an endpoint's count.\n⚠️ atlas_inventory does not list ITSELF. It is built from the same seed it\nreports on, so counting itself would be circular and the number would be\nwhatever the table held mid-build. 19 endpoints are listed; 20 are\npublished.",
+          "sample_query": "https://api-atlas.urbalurba.com/atlas_inventory?limit=5"
+        },
+        {
+          "mart_name": "mart_indicators__imdi_bosetting",
+          "api_v1_name": "indicators__imdi_bosetting",
+          "title": "Bosettingstall",
+          "description_short": "Per-source indicator data for imdi-bosetting (Integrerings- og mangfoldsdirektoratet), at the publisher's own grain.",
+          "description_full": "Per-source indicator data for imdi-bosetting (Integrerings- og mangfoldsdirektoratet), at the publisher's own grain.\n\nPer-source indicator relation for `imdi-bosetting` (Integrerings- og mangfoldsdirektoratet), published at the grain\nthe publisher actually uses rather than flattened into the cross-source views. One row per\n(kommune_name, year, metric).\n🔴 stability:source — the column set here follows Integrerings- og mangfoldsdirektoratet, not Atlas. If the\npublisher adds, renames or drops a dimension, this relation changes with it. That is\nthe deliberate trade for getting the real grain; prefer a stability:curated relation\nif you need a shape Atlas promises to hold still. Decode codes through\nmeta_dimensions filtered to source_id=imdi-bosetting.",
+          "sample_query": "https://api-atlas.urbalurba.com/indicators__imdi_bosetting?limit=5"
+        }
+      ],
+      "consuming_models": [
+        {
+          "name": "indicators__imdi_bosetting",
+          "kind": "indicators"
+        },
+        {
+          "name": "mart_atlas_inventory",
+          "kind": "mart"
+        },
+        {
+          "name": "mart_indicators__imdi_bosetting",
+          "kind": "mart"
+        }
+      ],
+      "joined_with": [
+        {
+          "source_id": "ssb-klass-kommuner",
+          "shared_models": [
+            "indicators__imdi_bosetting",
+            "mart_atlas_inventory",
+            "mart_indicators__imdi_bosetting"
+          ]
+        },
+        {
+          "source_id": "brreg-enheter-alle",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "brreg-frivillige",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "brreg-oppdateringer",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "bufdir-barnefattigdom",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "bufdir-barnevern",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "fhi-alkohol",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "fhi-befolkning",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        }
+      ],
+      "last_ingested_at": null,
+      "latest_row_count": null,
+      "total_runs": null,
+      "downstream_model_count": null
+    },
+    {
+      "kind": "source",
       "source_id": "nav-uforetrygd",
       "upstream_id": "PST302",
       "upstream_url": "https://www.nav.no/no/nav-og-samfunn/statistikk/aap-nedsatt-arbeidsevne-og-uforetrygd-statistikk/uforetrygd/uforetrygd-manedsstatistikk",
@@ -8347,6 +8522,7 @@
       "suggested_joins": [],
       "related_by_topic": [
         "bufdir-barnevern",
+        "imdi-bosetting",
         "ssb-12131",
         "ssb-12132",
         "ssb-13995",
@@ -11504,6 +11680,7 @@
       "suggested_joins": [],
       "related_by_topic": [
         "bufdir-barnevern",
+        "imdi-bosetting",
         "nav-uforetrygd",
         "ssb-12132",
         "ssb-13995",
@@ -11821,6 +11998,7 @@
       "suggested_joins": [],
       "related_by_topic": [
         "bufdir-barnevern",
+        "imdi-bosetting",
         "nav-uforetrygd",
         "ssb-12131",
         "ssb-13995",
@@ -12783,6 +12961,7 @@
       "suggested_joins": [],
       "related_by_topic": [
         "bufdir-barnevern",
+        "imdi-bosetting",
         "nav-uforetrygd",
         "ssb-12131",
         "ssb-12132",
@@ -13100,6 +13279,7 @@
       "suggested_joins": [],
       "related_by_topic": [
         "bufdir-barnevern",
+        "imdi-bosetting",
         "nav-uforetrygd",
         "ssb-12131",
         "ssb-12132",
@@ -13947,6 +14127,14 @@
           "sample_query": "https://api-atlas.urbalurba.com/indicator_summary?limit=5"
         },
         {
+          "mart_name": "mart_indicators__imdi_bosetting",
+          "api_v1_name": "indicators__imdi_bosetting",
+          "title": "Bosettingstall",
+          "description_short": "Per-source indicator data for imdi-bosetting (Integrerings- og mangfoldsdirektoratet), at the publisher's own grain.",
+          "description_full": "Per-source indicator data for imdi-bosetting (Integrerings- og mangfoldsdirektoratet), at the publisher's own grain.\n\nPer-source indicator relation for `imdi-bosetting` (Integrerings- og mangfoldsdirektoratet), published at the grain\nthe publisher actually uses rather than flattened into the cross-source views. One row per\n(kommune_name, year, metric).\n🔴 stability:source — the column set here follows Integrerings- og mangfoldsdirektoratet, not Atlas. If the\npublisher adds, renames or drops a dimension, this relation changes with it. That is\nthe deliberate trade for getting the real grain; prefer a stability:curated relation\nif you need a shape Atlas promises to hold still. Decode codes through\nmeta_dimensions filtered to source_id=imdi-bosetting.",
+          "sample_query": "https://api-atlas.urbalurba.com/indicators__imdi_bosetting?limit=5"
+        },
+        {
           "mart_name": "mart_kommune_befolkning_alder",
           "api_v1_name": "kommune_befolkning_alder",
           "title": null,
@@ -14009,6 +14197,10 @@
           "kind": "fact"
         },
         {
+          "name": "indicators__imdi_bosetting",
+          "kind": "indicators"
+        },
+        {
           "name": "mart_atlas_inventory",
           "kind": "mart"
         },
@@ -14034,6 +14226,10 @@
         },
         {
           "name": "mart_indicator_summary",
+          "kind": "mart"
+        },
+        {
+          "name": "mart_indicators__imdi_bosetting",
           "kind": "mart"
         },
         {
@@ -14517,6 +14713,12 @@
           "model_name": "mart_indicators__fhi_vgs_gjennomforing",
           "title": "Gjennomforing i videregående skole (utdann_3)",
           "description_short": "Per-source indicator data for fhi-vgs-gjennomforing (Folkehelseinstituttet), at the publisher's own grain."
+        },
+        {
+          "parent_kind": "model",
+          "model_name": "mart_indicators__imdi_bosetting",
+          "title": "Bosettingstall",
+          "description_short": "Per-source indicator data for imdi-bosetting (Integrerings- og mangfoldsdirektoratet), at the publisher's own grain."
         },
         {
           "parent_kind": "model",
@@ -17962,6 +18164,63 @@
       ],
       "sample_query": "https://api-atlas.urbalurba.com/indicators__fhi_vgs_gjennomforing?limit=5",
       "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__fhi_vgs_gjennomforing"
+    },
+    {
+      "kind": "view",
+      "view_id": "indicators__imdi_bosetting",
+      "mart_name": "mart_indicators__imdi_bosetting",
+      "api_v1_name": "indicators__imdi_bosetting",
+      "title": "Bosettingstall",
+      "description_short": "Per-source indicator data for imdi-bosetting (Integrerings- og mangfoldsdirektoratet), at the publisher's own grain.",
+      "description_full": "Per-source indicator data for imdi-bosetting (Integrerings- og mangfoldsdirektoratet), at the publisher's own grain.\n\nPer-source indicator relation for `imdi-bosetting` (Integrerings- og mangfoldsdirektoratet), published at the grain\nthe publisher actually uses rather than flattened into the cross-source views. One row per\n(kommune_name, year, metric).\n🔴 stability:source — the column set here follows Integrerings- og mangfoldsdirektoratet, not Atlas. If the\npublisher adds, renames or drops a dimension, this relation changes with it. That is\nthe deliberate trade for getting the real grain; prefer a stability:curated relation\nif you need a shape Atlas promises to hold still. Decode codes through\nmeta_dimensions filtered to source_id=imdi-bosetting.",
+      "columns": [
+        {
+          "name": "source_id",
+          "description": "Atlas catalogue id for this ingest — always imdi-bosetting."
+        },
+        {
+          "name": "kommune_name",
+          "description": "Kommune name verbatim from IMDi's own table row label — IMDi publishes no kommune code."
+        },
+        {
+          "name": "kommune_nr",
+          "description": "Four-digit kommune code, resolved via crosswalk_kommune_name restricted to active kommune names. NULL when IMDi's spelling doesn't match (measured live 2026-10-01: 7 of 359 distinct names, all fylke-disambiguation-suffix or spelling differences — see indicators__imdi_bosetting.sql)."
+        },
+        {
+          "name": "year",
+          "description": "Calendar year, from the page's own section heading and the discovered URL."
+        },
+        {
+          "name": "metric",
+          "description": "Which stage of the resettlement pipeline: anmodet (requested), vedtatt (decided), bosatte (settled), bosatte_kollektiv_beskyttelse (settled, collective protection), avtalt (agreed — not present for every kommune-year), or avtalt_kollektiv_beskyttelse (agreed, collective protection)."
+        },
+        {
+          "name": "contents_code",
+          "description": "Atlas-normalised variable code: fixed prefix `imdi_bosetting__` joined with metric, so each measure is filter-stable in the catalogue."
+        },
+        {
+          "name": "contents_label",
+          "description": "Human-readable Norwegian label for the metric."
+        },
+        {
+          "name": "value",
+          "description": "The metric's value for this kommune and year. NULL when IMDi suppressed the cell (its own marker, the literal character \":\") or published free text instead of a number."
+        },
+        {
+          "name": "updated_at",
+          "description": "Timestamp when the row was last written by ingest (from raw.loaded_at)."
+        }
+      ],
+      "built_from": [
+        {
+          "parent_kind": "model",
+          "model_name": "indicators__imdi_bosetting",
+          "title": null,
+          "description_short": "Per-source passthrough for IMDi bosettingstall (kommune-level refugee resettlement figures)."
+        }
+      ],
+      "sample_query": "https://api-atlas.urbalurba.com/indicators__imdi_bosetting?limit=5",
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__imdi_bosetting"
     },
     {
       "kind": "view",

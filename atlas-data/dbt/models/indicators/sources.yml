@@ -1496,6 +1496,63 @@ sources:
               - not_null
           - name: loaded_at
             data_type: timestamp with time zone
+      - name: imdi_bosetting
+        description: |
+          IMDi bosettingstall — kommune-level refugee resettlement figures (requested, decided,
+          settled, settled under collective protection), one page per year, kommune names only
+          (IMDi publishes no region code). Column count varies by year: 2022/2023/2025 carry 4
+          metrics; 2024 carries 2 extra ("avtalt") on Oslo's table alone; 2026 carries all 6 on
+          every fylke table — see crosswalk resolution note on kommune_nr below.
+          Populated by atlas-data/ingest/src/sources/imdi-bosetting.
+        loaded_at_field: loaded_at
+        meta:
+          ingest_cadence: weekly
+        freshness:
+          warn_after: {count: 400, period: day}
+          error_after: {count: 800, period: day}
+        columns:
+          - name: kommune_name
+            description: >-
+              Kommune name verbatim from IMDi's own table row label — no code published upstream.
+              Resolved to kommune_nr downstream via crosswalk_kommune_name, restricted to ACTIVE
+              kommune names only (IMDi's data starts in 2022, after the 2020 reform, so historical
+              pre-reform codes are never the right match) — measured live 2026-10-01: 352 of 359
+              distinct names resolve with zero ambiguity under that restriction; the 7 that don't
+              are IMDi's own fylke-disambiguation suffixes ("Bø (Nordland)", "Nes (Ak.)", "Os
+              (Hedm.)", "Sande (Møre og Romsdal)", "Våler (Hedm.)") plus two names the crosswalk
+              spells differently ("Kåfjord" vs crosswalk's "Kåfjord - Kaivuono", and bare "Våler").
+            data_tests:
+              - not_null
+          - name: year
+            description: >-
+              Calendar year, from the page's own section heading and the discovered URL. One page
+              per year; years are discovered dynamically from the hub page, not hardcoded.
+            data_tests:
+              - not_null
+          - name: metric
+            description: >-
+              Which stage of the resettlement pipeline this row's value is: anmodet (requested),
+              vedtatt (decided), bosatte (settled), bosatte_kollektiv_beskyttelse (settled under
+              collective protection), avtalt (agreed — not present for every kommune-year, see the
+              source description), or avtalt_kollektiv_beskyttelse (agreed, collective protection).
+            data_tests:
+              - not_null
+              - accepted_values:
+                  values:
+                    - anmodet
+                    - vedtatt
+                    - bosatte
+                    - bosatte_kollektiv_beskyttelse
+                    - avtalt
+                    - avtalt_kollektiv_beskyttelse
+          - name: value
+            description: >-
+              The metric's value for this kommune and year. NULL when IMDi itself suppressed the
+              cell (its own marker, the literal character ":", for privacy — usually fewer than 5
+              people) or published free text instead of a number (e.g. "avventer vedtak").
+            data_type: numeric
+          - name: loaded_at
+            data_type: timestamp with time zone
       - name: ssb_12944
         description: |
           SSB statistikkbanktabell 12944 — Personer i husholdninger med vedvarende

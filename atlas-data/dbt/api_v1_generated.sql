@@ -142,13 +142,13 @@ SUPPLY — voluntary-sector presence:
   distrikt_summary             chapters by district.
   kommune_local_chapters       chapters resolved to a kommune.
 
-PER-SOURCE INDICATOR RELATIONS — 42 of them, one per upstream table, at the
+PER-SOURCE INDICATOR RELATIONS — 43 of them, one per upstream table, at the
 grain the publisher actually uses. The cross-source views above impose ONE
 shape on every source; these keep the source''s own dimensions, so a breakdown
 those views flatten away (a sex, an age band, a household or family type, a
 parental-education split) is only answerable here.
 
-🔴 ALL 42 ARE stability:source. THE COLUMN SET FOLLOWS THE PUBLISHER, NOT
+🔴 ALL 43 ARE stability:source. THE COLUMN SET FOLLOWS THE PUBLISHER, NOT
 ATLAS. If SSB, FHI or Bufdir adds, renames or drops a dimension, these change
 with it — that is the deliberate trade for getting the real grain. Filter
 `meta_endpoints?tags=cs.{stability:curated}` for the relations whose shape
@@ -170,6 +170,8 @@ same source_id, and through the ref_* lists above where one exists.
     indicators__fhi_mobbing indicators__fhi_neet indicators__fhi_prognose
     indicators__fhi_selvmord indicators__fhi_smertestillende
     indicators__fhi_trangbodd indicators__fhi_vgs_gjennomforing
+  imdi (1):
+    indicators__imdi_bosetting
   nav (1):
     indicators__nav_uforetrygd
   ssb (18):
@@ -1883,6 +1885,28 @@ COMMENT ON COLUMN api_v1.indicators__fhi_vgs_gjennomforing.contents_label IS 'Hu
 COMMENT ON COLUMN api_v1.indicators__fhi_vgs_gjennomforing.value IS 'The measured value. NULL where the publisher suppressed the cell — see status.';
 COMMENT ON COLUMN api_v1.indicators__fhi_vgs_gjennomforing.status IS 'The publisher''s own suppression or quality marker for this cell, passed through verbatim.';
 COMMENT ON COLUMN api_v1.indicators__fhi_vgs_gjennomforing.updated_at IS 'When Atlas last loaded this row from the upstream.';
+
+-- indicators__imdi_bosetting  ←  marts.mart_indicators__imdi_bosetting
+CREATE OR REPLACE VIEW api_v1.indicators__imdi_bosetting AS SELECT * FROM marts.mart_indicators__imdi_bosetting;
+COMMENT ON VIEW api_v1.indicators__imdi_bosetting IS 'Per-source indicator data for imdi-bosetting (Integrerings- og mangfoldsdirektoratet), at the publisher''s own grain.
+
+Per-source indicator relation for `imdi-bosetting` (Integrerings- og mangfoldsdirektoratet), published at the grain
+the publisher actually uses rather than flattened into the cross-source views. One row per
+(kommune_name, year, metric).
+🔴 stability:source — the column set here follows Integrerings- og mangfoldsdirektoratet, not Atlas. If the
+publisher adds, renames or drops a dimension, this relation changes with it. That is
+the deliberate trade for getting the real grain; prefer a stability:curated relation
+if you need a shape Atlas promises to hold still. Decode codes through
+meta_dimensions filtered to source_id=imdi-bosetting.';
+COMMENT ON COLUMN api_v1.indicators__imdi_bosetting.source_id IS 'Atlas catalogue id for this ingest — always imdi-bosetting.';
+COMMENT ON COLUMN api_v1.indicators__imdi_bosetting.kommune_name IS 'Kommune name verbatim from IMDi''s own table row label — IMDi publishes no kommune code.';
+COMMENT ON COLUMN api_v1.indicators__imdi_bosetting.kommune_nr IS 'Four-digit kommune code, resolved via crosswalk_kommune_name restricted to active kommune names. NULL when IMDi''s spelling doesn''t match (measured live 2026-10-01: 7 of 359 distinct names, all fylke-disambiguation-suffix or spelling differences — see indicators__imdi_bosetting.sql).';
+COMMENT ON COLUMN api_v1.indicators__imdi_bosetting.year IS 'Calendar year, from the page''s own section heading and the discovered URL.';
+COMMENT ON COLUMN api_v1.indicators__imdi_bosetting.metric IS 'Which stage of the resettlement pipeline: anmodet (requested), vedtatt (decided), bosatte (settled), bosatte_kollektiv_beskyttelse (settled, collective protection), avtalt (agreed — not present for every kommune-year), or avtalt_kollektiv_beskyttelse (agreed, collective protection).';
+COMMENT ON COLUMN api_v1.indicators__imdi_bosetting.contents_code IS 'Atlas-normalised variable code: fixed prefix `imdi_bosetting__` joined with metric, so each measure is filter-stable in the catalogue.';
+COMMENT ON COLUMN api_v1.indicators__imdi_bosetting.contents_label IS 'Human-readable Norwegian label for the metric.';
+COMMENT ON COLUMN api_v1.indicators__imdi_bosetting.value IS 'The metric''s value for this kommune and year. NULL when IMDi suppressed the cell (its own marker, the literal character ":") or published free text instead of a number.';
+COMMENT ON COLUMN api_v1.indicators__imdi_bosetting.updated_at IS 'Timestamp when the row was last written by ingest (from raw.loaded_at).';
 
 -- indicators__nav_uforetrygd  ←  marts.mart_indicators__nav_uforetrygd
 CREATE OR REPLACE VIEW api_v1.indicators__nav_uforetrygd AS SELECT * FROM marts.mart_indicators__nav_uforetrygd;

@@ -47,6 +47,7 @@
     "ingest:fhi-smertestillende": "tsx --env-file-if-exists=.env src/sources/fhi-smertestillende/index.ts",
     "ingest:fhi-trangbodd": "tsx --env-file-if-exists=.env src/sources/fhi-trangbodd/index.ts",
     "ingest:fhi-vgs-gjennomforing": "tsx --env-file-if-exists=.env src/sources/fhi-vgs-gjennomforing/index.ts",
+    "ingest:imdi-bosetting": "tsx --env-file-if-exists=.env src/sources/imdi-bosetting/index.ts",
     "ingest:nav-uforetrygd": "tsx --env-file-if-exists=.env src/sources/nav-uforetrygd/index.ts",
     "ingest:redcross-branches": "tsx --env-file-if-exists=.env src/sources/redcross-branches/index.ts",
     "ingest:ssb-06083": "tsx --env-file-if-exists=.env src/sources/ssb-06083/index.ts",
@@ -88,6 +89,7 @@
   "dependencies": {
     "@dagster-io/dagster-pipes": "^0.1.0",
     "adm-zip": "^0.5.17",
+    "cheerio": "^1.0.0-rc.12",
     "crawlee": "^3.16.0",
     "fast-json-patch": "^3.1.1",
     "fast-json-stable-stringify": "^2.1.0",

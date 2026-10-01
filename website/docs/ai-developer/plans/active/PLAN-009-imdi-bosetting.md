@@ -10,7 +10,7 @@ API lead that turned out not to pan out within reasonable effort. All recorded b
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Backlog — unblocked, ready for Phase 2
+## Status: Active — Phases 2-3 done (ingest, dbt, api_v1 publication), ready for Phase 4 (deploy)
 
 **Goal**: Add `imdi-bosetting` as a served Atlas source, giving Report #8 (Integration Outcomes
 Gradient) the inflow signal it is currently missing — how many refugees a kommune actually
@@ -18,7 +18,7 @@ received per year, not just who already lives there.
 
 **Last Updated**: 2026-10-01
 
-**Investigation**: [INVESTIGATE-new-norwegian-public-sources.md](INVESTIGATE-new-norwegian-public-sources.md) §Tier 1 #5 ([Q14]–[Q16], [Q42]–[Q44])
+**Investigation**: [INVESTIGATE-new-norwegian-public-sources.md](../backlog/INVESTIGATE-new-norwegian-public-sources.md) §Tier 1 #5 ([Q14]–[Q16], [Q42]–[Q44])
 
 **Prerequisites**: None — `imdi` is already a valid `publishers.yaml` provider (#486). **[Q1]
 (licence) is resolved**: Terje, 2026-10-01 — *"IMDI is ok. we can use it."* That is an
@@ -135,7 +135,7 @@ Norwegian source for this, published annually per kommune since at least 2022.
 
 ### Tasks
 
-- [ ] 2.1 Create `atlas-data/ingest/src/sources/imdi-bosetting/`:
+- [x] 2.1 Create `atlas-data/ingest/src/sources/imdi-bosetting/`:
   - `parse.ts`:
     - `discoverYearPages(hubHtml)` — find every `/bosetting/bosettingstall/nokkeltall-bosetting-\d{4}/`
       link on the hub page, dedupe, return as a list of `{year, path}`. Discover, don't hardcode
@@ -144,12 +144,14 @@ Norwegian source for this, published annually per kommune since at least 2022.
     - `parseKommuneTables(html, year)` — find the `<h2>` matching
       `/^Oversikt over bosettingen i kommunene i \d{4}/` (prefix match, not exact — see Phase 1.3),
       then every `<table>` between it and the next `<h2>`. For each row: kommune name (first `<td>`)
-      + 4 metric cells in the fixed column order confirmed in Phase 1.3. Use `cheerio` (already a
-      transitive dependency via `crawlee`; add as an explicit direct dependency rather than rely on
-      an undeclared transitive one) — this page is simple, consistent static HTML, a proper parser
-      is still safer than regex against markup.
+      + metric cells resolved by header TEXT, not fixed position — **[Q5, new]** found the column
+      count is not fixed (4 metrics most years, 6 on Oslo's 2024 table and on every table from 2026).
+      Use `cheerio` (already a transitive dependency via `crawlee`; added as an explicit direct
+      dependency rather than rely on an undeclared transitive one) — this page is simple, consistent
+      static HTML, a proper parser is still safer than regex against markup.
     - `parseCell(raw)` — the literal string `:` → null (IMDi's own suppression marker, see Phase
-      1.4); otherwise parse as integer.
+      1.4), and any other unparseable text (e.g. `"avventer vedtak"`) → null as a side effect of the
+      same `Number.parseInt` → `NaN` → null path; otherwise parse as integer.
   - `index.ts` — fetch hub page → `discoverYearPages` → fetch each year page → `parseKommuneTables`
     → upsert `raw.imdi_bosetting`. Full-table replace per run, same convention as every other source
     this session — v1 re-ingests every discovered year on every run (cheap: 5 pages, no reason to
@@ -159,30 +161,32 @@ Norwegian source for this, published annually per kommune since at least 2022.
     `eu_theme: SOCI`, `tags.topic: social`, `license: NLOD` (Atlas's documented default for an
     unstated Norwegian public-sector licence, applied under Terje's 2026-10-01 authorization — see
     **[Q1]** — not a citation of a licence IMDi itself states).
-  - `README.md` and `__tests__/` — golden-file tests against real downloaded fixture pages (at least
-    one page per fylke-naming era: one pre-2024-reform fylke page like 2022, one post-reform like
-    2025/2026, so the fylke-instability finding from Phase 1.5 is actually exercised even though
-    fylke itself isn't stored).
+  - `README.md` and `__tests__/` — golden-file tests against real downloaded fixture pages. Ended up
+    with 5 (hub + 2022/2024/2025/2026), not the originally-planned 3 — 2024 and 2026 were added
+    specifically because they're what exercises the header-driven metric resolution from **[Q5]**,
+    which the original 2-fylke-era sample (2022 pre-reform, 2025 post-reform) would have missed
+    entirely since both of those years happen to have the same 4-column shape.
 
-- [ ] 2.2 Migration `raw.imdi_bosetting` — columns `kommune_name` (text, verbatim from IMDi — not
+- [x] 2.2 Migration `raw.imdi_bosetting` — columns `kommune_name` (text, verbatim from IMDi — not
   `region_code`, there isn't one), `year`, `metric` (text: `anmodet`/`vedtatt`/`bosatte`/
-  `bosatte_kollektiv_beskyttelse` — see **[Q2]**), `value`, `loaded_at`. PK
-  `(kommune_name, year, metric)`. No `values_json` — unlike the monthly/multi-year sources, each
-  (kommune, year, metric) triple is already a single scalar with nothing to spine across; adding it
-  would just wrap one number in JSON for no reason.
+  `bosatte_kollektiv_beskyttelse`/`avtalt`/`avtalt_kollektiv_beskyttelse` — see **[Q2]** and
+  **[Q5]**), `value`, `loaded_at`. PK `(kommune_name, year, metric)`. No `values_json` — unlike the
+  monthly/multi-year sources, each (kommune, year, metric) triple is already a single scalar with
+  nothing to spine across; adding it would just wrap one number in JSON for no reason.
 
-- [ ] 2.3 Dagster registration — `cadence.weekly_polled()`/`WEEKLY_FRESHNESS`, same as the Bufdir
+- [x] 2.3 Dagster registration — `cadence.weekly_polled()`/`WEEKLY_FRESHNESS`, same as the Bufdir
   sources (annual data, polled weekly so a new year's page doesn't sit undiscovered for months).
+  Added to `_ANNUAL_SOURCE_IDS` in `schedules.py` (the existing `annual_sources_refresh` job — no new
+  job needed, unlike `nav-uforetrygd`'s monthly cadence).
 
 ### Validation
 
 ```bash
 cd atlas-data/ingest && npm test -- imdi-bosetting
 ```
-Golden-file tests pass; a manual run against the live hub page discovers all years currently linked
-(5, as of this plan's drafting) and produces a plausible row count (~357 kommuner × up to 5 years ×
-4 metrics, fewer for kommuner that didn't exist or weren't asked to resettle in a given year), with
-zero rows silently dropped.
+✅ Done, 2026-10-01. 30 tests pass. A live run against the real hub page discovered all 5 years
+currently linked (2022-2026) and produced 7,848 real rows end to end (NDJSON + local Postgres),
+zero rows silently dropped. `npm run typecheck` clean.
 
 ---
 
@@ -190,30 +194,40 @@ zero rows silently dropped.
 
 ### Tasks
 
-- [ ] 3.1 Add `raw.imdi_bosetting` to `sources.yml` — `ingest_cadence: weekly`, freshness matching
+- [x] 3.1 Add `raw.imdi_bosetting` to `sources.yml` — `ingest_cadence: weekly`, freshness matching
   the Bufdir sources' annual-data bounds (400/800 day), not the NAV monthly bounds.
-- [ ] 3.2 `indicators__imdi_bosetting.sql` — `kommune_nr` via **`crosswalk_kommune_name`** (a join
+- [x] 3.2 `indicators__imdi_bosetting.sql` — `kommune_nr` via **`crosswalk_kommune_name`** (a join
   Atlas hasn't needed before — every prior source this session resolved `kommune_nr` from an
   upstream-published code via `classify_region_code`/`region_code_to_kommune_nr`; this is the first
-  to resolve it from a bare name instead). **Check empirically (Phase 1.5's [Q3])** whether any
-  actual kommune name in the ingested data produces more than one crosswalk match before deciding
-  whether disambiguation logic is needed at all.
-- [ ] 3.3 Document columns in `schema.yml`; validate against a local Postgres loaded with the real
-  ingest, not an empty schema.
-- [ ] 3.4 `mart_indicators__imdi_bosetting.sql` api passthrough + `marts/api/schema.yml` entry.
-- [ ] 3.5 `dbt build` + `dbt test` — relationship test `kommune_nr` → `dim_kommune`, `not_null` on
-  PK columns, `accepted_values` on `metric`.
+  to resolve it from a bare name instead). **[Q3] checked empirically** — see its own entry above;
+  restricting the join to active (canonical/alternative) crosswalk rows resolved the ambiguity
+  completely, no disambiguation machinery needed. Also excludes `dim_kommune.is_sentinel` (SSB's
+  9999 'Uoppgitt') explicitly, defensively — never observed in real data, but the crosswalk's
+  active branches don't filter it themselves (`check-kommune-marts-exclude-sentinels.sh` gate).
+- [x] 3.3 Document columns in `schema.yml`; validated against a local Postgres loaded with the real
+  ingest (7,848 rows), not an empty schema — `dbt build` green, including the `kommune_nr` →
+  `dim_kommune` relationships test.
+- [x] 3.4 `mart_indicators__imdi_bosetting.sql` api passthrough + `marts/api/schema.yml` entry.
+  Applied to the local `api_v1` schema and queried live — `GET
+  /indicators__imdi_bosetting?kommune_name=eq.Oslo&year=eq.2024` returns the real 6-metric row
+  including `avtalt`/`avtalt_kollektiv_beskyttelse`. All drift-gate checks
+  (`check-api-v1.sh`, `check-lineage-is-current.sh`, `check-inventory-depends-on.sh`,
+  `check-kommune-marts-exclude-sentinels.sh`, `check-root-document-indexes-every-relation.sh`, and
+  11 more) regenerated and green.
+- [x] 3.5 `dbt build` + `dbt test` — relationship test `kommune_nr` → `dim_kommune`, `not_null` on
+  PK columns, `accepted_values` on `metric`. All 12 data tests pass.
 
 ### Validation
 
 ```bash
 cd atlas-data/dbt && dbt build --select indicators__imdi_bosetting mart_indicators__imdi_bosetting
 ```
-Against a local Postgres loaded via the real ingest. **Specifically check the `kommune_nr`
-relationship test is not silently passing because every row has a null `kommune_nr`** — a
-crosswalk join that fails to match anything would look identical to one that succeeds, on a
-bare `not_null`-less relationship test; confirm a real, high match rate (expect close to 100% —
-flag anything below ~95% as a real defect to investigate, not wave through).
+✅ Done, 2026-10-01, against a local Postgres loaded via the real ingest. **Checked the `kommune_nr`
+relationship test was not silently passing on an all-null column** — it was not: 352 of 359
+distinct `kommune_name` values resolve to a real `kommune_nr` (98%, measured directly with SQL, not
+inferred from the test passing), restricted to active crosswalk rows with zero ambiguity. The 7
+unmatched (2%) are named in **[Q3]** above — well above the "flag below ~95%" threshold this plan
+set for itself.
 
 ---
 
@@ -229,16 +243,16 @@ deploy report alone.
 
 ## Acceptance Criteria
 
-- [ ] `imdi-bosetting` ingests cleanly from all currently-linked hub-page years with zero rows
-  silently dropped.
-- [ ] `raw.imdi_bosetting` stores `kommune_name`, not a code — and not a `fylke` column, per
+- [x] `imdi-bosetting` ingests cleanly from all currently-linked hub-page years with zero rows
+  silently dropped. 7,848 rows across 2022-2026.
+- [x] `raw.imdi_bosetting` stores `kommune_name`, not a code — and not a `fylke` column, per
   Phase 1.5's finding that IMDi's own fylke groupings aren't stable across the years ingested.
-- [ ] `kommune_nr` resolves via `crosswalk_kommune_name` with a measured, reported match rate — not
-  assumed to be 100%.
-- [ ] `indicators__imdi_bosetting` and `mart_indicators__imdi_bosetting` build and test clean
+- [x] `kommune_nr` resolves via `crosswalk_kommune_name` with a measured, reported match rate — not
+  assumed to be 100%. 352/359 (98%), zero ambiguity, 7 unmatched named explicitly.
+- [x] `indicators__imdi_bosetting` and `mart_indicators__imdi_bosetting` build and test clean
   against real loaded data.
 - [ ] `imdi-bosetting` appears in `meta_sources.served_as` after a real deploy, independently
-  verified via live `curl`.
+  verified via live `curl`. **Pending Phase 4.**
 - [ ] The investigation and `1PRIORITY.md` are updated to mark this candidate shipped, only once
   Phase 4 confirms rows actually arrived.
 - [x] **[Q1] (licence) is resolved — Terje, 2026-10-01: "IMDI is ok. we can use it."** Recorded as
@@ -269,9 +283,18 @@ deploy report alone.
   and `category_format` would misdescribe that. Flagged as a resolved-but-debatable decision, not
   silently picked, since a wide 4-column table is the more obvious first instinct for 4 named
   figures and a future reader might reasonably ask why it wasn't done that way.
-- **[Q3] Kommune-name collision risk in `crosswalk_kommune_name` is theoretical until checked
-  against the real data** — see Phase 1.5 and Phase 3.2. Don't build disambiguation machinery
-  speculatively.
+- **[Q3] RESOLVED, measured live 2026-10-01 against the real ingested data (7,848 rows, all 5
+  discoverable years).** The unrestricted crosswalk (all three of its canonical/alternative/
+  historical name_kinds) makes 259 of 359 distinct `kommune_name` values match 2+ `kommune_nr` —
+  not a rare "Os"-style edge case, the majority. Restricting the join to `name_kind IN
+  ('canonical', 'alternative')` — i.e. active kommune codes only, which is correct here because
+  IMDi's data starts in 2022, after the 2020 reform, so a historical pre-reform code is never the
+  right match — resolves this completely: 352 of 359 match with ZERO ambiguity. The 7 that still
+  don't match are IMDi's own fylke-disambiguation suffixes ("Bø (Nordland)", "Nes (Ak.)", "Os
+  (Hedm.)", "Sande (Møre og Romsdal)", "Våler (Hedm.)") plus two spelling differences ("Kåfjord" vs
+  the crosswalk's "Kåfjord - Kaivuono", and bare "Våler") — left NULL in `indicators__imdi_bosetting`
+  rather than guessed. See that model's own header comment. No disambiguation machinery was needed;
+  the fix was restricting which crosswalk rows to join against, not building a new lookup.
 - **IMDikator (`arkiv.imdi.no/statistikk/`, API host `app-simapi-prod.azurewebsites.net`) is a real,
   separate lead for the investigation's [Q42]/[Q43] extensions** (`imdi-innvandringsgrunn-kjonn`,
   `imdi-landbakgrunn`) — not chased further here. A future investigation reverse-engineering its
@@ -284,6 +307,18 @@ deploy report alone.
   already-understood data source; Phase 1 found the actual mechanism for those two extensions is
   unconfirmed. Combining them now would mean drafting Phase 2/3 against an unverified foundation —
   exactly the mistake this session's corrections have been about catching, not repeating.
+- **[Q5, new] Column count is NOT fixed across this source's own history — found during Phase 2
+  implementation, not anticipated in Phase 1.** Phase 1's sample (one year's page) only ever showed
+  4 metrics per kommune row. A live dry-run against all 5 then-discoverable years (2022-2026)
+  failed on 2024 with a header-column-count mismatch: IMDi piloted 2 extra "avtalt" (agreed) metrics
+  on Oslo's table alone in 2024, then rolled them out to every fylke table from 2026 on. The parser
+  (`parse.ts`) was rewritten to resolve metrics by header TEXT (`HEADER_TO_METRIC`) rather than
+  fixed position, specifically so this represents what IMDi actually published each year rather
+  than normalizing it into a single 4-column shape. An unrecognized header still throws. See
+  `parse.ts`'s own header comment and `README.md`'s quirks section for the full detail, including a
+  free-text non-numeric cell found the same way (Moskenes 2024: `"avventer vedtak"`, not the `:`
+  suppression marker — `parseCell` already handled it correctly as a side effect of mapping any
+  unparseable text to null).
 
 ---
 

@@ -6,7 +6,7 @@ This section is for **anyone consuming Atlas's public PostgREST API** to build t
 
 <!-- BEGIN holdings (generated) -->
 
-**45 upstream sources** from **6 publishers**, served as **82 read-only relations**.
+**46 upstream sources** from **7 publishers**, served as **83 read-only relations**.
 
 | publisher | sources | broadly |
 |---|---|---|
@@ -14,12 +14,13 @@ This section is for **anyone consuming Atlas's public PostgREST API** to build t
 | Statistisk sentralbyrå | 17 | population, income, families, housing, education, crime |
 | Brønnøysundregistrene | 3 | the company and voluntary-organisation registers |
 | Barne-, ungdoms- og familiedirektoratet | 2 | child poverty |
+| Integrerings- og mangfoldsdirektoratet | 1 | — |
 | Arbeids- og velferdsdirektoratet | 1 | — |
 | Norges Røde Kors | 1 | local chapters and their activities |
 
-By EU data theme: **SOCI** 22 (society) · **HEAL** 12 (health) · **GOVE** 5 (government) · **EDUC** 5 (education) · **JUST** 1 (justice).
+By EU data theme: **SOCI** 23 (society) · **HEAL** 12 (health) · **GOVE** 5 (government) · **EDUC** 5 (education) · **JUST** 1 (justice).
 
-Licences: **NLOD** for 43 of 45 — Norwegian public data, free to reuse with attribution. The exceptions are `nav-uforetrygd` (CC BY 4.0) and `redcross-branches` (permissive) — Red Cross's own data rather than the state's.
+Licences: **NLOD** for 44 of 46 — Norwegian public data, free to reuse with attribution. The exceptions are `nav-uforetrygd` (CC BY 4.0) and `redcross-branches` (permissive) — Red Cross's own data rather than the state's.
 
 ### What you can query
 
@@ -64,6 +65,7 @@ Licences: **NLOD** for 43 of 45 — Norwegian public data, free to reuse with at
 | `indicators__fhi_smertestillende` | Per-source indicator data for fhi-smertestillende (Folkehelseinstituttet), at the publisher's own grain. |
 | `indicators__fhi_trangbodd` | Per-source indicator data for fhi-trangbodd (Folkehelseinstituttet), at the publisher's own grain. |
 | `indicators__fhi_vgs_gjennomforing` | Per-source indicator data for fhi-vgs-gjennomforing (Folkehelseinstituttet), at the publisher's own grain. |
+| `indicators__imdi_bosetting` | Per-source indicator data for imdi-bosetting (Integrerings- og mangfoldsdirektoratet), at the publisher's own grain. |
 | `indicators__nav_uforetrygd` | Per-source indicator data for nav-uforetrygd (Arbeids- og velferdsdirektoratet), at the publisher's own grain. |
 | `indicators__ssb_06083` | Per-source indicator data for ssb-06083 (Statistisk sentralbyrå), at the publisher's own grain. |
 | `indicators__ssb_06913` | Per-source indicator data for ssb-06913 (Statistisk sentralbyrå), at the publisher's own grain. |
