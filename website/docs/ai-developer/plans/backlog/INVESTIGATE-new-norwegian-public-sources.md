@@ -10,7 +10,14 @@
 
 **Last Updated**: 2026-05-04 (added §"Cross-check against Samfunnspuls" — confirmed 6 candidates, surfaced 5 brand-new gap-fills incl. ssb-10826 bydel-level population, deferred 2, resolved 1 discontinued series)
 
-🔴 **2026-10-01 — a THIRD independent consumer (a Lovable-built UI, recreating samfunnspuls.rodekors.no) re-asked almost every question this investigation already answered in May, five months ago.** Checked what actually got built since then: **2 of ~14 Tier-1 candidates were ingested** (`bufdir-barnefattigdom`, `ssb-10826`). None of NAV (4 families), IMDi, Udir (5 families) or Husbanken were started — not even `PLAN-001-new-provider-enum-and-period-monthly.md`, the schema-prep step everything else depends on. ⚠️ **This is not a case of the work being lost — it is filed, correctly, in exactly the detail this file already has.** It simply was never executed. A fully-specified plan rotting unexecuted is a different failure from a report never being filed at all, and arguably a more wasteful one: the investigation cost already happened.
+🔴 **2026-10-01 — a THIRD independent consumer (a Lovable-built UI, recreating samfunnspuls.rodekors.no) re-asked almost every question this investigation already answered in May, five months ago.** Checked what actually got built since then: **3 candidates shipped** — `bufdir-barnefattigdom` and `ssb-10826` (Tier 1), plus `ssb-crime-tables` (Tier 2, #6) which this header previously missed entirely. None of NAV (4 families), IMDi, Udir (5 families), Husbanken or `bufdir-barnevern` were started. ⚠️ **This is not a case of the work being lost — it is filed, correctly, in exactly the detail this file already has.** It simply was never executed. A fully-specified plan rotting unexecuted is a different failure from a report never being filed at all, and arguably a more wasteful one: the investigation cost already happened.
+
+🔴 **2026-10-01 — `PLAN-001-new-provider-enum-and-period-monthly.md` was never a real blocker; its three premises don't match the code.** Checked each directly rather than trusting this file's own description:
+- **No `provider` enum exists to bump.** `manifest.schema.json`'s `provider` field is a free-form `^[a-z0-9][a-z0-9-]*[a-z0-9]$` pattern, cross-referenced against `publishers.yaml` — not a closed enum. Adding a new provider is one `publishers.yaml` entry, done per-source as needed (NAV/IMDi/Udir/Husbanken entries landed 2026-10-01, see `PLAN-phase0-new-publisher-metadata`, merged in #486). No schema-bump commit required, and none is blocking anything.
+- **No `dim_period` table exists** (`find atlas-data/dbt/models -iname '*dim_period*'` → nothing). Every existing indicator model just carries a plain `year` column (e.g. `indicators__ssb_06944.sql`). "Add a `period_grain` column to `dim_period`" assumes a dimension that was never built — it's not a prerequisite, it's a per-source modelling decision the *first* monthly source's own PLAN makes (add a `period_grain`/`month` column on that one model, same way `year` already works), exactly as [Q32]'s own recommendation (b) already said, just without a dimension table to extend first.
+- **No `dim_indicator` table exists either**, and no `presentation_policy`/sensitivity convention exists anywhere in the schema or models today. Same shape of correction: sensitivity flagging is a column/convention the first sensitive source's PLAN introduces, not a prerequisite schema bump.
+
+**So there is no Phase 0 to execute.** The provider half is already done (publisher metadata, #486). The `dim_period`/`presentation_policy` half isn't a blocker at all — it's a decision each of `PLAN-004-nav-uforetrygd` (first monthly) and whichever PLAN first carries a politically-sensitive per-kommune figure makes locally. **`PLAN-001-new-provider-enum-and-period-monthly.md` should not be drafted.** The real next item, per this file's own risk ranking, is `PLAN-003-bufdir-barnevern.md` (reuses `bufdir-barnefattigdom`'s ingest plumbing, zero new provider/logo work) — or, since publisher metadata for NAV/IMDi/Udir/Husbanken just landed, any of `PLAN-004` (nav-uforetrygd), `PLAN-008` (husbanken) or `PLAN-009` (imdi-bosetting) are equally unblocked now.
 
 ---
 
@@ -141,7 +148,7 @@ These are the highest-leverage adds: each one upgrades a specific report from "i
 
 These don't fill an existing report — they enable an *11th, 12th, 13th* report Atlas's current 10 don't cover. Each unlocks a distinct topic area.
 
-### 6. SSB crime tables (08484, 08487, 09405, 09406) — public safety
+### 6. SSB crime tables (08484, 08487, 09405, 09406) — public safety — ✅ shipped as `ssb-crime-tables`, all four tables in one bundle (confirmed 2026-10-01)
 
 - **URL**: reachable via the same SSB PxWebApi v2 endpoints Atlas already uses for every other SSB source (`https://data.ssb.no/api/pxwebapi/v2/tables/{tableId}/data`)
 - **Tables**: 08484 (anmeldte lovbrudd per kommune), 08487 (etter type), 09405 (offer per region × kjønn × alder), 09406 (siktede per kommune)
@@ -353,8 +360,8 @@ The prior Samfunnspuls research file flagged three table-ID open questions that 
 The Phase 1 PLAN sequence in the section above expands by 3 PLANs (`udir-fravar`, `udir-sluttet-vgs`, `nav-helt-ledige`, plus the IMDi extensions folded into the existing IMDi PLAN). The `ssb-sosialhjelp-stønadstid` PLAN that originally appeared here was dropped on 2026-05-05 after Cursor BG (PR #56) confirmed `ssb-13006` is a phantom and the data is already in Atlas via `ssb-13995`'s ContentsCode dimension — see [Q38] resolution above. Updated phase 1 sequence:
 
 ```
-Phase 1 — Tier-1 ingests (parallelisable after Phase 0)
-  PLAN-002-bufdir-barnefattigdom.md
+Phase 1 — Tier-1 ingests (parallelisable; no Phase 0 — see 2026-10-01 correction above, there was nothing to prep)
+  PLAN-002-bufdir-barnefattigdom.md    ← shipped
   PLAN-003-bufdir-barnevern.md
   PLAN-004-nav-uforetrygd.md           ← settles dim_period monthly
   PLAN-005-nav-aap.md
@@ -473,12 +480,11 @@ The current enum already covers all needed values: `JUST` (crime), `HEAL` (Helfo
 
 Atlas's [PLANS.md `Splitting Investigations into Multiple Plans`](../../PLANS.md#splitting-investigations-into-multiple-plans) section says: group by dependency and risk, group by completeness, keep optional/deferred work separate. Applied here:
 
-**Phase 0 — schema prep (one PLAN, ~2h)**
-- `PLAN-001-new-provider-enum-and-period-monthly.md` — bump `manifest.yml` `provider` enum to add the 8 new values; add `period_grain` column to `dim_period`; add `presentation_policy` column to `dim_indicator`. No data ingest in this PLAN — just the catalogue side. Unblocks every Tier-1 + Tier-2 PLAN.
+**Phase 0 — none.** Dropped 2026-10-01: `PLAN-001-new-provider-enum-and-period-monthly.md` assumed a closed `provider` enum and existing `dim_period`/`dim_indicator` tables, none of which exist (see correction above). The provider half is satisfied per-source via `publishers.yaml` (NAV/IMDi/Udir/Husbanken entries landed in #486); the period-grain and sensitivity-flag halves are per-source modelling decisions, not prerequisites. Nothing to prep — go straight to Phase 1.
 
 **Phase 1 — Tier-1 ingests (one PLAN per source family, ~6–8h each, parallelisable)**
-1. `PLAN-002-bufdir-barnefattigdom.md` (lowest risk: clean API, named gap-fill)
-2. `PLAN-003-bufdir-barnevern.md` (immediately after; reuses Bufdir ingest plumbing from PLAN-002)
+1. `PLAN-002-bufdir-barnefattigdom.md` — ✅ shipped
+2. `PLAN-003-bufdir-barnevern.md` (next lowest risk; reuses Bufdir ingest plumbing from PLAN-002, zero new provider/logo work)
 3. `PLAN-004-nav-uforetrygd.md` (first monthly source; settles `dim_period` monthly handling in practice)
 4. `PLAN-005-nav-aap.md` and `PLAN-006-nav-sykefravaer.md` (parallel after PLAN-004)
 5. `PLAN-007-husbanken-statistikkbank.md`
@@ -487,7 +493,7 @@ Atlas's [PLANS.md `Splitting Investigations into Multiple Plans`](../../PLANS.md
 8. `PLAN-010-udir-elevundersokelsen.md` and `PLAN-011-udir-nasjonale-prover.md` (after PLAN-009 lands `dim_school`)
 
 **Phase 2 — Tier-2 (one PLAN per source family)**
-1. `PLAN-012-ssb-crime-tables.md` (smallest, closes off Atlas's missing JUST theme)
+1. `PLAN-012-ssb-crime-tables.md` — ✅ shipped (smallest, closed off Atlas's missing JUST theme)
 2. `PLAN-013-helfo-fastlege.md` (uses Helsedirektoratet developer-portal pattern)
 3. `PLAN-014-dsb-kommuneundersokelsen.md`
 4. `PLAN-015-brreg-frivillighetsregisteret-lottstift.md` — **blocked by [`INVESTIGATE-tag-indicators-sdg-icnpo.md`](./INVESTIGATE-tag-indicators-sdg-icnpo.md)** for the ICNPO crosswalk, per [Q26]
@@ -501,10 +507,12 @@ Each PLAN follows the standard Atlas pattern (per-source folder under `atlas-dat
 
 ## Next steps
 
-- [ ] User reviews this investigation and tags Q-IDs they want to revisit (`[Q<N>]`).
-- [ ] Resolve the open `dim_period` monthly question ([Q5] / [Q32]) — block on this before drafting PLAN-002.
-- [ ] Draft `PLAN-001-new-provider-enum-and-period-monthly.md` in `backlog/`.
-- [ ] Draft `PLAN-002-bufdir-barnefattigdom.md` in `backlog/` — start here because it's the cleanest gap-fill (verified live API, named-column gap in Report #2, no methodology drama).
+- [x] `PLAN-002-bufdir-barnefattigdom.md` — shipped.
+- [x] `ssb-10826` and `ssb-crime-tables` — shipped (outside this file's original numbering, confirmed 2026-10-01).
+- [x] Publisher metadata for NAV/IMDi/Udir/Husbanken — landed 2026-10-01 (#486), unblocking their PLANs.
+- [ ] ~~Draft `PLAN-001-new-provider-enum-and-period-monthly.md`~~ — dropped, see the 2026-10-01 correction above. Nothing to prep.
+- [ ] Draft `PLAN-003-bufdir-barnevern.md` — next lowest-risk (reuses PLAN-002's Bufdir plumbing), or start one of the NAV/IMDi/Udir/Husbanken PLANs now that their publisher metadata is in place.
+- [ ] Resolve the `dim_period`/monthly question ([Q5] / [Q32]) *inside* `PLAN-004-nav-uforetrygd.md` when it's drafted — it's that PLAN's own decision, not a separate prerequisite.
 - [ ] Optionally: pre-write outreach emails to Bufdir, NAV, IMDi, Helsedirektoratet asking whether richer machine-readable distributions exist than what's surfaced publicly. (Pattern reused from [`INVESTIGATE-folkehjelp-supply` § A.4](./INVESTIGATE-folkehjelp-supply.md#a4-craft-cms-graphql-probe--q2-outreach-worth-pursuing) — non-blocking; we ship around the public surface either way.)
 
 ---
