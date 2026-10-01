@@ -1,0 +1,81 @@
+# Hand-authored catalogue metadata for NAV PST302 (uføretrygd kommune monthly statistics).
+# Ingest runs do not modify this file.
+
+source_id: nav-uforetrygd
+upstream_id: PST302
+upstream_url: https://www.nav.no/no/nav-og-samfunn/statistikk/aap-nedsatt-arbeidsevne-og-uforetrygd-statistikk/uforetrygd/uforetrygd-manedsstatistikk
+upstream_landing_page: https://www.nav.no/no/nav-og-samfunn/statistikk/aap-nedsatt-arbeidsevne-og-uforetrygd-statistikk/uforetrygd/uforetrygd-manedsstatistikk
+upstream_title: "PST302 Mottakere av uføretrygd. Antall og andel av befolkningen 18-67 år. Fylke. Kommune."
+description: |
+  NAV (Arbeids- og velferdsetaten) publishes PST302 on its monthly uføretrygd (disability benefit)
+  statistics page: the count and share of the population aged 18-67 receiving uføretrygd, per
+  kommune and fylke, as one xlsx workbook covering every month of the current calendar year to
+  date. Atlas downloads that workbook (URL discovered from the monitor page — a relative
+  `/_/attachment/download/...` link, re-resolved each run since it changes with every release) and
+  loads the `Kommune-bydel. Antall` and `Kommune-bydel. Andel` sheets into `raw.nav_uforetrygd`.
+  Atlas's first monthly-cadence source — a plain `month` column, no `dim_period` infrastructure
+  (none exists in the codebase; see INVESTIGATE-new-norwegian-public-sources.md's 2026-10-01
+  correction). v1 tracks the live current-year file only; historical backfill (NAV publishes
+  one archive file per past calendar year) is explicitly deferred.
+publisher: Arbeids- og velferdsdirektoratet
+license: CC BY 4.0
+license_url: https://creativecommons.org/licenses/by/4.0/deed.no
+periodicity: P1M
+eu_theme: SOCI
+attribution: "Kilde: NAV, PST302 Mottakere av uføretrygd"
+
+tags:
+  provider: nav
+  topic: social
+  geo: kommune
+  cadence: monthly
+
+dimensions:
+  - code: region_code
+    meaning: Geographic code from the workbook row label (NAV's own kommune/fylke/bydel numbering)
+    value_format: "2-digit fylke, 4-digit kommune, or 6-digit bydel code (Oslo, Bergen, Stavanger, Trondheim only)"
+    notes: >
+      region_kind (fylke/kommune/bydel) is derived downstream via classify_region_code, not stored
+      here — same convention as every other Atlas source. Oslo's own kommune-level rollup row
+      (region_code 0301) is suppressed for every month in the live file sampled 2026-10-01, despite
+      the fylke-level total for the same population being unsuppressed — recorded as observed
+      upstream behaviour, not explained or corrected.
+  - code: category_format
+    meaning: Which sheet the row came from, not a column within a sheet
+    value_format: antall or andel
+    notes: >
+      Structurally different from every prior Atlas source — NAV publishes count and share as two
+      separate sheets rather than a Tallformat-style column. No category_unit dimension exists for
+      this source.
+  - code: year
+    meaning: "Calendar year, read from the sheet's own year-label cell (e.g. '2026 :')"
+    value_format: 4-digit integer
+    notes: One year per file — the live file is replaced in place as the year progresses.
+  - code: month
+    meaning: Calendar month, from the sheet's own Norwegian month-name header row
+    value_format: 1-12 integer
+    notes: >
+      Atlas's first monthly-cadence dimension. A plain integer column, not a dim_period reference —
+      no such table exists anywhere in the codebase to reference.
+  - code: values_json
+    meaning: Parsed month->value map for the region and category_format slice, for this sheet's year
+    value_format: JSON object with string month-number keys; suppressed cells (NAV's own `*` marker) as null
+    notes: Matches the full month spine present in the live file (partial-year, growing monthly).
+
+lifecycle: stable
+time_coverage:
+  start: null
+  end: null
+keywords:
+  - uføretrygd
+  - disability-benefit
+  - welfare
+  - kommune
+  - monthly
+methodology_notes: |
+  Count and share (of population aged 18-67) of people receiving uføretrygd per kommune, counted
+  by NAV's Pesys decision system and population data warehouse. NAV counts 11/12 of 18-year-olds
+  and 1/12 of 67-year-olds (eligibility starts the month after turning 18, ends the month after
+  turning 67). A break in the population-share denominator source occurred in March 2014 (NAV's own
+  note: minor effect). Small cells are suppressed with `*`.
+suggested_joins: []

@@ -7,6 +7,9 @@ See _factory.make_raw_ingest_asset. Currently:
 - bufdir-barnevern: zip download from Bufdir's child welfare surface. Same
   delivery mechanism as the sibling above, different internal workbook shape
   — see atlas-data/ingest/src/sources/bufdir-barnevern/README.md.
+- nav-uforetrygd: one xlsx download from NAV's PST302 uføretrygd monthly
+  statistics page. Atlas's first monthly-polled source outside SSB/KLASS —
+  see atlas-data/ingest/src/sources/nav-uforetrygd/README.md.
 - redcross-branches: Crawlee-based scraper of Red Cross chapter pages.
   Heavier resource profile (per UIS Dagster INVESTIGATE — headless browser
   state, ~512MiB working set).
@@ -31,6 +34,7 @@ from atlas_data import cadence
 OTHER_SOURCES = [
     "bufdir-barnefattigdom",
     "bufdir-barnevern",
+    "nav-uforetrygd",
     "redcross-branches",
 ]
 
@@ -42,6 +46,13 @@ assets = [
         group_name="raw_other",
         automation_condition=cadence.weekly_polled(),
         freshness_policy=cadence.WEEKLY_FRESHNESS,
+    ),
+    # nav-uforetrygd republishes monthly, not weekly — polled to match.
+    *make_raw_ingest_assets(
+        ["nav-uforetrygd"],
+        group_name="raw_other",
+        automation_condition=cadence.monthly_polled(),
+        freshness_policy=cadence.MONTHLY_FRESHNESS,
     ),
     # No condition, no freshness policy: redcross-branches is parked pending
     # its credential. It may not self-trigger and stays runnable by hand.
