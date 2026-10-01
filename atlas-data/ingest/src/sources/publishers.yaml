@@ -67,3 +67,53 @@ publishers:
       No logo: Brreg's mark is not offered under the same open licence as the
       data, so the publisher page renders without one rather than
       redistributing it.
+
+  - id: nav
+    display_name: Arbeids- og velferdsdirektoratet
+    homepage: https://www.nav.no/
+    logo: /img/publishers/nav.svg
+    feedback_url: https://www.nav.no/kontaktoss
+    notes: |
+      The Norwegian Labour and Welfare Administration. Publishes open
+      labour-market and benefits statistics — registered unemployment,
+      disability benefit (uføretrygd), work-assessment allowance (AAP) and
+      sick-leave figures — mostly as monthly Excel releases per kommune.
+      `display_name` is the formal directorate name; the public brand is
+      "NAV", used in `publisher:` on every NAV manifest to match.
+
+  - id: imdi
+    display_name: Integrerings- og mangfoldsdirektoratet
+    homepage: https://www.imdi.no/
+    logo: /img/publishers/imdi.png
+    feedback_url: https://www.imdi.no/om-imdi/kontakt-oss/
+    notes: |
+      The Directorate of Integration and Diversity. Publishes refugee
+      resettlement figures (bosettingstall) and immigration statistics by
+      reason and country background, per kommune and year. Atlas's existing
+      FHI-mediated immigration figures (innvkat, innvandrere) describe *who*;
+      IMDi's data is the *when/where* resettlement-flow signal neither of
+      those carries.
+
+  - id: udir
+    display_name: Utdanningsdirektoratet
+    homepage: https://www.udir.no/
+    logo: /img/publishers/udir.png
+    feedback_url: https://www.udir.no/om-udir/kontakt-oss/
+    notes: |
+      The Directorate for Education and Training. Publishes school-level
+      register data (GSI — Grunnskolens Informasjonssystem), the annual
+      pupil survey (Elevundersøkelsen: trivsel, mobbing) and absence
+      statistics, at a sharper resolution than Atlas's existing FHI-mediated
+      bullying figure (`fhi-mobbing`, a 3-year rolling 7th+10th-grade
+      aggregate).
+
+  - id: husbanken
+    display_name: Husbanken
+    homepage: https://www.husbanken.no/
+    logo: /img/publishers/husbanken.svg
+    feedback_url: https://www.husbanken.no/om-husbanken/kontakt/
+    notes: |
+      The Norwegian State Housing Bank. Publishes housing-support
+      statistikkbank data (bostøtte, startlån) per kommune — the housing
+      half of the income/welfare picture Atlas's SSB and NAV sources do not
+      carry on their own.
