@@ -8,7 +8,9 @@ workbooks are shaped differently (verified below).
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Active — Phases 1-3 DONE, Phase 4 deploy request filed (urb-agents#1796), awaiting imac
+## Status: Completed
+
+**Completed**: 2026-10-01
 
 **Goal**: Add `bufdir-barnevern` as a served Atlas source, plugging the barnevern axis that Report
 #2 (Child Welfare / Vulnerability Composite) is missing today.
@@ -282,7 +284,7 @@ passes checks that prove nothing, per `[[ci-builds-from-empty-so-state-defects-a
 
 ---
 
-## Phase 4: Catalogue, deploy, and verify arrival — IN PROGRESS (deploy request filed, awaiting imac)
+## Phase 4: Catalogue, deploy, and verify arrival — DONE
 
 ### Tasks
 
@@ -306,17 +308,46 @@ passes checks that prove nothing, per `[[ci-builds-from-empty-so-state-defects-a
   between my local fetch and imac's run, as the sibling source already has once). Also flagged:
   `weekly_polled()`'s `AutomationCondition.on_cron` won't self-materialize a brand-new asset before
   the next Sunday 02:00 tick, so the refresh needs triggering deliberately if this should land sooner.
-- [ ] 4.4 **After imac's run**, verify arrival — not green CI, not `transform_and_publish` SUCCESS,
-  but actual rows: `GET /meta_sources?source_id=eq.bufdir-barnevern&select=served_as` is non-empty,
-  and `GET /mart_indicators__bufdir_barnevern?limit=1` returns a row. Per the standing rule, the
-  release isn't done until this step confirms rows arrived, not until the PR merged or the task was
-  filed. **Not yet done — waiting on #1796.**
+- [x] 4.4 **Verified arrival, 2026-10-01** — not just imac's green run report, independently re-checked
+  against the live public API myself before closing the task:
+  ```
+  GET /meta_sources?source_id=eq.bufdir-barnevern&select=served_as
+  -> [{"served_as":["indicators__bufdir_barnevern"]}]
+
+  GET /indicators__bufdir_barnevern?limit=1
+  -> 200, a real row (bv_zip_ind_1a, region_kind "nasjon", category_format "andel",
+     full 2015-2025 values_json spine)
+
+  HEAD with Prefer: count=exact
+  -> content-range: 0-0/191673, cf-cache-status: BYPASS (not a stale cached read)
+  ```
+  **191,673 rows — an exact match to both this plan's own local prediction and imac's independent
+  cluster-side measurement.** No upstream drift between the local validation run and the live
+  deploy. imac also confirmed no regression elsewhere (`bufdir-barnefattigdom` 81,568 rows
+  unchanged; FHI sources unchanged) and caught one more naming gotcha worth keeping: the public API
+  serves `indicators__bufdir_barnevern`, not `mart_indicators__bufdir_barnevern` — the `mart_`
+  prefix is a `marts`-schema internal naming convention, not part of the published `api_v1` view
+  name (the same mistake was made once before on `brreg_enhet`). Full exchange:
+  [urb-agents#1796](https://github.com/terchris/urb-agents/issues/1796), closed `completed`.
 
 ### Validation
 
-Live `curl` against the public API returns real Barnevern rows through
-`mart_indicators__bufdir_barnevern`, and `meta_sources.served_as` for `bufdir-barnevern` is non-empty.
-**Pending imac's response on urb-agents#1796.**
+✅ Done 2026-10-01, verified independently, not taken on trust. Live `curl` against the public API
+returns real Barnevern rows through `indicators__bufdir_barnevern` (191,673, confirmed via
+`Content-Range`, not a cached response), and `meta_sources.served_as` for `bufdir-barnevern` is
+non-empty.
+
+---
+
+## Outcome
+
+Shipped end to end, 2026-10-01: ingest (23 workbooks, 191,673 rows, zero dropped) → dbt staging and
+api_v1 publication → live cluster deploy → independently verified arrival. Two real data defects
+were caught by validating against real ingested data at each phase rather than an empty schema or a
+green CI run — the `andel`/`prosent` vocabulary mismatch (Phase 2) and the Svalbard-as-kommune/fylke
+misclassification (Phase 3) — both documented in place rather than only in this plan, so a future
+reader of the code finds them without needing this file. `bufdir-barnevern` plugs the barnevern axis
+Report #2 (Child Welfare / Vulnerability Composite) was missing.
 
 ---
 
@@ -328,14 +359,13 @@ Live `curl` against the public API returns real Barnevern rows through
   finding, not assumed).
 - [x] `indicators__bufdir_barnevern` and `mart_indicators__bufdir_barnevern` build and test clean
   (23/23 data tests, against real loaded data).
-- [ ] `bufdir-barnevern` appears in `meta_sources.served_as` **after a real deploy**, with rows
-  confirmed via a live `curl`, not inferred from CI. **Not done — this agent has no cluster access;
-  Phase 4 is the deploy request.**
+- [x] `bufdir-barnevern` appears in `meta_sources.served_as` **after a real deploy**, with rows
+  confirmed via a live `curl`, not inferred from CI. Deployed by imac (urb-agents#1796), verified
+  independently by this agent against the live public API: 191,673 rows, non-empty `served_as`.
 - [x] Golden-file tests cover both the `1A`-style shape and the `Turnover_...` outlier shape (33
   tests total, including an end-to-end parse of the real `1A` fixture).
-- [ ] The investigation (`INVESTIGATE-new-norwegian-public-sources.md`) and `1PRIORITY.md` are updated
-  to mark this candidate shipped, same as the other three corrections made 2026-10-01. **Not yet
-  done — do this once Phase 4 confirms rows actually arrived, not before.**
+- [x] The investigation (`INVESTIGATE-new-norwegian-public-sources.md`) and `1PRIORITY.md` are updated
+  to mark this candidate shipped, same as the other three corrections made 2026-10-01.
 
 ---
 
