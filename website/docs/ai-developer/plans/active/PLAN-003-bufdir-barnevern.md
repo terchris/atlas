@@ -8,7 +8,7 @@ workbooks are shaped differently (verified below).
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Active — Phases 1-3 DONE, Phase 4 (deploy + verify) not started
+## Status: Active — Phases 1-3 DONE, Phase 4 deploy request filed (urb-agents#1796), awaiting imac
 
 **Goal**: Add `bufdir-barnevern` as a served Atlas source, plugging the barnevern axis that Report
 #2 (Child Welfare / Vulnerability Composite) is missing today.
@@ -282,26 +282,41 @@ passes checks that prove nothing, per `[[ci-builds-from-empty-so-state-defects-a
 
 ---
 
-## Phase 4: Catalogue, deploy, and verify arrival
+## Phase 4: Catalogue, deploy, and verify arrival — IN PROGRESS (deploy request filed, awaiting imac)
 
 ### Tasks
 
-- [ ] 4.1 Regenerate the website catalogue (`npm run sources:generate` in `website/`) and confirm
-  `bufdir-barnevern` appears as a ninth-publisher-scoped source with no new publisher work needed.
-- [ ] 4.2 Run `atlas-data/dbt/check-every-source-is-served.sh` and confirm `bufdir-barnevern` is not
-  flagged as unreached.
-- [ ] 4.3 Write a `for-ops-atlas-deploy-bufdir-barnevern.md` in `~/home` naming the exact relation
-  (`api_v1.mart_indicators__bufdir_barnevern`) and, if measurable by then, an expected row count —
-  "cannot predict the count" is an acceptable answer, omitting the source is not.
-- [ ] 4.4 **After the deploy runs**, verify arrival — not green CI, not `transform_and_publish`
-  SUCCESS, but actual rows: `GET /meta_sources?source_id=eq.bufdir-barnevern&select=served_as` is
-  non-empty, and `GET /mart_indicators__bufdir_barnevern?limit=1` returns a row. Per the standing
-  rule, the release isn't done until this step confirms rows arrived, not until the PR merges.
+- [x] 4.1 Website catalogue already regenerated as part of Phase 2/3's artifact fixes (`44 sources,
+  9 publishers` — `bufdir-barnevern` scoped under the existing `bufdir` publisher, no new publisher
+  work needed).
+- [x] 4.2 `atlas-data/dbt/check-every-source-is-served.sh` passes locally (44 sources, 0 exempt, 0
+  deferred) — confirmed as part of Phase 3's validation, re-confirmed after merge.
+- [x] 4.3 Filed the deploy request — not a `~/home` file (this project's actual convention, per the
+  bus history: cluster-deploy/verification requests go to **imac**, who operates the live cluster,
+  not a `for-ops-*.md` drop or `ops-dev`). Sent via `urb send --to imac --from atlas --context atlas`,
+  filed as **[urb-agents#1796](https://github.com/terchris/urb-agents/issues/1796)**. Named the exact
+  relations (`raw.bufdir_barnevern`, `api_v1.indicators__bufdir_barnevern`/
+  `mart_indicators__bufdir_barnevern`), the code-location image digest
+  (`ghcr.io/terchris/atlas-data:v20261001-1b16c96`,
+  `sha256:c8fb9ce64920ebb1e58b5564019f238bf972690cd09faab48292b60c44caf9de`, labelled as the
+  code-location digest, not a UIS install-artifact digest — don't have one of those from here),
+  the derived `LANDS WITH` (`annual_sources_refresh` then `transform_and_publish` —
+  `atlas-data/uis/lands-with.sh 8cbcb84..1b16c96`), and an expected row count (191,673, stated
+  explicitly as a prediction to be measured, not a certainty — Bufdir could republish the bundle
+  between my local fetch and imac's run, as the sibling source already has once). Also flagged:
+  `weekly_polled()`'s `AutomationCondition.on_cron` won't self-materialize a brand-new asset before
+  the next Sunday 02:00 tick, so the refresh needs triggering deliberately if this should land sooner.
+- [ ] 4.4 **After imac's run**, verify arrival — not green CI, not `transform_and_publish` SUCCESS,
+  but actual rows: `GET /meta_sources?source_id=eq.bufdir-barnevern&select=served_as` is non-empty,
+  and `GET /mart_indicators__bufdir_barnevern?limit=1` returns a row. Per the standing rule, the
+  release isn't done until this step confirms rows arrived, not until the PR merged or the task was
+  filed. **Not yet done — waiting on #1796.**
 
 ### Validation
 
 Live `curl` against the public API returns real Barnevern rows through
 `mart_indicators__bufdir_barnevern`, and `meta_sources.served_as` for `bufdir-barnevern` is non-empty.
+**Pending imac's response on urb-agents#1796.**
 
 ---
 
