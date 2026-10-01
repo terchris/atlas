@@ -991,6 +991,12 @@
           ]
         },
         {
+          "source_id": "bufdir-barnevern",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
           "source_id": "fhi-alkohol",
           "shared_models": [
             "mart_atlas_inventory"
@@ -1010,12 +1016,6 @@
         },
         {
           "source_id": "fhi-bor-alene",
-          "shared_models": [
-            "mart_atlas_inventory"
-          ]
-        },
-        {
-          "source_id": "fhi-depresjon",
           "shared_models": [
             "mart_atlas_inventory"
           ]
@@ -1119,6 +1119,14 @@
       "feedback_url": "https://www.bufdir.no/kontakt/",
       "consuming_marts": [
         {
+          "mart_name": "mart_atlas_inventory",
+          "api_v1_name": "atlas_inventory",
+          "title": null,
+          "description_short": "What Atlas publishes: one row per endpoint with its row count, freshness and origin.",
+          "description_full": "What Atlas publishes: one row per endpoint with its row count, freshness and origin.\n\nWhat Atlas publishes, one row per queryable endpoint: how many records it\nserves, when its data last arrived, and where those rows came from.\nAsked for by Røde Kors — \"validate that all datasets that are ingested has\nan endpoint and it can be queried … count the number of records each\nendpoint has and update the last time it ingested data.\"\n⚠️ THE GRAIN IS PER ENDPOINT, NOT PER SOURCE. meta_sources answers \"what\ndid Atlas ingest\"; this answers \"what can I query, and is there anything\nin it\". One source can feed several endpoints and one endpoint can draw on\nseveral sources, so the two row counts are not comparable and summing\nsources will not reproduce an endpoint's count.\n⚠️ atlas_inventory does not list ITSELF. It is built from the same seed it\nreports on, so counting itself would be circular and the number would be\nwhatever the table held mid-build. 19 endpoints are listed; 20 are\npublished.",
+          "sample_query": "https://api-atlas.urbalurba.com/atlas_inventory?limit=5"
+        },
+        {
           "mart_name": "mart_indicators__bufdir_barnevern",
           "api_v1_name": "indicators__bufdir_barnevern",
           "title": "Barnevern kommunemonitor",
@@ -1133,11 +1141,64 @@
           "kind": "indicators"
         },
         {
+          "name": "mart_atlas_inventory",
+          "kind": "mart"
+        },
+        {
           "name": "mart_indicators__bufdir_barnevern",
           "kind": "mart"
         }
       ],
-      "joined_with": [],
+      "joined_with": [
+        {
+          "source_id": "brreg-enheter-alle",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "brreg-frivillige",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "brreg-oppdateringer",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "bufdir-barnefattigdom",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "fhi-alkohol",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "fhi-befolkning",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "fhi-befolkningsvekst",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "fhi-bor-alene",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        }
+      ],
       "last_ingested_at": null,
       "latest_row_count": null,
       "total_runs": null,
@@ -8562,6 +8623,12 @@
           ]
         },
         {
+          "source_id": "bufdir-barnevern",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
           "source_id": "fhi-alkohol",
           "shared_models": [
             "mart_atlas_inventory"
@@ -8569,12 +8636,6 @@
         },
         {
           "source_id": "fhi-befolkning",
-          "shared_models": [
-            "mart_atlas_inventory"
-          ]
-        },
-        {
-          "source_id": "fhi-befolkningsvekst",
           "shared_models": [
             "mart_atlas_inventory"
           ]
@@ -10056,13 +10117,13 @@
           ]
         },
         {
-          "source_id": "fhi-alkohol",
+          "source_id": "bufdir-barnevern",
           "shared_models": [
             "mart_atlas_inventory"
           ]
         },
         {
-          "source_id": "fhi-befolkning",
+          "source_id": "fhi-alkohol",
           "shared_models": [
             "mart_atlas_inventory"
           ]
@@ -10875,6 +10936,12 @@
           ]
         },
         {
+          "source_id": "bufdir-barnevern",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
           "source_id": "fhi-alkohol",
           "shared_models": [
             "mart_atlas_inventory"
@@ -10888,12 +10955,6 @@
         },
         {
           "source_id": "fhi-befolkningsvekst",
-          "shared_models": [
-            "mart_atlas_inventory"
-          ]
-        },
-        {
-          "source_id": "fhi-bor-alene",
           "shared_models": [
             "mart_atlas_inventory"
           ]
@@ -14141,6 +14202,12 @@
           "model_name": "mart_indicators__bufdir_barnefattigdom",
           "title": "Barnefattigdom kommunemonitor",
           "description_short": "Per-source indicator data for bufdir-barnefattigdom, at the publisher's own grain."
+        },
+        {
+          "parent_kind": "model",
+          "model_name": "mart_indicators__bufdir_barnevern",
+          "title": "Barnevern kommunemonitor",
+          "description_short": "Per-source indicator data for bufdir-barnevern, at the publisher's own grain."
         },
         {
           "parent_kind": "model",
@@ -20198,6 +20265,12 @@
                 ]
               },
               {
+                "source_id": "bufdir-barnevern",
+                "shared_models": [
+                  "mart_atlas_inventory"
+                ]
+              },
+              {
                 "source_id": "fhi-alkohol",
                 "shared_models": [
                   "mart_atlas_inventory"
@@ -20217,12 +20290,6 @@
               },
               {
                 "source_id": "fhi-bor-alene",
-                "shared_models": [
-                  "mart_atlas_inventory"
-                ]
-              },
-              {
-                "source_id": "fhi-depresjon",
                 "shared_models": [
                   "mart_atlas_inventory"
                 ]
