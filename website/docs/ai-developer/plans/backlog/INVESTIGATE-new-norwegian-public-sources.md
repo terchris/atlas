@@ -546,11 +546,12 @@ Each PLAN follows the standard Atlas pattern (per-source folder under `atlas-dat
   `backlog/`. Confirmed live: no kommune codes (names only, resolved via the existing
   `crosswalk_kommune_name` model), suppression marker `:` with IMDi's own inline explanation, and a
   real alternative API lead (IMDikator) that didn't pan out within reasonable effort — chased far
-  enough to decide not to depend on it, not abandoned on a guess. **Blocked on [Q1]: licence
-  genuinely could not be verified anywhere** (unlike NAV, where it was found directly) — needs a
-  human answer before implementation, not a default.
-- [ ] Draft one of the Udir/Husbanken PLANs, or `PLAN-005-nav-aap.md`/`PLAN-006-nav-sykefravaer.md`
-  once `PLAN-004` ships and its ingest pattern is proven.
+  enough to decide not to depend on it, not abandoned on a guess. **[Q1] (licence) resolved by
+  authorization, 2026-10-01** — Terje: *"IMDI is ok. we can use it."* `manifest.yml` records
+  `license: NLOD` as Atlas's own default for an unstated licence, applied under that authorization,
+  not found on IMDi's own site — kept visibly distinct, not conflated with a verified citation.
+  Ready for Phase 2.
+- [ ] Draft one of the Udir/Husbanken PLANs, or `PLAN-005-nav-aap.md`/`PLAN-006-nav-sykefravaer.md`.
 - [ ] Optionally: pre-write outreach emails to Bufdir, NAV, IMDi, Helsedirektoratet asking whether richer machine-readable distributions exist than what's surfaced publicly. (Pattern reused from [`INVESTIGATE-folkehjelp-supply` § A.4](./INVESTIGATE-folkehjelp-supply.md#a4-craft-cms-graphql-probe--q2-outreach-worth-pursuing) — non-blocking; we ship around the public surface either way.)
 
 ---
