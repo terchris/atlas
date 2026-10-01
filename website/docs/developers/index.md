@@ -6,7 +6,7 @@ This section is for **anyone consuming Atlas's public PostgREST API** to build t
 
 <!-- BEGIN holdings (generated) -->
 
-**44 upstream sources** from **5 publishers**, served as **80 read-only relations**.
+**44 upstream sources** from **5 publishers**, served as **81 read-only relations**.
 
 | publisher | sources | broadly |
 |---|---|---|
@@ -41,6 +41,7 @@ Licences: **NLOD** for 43 of 44 — Norwegian public data, free to reuse with at
 | `indicator_missing_kommuner` | One row per indicator and kommune that the indicator does not cover. |
 | `indicator_summary` | One row per indicator and source: latest year, kommune coverage and value range. |
 | `indicators__bufdir_barnefattigdom` | Per-source indicator data for bufdir-barnefattigdom, at the publisher's own grain. |
+| `indicators__bufdir_barnevern` | Per-source indicator data for bufdir-barnevern, at the publisher's own grain. |
 | `indicators__fhi_alkohol` | Per-source indicator data for fhi-alkohol (Folkehelseinstituttet), at the publisher's own grain. |
 | `indicators__fhi_befolkning` | Per-source indicator data for fhi-befolkning (Folkehelseinstituttet), at the publisher's own grain. |
 | `indicators__fhi_befolkningsvekst` | Per-source indicator data for fhi-befolkningsvekst (Folkehelseinstituttet), at the publisher's own grain. |

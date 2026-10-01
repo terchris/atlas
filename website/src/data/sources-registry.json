@@ -1117,8 +1117,26 @@
         "bibtex": "@misc{atlas_bufdir_barnevern,\n  author = {Barne-, ungdoms- og familiedirektoratet},\n  title  = {Barnevern kommunemonitor},\n  year   = {n.d.},\n  url    = {https://www.bufdir.no/statistikk-og-analyse/monitor/barnevern/},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/bufdir-barnevern}\n}"
       },
       "feedback_url": "https://www.bufdir.no/kontakt/",
-      "consuming_marts": [],
-      "consuming_models": [],
+      "consuming_marts": [
+        {
+          "mart_name": "mart_indicators__bufdir_barnevern",
+          "api_v1_name": "indicators__bufdir_barnevern",
+          "title": "Barnevern kommunemonitor",
+          "description_short": "Per-source indicator data for bufdir-barnevern, at the publisher's own grain.",
+          "description_full": "Per-source indicator data for bufdir-barnevern, at the publisher's own grain.\n\nPer-source indicator relation for `bufdir-barnevern` (Barne-, ungdoms- og familiedirektoratet), published at the grain the publisher\nactually uses rather than flattened into the cross-source views.\n🔴 stability:source — the column set here follows Barne-, ungdoms- og familiedirektoratet, not Atlas. If the\npublisher adds, renames or drops a dimension, this relation changes with it. That is\nthe deliberate trade for getting the real grain; prefer a stability:curated relation\nif you need a shape Atlas promises to hold still. Decode codes through\nmeta_dimensions filtered to source_id=bufdir-barnevern. Sibling of\nmart_indicators__bufdir_barnefattigdom — no category_unit column here, and\ncategory_format uses \"andel\" (this source's own vocabulary), not \"prosent\".",
+          "sample_query": "https://api-atlas.urbalurba.com/indicators__bufdir_barnevern?limit=5"
+        }
+      ],
+      "consuming_models": [
+        {
+          "name": "indicators__bufdir_barnevern",
+          "kind": "indicators"
+        },
+        {
+          "name": "mart_indicators__bufdir_barnevern",
+          "kind": "mart"
+        }
+      ],
       "joined_with": [],
       "last_ingested_at": null,
       "latest_row_count": null,
@@ -15698,6 +15716,99 @@
       ],
       "sample_query": "https://api-atlas.urbalurba.com/indicators__bufdir_barnefattigdom?limit=5",
       "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__bufdir_barnefattigdom"
+    },
+    {
+      "kind": "view",
+      "view_id": "indicators__bufdir_barnevern",
+      "mart_name": "mart_indicators__bufdir_barnevern",
+      "api_v1_name": "indicators__bufdir_barnevern",
+      "title": "Barnevern kommunemonitor",
+      "description_short": "Per-source indicator data for bufdir-barnevern, at the publisher's own grain.",
+      "description_full": "Per-source indicator data for bufdir-barnevern, at the publisher's own grain.\n\nPer-source indicator relation for `bufdir-barnevern` (Barne-, ungdoms- og familiedirektoratet), published at the grain the publisher\nactually uses rather than flattened into the cross-source views.\n🔴 stability:source — the column set here follows Barne-, ungdoms- og familiedirektoratet, not Atlas. If the\npublisher adds, renames or drops a dimension, this relation changes with it. That is\nthe deliberate trade for getting the real grain; prefer a stability:curated relation\nif you need a shape Atlas promises to hold still. Decode codes through\nmeta_dimensions filtered to source_id=bufdir-barnevern. Sibling of\nmart_indicators__bufdir_barnefattigdom — no category_unit column here, and\ncategory_format uses \"andel\" (this source's own vocabulary), not \"prosent\".",
+      "columns": [
+        {
+          "name": "source_id",
+          "description": "Atlas catalogue id for this ingest — always bufdir-barnevern."
+        },
+        {
+          "name": "indicator_api_id",
+          "description": "Stable surrogate workbook id — bv_zip_ind_<code> (e.g. bv_zip_ind_1a), or bv_zip_<24 hex SHA-256> fallback."
+        },
+        {
+          "name": "indicator_slug",
+          "description": "Normalised slug from the upstream indicator name; used as part of contents_code."
+        },
+        {
+          "name": "indicator_group_slug",
+          "description": "Fixed literal barnevern_zip for ZIP-ingested rows."
+        },
+        {
+          "name": "indicator_name",
+          "description": "Workbook-derived indicator title concatenated above the Region header rows."
+        },
+        {
+          "name": "indicator_title",
+          "description": "Same human-facing title chain as indicator_name after ZIP parsing."
+        },
+        {
+          "name": "link_text",
+          "description": "NULL for workbook-backed rows."
+        },
+        {
+          "name": "region_code",
+          "description": "Geographic code string from workbook column Region, verbatim from upstream. It may be a kommune, fylke, bydel, Svalbard, or national code; region_kind says which."
+        },
+        {
+          "name": "region_kind",
+          "description": "What region_code is, from classify_region_code: kommune · fylke · svalbard · bydel · nasjon · unknown."
+        },
+        {
+          "name": "kommune_nr",
+          "description": "Four-digit kommune code, derived through region_code_to_kommune_nr so Svalbard-shaped codes are correctly NULL rather than misclassified as a kommune. NULL for other geography levels."
+        },
+        {
+          "name": "fylke_nr",
+          "description": "Two-digit fylke code when region_code is exactly two digits; NULL otherwise."
+        },
+        {
+          "name": "category_format",
+          "description": "Tallformat column — andel (share/decimal-formatted, not limited to 0-100) or antall (count). There is no category_unit column for this source."
+        },
+        {
+          "name": "year",
+          "description": "Calendar year of the observation."
+        },
+        {
+          "name": "contents_code",
+          "description": "Atlas-normalised variable code: prefix `bv_`, the indicator slug, and category_format joined with `__`, so each measure is filter-stable in the catalogue."
+        },
+        {
+          "name": "contents_label",
+          "description": "Human-readable label combining the workbook title with the andel/antall format."
+        },
+        {
+          "name": "value",
+          "description": "Numeric value for this year; NULL when the upstream series omits this year."
+        },
+        {
+          "name": "values_json",
+          "description": "Parse of Sheet1 rows into year keys (spreadsheet blanks / suppression → JSON null values)."
+        },
+        {
+          "name": "updated_at",
+          "description": "Timestamp when the row was last written by ingest (from raw.loaded_at)."
+        }
+      ],
+      "built_from": [
+        {
+          "parent_kind": "model",
+          "model_name": "indicators__bufdir_barnevern",
+          "title": null,
+          "description_short": "Per-source passthrough for Bufdir Barnevern kommunemonitor."
+        }
+      ],
+      "sample_query": "https://api-atlas.urbalurba.com/indicators__bufdir_barnevern?limit=5",
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__bufdir_barnevern"
     },
     {
       "kind": "view",
