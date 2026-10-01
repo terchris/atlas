@@ -616,27 +616,54 @@ def _drive_graphql_failure(mod, raiser):
 
 
 
-def test_nothing_declares_itself_running(mod):
+def test_declaring_running_in_code_is_reviewed_not_merely_present(mod):
     """
-    🔴 AN ABSENCE-GUARD FOR THE ASSUMPTION UNDER `running_instigators`: no row in
-    `instigators` means STOPPED only because nothing in this code location
-    declares `default_status=RUNNING`. If that changes, absence stops meaning
-    stoppedness — and the tool's answer would be wrong only in the window before
-    the daemon's first tick writes the row, which is exactly the kind of defect
-    nobody finds.
+    🔴 WAS an absence-guard forbidding `default_status` anywhere in this package;
+    tripped and reviewed 2026-10-01 (urb-agents #1793, atlas PR #482) when
+    `automation.py` and `schedules.py` were deliberately changed to
+    `default_status=RUNNING` — Terje's standing requirement that an install or
+    reset must not need a human to notice and start anything.
 
-    ⚠️ Swept over the whole package, not over the two modules that declare
-    schedules today. Matching the spelling I remember instead of the pattern is
-    how a fix landed in three places out of four once already.
+    The guard's original worry was real and is answered here, not deleted:
+    does `running_instigators()` still read "no row yet" as "stopped" once an
+    instigator can be RUNNING purely by code declaration? **No** — Dagster
+    reports that exact case over GraphQL as `DECLARED_IN_CODE` (or
+    `AUTOMATICALLY_RUNNING` on older versions), which `_drive_instigators`
+    already treats as running, independently re-verified right here rather
+    than trusted from `test_declared_in_code_counts_as_running` alone.
+
+    ⚠️ What stays open, and is NOT what this test claims to settle: the window
+    before Dagster's daemon has loaded the code location at all, during which
+    a GraphQL query returns nothing for ANY instigator — declared-running or
+    not. That race pre-dates this change and is not specific to
+    `default_status`; it is not this test's job.
+
+    **What this test still guards**: that the reviewed set of files declaring
+    `default_status` doesn't grow silently. A NEW file doing so should trip
+    this exactly as the original did, and get the same review — swept over
+    the whole package, not just the two modules reviewed today, because
+    matching a file list instead of the pattern is how a fix once landed in
+    three places out of four.
     """
     pkg = HERE.parent / "dagster" / "atlas_data"
     assert pkg.is_dir(), f"cannot find the definitions package at {pkg}"
-    offenders = [f.name for f in sorted(pkg.rglob("*.py")) if "default_status" in f.read_text()]
-    assert not offenders, (
-        f"{offenders} set default_status; running_instigators() assumes no instigator "
-        "declares itself RUNNING, so absence of a row means stopped. Either revert, "
-        "or make that function read the declarations too."
+    declares = {f.name for f in sorted(pkg.rglob("*.py")) if "default_status" in f.read_text()}
+    reviewed = {"automation.py", "schedules.py"}
+    assert declares == reviewed, (
+        f"default_status is now declared in {sorted(declares)}, reviewed set is "
+        f"{sorted(reviewed)}. A file outside the reviewed set needs the same check "
+        "test_declared_in_code_counts_as_running does: confirm DECLARED_IN_CODE / "
+        "AUTOMATICALLY_RUNNING from Dagster's GraphQL is still read as running for "
+        "it, then add it to `reviewed` here."
     )
+
+    # Re-verify the thing that actually matters, not just that a sibling test
+    # exists to verify it — DECLARED_IN_CODE and AUTOMATICALLY_RUNNING both
+    # read as running for an instigator with no explicit stored state.
+    for status in ("DECLARED_IN_CODE", "AUTOMATICALLY_RUNNING"):
+        payload = _repos([{"name": "transform_daily", "scheduleState": {"status": status}}])
+        running, _loc, _why = _drive_instigators(mod, payload)
+        assert running == {"transform_daily"}, (status, running)
 
 
 def test_the_named_schedule_is_the_one_that_exists(mod):

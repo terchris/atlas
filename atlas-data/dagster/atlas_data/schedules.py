@@ -37,6 +37,8 @@ import os
 from dagster import (
     AssetSelection,
     DagsterRunStatus,
+    DefaultScheduleStatus,
+    DefaultSensorStatus,
     RunRequest,
     RunStatusSensorContext,
     ScheduleDefinition,
@@ -641,6 +643,12 @@ transform_checks_job = define_asset_job(
     monitored_jobs=[transform_job],
     request_job=api_v1_checks_job,
     name="run_api_v1_checks_after_transform",
+    # 🔴 RUNNING by default (urb-agents #1793) -- stopped by default meant the
+    # check chain needed a human to re-enable it after every reset, which is
+    # exactly gap #4 the night of 2026-09-30/10-01: raw tables correct,
+    # marts.mart_meta_sources still reading "0 runs" because nothing re-ran
+    # the transform that rebuilds it.
+    default_status=DefaultSensorStatus.RUNNING,
     description=(
         "Runs the publish gate once the build and api_v1 publish have succeeded. "
         "The ordering is load-bearing, not cosmetic: `dbt run` drops the api_v1 "
@@ -658,6 +666,9 @@ def run_api_v1_checks_after_transform(context: RunStatusSensorContext):
     monitored_jobs=[api_v1_checks_job],
     request_job=transform_checks_job,
     name="run_dbt_checks_after_api_v1",
+    # 🔴 RUNNING by default -- same reason as run_api_v1_checks_after_transform
+    # above. See urb-agents #1793.
+    default_status=DefaultSensorStatus.RUNNING,
     description=(
         "Runs the dbt data-quality suite after the publish gate has passed. "
         "Chained rather than parallel so the cheap, high-signal check reports "
@@ -679,6 +690,11 @@ transform_schedule = ScheduleDefinition(
     job=transform_job,
     cron_schedule="0 5 * * *",  # 05:00 daily — after Sunday's ingest window
     execution_timezone=TIMEZONE,
+    # 🔴 RUNNING by default (urb-agents #1793): a schedule declared without
+    # this ships STOPPED and needs a human to enable it after every fresh
+    # instance or reset. Confirmed live the night of 2026-09-30/10-01 -- all
+    # three schedules in this file came up stopped after rdctl reset --vm.
+    default_status=DefaultScheduleStatus.RUNNING,
 )
 
 
@@ -715,6 +731,9 @@ daily_validation_schedule = ScheduleDefinition(
     job=daily_validation_job,
     cron_schedule="0 6 * * *",  # 06:00 daily — one hour after transform_daily
     execution_timezone=TIMEZONE,
+    # 🔴 RUNNING by default -- see transform_schedule above. Terje asked for
+    # this check explicitly (#1433); it cannot do its job stopped.
+    default_status=DefaultScheduleStatus.RUNNING,
 )
 
 # ── What happened to the ingest schedules ────────────────────────────────────
@@ -738,6 +757,8 @@ brreg_transform_schedule = ScheduleDefinition(
     job=brreg_transform_job,
     cron_schedule=cadence.BRREG_TRANSFORM_CRON,
     execution_timezone=cadence.TIMEZONE,
+    # 🔴 RUNNING by default -- see transform_schedule above.
+    default_status=DefaultScheduleStatus.RUNNING,
     description=(
         "Reconciles the register into marts.dim_brreg_enhet, ten minutes after "
         "each feed poll. The offset is load-bearing: firing alongside the feed "
