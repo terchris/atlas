@@ -2245,6 +2245,109 @@ models:
             - year
             - month
 
+  - name: indicators__nav_helt_ledige
+    description: |-
+      Per-source passthrough for NAV HL060 (helt ledige — fully unemployed — count and share of
+      the labour force, per kommune, monthly). Atlas's fourth NAV-adjacent source, third
+      monthly-cadence indicator model. One row per (region_code, category_format, year, month).
+      Single-table source — no indicator_slug/name/title/group_slug columns the way the Bufdir
+      sources carry. No fylke_nr column — this table has no fylke-level rows at all.
+    columns:
+      - name: source_id
+        description: Atlas catalogue id for this ingest — always nav-helt-ledige.
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: [nav-helt-ledige]
+        data_type: text
+      - name: region_code
+        description: >-
+          NAV's own region code, verbatim from the workbook row label — a 4-digit kommune code
+          (including the Svalbard pseudo-kommune 2100), or the literal string "Ukjent" (NAV's own
+          unknown-region bucket). region_kind says which.
+        data_tests:
+          - not_null
+        data_type: text
+      - name: kommune_nr
+        description: >-
+          Four-digit kommune code, derived through region_code_to_kommune_nr. NULL for "Ukjent"
+          and for Svalbard (2100 resolves to region_kind=svalbard, kommune_nr NULL).
+        data_tests:
+          - relationships:
+              to: ref('dim_kommune')
+              field: kommune_nr
+        data_type: text
+      - name: region_kind
+        description: |
+          What region_code is, from classify_region_code: kommune, svalbard or unknown (the three
+          observed live for this source — no fylke/bydel rows exist here).
+        data_tests:
+          - not_null
+          - relationships: {to: ref('ref_region_kind'), field: region_kind}
+        data_type: text
+      - name: category_format
+        description: >-
+          Which sheet the row came from — antall (count) or prosent (share of the labour force) —
+          not a column within a sheet. Unlike nav_aap, "Ukjent" is present under both antall and
+          prosent here (every prosent cell for it is NAV's own suppression marker, not omitted).
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: [antall, prosent]
+        data_type: text
+      - name: year
+        description: Calendar year of the observation.
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 2000
+              max_value: 2050
+        data_type: integer
+      - name: month
+        description: Calendar month (1-12) of the observation. A plain integer, not a dim_period reference.
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 1
+              max_value: 12
+        data_type: integer
+      - name: contents_code
+        description: |
+          Atlas-normalised variable code: fixed prefix `nav_helt_ledige__` joined with
+          category_format, so each measure is filter-stable in the catalogue.
+        data_tests:
+          - not_null
+        data_type: text
+      - name: contents_label
+        description: >-
+          Human-readable label combining "Helt ledige" with the antall/prosent format.
+        data_tests:
+          - not_null
+        data_type: text
+      - name: value
+        description: Numeric value for this year/month; NULL when NAV suppresses the cell (*).
+        data_type: numeric
+      - name: values_json
+        description: >-
+          Parse of the sheet's rows into month keys for this region/category_format/year slice
+          (NAV's suppression marker * and blanks → JSON null values).
+        data_tests:
+          - not_null
+        data_type: jsonb
+      - name: updated_at
+        description: Timestamp when the row was last written by ingest (from raw.loaded_at).
+        data_tests:
+          - not_null
+        data_type: timestamp with time zone
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - source_id
+            - region_code
+            - category_format
+            - year
+            - month
+
   - name: indicators__imdi_bosetting
     description: |-
       Per-source passthrough for IMDi bosettingstall (kommune-level refugee resettlement

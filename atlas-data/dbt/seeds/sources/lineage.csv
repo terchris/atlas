@@ -72,6 +72,7 @@ indicators__husbanken_bostotte,husbanken-bostotte
 indicators__imdi_bosetting,imdi-bosetting
 indicators__imdi_bosetting,ssb-klass-kommuner
 indicators__nav_aap,nav-aap
+indicators__nav_helt_ledige,nav-helt-ledige
 indicators__nav_uforetrygd,nav-uforetrygd
 indicators__ssb_06083,ssb-06083
 indicators__ssb_06913,ssb-06913
@@ -123,6 +124,7 @@ mart_atlas_inventory,fhi-vgs-gjennomforing
 mart_atlas_inventory,husbanken-bostotte
 mart_atlas_inventory,imdi-bosetting
 mart_atlas_inventory,nav-aap
+mart_atlas_inventory,nav-helt-ledige
 mart_atlas_inventory,nav-uforetrygd
 mart_atlas_inventory,redcross-branches
 mart_atlas_inventory,ssb-06083
@@ -327,6 +329,7 @@ mart_indicators__husbanken_bostotte,husbanken-bostotte
 mart_indicators__imdi_bosetting,imdi-bosetting
 mart_indicators__imdi_bosetting,ssb-klass-kommuner
 mart_indicators__nav_aap,nav-aap
+mart_indicators__nav_helt_ledige,nav-helt-ledige
 mart_indicators__nav_uforetrygd,nav-uforetrygd
 mart_indicators__ssb_06083,ssb-06083
 mart_indicators__ssb_06913,ssb-06913

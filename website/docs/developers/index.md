@@ -6,23 +6,23 @@ This section is for **anyone consuming Atlas's public PostgREST API** to build t
 
 <!-- BEGIN holdings (generated) -->
 
-**50 upstream sources** from **9 publishers**, served as **87 read-only relations**.
+**51 upstream sources** from **9 publishers**, served as **88 read-only relations**.
 
 | publisher | sources | broadly |
 |---|---|---|
 | Folkehelseinstituttet | 21 | public health, and the Ungdata youth surveys |
 | Statistisk sentralbyrå | 18 | population, income, families, housing, education, crime |
 | Brønnøysundregistrene | 3 | the company and voluntary-organisation registers |
+| Arbeids- og velferdsdirektoratet | 3 | — |
 | Barne-, ungdoms- og familiedirektoratet | 2 | child poverty |
-| Arbeids- og velferdsdirektoratet | 2 | — |
 | Husbanken | 1 | — |
 | Integrerings- og mangfoldsdirektoratet | 1 | — |
 | Norges Røde Kors | 1 | local chapters and their activities |
 | Utdanningsdirektoratet | 1 | — |
 
-By EU data theme: **SOCI** 26 (society) · **HEAL** 12 (health) · **EDUC** 6 (education) · **GOVE** 5 (government) · **JUST** 1 (justice).
+By EU data theme: **SOCI** 27 (society) · **HEAL** 12 (health) · **EDUC** 6 (education) · **GOVE** 5 (government) · **JUST** 1 (justice).
 
-Licences: **NLOD** for 47 of 50 — Norwegian public data, free to reuse with attribution. The exceptions are `nav-aap` (CC BY 4.0) and `nav-uforetrygd` (CC BY 4.0) and `redcross-branches` (permissive) — Red Cross's own data rather than the state's.
+Licences: **NLOD** for 47 of 51 — Norwegian public data, free to reuse with attribution. The exceptions are `nav-aap` (CC BY 4.0) and `nav-helt-ledige` (CC BY 4.0) and `nav-uforetrygd` (CC BY 4.0) and `redcross-branches` (permissive) — Red Cross's own data rather than the state's.
 
 ### What you can query
 
@@ -70,6 +70,7 @@ Licences: **NLOD** for 47 of 50 — Norwegian public data, free to reuse with at
 | `indicators__husbanken_bostotte` | Per-source indicator data for husbanken-bostotte (Husbanken), at the publisher's own grain. |
 | `indicators__imdi_bosetting` | Per-source indicator data for imdi-bosetting (Integrerings- og mangfoldsdirektoratet), at the publisher's own grain. |
 | `indicators__nav_aap` | Per-source indicator data for nav-aap (Arbeids- og velferdsdirektoratet), at the publisher's own grain. |
+| `indicators__nav_helt_ledige` | Per-source indicator data for nav-helt-ledige (Arbeids- og velferdsdirektoratet), at the publisher's own grain. |
 | `indicators__nav_uforetrygd` | Per-source indicator data for nav-uforetrygd (Arbeids- og velferdsdirektoratet), at the publisher's own grain. |
 | `indicators__ssb_06083` | Per-source indicator data for ssb-06083 (Statistisk sentralbyrå), at the publisher's own grain. |
 | `indicators__ssb_06913` | Per-source indicator data for ssb-06913 (Statistisk sentralbyrå), at the publisher's own grain. |
