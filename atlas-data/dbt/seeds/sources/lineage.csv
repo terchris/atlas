@@ -89,6 +89,7 @@ indicators__ssb_12132,ssb-12132
 indicators__ssb_12292,ssb-12292
 indicators__ssb_12944,ssb-12944
 indicators__ssb_13995,ssb-13995
+indicators__udir_gsi,udir-gsi
 mart_activity_catalog,redcross-branches
 mart_atlas_inventory,brreg-enheter-alle
 mart_atlas_inventory,brreg-frivillige
@@ -136,6 +137,7 @@ mart_atlas_inventory,ssb-13995
 mart_atlas_inventory,ssb-crime-tables
 mart_atlas_inventory,ssb-klass-fylker
 mart_atlas_inventory,ssb-klass-kommuner
+mart_atlas_inventory,udir-gsi
 mart_brreg_enhet,brreg-enheter-alle
 mart_brreg_enhet,brreg-frivillige
 mart_brreg_enhet,brreg-oppdateringer
@@ -336,6 +338,7 @@ mart_indicators__ssb_12132,ssb-12132
 mart_indicators__ssb_12292,ssb-12292
 mart_indicators__ssb_12944,ssb-12944
 mart_indicators__ssb_13995,ssb-13995
+mart_indicators__udir_gsi,udir-gsi
 mart_kommune_befolkning_alder,ssb-07459
 mart_kommune_befolkning_alder,ssb-klass-fylker
 mart_kommune_befolkning_alder,ssb-klass-kommuner

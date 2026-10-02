@@ -1,0 +1,88 @@
+{
+  "TidID": [
+    {
+      "indeks": 0,
+      "id": 202510,
+      "kode": "202510",
+      "navn": "2025-26",
+      "erBegrenset": 0
+    },
+    {
+      "indeks": 1,
+      "id": 202410,
+      "kode": "202410",
+      "navn": "2024-25",
+      "erBegrenset": 0
+    },
+    {
+      "indeks": 2,
+      "id": 202310,
+      "kode": "202310",
+      "navn": "2023-24",
+      "erBegrenset": 0
+    },
+    {
+      "indeks": 3,
+      "id": 202210,
+      "kode": "202210",
+      "navn": "2022-23",
+      "erBegrenset": 0
+    },
+    {
+      "indeks": 4,
+      "id": 202110,
+      "kode": "202110",
+      "navn": "2021-22",
+      "erBegrenset": 0
+    },
+    {
+      "indeks": 5,
+      "id": 202010,
+      "kode": "202010",
+      "navn": "2020-21",
+      "erBegrenset": 0
+    },
+    {
+      "indeks": 6,
+      "id": 201910,
+      "kode": "201910",
+      "navn": "2019-20",
+      "erBegrenset": 0
+    },
+    {
+      "indeks": 7,
+      "id": 201810,
+      "kode": "201810",
+      "navn": "2018-19",
+      "erBegrenset": 0
+    },
+    {
+      "indeks": 8,
+      "id": 201710,
+      "kode": "201710",
+      "navn": "2017-18",
+      "erBegrenset": 0
+    },
+    {
+      "indeks": 9,
+      "id": 201610,
+      "kode": "201610",
+      "navn": "2016-17",
+      "erBegrenset": 0
+    },
+    {
+      "indeks": 10,
+      "id": 201510,
+      "kode": "201510",
+      "navn": "2015-16",
+      "erBegrenset": 0
+    },
+    {
+      "indeks": 11,
+      "id": 201410,
+      "kode": "201410",
+      "navn": "2014-15",
+      "erBegrenset": 0
+    }
+  ]
+}

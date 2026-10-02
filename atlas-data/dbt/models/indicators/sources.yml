@@ -1595,3 +1595,48 @@ sources:
             data_type: text
           - name: loaded_at
             data_type: timestamp with time zone
+      - name: udir_gsi
+        description: |
+          Udir GSI (Grunnskolens informasjonssystem) — pupil counts, individually-tailored-
+          instruction counts, Norwegian-reinforcement counts, and school counts, per region, per
+          school year. Reached through statistikkportalen.udir.no/api/rapportering ("USS — Udirs
+          StatistikkSystem"), a real Swagger-documented API that Udir's own public docs name the
+          wrong hostname for (api.udir-statistikkbanken.no is dead). The grand-total slice only
+          (trinn/kjønn/eierform breakdowns pinned to "alle") — the underlying report supports a
+          much finer cross-tab this source does not ingest.
+          Populated by atlas-data/ingest/src/sources/udir-gsi.
+        loaded_at_field: loaded_at
+        meta:
+          ingest_cadence: weekly
+        freshness:
+          warn_after: {count: 400, period: day}
+          error_after: {count: 800, period: day}
+        columns:
+          - name: region_code
+            description: >-
+              SSB-format region code, read directly from Udir's API at the third hierarchy level —
+              not always a real kommune. Svalbard (matching SSB's 21xx pattern) reports a school at
+              this exact tree depth; kommune_nr is resolved downstream via classify_region_code,
+              not assumed from this column's shape.
+            data_tests:
+              - not_null
+          - name: year
+            description: >-
+              School year code from Udir's own TidID dimension (e.g. 202510 = school year 2025-26),
+              discovered dynamically, not a hardcoded range.
+            data_tests:
+              - not_null
+          - name: measure
+            description: >-
+              Which GSI figure this row's value is — Antall elever, Antall elever med individuelt
+              tilrettelagt opplæring/spesialundervisning, Antall elever med forsterket opplæring i
+              norsk, or Antall skoler. Four distinct counts, not format variants of one quantity.
+            data_tests:
+              - not_null
+          - name: value
+            description: >-
+              The measure's value for this region and year. NULL when Udir itself suppressed the
+              cell (its own marker, the literal character "*").
+            data_type: numeric
+          - name: loaded_at
+            data_type: timestamp with time zone

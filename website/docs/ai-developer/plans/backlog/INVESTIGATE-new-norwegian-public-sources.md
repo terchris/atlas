@@ -128,7 +128,7 @@ drafting `PLAN-004-nav-uforetrygd.md`:**
 
 🔴 **PLAN-010 drafted 2026-10-02 — Phase 1 live-verified this entire section and found a real,
 working API this section didn't know existed.** See
-[`PLAN-010-udir-gsi.md`](PLAN-010-udir-gsi.md) for the full research. Headline corrections:
+[`PLAN-010-udir-gsi.md`](../active/PLAN-010-udir-gsi.md) for the full research. Headline corrections:
 Udir's own public docs name a **dead** API hostname (`api.udir-statistikkbanken.no` — TLS cert
 mismatch, Azure 404 page); the real, working host is `api.statistikkbanken.udir.no`
 (`statistikkportalen.udir.no/api/rapportering` for the Swagger-documented endpoints). That one API

@@ -67,6 +67,7 @@
     "ingest:ssb-crime-tables": "tsx --env-file-if-exists=.env src/sources/ssb-crime-tables/index.ts",
     "ingest:ssb-klass-fylker": "tsx --env-file-if-exists=.env src/sources/ssb-klass-fylker/index.ts",
     "ingest:ssb-klass-kommuner": "tsx --env-file-if-exists=.env src/sources/ssb-klass-kommuner/index.ts",
+    "ingest:udir-gsi": "tsx --env-file-if-exists=.env src/sources/udir-gsi/index.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest"
