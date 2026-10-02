@@ -91,4 +91,4 @@ macro's existing `unknown` kind — no macro change needed for either.
 - Helt-ledige page: https://www.nav.no/no/nav-og-samfunn/statistikk/arbeidssokere-og-stillinger-statistikk/helt-ledige
 - Licence: https://creativecommons.org/licenses/by/4.0/deed.no
 - Shared helpers: `atlas-data/ingest/src/lib/postgres.ts`, `atlas-data/ingest/src/lib/output.ts`, `atlas-data/ingest/src/lib/ingest_run.ts`
-- Plan: [`PLAN-014-nav-helt-ledige.md`](../../../../../website/docs/ai-developer/plans/active/PLAN-014-nav-helt-ledige.md)
+- Plan: [`PLAN-014-nav-helt-ledige.md`](../../../../../website/docs/ai-developer/plans/completed/PLAN-014-nav-helt-ledige.md)

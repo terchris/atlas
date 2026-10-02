@@ -11,7 +11,7 @@ kommune-level table (`HL060 "Fylke og kommune"`), the same NAV-Excel shape as `n
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Active — Phases 2-3 DONE, Phase 4 (deploy) submitted, awaiting imac + ops-dev
+## Status: Completed
 
 **Goal**: Add `nav-helt-ledige` as a served Atlas source — the *short-tail* labour-market signal
 slotting between `nav-uforetrygd` (long-tail disability outcome) and `nav-aap` (transitional
@@ -243,7 +243,7 @@ links.
 
 ---
 
-## Phase 4: Deploy and verify arrival — IN PROGRESS (submitted 2026-10-02)
+## Phase 4: Deploy and verify arrival — DONE (verified 2026-10-02)
 
 PR #523 merged to main at `e9e33a5`. Image build (run
 [37070426629](https://github.com/terchris/atlas/actions/runs/37070426629)) succeeded; both digests
@@ -277,9 +277,42 @@ uis/generate-holdings.py" — checked directly: that script has zero substitutio
 anywhere, so the raw-table figure is hand-maintained and had already drifted stale before this
 PR, independent of it).
 
-Independent re-verification against the live public API, and closing both bus tasks, are still
-pending — do not take either task's own report as sufficient, per this session's standing
-discipline.
+**imac's deploy report ([urb-agents#1813](https://github.com/terchris/urb-agents/issues/1813)):**
+`monthly_sources_refresh` SUCCESS (76.7s) — `raw.nav_helt_ledige` row count 5,744, exact match to
+prediction. `transform_and_publish` SUCCESS (474.3s) — watched PostgreSQL's log live throughout for
+#1810-style corruption; zero events. Regression check against 6 prior sources (nav_uforetrygd,
+nav_aap, bufdir_barnevern, imdi_bosetting, udir_gsi, ssb_12451, husbanken_bostotte) — all unchanged.
+One real discrepancy flagged rather than silently reconciled: this plan's own Phase 4 request had
+predicted `atlas_inventory` would also carry a `mart_indicators__nav_helt_ledige` entry; imac found
+that endpoint doesn't exist (404) and isn't in inventory.
+
+**ops-dev's pin report ([urb-agents#1814](https://github.com/terchris/urb-agents/issues/1814)):**
+tag `v20261002-e9e33a5` pushed to `dev-templates` main, catalogue text regenerated (this bump also
+absorbed 11 days of accumulated drift: `nav-aap`, `nav-uforetrygd` and PR #482 had landed since the
+last catalogue bump). Separately flagged, not resolved: `template-info.yaml`'s
+`operational.automation` text ("ships stopped") may be stale against PR #482's
+`default_status=RUNNING`, measured live in urb-agents#1794 — filed as a cross-cutting note in
+`1PRIORITY.md` rather than left to die in a closed bus task, since it's unrelated to this source.
+
+**Both independently re-verified against the live public API before closing either task — neither
+report was taken on its own word:**
+- `GET /indicators__nav_helt_ledige?limit=1` → real row (Oslo, January, 12125 — matches the
+  captured live workbook exactly); `Content-Range` / `atlas_inventory` both confirm 5744/5744.
+- `GET /meta_sources?source_id=eq.nav-helt-ledige` → `served_as: ["indicators__nav_helt_ledige"]`,
+  non-empty.
+- Spot-checked Svalbard (`2100` → `region_kind=svalbard`, `kommune_nr=NULL`,
+  `[13,9,11,14,20,19,16,18]`), `Ukjent` (→ `unknown`, NULL, `[13,14,15,15,13,13,15,20]`), and
+  Utsira's mixed real/suppressed row (`1151` → `[null,null,null,null,4,null,4,null]`) — all three
+  match the live HL060 workbook and the golden-fixture tests exactly.
+- **Resolved the `mart_indicators__` discrepancy as a mistake in this plan's own Phase 4 write-up,
+  not a defect**: `GET /mart_indicators__nav_aap` — an existing source shipped weeks ago — returns
+  the identical 404 from the live API, and its own `atlas_inventory` also lists only
+  `indicators__nav_aap`. The `mart_indicators__*` dbt model selects from `indicators__*` and is
+  never itself exposed as a separate `api_v1` endpoint under that name; this plan's row-count
+  prediction was simply wrong, carried from `mart_atlas_inventory.sql`'s `{relation, mart}` dict
+  where `mart` only names the dbt model. Worth remembering for the next source's Phase 4 write-up.
+
+Both bus tasks closed with the verification evidence attached as comments.
 
 ---
 
@@ -298,14 +331,12 @@ discipline.
 - [x] `indicators__nav_helt_ledige` and `mart_indicators__nav_helt_ledige` build and test clean
   against real loaded data, with `2100` and `Ukjent` resolving through `classify_region_code`
   exactly as predicted (`PASS=19 WARN=0 ERROR=0`).
-- [ ] `nav-helt-ledige` appears in `meta_sources.served_as` after a real deploy, independently
-  verified via live `curl`. *(Phase 4, pending.)*
+- [x] `nav-helt-ledige` appears in `meta_sources.served_as` after a real deploy, independently
+  verified via live `curl` — `served_as: ["indicators__nav_helt_ledige"]`.
 - [x] Golden-file tests cover: an ordinary kommune row, the Svalbard pseudo-kommune, the `Ukjent`
   block, and a suppressed row with mixed real/suppressed cells in the same row — 26 tests, all
   passing.
-- [ ] The investigation and `1PRIORITY.md` are updated to mark this candidate shipped. *(Will be
-  marked shipped at close-out, after Phase 4 verification — same sequencing as every prior
-  source.)*
+- [x] The investigation and `1PRIORITY.md` are updated to mark this candidate shipped.
 
 ---
 
@@ -323,6 +354,54 @@ discipline.
 - **A different Statistikklov paragraph than AAP155's.** § 7-1 here, § 2-6 there — don't assume
   every NAV table cites the same section; read each table's own methodology sheet.
 - **Historical backfill genuinely unresolved, not just deferred by convention** — see **[Q1]**.
+
+---
+
+## Outcome
+
+Shipped end to end, 2026-10-02: ingest (5,744 rows, zero dropped) → dbt staging and api_v1
+publication → live cluster deploy → independently re-verified arrival. Atlas's fourth NAV-adjacent
+source and third on `monthly_sources_refresh`. Unlike `nav-sykefravaer` (PLAN-013), the
+investigation's mechanism held exactly as described this time — NAV's own `HL060` table is
+genuinely kommune-resolved — worth confirming explicitly rather than assuming "the description
+held" after two sources in a row where it hadn't.
+
+A fourth distinct pivot shape within the NAV-Excel family, but the simplest to classify yet:
+neither the bare fylke header row nor the "I alt `<name>`" rollup carries any digit at all, so
+"label starts with exactly 4 digits" alone separates kommune rows — a fresh parser, not adapted
+from `nav-aap`'s or `nav-uforetrygd`'s (per **[Q2]**). Both sentinel shapes already had precedent
+and resolved exactly as predicted on the first `dbt build`, with zero relationship-test failures:
+the Svalbard pseudo-kommune `2100` through `classify_region_code`'s existing svalbard branch, and
+the literal `Ukjent` through its existing unknown branch — confirmed directly against both the
+local build and the live API, not assumed to work.
+
+One genuinely new finding, caught against real data rather than assumed from the investigation:
+unlike `nav-aap`, where `Ukjent` exists only in the Antall sheet, here it is present in BOTH
+sheets — its Prosent-sheet cells are all NAV's own suppression marker, not omitted. A second,
+structural finding (**[Q5]**): the `Ukjent` block's fylke-level header row and its kommune-level
+leaf row carry the identical bare label `"Ukjent"` — the header row is correctly dropped by the
+ingest's existing hasData guard, with no special-casing added.
+
+Found and fixed before merge, not after: CI's `render-template-info.sh` caught a stale "59 raw
+BASE TABLEs" claim in `template-info.yaml` left over from before this PR (migrations now create
+60). While fixing it, found and corrected an adjacent false claim in the same paragraph — it said
+every number there was "now written by `uis/generate-holdings.py`", but that script has zero
+substitutions for the raw-table figure; it was hand-maintained and had already drifted stale
+independent of this change.
+
+One deploy-verification mistake, caught and corrected rather than silently reconciled: this plan's
+own Phase 4 deploy request predicted a second `mart_indicators__nav_helt_ledige` inventory entry
+that doesn't exist. imac flagged the discrepancy instead of quietly resolving it; checking
+`mart_indicators__nav_aap` (an existing, long-shipped sibling) confirmed the same 404 there too —
+the `mart_indicators__*` view is never itself an exposed `api_v1` endpoint, so the prediction was
+wrong in the request template, not a defect in the deploy. Also surfaced, filed separately rather
+than left in a closed bus task: ops-dev flagged that `template-info.yaml`'s own
+`operational.automation` text may be stale against PR #482's `default_status=RUNNING` behaviour —
+unrelated to this source, tracked as a cross-cutting note in `1PRIORITY.md`.
+
+Plugs the short-tail labour-market signal slotting between `nav-uforetrygd` (long-tail disability
+outcome) and `nav-aap` (transitional work-assessment benefit) — Report #5 (Income & Welfare) and an
+axis for Report #4 (Mental-Health Triangulation).
 
 ---
 
