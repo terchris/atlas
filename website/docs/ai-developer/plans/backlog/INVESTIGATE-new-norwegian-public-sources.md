@@ -110,8 +110,8 @@ drafting `PLAN-004-nav-uforetrygd.md`:**
 
 ### 3. Husbanken Boligsosial Monitor — housing assistance + vanskeligstilte
 
-🔴 **PLAN-011 drafted 2026-10-02 — Phase 1 live-verified this entire section and found the
-"Power-BI-backed" claim was wrong.** See
+✅ **`husbanken-bostotte` (PLAN-011) drafted 2026-10-02, unblocked — Phase 1 live-verified this
+entire section and found the "Power-BI-backed" claim was wrong.** See
 [`PLAN-011-husbanken-statistikkbank.md`](PLAN-011-husbanken-statistikkbank.md) for the full
 research. Headline correction: `statistikk.husbanken.no` is **Qlik Sense**, not Power BI, with a
 real anonymously-reachable backend (`qlik.husbanken.no`) this agent drove live — a full
@@ -120,8 +120,10 @@ by Qlik, with an official open-source client, `enigma.js`) returned real per-kom
 figures. The Boligsosial Monitor (this section's original URL) turned out to be a **separate**
 mechanism with no discoverable backend and no bostedsløshet/kommunal-bolig fields in the Qlik app
 either — deliberately not chased further, same shape as `imdi-bosetting`'s IMDikator decision.
-Licence could not be confirmed (no statement on Husbanken's site, zero `data.norge.no`
-registrations for org 942114184) — a real blocker, same shape as IMDi's original one.
+**Licence resolved, 2026-10-02** — Terje: *"Husbanken is owned by the norwegian goverment and they
+follow NLOD."* A direct statement of the licence (not merely an authorization to proceed despite
+one being unknown, unlike IMDi's); still not independently verified on a Husbanken-published terms
+page, since none was found.
 
 - **URL**: `https://boligsosial-monitor.husbanken.no/region/0/Norge` (browse, now confirmed a
   separate mechanism — see above) + `https://www.husbanken.no/statistikk/` →
@@ -130,8 +132,10 @@ registrations for org 942114184) — a real blocker, same shape as IMDi's origin
 - **Format**: JSON over a WebSocket (Qlik Engine API) — confirmed live, not Excel/HTML as this
   entry originally guessed; see `PLAN-011`
 - **Auth**: none (confirmed live — anonymous Qlik session, `mustAuthenticate:false`)
-- **Licence**: UNVERIFIED (confirmed live, 2026-10-02 — see `PLAN-011` **[Q1]**; not the confident
-  "NLOD" this entry originally stated)
+- **Licence**: NLOD — stated directly by Terje, 2026-10-02 (*"Husbanken is owned by the norwegian
+  goverment and they follow NLOD"*), not independently verified on a Husbanken-published terms
+  page (none was found live, see `PLAN-011` **[Q1]**) — this entry's original "NLOD" guess turned
+  out to be the right answer, just not for a reason this agent could confirm on its own
 - **Geo**: kommune (real SSB `KommuneNr`, confirmed live, no crosswalk needed); the real underlying
   grain is **daily**, not annual as this entry originally guessed — Atlas can still choose to
   publish annually, see `PLAN-011` **[Q4]**

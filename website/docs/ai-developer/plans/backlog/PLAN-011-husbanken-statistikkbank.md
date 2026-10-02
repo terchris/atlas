@@ -9,7 +9,7 @@ agent drove live to pull real per-kommune figures.
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Backlog
+## Status: Backlog — unblocked, ready for Phase 2
 
 **Goal**: Add `husbanken-bostotte` as a served Atlas source, giving Reports #2 (Child Welfare) and
 #5 (Income & Welfare Trajectory) the policy-response side of housing distress that `fhi-trangbodd`
@@ -19,7 +19,14 @@ agent drove live to pull real per-kommune figures.
 
 **Investigation**: [INVESTIGATE-new-norwegian-public-sources.md](INVESTIGATE-new-norwegian-public-sources.md) §3 (Tier 1 #3, [Q8]–[Q9])
 
-**Prerequisites**: None — `husbanken` is already a valid `publishers.yaml` provider (#486).
+**Prerequisites**: None — `husbanken` is already a valid `publishers.yaml` provider (#486). **[Q1]
+(licence) is resolved**: Terje, 2026-10-02 — *"Husbanken is owned by the norwegian goverment and
+they follow NLOD."* Unlike `imdi-bosetting`'s authorization (a bare "we can use it," with NLOD
+applied only as Atlas's own default for an unstated licence), this is a direct statement of the
+licence itself — `manifest.yml` records `license: NLOD` as what Terje stated, not as an assumed
+default. Still not a citation of a specific Husbanken-published terms page, since this agent could
+not find one directly on Husbanken's own site or on `data.norge.no` (see Phase 1.7) — kept that
+distinction visible rather than implying it was independently verified on Husbanken's page.
 
 ---
 
@@ -90,13 +97,13 @@ pulled and read, the same discipline as every prior source this session.
 
 ## Open Questions
 
-- **[Q1] Licence is unverified — this plan cannot proceed to implementation without resolving it.**
-  Same shape as `imdi-bosetting`'s original blocker: NLOD is Atlas's own documented default for an
-  unstated Norwegian public-sector licence, but Husbanken's own site states nothing and
-  `data.norge.no` has no registration to check. **Recommendation**: ask Terje for the same kind of
-  authorization given for IMDi ("we can use it"), or wait for an explicit statement to be found —
-  do not implement on an assumed default without that authorization, per this repo's own
-  licence-handling precedent.
+- **[Q1] RESOLVED, 2026-10-02 — Terje**: *"Husbanken is owned by the norwegian goverment and they
+  follow NLOD."* A direct statement of the licence, not merely an authorization to proceed despite
+  an unknown one (contrast `imdi-bosetting`'s "we can use it," where NLOD was applied only as
+  Atlas's own default). `manifest.yml` records `license: NLOD` as what Terje stated. Still not
+  independently verified on a Husbanken-published terms page — this agent checked and found none
+  (Phase 1.7) — so the manifest keeps that distinction visible rather than implying direct
+  verification.
 - **[Q2] Is anonymous Engine API access intentional, or an open door Husbanken doesn't know is
   open?** The app is `"published":true` with `mustAuthenticate:false` on the public virtual proxy —
   this reads as deliberate (Husbanken's own statistikkbank website is built on exactly this access
@@ -145,7 +152,8 @@ pulled and read, the same discipline as every prior source this session.
     `GetLayout`, paginate if `qSize` exceeds one page, close the session, upsert
     `raw.husbanken_bostotte`.
   - `manifest.yml` — `source_id: husbanken-bostotte`, `provider: husbanken`, `periodicity: P1Y`,
-    `eu_theme: SOCI`, `tags.topic: social`, `license:` pending **[Q1]**.
+    `eu_theme: SOCI`, `tags.topic: social`, `license: NLOD` (stated directly by Terje, 2026-10-02 —
+    see **[Q1]** — not independently verified on a Husbanken-published terms page).
   - `README.md` and `__tests__/` — golden-file tests against a real captured `GetLayout` response.
 - [ ] 2.2 Migration `raw.husbanken_bostotte` — columns TBD once **[Q3]**/**[Q6]** resolve during
   implementation; expect at minimum `kommune_nr`, `year`, `measure`, `value`, `loaded_at`, same
@@ -194,8 +202,8 @@ Same shape as every prior source's Phase 4 this session.
 
 ## Acceptance Criteria
 
-- [ ] **[Q1] (licence) resolved** — authorization from Terje or a found explicit statement, not an
-  assumed default, before implementation proceeds past this plan.
+- [x] **[Q1] (licence) resolved** — Terje, 2026-10-02: *"Husbanken is owned by the norwegian
+  goverment and they follow NLOD."*
 - [ ] `husbanken-bostotte` ingests cleanly via the Qlik Engine API with zero rows silently dropped.
 - [ ] `raw.husbanken_bostotte` stores `kommune_nr` directly (verified real SSB kommune codes).
 - [ ] The suppression marker (if any) is identified from real data, not assumed.
