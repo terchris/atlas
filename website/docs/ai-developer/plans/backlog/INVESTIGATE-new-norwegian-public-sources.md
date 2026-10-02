@@ -110,19 +110,39 @@ drafting `PLAN-004-nav-uforetrygd.md`:**
 
 ### 3. Husbanken Boligsosial Monitor — housing assistance + vanskeligstilte
 
-- **URL**: `https://boligsosial-monitor.husbanken.no/region/0/Norge` (browse) + `https://www.husbanken.no/statistikk/` (statistikkbank)
-- **Format**: HTML + Excel downloads; underlying data is Power-BI-backed (similar to Helfo's pattern)
-- **Auth**: none
-- **Licence**: NLOD
-- **Geo**: kommune, annual
-- **Provider tag**: `husbanken` (new)
+🔴 **PLAN-011 drafted 2026-10-02 — Phase 1 live-verified this entire section and found the
+"Power-BI-backed" claim was wrong.** See
+[`PLAN-011-husbanken-statistikkbank.md`](PLAN-011-husbanken-statistikkbank.md) for the full
+research. Headline correction: `statistikk.husbanken.no` is **Qlik Sense**, not Power BI, with a
+real anonymously-reachable backend (`qlik.husbanken.no`) this agent drove live — a full
+`OpenDoc`/hypercube/`GetLayout` exchange over the Qlik Engine API (WebSocket, officially documented
+by Qlik, with an official open-source client, `enigma.js`) returned real per-kommune bostøtte
+figures. The Boligsosial Monitor (this section's original URL) turned out to be a **separate**
+mechanism with no discoverable backend and no bostedsløshet/kommunal-bolig fields in the Qlik app
+either — deliberately not chased further, same shape as `imdi-bosetting`'s IMDikator decision.
+Licence could not be confirmed (no statement on Husbanken's site, zero `data.norge.no`
+registrations for org 942114184) — a real blocker, same shape as IMDi's original one.
+
+- **URL**: `https://boligsosial-monitor.husbanken.no/region/0/Norge` (browse, now confirmed a
+  separate mechanism — see above) + `https://www.husbanken.no/statistikk/` →
+  `https://statistikk.husbanken.no/` (the real statistikkbank, confirmed live 2026-10-02 to be a
+  Qlik Sense app, backend at `qlik.husbanken.no`)
+- **Format**: JSON over a WebSocket (Qlik Engine API) — confirmed live, not Excel/HTML as this
+  entry originally guessed; see `PLAN-011`
+- **Auth**: none (confirmed live — anonymous Qlik session, `mustAuthenticate:false`)
+- **Licence**: UNVERIFIED (confirmed live, 2026-10-02 — see `PLAN-011` **[Q1]**; not the confident
+  "NLOD" this entry originally stated)
+- **Geo**: kommune (real SSB `KommuneNr`, confirmed live, no crosswalk needed); the real underlying
+  grain is **daily**, not annual as this entry originally guessed — Atlas can still choose to
+  publish annually, see `PLAN-011` **[Q4]**
+- **Provider tag**: `husbanken` (already landed, #486)
 - **EU theme**: `SOCI`
 
-**Plugs into**: Reports #2 (Child Welfare) and #5 (Income & Welfare Trajectory). Atlas currently has the *symptom* side of housing distress (`fhi-trangbodd` — overcrowded housing share) but **no policy-response side** (who receives bostøtte, who is in kommunal bolig, who is registered as bostedsløs). Husbanken is the authoritative Norwegian source for the response side and pairs naturally with FHI's symptom data.
+**Plugs into**: Reports #2 (Child Welfare) and #5 (Income & Welfare Trajectory). Atlas currently has the *symptom* side of housing distress (`fhi-trangbodd` — overcrowded housing share) but **no policy-response side** (who receives bostøtte, who is in kommunal bolig, who is registered as bostedsløs). Husbanken is the authoritative Norwegian source for the response side and pairs naturally with FHI's symptom data. ⚠️ Confirmed live: the Qlik app's own data model covers bostøtte (housing allowance) and startlån (start loan) richly — it does NOT cover kommunal bolig or bostedsløshet; those remain unanswered, tracked under `PLAN-011` **[Q5]**.
 
 **Source-specific quirks**:
-- **[Q8]** Power-BI-backed indicators rarely expose a clean JSON endpoint. Two options: scrape the HTML monitor (fragile, breaks on Power-BI template upgrades) or use Husbanken's Excel statistikkbank (stable, but requires per-indicator URL discovery). **Recommendation**: Excel statistikkbank route for v1; keep the HTML monitor as a fallback / verification surface.
-- **[Q9]** "Vanskeligstilte" definition has changed across Husbanken's monitor versions. Atlas should pin the methodology version it ingested in the manifest's `description` field and re-verify on each annual refresh.
+- **[Q8]** RESOLVED, 2026-10-02 — wrong on both options posed. Not a Power-BI monitor scrape, not an Excel statistikkbank download: the real mechanism is the Qlik Sense Engine API (WebSocket), confirmed live and proven end-to-end by pulling real data. See `PLAN-011-husbanken-statistikkbank.md`.
+- **[Q9]** "Vanskeligstilte" definition has changed across Husbanken's monitor versions. Atlas should pin the methodology version it ingested in the manifest's `description` field and re-verify on each annual refresh. Not yet re-checked against the Qlik app's own field definitions — do so during `PLAN-011` Phase 2.
 
 ### 4. Udir — school-level data (Grunnskolens informasjonssystem + Elevundersøkelsen + Nasjonale prøver)
 
@@ -460,7 +480,7 @@ The current enum already covers all needed values: `JUST` (crime), `HEAL` (Helfo
 
 ### E. Power-BI-backed sources
 
-- **[Q34]** Husbanken, Helfo, Helsedir NKI, Bufdir all front their data with Power BI dashboards. None expose a clean JSON endpoint *from* Power BI — but each has a separate machine-readable distribution (Excel, developer-portal API, or backing dataset). **Convention**: never scrape Power BI iframes. Always trace to the underlying dataset. Document this as a rule in [`atlas-data/ingest/src/sources/README.md`](https://github.com/terchris/atlas/tree/main/atlas-data/ingest/src/sources/README.md).
+- **[Q34]** ⚠️ **Husbanken corrected, 2026-10-02**: it fronts its data with **Qlik Sense**, not Power BI — confirmed live, see `PLAN-011-husbanken-statistikkbank.md`. Helfo, Helsedir NKI, Bufdir not re-checked; this row's claim about them is unverified, not confirmed wrong. Whichever BI tool a source uses, none expose a clean JSON endpoint from the dashboard itself — but each has a separate machine-readable distribution (Excel, developer-portal API, or — as Husbanken turned out to have — a documented, anonymously-reachable backend API). **Convention**: never scrape a BI tool's iframe. Always trace to the underlying dataset or backend API. Document this as a rule in [`atlas-data/ingest/src/sources/README.md`](https://github.com/terchris/atlas/tree/main/atlas-data/ingest/src/sources/README.md).
 
 ### F. Sensitivity tagging propagation
 
@@ -472,7 +492,7 @@ The current enum already covers all needed values: `JUST` (crime), `HEAL` (Helfo
 
 1. **[Q1]** Bufdir: ingest as one folder per indicator family (`bufdir-barnefattigdom`, `bufdir-barnevern`), not one mega-source. Resolved 2026-05-04.
 2. **[Q4]** NAV: one folder per indicator family (`nav-uforetrygd`, `nav-aap`, `nav-sykefravaer`). Resolved 2026-05-04.
-3. **[Q8]** Husbanken: ingest the Excel statistikkbank, not the Power BI monitor HTML. Resolved 2026-05-04.
+3. **[Q8]** Husbanken: ingest the Excel statistikkbank, not the Power BI monitor HTML. Resolved 2026-05-04. **Superseded, 2026-10-02** — live verification found neither option was real: `statistikk.husbanken.no` is Qlik Sense, not Power BI, and no Excel download was found. The real mechanism is the Qlik Engine API (WebSocket), confirmed live. See `PLAN-011-husbanken-statistikkbank.md`.
 4. **[Q19]** Helfo: developer-portal API (`utvikler.helsedirektoratet.no`), not the Power BI dashboard. Resolved 2026-05-04.
 5. **[Q30]** SSB Sentralitetsindeks lands as a column on `dim_kommune`, not a separate attributes table. Resolved 2026-05-04.
 6. **[Q31]** Add all eight new `provider` values in a single schema-bump commit at the head of the batch. Resolved 2026-05-04.
