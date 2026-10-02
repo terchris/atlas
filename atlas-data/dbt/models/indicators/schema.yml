@@ -2153,6 +2153,96 @@ models:
             - year
             - metric
 
+  - name: indicators__udir_gsi
+    description: |-
+      Per-source passthrough for Udir GSI (Grunnskolens informasjonssystem — pupil counts,
+      individually-tailored-instruction counts, Norwegian-reinforcement counts, school counts).
+      One row per (region_code, year, measure). Atlas's first Udir source.
+    columns:
+      - name: source_id
+        description: Atlas catalogue id for this ingest — always udir-gsi.
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: [udir-gsi]
+        data_type: text
+      - name: region_code
+        description: >-
+          SSB-format region code, verbatim from Udir's API. May not be a kommune — region_kind
+          says which (Svalbard reports a school at the same tree depth as genuine kommuner).
+        data_tests:
+          - not_null
+        data_type: text
+      - name: kommune_nr
+        description: >-
+          Four-digit kommune code, derived through region_code_to_kommune_nr. NULL for Svalbard
+          and any other non-kommune region_code.
+        data_tests:
+          - relationships:
+              to: ref('dim_kommune')
+              field: kommune_nr
+        data_type: text
+      - name: region_kind
+        description: |
+          What region_code is, from classify_region_code: kommune · svalbard · unknown (only
+          those three observed live for this source — no fylke/bydel/nasjon rows reach raw, since
+          ingest only requests the kommune-grain hierarchy depth).
+        data_tests:
+          - not_null
+          - relationships: {to: ref('ref_region_kind'), field: region_kind}
+        data_type: text
+      - name: year
+        description: School year code from Udir's own TidID dimension (e.g. 202510 = 2025-26).
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 200000
+              max_value: 210000
+        data_type: integer
+      - name: measure
+        description: >-
+          Which GSI figure this row's value is — Antall elever, Antall elever med individuelt
+          tilrettelagt opplæring/spesialundervisning, Antall elever med forsterket opplæring i
+          norsk, or Antall skoler. Four distinct counts, not format variants of one quantity.
+        data_tests:
+          - not_null
+          - accepted_values:
+              values:
+                - "Antall elever"
+                - "Antall elever med individuelt tilrettelagt opplæring/spesialundervisning"
+                - "Antall elever med forsterket opplæring i norsk"
+                - "Antall skoler"
+        data_type: text
+      - name: contents_code
+        description: |
+          Atlas-normalised variable code, one per measure (udir_gsi__elever,
+          udir_gsi__spesialundervisning, udir_gsi__forsterket_norsk, udir_gsi__skoler).
+        data_tests:
+          - not_null
+        data_type: text
+      - name: contents_label
+        description: Human-readable Norwegian label — identical to `measure` for this source.
+        data_tests:
+          - not_null
+        data_type: text
+      - name: value
+        description: >-
+          The measure's value for this region and year. NULL when Udir itself suppressed the cell
+          (its own marker, the literal character "*").
+        data_type: numeric
+      - name: updated_at
+        description: Timestamp when the row was last written by ingest (from raw.loaded_at).
+        data_tests:
+          - not_null
+        data_type: timestamp with time zone
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - source_id
+            - region_code
+            - year
+            - measure
+
   - name: indicators__fhi_alkohol
     description: |
       Per-source indicator passthrough for FHI Folkehelsestatistikk (Ungdata):

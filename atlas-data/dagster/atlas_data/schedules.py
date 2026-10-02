@@ -197,6 +197,7 @@ _ANNUAL_SOURCE_IDS = [
     "bufdir-barnefattigdom",
     "bufdir-barnevern",
     "imdi-bosetting",
+    "udir-gsi",
 ]
 
 _KLASS_SOURCE_IDS = list(raw_ssb.SSB_KLASS_SOURCES)
@@ -233,10 +234,10 @@ annual_sources_job = define_asset_job(
     selection=_asset_selection(_ANNUAL_SOURCE_IDS),
     executor_def=_ingest_executor(),
     description=(
-        "The 38 sources whose manifest declares periodicity P1Y. Polled weekly "
+        "The 39 sources whose manifest declares periodicity P1Y. Polled weekly "
         "rather than annually: publication dates drift by weeks and nobody wants "
         "to discover a new release eleven months late. Weekly means a new "
-        "release is picked up within 7 days for ~38 requests a week, which is "
+        "release is picked up within 7 days for ~39 requests a week, which is "
         "nothing to SSB or FHI. The ingests upsert, so a poll that finds "
         "nothing new is a no-op."
     ),

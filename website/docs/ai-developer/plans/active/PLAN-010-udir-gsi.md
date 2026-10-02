@@ -9,7 +9,7 @@ documentation page names the wrong hostname for it.
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Backlog
+## Status: Active — Phases 2-3 done (ingest, dbt, api_v1 publication), ready for Phase 4 (deploy)
 
 **Goal**: Add `udir-gsi` as a served Atlas source, giving Report #10 (School-Capacity Forecast) the
 current-enrolment supply side it's missing, and sharpening Atlas's existing education signal beyond
@@ -17,7 +17,7 @@ current-enrolment supply side it's missing, and sharpening Atlas's existing educ
 
 **Last Updated**: 2026-10-02
 
-**Investigation**: [INVESTIGATE-new-norwegian-public-sources.md](INVESTIGATE-new-norwegian-public-sources.md) §4 (Tier 1 #4), §C.2 ([Q39]–[Q41])
+**Investigation**: [INVESTIGATE-new-norwegian-public-sources.md](../backlog/INVESTIGATE-new-norwegian-public-sources.md) §4 (Tier 1 #4), §C.2 ([Q39]–[Q41])
 
 **Prerequisites**: None — `udir` is already a valid `publishers.yaml` provider (#486), with a logo
 and notes already naming GSI specifically. `education` is a valid `topics.yaml` id.
@@ -80,13 +80,15 @@ and notes already naming GSI specifically. `education` is a valid `topics.yaml` 
   Oct 1, individually-tailored-instruction counts, Norwegian-reinforcement counts, school counts) —
   matches the investigation's "pupil-teacher ratio, special-ed share" framing closely enough to
   trust, not identical wording.
-- [x] 1.6 **`kommune_nr` is directly in the data — no crosswalk needed, unlike `imdi-bosetting`.**
-  The `EnhetID` filter is a real 4-level hierarchy (`GET .../filterVerdier?filter=TidID(202510)_EnhetID(*)`):
-  `nivaa:1` national → `nivaa:2` fylke (`"kode":"42"` for Agder, SSB's real 2-digit fylke code) →
-  `nivaa:3` kommune (`"kode":"4203"` for Arendal — SSB's real 4-digit kommune code, verbatim) →
-  `nivaa:4` individual school (`"kode"` = organisasjonsnummer, e.g. `"990334021"` for Arendal
-  International School). The kommune-level `kode` field needs no `classify_region_code` macro and
-  no `crosswalk_kommune_name` lookup — it already **is** `kommune_nr`.
+- [x] 1.6 **A real SSB-format code is directly in the data — no crosswalk needed, unlike
+  `imdi-bosetting`.** The `EnhetID` filter is a real 4-level hierarchy
+  (`GET .../filterVerdier?filter=TidID(202510)_EnhetID(*)`): `nivaa:1` national → `nivaa:2` fylke
+  (`"kode":"42"` for Agder, SSB's real 2-digit fylke code) → `nivaa:3` the level this plan ingests
+  (`"kode":"4203"` for Arendal — SSB's real 4-digit kommune code, verbatim) → `nivaa:4` individual
+  school (`"kode"` = organisasjonsnummer, e.g. `"990334021"` for Arendal International School). No
+  `crosswalk_kommune_name`-style name lookup is needed. ⚠️ **Correction, Phase 2 — this is not the
+  same claim as "no `classify_region_code` macro needed."** It IS needed: `2100` (Svalbard) sits at
+  this exact tree depth too, because GSI reports a school there. See **[Q6]**.
 - [x] 1.7 **Suppression exists** — the Rapportside metadata for GSI report 1 carries `"erPrikket":
   true`. ⚠️ **Mechanism not yet characterized** (what marker appears in a suppressed cell) — found
   as a flag, not yet observed on an actual suppressed value. Confirm during Phase 2.
@@ -137,75 +139,92 @@ a verbatim-matching kommune code — not asserted from documentation, pulled and
   framing** — named explicitly, not silently dropped, same shape as `imdi-bosetting` deviating from
   [Q42]. `dim_school` stays a real, scoped future extension (its own PLAN, once a second
   school-grain source makes the crosswalk worth building) rather than this plan's job.
-- **[Q3] Which GSI report(s) to ingest first?** GSI has 3 report numbers under `GSK/GSI`
-  (`1` = "Elever og skoler" confirmed above; `2` and `3` not yet characterized — Phase 1 confirmed
-  they exist and resolve, not what they contain). **Recommendation**: start with report 1 alone
-  (pupils, schools, special-ed/Norwegian-reinforcement counts — matches the investigation's stated
-  scope most directly); characterize 2 and 3 during Phase 2 and decide then whether they're the same
-  source or a sibling table, same pattern as `nav-uforetrygd`'s two-sheet split.
-- **[Q4] How to represent the suppressed-cell marker once it's observed?** Flagged as existing
-  (`erPrikket: true`) but not yet seen on an actual value. Phase 2's first task against real data.
-- **[Q5] `SpoersmaalID` (which named measure each row represents) resolves through a separate
-  `Tekst` lookup endpoint, not inline.** Each GSI report has multiple `SpoersmaalID` values (report 1's
-  default filter is `[1,2,3,5]` — at least 4 distinct measures bundled in one call). Resolving
-  `SpoersmaalID` → a human-readable measure name needs a `GET /rest/v1/Tekst/...` call per
-  `tekstId_kolonne` reference in the response metadata. Confirm during Phase 2 whether this needs
-  one lookup per ingest run (cheap, cacheable) or is stable enough to hardcode after first
-  observation (same editorial-judgement shape as `imdi-bosetting`'s `contents_label` `case` block).
+- **[Q3] RESOLVED during Phase 2.** Report 1 alone, as recommended — not chased further. Reports 2
+  and 3 remain uncharacterized; a future Udir plan can pick them up the same way this one was
+  researched.
+- **[Q4] RESOLVED, measured live 2026-10-02.** The suppressed-cell marker is the literal character
+  `*` — confirmed on real small kommuner (Træna, Utsira) where the individually-tailored-
+  instruction and Norwegian-reinforcement counts are suppressed while the plain pupil/school counts
+  for the same kommune are not. Same convention `nav-uforetrygd` uses.
+- **[Q5] RESOLVED — unnecessary once the right query shape was found.** Pinning
+  `TrinnID(-10)_KjoennID(-10)_KommunalitetID(-10)` (the "alle"/all sentinel for each breakdown
+  dimension) collapses the response's column metadata to exactly 4 entries, and those entries
+  already carry human-readable names (`"Antall elever"`, etc.) directly — no separate `Tekst`
+  lookup round trip needed. The Phase 1 concern assumed the unfiltered, multi-dimensional response
+  shape; the actual ingest never requests that shape.
+- **[Q6] NEW, found during Phase 2 — the depth-3 hierarchy level is not synonymous with "kommune."**
+  Verified live: `2100` (Svalbard) and `2111` sit at the exact same tree depth as genuine kommuner,
+  because GSI reports a school there (Longyearbyen skole) — matching SSB's own `21\d{2}` Svalbard
+  pattern this project's `classify_region_code` macro already handles (built for exactly this class
+  of bug, urb-agents #700, previously found via SSB sources). **Consequence**: `raw.udir_gsi`'s
+  geography column is named `region_code`, not `kommune_nr` — the Phase 1 claim that "no crosswalk
+  and no derivation macro needed" was half right (no crosswalk) and half wrong (the macro IS
+  needed, just for classification rather than name resolution). `indicators__udir_gsi.sql` resolves
+  `kommune_nr` through `region_code_to_kommune_nr`/`classify_region_code`, same as every other
+  kommune-grain source. Measured: of 18,816 raw rows, 18,768 are real kommune rows (all resolve),
+  48 are Svalbard (correctly NULL `kommune_nr`, `region_kind = 'svalbard'`).
 
 ---
 
-## Phase 2: Ingest module + raw table (not started)
+## Phase 2: Ingest module + raw table
 
 ### Tasks
 
-- [ ] 2.1 Create `atlas-data/ingest/src/sources/udir-gsi/`:
-  - `parse.ts` — parse the nested `{metadata: {rowHierarchy, columns}, rows: [...]}` shape into flat
-    rows. ⚠️ **This is a genuinely more complex pivot than any prior source** — columns are nested
-    two levels deep (trinn × kjønn) per the sample pulled in Phase 1.5; budget real design time for
-    this, don't assume it flattens as easily as NAV's two-level fylke→kommune→bydel blocks did.
-  - `index.ts` — resolve current report version via `Rapportside`, fetch via
-    `.../data?filter=TidID(<year>)_EnhetID(<kommune-level radSti>)&radSti=F`, upsert
-    `raw.udir_gsi`.
+- [x] 2.1 Created `atlas-data/ingest/src/sources/udir-gsi/`:
+  - `parse.ts` — the real response shape turned out simpler than feared once the right query was
+    found: pinning `TrinnID(-10)_KjoennID(-10)_KommunalitetID(-10)` (the "alle" sentinel for each
+    breakdown dimension) collapses the column metadata to exactly 4 named measures — no nested
+    trinn × kjønn pivot to decode. The real complexity turned out to be elsewhere: `inkluderKoder=true`
+    is required to get real codes into row data at all, and a row's `id` is an internal path, not a
+    usable code (see Phase 1.6/[Q6]).
+  - `index.ts` — resolves the current report version via `Rapportside` (no hardcoded
+    rapportNr/rapportVersjon), discovers every valid school year via `filterVerdier` (no hardcoded
+    range), fetches `.../data?filter=TidID(<year>)_TrinnID(-10)_KjoennID(-10)_KommunalitetID(-10)&radSti=-12.*.*&inkluderKoder=true`
+    per year, upserts `raw.udir_gsi`.
   - `fetch_retry.ts` — copy, adapted header comment.
   - `manifest.yml` — `source_id: udir-gsi`, `provider: udir`, `periodicity: P1Y`, `eu_theme: EDUC`,
-    `tags.topic: education`, `license: NLOD` (confirmed on Udir's own page, not Atlas's default —
-    unlike IMDi, cite it directly).
-  - `README.md` and `__tests__/` — golden-file tests against a real downloaded response.
-- [ ] 2.2 Migration `raw.udir_gsi` — columns TBD once **[Q3]**/**[Q5]** resolve during
-  implementation; expect at minimum `kommune_nr`, `year`, `measure` (resolved `SpoersmaalID`
-  name), `trinn` (grade level, nullable for "alle trinn" rollups), `kjoenn` (nullable for "alle
-  kjønn" rollups), `value`, `loaded_at`.
-- [ ] 2.3 Dagster registration — `cadence.weekly_polled()`/`WEEKLY_FRESHNESS` (annual data, same
-  polling cadence as `imdi-bosetting`/Bufdir, not a new job).
+    `tags.topic: education`, `license: NLOD` (confirmed on Udir's own page, cited directly — unlike
+    IMDi's default).
+  - `README.md` and `__tests__/` — golden-file tests against 4 real downloaded responses
+    (Rapportside, 2 years of data, a trimmed filterVerdier years list).
+- [x] 2.2 Migration `raw.udir_gsi` — `region_code` (not `kommune_nr` — see **[Q6]**), `year`,
+  `measure`, `value`, `loaded_at`. PK `(region_code, year, measure)`.
+- [x] 2.3 Dagster registration — `cadence.weekly_polled()`/`WEEKLY_FRESHNESS`, added to the existing
+  `annual_sources_refresh` job (no new job needed).
 
 ### Validation
 
 ```bash
 cd atlas-data/ingest && npm test -- udir-gsi
 ```
-Golden-file tests pass; a manual run against the live API returns real kommune-grain rows for the
-current school year, zero rows silently dropped, with a real observed suppression marker if one
-exists in the pulled data (don't assume — check).
+✅ Done, 2026-10-02. 26 tests pass. A live run against the real API discovered all 12 available
+school years (2014-15 through 2025-26) and produced 18,816 real rows end to end (NDJSON + local
+Postgres), zero rows silently dropped — including the historical kommune-count decline (1,716 rows
+in 2014-15 down to 1,432 in 2024-25/2025-26, matching Norway's real kommune mergers over that
+period). `npm run typecheck` clean.
 
 ---
 
-## Phase 3: dbt staging and marts (not started)
+## Phase 3: dbt staging and marts
 
 ### Tasks
 
-- [ ] 3.1 Add `raw.udir_gsi` to `sources.yml`.
-- [ ] 3.2 `indicators__udir_gsi.sql` — `kommune_nr` passed through directly (no macro, no
-  crosswalk — see Phase 1.6).
-- [ ] 3.3 Document columns in `schema.yml`; validate against a local Postgres loaded with the real
-  ingest.
-- [ ] 3.4 `mart_indicators__udir_gsi.sql` api passthrough + `marts/api/schema.yml` entry.
-- [ ] 3.5 `dbt build` + `dbt test`.
+- [x] 3.1 Added `raw.udir_gsi` to `sources.yml`.
+- [x] 3.2 `indicators__udir_gsi.sql` — `kommune_nr` via `region_code_to_kommune_nr`/
+  `classify_region_code`, **not** a bare passthrough (Phase 1.6's original claim was wrong — see
+  **[Q6]**). `region_kind` also derived, same as every other kommune-grain source.
+- [x] 3.3 Documented columns in `schema.yml`; validated against a local Postgres loaded with the
+  real ingest (18,816 rows), not an empty schema.
+- [x] 3.4 `mart_indicators__udir_gsi.sql` api passthrough + `marts/api/schema.yml` entry.
+- [x] 3.5 `dbt build` + `dbt test` — 16 checks, all green.
 
 ### Validation
 
-Same discipline as every prior source: real local Postgres, not an empty schema; check the
-`kommune_nr` relationship test isn't passing on an all-matching trivially-small sample.
+✅ Done, 2026-10-02, against a local Postgres loaded via the real ingest. **Checked the
+`kommune_nr` relationship test was not silently passing on an all-null or trivially-small sample**
+— it was not: `select region_kind, count(*), count(kommune_nr) from marts.indicators__udir_gsi
+group by region_kind` shows 18,768 `kommune` rows all with a non-null `kommune_nr`, and 48
+`svalbard` rows all correctly `NULL` — a real, measured split, not a vacuous pass.
 
 ---
 
@@ -217,15 +236,18 @@ Same shape as every prior source's Phase 4 this session.
 
 ## Acceptance Criteria
 
-- [ ] `udir-gsi` ingests cleanly from the current school year with zero rows silently dropped.
-- [ ] `raw.udir_gsi` stores `kommune_nr` directly (verified real SSB kommune codes, not a crosswalk
-  or a guess).
-- [ ] The suppression marker is identified from real data, not assumed.
-- [ ] `indicators__udir_gsi` and `mart_indicators__udir_gsi` build and test clean against real
+- [x] `udir-gsi` ingests cleanly from all 12 available school years with zero rows silently
+  dropped. 18,816 rows.
+- [x] `raw.udir_gsi` stores a real SSB-format `region_code` directly (verified, not a crosswalk or
+  a guess) — named `region_code`, not `kommune_nr`, because it is not always a real kommune
+  (Svalbard). `kommune_nr` is resolved in the indicators model via `classify_region_code`.
+- [x] The suppression marker is identified from real data, not assumed. Literal `*`.
+- [x] `indicators__udir_gsi` and `mart_indicators__udir_gsi` build and test clean against real
   loaded data.
 - [ ] `udir-gsi` appears in `meta_sources.served_as` after a real deploy, independently verified via
-  live `curl`.
-- [ ] The investigation and `1PRIORITY.md` are updated to mark this candidate shipped.
+  live `curl`. **Pending Phase 4.**
+- [ ] The investigation and `1PRIORITY.md` are updated to mark this candidate shipped, only once
+  Phase 4 confirms rows actually arrived.
 
 ---
 
@@ -257,7 +279,7 @@ Same shape as every prior source's Phase 4 this session.
 - `atlas-data/ingest/src/sources/udir-gsi/README.md` (new)
 - `atlas-data/ingest/src/sources/udir-gsi/__tests__/` (new)
 - `atlas-data/ingest/package.json` (`ingest:udir-gsi` script)
-- `atlas-data/migrations/<next>_raw_udir_gsi.sql` (new)
+- `atlas-data/migrations/059_raw_udir_gsi.sql` (new)
 - `atlas-data/dagster/atlas_data/assets/raw_other.py`, `schedules.py` (asset registration)
 - `atlas-data/dbt/models/indicators/sources.yml`, `indicators__udir_gsi.sql` (new), `schema.yml`
 - `atlas-data/dbt/models/marts/api/mart_indicators__udir_gsi.sql` (new), `schema.yml`

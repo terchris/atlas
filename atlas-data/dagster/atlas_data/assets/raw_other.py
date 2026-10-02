@@ -13,6 +13,10 @@ See _factory.make_raw_ingest_asset. Currently:
 - imdi-bosetting: static HTML scrape of IMDi's bosettingstall hub + one page
   per discovered year. Annual data, polled weekly like the Bufdir sources —
   see atlas-data/ingest/src/sources/imdi-bosetting/README.md.
+- udir-gsi: real JSON API (statistikkportalen.udir.no/api/rapportering —
+  Udir's own public docs name a dead hostname for this). Annual data, polled
+  weekly like the sources above — see
+  atlas-data/ingest/src/sources/udir-gsi/README.md.
 - redcross-branches: Crawlee-based scraper of Red Cross chapter pages.
   Heavier resource profile (per UIS Dagster INVESTIGATE — headless browser
   state, ~512MiB working set).
@@ -40,13 +44,14 @@ OTHER_SOURCES = [
     "imdi-bosetting",
     "nav-uforetrygd",
     "redcross-branches",
+    "udir-gsi",
 ]
 
 # redcross-branches is absent from the scheduled list on purpose — it has no
 # cadence and no freshness policy. See cadence.UNSCHEDULED_SOURCES for why.
 assets = [
     *make_raw_ingest_assets(
-        ["bufdir-barnefattigdom", "bufdir-barnevern", "imdi-bosetting"],
+        ["bufdir-barnefattigdom", "bufdir-barnevern", "imdi-bosetting", "udir-gsi"],
         group_name="raw_other",
         automation_condition=cadence.weekly_polled(),
         freshness_policy=cadence.WEEKLY_FRESHNESS,

@@ -6,7 +6,7 @@ This section is for **anyone consuming Atlas's public PostgREST API** to build t
 
 <!-- BEGIN holdings (generated) -->
 
-**46 upstream sources** from **7 publishers**, served as **83 read-only relations**.
+**47 upstream sources** from **8 publishers**, served as **84 read-only relations**.
 
 | publisher | sources | broadly |
 |---|---|---|
@@ -17,10 +17,11 @@ This section is for **anyone consuming Atlas's public PostgREST API** to build t
 | Integrerings- og mangfoldsdirektoratet | 1 | — |
 | Arbeids- og velferdsdirektoratet | 1 | — |
 | Norges Røde Kors | 1 | local chapters and their activities |
+| Utdanningsdirektoratet | 1 | — |
 
-By EU data theme: **SOCI** 23 (society) · **HEAL** 12 (health) · **GOVE** 5 (government) · **EDUC** 5 (education) · **JUST** 1 (justice).
+By EU data theme: **SOCI** 23 (society) · **HEAL** 12 (health) · **EDUC** 6 (education) · **GOVE** 5 (government) · **JUST** 1 (justice).
 
-Licences: **NLOD** for 44 of 46 — Norwegian public data, free to reuse with attribution. The exceptions are `nav-uforetrygd` (CC BY 4.0) and `redcross-branches` (permissive) — Red Cross's own data rather than the state's.
+Licences: **NLOD** for 45 of 47 — Norwegian public data, free to reuse with attribution. The exceptions are `nav-uforetrygd` (CC BY 4.0) and `redcross-branches` (permissive) — Red Cross's own data rather than the state's.
 
 ### What you can query
 
@@ -85,6 +86,7 @@ Licences: **NLOD** for 44 of 46 — Norwegian public data, free to reuse with at
 | `indicators__ssb_12292` | Per-source indicator data for ssb-12292 (Statistisk sentralbyrå), at the publisher's own grain. |
 | `indicators__ssb_12944` | Per-source indicator data for ssb-12944 (Statistisk sentralbyrå), at the publisher's own grain. |
 | `indicators__ssb_13995` | Per-source indicator data for ssb-13995 (Statistisk sentralbyrå), at the publisher's own grain. |
+| `indicators__udir_gsi` | Per-source indicator data for udir-gsi (Utdanningsdirektoratet), at the publisher's own grain. |
 | `ingest_health` | One row per source: its most recent completed ingest run, and whether that run succeeded. |
 | `kommune_befolkning_alder` | Population by kommune, year and age band — the denominator layer for rates. |
 | `kommune_local_chapters` | One row per local chapter resolved to a kommune, with its NGO and category. |

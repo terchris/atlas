@@ -142,13 +142,13 @@ SUPPLY — voluntary-sector presence:
   distrikt_summary             chapters by district.
   kommune_local_chapters       chapters resolved to a kommune.
 
-PER-SOURCE INDICATOR RELATIONS — 43 of them, one per upstream table, at the
+PER-SOURCE INDICATOR RELATIONS — 44 of them, one per upstream table, at the
 grain the publisher actually uses. The cross-source views above impose ONE
 shape on every source; these keep the source''s own dimensions, so a breakdown
 those views flatten away (a sex, an age band, a household or family type, a
 parental-education split) is only answerable here.
 
-🔴 ALL 43 ARE stability:source. THE COLUMN SET FOLLOWS THE PUBLISHER, NOT
+🔴 ALL 44 ARE stability:source. THE COLUMN SET FOLLOWS THE PUBLISHER, NOT
 ATLAS. If SSB, FHI or Bufdir adds, renames or drops a dimension, these change
 with it — that is the deliberate trade for getting the real grain. Filter
 `meta_endpoints?tags=cs.{stability:curated}` for the relations whose shape
@@ -181,6 +181,8 @@ same source_id, and through the ref_* lists above where one exists.
     indicators__ssb_09406 indicators__ssb_09429 indicators__ssb_10826
     indicators__ssb_12063 indicators__ssb_12131 indicators__ssb_12132
     indicators__ssb_12292 indicators__ssb_12944 indicators__ssb_13995
+  udir (1):
+    indicators__udir_gsi
 
 REFERENCE:
   dim_kommune                  the municipality dimension. Keeps SSB''s 9999
@@ -2356,6 +2358,29 @@ COMMENT ON COLUMN api_v1.indicators__ssb_13995.contents_label IS 'Human-readable
 COMMENT ON COLUMN api_v1.indicators__ssb_13995.value IS 'The measured value. NULL where the publisher suppressed the cell — see status.';
 COMMENT ON COLUMN api_v1.indicators__ssb_13995.status IS 'The publisher''s own suppression or quality marker for this cell, passed through verbatim.';
 COMMENT ON COLUMN api_v1.indicators__ssb_13995.updated_at IS 'When Atlas last loaded this row from the upstream.';
+
+-- indicators__udir_gsi  ←  marts.mart_indicators__udir_gsi
+CREATE OR REPLACE VIEW api_v1.indicators__udir_gsi AS SELECT * FROM marts.mart_indicators__udir_gsi;
+COMMENT ON VIEW api_v1.indicators__udir_gsi IS 'Per-source indicator data for udir-gsi (Utdanningsdirektoratet), at the publisher''s own grain.
+
+Per-source indicator relation for `udir-gsi` (Utdanningsdirektoratet), published at the grain
+the publisher actually uses rather than flattened into the cross-source views. One row per
+(region_code, year, measure). Atlas''s first Udir source.
+🔴 stability:source — the column set here follows Utdanningsdirektoratet, not Atlas. If the
+publisher adds, renames or drops a dimension, this relation changes with it. That is
+the deliberate trade for getting the real grain; prefer a stability:curated relation
+if you need a shape Atlas promises to hold still. Decode codes through
+meta_dimensions filtered to source_id=udir-gsi.';
+COMMENT ON COLUMN api_v1.indicators__udir_gsi.source_id IS 'Atlas catalogue id for this ingest — always udir-gsi.';
+COMMENT ON COLUMN api_v1.indicators__udir_gsi.region_code IS 'SSB-format region code, verbatim from Udir''s API. May not be a kommune — region_kind says which.';
+COMMENT ON COLUMN api_v1.indicators__udir_gsi.kommune_nr IS 'Four-digit kommune code, derived through region_code_to_kommune_nr. NULL for Svalbard and any other non-kommune region_code.';
+COMMENT ON COLUMN api_v1.indicators__udir_gsi.region_kind IS 'What region_code is, from classify_region_code: kommune or svalbard for this source (no fylke/bydel/nasjon rows reach raw).';
+COMMENT ON COLUMN api_v1.indicators__udir_gsi.year IS 'School year code from Udir''s own TidID dimension (e.g. 202510 = 2025-26).';
+COMMENT ON COLUMN api_v1.indicators__udir_gsi.measure IS 'Which GSI figure this row''s value is — Antall elever, Antall elever med individuelt tilrettelagt opplæring/spesialundervisning, Antall elever med forsterket opplæring i norsk, or Antall skoler.';
+COMMENT ON COLUMN api_v1.indicators__udir_gsi.contents_code IS 'Atlas-normalised variable code, one per measure (udir_gsi__elever, udir_gsi__spesialundervisning, udir_gsi__forsterket_norsk, udir_gsi__skoler).';
+COMMENT ON COLUMN api_v1.indicators__udir_gsi.contents_label IS 'Human-readable Norwegian label — identical to measure for this source.';
+COMMENT ON COLUMN api_v1.indicators__udir_gsi.value IS 'The measure''s value for this region and year. NULL when Udir suppressed the cell (its own marker, the literal character "*").';
+COMMENT ON COLUMN api_v1.indicators__udir_gsi.updated_at IS 'Timestamp when the row was last written by ingest (from raw.loaded_at).';
 
 -- ingest_health  ←  marts.mart_ingest_health
 CREATE OR REPLACE VIEW api_v1.ingest_health AS SELECT * FROM marts.mart_ingest_health;
