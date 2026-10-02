@@ -70,4 +70,4 @@ needed.
 - AAP page: https://www.nav.no/no/nav-og-samfunn/statistikk/aap-nedsatt-arbeidsevne-og-uforetrygd-statistikk/arbeidsavklaringspenger
 - Licence: https://creativecommons.org/licenses/by/4.0/deed.no
 - Shared helpers: `atlas-data/ingest/src/lib/postgres.ts`, `atlas-data/ingest/src/lib/output.ts`, `atlas-data/ingest/src/lib/ingest_run.ts`
-- Plan: [`PLAN-012-nav-aap.md`](../../../../../website/docs/ai-developer/plans/active/PLAN-012-nav-aap.md)
+- Plan: [`PLAN-012-nav-aap.md`](../../../../../website/docs/ai-developer/plans/completed/PLAN-012-nav-aap.md)
