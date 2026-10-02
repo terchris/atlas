@@ -394,7 +394,16 @@ These extend the existing Tier-1 family entries above, plus one fully-new candid
 
 #### C.4 NAV-family extension (extend Tier-1 #2)
 
-- **[Q45] `nav-helt-ledige` — Registrerte helt arbeidsledige, monthly**. NAV register data; same scrape/Excel pattern as the other NAV families (per [Q4]). Last-day-of-month snapshot per kommune. Small-cell suppression at ≤4 (consistent with Atlas's other suppression handling). Slots cleanly between `nav-uforetrygd` (long-tail outcome) and `nav-aap` (transitional benefit) as the *short-tail* labour-market signal. Plugs into Report #5 (Income & Welfare) and as an additional axis on Report #4 (Mental-Health Triangulation — because acute unemployment ↔ mental health is well-documented).
+- **[Q45] `nav-helt-ledige` — Registrerte helt arbeidsledige, monthly**. NAV register data; same scrape/Excel pattern as the other NAV families (per [Q4]). Small-cell suppression at ≤4 (consistent with Atlas's other suppression handling — confirmed live 2026-10-02, 15 kommuner suppressed in the live sample, citing Statistikklovens § 7-1). Slots cleanly between `nav-uforetrygd` (long-tail outcome) and `nav-aap` (transitional benefit) as the *short-tail* labour-market signal. Plugs into Report #5 (Income & Welfare) and as an additional axis on Report #4 (Mental-Health Triangulation — because acute unemployment ↔ mental health is well-documented).
+
+  ✅ **`nav-helt-ledige` (PLAN-014) drafted 2026-10-02 — mechanism confirmed live, matching this
+  description for once** (unlike `nav-sykefravaer`, where it didn't): NAV's own `HL060 "Fylke og
+  kommune"` table is genuinely kommune-resolved, same NAV-Excel shape as `nav-uforetrygd`/`nav-aap`.
+  ⚠️ The "last-day-of-month snapshot" framing above was not independently re-confirmed — not
+  contradicted either, just not specifically checked; the workbook itself doesn't state its own
+  measurement timing in what was inspected. See the plan's own Phase 1 for the full research,
+  including two sentinel shapes (Svalbard's `2100`, a bare `Ukjent` bucket) both already handled by
+  `classify_region_code` from prior sources, no new macro branch needed.
 
 #### C.5 Bespoke / cooperative — flag, defer
 
@@ -624,6 +633,17 @@ Each PLAN follows the standard Atlas pattern (per-source folder under `atlas-dat
   cleanly, no macro change needed. The simplest Phase 2 of any NAV-adjacent source this session:
   zero relationship-test failures on the first `dbt build`. Full exchange:
   [urb-agents#1811](https://github.com/terchris/urb-agents/issues/1811).
+- [x] 🆕 **Drafted 2026-10-02.** [`PLAN-014-nav-helt-ledige.md`](PLAN-014-nav-helt-ledige.md), in
+  `backlog/` — Atlas's fourth NAV-adjacent source. Phase 1 found this candidate's mechanism matches
+  the investigation's original description for once (unlike `nav-sykefravaer`, which didn't): NAV's
+  own `HL060 "Fylke og kommune"` table is genuinely kommune-resolved, confirmed live by direct
+  download. Licence CC BY 4.0, confirmed against this table's own `"Kilde: NAV"` provenance, not
+  assumed by family resemblance. A fourth distinct pivot shape within the NAV-Excel family, but the
+  simplest to classify: neither the bare fylke header row nor the "I alt <name>" total row carries
+  any digit at all, so "exactly 4 leading digits" alone separates kommune rows with no "I alt"
+  prefix check needed. Two sentinel shapes present (Svalbard's `2100`, a bare `Ukjent` bucket) both
+  already have exact precedent from prior sources this session — no new `classify_region_code`
+  branch needed. No licence blocker; ready to move to `active/`.
 - [ ] Optionally: pre-write outreach emails to Bufdir, NAV, IMDi, Helsedirektoratet asking whether richer machine-readable distributions exist than what's surfaced publicly. (Pattern reused from [`INVESTIGATE-folkehjelp-supply` § A.4](./INVESTIGATE-folkehjelp-supply.md#a4-craft-cms-graphql-probe--q2-outreach-worth-pursuing) — non-blocking; we ship around the public surface either way.)
 
 ---
