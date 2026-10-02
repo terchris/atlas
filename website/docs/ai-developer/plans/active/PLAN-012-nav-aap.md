@@ -226,14 +226,18 @@ Real local Postgres, not an empty schema. Explicitly check the `Ukjent` rows res
 
 ---
 
-## Phase 4: Deploy and verify arrival (not started)
+## Phase 4: Deploy and verify arrival (deploy request filed)
 
-Same shape as every prior source's Phase 4 this session — name exact relations, both image
-digests labelled, `LANDS WITH` derived via `atlas-data/uis/lands-with.sh`, a row-count prediction
-stated explicitly (NAV's live file grows a column every month, so state the prediction as "as of
-today's validation run", same caveat `nav-uforetrygd`'s Phase 4 raised). Independently re-verify
-against the live public API before closing the deploy task — do not take imac's report alone as
-sufficient, per this session's standing discipline.
+Deploy request sent to imac, 2026-10-02: [urb-agents#1810](https://github.com/terchris/urb-agents/issues/1810).
+Tag `v20261002-ddeca2d`, both digests labelled, `LANDS WITH` derived via `lands-with.sh`
+(`monthly_sources_refresh` then `transform_and_publish`), row-count prediction stated (5,720 for
+`raw.nav_aap` / `indicators__nav_aap` / `mart_indicators__nav_aap`, confirmed via a real
+local-Postgres ingest run; flagged that NAV's live file grows a column every month, so a run in a
+different month would legitimately see a different total). Also flagged and explained a
+false-positive in the derived range: `lands-with.sh` named `husbanken-bostotte` as "ingest
+changed" too, traced to a one-line README link fix from PLAN-011's close-out commit, not a code or
+data-path change — husbanken-bostotte does not need `annual_sources_refresh` re-run for this
+release.
 
 ---
 
