@@ -15,7 +15,7 @@ uses, not a new NAV-family Excel parser. **Recommendation: build this as `ssb-12
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Active — Phase 2 IN PROGRESS
+## Status: Completed
 
 **Goal**: Add kommune-level sick-leave statistics to Atlas, completing the NAV-adjacent welfare
 triad alongside `nav-uforetrygd` (long-tail disability outcome) and `nav-aap` (transitional
@@ -225,9 +225,9 @@ rather than assuming the existing macro "just works" without checking.
 
 ---
 
-## Phase 4: Deploy and verify arrival (deploy request filed)
+## Phase 4: Deploy and verify arrival (COMPLETE, 2026-10-02)
 
-Deploy request sent to imac, 2026-10-02: [urb-agents#1811](https://github.com/terchris/urb-agents/issues/1811).
+Deploy request filed to imac: [urb-agents#1811](https://github.com/terchris/urb-agents/issues/1811).
 Tag `v20261002-15e7b13`, both digests labelled, `LANDS WITH` derived via `lands-with.sh`
 (`annual_sources_refresh` then `transform_and_publish`), row-count prediction stated (196,770 for
 `raw.ssb_12451` / `indicators__ssb_12451` / `mart_indicators__ssb_12451`, confirmed via a real
@@ -240,6 +240,24 @@ mistyped (`...16705b8120f...` instead of the real `...16705b2120f...`). Caught b
 against the build log immediately after sending, before any reply — corrected with a follow-up
 comment on the same task rather than leaving the wrong value standing.
 
+`annual_sources_refresh` and `transform_and_publish` both succeeded clean on the first attempt —
+`raw.ssb_12451` landed 196,770 rows, exact match to the prediction. No `dim_brreg_enhet`
+corruption recurrence (imac watched PostgreSQL's own log for the entire run and checked the table
+directly before and after).
+
+**Independently verified live** (not just trusting the report), 2026-10-02, against
+`https://api-atlas.urbalurba.com` (confirmed `cf-cache-status: MISS`, not a stale cached read):
+- `GET /meta_sources?source_id=eq.ssb-12451&select=served_as` → `["indicators__ssb_12451"]`
+- `GET /indicators__ssb_12451?limit=1` → a real row (region 3101, period 2000K2 — `value: null`,
+  `status: "."`, SSB's own documented convention for a historical period with no data, not an
+  ingest error)
+- `HEAD` with `Prefer: count=exact` → `content-range: 0-196769/196770` — 196,770, exact
+- `GET /atlas_inventory?endpoint=eq.indicators__ssb_12451` → `row_count=196770, is_empty=false`
+- Spot-checked Oslo/Eigersund/Utsira's `Sykefraversprosent` values directly against this plan's
+  own Phase 1 live-captured figures — exact match, same source, no republish happened in between.
+
+All match imac's report exactly. No regression on `nav-aap`, `husbanken-bostotte`, or `udir-gsi`.
+
 ---
 
 ## Acceptance Criteria
@@ -250,19 +268,19 @@ comment on the same task rather than leaving the wrong value standing.
 - [x] **Licence independently confirmed for this specific candidate** — NLOD (SSB's own,
   confirmed via the table's own metadata and this repo's unbroken `ssb-*` precedent), not CC BY
   4.0 inherited from the NAV-family assumption.
-- [ ] The source ships as `ssb-12451` (per **[Q1]**), not `nav-sykefravaer` — confirm this
-  decision is actually carried through at Phase 2, not quietly reverted to the family-folder name
-  under naming-consistency pressure from the other two NAV sources.
-- [ ] `ssb-12451` ingests cleanly with zero rows silently dropped, for whatever ContentsCode/Kjonn
-  scope **[Q2]**/**[Q3]** settle on.
-- [ ] `indicators__ssb_12451` and `mart_indicators__ssb_12451` build and test clean against real
-  loaded data, with every sentinel region code resolving through `classify_region_code` as
-  predicted.
-- [ ] `ssb-12451` appears in `meta_sources.served_as` after a real deploy, independently verified
+- [x] The source ships as `ssb-12451` (per **[Q1]**), not `nav-sykefravaer` — carried through
+  Phase 2 exactly as decided, including the folder name, source_id, dbt model names, and Dagster
+  registration in `raw_ssb.py`'s `SSB_SOURCES` list.
+- [x] `ssb-12451` ingests cleanly with zero rows silently dropped — `Kjonn=0`,
+  `Sykefraversprosent`/`Sykefraversdagsverk` only (per **[Q2]**/**[Q3]**), 196,770 rows, confirmed
+  live and against a real local Postgres.
+- [x] `indicators__ssb_12451` and `mart_indicators__ssb_12451` build and test clean against real
+  loaded data (13/13 PASS), with every sentinel region code — including the one unanticipated
+  shape, `0716u` — resolving through `classify_region_code` exactly as predicted.
+- [x] `ssb-12451` appears in `meta_sources.served_as` after a real deploy, independently verified
   via live `curl`.
-- [ ] The investigation and `1PRIORITY.md` are updated to mark this candidate shipped — and to
-  correct the "nav-sykefravaer" framing wherever it's referenced, not just add a new entry beside
-  the old name.
+- [x] The investigation and `1PRIORITY.md` are updated to mark this candidate shipped, with the
+  "nav-sykefravaer" framing corrected to name `ssb-12451` throughout.
 
 ---
 
@@ -287,18 +305,49 @@ comment on the same task rather than leaving the wrong value standing.
 
 ---
 
+## Outcome
+
+Shipped end to end, 2026-10-02: ingest (196,770 rows, zero dropped) → dbt staging and api_v1
+publication → live cluster deploy → independently verified arrival. Implements what the
+investigation originally called "nav-sykefravaer" — the real mechanism turned out to be SSB's
+existing `lib/pxweb.ts` client, not a new NAV-family Excel parser, because NAV's own sykefravær
+statistics pages publish no kommune-level table at all. This was the simplest Phase 2 of any
+source shipped this session: no discovery-tier HTML scraping, no sheet-shape quirks, no
+suppression-marker handling, and the ingest passed clean on the first `dbt build` with zero
+relationship-test failures — unlike every NAV-Excel source this session.
+
+One genuinely new finding surfaced anyway, caught by querying the built table rather than assumed
+from metadata: a single region code, `0716u` ("Våle (-2001)"), is SSB's own disambiguation suffix
+for a historical kommune whose numeric code was later reused by a different kommune (0716 is Re,
+2002-2019). Not digit-only, so it correctly fell through `classify_region_code`'s existing
+branches to `unknown` rather than needing a new one — confirmed directly against the built table,
+not assumed to work.
+
+Also applied, not just inherited: `ingest:ssb-12451` was added and verified via the real `npm run`
+invocation before any other Phase 2 work began, for the third source running after
+`husbanken-bostotte`'s urb-agents#1807 finding.
+
+Plugs the largest-population welfare-claim signal in the NAV-adjacent triad — sykefravær covers
+everyone with a physician-certified sick-leave spell, a much broader population than
+`nav-uforetrygd`'s long-tail disability outcome or `nav-aap`'s transitional work-assessment
+benefit — completing Report #4 (Mental-Health Triangulation) and Report #5 (Income & Welfare
+Trajectory)'s registry-side welfare signal.
+
+---
+
 ## Files to Modify
 
 - `atlas-data/ingest/src/sources/ssb-12451/manifest.yml` (new — per **[Q1]**, not
   `nav-sykefravaer/`)
 - `atlas-data/ingest/src/sources/ssb-12451/index.ts` (new)
-- `atlas-data/ingest/src/sources/ssb-12451/README.md` (new)
-- `atlas-data/ingest/src/sources/ssb-12451/__tests__/` (new)
-- `atlas-data/ingest/package.json` (`ingest:ssb-12451` script — add first, verify with the real
-  `npm run` invocation before anything else, per `nav-aap`'s own Phase 2 lesson)
-- `atlas-data/migrations/<next>_raw_ssb_12451.sql` (new)
-- `atlas-data/dagster/atlas_data/assets/raw_ssb.py` or equivalent (`SSB_SOURCES` list — existing
-  weekly job, no new Dagster infrastructure)
+- `atlas-data/ingest/src/sources/ssb-12451/README.md` (new — no `__tests__/`: checked while
+  implementing, and no `ssb-*` PXWebAPI source in this repo has per-source tests, `lib/pxweb.ts`
+  included; followed that unbroken precedent rather than inventing one)
+- `atlas-data/ingest/package.json` (`ingest:ssb-12451` script, added first, verified via
+  `check-every-source-has-an-ingest-script.sh`)
+- `atlas-data/migrations/062_raw_ssb_12451.sql` (new)
+- `atlas-data/dagster/atlas_data/assets/raw_ssb.py` (`SSB_SOURCES` list — existing weekly job, no
+  new Dagster infrastructure)
 - `atlas-data/dbt/models/indicators/sources.yml`, `indicators__ssb_12451.sql` (new), `schema.yml`
 - `atlas-data/dbt/models/marts/api/mart_indicators__ssb_12451.sql` (new), `schema.yml`
 - `atlas-data/dbt/models/marts/api/mart_atlas_inventory.sql` (depends_on + counted list)
