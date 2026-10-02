@@ -9,7 +9,7 @@ agent drove live to pull real per-kommune figures.
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Active — Phases 2 and 3 COMPLETE, Phase 4 (deploy) pending
+## Status: Completed
 
 **Goal**: Add `husbanken-bostotte` as a served Atlas source, giving Reports #2 (Child Welfare) and
 #5 (Income & Welfare Trajectory) the policy-response side of housing distress that `fhi-trangbodd`
@@ -229,13 +229,40 @@ covers all 48 automated sources". `npm run build` (Docusaurus): clean, no broken
 
 ---
 
-## Phase 4: Deploy and verify arrival (deploy request filed)
+## Phase 4: Deploy and verify arrival (COMPLETE, 2026-10-02 — three attempts)
 
-Deploy request sent to imac, 2026-10-02: [urb-agents#1807](https://github.com/terchris/urb-agents/issues/1807).
-Tag `v20261002-228dc50`, both digests labelled, `LANDS WITH` derived via `lands-with.sh`
-(`annual_sources_refresh` then `transform_and_publish`), row-count predictions stated
-(35,295 for `raw.husbanken_bostotte` / `indicators__husbanken_bostotte` /
-`mart_indicators__husbanken_bostotte`, confirmed via a real local-Postgres full ingest run).
+Shipped live after two real, isolated bugs caught by imac's deploy testing — exactly the kind of
+upgrade-path defect `project-atlas.md` says only a real cluster can exhibit:
+
+- **[urb-agents#1807](https://github.com/terchris/urb-agents/issues/1807)** — `package.json` was
+  missing the `ingest:husbanken-bostotte` npm script. 40/41 sources succeeded; this one failed with
+  `npm error Missing script`, and `raw.husbanken_bostotte` landed with 0 rows. Root cause: every
+  local validation this agent ran called `src/sources/husbanken-bostotte/index.ts` directly via
+  `tsx`, never through the actual `npm run ingest:<id>` path Dagster uses. Fixed in PR #511, one
+  line, plus a new CI gate (`check-every-source-has-an-ingest-script.sh`) proven to catch this
+  exact defect before merge.
+- **[urb-agents#1808](https://github.com/terchris/urb-agents/issues/1808)** — the re-deploy got
+  past the script and hit `ReferenceError: WebSocket is not defined`. `qlik_client.ts` relied on
+  the global `WebSocket`; the deployed image's Node is v20.20.2, which has none (added in Node
+  21+). Invisible in this agent's own testing, done on Node 22 — matching `package.json`'s stated
+  `engines.node >=22.0.0`, which does not match what the Dockerfile actually installs (Node 20.x,
+  confirmed via a live `npm ci` printing `EBADENGINE` on every image build, silently ignored).
+  Fixed in PR #512 by importing `WebSocket` from the `ws` package explicitly (promoted from a
+  transitive dependency via `jsdom` to a direct one). This time verified against Node 20.20.2
+  itself (installed via `nvm`) before re-requesting deploy, not a newer local version.
+- **[urb-agents#1809](https://github.com/terchris/urb-agents/issues/1809)** — third attempt,
+  succeeded clean. `annual_sources_refresh`: SUCCESS, `raw.husbanken_bostotte` = 35,295 rows, exact
+  match to the prediction. `transform_and_publish`: SUCCESS. No regression on any of the 40 other
+  sources or on `classify_region_code`'s new Oslo-bydel branch.
+
+**Independently verified live** (not just trusting imac's report), 2026-10-02, against
+`https://api-atlas.urbalurba.com`:
+- `GET /meta_sources?source_id=eq.husbanken-bostotte&select=served_as` → `["indicators__husbanken_bostotte"]`
+- `GET /indicators__husbanken_bostotte?limit=1` → a real row (region 1160, kommune, year 2008, measure "soknad")
+- `HEAD` with `Prefer: count=exact` → `content-range: 0-35294/35295` — 35,295, exact
+- `GET /atlas_inventory?endpoint=eq.indicators__husbanken_bostotte` → `row_count=35295, is_empty=false, origin="ingest"`
+
+All four match imac's report exactly.
 
 ---
 
@@ -252,10 +279,9 @@ Tag `v20261002-228dc50`, both digests labelled, `LANDS WITH` derived via `lands-
   smallest kommune by bostøtte volume.
 - [x] `indicators__husbanken_bostotte` and `mart_indicators__husbanken_bostotte` build and test
   clean against real loaded data (24/24 PASS).
-- [ ] `husbanken-bostotte` appears in `meta_sources.served_as` after a real deploy, independently
-  verified via live `curl`. **Pending Phase 4.**
-- [ ] The investigation and `1PRIORITY.md` are updated to mark this candidate shipped. **Pending
-  Phase 4.**
+- [x] `husbanken-bostotte` appears in `meta_sources.served_as` after a real deploy, independently
+  verified via live `curl` — `["indicators__husbanken_bostotte"]`, 2026-10-02.
+- [x] The investigation and `1PRIORITY.md` are updated to mark this candidate shipped.
 
 ---
 
@@ -280,15 +306,57 @@ Tag `v20261002-228dc50`, both digests labelled, `LANDS WITH` derived via `lands-
 
 ---
 
+## Outcome
+
+Shipped end to end, 2026-10-02: ingest (35,295 rows, zero dropped) → dbt staging and api_v1
+publication → live cluster deploy → independently verified arrival. Atlas's first Husbanken source
+and its first WebSocket-based ingest, over the officially documented Qlik Engine API rather than
+`enigma.js` (the raw WebSocket/JSON-RPC approach proven live in Phase 1 already covered everything
+needed, so the dependency was never added).
+
+Three real findings during implementation Phase 1's research didn't anticipate, caught by real
+testing rather than assumed away: (1) Husbanken's `KommuneNr` carries Oslo's 15 bydeler plus one
+discontinued pre-2004 one under a 4-digit numbering distinct from the 6-digit convention FHI's
+sources already use for the same districts — caught by an actual `relationships` test failure
+(1,300 rows) against a live-loaded local Postgres, `classify_region_code` now recognises both; (2)
+`package.json` was missing the `ingest:husbanken-bostotte` npm script — every local validation
+called the module directly via `tsx`, never through the real `npm run ingest:<id>` path Dagster
+uses, so it shipped clean and failed on the first real deploy ([#1807](https://github.com/terchris/urb-agents/issues/1807));
+(3) `qlik_client.ts` relied on the global `WebSocket`, absent on the deployed image's Node 20.20.2
+(added in Node 21+) — invisible in local testing done on Node 22, which matches `package.json`'s
+stated `engines.node` but not what the Dockerfile actually installs
+([#1808](https://github.com/terchris/urb-agents/issues/1808)). Both deploy-time bugs were
+reproduced against the exact deployed Node version before the fix that finally landed clean
+([#1809](https://github.com/terchris/urb-agents/issues/1809)) — "tested locally" turned out to
+mean "tested on a Node version production doesn't run," twice, until the verification method
+itself changed. A new CI gate (`check-every-source-has-an-ingest-script.sh`) now catches the first
+class of defect before merge.
+
+Also surfaced, not fixed — not this agent's call: `package.json`'s `engines.node` (`>=22.0.0`,
+set directly by Terje) does not match the Dockerfile's Node 20.x install, and `npm ci` has printed
+`EBADENGINE` on every image build as a result, silently ignored. Flagged to imac in the final
+deploy request; whoever owns that decision should reconcile it.
+
+Plugs the policy-response side of housing distress that `fhi-trangbodd` (the symptom side) doesn't
+cover, for Reports #2 (Child Welfare) and #5 (Income & Welfare Trajectory).
+
+---
+
 ## Files to Modify
 
 - `atlas-data/ingest/src/sources/husbanken-bostotte/manifest.yml` (new)
 - `atlas-data/ingest/src/sources/husbanken-bostotte/index.ts` (new)
 - `atlas-data/ingest/src/sources/husbanken-bostotte/parse.ts` (new)
 - `atlas-data/ingest/src/sources/husbanken-bostotte/qlik_client.ts` (new — no `enigma.js` dependency
-  added; see Phase 2's deviation note)
+  added; see Phase 2's deviation note; imports `WebSocket` from `ws` explicitly, fixed post-deploy
+  per **[#1808](https://github.com/terchris/urb-agents/issues/1808)**)
 - `atlas-data/ingest/src/sources/husbanken-bostotte/README.md` (new)
 - `atlas-data/ingest/src/sources/husbanken-bostotte/__tests__/` (new)
+- `atlas-data/ingest/package.json`, `package-lock.json` (`ingest:husbanken-bostotte` script, added
+  post-deploy per **[#1807](https://github.com/terchris/urb-agents/issues/1807)**; `ws` promoted
+  to a direct dependency per **#1808**)
+- `atlas-data/dbt/check-every-source-has-an-ingest-script.sh` (new CI gate, added after #1807)
+- `.github/workflows/check-raw-read-only.yml` (wires the new gate in)
 - `atlas-data/migrations/060_raw_husbanken_bostotte.sql` (new)
 - `atlas-data/dagster/atlas_data/assets/raw_other.py`, `schedules.py` (asset registration; also
   corrected several pre-existing stale source-count comments found while editing this same file)
@@ -301,6 +369,5 @@ Tag `v20261002-228dc50`, both digests labelled, `LANDS WITH` derived via `lands-
   corrected the pre-existing stale raw-table-count claim found while editing this same file)
 - `atlas-data/template-info.yaml`, `website/docs/developers/index.md` (regenerated counts)
 - `website/docs/ai-developer/plans/backlog/INVESTIGATE-new-norwegian-public-sources.md` (mark
-  shipped; correct the "Power-BI-backed" claim; split out Boligsosial Monitor per **[Q5]**) —
-  **pending Phase 4**
-- `website/docs/ai-developer/plans/backlog/1PRIORITY.md` (mark shipped) — **pending Phase 4**
+  shipped; correct the "Power-BI-backed" claim; split out Boligsosial Monitor per **[Q5]**)
+- `website/docs/ai-developer/plans/backlog/1PRIORITY.md` (mark shipped)

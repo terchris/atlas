@@ -110,14 +110,15 @@ drafting `PLAN-004-nav-uforetrygd.md`:**
 
 ### 3. Husbanken Boligsosial Monitor — housing assistance + vanskeligstilte
 
-✅ **`husbanken-bostotte` (PLAN-011) drafted 2026-10-02, unblocked — Phase 1 live-verified this
+✅ **`husbanken-bostotte` (PLAN-011) shipped end to end, 2026-10-02 — Phase 1 live-verified this
 entire section and found the "Power-BI-backed" claim was wrong.** See
-[`PLAN-011-husbanken-statistikkbank.md`](../active/PLAN-011-husbanken-statistikkbank.md) for the full
+[`PLAN-011-husbanken-statistikkbank.md`](../completed/PLAN-011-husbanken-statistikkbank.md) for the full
 research. Headline correction: `statistikk.husbanken.no` is **Qlik Sense**, not Power BI, with a
 real anonymously-reachable backend (`qlik.husbanken.no`) this agent drove live — a full
 `OpenDoc`/hypercube/`GetLayout` exchange over the Qlik Engine API (WebSocket, officially documented
-by Qlik, with an official open-source client, `enigma.js`) returned real per-kommune bostøtte
-figures. The Boligsosial Monitor (this section's original URL) turned out to be a **separate**
+by Qlik — Qlik also publishes an official open-source client, `enigma.js`, though the shipped
+ingest ended up not needing it; see PLAN-011 Phase 2) returned real per-kommune bostøtte figures.
+The Boligsosial Monitor (this section's original URL) turned out to be a **separate**
 mechanism with no discoverable backend and no bostedsløshet/kommunal-bolig fields in the Qlik app
 either — deliberately not chased further, same shape as `imdi-bosetting`'s IMDikator decision.
 **Licence resolved, 2026-10-02** — Terje: *"Husbanken is owned by the norwegian goverment and they
@@ -590,7 +591,8 @@ Each PLAN follows the standard Atlas pattern (per-source folder under `atlas-dat
   2 extra "avtalt" metrics on Oslo's 2024 table before rolling them out everywhere in 2026) —
   parser resolves metrics by header text, not position, to represent this rather than normalize it
   away. Full exchange: [urb-agents#1799](https://github.com/terchris/urb-agents/issues/1799).
-- [ ] Draft one of the Udir/Husbanken PLANs, or `PLAN-005-nav-aap.md`/`PLAN-006-nav-sykefravaer.md`.
+- [x] ✅ **Shipped end to end, 2026-10-02.** [`PLAN-011-husbanken-statistikkbank.md`](../completed/PLAN-011-husbanken-statistikkbank.md) — all four phases done: ingest (35,295 rows, zero dropped), dbt staging + api_v1 publication, deployed to the live cluster by imac, independently re-verified against the public API — `GET /indicators__husbanken_bostotte?limit=1` returns real rows, `content-range` confirms 35,295. Atlas's first Husbanken source and first WebSocket-based ingest (Qlik Engine API). Caught a new region-code defect: Husbanken's `KommuneNr` carries Oslo's bydeler under a 4-digit numbering distinct from FHI's 6-digit one — `classify_region_code` now recognises both. Deploy itself took three attempts: a missing `ingest:husbanken-bostotte` npm script ([urb-agents#1807](https://github.com/terchris/urb-agents/issues/1807)), then a `WebSocket` global absent on the deployed image's Node 20 ([urb-agents#1808](https://github.com/terchris/urb-agents/issues/1808)) — both invisible to local testing done on a newer Node, both fixed and verified against the deployed Node version before the third attempt landed clean ([urb-agents#1809](https://github.com/terchris/urb-agents/issues/1809)). **[Q1] (licence) resolved by direct statement, 2026-10-02** — Terje: *"Husbanken is owned by the norwegian goverment and they follow NLOD."*
+- [ ] Draft `PLAN-005-nav-aap.md`/`PLAN-006-nav-sykefravaer.md`. (Udir and Husbanken are both shipped now — see `PLAN-010`/`PLAN-011` above.)
 - [ ] Optionally: pre-write outreach emails to Bufdir, NAV, IMDi, Helsedirektoratet asking whether richer machine-readable distributions exist than what's surfaced publicly. (Pattern reused from [`INVESTIGATE-folkehjelp-supply` § A.4](./INVESTIGATE-folkehjelp-supply.md#a4-craft-cms-graphql-probe--q2-outreach-worth-pursuing) — non-blocking; we ship around the public surface either way.)
 
 ---

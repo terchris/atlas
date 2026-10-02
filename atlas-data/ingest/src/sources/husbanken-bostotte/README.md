@@ -93,4 +93,4 @@ change to this source needs ad-hoc exploration, reach for `node some-script.mjs`
 - Licence: https://data.norge.no/nlod/no/2.0 — authorized directly by Terje, 2026-10-02 (not
   independently found on a Husbanken terms page; see `manifest.yml`)
 - Shared helpers: `atlas-data/ingest/src/lib/postgres.ts`, `atlas-data/ingest/src/lib/output.ts`, `atlas-data/ingest/src/lib/ingest_run.ts`
-- Plan: [`PLAN-011-husbanken-statistikkbank.md`](../../../../../website/docs/ai-developer/plans/active/PLAN-011-husbanken-statistikkbank.md)
+- Plan: [`PLAN-011-husbanken-statistikkbank.md`](../../../../../website/docs/ai-developer/plans/completed/PLAN-011-husbanken-statistikkbank.md)
