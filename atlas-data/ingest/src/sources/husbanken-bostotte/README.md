@@ -28,14 +28,18 @@ which name a `qlikUrl` and `qlikAppId` directly. The app, "Statistikkbank"
 confirmed from the server's own `OnAuthenticationInformation` push) over the **Qlik Engine API** —
 a WebSocket JSON-RPC 2.0 protocol that Qlik itself documents and ships an open-source client for
 (`enigma.js`). This is not a reverse-engineered protocol the way IMDikator's opaque bundle would
-have been; `qlik_client.ts` is a small, dependency-free subset of it written directly against the
-documented calls (`OpenDoc`, `CreateSessionObject`, `GetLayout`, `GetHyperCubeData`) because this
-ingest needs only a handful of them.
+have been; `qlik_client.ts` is a small subset of it written directly against the documented calls
+(`OpenDoc`, `CreateSessionObject`, `GetLayout`, `GetHyperCubeData`) because this ingest needs only
+a handful of them. It uses the `ws` package's `WebSocket` explicitly, not a global — confirmed
+live 2026-10-02 that the deployed image's Node (v20.20.2) has no global `WebSocket` at all (added
+in Node 21+), a failure mode invisible when testing locally against a newer Node.
 
 ⚠️ **System `curl` cannot reach these hosts** — `curl: (35) LibreSSL/3.3.6: error:1404B410:SSL
 routines:ST_CONNECT:sslv3 alert handshake failure` against both `statistikk.husbanken.no` and
 `qlik.husbanken.no`, with or without `--tlsv1.2` forced. This is specific to Husbanken's hosts (NAV/
-IMDi/Udir all worked fine with curl). Node's own `fetch`/`WebSocket` connect cleanly — if a future
+IMDi/Udir all worked fine with curl). Node's own `fetch` connects cleanly, and so does `ws`'s
+`WebSocket` (the global `WebSocket` does NOT exist on the deployed runtime, Node 20 — see
+`qlik_client.ts`'s own header comment) — if a future
 change to this source needs ad-hoc exploration, reach for `node some-script.mjs`, not `curl`.
 
 ## Known quirks / fragility
