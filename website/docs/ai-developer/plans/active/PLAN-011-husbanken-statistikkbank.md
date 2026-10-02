@@ -229,9 +229,13 @@ covers all 48 automated sources". `npm run build` (Docusaurus): clean, no broken
 
 ---
 
-## Phase 4: Deploy and verify arrival (not started)
+## Phase 4: Deploy and verify arrival (deploy request filed)
 
-Same shape as every prior source's Phase 4 this session.
+Deploy request sent to imac, 2026-10-02: [urb-agents#1807](https://github.com/terchris/urb-agents/issues/1807).
+Tag `v20261002-228dc50`, both digests labelled, `LANDS WITH` derived via `lands-with.sh`
+(`annual_sources_refresh` then `transform_and_publish`), row-count predictions stated
+(35,295 for `raw.husbanken_bostotte` / `indicators__husbanken_bostotte` /
+`mart_indicators__husbanken_bostotte`, confirmed via a real local-Postgres full ingest run).
 
 ---
 
