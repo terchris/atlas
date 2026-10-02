@@ -6,11 +6,21 @@
  * This is NOT a reverse-engineered protocol the way IMDikator would have
  * been (see `INVESTIGATE-imdikator-api.md`) — the Qlik Engine API is
  * officially documented by Qlik, and Qlik publishes its own open-source
- * client (`enigma.js`). This file is a small, dependency-free subset
- * written directly against the raw protocol rather than pulling in
- * `enigma.js`, because the only operations this ingest needs — open a doc,
- * create one hypercube, page through its rows, close — are a handful of
- * JSON-RPC calls, confirmed live during Phase 1/2 research.
+ * client (`enigma.js`). This file is a small subset written directly
+ * against the raw protocol rather than pulling in `enigma.js`, because the
+ * only operations this ingest needs — open a doc, create one hypercube,
+ * page through its rows, close — are a handful of JSON-RPC calls, confirmed
+ * live during Phase 1/2 research.
+ *
+ * 🔴 USES `ws`, NOT THE GLOBAL `WebSocket` — confirmed live 2026-10-02
+ * (imac, deploy of PLAN-011): the deployed image's Node is v20.20.2, which
+ * has no global `WebSocket` at all (added in Node 21+, and even there it is
+ * the `undici`-backed browser-compatible one). Local testing against a
+ * newer local Node (this agent used v22 via nvm) does not exercise this —
+ * reproduce with the deployed runtime's exact version before trusting a fix
+ * here. `ws`'s `WebSocket` class implements the same `onopen`/`onerror`/
+ * `onmessage`/`onclose` property API used below, so this is a drop-in
+ * import, not a rewrite.
  *
  * ⚠️ Confirmed live: a full `qHeight`-in-one-page fetch over the whole
  * dataset (7,449 rows × 7 columns) fails with Qlik's own `qErrorCode: 7009`
@@ -28,6 +38,7 @@
  * not shared, across sources) — copy this file for a future Qlik-backed
  * source rather than importing it from here.
  */
+import { WebSocket } from "ws";
 
 export type QlikHypercubeDef = {
   qDimensions: { qDef: { qFieldDefs: string[] } }[];
