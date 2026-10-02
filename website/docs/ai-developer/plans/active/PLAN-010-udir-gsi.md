@@ -228,9 +228,26 @@ group by region_kind` shows 18,768 `kommune` rows all with a non-null `kommune_n
 
 ---
 
-## Phase 4: Deploy and verify arrival (not started)
+## Phase 4: Deploy and verify arrival
 
-Same shape as every prior source's Phase 4 this session.
+### Tasks
+
+- [x] 4.1 Regenerated every drift-gated artifact up front — see Phase 3's validation note. All 17
+  dbt checks and the website build were green on the **first** CI push (PR #504); no follow-up fix
+  commits needed, unlike `imdi-bosetting`'s raw-table-count miss.
+- [x] 4.2 Filed the deploy request to **imac**, as
+  **[urb-agents#1806](https://github.com/terchris/urb-agents/issues/1806)**. Named the exact
+  relations (`raw.udir_gsi`, `api_v1.indicators__udir_gsi`/`mart_indicators__udir_gsi`), both image
+  digests labelled by object (`ghcr.io/terchris/atlas-data:v20261002-c1e9af2` code-location,
+  `ghcr.io/terchris/atlas-data/uis:v20261002-c1e9af2` artifact), and the derived `LANDS WITH`
+  (`atlas-data/uis/lands-with.sh 8e672cf..c1e9af2`: `annual_sources_refresh` then
+  `transform_and_publish` — `udir-gsi` was added to the existing `annual_sources_refresh` job, no
+  new job needed). Row-count prediction: 18,816 (measured locally 2026-10-02), with the same
+  "2025-26 is still open, a republish could move it" caveat class as every annual/monthly source
+  this session, plus an explicit check for the Svalbard split (18,768 real kommune rows vs. 48
+  `region_kind = 'svalbard'` rows with `kommune_nr IS NULL`) so a non-~48 null count would read as
+  a real signal, not noise.
+- [ ] 4.3 Verify arrival independently against the live public API — not the deploy report alone.
 
 ---
 
