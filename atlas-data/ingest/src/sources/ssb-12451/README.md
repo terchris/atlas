@@ -9,7 +9,7 @@ table at all** (checked live 2026-10-02: every downloadable table there is fylke
 coarser — residence, sector, industry, age, occupation, diagnosis, duration). SSB republishes
 NAV's underlying register data at kommune resolution instead, through the same PXWebAPI mechanism
 every other `ssb-*` source in this project already uses. See
-[`PLAN-013-nav-sykefravaer.md`](../../../../../website/docs/ai-developer/plans/active/PLAN-013-nav-sykefravaer.md)
+[`PLAN-013-nav-sykefravaer.md`](../../../../../website/docs/ai-developer/plans/completed/PLAN-013-nav-sykefravaer.md)
 for the full Phase 1 research.
 
 ## What the script does
