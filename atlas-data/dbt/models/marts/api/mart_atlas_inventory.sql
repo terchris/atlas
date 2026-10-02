@@ -96,6 +96,7 @@
 -- depends_on: {{ ref('mart_indicators__fhi_smertestillende') }}
 -- depends_on: {{ ref('mart_indicators__fhi_trangbodd') }}
 -- depends_on: {{ ref('mart_indicators__fhi_vgs_gjennomforing') }}
+-- depends_on: {{ ref('mart_indicators__husbanken_bostotte') }}
 -- depends_on: {{ ref('mart_indicators__imdi_bosetting') }}
 -- depends_on: {{ ref('mart_indicators__nav_uforetrygd') }}
 -- depends_on: {{ ref('mart_indicators__ssb_06083') }}
@@ -192,6 +193,7 @@
   {'relation': 'indicators__fhi_smertestillende', 'mart': 'mart_indicators__fhi_smertestillende'},
   {'relation': 'indicators__fhi_trangbodd', 'mart': 'mart_indicators__fhi_trangbodd'},
   {'relation': 'indicators__fhi_vgs_gjennomforing', 'mart': 'mart_indicators__fhi_vgs_gjennomforing'},
+  {'relation': 'indicators__husbanken_bostotte', 'mart': 'mart_indicators__husbanken_bostotte'},
   {'relation': 'indicators__imdi_bosetting', 'mart': 'mart_indicators__imdi_bosetting'},
   {'relation': 'indicators__nav_uforetrygd', 'mart': 'mart_indicators__nav_uforetrygd'},
   {'relation': 'indicators__ssb_06083', 'mart': 'mart_indicators__ssb_06083'},

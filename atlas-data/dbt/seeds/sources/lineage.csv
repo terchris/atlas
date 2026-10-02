@@ -68,6 +68,7 @@ indicators__fhi_selvmord,fhi-selvmord
 indicators__fhi_smertestillende,fhi-smertestillende
 indicators__fhi_trangbodd,fhi-trangbodd
 indicators__fhi_vgs_gjennomforing,fhi-vgs-gjennomforing
+indicators__husbanken_bostotte,husbanken-bostotte
 indicators__imdi_bosetting,imdi-bosetting
 indicators__imdi_bosetting,ssb-klass-kommuner
 indicators__nav_uforetrygd,nav-uforetrygd
@@ -117,6 +118,7 @@ mart_atlas_inventory,fhi-selvmord
 mart_atlas_inventory,fhi-smertestillende
 mart_atlas_inventory,fhi-trangbodd
 mart_atlas_inventory,fhi-vgs-gjennomforing
+mart_atlas_inventory,husbanken-bostotte
 mart_atlas_inventory,imdi-bosetting
 mart_atlas_inventory,nav-uforetrygd
 mart_atlas_inventory,redcross-branches
@@ -317,6 +319,7 @@ mart_indicators__fhi_selvmord,fhi-selvmord
 mart_indicators__fhi_smertestillende,fhi-smertestillende
 mart_indicators__fhi_trangbodd,fhi-trangbodd
 mart_indicators__fhi_vgs_gjennomforing,fhi-vgs-gjennomforing
+mart_indicators__husbanken_bostotte,husbanken-bostotte
 mart_indicators__imdi_bosetting,imdi-bosetting
 mart_indicators__imdi_bosetting,ssb-klass-kommuner
 mart_indicators__nav_uforetrygd,nav-uforetrygd

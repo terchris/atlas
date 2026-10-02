@@ -37,8 +37,8 @@ than that it guessed the wrong URL. Ask for the base URL instead.
 schema change a breaking API change, and the modelled layer above exists
 precisely so consumers do not depend on that shape.
 
-⚠️ THIS IS WRITTEN DOWN BECAUSE THE ALTERNATIVE IS 52 SILENT 404s. Atlas holds
-52 raw tables. A consumer who guesses one of their names gets the same PGRST205
+⚠️ THIS IS WRITTEN DOWN BECAUSE THE ALTERNATIVE IS 57 SILENT 404s. Atlas holds
+57 raw tables. A consumer who guesses one of their names gets the same PGRST205
 described above — "Could not find the table" — which reads as *this endpoint is
 broken or not built yet*, when it is a decision that will not be revisited. An
 absence cannot say why it is absent, so the reason is stated here rather than
@@ -142,13 +142,13 @@ SUPPLY — voluntary-sector presence:
   distrikt_summary             chapters by district.
   kommune_local_chapters       chapters resolved to a kommune.
 
-PER-SOURCE INDICATOR RELATIONS — 44 of them, one per upstream table, at the
+PER-SOURCE INDICATOR RELATIONS — 45 of them, one per upstream table, at the
 grain the publisher actually uses. The cross-source views above impose ONE
 shape on every source; these keep the source''s own dimensions, so a breakdown
 those views flatten away (a sex, an age band, a household or family type, a
 parental-education split) is only answerable here.
 
-🔴 ALL 44 ARE stability:source. THE COLUMN SET FOLLOWS THE PUBLISHER, NOT
+🔴 ALL 45 ARE stability:source. THE COLUMN SET FOLLOWS THE PUBLISHER, NOT
 ATLAS. If SSB, FHI or Bufdir adds, renames or drops a dimension, these change
 with it — that is the deliberate trade for getting the real grain. Filter
 `meta_endpoints?tags=cs.{stability:curated}` for the relations whose shape
@@ -170,6 +170,8 @@ same source_id, and through the ref_* lists above where one exists.
     indicators__fhi_mobbing indicators__fhi_neet indicators__fhi_prognose
     indicators__fhi_selvmord indicators__fhi_smertestillende
     indicators__fhi_trangbodd indicators__fhi_vgs_gjennomforing
+  husbanken (1):
+    indicators__husbanken_bostotte
   imdi (1):
     indicators__imdi_bosetting
   nav (1):
@@ -1887,6 +1889,30 @@ COMMENT ON COLUMN api_v1.indicators__fhi_vgs_gjennomforing.contents_label IS 'Hu
 COMMENT ON COLUMN api_v1.indicators__fhi_vgs_gjennomforing.value IS 'The measured value. NULL where the publisher suppressed the cell — see status.';
 COMMENT ON COLUMN api_v1.indicators__fhi_vgs_gjennomforing.status IS 'The publisher''s own suppression or quality marker for this cell, passed through verbatim.';
 COMMENT ON COLUMN api_v1.indicators__fhi_vgs_gjennomforing.updated_at IS 'When Atlas last loaded this row from the upstream.';
+
+-- indicators__husbanken_bostotte  ←  marts.mart_indicators__husbanken_bostotte
+CREATE OR REPLACE VIEW api_v1.indicators__husbanken_bostotte AS SELECT * FROM marts.mart_indicators__husbanken_bostotte;
+COMMENT ON VIEW api_v1.indicators__husbanken_bostotte IS 'Per-source indicator data for husbanken-bostotte (Husbanken), at the publisher''s own grain.
+
+Per-source indicator relation for `husbanken-bostotte` (Husbanken), published at the grain
+the publisher actually uses rather than flattened into the cross-source views. One row per
+(region_code, year, measure). Atlas''s first Husbanken source, and its first ingest reached
+over the Qlik Engine API (WebSocket JSON-RPC) rather than a plain HTTP GET.
+🔴 stability:source — the column set here follows Husbanken, not Atlas. If the publisher
+adds, renames or drops a dimension, this relation changes with it. That is the deliberate
+trade for getting the real grain; prefer a stability:curated relation if you need a shape
+Atlas promises to hold still. Decode codes through meta_dimensions filtered to
+source_id=husbanken-bostotte.';
+COMMENT ON COLUMN api_v1.indicators__husbanken_bostotte.source_id IS 'Atlas catalogue id for this ingest — always husbanken-bostotte.';
+COMMENT ON COLUMN api_v1.indicators__husbanken_bostotte.region_code IS 'SSB-format region code, verbatim from the Qlik hypercube''s KommuneNr dimension. May not be a kommune — region_kind says which (Svalbard''s pseudo-codes and Oslo''s bydeler, under a numbering distinct from FHI''s, are both present).';
+COMMENT ON COLUMN api_v1.indicators__husbanken_bostotte.kommune_nr IS 'Four-digit kommune code, derived through region_code_to_kommune_nr. NULL for Svalbard and any other non-kommune region_code.';
+COMMENT ON COLUMN api_v1.indicators__husbanken_bostotte.region_kind IS 'What region_code is, from classify_region_code: kommune or svalbard for this source.';
+COMMENT ON COLUMN api_v1.indicators__husbanken_bostotte.year IS 'Calendar year from the hypercube''s År dimension. Real data coverage starts 2010; rows with no assigned year ("-") are dropped upstream.';
+COMMENT ON COLUMN api_v1.indicators__husbanken_bostotte.measure IS 'Which bostøtte figure this row''s value is — soknad (application count), vedtak (decision count), utbetaling (payout count), avslag (rejection count), or belop (paid kroner amount).';
+COMMENT ON COLUMN api_v1.indicators__husbanken_bostotte.contents_code IS 'Atlas-normalised variable code, one per measure (husbanken_bostotte__soknad, husbanken_bostotte__vedtak, husbanken_bostotte__utbetaling, husbanken_bostotte__avslag, husbanken_bostotte__belop).';
+COMMENT ON COLUMN api_v1.indicators__husbanken_bostotte.contents_label IS 'Human-readable label — identical to measure for this source.';
+COMMENT ON COLUMN api_v1.indicators__husbanken_bostotte.value IS 'The measure''s value for this region and year. No suppression marker was found in this dataset during Phase 1/2 research.';
+COMMENT ON COLUMN api_v1.indicators__husbanken_bostotte.updated_at IS 'Timestamp when the row was last written by ingest (from raw.loaded_at).';
 
 -- indicators__imdi_bosetting  ←  marts.mart_indicators__imdi_bosetting
 CREATE OR REPLACE VIEW api_v1.indicators__imdi_bosetting AS SELECT * FROM marts.mart_indicators__imdi_bosetting;

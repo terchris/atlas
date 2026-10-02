@@ -3198,6 +3198,44 @@ category_format joined with `__`, so each measure is filter-stable in the catalo
       - name: updated_at
         description: "Timestamp when the row was last written by ingest (from raw.loaded_at)."
 
+  - name: mart_indicators__husbanken_bostotte
+    meta:
+      title: "Statistikkbank — Bostøtte"
+      stability: source
+    description: |
+      Per-source indicator data for husbanken-bostotte (Husbanken), at the publisher's own grain.
+
+      Per-source indicator relation for `husbanken-bostotte` (Husbanken), published at the grain
+      the publisher actually uses rather than flattened into the cross-source views. One row per
+      (region_code, year, measure). Atlas's first Husbanken source, and its first ingest reached
+      over the Qlik Engine API (WebSocket JSON-RPC) rather than a plain HTTP GET.
+      🔴 stability:source — the column set here follows Husbanken, not Atlas. If the publisher
+      adds, renames or drops a dimension, this relation changes with it. That is the deliberate
+      trade for getting the real grain; prefer a stability:curated relation if you need a shape
+      Atlas promises to hold still. Decode codes through meta_dimensions filtered to
+      source_id=husbanken-bostotte.
+    columns:
+      - name: source_id
+        description: "Atlas catalogue id for this ingest — always husbanken-bostotte."
+      - name: region_code
+        description: "SSB-format region code, verbatim from the Qlik hypercube's KommuneNr dimension. May not be a kommune — region_kind says which (Svalbard's pseudo-codes and Oslo's bydeler, under a numbering distinct from FHI's, are both present)."
+      - name: kommune_nr
+        description: "Four-digit kommune code, derived through region_code_to_kommune_nr. NULL for Svalbard and any other non-kommune region_code."
+      - name: region_kind
+        description: "What region_code is, from classify_region_code: kommune or svalbard for this source."
+      - name: year
+        description: "Calendar year from the hypercube's År dimension. Real data coverage starts 2010; rows with no assigned year (\"-\") are dropped upstream."
+      - name: measure
+        description: "Which bostøtte figure this row's value is — soknad (application count), vedtak (decision count), utbetaling (payout count), avslag (rejection count), or belop (paid kroner amount)."
+      - name: contents_code
+        description: "Atlas-normalised variable code, one per measure (husbanken_bostotte__soknad, husbanken_bostotte__vedtak, husbanken_bostotte__utbetaling, husbanken_bostotte__avslag, husbanken_bostotte__belop)."
+      - name: contents_label
+        description: "Human-readable label — identical to measure for this source."
+      - name: value
+        description: "The measure's value for this region and year. No suppression marker was found in this dataset during Phase 1/2 research."
+      - name: updated_at
+        description: "Timestamp when the row was last written by ingest (from raw.loaded_at)."
+
   - name: mart_indicators__fhi_alkohol
     meta:
       title: "Alkohol_Ungdata_KH"

@@ -43,7 +43,7 @@
       "description": "Social assistance use, household composition, overcrowded housing,\nand integration indicators. The bridge between need and the services\nthat respond to it.\n",
       "emoji": "🏘️",
       "order": 50,
-      "source_count": 7
+      "source_count": 8
     },
     {
       "id": "ngo-supply",
@@ -105,7 +105,7 @@
       "logo": "/img/publishers/husbanken.svg",
       "feedback_url": "https://www.husbanken.no/om-husbanken/kontakt/",
       "notes": "The Norwegian State Housing Bank. Publishes housing-support\nstatistikkbank data (bostøtte, startlån) per kommune — the housing\nhalf of the income/welfare picture Atlas's SSB and NAV sources do not\ncarry on their own.\n",
-      "source_count": 0
+      "source_count": 1
     },
     {
       "id": "imdi",
@@ -1073,12 +1073,12 @@
         "bufdir-barnefattigdom"
       ],
       "related_by_topic": [
+        "husbanken-bostotte",
         "imdi-bosetting",
         "nav-uforetrygd",
         "ssb-12131",
         "ssb-12132",
-        "ssb-13995",
-        "ssb-crime-tables"
+        "ssb-13995"
       ],
       "dimensions": [
         {
@@ -8307,6 +8307,179 @@
     },
     {
       "kind": "source",
+      "source_id": "husbanken-bostotte",
+      "upstream_id": "ee185fe5-e94d-463e-bff8-cd1c5f2f566f",
+      "upstream_url": "https://www.husbanken.no/tall-og-analyse/statistikkbank/",
+      "upstream_landing_page": "https://www.husbanken.no/tall-og-analyse/",
+      "upstream_title": "Statistikkbank — Bostøtte",
+      "description": "Husbanken publishes bostøtte (housing allowance) application counts, decision counts, payout\ncounts, rejection counts and the paid-out kroner amount, per kommune, per year, through its public\n\"Statistikkbank\" Qlik Sense app. Atlas reaches this over the Qlik Engine API (WebSocket JSON-RPC\n2.0, officially documented by Qlik), not Power BI as an earlier investigation assumed — see\natlas-data/ingest/src/sources/husbanken-bostotte/README.md for the full mechanism, including why\na single-page hypercube fetch fails and the paginated fetch this source uses instead.\n",
+      "atlas_summary": null,
+      "publisher": {
+        "id": "husbanken",
+        "display_name": "Husbanken",
+        "homepage": "https://www.husbanken.no/",
+        "logo": "/img/publishers/husbanken.svg"
+      },
+      "category": {
+        "id": "social",
+        "name": "Social & housing",
+        "emoji": "🏘️"
+      },
+      "license": "NLOD",
+      "license_url": "https://data.norge.no/nlod/no/2.0",
+      "periodicity": "P1Y",
+      "eu_theme": "SOCI",
+      "attribution": "Kilde: Husbanken, Statistikkbank",
+      "tags": {
+        "provider": "husbanken",
+        "topic": "social",
+        "geo": "kommune",
+        "cadence": "annual"
+      },
+      "keywords": [
+        "bostotte",
+        "bostøtte",
+        "husbanken",
+        "boligsosial",
+        "kommune"
+      ],
+      "lifecycle": "stable",
+      "time_coverage": {
+        "start": null,
+        "end": null
+      },
+      "methodology_notes": "Real data coverage starts in 2010 (2008/2009 are genuinely zero, not missing) and extends through\nthe current year (in progress). Husbanken's \"Boligsosial Monitor\" app on the same Qlik backend\ncarries related but distinct indicators and is deferred — see PLAN-011 for why.\n",
+      "suggested_joins": [],
+      "related_by_topic": [
+        "bufdir-barnevern",
+        "imdi-bosetting",
+        "nav-uforetrygd",
+        "ssb-12131",
+        "ssb-12132",
+        "ssb-13995"
+      ],
+      "dimensions": [
+        {
+          "code": "region_code",
+          "meaning": "Kommune code, read directly from the hypercube's `KommuneNr` dimension",
+          "value_format": "4-digit code (SSB standard) — not always a real kommune",
+          "notes": "⚠️ Confirmed live 2026-10-02, matching the exact lesson udir-gsi learned: Svalbard's two pseudo-codes (`2100`, `2111`) are present among Husbanken's 883 distinct `KommuneNr` values, always carrying real zero values for every measure (not suppressed — Husbanken's bostøtte programme genuinely administers no Svalbard cases). Named `region_code`, not `kommune_nr`, for this reason; `kommune_nr` resolution happens downstream via this project's existing `classify_region_code`/`region_code_to_kommune_nr` dbt macros.\n⚠️ Also confirmed live: `KommuneNr` carries Oslo's 15 bydeler (plus one discontinued pre-2004 one) as 4-digit codes `0311`-`0326`, named via Husbanken's own Qlik app (e.g. `0311` = \"Gamle Oslo\"). This is a second, incompatible bydel numbering from the 6-digit convention FHI's sources use for the same districts — `classify_region_code` now recognises both.\n"
+        },
+        {
+          "code": "year",
+          "meaning": "Calendar year, read from the hypercube's `År` dimension",
+          "value_format": "4-digit year",
+          "notes": "⚠️ Confirmed live: the underlying source records at DAILY grain (31 distinct `Dato` values checked for a single January) — an earlier investigation wrongly assumed annual grain. Atlas publishes at annual grain as its own choice (matching this source's sibling indicators and PLAN-011's recommendation), not because the source is coarser than that.\n⚠️ Also confirmed live: a real null-year bucket exists in Husbanken's own data (`År` as the literal text `-`), seen both nationally and per-kommune (e.g. Svalbard code 2111). These rows are dropped during parsing, not fabricated into a fake year — see parse.ts.\n"
+        },
+        {
+          "code": "measure",
+          "meaning": "Which bostøtte figure this row's value is — not a format variant",
+          "value_format": "soknad | vedtak | utbetaling | avslag | belop",
+          "notes": "Five measures: application count, decision count, payout count, rejection count, and the paid kroner amount. Named via explicit `qLabel`s set on the Qlik request (`soknad`/`vedtak`/ `utbetaling`/`avslag`/`belop`) — without a `qLabel`, Qlik echoes the raw expression string (e.g. `Sum(BostøtteSøknadTeller)`) instead, confirmed live.\n"
+        },
+        {
+          "code": "value",
+          "meaning": "The measure's numeric value for this kommune and year",
+          "value_format": "Integer count, or kroner for the `belop` measure; no suppression marker found",
+          "notes": "Checked live against Røyrvik (kommune 5043, Norway's smallest by bostøtte volume) — every cell is a real number, not a suppression placeholder. No suppression convention was found anywhere in this dataset during Phase 1/2 research.\n"
+        }
+      ],
+      "raw_tables": null,
+      "sample_query": null,
+      "citation": {
+        "text": "Husbanken. (n.d.). Statistikkbank — Bostøtte. Retrieved from https://www.husbanken.no/tall-og-analyse/. Available in Atlas at https://atlas.sovereignsky.no/datasets/husbanken-bostotte.",
+        "bibtex": "@misc{atlas_husbanken_bostotte,\n  author = {Husbanken},\n  title  = {Statistikkbank — Bostøtte},\n  year   = {n.d.},\n  url    = {https://www.husbanken.no/tall-og-analyse/},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/husbanken-bostotte}\n}"
+      },
+      "feedback_url": "https://www.husbanken.no/om-husbanken/kontakt/",
+      "consuming_marts": [
+        {
+          "mart_name": "mart_atlas_inventory",
+          "api_v1_name": "atlas_inventory",
+          "title": null,
+          "description_short": "What Atlas publishes: one row per endpoint with its row count, freshness and origin.",
+          "description_full": "What Atlas publishes: one row per endpoint with its row count, freshness and origin.\n\nWhat Atlas publishes, one row per queryable endpoint: how many records it\nserves, when its data last arrived, and where those rows came from.\nAsked for by Røde Kors — \"validate that all datasets that are ingested has\nan endpoint and it can be queried … count the number of records each\nendpoint has and update the last time it ingested data.\"\n⚠️ THE GRAIN IS PER ENDPOINT, NOT PER SOURCE. meta_sources answers \"what\ndid Atlas ingest\"; this answers \"what can I query, and is there anything\nin it\". One source can feed several endpoints and one endpoint can draw on\nseveral sources, so the two row counts are not comparable and summing\nsources will not reproduce an endpoint's count.\n⚠️ atlas_inventory does not list ITSELF. It is built from the same seed it\nreports on, so counting itself would be circular and the number would be\nwhatever the table held mid-build. 19 endpoints are listed; 20 are\npublished.",
+          "sample_query": "https://api-atlas.urbalurba.com/atlas_inventory?limit=5"
+        },
+        {
+          "mart_name": "mart_indicators__husbanken_bostotte",
+          "api_v1_name": "indicators__husbanken_bostotte",
+          "title": "Statistikkbank — Bostøtte",
+          "description_short": "Per-source indicator data for husbanken-bostotte (Husbanken), at the publisher's own grain.",
+          "description_full": "Per-source indicator data for husbanken-bostotte (Husbanken), at the publisher's own grain.\n\nPer-source indicator relation for `husbanken-bostotte` (Husbanken), published at the grain\nthe publisher actually uses rather than flattened into the cross-source views. One row per\n(region_code, year, measure). Atlas's first Husbanken source, and its first ingest reached\nover the Qlik Engine API (WebSocket JSON-RPC) rather than a plain HTTP GET.\n🔴 stability:source — the column set here follows Husbanken, not Atlas. If the publisher\nadds, renames or drops a dimension, this relation changes with it. That is the deliberate\ntrade for getting the real grain; prefer a stability:curated relation if you need a shape\nAtlas promises to hold still. Decode codes through meta_dimensions filtered to\nsource_id=husbanken-bostotte.",
+          "sample_query": "https://api-atlas.urbalurba.com/indicators__husbanken_bostotte?limit=5"
+        }
+      ],
+      "consuming_models": [
+        {
+          "name": "indicators__husbanken_bostotte",
+          "kind": "indicators"
+        },
+        {
+          "name": "mart_atlas_inventory",
+          "kind": "mart"
+        },
+        {
+          "name": "mart_indicators__husbanken_bostotte",
+          "kind": "mart"
+        }
+      ],
+      "joined_with": [
+        {
+          "source_id": "brreg-enheter-alle",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "brreg-frivillige",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "brreg-oppdateringer",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "bufdir-barnefattigdom",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "bufdir-barnevern",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "fhi-alkohol",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "fhi-befolkning",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "fhi-befolkningsvekst",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        }
+      ],
+      "last_ingested_at": null,
+      "latest_row_count": null,
+      "total_runs": null,
+      "downstream_model_count": null
+    },
+    {
+      "kind": "source",
       "source_id": "imdi-bosetting",
       "upstream_id": "bosettingstall",
       "upstream_url": "https://www.imdi.no/bosetting/bosettingstall/",
@@ -8351,11 +8524,11 @@
       "suggested_joins": [],
       "related_by_topic": [
         "bufdir-barnevern",
+        "husbanken-bostotte",
         "nav-uforetrygd",
         "ssb-12131",
         "ssb-12132",
-        "ssb-13995",
-        "ssb-crime-tables"
+        "ssb-13995"
       ],
       "dimensions": [
         {
@@ -8526,11 +8699,11 @@
       "suggested_joins": [],
       "related_by_topic": [
         "bufdir-barnevern",
+        "husbanken-bostotte",
         "imdi-bosetting",
         "ssb-12131",
         "ssb-12132",
-        "ssb-13995",
-        "ssb-crime-tables"
+        "ssb-13995"
       ],
       "dimensions": [
         {
@@ -11685,11 +11858,11 @@
       "suggested_joins": [],
       "related_by_topic": [
         "bufdir-barnevern",
+        "husbanken-bostotte",
         "imdi-bosetting",
         "nav-uforetrygd",
         "ssb-12132",
-        "ssb-13995",
-        "ssb-crime-tables"
+        "ssb-13995"
       ],
       "dimensions": [
         {
@@ -12003,11 +12176,11 @@
       "suggested_joins": [],
       "related_by_topic": [
         "bufdir-barnevern",
+        "husbanken-bostotte",
         "imdi-bosetting",
         "nav-uforetrygd",
         "ssb-12131",
-        "ssb-13995",
-        "ssb-crime-tables"
+        "ssb-13995"
       ],
       "dimensions": [
         {
@@ -12966,11 +13139,11 @@
       "suggested_joins": [],
       "related_by_topic": [
         "bufdir-barnevern",
+        "husbanken-bostotte",
         "imdi-bosetting",
         "nav-uforetrygd",
         "ssb-12131",
-        "ssb-12132",
-        "ssb-crime-tables"
+        "ssb-12132"
       ],
       "dimensions": [
         {
@@ -13284,11 +13457,11 @@
       "suggested_joins": [],
       "related_by_topic": [
         "bufdir-barnevern",
+        "husbanken-bostotte",
         "imdi-bosetting",
         "nav-uforetrygd",
         "ssb-12131",
-        "ssb-12132",
-        "ssb-13995"
+        "ssb-12132"
       ],
       "dimensions": [
         {
@@ -14891,6 +15064,12 @@
           "model_name": "mart_indicators__fhi_vgs_gjennomforing",
           "title": "Gjennomforing i videregående skole (utdann_3)",
           "description_short": "Per-source indicator data for fhi-vgs-gjennomforing (Folkehelseinstituttet), at the publisher's own grain."
+        },
+        {
+          "parent_kind": "model",
+          "model_name": "mart_indicators__husbanken_bostotte",
+          "title": "Statistikkbank — Bostøtte",
+          "description_short": "Per-source indicator data for husbanken-bostotte (Husbanken), at the publisher's own grain."
         },
         {
           "parent_kind": "model",
@@ -18348,6 +18527,67 @@
       ],
       "sample_query": "https://api-atlas.urbalurba.com/indicators__fhi_vgs_gjennomforing?limit=5",
       "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__fhi_vgs_gjennomforing"
+    },
+    {
+      "kind": "view",
+      "view_id": "indicators__husbanken_bostotte",
+      "mart_name": "mart_indicators__husbanken_bostotte",
+      "api_v1_name": "indicators__husbanken_bostotte",
+      "title": "Statistikkbank — Bostøtte",
+      "description_short": "Per-source indicator data for husbanken-bostotte (Husbanken), at the publisher's own grain.",
+      "description_full": "Per-source indicator data for husbanken-bostotte (Husbanken), at the publisher's own grain.\n\nPer-source indicator relation for `husbanken-bostotte` (Husbanken), published at the grain\nthe publisher actually uses rather than flattened into the cross-source views. One row per\n(region_code, year, measure). Atlas's first Husbanken source, and its first ingest reached\nover the Qlik Engine API (WebSocket JSON-RPC) rather than a plain HTTP GET.\n🔴 stability:source — the column set here follows Husbanken, not Atlas. If the publisher\nadds, renames or drops a dimension, this relation changes with it. That is the deliberate\ntrade for getting the real grain; prefer a stability:curated relation if you need a shape\nAtlas promises to hold still. Decode codes through meta_dimensions filtered to\nsource_id=husbanken-bostotte.",
+      "columns": [
+        {
+          "name": "source_id",
+          "description": "Atlas catalogue id for this ingest — always husbanken-bostotte."
+        },
+        {
+          "name": "region_code",
+          "description": "SSB-format region code, verbatim from the Qlik hypercube's KommuneNr dimension. May not be a kommune — region_kind says which (Svalbard's pseudo-codes and Oslo's bydeler, under a numbering distinct from FHI's, are both present)."
+        },
+        {
+          "name": "kommune_nr",
+          "description": "Four-digit kommune code, derived through region_code_to_kommune_nr. NULL for Svalbard and any other non-kommune region_code."
+        },
+        {
+          "name": "region_kind",
+          "description": "What region_code is, from classify_region_code: kommune or svalbard for this source."
+        },
+        {
+          "name": "year",
+          "description": "Calendar year from the hypercube's År dimension. Real data coverage starts 2010; rows with no assigned year (\"-\") are dropped upstream."
+        },
+        {
+          "name": "measure",
+          "description": "Which bostøtte figure this row's value is — soknad (application count), vedtak (decision count), utbetaling (payout count), avslag (rejection count), or belop (paid kroner amount)."
+        },
+        {
+          "name": "contents_code",
+          "description": "Atlas-normalised variable code, one per measure (husbanken_bostotte__soknad, husbanken_bostotte__vedtak, husbanken_bostotte__utbetaling, husbanken_bostotte__avslag, husbanken_bostotte__belop)."
+        },
+        {
+          "name": "contents_label",
+          "description": "Human-readable label — identical to measure for this source."
+        },
+        {
+          "name": "value",
+          "description": "The measure's value for this region and year. No suppression marker was found in this dataset during Phase 1/2 research."
+        },
+        {
+          "name": "updated_at",
+          "description": "Timestamp when the row was last written by ingest (from raw.loaded_at)."
+        }
+      ],
+      "built_from": [
+        {
+          "parent_kind": "model",
+          "model_name": "indicators__husbanken_bostotte",
+          "title": null,
+          "description_short": "Per-source passthrough for Husbanken bostøtte (housing allowance — application, decision, payout and rejection counts, plus the paid kroner amount)."
+        }
+      ],
+      "sample_query": "https://api-atlas.urbalurba.com/indicators__husbanken_bostotte?limit=5",
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__husbanken_bostotte"
     },
     {
       "kind": "view",

@@ -1640,3 +1640,48 @@ sources:
             data_type: numeric
           - name: loaded_at
             data_type: timestamp with time zone
+      - name: husbanken_bostotte
+        description: |
+          Husbanken bostøtte (housing allowance) — application counts, decision counts, payout
+          counts, rejection counts, and the paid-out kroner amount, per region, per year. Reached
+          through Husbanken's public "Statistikkbank" Qlik Sense app over the Qlik Engine API
+          (WebSocket JSON-RPC), not Power BI as an earlier investigation assumed. Underlying grain
+          is daily; Atlas publishes annually as its own choice.
+          Populated by atlas-data/ingest/src/sources/husbanken-bostotte.
+        loaded_at_field: loaded_at
+        meta:
+          ingest_cadence: weekly
+        freshness:
+          warn_after: {count: 400, period: day}
+          error_after: {count: 800, period: day}
+        columns:
+          - name: region_code
+            description: >-
+              SSB-format region code, read directly from the Qlik hypercube's KommuneNr dimension —
+              not always a real kommune. Svalbard's pseudo-codes (2100, 2111) are present, confirmed
+              live, always as real zero values. Oslo's 15 bydeler (plus one discontinued pre-2004
+              one) are also present, as 4-digit codes 0311-0326 under a numbering distinct from
+              FHI's 6-digit bydel convention. kommune_nr is resolved downstream via
+              classify_region_code, not assumed from this column's shape.
+            data_tests:
+              - not_null
+          - name: year
+            description: >-
+              Calendar year from the hypercube's År dimension. Rows where Husbanken's own system
+              recorded no year (the literal text "-") are dropped during parsing, not fabricated
+              into a fake year.
+            data_tests:
+              - not_null
+          - name: measure
+            description: >-
+              Which bostøtte figure this row's value is — soknad, vedtak, utbetaling, avslag, or
+              belop. Five distinct measures, not format variants of one quantity.
+            data_tests:
+              - not_null
+          - name: value
+            description: >-
+              The measure's value for this region and year. No suppression marker was found in this
+              dataset during Phase 1/2 research.
+            data_type: numeric
+          - name: loaded_at
+            data_type: timestamp with time zone

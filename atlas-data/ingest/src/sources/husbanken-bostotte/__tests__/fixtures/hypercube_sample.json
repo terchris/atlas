@@ -1,0 +1,3088 @@
+{
+  "qLayout": {
+    "qHyperCube": {
+      "qDimensionInfo": [
+        {
+          "qFallbackTitle": "KommuneNr"
+        },
+        {
+          "qFallbackTitle": "År"
+        }
+      ],
+      "qMeasureInfo": [
+        {
+          "qFallbackTitle": "soknad"
+        },
+        {
+          "qFallbackTitle": "vedtak"
+        },
+        {
+          "qFallbackTitle": "utbetaling"
+        },
+        {
+          "qFallbackTitle": "avslag"
+        },
+        {
+          "qFallbackTitle": "belop"
+        }
+      ],
+      "qSize": {
+        "qcx": 7,
+        "qcy": 69
+      },
+      "qDataPages": [
+        {
+          "qMatrix": [
+            [
+              {
+                "qText": "0301",
+                "qNum": 301,
+                "qElemNumber": 73,
+                "qState": "O"
+              },
+              {
+                "qText": "2008",
+                "qNum": 2008,
+                "qElemNumber": 0,
+                "qState": "O"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              }
+            ],
+            [
+              {
+                "qText": "0301",
+                "qNum": 301,
+                "qElemNumber": 73,
+                "qState": "O"
+              },
+              {
+                "qText": "2009",
+                "qNum": 2009,
+                "qElemNumber": 1,
+                "qState": "O"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              }
+            ],
+            [
+              {
+                "qText": "0301",
+                "qNum": 301,
+                "qElemNumber": 73,
+                "qState": "O"
+              },
+              {
+                "qText": "2010",
+                "qNum": 2010,
+                "qElemNumber": 2,
+                "qState": "O"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              }
+            ],
+            [
+              {
+                "qText": "0301",
+                "qNum": 301,
+                "qElemNumber": 73,
+                "qState": "O"
+              },
+              {
+                "qText": "2011",
+                "qNum": 2011,
+                "qElemNumber": 3,
+                "qState": "O"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              }
+            ],
+            [
+              {
+                "qText": "0301",
+                "qNum": 301,
+                "qElemNumber": 73,
+                "qState": "O"
+              },
+              {
+                "qText": "2012",
+                "qNum": 2012,
+                "qElemNumber": 4,
+                "qState": "O"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              }
+            ],
+            [
+              {
+                "qText": "0301",
+                "qNum": 301,
+                "qElemNumber": 73,
+                "qState": "O"
+              },
+              {
+                "qText": "2013",
+                "qNum": 2013,
+                "qElemNumber": 5,
+                "qState": "O"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              }
+            ],
+            [
+              {
+                "qText": "0301",
+                "qNum": 301,
+                "qElemNumber": 73,
+                "qState": "O"
+              },
+              {
+                "qText": "2014",
+                "qNum": 2014,
+                "qElemNumber": 6,
+                "qState": "O"
+              },
+              {
+                "qText": "2",
+                "qNum": 2,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "1",
+                "qNum": 1,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "1",
+                "qNum": 1,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "1",
+                "qNum": 1,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "20178",
+                "qNum": 20178,
+                "qElemNumber": 0,
+                "qState": "L"
+              }
+            ],
+            [
+              {
+                "qText": "0301",
+                "qNum": 301,
+                "qElemNumber": 73,
+                "qState": "O"
+              },
+              {
+                "qText": "2015",
+                "qNum": 2015,
+                "qElemNumber": 7,
+                "qState": "O"
+              },
+              {
+                "qText": "4",
+                "qNum": 4,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "4",
+                "qNum": 4,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "3",
+                "qNum": 3,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "44990",
+                "qNum": 44990,
+                "qElemNumber": 0,
+                "qState": "L"
+              }
+            ],
+            [
+              {
+                "qText": "0301",
+                "qNum": 301,
+                "qElemNumber": 73,
+                "qState": "O"
+              },
+              {
+                "qText": "2016",
+                "qNum": 2016,
+                "qElemNumber": 8,
+                "qState": "O"
+              },
+              {
+                "qText": "7",
+                "qNum": 7,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "7",
+                "qNum": 7,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "8",
+                "qNum": 8,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "72709",
+                "qNum": 72709,
+                "qElemNumber": 0,
+                "qState": "L"
+              }
+            ],
+            [
+              {
+                "qText": "0301",
+                "qNum": 301,
+                "qElemNumber": 73,
+                "qState": "O"
+              },
+              {
+                "qText": "2017",
+                "qNum": 2017,
+                "qElemNumber": 9,
+                "qState": "O"
+              },
+              {
+                "qText": "13",
+                "qNum": 13,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "10",
+                "qNum": 10,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "9",
+                "qNum": 9,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "3",
+                "qNum": 3,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "140966",
+                "qNum": 140966,
+                "qElemNumber": 0,
+                "qState": "L"
+              }
+            ],
+            [
+              {
+                "qText": "0301",
+                "qNum": 301,
+                "qElemNumber": 73,
+                "qState": "O"
+              },
+              {
+                "qText": "2018",
+                "qNum": 2018,
+                "qElemNumber": 10,
+                "qState": "O"
+              },
+              {
+                "qText": "11",
+                "qNum": 11,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "8",
+                "qNum": 8,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "9",
+                "qNum": 9,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "3",
+                "qNum": 3,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "160018",
+                "qNum": 160018,
+                "qElemNumber": 0,
+                "qState": "L"
+              }
+            ],
+            [
+              {
+                "qText": "0301",
+                "qNum": 301,
+                "qElemNumber": 73,
+                "qState": "O"
+              },
+              {
+                "qText": "2019",
+                "qNum": 2019,
+                "qElemNumber": 11,
+                "qState": "O"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              }
+            ],
+            [
+              {
+                "qText": "0301",
+                "qNum": 301,
+                "qElemNumber": 73,
+                "qState": "O"
+              },
+              {
+                "qText": "2020",
+                "qNum": 2020,
+                "qElemNumber": 12,
+                "qState": "O"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              }
+            ],
+            [
+              {
+                "qText": "0301",
+                "qNum": 301,
+                "qElemNumber": 73,
+                "qState": "O"
+              },
+              {
+                "qText": "2021",
+                "qNum": 2021,
+                "qElemNumber": 13,
+                "qState": "O"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              }
+            ],
+            [
+              {
+                "qText": "0301",
+                "qNum": 301,
+                "qElemNumber": 73,
+                "qState": "O"
+              },
+              {
+                "qText": "2022",
+                "qNum": 2022,
+                "qElemNumber": 14,
+                "qState": "O"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              }
+            ],
+            [
+              {
+                "qText": "0301",
+                "qNum": 301,
+                "qElemNumber": 73,
+                "qState": "O"
+              },
+              {
+                "qText": "2023",
+                "qNum": 2023,
+                "qElemNumber": 15,
+                "qState": "O"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              }
+            ],
+            [
+              {
+                "qText": "0301",
+                "qNum": 301,
+                "qElemNumber": 73,
+                "qState": "O"
+              },
+              {
+                "qText": "2024",
+                "qNum": 2024,
+                "qElemNumber": 16,
+                "qState": "O"
+              },
+              {
+                "qText": "2",
+                "qNum": 2,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "2",
+                "qNum": 2,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "22782",
+                "qNum": 22782,
+                "qElemNumber": 0,
+                "qState": "L"
+              }
+            ],
+            [
+              {
+                "qText": "0301",
+                "qNum": 301,
+                "qElemNumber": 73,
+                "qState": "O"
+              },
+              {
+                "qText": "2025",
+                "qNum": 2025,
+                "qElemNumber": 17,
+                "qState": "O"
+              },
+              {
+                "qText": "3",
+                "qNum": 3,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "2",
+                "qNum": 2,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "2",
+                "qNum": 2,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "1",
+                "qNum": 1,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "35262",
+                "qNum": 35262,
+                "qElemNumber": 0,
+                "qState": "L"
+              }
+            ],
+            [
+              {
+                "qText": "0301",
+                "qNum": 301,
+                "qElemNumber": 73,
+                "qState": "O"
+              },
+              {
+                "qText": "2026",
+                "qNum": 2026,
+                "qElemNumber": 18,
+                "qState": "O"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              }
+            ],
+            [
+              {
+                "qText": "0301",
+                "qNum": 301,
+                "qElemNumber": 73,
+                "qState": "O"
+              },
+              {
+                "qText": "-",
+                "qNum": "NaN",
+                "qElemNumber": -2,
+                "qState": "L",
+                "qIsNull": true
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              }
+            ],
+            [
+              {
+                "qText": "2111",
+                "qNum": 2111,
+                "qElemNumber": 471,
+                "qState": "O"
+              },
+              {
+                "qText": "-",
+                "qNum": "NaN",
+                "qElemNumber": -2,
+                "qState": "L",
+                "qIsNull": true
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              }
+            ],
+            [
+              {
+                "qText": "5043",
+                "qNum": 5043,
+                "qElemNumber": 479,
+                "qState": "O"
+              },
+              {
+                "qText": "2008",
+                "qNum": 2008,
+                "qElemNumber": 0,
+                "qState": "O"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              }
+            ],
+            [
+              {
+                "qText": "5043",
+                "qNum": 5043,
+                "qElemNumber": 479,
+                "qState": "O"
+              },
+              {
+                "qText": "2009",
+                "qNum": 2009,
+                "qElemNumber": 1,
+                "qState": "O"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              }
+            ],
+            [
+              {
+                "qText": "5043",
+                "qNum": 5043,
+                "qElemNumber": 479,
+                "qState": "O"
+              },
+              {
+                "qText": "2010",
+                "qNum": 2010,
+                "qElemNumber": 2,
+                "qState": "O"
+              },
+              {
+                "qText": "59",
+                "qNum": 59,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "55",
+                "qNum": 55,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "50",
+                "qNum": 50,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "4",
+                "qNum": 4,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "320302",
+                "qNum": 320302,
+                "qElemNumber": 0,
+                "qState": "L"
+              }
+            ],
+            [
+              {
+                "qText": "5043",
+                "qNum": 5043,
+                "qElemNumber": 479,
+                "qState": "O"
+              },
+              {
+                "qText": "2011",
+                "qNum": 2011,
+                "qElemNumber": 3,
+                "qState": "O"
+              },
+              {
+                "qText": "63",
+                "qNum": 63,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "55",
+                "qNum": 55,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "54",
+                "qNum": 54,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "8",
+                "qNum": 8,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "272322",
+                "qNum": 272322,
+                "qElemNumber": 0,
+                "qState": "L"
+              }
+            ],
+            [
+              {
+                "qText": "5043",
+                "qNum": 5043,
+                "qElemNumber": 479,
+                "qState": "O"
+              },
+              {
+                "qText": "2012",
+                "qNum": 2012,
+                "qElemNumber": 4,
+                "qState": "O"
+              },
+              {
+                "qText": "61",
+                "qNum": 61,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "58",
+                "qNum": 58,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "60",
+                "qNum": 60,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "3",
+                "qNum": 3,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "196790",
+                "qNum": 196790,
+                "qElemNumber": 0,
+                "qState": "L"
+              }
+            ],
+            [
+              {
+                "qText": "5043",
+                "qNum": 5043,
+                "qElemNumber": 479,
+                "qState": "O"
+              },
+              {
+                "qText": "2013",
+                "qNum": 2013,
+                "qElemNumber": 5,
+                "qState": "O"
+              },
+              {
+                "qText": "33",
+                "qNum": 33,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "30",
+                "qNum": 30,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "33",
+                "qNum": 33,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "3",
+                "qNum": 3,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "75234",
+                "qNum": 75234,
+                "qElemNumber": 0,
+                "qState": "L"
+              }
+            ],
+            [
+              {
+                "qText": "5043",
+                "qNum": 5043,
+                "qElemNumber": 479,
+                "qState": "O"
+              },
+              {
+                "qText": "2014",
+                "qNum": 2014,
+                "qElemNumber": 6,
+                "qState": "O"
+              },
+              {
+                "qText": "14",
+                "qNum": 14,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "10",
+                "qNum": 10,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "11",
+                "qNum": 11,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "4",
+                "qNum": 4,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "29786",
+                "qNum": 29786,
+                "qElemNumber": 0,
+                "qState": "L"
+              }
+            ],
+            [
+              {
+                "qText": "5043",
+                "qNum": 5043,
+                "qElemNumber": 479,
+                "qState": "O"
+              },
+              {
+                "qText": "2015",
+                "qNum": 2015,
+                "qElemNumber": 7,
+                "qState": "O"
+              },
+              {
+                "qText": "4",
+                "qNum": 4,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "4",
+                "qNum": 4,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "598",
+                "qNum": 598,
+                "qElemNumber": 0,
+                "qState": "L"
+              }
+            ],
+            [
+              {
+                "qText": "5043",
+                "qNum": 5043,
+                "qElemNumber": 479,
+                "qState": "O"
+              },
+              {
+                "qText": "2016",
+                "qNum": 2016,
+                "qElemNumber": 8,
+                "qState": "O"
+              },
+              {
+                "qText": "7",
+                "qNum": 7,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "4",
+                "qNum": 4,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "2",
+                "qNum": 2,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "3",
+                "qNum": 3,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "41223",
+                "qNum": 41223,
+                "qElemNumber": 0,
+                "qState": "L"
+              }
+            ],
+            [
+              {
+                "qText": "5043",
+                "qNum": 5043,
+                "qElemNumber": 479,
+                "qState": "O"
+              },
+              {
+                "qText": "2017",
+                "qNum": 2017,
+                "qElemNumber": 9,
+                "qState": "O"
+              },
+              {
+                "qText": "30",
+                "qNum": 30,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "16",
+                "qNum": 16,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "17",
+                "qNum": 17,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "14",
+                "qNum": 14,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "98716",
+                "qNum": 98716,
+                "qElemNumber": 0,
+                "qState": "L"
+              }
+            ],
+            [
+              {
+                "qText": "5043",
+                "qNum": 5043,
+                "qElemNumber": 479,
+                "qState": "O"
+              },
+              {
+                "qText": "2018",
+                "qNum": 2018,
+                "qElemNumber": 10,
+                "qState": "O"
+              },
+              {
+                "qText": "24",
+                "qNum": 24,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "12",
+                "qNum": 12,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "12",
+                "qNum": 12,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "12",
+                "qNum": 12,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "53019",
+                "qNum": 53019,
+                "qElemNumber": 0,
+                "qState": "L"
+              }
+            ],
+            [
+              {
+                "qText": "5043",
+                "qNum": 5043,
+                "qElemNumber": 479,
+                "qState": "O"
+              },
+              {
+                "qText": "2019",
+                "qNum": 2019,
+                "qElemNumber": 11,
+                "qState": "O"
+              },
+              {
+                "qText": "33",
+                "qNum": 33,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "15",
+                "qNum": 15,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "14",
+                "qNum": 14,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "18",
+                "qNum": 18,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "76851",
+                "qNum": 76851,
+                "qElemNumber": 0,
+                "qState": "L"
+              }
+            ],
+            [
+              {
+                "qText": "5043",
+                "qNum": 5043,
+                "qElemNumber": 479,
+                "qState": "O"
+              },
+              {
+                "qText": "2020",
+                "qNum": 2020,
+                "qElemNumber": 12,
+                "qState": "O"
+              },
+              {
+                "qText": "27",
+                "qNum": 27,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "18",
+                "qNum": 18,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "19",
+                "qNum": 19,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "9",
+                "qNum": 9,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "155237",
+                "qNum": 155237,
+                "qElemNumber": 0,
+                "qState": "L"
+              }
+            ],
+            [
+              {
+                "qText": "5043",
+                "qNum": 5043,
+                "qElemNumber": 479,
+                "qState": "O"
+              },
+              {
+                "qText": "2021",
+                "qNum": 2021,
+                "qElemNumber": 13,
+                "qState": "O"
+              },
+              {
+                "qText": "32",
+                "qNum": 32,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "29",
+                "qNum": 29,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "27",
+                "qNum": 27,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "3",
+                "qNum": 3,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "144755",
+                "qNum": 144755,
+                "qElemNumber": 0,
+                "qState": "L"
+              }
+            ],
+            [
+              {
+                "qText": "5043",
+                "qNum": 5043,
+                "qElemNumber": 479,
+                "qState": "O"
+              },
+              {
+                "qText": "2022",
+                "qNum": 2022,
+                "qElemNumber": 14,
+                "qState": "O"
+              },
+              {
+                "qText": "55",
+                "qNum": 55,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "48",
+                "qNum": 48,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "46",
+                "qNum": 46,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "7",
+                "qNum": 7,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "289812",
+                "qNum": 289812,
+                "qElemNumber": 0,
+                "qState": "L"
+              }
+            ],
+            [
+              {
+                "qText": "5043",
+                "qNum": 5043,
+                "qElemNumber": 479,
+                "qState": "O"
+              },
+              {
+                "qText": "2023",
+                "qNum": 2023,
+                "qElemNumber": 15,
+                "qState": "O"
+              },
+              {
+                "qText": "81",
+                "qNum": 81,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "71",
+                "qNum": 71,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "69",
+                "qNum": 69,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "10",
+                "qNum": 10,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "449549",
+                "qNum": 449549,
+                "qElemNumber": 0,
+                "qState": "L"
+              }
+            ],
+            [
+              {
+                "qText": "5043",
+                "qNum": 5043,
+                "qElemNumber": 479,
+                "qState": "O"
+              },
+              {
+                "qText": "2024",
+                "qNum": 2024,
+                "qElemNumber": 16,
+                "qState": "O"
+              },
+              {
+                "qText": "129",
+                "qNum": 129,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "98",
+                "qNum": 98,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "94",
+                "qNum": 94,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "31",
+                "qNum": 31,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "843925",
+                "qNum": 843925,
+                "qElemNumber": 0,
+                "qState": "L"
+              }
+            ],
+            [
+              {
+                "qText": "5043",
+                "qNum": 5043,
+                "qElemNumber": 479,
+                "qState": "O"
+              },
+              {
+                "qText": "2025",
+                "qNum": 2025,
+                "qElemNumber": 17,
+                "qState": "O"
+              },
+              {
+                "qText": "125",
+                "qNum": 125,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "87",
+                "qNum": 87,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "91",
+                "qNum": 91,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "38",
+                "qNum": 38,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "534040",
+                "qNum": 534040,
+                "qElemNumber": 0,
+                "qState": "L"
+              }
+            ],
+            [
+              {
+                "qText": "5043",
+                "qNum": 5043,
+                "qElemNumber": 479,
+                "qState": "O"
+              },
+              {
+                "qText": "2026",
+                "qNum": 2026,
+                "qElemNumber": 18,
+                "qState": "O"
+              },
+              {
+                "qText": "75",
+                "qNum": 75,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "59",
+                "qNum": 59,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "66",
+                "qNum": 66,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "16",
+                "qNum": 16,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "429289",
+                "qNum": 429289,
+                "qElemNumber": 0,
+                "qState": "L"
+              }
+            ],
+            [
+              {
+                "qText": "5043",
+                "qNum": 5043,
+                "qElemNumber": 479,
+                "qState": "O"
+              },
+              {
+                "qText": "-",
+                "qNum": "NaN",
+                "qElemNumber": -2,
+                "qState": "L",
+                "qIsNull": true
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              }
+            ],
+            [
+              {
+                "qText": "4203",
+                "qNum": 4203,
+                "qElemNumber": 740,
+                "qState": "O"
+              },
+              {
+                "qText": "2008",
+                "qNum": 2008,
+                "qElemNumber": 0,
+                "qState": "O"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              }
+            ],
+            [
+              {
+                "qText": "4203",
+                "qNum": 4203,
+                "qElemNumber": 740,
+                "qState": "O"
+              },
+              {
+                "qText": "2009",
+                "qNum": 2009,
+                "qElemNumber": 1,
+                "qState": "O"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              }
+            ],
+            [
+              {
+                "qText": "4203",
+                "qNum": 4203,
+                "qElemNumber": 740,
+                "qState": "O"
+              },
+              {
+                "qText": "2010",
+                "qNum": 2010,
+                "qElemNumber": 2,
+                "qState": "O"
+              },
+              {
+                "qText": "14733",
+                "qNum": 14733,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "13870",
+                "qNum": 13870,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "12655",
+                "qNum": 12655,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "863",
+                "qNum": 863,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "77105035",
+                "qNum": 77105035,
+                "qElemNumber": 0,
+                "qState": "L"
+              }
+            ],
+            [
+              {
+                "qText": "4203",
+                "qNum": 4203,
+                "qElemNumber": 740,
+                "qState": "O"
+              },
+              {
+                "qText": "2011",
+                "qNum": 2011,
+                "qElemNumber": 3,
+                "qState": "O"
+              },
+              {
+                "qText": "15858",
+                "qNum": 15858,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "15061",
+                "qNum": 15061,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "15035",
+                "qNum": 15035,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "797",
+                "qNum": 797,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "85020312",
+                "qNum": 85020312,
+                "qElemNumber": 0,
+                "qState": "L"
+              }
+            ],
+            [
+              {
+                "qText": "4203",
+                "qNum": 4203,
+                "qElemNumber": 740,
+                "qState": "O"
+              },
+              {
+                "qText": "2012",
+                "qNum": 2012,
+                "qElemNumber": 4,
+                "qState": "O"
+              },
+              {
+                "qText": "15963",
+                "qNum": 15963,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "15256",
+                "qNum": 15256,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "15200",
+                "qNum": 15200,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "707",
+                "qNum": 707,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "84534749",
+                "qNum": 84534749,
+                "qElemNumber": 0,
+                "qState": "L"
+              }
+            ],
+            [
+              {
+                "qText": "4203",
+                "qNum": 4203,
+                "qElemNumber": 740,
+                "qState": "O"
+              },
+              {
+                "qText": "2013",
+                "qNum": 2013,
+                "qElemNumber": 5,
+                "qState": "O"
+              },
+              {
+                "qText": "16315",
+                "qNum": 16315,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "15415",
+                "qNum": 15415,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "15412",
+                "qNum": 15412,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "900",
+                "qNum": 900,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "83788919",
+                "qNum": 83788919,
+                "qElemNumber": 0,
+                "qState": "L"
+              }
+            ],
+            [
+              {
+                "qText": "4203",
+                "qNum": 4203,
+                "qElemNumber": 740,
+                "qState": "O"
+              },
+              {
+                "qText": "2014",
+                "qNum": 2014,
+                "qElemNumber": 6,
+                "qState": "O"
+              },
+              {
+                "qText": "16382",
+                "qNum": 16382,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "15461",
+                "qNum": 15461,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "15473",
+                "qNum": 15473,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "921",
+                "qNum": 921,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "84816635",
+                "qNum": 84816635,
+                "qElemNumber": 0,
+                "qState": "L"
+              }
+            ],
+            [
+              {
+                "qText": "4203",
+                "qNum": 4203,
+                "qElemNumber": 740,
+                "qState": "O"
+              },
+              {
+                "qText": "2015",
+                "qNum": 2015,
+                "qElemNumber": 7,
+                "qState": "O"
+              },
+              {
+                "qText": "16334",
+                "qNum": 16334,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "15331",
+                "qNum": 15331,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "15305",
+                "qNum": 15305,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "1003",
+                "qNum": 1003,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "87942703",
+                "qNum": 87942703,
+                "qElemNumber": 0,
+                "qState": "L"
+              }
+            ],
+            [
+              {
+                "qText": "4203",
+                "qNum": 4203,
+                "qElemNumber": 740,
+                "qState": "O"
+              },
+              {
+                "qText": "2016",
+                "qNum": 2016,
+                "qElemNumber": 8,
+                "qState": "O"
+              },
+              {
+                "qText": "17017",
+                "qNum": 17017,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "15998",
+                "qNum": 15998,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "15996",
+                "qNum": 15996,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "1019",
+                "qNum": 1019,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "98425727",
+                "qNum": 98425727,
+                "qElemNumber": 0,
+                "qState": "L"
+              }
+            ],
+            [
+              {
+                "qText": "4203",
+                "qNum": 4203,
+                "qElemNumber": 740,
+                "qState": "O"
+              },
+              {
+                "qText": "2017",
+                "qNum": 2017,
+                "qElemNumber": 9,
+                "qState": "O"
+              },
+              {
+                "qText": "16382",
+                "qNum": 16382,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "12805",
+                "qNum": 12805,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "13040",
+                "qNum": 13040,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "3577",
+                "qNum": 3577,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "77874342",
+                "qNum": 77874342,
+                "qElemNumber": 0,
+                "qState": "L"
+              }
+            ],
+            [
+              {
+                "qText": "4203",
+                "qNum": 4203,
+                "qElemNumber": 740,
+                "qState": "O"
+              },
+              {
+                "qText": "2018",
+                "qNum": 2018,
+                "qElemNumber": 10,
+                "qState": "O"
+              },
+              {
+                "qText": "15630",
+                "qNum": 15630,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "12364",
+                "qNum": 12364,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "12434",
+                "qNum": 12434,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "3266",
+                "qNum": 3266,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "77781625",
+                "qNum": 77781625,
+                "qElemNumber": 0,
+                "qState": "L"
+              }
+            ],
+            [
+              {
+                "qText": "4203",
+                "qNum": 4203,
+                "qElemNumber": 740,
+                "qState": "O"
+              },
+              {
+                "qText": "2019",
+                "qNum": 2019,
+                "qElemNumber": 11,
+                "qState": "O"
+              },
+              {
+                "qText": "14903",
+                "qNum": 14903,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "12040",
+                "qNum": 12040,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "12124",
+                "qNum": 12124,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "2863",
+                "qNum": 2863,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "82318786",
+                "qNum": 82318786,
+                "qElemNumber": 0,
+                "qState": "L"
+              }
+            ],
+            [
+              {
+                "qText": "4203",
+                "qNum": 4203,
+                "qElemNumber": 740,
+                "qState": "O"
+              },
+              {
+                "qText": "2020",
+                "qNum": 2020,
+                "qElemNumber": 12,
+                "qState": "O"
+              },
+              {
+                "qText": "13938",
+                "qNum": 13938,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "11413",
+                "qNum": 11413,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "11400",
+                "qNum": 11400,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "2525",
+                "qNum": 2525,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "89974571",
+                "qNum": 89974571,
+                "qElemNumber": 0,
+                "qState": "L"
+              }
+            ],
+            [
+              {
+                "qText": "4203",
+                "qNum": 4203,
+                "qElemNumber": 740,
+                "qState": "O"
+              },
+              {
+                "qText": "2021",
+                "qNum": 2021,
+                "qElemNumber": 13,
+                "qState": "O"
+              },
+              {
+                "qText": "13406",
+                "qNum": 13406,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "10499",
+                "qNum": 10499,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "10457",
+                "qNum": 10457,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "2907",
+                "qNum": 2907,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "73521932",
+                "qNum": 73521932,
+                "qElemNumber": 0,
+                "qState": "L"
+              }
+            ],
+            [
+              {
+                "qText": "4203",
+                "qNum": 4203,
+                "qElemNumber": 740,
+                "qState": "O"
+              },
+              {
+                "qText": "2022",
+                "qNum": 2022,
+                "qElemNumber": 14,
+                "qState": "O"
+              },
+              {
+                "qText": "16290",
+                "qNum": 16290,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "12400",
+                "qNum": 12400,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "12270",
+                "qNum": 12270,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "3890",
+                "qNum": 3890,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "87886776",
+                "qNum": 87886776,
+                "qElemNumber": 0,
+                "qState": "L"
+              }
+            ],
+            [
+              {
+                "qText": "4203",
+                "qNum": 4203,
+                "qElemNumber": 740,
+                "qState": "O"
+              },
+              {
+                "qText": "2023",
+                "qNum": 2023,
+                "qElemNumber": 15,
+                "qState": "O"
+              },
+              {
+                "qText": "16928",
+                "qNum": 16928,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "13620",
+                "qNum": 13620,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "13547",
+                "qNum": 13547,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "3308",
+                "qNum": 3308,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "96394339",
+                "qNum": 96394339,
+                "qElemNumber": 0,
+                "qState": "L"
+              }
+            ],
+            [
+              {
+                "qText": "4203",
+                "qNum": 4203,
+                "qElemNumber": 740,
+                "qState": "O"
+              },
+              {
+                "qText": "2024",
+                "qNum": 2024,
+                "qElemNumber": 16,
+                "qState": "O"
+              },
+              {
+                "qText": "15585",
+                "qNum": 15585,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "11501",
+                "qNum": 11501,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "11819",
+                "qNum": 11819,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "4084",
+                "qNum": 4084,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "95300693",
+                "qNum": 95300693,
+                "qElemNumber": 0,
+                "qState": "L"
+              }
+            ],
+            [
+              {
+                "qText": "4203",
+                "qNum": 4203,
+                "qElemNumber": 740,
+                "qState": "O"
+              },
+              {
+                "qText": "2025",
+                "qNum": 2025,
+                "qElemNumber": 17,
+                "qState": "O"
+              },
+              {
+                "qText": "13009",
+                "qNum": 13009,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "10716",
+                "qNum": 10716,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "10729",
+                "qNum": 10729,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "2293",
+                "qNum": 2293,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "102382757",
+                "qNum": 102382757,
+                "qElemNumber": 0,
+                "qState": "L"
+              }
+            ],
+            [
+              {
+                "qText": "4203",
+                "qNum": 4203,
+                "qElemNumber": 740,
+                "qState": "O"
+              },
+              {
+                "qText": "2026",
+                "qNum": 2026,
+                "qElemNumber": 18,
+                "qState": "O"
+              },
+              {
+                "qText": "8241",
+                "qNum": 8241,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "6751",
+                "qNum": 6751,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "7605",
+                "qNum": 7605,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "1490",
+                "qNum": 1490,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "68763578",
+                "qNum": 68763578,
+                "qElemNumber": 0,
+                "qState": "L"
+              }
+            ],
+            [
+              {
+                "qText": "4203",
+                "qNum": 4203,
+                "qElemNumber": 740,
+                "qState": "O"
+              },
+              {
+                "qText": "-",
+                "qNum": "NaN",
+                "qElemNumber": -2,
+                "qState": "L",
+                "qIsNull": true
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              }
+            ],
+            [
+              {
+                "qText": "2100",
+                "qNum": 2100,
+                "qElemNumber": 767,
+                "qState": "O"
+              },
+              {
+                "qText": "2013",
+                "qNum": 2013,
+                "qElemNumber": 5,
+                "qState": "O"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              }
+            ],
+            [
+              {
+                "qText": "2100",
+                "qNum": 2100,
+                "qElemNumber": 767,
+                "qState": "O"
+              },
+              {
+                "qText": "2014",
+                "qNum": 2014,
+                "qElemNumber": 6,
+                "qState": "O"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              }
+            ],
+            [
+              {
+                "qText": "2100",
+                "qNum": 2100,
+                "qElemNumber": 767,
+                "qState": "O"
+              },
+              {
+                "qText": "2017",
+                "qNum": 2017,
+                "qElemNumber": 9,
+                "qState": "O"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              }
+            ],
+            [
+              {
+                "qText": "2100",
+                "qNum": 2100,
+                "qElemNumber": 767,
+                "qState": "O"
+              },
+              {
+                "qText": "2018",
+                "qNum": 2018,
+                "qElemNumber": 10,
+                "qState": "O"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              }
+            ],
+            [
+              {
+                "qText": "2100",
+                "qNum": 2100,
+                "qElemNumber": 767,
+                "qState": "O"
+              },
+              {
+                "qText": "2019",
+                "qNum": 2019,
+                "qElemNumber": 11,
+                "qState": "O"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              }
+            ],
+            [
+              {
+                "qText": "2100",
+                "qNum": 2100,
+                "qElemNumber": 767,
+                "qState": "O"
+              },
+              {
+                "qText": "2020",
+                "qNum": 2020,
+                "qElemNumber": 12,
+                "qState": "O"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              }
+            ],
+            [
+              {
+                "qText": "2100",
+                "qNum": 2100,
+                "qElemNumber": 767,
+                "qState": "O"
+              },
+              {
+                "qText": "2022",
+                "qNum": 2022,
+                "qElemNumber": 14,
+                "qState": "O"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              }
+            ],
+            [
+              {
+                "qText": "2100",
+                "qNum": 2100,
+                "qElemNumber": 767,
+                "qState": "O"
+              },
+              {
+                "qText": "-",
+                "qNum": "NaN",
+                "qElemNumber": -2,
+                "qState": "L",
+                "qIsNull": true
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              },
+              {
+                "qText": "0",
+                "qNum": 0,
+                "qElemNumber": 0,
+                "qState": "L"
+              }
+            ]
+          ],
+          "qArea": {
+            "qLeft": 0,
+            "qTop": 0,
+            "qWidth": 7,
+            "qHeight": 69
+          }
+        }
+      ]
+    }
+  }
+}
