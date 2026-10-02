@@ -9,7 +9,7 @@ documentation page names the wrong hostname for it.
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Active — Phases 2-3 done (ingest, dbt, api_v1 publication), ready for Phase 4 (deploy)
+## Status: Completed
 
 **Goal**: Add `udir-gsi` as a served Atlas source, giving Report #10 (School-Capacity Forecast) the
 current-enrolment supply side it's missing, and sharpening Atlas's existing education signal beyond
@@ -247,7 +247,31 @@ group by region_kind` shows 18,768 `kommune` rows all with a non-null `kommune_n
   this session, plus an explicit check for the Svalbard split (18,768 real kommune rows vs. 48
   `region_kind = 'svalbard'` rows with `kommune_nr IS NULL`) so a non-~48 null count would read as
   a real signal, not noise.
-- [ ] 4.3 Verify arrival independently against the live public API — not the deploy report alone.
+- [x] 4.3 **Verified arrival, 2026-10-02** — imac ran `annual_sources_refresh`
+  (run `fa67a54a`, 1065.0s) then `transform_and_publish` (run `092cebd2`, 707.4s), both SUCCESS,
+  `raw.udir_gsi` landed exactly 18,816 rows matching this plan's own prediction. Not taken on
+  trust — independently re-checked against the live public API myself before closing:
+  ```
+  GET /meta_sources?source_id=eq.udir-gsi&select=served_as
+  -> [{"served_as":["indicators__udir_gsi"]}]
+
+  GET /indicators__udir_gsi?region_code=eq.4203&year=eq.202510&order=measure
+  -> 4 rows: Antall elever=5266, med forsterket opplæring i norsk=176,
+     individuelt tilrettelagt/spesialundervisning=527, Antall skoler=20
+
+  HEAD with Prefer: count=exact
+  -> content-range 0-18815/18816 (cf-cache-status: MISS — a fresh server read, not stale cache)
+
+  GET /indicators__udir_gsi?kommune_nr=is.null&region_kind=eq.svalbard&select=region_code
+  -> 48 rows: region_code 2100 x28, 2111 x20
+  ```
+  **All four checks matched exactly — including the Svalbard split, confirmed 48/48, this plan's
+  own "a null count other than ~48 would be worth a second look" criterion never triggered.**
+  Unlike `imdi-bosetting`'s deploy, nothing needed tracing this time — imac's report and this
+  agent's independent check agreed on every figure on the first pass. No regression in
+  `imdi-bosetting` (7,848), `nav-uforetrygd` (6,560), `bufdir-barnevern` (191,673) or
+  `fhi-innvandrere` (123,680). Full exchange:
+  [urb-agents#1806](https://github.com/terchris/urb-agents/issues/1806), closed `completed`.
 
 ---
 
@@ -261,10 +285,9 @@ group by region_kind` shows 18,768 `kommune` rows all with a non-null `kommune_n
 - [x] The suppression marker is identified from real data, not assumed. Literal `*`.
 - [x] `indicators__udir_gsi` and `mart_indicators__udir_gsi` build and test clean against real
   loaded data.
-- [ ] `udir-gsi` appears in `meta_sources.served_as` after a real deploy, independently verified via
-  live `curl`. **Pending Phase 4.**
-- [ ] The investigation and `1PRIORITY.md` are updated to mark this candidate shipped, only once
-  Phase 4 confirms rows actually arrived.
+- [x] `udir-gsi` appears in `meta_sources.served_as` after a real deploy, independently verified via
+  live `curl`. `served_as: ["indicators__udir_gsi"]`.
+- [x] The investigation and `1PRIORITY.md` are updated to mark this candidate shipped.
 
 ---
 
@@ -284,6 +307,22 @@ group by region_kind` shows 18,768 `kommune` rows all with a non-null `kommune_n
   implementation in case the table set has moved since 2026-10-02.
 - **This plan deliberately does not build `dim_school`** — see **[Q2]**. If a future source needs
   per-school resolution, revisit then; don't speculatively build a crosswalk this plan doesn't need.
+
+---
+
+## Outcome
+
+Shipped end to end, 2026-10-02: ingest (12 school years, 18,816 rows, zero dropped) → dbt staging
+and api_v1 publication → live cluster deploy → independently verified arrival. Atlas's first Udir
+source. Two real findings during implementation that Phase 1's research didn't anticipate: the
+response shape is simpler than feared once the right query was found (pinning three breakdown
+filters to Udir's own "alle" sentinel collapses a ~420-column cross-tab to exactly 4 named
+measures, with no separate text-lookup needed to name them), and the Phase 1 claim that
+`kommune_nr` needed no derivation macro was wrong — Svalbard sits at the same API hierarchy depth
+as genuine kommuner, caught and fixed before anything shipped by renaming the raw column to
+`region_code` and resolving `kommune_nr` through this project's existing `classify_region_code`
+macro. Also corrected Udir's own public documentation, which names a dead API hostname. Plugs the
+current-enrolment supply signal Report #10 (School-Capacity Forecast) was missing.
 
 ---
 
