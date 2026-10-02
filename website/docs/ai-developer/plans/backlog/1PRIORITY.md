@@ -136,6 +136,20 @@ instance that serves data**, unless it names who ran the check and where.
 
 ## Cross-cutting notes
 
+- ⚠️ **`template-info.yaml`'s `operational.automation` text may now be wrong about what a fresh
+  install does.** Flagged by ops-dev while landing the nav-helt-ledige pin (urb-agents#1814,
+  2026-10-02), not settled here. The text reads *"Ships stopped. No data is fetched and no
+  external service is contacted until an operator enables both the schedules and the sensors"* —
+  but `urb-agents#1794`'s own redeploy (PR #482, `default_status=RUNNING`) measured all three
+  schedules and sensors coming up `RUNNING` on install, with the automation sensor firing an
+  unprompted real run ~15 minutes later. ops-dev checked for a reconciling explanation (an
+  install-time stop hook in `uis/init/`) and found none — `001_bootstrap.sql` is one line of
+  schema creation. So either this redeploy wasn't a real `uis template install` (and the text is
+  still correct for that path), or the text is stale since PR #482 and needs to say "ships
+  RUNNING, not stopped". dev-templates' own catalogue quotes the artifact faithfully either way
+  and flags the question as open (`uis-applications/atlas/README-atlas.md` in
+  `helpers-no/dev-templates`) — settle it here, in `atlas-data/template-info.yaml`, next release
+  that touches automation.
 - 🔴 **One check outranks everything in this doc, and it is not a decision: does the public API
   accept writes?** Found while measuring the Parquet item, 2026-09-23. The live API advertises
   `Allow: OPTIONS,GET,HEAD,POST,PATCH,DELETE` on all 16 auto-updatable `api_v1` views; the 4
