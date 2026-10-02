@@ -11,7 +11,7 @@ kommune-level table (`HL060 "Fylke og kommune"`), the same NAV-Excel shape as `n
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Active — Phases 2-3 DONE, Phase 4 (deploy) pending
+## Status: Active — Phases 2-3 DONE, Phase 4 (deploy) submitted, awaiting imac + ops-dev
 
 **Goal**: Add `nav-helt-ledige` as a served Atlas source — the *short-tail* labour-market signal
 slotting between `nav-uforetrygd` (long-tail disability outcome) and `nav-aap` (transitional
@@ -243,16 +243,43 @@ links.
 
 ---
 
-## Phase 4: Deploy and verify arrival (not started)
+## Phase 4: Deploy and verify arrival — IN PROGRESS (submitted 2026-10-02)
 
-Same shape as every prior source's Phase 4 this session — name exact relations, both image
-digests labelled, `LANDS WITH` derived via `atlas-data/uis/lands-with.sh`, a row-count prediction
-stated explicitly (NAV's live file grows a column every month, so state the prediction as "as of
-today's validation run", same caveat `nav-uforetrygd`/`nav-aap`'s Phase 4 raised). Independently
-re-verify against the live public API before closing the deploy task — do not take a deploy report
-alone as sufficient, per this session's standing discipline. Double-check digests character-by-
-character against the build log before sending, per the transcription error caught (and
-corrected) during `ssb-12451`'s Phase 4.
+PR #523 merged to main at `e9e33a5`. Image build (run
+[37070426629](https://github.com/terchris/atlas/actions/runs/37070426629)) succeeded; both digests
+read from the release's own `uis-artifact.json`, not reconstructed, and cross-checked against the
+full build log before sending:
+
+```
+artifact_digest  sha256:f91d7dee689f2cbbeb326d130703524a5e4e21bc8d8332832cba0490dd9a7ff4  ghcr.io/terchris/atlas-data/uis:v20261002-e9e33a5
+image_digest     sha256:4f32b9a13b4e3b4e2ff5dc9d54ef05b26ab6148d550f05598e34a166eb811c7c  ghcr.io/terchris/atlas-data:v20261002-e9e33a5
+```
+
+`lands-with.sh 57bb5f9..e9e33a5` output was clean (no false-positive this time — this range starts
+right after `ssb-12451`'s own close-out commit, so only `nav-helt-ledige`'s own ingest directory
+changed): `monthly_sources_refresh` (re-fetch) then `transform_and_publish`, plus a template-info
+pin (this range changes `atlas-data/template-info.yaml`'s counts).
+
+**Two tasks filed, per the pin/run split ([[a-pin-and-a-run-are-two-actions]]):**
+- Deploy request to imac: [urb-agents#1813](https://github.com/terchris/urb-agents/issues/1813) —
+  names `raw.nav_helt_ledige` (5,744 rows as of today's validation run, caveat stated: NAV's live
+  file grows a column every month), both relations to check row counts on
+  (`indicators__nav_helt_ledige`, `atlas_inventory`).
+- Pin nomination to ops-dev: [urb-agents#1814](https://github.com/terchris/urb-agents/issues/1814)
+  — both digests copied verbatim from `uis-artifact.json`, not reconstructed, per the one prior
+  incident where an unlabelled digest was refused at the catalogue.
+
+**Also found and fixed before merge, not after**: CI's `render-template-info.sh` caught a stale
+"59 raw BASE TABLEs" claim in `template-info.yaml` (migrations now create 60) — fixed in a
+follow-up commit on the same PR before merge. While fixing it, found and corrected a second,
+adjacent false claim in the same paragraph ("EVERY NUMBER IN IT IS NOW WRITTEN BY
+uis/generate-holdings.py" — checked directly: that script has zero substitutions for "raw"
+anywhere, so the raw-table figure is hand-maintained and had already drifted stale before this
+PR, independent of it).
+
+Independent re-verification against the live public API, and closing both bus tasks, are still
+pending — do not take either task's own report as sufficient, per this session's standing
+discipline.
 
 ---
 
