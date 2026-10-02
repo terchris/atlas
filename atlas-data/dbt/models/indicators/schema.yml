@@ -569,6 +569,88 @@ models:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns: [source_id, region_code, year, contents_code]
 
+  - name: indicators__ssb_12451
+    description: |-
+      Per-source passthrough for SSB 12451 (Bostedskommune- og kjønnsfordelt sykefravær,
+      legemeldt). One row per (region_code, period, contents_code). Reached via lib/pxweb.ts with
+      an explicit Region="*" filter — unlike ssb-12944's no-filter default, this pulls the full
+      937-code Region dimension, including every sentinel shape classify_region_code already
+      handles (confirmed live by querying raw.ssb_12451 directly).
+    columns:
+      - name: source_id
+        description: Atlas catalogue id for this ingest — always ssb-12451.
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: [ssb-12451]
+        data_type: text
+      - name: region_code
+        description: >-
+          SSB's own region code, verbatim from the Region dimension. May not be a kommune —
+          region_kind says which.
+        data_tests:
+          - not_null
+        data_type: text
+      - name: kommune_nr
+        description: >-
+          Four-digit kommune code, derived through region_code_to_kommune_nr. NULL for every
+          non-kommune sentinel (XX99, 9999, 21xx, 22xx, 23xx — all confirmed present live).
+        data_tests:
+          - relationships:
+              to: ref('dim_kommune')
+              field: kommune_nr
+        data_type: text
+      - name: region_kind
+        description: |
+          What region_code is, from classify_region_code: kommune · unspecified_within_fylke ·
+          unspecified_national · svalbard · jan_mayen · continental_shelf · unknown (all seven
+          observed live for this source). The one `unknown` row is `0716u` ("Våle (-2001)") — SSB's
+          own disambiguation suffix for a historical kommune whose numeric code (0716) was later
+          reused for a different kommune (Re, 2002-2019); it correctly falls through every
+          digit-based branch rather than being misclassified, same philosophy as every other
+          sentinel this macro handles.
+        data_tests:
+          - not_null
+          - relationships: {to: ref('ref_region_kind'), field: region_kind}
+        data_type: text
+      - name: period
+        description: "Quarter, SSB's own code (e.g. 2026K2), stored verbatim — not parsed into year/quarter columns."
+        data_tests:
+          - not_null
+        data_type: text
+      - name: contents_code
+        description: >-
+          Which sykefravær figure this row's value is — Sykefraversprosent or
+          Sykefraversdagsverk (v1 scope; the table has 7 other measures, not ingested).
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: [Sykefraversprosent, Sykefraversdagsverk]
+        data_type: text
+      - name: contents_label
+        description: Human-readable label from SSB's own ContentsCode metadata.
+        data_type: text
+      - name: value
+        description: >-
+          The measure's value for this kommune and quarter. No suppression observed live on any
+          sampled cell, including Norway's smallest kommune by population.
+        data_type: numeric
+      - name: status
+        description: SSB's own cell-level status flag, when one exists (none observed at ingest time).
+        data_type: text
+      - name: updated_at
+        description: Timestamp when the row was last written by ingest (from raw.loaded_at).
+        data_tests:
+          - not_null
+        data_type: timestamp with time zone
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - source_id
+            - region_code
+            - period
+            - contents_code
+
   - name: indicators__ssb_13995
     description: |
       Per-source indicator passthrough for SSB 13995 (social-assistance

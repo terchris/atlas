@@ -37,8 +37,8 @@ than that it guessed the wrong URL. Ask for the base URL instead.
 schema change a breaking API change, and the modelled layer above exists
 precisely so consumers do not depend on that shape.
 
-⚠️ THIS IS WRITTEN DOWN BECAUSE THE ALTERNATIVE IS 58 SILENT 404s. Atlas holds
-58 raw tables. A consumer who guesses one of their names gets the same PGRST205
+⚠️ THIS IS WRITTEN DOWN BECAUSE THE ALTERNATIVE IS 59 SILENT 404s. Atlas holds
+59 raw tables. A consumer who guesses one of their names gets the same PGRST205
 described above — "Could not find the table" — which reads as *this endpoint is
 broken or not built yet*, when it is a decision that will not be revisited. An
 absence cannot say why it is absent, so the reason is stated here rather than
@@ -142,13 +142,13 @@ SUPPLY — voluntary-sector presence:
   distrikt_summary             chapters by district.
   kommune_local_chapters       chapters resolved to a kommune.
 
-PER-SOURCE INDICATOR RELATIONS — 46 of them, one per upstream table, at the
+PER-SOURCE INDICATOR RELATIONS — 47 of them, one per upstream table, at the
 grain the publisher actually uses. The cross-source views above impose ONE
 shape on every source; these keep the source''s own dimensions, so a breakdown
 those views flatten away (a sex, an age band, a household or family type, a
 parental-education split) is only answerable here.
 
-🔴 ALL 46 ARE stability:source. THE COLUMN SET FOLLOWS THE PUBLISHER, NOT
+🔴 ALL 47 ARE stability:source. THE COLUMN SET FOLLOWS THE PUBLISHER, NOT
 ATLAS. If SSB, FHI or Bufdir adds, renames or drops a dimension, these change
 with it — that is the deliberate trade for getting the real grain. Filter
 `meta_endpoints?tags=cs.{stability:curated}` for the relations whose shape
@@ -176,13 +176,14 @@ same source_id, and through the ref_* lists above where one exists.
     indicators__imdi_bosetting
   nav (2):
     indicators__nav_aap indicators__nav_uforetrygd
-  ssb (18):
+  ssb (19):
     indicators__ssb_06083 indicators__ssb_06913 indicators__ssb_06944
     indicators__ssb_06947 indicators__ssb_07459 indicators__ssb_08484
     indicators__ssb_08487 indicators__ssb_08764 indicators__ssb_09405
     indicators__ssb_09406 indicators__ssb_09429 indicators__ssb_10826
     indicators__ssb_12063 indicators__ssb_12131 indicators__ssb_12132
-    indicators__ssb_12292 indicators__ssb_12944 indicators__ssb_13995
+    indicators__ssb_12292 indicators__ssb_12451 indicators__ssb_12944
+    indicators__ssb_13995
   udir (1):
     indicators__udir_gsi
 
@@ -2360,6 +2361,31 @@ COMMENT ON COLUMN api_v1.indicators__ssb_12292.contents_label IS 'Human-readable
 COMMENT ON COLUMN api_v1.indicators__ssb_12292.value IS 'The measured value. NULL where the publisher suppressed the cell — see status.';
 COMMENT ON COLUMN api_v1.indicators__ssb_12292.status IS 'The publisher''s own suppression or quality marker for this cell, passed through verbatim.';
 COMMENT ON COLUMN api_v1.indicators__ssb_12292.updated_at IS 'When Atlas last loaded this row from the upstream.';
+
+-- indicators__ssb_12451  ←  marts.mart_indicators__ssb_12451
+CREATE OR REPLACE VIEW api_v1.indicators__ssb_12451 AS SELECT * FROM marts.mart_indicators__ssb_12451;
+COMMENT ON VIEW api_v1.indicators__ssb_12451 IS 'Per-source indicator data for ssb-12451 (Statistisk sentralbyrå), at the publisher''s own grain.
+
+Per-source indicator relation for `ssb-12451` (Statistisk sentralbyrå), published at the
+grain the publisher actually uses rather than flattened into the cross-source views. Reached
+via lib/pxweb.ts, not a NAV Excel download — NAV''s own sykefravær statistics pages publish
+no kommune-level table at all (PLAN-013-nav-sykefravaer.md Phase 1). v1 scope: Kjonn=0,
+Sykefraversprosent + Sykefraversdagsverk only.
+🔴 stability:source — the column set here follows Statistisk sentralbyrå, not Atlas. If the
+publisher adds, renames or drops a dimension, this relation changes with it. That is
+the deliberate trade for getting the real grain; prefer a stability:curated relation
+if you need a shape Atlas promises to hold still. Decode codes through
+meta_dimensions filtered to source_id=ssb-12451.';
+COMMENT ON COLUMN api_v1.indicators__ssb_12451.source_id IS 'Atlas catalogue id for this ingest — always ssb-12451.';
+COMMENT ON COLUMN api_v1.indicators__ssb_12451.region_code IS 'SSB''s own region code, verbatim from the Region dimension. May not be a kommune — region_kind says which.';
+COMMENT ON COLUMN api_v1.indicators__ssb_12451.kommune_nr IS 'Four-digit kommune code, derived through region_code_to_kommune_nr. NULL for every non-kommune sentinel.';
+COMMENT ON COLUMN api_v1.indicators__ssb_12451.region_kind IS 'What region_code is, from classify_region_code: kommune, unspecified_within_fylke, unspecified_national, svalbard, jan_mayen, continental_shelf, or unknown (the one discontinued-code exception, 0716u).';
+COMMENT ON COLUMN api_v1.indicators__ssb_12451.period IS 'Quarter, SSB''s own code (e.g. 2026K2), stored verbatim.';
+COMMENT ON COLUMN api_v1.indicators__ssb_12451.contents_code IS 'Which sykefravær figure this row''s value is — Sykefraversprosent or Sykefraversdagsverk (v1 scope).';
+COMMENT ON COLUMN api_v1.indicators__ssb_12451.contents_label IS 'Human-readable label from SSB''s own ContentsCode metadata.';
+COMMENT ON COLUMN api_v1.indicators__ssb_12451.value IS 'The measure''s value for this kommune and quarter. No suppression observed live.';
+COMMENT ON COLUMN api_v1.indicators__ssb_12451.status IS 'SSB''s own cell-level status flag, when one exists (none observed at ingest time).';
+COMMENT ON COLUMN api_v1.indicators__ssb_12451.updated_at IS 'Timestamp when the row was last written by ingest (from raw.loaded_at).';
 
 -- indicators__ssb_12944  ←  marts.mart_indicators__ssb_12944
 CREATE OR REPLACE VIEW api_v1.indicators__ssb_12944 AS SELECT * FROM marts.mart_indicators__ssb_12944;

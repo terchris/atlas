@@ -1,0 +1,100 @@
+# Hand-authored catalogue metadata for SSB table 12451 (kommune-level sykefravær).
+# Ingest runs do not modify this file.
+
+source_id: ssb-12451
+upstream_id: "12451"
+upstream_url: https://www.ssb.no/statbank/table/12451
+upstream_landing_page: https://www.ssb.no/sykefratot
+upstream_title: "12451: Bostedskommune- og kjønnsfordelt sykefravær (legemeldt) for lønnstakere (K) 2000K2-2026K2"
+description: |
+  SSB table 12451 — legemeldt (physician-certified) sick-leave, percentage and lost workdays, per
+  kommune of residence, quarterly. Atlas's third NAV-adjacent welfare-claim source (after
+  `nav-uforetrygd` and `nav-aap`), but reached through SSB's PXWebAPI rather than a NAV Excel
+  download — NAV's own sykefravær/sykepenger statistics pages publish no kommune-level table at
+  all (checked live 2026-10-02; every downloadable table there is fylke-level or coarser). SSB
+  republishes NAV's underlying register data at kommune resolution instead. Fetched via this
+  project's existing `lib/pxweb.ts` client — the same mechanism every other `ssb-*` source uses,
+  not a new NAV-family parser. v1 scope: `Sykefraversprosent` and `Sykefraversdagsverk` only
+  (two of the table's nine measures — the rest are a different metric family or pure
+  year-over-year deltas, deferred, see PLAN-013 [Q2]), `Kjonn=0` (Begge kjønn total, not the
+  sex-split), full `Tid` history (105 quarters, 2000K2-2026K2).
+publisher: Statistisk sentralbyrå
+license: NLOD
+license_url: https://data.norge.no/nlod/no/2.0
+periodicity: P1Y
+eu_theme: SOCI
+attribution: "Kilde: Statistisk sentralbyrå, tabell 12451"
+
+# 🔴 NLOD, not CC BY 4.0 — despite this being "NAV sick-leave data" conceptually. The actual
+# publisher Atlas fetches from is SSB (confirmed live: NAV's own site has no kommune-level
+# table for this at all), so SSB's own licence applies, not NAV's. Confirmed via the table's own
+# metadata (`"copyright": false` in the px extension block) and this repo's unbroken ssb-*
+# precedent — not inherited by assumption from nav-uforetrygd/nav-aap's CC BY 4.0 correction.
+
+tags:
+  provider: ssb
+  topic: social
+  geo: kommune
+  cadence: annual
+
+dimensions:
+  - code: region_code
+    meaning: Kommune of residence (bostedskommune), SSB-format
+    value_format: "Numeric code: 4-digit kommune, plus SSB's own sentinel shapes"
+    notes: >
+      937 codes total, spanning the full 2000-2026 series including historical (pre-merger)
+      kommune codes — same convention as every other SSB Region dimension in this project.
+      Confirmed live 2026-10-02 that the sentinel codes present already match
+      classify_region_code's existing patterns exactly: XX99 ("Uoppgitt kommune <fylke>"), 9999
+      ("Uoppgitt kommune" national), 2111 (Longyearbyen/Svalbard), 2199/2299 (Svalbard/Jan Mayen
+      unspecified). One exception: `0716u` ("Våle (-2001)") — SSB's own disambiguation suffix for
+      a historical kommune whose numeric code was later reused by a different kommune (0716 is Re,
+      2002-2019). Not digit-only, so it correctly falls through to classify_region_code's
+      `unknown` branch rather than a dedicated new one — a single discontinued code, not a new
+      sentinel class.
+  - code: period
+    meaning: "Quarter, SSB's own code (e.g. 2026K2 = 2026, 2nd quarter)"
+    value_format: "YYYYKQ text, stored verbatim — not parsed into year+quarter columns"
+    notes: >
+      Same convention as ssb-12944's "period stored as text, not parsed" — keeps this module a
+      faithful passthrough. 105 distinct values at ingest time, 2000K2 through 2026K2.
+  - code: contents_code
+    meaning: Which sykefravær figure this row's value is — not a format variant
+    value_format: "Sykefraversprosent | Sykefraversdagsverk"
+    notes: >
+      v1 scope is these two headline measures only. The table also has ArbeidstakereSykefra /
+      ArbeidstakereSykePro (a different metric — count/share of employees with ANY sick-leave
+      spell, not days-weighted) and four *Endr* variants that are pure year-over-year deltas of
+      the measures above, trivially re-derivable from the raw quarterly series — none ingested,
+      per PLAN-013's [Q2].
+  - code: value
+    meaning: The measure's value for this kommune and quarter
+    value_format: Numeric (percent for Sykefraversprosent, lost workdays for Sykefraversdagsverk)
+    notes: >
+      No suppression marker observed on any cell checked live, including Norway's smallest
+      kommune by population (Utsira) — not a blanket claim that no cell in this table is ever
+      suppressed, just what the sampled cells showed. `status` carries SSB's own cell-level flag
+      when one exists (none observed at ingest time).
+
+lifecycle: stable
+time_coverage:
+  start: 2000
+  end: null
+keywords:
+  - sykefravaer
+  - sick-leave
+  - legemeldt
+  - welfare
+  - kommune
+methodology_notes: |
+  Legemeldt (physician-certified) sick leave only — does not include egenmeldt (self-certified)
+  short absences. SSB's own metadata documents two data-quality notes, represented here verbatim
+  rather than corrected or omitted: (1) a trend break 2007→2008 (industry-standard SN2007
+  introduced) and 2014→2015 (NAV's Aa-register replaced by A-ordningen as the data source); (2)
+  a since-corrected error affecting Q1 2026 (25,656 employment relationships were briefly
+  misassigned from kommune 3118 Indre Østfold to 3216 Vestby when using bostedskommune, corrected
+  by SSB before this source's Phase 1 research — nothing for Atlas to fix). Kjonn=0 selects
+  "Begge kjønn" (both sexes combined); the table also supports a sex-split, not ingested in v1.
+suggested_joins:
+  - nav-uforetrygd
+  - nav-aap

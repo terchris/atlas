@@ -394,6 +394,35 @@ sources:
             data_type: text
           - name: loaded_at
             data_type: timestamp with time zone
+      - name: ssb_12451
+        description: |
+          SSB 12451 — Bostedskommune- og kjønnsfordelt sykefravær (legemeldt). Reached via
+          lib/pxweb.ts, not a NAV Excel download — NAV's own sykefravær pages publish no
+          kommune-level table at all (PLAN-013-nav-sykefravaer.md Phase 1). v1 scope: Kjonn=0,
+          Sykefraversprosent + Sykefraversdagsverk only. Populated by
+          atlas-data/ingest/src/sources/ssb-12451.
+        loaded_at_field: loaded_at
+        meta:
+          ingest_cadence: weekly
+        freshness:
+          warn_after: {count: 400, period: day}
+          error_after: {count: 800, period: day}
+        columns:
+          - name: region_code
+            data_tests: [not_null]
+          - name: period
+            description: Quarter, SSB's own code (e.g. 2026K2), stored verbatim.
+            data_tests: [not_null]
+          - name: contents_code
+            data_tests: [not_null]
+          - name: contents_label
+            data_type: text
+          - name: value
+            data_type: numeric
+          - name: status
+            data_type: text
+          - name: loaded_at
+            data_type: timestamp with time zone
       - name: ssb_13995
         description: |
           SSB statistikkbanktabell 13995 — Sosialhjelpstilfeller, utbetalt

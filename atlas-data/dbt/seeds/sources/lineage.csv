@@ -89,6 +89,7 @@ indicators__ssb_12063,ssb-12063
 indicators__ssb_12131,ssb-12131
 indicators__ssb_12132,ssb-12132
 indicators__ssb_12292,ssb-12292
+indicators__ssb_12451,ssb-12451
 indicators__ssb_12944,ssb-12944
 indicators__ssb_13995,ssb-13995
 indicators__udir_gsi,udir-gsi
@@ -136,6 +137,7 @@ mart_atlas_inventory,ssb-12063
 mart_atlas_inventory,ssb-12131
 mart_atlas_inventory,ssb-12132
 mart_atlas_inventory,ssb-12292
+mart_atlas_inventory,ssb-12451
 mart_atlas_inventory,ssb-12944
 mart_atlas_inventory,ssb-13995
 mart_atlas_inventory,ssb-crime-tables
@@ -342,6 +344,7 @@ mart_indicators__ssb_12063,ssb-12063
 mart_indicators__ssb_12131,ssb-12131
 mart_indicators__ssb_12132,ssb-12132
 mart_indicators__ssb_12292,ssb-12292
+mart_indicators__ssb_12451,ssb-12451
 mart_indicators__ssb_12944,ssb-12944
 mart_indicators__ssb_13995,ssb-13995
 mart_indicators__udir_gsi,udir-gsi

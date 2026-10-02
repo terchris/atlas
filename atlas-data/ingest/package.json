@@ -64,6 +64,7 @@
     "ingest:ssb-12131": "tsx --env-file-if-exists=.env src/sources/ssb-12131/index.ts",
     "ingest:ssb-12132": "tsx --env-file-if-exists=.env src/sources/ssb-12132/index.ts",
     "ingest:ssb-12292": "tsx --env-file-if-exists=.env src/sources/ssb-12292/index.ts",
+    "ingest:ssb-12451": "tsx --env-file-if-exists=.env src/sources/ssb-12451/index.ts",
     "ingest:ssb-12944": "tsx --env-file-if-exists=.env src/sources/ssb-12944/index.ts",
     "ingest:ssb-13995": "tsx --env-file-if-exists=.env src/sources/ssb-13995/index.ts",
     "ingest:ssb-crime-tables": "tsx --env-file-if-exists=.env src/sources/ssb-crime-tables/index.ts",
