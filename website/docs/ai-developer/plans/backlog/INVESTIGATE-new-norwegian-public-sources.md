@@ -126,22 +126,32 @@ drafting `PLAN-004-nav-uforetrygd.md`:**
 
 ### 4. Udir — school-level data (Grunnskolens informasjonssystem + Elevundersøkelsen + Nasjonale prøver)
 
+🔴 **PLAN-010 drafted 2026-10-02 — Phase 1 live-verified this entire section and found a real,
+working API this section didn't know existed.** See
+[`PLAN-010-udir-gsi.md`](PLAN-010-udir-gsi.md) for the full research. Headline corrections:
+Udir's own public docs name a **dead** API hostname (`api.udir-statistikkbanken.no` — TLS cert
+mismatch, Azure 404 page); the real, working host is `api.statistikkbanken.udir.no`
+(`statistikkportalen.udir.no/api/rapportering` for the Swagger-documented endpoints). That one API
+covers GSI, Elevundersøkelsen, Nasjonale prøver, `udir-fravar` ([Q39]) and `udir-sluttet-vgs`
+([Q40]) — not five separate acquisition problems, one client with different table-name parameters.
+`kommune_nr` is a real SSB code straight off the API, no crosswalk needed.
+
 - **URL**: `https://www.udir.no/om-udir/data` (portal; old `data.udir.no` redirects here)
 - **Datasets in scope**: GSI (grunnskolens informasjonssystem — enrolment, pupil-teacher ratio, special-ed share); Elevundersøkelsen (pupil survey — trivsel, mobbing); Nasjonale prøver (national tests, 2022→ resumed); Barnehagefakta (BAF — kindergarten coverage)
-- **Format**: JSON / CSV per dataset; some Excel
-- **Auth**: none for aggregates
-- **Licence**: NLOD
-- **Geo**: per-school (school org number) — first non-kommune resolution Atlas would ingest. Aggregates to kommune; school-level data optional.
+- **Format**: JSON (confirmed live, 2026-10-02 — not CSV/Excel as this entry originally guessed; see `PLAN-010`)
+- **Auth**: none for aggregates (confirmed live)
+- **Licence**: NLOD (confirmed live, 2026-10-02, on Udir's own terms page — explicit, not inferred)
+- **Geo**: kommune AND per-school (school org number) both directly queryable — see **[Q10]**'s update below for why `PLAN-010` deliberately ingests kommune-only for v1.
 - **Cadence**: annual
-- **Provider tag**: `udir` (new)
+- **Provider tag**: `udir` (already landed, #486)
 - **EU theme**: `EDUC`
 
 **Plugs into**: Reports #3 (Youth Outcomes) and #10 (School-Capacity Forecast). Today's bullying signal is `fhi-mobbing`, which is a **3-year-rolling 7th + 10th-grade aggregate**; Udir's Elevundersøkelsen gives *annual, per-school* trivsel/mobbing scores — much sharper. Nasjonale prøver gives the only direct learning-outcome signal Atlas would have. For Report #10, GSI's *current* school-age enrolment is the supply side that the FHI projection (demand) maps against.
 
 **Source-specific quirks**:
-- **[Q10]** First school-level (sub-kommune) ingest. New `dim_school` table with school org number as PK, plus `crosswalk_school_to_kommune`. Schools cross kommune lines occasionally (boarding, special-needs); decide whether to use the school's *registered* kommune or its *student-catchment* kommune. **Recommendation**: registered kommune for v1; catchment is a separate methodology decision.
+- **[Q10]** First school-level (sub-kommune) ingest. New `dim_school` table with school org number as PK, plus `crosswalk_school_to_kommune`. Schools cross kommune lines occasionally (boarding, special-needs); decide whether to use the school's *registered* kommune or its *student-catchment* kommune. **Recommendation**: registered kommune for v1; catchment is a separate methodology decision. ⚠️ **`PLAN-010` (2026-10-02) deliberately does NOT build this for GSI** — kommune-level only for v1, named as a deviation from this row's own framing, not silently dropped. `dim_school` stays real future work once a second school-grain source makes the crosswalk worth building.
 - **[Q11]** Elevundersøkelsen has known suppression on small schools (< 5 respondents per item). Inherits the Atlas-wide suppression policy proposed in [INVESTIGATE-reports-and-indicators §2](./INVESTIGATE-reports-and-indicators-from-catalogue.md#open-questions-for-decision).
-- **[Q12]** Per-school resolution may overshoot Atlas's target audience. Decide whether to ingest at school level or aggregate to kommune in the staging layer. **Recommendation**: ingest at school level (raw stays granular, marts aggregate) so future use-cases aren't blocked.
+- **[Q12]** Per-school resolution may overshoot Atlas's target audience. Decide whether to ingest at school level or aggregate to kommune in the staging layer. **Recommendation**: ingest at school level (raw stays granular, marts aggregate) so future use-cases aren't blocked. Superseded for GSI by `PLAN-010`'s **[Q2]** — kommune-only, see above.
 - **[Q13]** Privacy / minor-related data. Per-school small-cell suppression must be respected verbatim — no re-derivation across years to defeat suppression.
 
 ### 5. IMDi Bosettingstall — refugee resettlement
@@ -415,7 +425,7 @@ Phase 2 / Phase 3 unchanged from the original sequencing — but renumber subseq
 
 ### F. Open questions added by the cross-check
 
-27. **[Q39]** `udir-fravar` ingest mechanism — Skoleporten programmatic endpoint vs HTML scrape (Samfunnspuls uses an R-script auto-update). Investigate during the Udir PLAN.
+27. **[Q39]** `udir-fravar` ingest mechanism — Skoleporten programmatic endpoint vs HTML scrape (Samfunnspuls uses an R-script auto-update). Investigate during the Udir PLAN. **Partially resolved, 2026-10-02**: `skoleporten.udir.no` is **NXDOMAIN** — confirmed by direct DNS lookup, not a fetch-tool glitch; a web-search result pointing at a live-looking `rapportvisning` URL there was stale. Neither of the two options this question posed is the real mechanism — it's the same unified `statistikkportalen.udir.no`/USS API found for GSI (`PLAN-010-udir-gsi.md`). Confirmed live: the `GSK` (grunnskole) schema has a `FravaerG` table, covering the "10. trinn" half. The videregående half's table name under `VGO` wasn't checked (not in the table list pulled for `PLAN-010`'s unrelated `SluttaV` check) — confirm when implementing `udir-fravar`.
 28. **[Q40]** `udir-sluttet-vgs` vs `fhi-vgs-gjennomforing` — Atlas already has the completion side; document the methodological difference (annual dropout-during-year vs 3-year-cohort completion) so consumers don't double-count.
 29. **[Q42]** IMDi-extension scope — fold `imdi-innvandringsgrunn-kjonn` into the same `imdi` source family as `imdi-bosetting`, so one PLAN (`PLAN-009-imdi-bosetting`) covers all three IMDi indicators. **Rejected, 2026-10-01**: `PLAN-009` shipped bosettingstall only — the other two need an undocumented API reverse-engineered first. See [`INVESTIGATE-imdikator-api.md`](INVESTIGATE-imdikator-api.md).
 30. **[Q43]** `imdi-landbakgrunn` vs `fhi-innvandrere` — overlap analysis. Recommendation: ingest IMDi only if the methodology gap is meaningful (FHI typically lags IMDi by one cycle). Still open — tracked in [`INVESTIGATE-imdikator-api.md`](INVESTIGATE-imdikator-api.md) [Q4].
