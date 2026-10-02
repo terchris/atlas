@@ -10,6 +10,10 @@ See _factory.make_raw_ingest_asset. Currently:
 - nav-uforetrygd: one xlsx download from NAV's PST302 uføretrygd monthly
   statistics page. Atlas's first monthly-polled source outside SSB/KLASS —
   see atlas-data/ingest/src/sources/nav-uforetrygd/README.md.
+- nav-aap: one xlsx download from NAV's AAP155 arbeidsavklaringspenger
+  monthly statistics page. Same mechanism as nav-uforetrygd (same NAV
+  statistics section, same monthly_sources_refresh job) — see
+  atlas-data/ingest/src/sources/nav-aap/README.md.
 - imdi-bosetting: static HTML scrape of IMDi's bosettingstall hub + one page
   per discovered year. Annual data, polled weekly like the Bufdir sources —
   see atlas-data/ingest/src/sources/imdi-bosetting/README.md.
@@ -49,6 +53,7 @@ OTHER_SOURCES = [
     "bufdir-barnevern",
     "husbanken-bostotte",
     "imdi-bosetting",
+    "nav-aap",
     "nav-uforetrygd",
     "redcross-branches",
     "udir-gsi",
@@ -69,9 +74,9 @@ assets = [
         automation_condition=cadence.weekly_polled(),
         freshness_policy=cadence.WEEKLY_FRESHNESS,
     ),
-    # nav-uforetrygd republishes monthly, not weekly — polled to match.
+    # nav-uforetrygd and nav-aap republish monthly, not weekly — polled to match.
     *make_raw_ingest_assets(
-        ["nav-uforetrygd"],
+        ["nav-aap", "nav-uforetrygd"],
         group_name="raw_other",
         automation_condition=cadence.monthly_polled(),
         freshness_policy=cadence.MONTHLY_FRESHNESS,

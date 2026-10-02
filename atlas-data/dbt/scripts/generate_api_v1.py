@@ -158,8 +158,8 @@ than that it guessed the wrong URL. Ask for the base URL instead.
 schema change a breaking API change, and the modelled layer above exists
 precisely so consumers do not depend on that shape.
 
-⚠️ THIS IS WRITTEN DOWN BECAUSE THE ALTERNATIVE IS 57 SILENT 404s. Atlas holds
-57 raw tables. A consumer who guesses one of their names gets the same PGRST205
+⚠️ THIS IS WRITTEN DOWN BECAUSE THE ALTERNATIVE IS 58 SILENT 404s. Atlas holds
+58 raw tables. A consumer who guesses one of their names gets the same PGRST205
 described above — "Could not find the table" — which reads as *this endpoint is
 broken or not built yet*, when it is a decision that will not be revisited. An
 absence cannot say why it is absent, so the reason is stated here rather than
@@ -263,13 +263,13 @@ SUPPLY — voluntary-sector presence:
   distrikt_summary             chapters by district.
   kommune_local_chapters       chapters resolved to a kommune.
 
-PER-SOURCE INDICATOR RELATIONS — 45 of them, one per upstream table, at the
+PER-SOURCE INDICATOR RELATIONS — 46 of them, one per upstream table, at the
 grain the publisher actually uses. The cross-source views above impose ONE
 shape on every source; these keep the source's own dimensions, so a breakdown
 those views flatten away (a sex, an age band, a household or family type, a
 parental-education split) is only answerable here.
 
-🔴 ALL 45 ARE stability:source. THE COLUMN SET FOLLOWS THE PUBLISHER, NOT
+🔴 ALL 46 ARE stability:source. THE COLUMN SET FOLLOWS THE PUBLISHER, NOT
 ATLAS. If SSB, FHI or Bufdir adds, renames or drops a dimension, these change
 with it — that is the deliberate trade for getting the real grain. Filter
 `meta_endpoints?tags=cs.{{stability:curated}}` for the relations whose shape
@@ -295,8 +295,8 @@ same source_id, and through the ref_* lists above where one exists.
     indicators__husbanken_bostotte
   imdi (1):
     indicators__imdi_bosetting
-  nav (1):
-    indicators__nav_uforetrygd
+  nav (2):
+    indicators__nav_aap indicators__nav_uforetrygd
   ssb (18):
     indicators__ssb_06083 indicators__ssb_06913 indicators__ssb_06944
     indicators__ssb_06947 indicators__ssb_07459 indicators__ssb_08484

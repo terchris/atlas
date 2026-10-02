@@ -43,7 +43,7 @@
       "description": "Social assistance use, household composition, overcrowded housing,\nand integration indicators. The bridge between need and the services\nthat respond to it.\n",
       "emoji": "🏘️",
       "order": 50,
-      "source_count": 8
+      "source_count": 9
     },
     {
       "id": "ngo-supply",
@@ -123,7 +123,7 @@
       "logo": "/img/publishers/nav.svg",
       "feedback_url": "https://www.nav.no/kontaktoss",
       "notes": "The Norwegian Labour and Welfare Administration. Publishes open\nlabour-market and benefits statistics — registered unemployment,\ndisability benefit (uføretrygd), work-assessment allowance (AAP) and\nsick-leave figures — mostly as monthly Excel releases per kommune.\n`display_name` is the formal directorate name; the public brand is\n\"NAV\", used in `publisher:` on every NAV manifest to match.\n",
-      "source_count": 1
+      "source_count": 2
     },
     {
       "id": "redcross",
@@ -1075,10 +1075,10 @@
       "related_by_topic": [
         "husbanken-bostotte",
         "imdi-bosetting",
+        "nav-aap",
         "nav-uforetrygd",
         "ssb-12131",
-        "ssb-12132",
-        "ssb-13995"
+        "ssb-12132"
       ],
       "dimensions": [
         {
@@ -8353,10 +8353,10 @@
       "related_by_topic": [
         "bufdir-barnevern",
         "imdi-bosetting",
+        "nav-aap",
         "nav-uforetrygd",
         "ssb-12131",
-        "ssb-12132",
-        "ssb-13995"
+        "ssb-12132"
       ],
       "dimensions": [
         {
@@ -8525,10 +8525,10 @@
       "related_by_topic": [
         "bufdir-barnevern",
         "husbanken-bostotte",
+        "nav-aap",
         "nav-uforetrygd",
         "ssb-12131",
-        "ssb-12132",
-        "ssb-13995"
+        "ssb-12132"
       ],
       "dimensions": [
         {
@@ -8654,6 +8654,185 @@
     },
     {
       "kind": "source",
+      "source_id": "nav-aap",
+      "upstream_id": "AAP155",
+      "upstream_url": "https://www.nav.no/no/nav-og-samfunn/statistikk/aap-nedsatt-arbeidsevne-og-uforetrygd-statistikk/arbeidsavklaringspenger",
+      "upstream_landing_page": "https://www.nav.no/no/nav-og-samfunn/statistikk/aap-nedsatt-arbeidsevne-og-uforetrygd-statistikk/arbeidsavklaringspenger",
+      "upstream_title": "AAP155 Mottakere av arbeidsavklaringspenger. Kommune.",
+      "description": "NAV (Arbeids- og velferdsetaten) publishes AAP155 on its arbeidsavklaringspenger (AAP —\nwork-assessment allowance, a transitional benefit paid while NAV assesses someone's capacity for\nwork) statistics page: the count and share of the population receiving AAP, per kommune, as one\nxlsx workbook covering every month of the current calendar year to date. Atlas downloads that\nworkbook (URL discovered from the page — a relative `/_/attachment/inline/...` link, re-resolved\neach run since it changes with every release) and loads the `1. Kommune. Antall` and\n`2. Kommune. Andel` sheets into `raw.nav_aap`. Atlas's second NAV source and second\nmonthly-cadence source, reusing the `monthly_sources_refresh` job built for `nav-uforetrygd`.\nv1 tracks the live current-year file only; whether a historical archive exists for this specific\ntable was checked and not found (unlike `nav-uforetrygd`'s PST302, which has one) — backfill is\nunresolved, not just deferred by convention.\n",
+      "atlas_summary": null,
+      "publisher": {
+        "id": "nav",
+        "display_name": "Arbeids- og velferdsdirektoratet",
+        "homepage": "https://www.nav.no/",
+        "logo": "/img/publishers/nav.svg"
+      },
+      "category": {
+        "id": "social",
+        "name": "Social & housing",
+        "emoji": "🏘️"
+      },
+      "license": "CC BY 4.0",
+      "license_url": "https://creativecommons.org/licenses/by/4.0/deed.no",
+      "periodicity": "P1M",
+      "eu_theme": "SOCI",
+      "attribution": "Kilde: NAV, AAP155 Mottakere av arbeidsavklaringspenger",
+      "tags": {
+        "provider": "nav",
+        "topic": "social",
+        "geo": "kommune",
+        "cadence": "monthly"
+      },
+      "keywords": [
+        "arbeidsavklaringspenger",
+        "aap",
+        "welfare",
+        "kommune",
+        "monthly"
+      ],
+      "lifecycle": "stable",
+      "time_coverage": {
+        "start": null,
+        "end": null
+      },
+      "methodology_notes": "Count and share of people receiving arbeidsavklaringspenger (AAP) per kommune. AAP is a\ntransitional benefit paid while NAV assesses someone's remaining capacity for work — distinct\nfrom `nav-uforetrygd`'s uføretrygd, which is the longer-term outcome once that assessment\nconcludes someone cannot work. Small cells are suppressed with `*` — the workbook's own\nmethodology sheet states the exact rule: any cell representing fewer than 4 people, per\nStatistikklovens § 2-6.\n",
+      "suggested_joins": [],
+      "related_by_topic": [
+        "bufdir-barnevern",
+        "husbanken-bostotte",
+        "imdi-bosetting",
+        "nav-uforetrygd",
+        "ssb-12131",
+        "ssb-12132"
+      ],
+      "dimensions": [
+        {
+          "code": "region_code",
+          "meaning": "Geographic code from the workbook row label, or the literal text \"Ukjent\"",
+          "value_format": "4-digit kommune code, or the literal string Ukjent (NAV's own unknown-region bucket)",
+          "notes": "Confirmed live 2026-10-02: this table has NO fylke rows and NO bydel rows at all (unlike nav-uforetrygd's PST302) — every real region row is a 4-digit kommune code. The one exception is \"Ukjent\" (NAV's own region-not-determinable bucket, a real and substantial count — 1,500+ people nationally per month, not a rounding artifact), which carries no numeric code at all. region_kind is derived downstream via classify_region_code, which correctly falls through to its existing `unknown` branch for a non-numeric label — no macro change needed. ⚠️ \"Ukjent\" exists only in the Antall (count) sheet — the Andel (share) sheet omits it entirely (357 regions there, 358 in Antall), presumably because there is no population denominator to compute a share against for a non-geographic bucket.\n"
+        },
+        {
+          "code": "category_format",
+          "meaning": "Which sheet the row came from, not a column within a sheet",
+          "value_format": "antall or andel",
+          "notes": "Same convention as nav-uforetrygd — NAV publishes count and share as two separate sheets."
+        },
+        {
+          "code": "year",
+          "meaning": "Calendar year, read from the sheet's own period-label cell (e.g. 'Periode: 2026 01 - 2026 08')",
+          "value_format": "4-digit integer",
+          "notes": "One year per file — the live file is replaced in place as the year progresses."
+        },
+        {
+          "code": "month",
+          "meaning": "Calendar month, from the sheet's own Norwegian month-name header row",
+          "value_format": "1-12 integer",
+          "notes": "A plain integer column, same shape as nav-uforetrygd — no dim_period reference."
+        },
+        {
+          "code": "values_json",
+          "meaning": "Parsed month->value map for the region and category_format slice, for this sheet's year",
+          "value_format": "JSON object with string month-number keys; suppressed cells (NAV's own `*` marker) as null",
+          "notes": "Matches the full month spine present in the live file (partial-year, growing monthly)."
+        }
+      ],
+      "raw_tables": null,
+      "sample_query": null,
+      "citation": {
+        "text": "Arbeids- og velferdsdirektoratet. (n.d.). AAP155 Mottakere av arbeidsavklaringspenger. Kommune.. Retrieved from https://www.nav.no/no/nav-og-samfunn/statistikk/aap-nedsatt-arbeidsevne-og-uforetrygd-statistikk/arbeidsavklaringspenger. Available in Atlas at https://atlas.sovereignsky.no/datasets/nav-aap.",
+        "bibtex": "@misc{atlas_nav_aap,\n  author = {Arbeids- og velferdsdirektoratet},\n  title  = {AAP155 Mottakere av arbeidsavklaringspenger. Kommune.},\n  year   = {n.d.},\n  url    = {https://www.nav.no/no/nav-og-samfunn/statistikk/aap-nedsatt-arbeidsevne-og-uforetrygd-statistikk/arbeidsavklaringspenger},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/nav-aap}\n}"
+      },
+      "feedback_url": "https://www.nav.no/kontaktoss",
+      "consuming_marts": [
+        {
+          "mart_name": "mart_atlas_inventory",
+          "api_v1_name": "atlas_inventory",
+          "title": null,
+          "description_short": "What Atlas publishes: one row per endpoint with its row count, freshness and origin.",
+          "description_full": "What Atlas publishes: one row per endpoint with its row count, freshness and origin.\n\nWhat Atlas publishes, one row per queryable endpoint: how many records it\nserves, when its data last arrived, and where those rows came from.\nAsked for by Røde Kors — \"validate that all datasets that are ingested has\nan endpoint and it can be queried … count the number of records each\nendpoint has and update the last time it ingested data.\"\n⚠️ THE GRAIN IS PER ENDPOINT, NOT PER SOURCE. meta_sources answers \"what\ndid Atlas ingest\"; this answers \"what can I query, and is there anything\nin it\". One source can feed several endpoints and one endpoint can draw on\nseveral sources, so the two row counts are not comparable and summing\nsources will not reproduce an endpoint's count.\n⚠️ atlas_inventory does not list ITSELF. It is built from the same seed it\nreports on, so counting itself would be circular and the number would be\nwhatever the table held mid-build. 19 endpoints are listed; 20 are\npublished.",
+          "sample_query": "https://api-atlas.urbalurba.com/atlas_inventory?limit=5"
+        },
+        {
+          "mart_name": "mart_indicators__nav_aap",
+          "api_v1_name": "indicators__nav_aap",
+          "title": "Arbeidsavklaringspenger månedsstatistikk (AAP155)",
+          "description_short": "Per-source indicator data for nav-aap (Arbeids- og velferdsdirektoratet), at the publisher's own grain.",
+          "description_full": "Per-source indicator data for nav-aap (Arbeids- og velferdsdirektoratet), at the publisher's own grain.\n\nPer-source indicator relation for `nav-aap` (Arbeids- og velferdsdirektoratet), published at the grain the publisher\nactually uses rather than flattened into the cross-source views. Atlas's second monthly-cadence\nsource. No fylke_nr column — this table has no fylke-level rows at all, unlike nav_uforetrygd.\n🔴 stability:source — the column set here follows Arbeids- og velferdsdirektoratet, not Atlas. If the\npublisher adds, renames or drops a dimension, this relation changes with it. That is\nthe deliberate trade for getting the real grain; prefer a stability:curated relation\nif you need a shape Atlas promises to hold still. Decode codes through\nmeta_dimensions filtered to source_id=nav-aap.",
+          "sample_query": "https://api-atlas.urbalurba.com/indicators__nav_aap?limit=5"
+        }
+      ],
+      "consuming_models": [
+        {
+          "name": "indicators__nav_aap",
+          "kind": "indicators"
+        },
+        {
+          "name": "mart_atlas_inventory",
+          "kind": "mart"
+        },
+        {
+          "name": "mart_indicators__nav_aap",
+          "kind": "mart"
+        }
+      ],
+      "joined_with": [
+        {
+          "source_id": "brreg-enheter-alle",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "brreg-frivillige",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "brreg-oppdateringer",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "bufdir-barnefattigdom",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "bufdir-barnevern",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "fhi-alkohol",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "fhi-befolkning",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "fhi-befolkningsvekst",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        }
+      ],
+      "last_ingested_at": null,
+      "latest_row_count": null,
+      "total_runs": null,
+      "downstream_model_count": null
+    },
+    {
+      "kind": "source",
       "source_id": "nav-uforetrygd",
       "upstream_id": "PST302",
       "upstream_url": "https://www.nav.no/no/nav-og-samfunn/statistikk/aap-nedsatt-arbeidsevne-og-uforetrygd-statistikk/uforetrygd/uforetrygd-manedsstatistikk",
@@ -8701,9 +8880,9 @@
         "bufdir-barnevern",
         "husbanken-bostotte",
         "imdi-bosetting",
+        "nav-aap",
         "ssb-12131",
-        "ssb-12132",
-        "ssb-13995"
+        "ssb-12132"
       ],
       "dimensions": [
         {
@@ -11860,9 +12039,9 @@
         "bufdir-barnevern",
         "husbanken-bostotte",
         "imdi-bosetting",
+        "nav-aap",
         "nav-uforetrygd",
-        "ssb-12132",
-        "ssb-13995"
+        "ssb-12132"
       ],
       "dimensions": [
         {
@@ -12178,9 +12357,9 @@
         "bufdir-barnevern",
         "husbanken-bostotte",
         "imdi-bosetting",
+        "nav-aap",
         "nav-uforetrygd",
-        "ssb-12131",
-        "ssb-13995"
+        "ssb-12131"
       ],
       "dimensions": [
         {
@@ -13141,9 +13320,9 @@
         "bufdir-barnevern",
         "husbanken-bostotte",
         "imdi-bosetting",
+        "nav-aap",
         "nav-uforetrygd",
-        "ssb-12131",
-        "ssb-12132"
+        "ssb-12131"
       ],
       "dimensions": [
         {
@@ -13459,9 +13638,9 @@
         "bufdir-barnevern",
         "husbanken-bostotte",
         "imdi-bosetting",
+        "nav-aap",
         "nav-uforetrygd",
-        "ssb-12131",
-        "ssb-12132"
+        "ssb-12131"
       ],
       "dimensions": [
         {
@@ -15076,6 +15255,12 @@
           "model_name": "mart_indicators__imdi_bosetting",
           "title": "Bosettingstall",
           "description_short": "Per-source indicator data for imdi-bosetting (Integrerings- og mangfoldsdirektoratet), at the publisher's own grain."
+        },
+        {
+          "parent_kind": "model",
+          "model_name": "mart_indicators__nav_aap",
+          "title": "Arbeidsavklaringspenger månedsstatistikk (AAP155)",
+          "description_short": "Per-source indicator data for nav-aap (Arbeids- og velferdsdirektoratet), at the publisher's own grain."
         },
         {
           "parent_kind": "model",
@@ -18645,6 +18830,75 @@
       ],
       "sample_query": "https://api-atlas.urbalurba.com/indicators__imdi_bosetting?limit=5",
       "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__imdi_bosetting"
+    },
+    {
+      "kind": "view",
+      "view_id": "indicators__nav_aap",
+      "mart_name": "mart_indicators__nav_aap",
+      "api_v1_name": "indicators__nav_aap",
+      "title": "Arbeidsavklaringspenger månedsstatistikk (AAP155)",
+      "description_short": "Per-source indicator data for nav-aap (Arbeids- og velferdsdirektoratet), at the publisher's own grain.",
+      "description_full": "Per-source indicator data for nav-aap (Arbeids- og velferdsdirektoratet), at the publisher's own grain.\n\nPer-source indicator relation for `nav-aap` (Arbeids- og velferdsdirektoratet), published at the grain the publisher\nactually uses rather than flattened into the cross-source views. Atlas's second monthly-cadence\nsource. No fylke_nr column — this table has no fylke-level rows at all, unlike nav_uforetrygd.\n🔴 stability:source — the column set here follows Arbeids- og velferdsdirektoratet, not Atlas. If the\npublisher adds, renames or drops a dimension, this relation changes with it. That is\nthe deliberate trade for getting the real grain; prefer a stability:curated relation\nif you need a shape Atlas promises to hold still. Decode codes through\nmeta_dimensions filtered to source_id=nav-aap.",
+      "columns": [
+        {
+          "name": "source_id",
+          "description": "Atlas catalogue id for this ingest — always nav-aap."
+        },
+        {
+          "name": "region_code",
+          "description": "NAV's own region code, verbatim from the workbook row label — a 4-digit kommune code, or the literal string \"Ukjent\" (NAV's own unknown-region bucket)."
+        },
+        {
+          "name": "kommune_nr",
+          "description": "Four-digit kommune code, derived through region_code_to_kommune_nr. NULL for \"Ukjent\"."
+        },
+        {
+          "name": "region_kind",
+          "description": "What region_code is, from classify_region_code: kommune or unknown — no fylke/bydel rows exist in this table."
+        },
+        {
+          "name": "category_format",
+          "description": "Which sheet the row came from — antall (count) or andel (share) — not a column within a sheet. \"Ukjent\" exists only under antall; andel omits it entirely."
+        },
+        {
+          "name": "year",
+          "description": "Calendar year of the observation."
+        },
+        {
+          "name": "month",
+          "description": "Calendar month (1-12) of the observation. A plain integer, not a dim_period reference."
+        },
+        {
+          "name": "contents_code",
+          "description": "Atlas-normalised variable code: fixed prefix `nav_aap__` joined with category_format, so each measure is filter-stable in the catalogue."
+        },
+        {
+          "name": "contents_label",
+          "description": "Human-readable label combining \"Arbeidsavklaringspenger\" with the antall/andel format."
+        },
+        {
+          "name": "value",
+          "description": "Numeric value for this year/month; NULL when NAV suppresses the cell (*)."
+        },
+        {
+          "name": "values_json",
+          "description": "Parse of the sheet's rows into month keys for this region/category_format/year slice (NAV's suppression marker * and blanks → JSON null values)."
+        },
+        {
+          "name": "updated_at",
+          "description": "Timestamp when the row was last written by ingest (from raw.loaded_at)."
+        }
+      ],
+      "built_from": [
+        {
+          "parent_kind": "model",
+          "model_name": "indicators__nav_aap",
+          "title": null,
+          "description_short": "Per-source passthrough for NAV AAP155 (arbeidsavklaringspenger — work-assessment allowance — recipients, count and share of the population, per kommune, monthly)."
+        }
+      ],
+      "sample_query": "https://api-atlas.urbalurba.com/indicators__nav_aap?limit=5",
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__nav_aap"
     },
     {
       "kind": "view",
