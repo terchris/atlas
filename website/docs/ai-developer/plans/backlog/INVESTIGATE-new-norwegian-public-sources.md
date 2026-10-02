@@ -112,7 +112,7 @@ drafting `PLAN-004-nav-uforetrygd.md`:**
 
 ✅ **`husbanken-bostotte` (PLAN-011) drafted 2026-10-02, unblocked — Phase 1 live-verified this
 entire section and found the "Power-BI-backed" claim was wrong.** See
-[`PLAN-011-husbanken-statistikkbank.md`](PLAN-011-husbanken-statistikkbank.md) for the full
+[`PLAN-011-husbanken-statistikkbank.md`](../active/PLAN-011-husbanken-statistikkbank.md) for the full
 research. Headline correction: `statistikk.husbanken.no` is **Qlik Sense**, not Power BI, with a
 real anonymously-reachable backend (`qlik.husbanken.no`) this agent drove live — a full
 `OpenDoc`/hypercube/`GetLayout` exchange over the Qlik Engine API (WebSocket, officially documented

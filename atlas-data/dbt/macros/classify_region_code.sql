@@ -82,6 +82,21 @@
   What changes is that it is no longer "ingest a bydel source"; it is "two
   sources already in raw carry bydel rows and neither has anywhere to put
   them".
+
+  🔴 A SECOND, INCOMPATIBLE BYDEL CODE SPACE. Verified live 2026-10-02
+  (husbanken-bostotte Phase 2): Husbanken's own KommuneNr dimension carries
+  Oslo's 15 current bydeler, plus one discontinued pre-2004 bydel
+  ("Uranienborg-Majorstua"), as 4-digit codes 0311–0326 — confirmed by name
+  via Husbanken's own Qlik app, not guessed from the shape. These are NOT in
+  SSB's Klass 131 (dim_kommune has no row for any of them, at any point since
+  1950), so without this branch they fall through to `^\d{4}$` and become a
+  kommune — the exact defect this macro exists to prevent, rediscovered from
+  a second source with a second, incompatible 4-digit convention for the same
+  15 districts the `^\d{6}$` branch above already names via FHI's numbering.
+  Listed literally, not by range, because 03xx is otherwise real kommune
+  territory (Oslo's own 0301 sits right next to this block) — a regex here
+  would risk reclassifying a real kommune the day one is renumbered into this
+  range, which the literal list cannot.
 #}
 {% macro classify_region_code(col) -%}
   case
@@ -91,6 +106,8 @@
     when {{ col }} ~ '^22\d{2}$' then 'jan_mayen'
     when {{ col }} ~ '^23\d{2}$' then 'continental_shelf'
     when {{ col }} ~ '^\d{6}$' then 'bydel'
+    when {{ col }} in ('0311','0312','0313','0314','0315','0316','0317','0318','0319',
+                        '0320','0321','0322','0323','0324','0325','0326') then 'bydel'
     when {{ col }} ~ '^\d{2}99$' then 'unspecified_within_fylke'
     when {{ col }} ~ '^\d{4}$'   then 'kommune'
     when {{ col }} ~ '^\d{2}$'   then 'fylke'

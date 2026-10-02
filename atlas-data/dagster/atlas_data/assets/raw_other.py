@@ -17,6 +17,12 @@ See _factory.make_raw_ingest_asset. Currently:
   Udir's own public docs name a dead hostname for this). Annual data, polled
   weekly like the sources above — see
   atlas-data/ingest/src/sources/udir-gsi/README.md.
+- husbanken-bostotte: Qlik Engine API (WebSocket JSON-RPC) against Husbanken's
+  public "Statistikkbank" app — Atlas's first WebSocket-based ingest. Still
+  one subprocess per run, same as every HTTP-based source above; the
+  WebSocket session opens and closes entirely inside that one process. Annual
+  data, polled weekly like the sources above — see
+  atlas-data/ingest/src/sources/husbanken-bostotte/README.md.
 - redcross-branches: Crawlee-based scraper of Red Cross chapter pages.
   Heavier resource profile (per UIS Dagster INVESTIGATE — headless browser
   state, ~512MiB working set).
@@ -41,6 +47,7 @@ from atlas_data import cadence
 OTHER_SOURCES = [
     "bufdir-barnefattigdom",
     "bufdir-barnevern",
+    "husbanken-bostotte",
     "imdi-bosetting",
     "nav-uforetrygd",
     "redcross-branches",
@@ -51,7 +58,13 @@ OTHER_SOURCES = [
 # cadence and no freshness policy. See cadence.UNSCHEDULED_SOURCES for why.
 assets = [
     *make_raw_ingest_assets(
-        ["bufdir-barnefattigdom", "bufdir-barnevern", "imdi-bosetting", "udir-gsi"],
+        [
+            "bufdir-barnefattigdom",
+            "bufdir-barnevern",
+            "husbanken-bostotte",
+            "imdi-bosetting",
+            "udir-gsi",
+        ],
         group_name="raw_other",
         automation_condition=cadence.weekly_polled(),
         freshness_policy=cadence.WEEKLY_FRESHNESS,

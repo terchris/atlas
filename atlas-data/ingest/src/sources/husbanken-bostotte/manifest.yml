@@ -1,0 +1,92 @@
+# Hand-authored catalogue metadata for Husbanken's bostøtte statistics.
+# Ingest runs do not modify this file.
+
+source_id: husbanken-bostotte
+upstream_id: ee185fe5-e94d-463e-bff8-cd1c5f2f566f
+upstream_url: https://www.husbanken.no/tall-og-analyse/statistikkbank/
+upstream_landing_page: https://www.husbanken.no/tall-og-analyse/
+upstream_title: "Statistikkbank — Bostøtte"
+description: |
+  Husbanken publishes bostøtte (housing allowance) application counts, decision counts, payout
+  counts, rejection counts and the paid-out kroner amount, per kommune, per year, through its public
+  "Statistikkbank" Qlik Sense app. Atlas reaches this over the Qlik Engine API (WebSocket JSON-RPC
+  2.0, officially documented by Qlik), not Power BI as an earlier investigation assumed — see
+  atlas-data/ingest/src/sources/husbanken-bostotte/README.md for the full mechanism, including why
+  a single-page hypercube fetch fails and the paginated fetch this source uses instead.
+publisher: Husbanken
+license: NLOD
+license_url: https://data.norge.no/nlod/no/2.0
+periodicity: P1Y
+eu_theme: SOCI
+attribution: "Kilde: Husbanken, Statistikkbank"
+
+# 🔵 Licence authorized directly by Terje, 2026-10-02 (PLAN-011, [Q1]):
+# "Husbanken is owned by the norwegian goverment and they follow NLOD." —
+# not independently found on a Husbanken terms page the way udir-gsi's NLOD
+# claim was; recorded as a direct statement, not a verified citation.
+
+tags:
+  provider: husbanken
+  topic: social
+  geo: kommune
+  cadence: annual
+
+dimensions:
+  - code: region_code
+    meaning: Kommune code, read directly from the hypercube's `KommuneNr` dimension
+    value_format: 4-digit code (SSB standard) — not always a real kommune
+    notes: >
+      ⚠️ Confirmed live 2026-10-02, matching the exact lesson udir-gsi learned: Svalbard's two
+      pseudo-codes (`2100`, `2111`) are present among Husbanken's 883 distinct `KommuneNr` values,
+      always carrying real zero values for every measure (not suppressed — Husbanken's bostøtte
+      programme genuinely administers no Svalbard cases). Named `region_code`, not `kommune_nr`, for
+      this reason; `kommune_nr` resolution happens downstream via this project's existing
+      `classify_region_code`/`region_code_to_kommune_nr` dbt macros.
+
+      ⚠️ Also confirmed live: `KommuneNr` carries Oslo's 15 bydeler (plus one discontinued pre-2004
+      one) as 4-digit codes `0311`-`0326`, named via Husbanken's own Qlik app (e.g. `0311` = "Gamle
+      Oslo"). This is a second, incompatible bydel numbering from the 6-digit convention FHI's
+      sources use for the same districts — `classify_region_code` now recognises both.
+  - code: year
+    meaning: Calendar year, read from the hypercube's `År` dimension
+    value_format: 4-digit year
+    notes: >
+      ⚠️ Confirmed live: the underlying source records at DAILY grain (31 distinct `Dato` values
+      checked for a single January) — an earlier investigation wrongly assumed annual grain. Atlas
+      publishes at annual grain as its own choice (matching this source's sibling indicators and
+      PLAN-011's recommendation), not because the source is coarser than that.
+
+      ⚠️ Also confirmed live: a real null-year bucket exists in Husbanken's own data (`År` as the
+      literal text `-`), seen both nationally and per-kommune (e.g. Svalbard code 2111). These rows
+      are dropped during parsing, not fabricated into a fake year — see parse.ts.
+  - code: measure
+    meaning: Which bostøtte figure this row's value is — not a format variant
+    value_format: "soknad | vedtak | utbetaling | avslag | belop"
+    notes: >
+      Five measures: application count, decision count, payout count, rejection count, and the paid
+      kroner amount. Named via explicit `qLabel`s set on the Qlik request (`soknad`/`vedtak`/
+      `utbetaling`/`avslag`/`belop`) — without a `qLabel`, Qlik echoes the raw expression string
+      (e.g. `Sum(BostøtteSøknadTeller)`) instead, confirmed live.
+  - code: value
+    meaning: The measure's numeric value for this kommune and year
+    value_format: Integer count, or kroner for the `belop` measure; no suppression marker found
+    notes: >
+      Checked live against Røyrvik (kommune 5043, Norway's smallest by bostøtte volume) — every cell
+      is a real number, not a suppression placeholder. No suppression convention was found anywhere
+      in this dataset during Phase 1/2 research.
+
+lifecycle: stable
+time_coverage:
+  start: null
+  end: null
+keywords:
+  - bostotte
+  - bostøtte
+  - husbanken
+  - boligsosial
+  - kommune
+methodology_notes: |
+  Real data coverage starts in 2010 (2008/2009 are genuinely zero, not missing) and extends through
+  the current year (in progress). Husbanken's "Boligsosial Monitor" app on the same Qlik backend
+  carries related but distinct indicators and is deferred — see PLAN-011 for why.
+suggested_joins: []
