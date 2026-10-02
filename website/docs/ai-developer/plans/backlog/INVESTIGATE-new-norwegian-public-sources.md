@@ -76,6 +76,14 @@ Phase 1 summary.** The CC BY 4.0 correction below was scoped to uføretrygd only
 AAP/sykefravær — re-check per source"); independently re-confirmed for AAP specifically rather than
 assumed, and the file shape turned out simpler than PST302's, not harder.
 
+🔴 **"nav-sykefravaer" (PLAN-013) drafted 2026-10-02 — wrong on the mechanism, not just a detail.**
+NAV's own sykefravær/sykepenger statistics pages publish no kommune-level table at all (checked
+live — every downloadable table is fylke-level or coarser). The real kommune-resolved data is at
+**SSB table 12451**, reached via this project's existing `lib/pxweb.ts` — the same mechanism every
+`ssb-*` source uses, not a NAV-family Excel parser. Licence is therefore **NLOD** (SSB's own), not
+CC BY 4.0. See the "Next steps" checklist below for the full Phase 1 summary; the plan itself
+recommends shipping this as `ssb-12451`, not `nav-sykefravaer`.
+
 🔴 **Corrected 2026-10-01, for uføretrygd specifically — three claims below were wrong, found while
 drafting `PLAN-004-nav-uforetrygd.md`:**
 - **Licence is CC BY 4.0, not NLOD.** Verified directly against NAV's own statement:
@@ -99,8 +107,10 @@ drafting `PLAN-004-nav-uforetrygd.md`:**
 - **URL (verified live 2026-05-04 — research catalogue's older URL is stale)**: index at `https://www.nav.no/no/nav-og-samfunn/statistikk`; uføretrygd month-by-month at `https://www.nav.no/no/nav-og-samfunn/statistikk/aap-nedsatt-arbeidsevne-og-uforetrygd-statistikk/uforetrygd/uforetrygd-manedsstatistikk`. ~~Bulk open data is published on `https://data.norge.no/` (DCAT-AP catalogue, where NAV registers its datasets).~~ **Wrong for uføretrygd — see the 2026-10-01 correction above.**
 - **Format**: Excel + CSV; some datasets exposed as JSON via data.norge.no's distribution links
 - **Auth**: none for aggregate kommune statistics. (`pam-stilling-feed` for vacancies needs Bearer auth — out of scope for this candidate.)
-- **Licence**: ~~NLOD~~ **CC BY 4.0** (corrected above for uføretrygd; independently re-confirmed for
-  AAP, 2026-10-02, PLAN-012 Phase 1.2 — still unverified for sykefravær, re-check per source)
+- **Licence**: ~~NLOD~~ **CC BY 4.0** for uføretrygd and AAP (corrected above; independently
+  re-confirmed for AAP, 2026-10-02, PLAN-012 Phase 1.2). **For sykefravær specifically, NLOD** —
+  the real kommune-level source is SSB table 12451, not a NAV page, so NAV's CC BY 4.0 correction
+  does not transfer; see PLAN-013 Phase 1.5.
 - **Geo**: kommune (some series fylke-only)
 - **Cadence**: monthly for uføretrygd / AAP, quarterly for sykefravær
 - **Provider tag**: `nav` (new)
@@ -599,7 +609,18 @@ Each PLAN follows the standard Atlas pattern (per-source folder under `atlas-dat
   away. Full exchange: [urb-agents#1799](https://github.com/terchris/urb-agents/issues/1799).
 - [x] ✅ **Shipped end to end, 2026-10-02.** [`PLAN-011-husbanken-statistikkbank.md`](../completed/PLAN-011-husbanken-statistikkbank.md) — all four phases done: ingest (35,295 rows, zero dropped), dbt staging + api_v1 publication, deployed to the live cluster by imac, independently re-verified against the public API — `GET /indicators__husbanken_bostotte?limit=1` returns real rows, `content-range` confirms 35,295. Atlas's first Husbanken source and first WebSocket-based ingest (Qlik Engine API). Caught a new region-code defect: Husbanken's `KommuneNr` carries Oslo's bydeler under a 4-digit numbering distinct from FHI's 6-digit one — `classify_region_code` now recognises both. Deploy itself took three attempts: a missing `ingest:husbanken-bostotte` npm script ([urb-agents#1807](https://github.com/terchris/urb-agents/issues/1807)), then a `WebSocket` global absent on the deployed image's Node 20 ([urb-agents#1808](https://github.com/terchris/urb-agents/issues/1808)) — both invisible to local testing done on a newer Node, both fixed and verified against the deployed Node version before the third attempt landed clean ([urb-agents#1809](https://github.com/terchris/urb-agents/issues/1809)). **[Q1] (licence) resolved by direct statement, 2026-10-02** — Terje: *"Husbanken is owned by the norwegian goverment and they follow NLOD."*
 - [x] ✅ **Shipped end to end, 2026-10-02.** [`PLAN-012-nav-aap.md`](../completed/PLAN-012-nav-aap.md) — Atlas's second NAV source and second monthly-cadence source. Ingested (5,720 rows, zero dropped), published to `api_v1`, deployed to the live cluster, independently re-verified against the public API. Phase 1 found AAP155 (the kommune-resolved table) is simpler than `nav-uforetrygd`'s PST302: no fylke-sheet duplicate, no bydel nesting, no Oslo/Stavanger row-order inconsistency. Independently re-confirmed CC BY 4.0 for AAP specifically (fetched NAV's general statistics-licence page directly) rather than inheriting the uføretrygd correction by assumption — resolves the "unverified for AAP/sykefravær" flag above for this source. One genuinely new finding, caught by a real test failure against the real fixture: a non-numeric `Ukjent` (unknown-region) bucket exists only in the Antall sheet, not Andel (358 regions vs 357) — falls through to `classify_region_code`'s existing `unknown` branch, confirmed with a real dbt test. Deploy hit an unrelated platform incident — checksum-verified PostgreSQL corruption on `marts.dim_brreg_enhet`, the second that day — correctly declined to self-repair and escalated rather than retried blind; verified clean before retry, then landed cleanly ([urb-agents#1810](https://github.com/terchris/urb-agents/issues/1810)). Applied the `husbanken-bostotte` deploy's npm-script lesson (#1807) proactively this time — `ingest:nav-aap` verified via the real `npm run` invocation and the new CI gate before any other Phase 2 work began.
-- [ ] Draft `PLAN-013-nav-sykefravaer.md`.
+- [x] 🆕 **Drafted 2026-10-02.** [`PLAN-013-nav-sykefravaer.md`](PLAN-013-nav-sykefravaer.md), in
+  `backlog/` — 🔴 wrong on the mechanism, not just a detail: NAV's own sykefravær/sykepenger pages
+  publish no kommune-level table at all (checked live — every downloadable table there is
+  fylke-level or coarser). The real kommune-resolved data is SSB table 12451
+  ("Bostedskommune- og kjønnsfordelt sykefravær"), reached via this project's existing
+  `lib/pxweb.ts` — the same mechanism every `ssb-*` source already uses, not a new NAV-family
+  Excel parser. Licence is therefore NLOD (SSB's own), not CC BY 4.0. Region codes already match
+  `classify_region_code`'s existing sentinel patterns exactly — no new sentinel shape, unlike every
+  NAV-Excel source this session. Proved end-to-end with a real filtered query (Oslo, Eigersund,
+  Utsira all returned plausible real figures). **Recommendation: ship as `ssb-12451`, not
+  `nav-sykefravaer`** — the family-folder convention from [Q4] assumed an Excel-scrape mechanism
+  this candidate doesn't have. No licence blocker; ready to move to `active/`.
 - [ ] Optionally: pre-write outreach emails to Bufdir, NAV, IMDi, Helsedirektoratet asking whether richer machine-readable distributions exist than what's surfaced publicly. (Pattern reused from [`INVESTIGATE-folkehjelp-supply` § A.4](./INVESTIGATE-folkehjelp-supply.md#a4-craft-cms-graphql-probe--q2-outreach-worth-pursuing) — non-blocking; we ship around the public surface either way.)
 
 ---
