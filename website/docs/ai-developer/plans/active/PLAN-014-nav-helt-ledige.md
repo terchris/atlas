@@ -11,7 +11,7 @@ kommune-level table (`HL060 "Fylke og kommune"`), the same NAV-Excel shape as `n
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Backlog — Phase 1 complete, ready to move to active/ for Phase 2
+## Status: Active — Phases 2-3 DONE, Phase 4 (deploy) pending
 
 **Goal**: Add `nav-helt-ledige` as a served Atlas source — the *short-tail* labour-market signal
 slotting between `nav-uforetrygd` (long-tail disability outcome) and `nav-aap` (transitional
@@ -21,7 +21,7 @@ mental health).
 
 **Last Updated**: 2026-10-02
 
-**Investigation**: [INVESTIGATE-new-norwegian-public-sources.md](INVESTIGATE-new-norwegian-public-sources.md) §C.4 ([Q45], [Q37])
+**Investigation**: [INVESTIGATE-new-norwegian-public-sources.md](../backlog/INVESTIGATE-new-norwegian-public-sources.md) §C.4 ([Q45], [Q37])
 
 **Prerequisites**: None. `nav` is already a valid `publishers.yaml` provider, `topics.yaml` already
 has `social` validated (`nav-uforetrygd`/`nav-aap`), and the existing `monthly_sources_refresh`
@@ -156,71 +156,90 @@ not a sample) — same discipline as every prior source.
 
 ---
 
-## Phase 2: Ingest module + raw table (not started)
+## Phase 2: Ingest module + raw table — DONE (verified 2026-10-02)
 
 ### Tasks
 
-- [ ] 2.1 Create `atlas-data/ingest/src/sources/nav-helt-ledige/`:
-  - `discoverWorkbookPath` — find the real `<a href>` on the helt-ledige page pointing to a
-    filename containing `HL060` and ending `.xlsx`. Same shape as `nav-aap`'s discovery function,
-    written fresh per **[Q2]**.
+- [x] 2.1 Created `atlas-data/ingest/src/sources/nav-helt-ledige/`:
+  - `discoverWorkbookPath` — found the real `<a href>` on the helt-ledige page, matched `HL060`.
+    Same shape as `nav-aap`'s discovery function, written fresh per **[Q2]**, confirmed live — the
+    path segment is `download`, not `inline` (AAP155's segment), confirmed not assumed.
   - `parse.ts` — pure functions reading `"3. Kommune Antall"`/`"4. Kommune Prosent av arbeidsst"`,
     classifying rows by "label starts with exactly 4 digits" alone (simpler than both
-    `nav-uforetrygd`'s and `nav-aap`'s classifiers — no "I alt" prefix check needed at all, per
-    Phase 1.3's finding).
-  - `fetch_retry.ts` — copied from an existing source, same convention as every prior source.
+    `nav-uforetrygd`'s and `nav-aap`'s classifiers — no "I alt" prefix check needed at all,
+    confirmed per Phase 1.3's finding).
+  - `fetch_retry.ts` — copied from `nav-aap`, same convention as every prior source.
   - `manifest.yml` — `source_id: nav-helt-ledige`, `provider: nav`, `periodicity: P1M`,
-    `eu_theme: SOCI`, `tags.topic: social` (**[Q3]**), `license: CC BY 4.0` (confirmed directly
-    against this table's own `"Kilde: NAV"` provenance, Phase 1.2).
+    `eu_theme: SOCI`, `tags.topic: social` (**[Q3]**, confirmed against `topics.yaml`),
+    `license: CC BY 4.0` (confirmed directly against this table's own `"Kilde: NAV"` provenance,
+    Phase 1.2).
   - `README.md` and `__tests__/` — golden-file tests against the real captured workbook (full
     file, not trimmed, same precedent as `nav-uforetrygd`/`nav-aap`'s fixtures) covering: an
-    ordinary kommune row, the Svalbard pseudo-kommune (`2100`), the bare `Ukjent` block, and a
-    suppressed row (e.g. `1151 Utsira`, mixed real/suppressed cells in the same row).
-- [ ] 2.2 Migration `raw.nav_helt_ledige(region_code, category_format, year, month, value,
-  values_json, loaded_at)` — same shape as `raw.nav_aap`, PK `(region_code, category_format, year,
-  month)`.
-- [ ] 2.3 Dagster registration — add to the existing `monthly_sources_refresh` job
+    ordinary kommune row (Eigersund, 1101), the Svalbard pseudo-kommune (`2100`), the bare `Ukjent`
+    block, and a suppressed row (`1151 Utsira`, mixed real/suppressed cells in the same row). 26
+    tests, all passing against the real downloaded fixture.
+- [x] 2.2 Migration `063_raw_nav_helt_ledige.sql` — `raw.nav_helt_ledige(region_code,
+  category_format, year, month, value, values_json, loaded_at)`, same shape as `raw.nav_aap`, PK
+  `(region_code, category_format, year, month)`.
+- [x] 2.3 Dagster registration — added to the existing `monthly_sources_refresh` job
   (`_MONTHLY_SOURCE_IDS` in `schedules.py`, `OTHER_SOURCES`/asset group in `raw_other.py`). No new
-  job — this is the third source on it.
+  job — the third source on it. `dagster definitions validate` passes.
 
 ### Validation
 
 ```bash
 cd atlas-data/ingest && npm run ingest:nav-helt-ledige   # the REAL npm-run invocation
 ```
-🔴 **Run it this exact way, not a direct `tsx` call.** `check-every-source-has-an-ingest-script.sh`
-(added after `husbanken-bostotte`'s urb-agents#1807) will catch a missing script entry in CI, but
-verify with the real invocation anyway — this is the fourth source since that lesson, and the
-discipline is "verify directly", not "trust the gate alone".
+🔴 **Run it this exact way, not a direct `tsx` call.** Ran it this exact way, against the live
+workbook and then against local Postgres.
 
-Golden-file tests pass; a manual run against the live workbook returns 358 kommune-shaped region
-rows (357 real + Svalbard) plus the `Ukjent` bucket, zero rows silently dropped, with the
-suppression marker and the `Ukjent`/Svalbard handling both confirmed against real data.
+**Confirmed, not assumed:** a real run against the live workbook returns 359 distinct regions (357
+kommuner + Svalbard's `2100` + `Ukjent`), 8 months each, zero rows silently dropped —
+`antall_rows: 2872, prosent_rows: 2872`, `rows_written: 5744` into local Postgres. One finding
+caught during real-data verification, not assumed from the plan: **`Ukjent` IS present in BOTH
+sheets here** (unlike `nav-aap`, where it's Antall-only) — its Prosent-sheet cells are all NAV's
+own suppression marker `*`, not omitted. Documented in `parse.ts`, `manifest.yml` and this file.
 
 ---
 
-## Phase 3: dbt staging and marts (not started)
+## Phase 3: dbt staging and marts — DONE (verified 2026-10-02)
 
 ### Tasks
 
-- [ ] 3.1 Add `raw.nav_helt_ledige` to `models/indicators/sources.yml` — `ingest_cadence: monthly`,
-  freshness bounds matching `cadence.MONTHLY_FRESHNESS` exactly.
-- [ ] 3.2 `indicators__nav_helt_ledige.sql` — `kommune_nr`/`region_kind` via
-  `region_code_to_kommune_nr`/`classify_region_code` from the first commit. **Expect this to pass
-  clean** — both sentinel shapes present (`2100` Svalbard, `Ukjent`) already have exact precedent
-  in the macro from `udir-gsi`/`husbanken-bostotte` and `nav-aap` respectively; if either doesn't
-  resolve as predicted, that is itself the more surprising finding worth stopping on.
-- [ ] 3.3 Document columns in `schema.yml`; validate against a local Postgres loaded with the real
-  ingest.
-- [ ] 3.4 `mart_indicators__nav_helt_ledige.sql` api passthrough + `marts/api/schema.yml` entry.
-- [ ] 3.5 `dbt build --select indicators__nav_helt_ledige mart_indicators__nav_helt_ledige`
-  against real loaded data.
+- [x] 3.1 Added `raw.nav_helt_ledige` to `models/indicators/sources.yml` — `ingest_cadence:
+  monthly`, freshness bounds matching `cadence.MONTHLY_FRESHNESS` exactly.
+- [x] 3.2 `indicators__nav_helt_ledige.sql` — `kommune_nr`/`region_kind` via
+  `region_code_to_kommune_nr`/`classify_region_code` from the first commit. **Passed clean on the
+  first `dbt build`**, as expected — both sentinel shapes resolved exactly as predicted (see
+  Validation below).
+- [x] 3.3 Documented columns in `schema.yml`; validated against local Postgres loaded with the
+  real ingest — 17/17 data tests pass on the first build.
+- [x] 3.4 `mart_indicators__nav_helt_ledige.sql` api passthrough + `marts/api/schema.yml` entry.
+- [x] 3.5 `dbt build --select indicators__nav_helt_ledige mart_indicators__nav_helt_ledige`
+  against real loaded data — `PASS=19 WARN=0 ERROR=0 SKIP=0 TOTAL=19`.
 
 ### Validation
 
-Real local Postgres, not an empty schema. Explicitly confirm `2100` resolves to
-`region_kind='svalbard'`/`kommune_nr=NULL` and `Ukjent` resolves to `region_kind='unknown'`/
-`kommune_nr=NULL`, rather than assuming the macro "just works" without checking.
+Real local Postgres, not an empty schema. Explicitly confirmed by direct query:
+
+```
+ region_code | kommune_nr | region_kind | count
+-------------+------------+-------------+-------
+ 2100        |            | svalbard    |    16
+ Ukjent      |            | unknown     |    16
+```
+
+`2100` resolves to `region_kind='svalbard'`/`kommune_nr=NULL` and `Ukjent` resolves to
+`region_kind='unknown'`/`kommune_nr=NULL`, exactly as predicted — no macro change needed, matching
+the precedent from `udir-gsi`/`husbanken-bostotte` (svalbard) and `nav-aap` (unknown).
+
+Full dbt check-suite (all 17 scripts) and a full `dbt build` both ran clean — the only non-pass
+results (`extracted_columns_are_still_populated`, `raw_sources_were_refreshed_recently`, the
+`mart_atlas_inventory` SKIP cascade) are pre-existing environmental staleness in the long-lived
+local scratch Postgres, confirmed unrelated to this source: `nav_helt_ledige` does not appear in
+either failing test's result set, and `mart_brreg_enhet` (the SKIP's root) builds 14/14 clean in
+isolation. Website build (`npm run build`) also passed clean: 51 sources, 88 relations, no broken
+links.
 
 ---
 
@@ -244,18 +263,22 @@ corrected) during `ssb-12451`'s Phase 4.
 - [x] **Licence independently confirmed for this specific candidate** — CC BY 4.0, verified
   against this table's own `"Kilde: NAV"` provenance, not assumed by family resemblance to
   `nav-uforetrygd`/`nav-aap` alone.
-- [ ] `nav-helt-ledige` ingests cleanly from the live HL060 workbook with zero rows silently
-  dropped, including the Svalbard pseudo-kommune and the bare `Ukjent` bucket both represented.
-- [ ] `raw.nav_helt_ledige` stores `region_code` as NAV publishes it, including the literal
+- [x] `nav-helt-ledige` ingests cleanly from the live HL060 workbook with zero rows silently
+  dropped, including the Svalbard pseudo-kommune and the bare `Ukjent` bucket both represented —
+  5,744 rows written (359 regions × 8 months × 2 sheets).
+- [x] `raw.nav_helt_ledige` stores `region_code` as NAV publishes it, including the literal
   `Ukjent` label with no numeric code — represented, not normalised away.
-- [ ] `indicators__nav_helt_ledige` and `mart_indicators__nav_helt_ledige` build and test clean
+- [x] `indicators__nav_helt_ledige` and `mart_indicators__nav_helt_ledige` build and test clean
   against real loaded data, with `2100` and `Ukjent` resolving through `classify_region_code`
-  exactly as predicted.
+  exactly as predicted (`PASS=19 WARN=0 ERROR=0`).
 - [ ] `nav-helt-ledige` appears in `meta_sources.served_as` after a real deploy, independently
-  verified via live `curl`.
-- [ ] Golden-file tests cover: an ordinary kommune row, the Svalbard pseudo-kommune, the `Ukjent`
-  block, and a suppressed row with mixed real/suppressed cells in the same row.
-- [ ] The investigation and `1PRIORITY.md` are updated to mark this candidate shipped.
+  verified via live `curl`. *(Phase 4, pending.)*
+- [x] Golden-file tests cover: an ordinary kommune row, the Svalbard pseudo-kommune, the `Ukjent`
+  block, and a suppressed row with mixed real/suppressed cells in the same row — 26 tests, all
+  passing.
+- [ ] The investigation and `1PRIORITY.md` are updated to mark this candidate shipped. *(Will be
+  marked shipped at close-out, after Phase 4 verification — same sequencing as every prior
+  source.)*
 
 ---
 

@@ -633,17 +633,18 @@ Each PLAN follows the standard Atlas pattern (per-source folder under `atlas-dat
   cleanly, no macro change needed. The simplest Phase 2 of any NAV-adjacent source this session:
   zero relationship-test failures on the first `dbt build`. Full exchange:
   [urb-agents#1811](https://github.com/terchris/urb-agents/issues/1811).
-- [x] 🆕 **Drafted 2026-10-02.** [`PLAN-014-nav-helt-ledige.md`](PLAN-014-nav-helt-ledige.md), in
-  `backlog/` — Atlas's fourth NAV-adjacent source. Phase 1 found this candidate's mechanism matches
-  the investigation's original description for once (unlike `nav-sykefravaer`, which didn't): NAV's
-  own `HL060 "Fylke og kommune"` table is genuinely kommune-resolved, confirmed live by direct
-  download. Licence CC BY 4.0, confirmed against this table's own `"Kilde: NAV"` provenance, not
-  assumed by family resemblance. A fourth distinct pivot shape within the NAV-Excel family, but the
-  simplest to classify: neither the bare fylke header row nor the "I alt <name>" total row carries
-  any digit at all, so "exactly 4 leading digits" alone separates kommune rows with no "I alt"
-  prefix check needed. Two sentinel shapes present (Svalbard's `2100`, a bare `Ukjent` bucket) both
-  already have exact precedent from prior sources this session — no new `classify_region_code`
-  branch needed. No licence blocker; ready to move to `active/`.
+- [x] 🔄 **Drafted 2026-10-02, moved to `active/` — Phase 2 in progress.**
+  [`PLAN-014-nav-helt-ledige.md`](../active/PLAN-014-nav-helt-ledige.md) — Atlas's fourth
+  NAV-adjacent source. Phase 1 found this candidate's mechanism matches the investigation's
+  original description for once (unlike `nav-sykefravaer`, which didn't): NAV's own `HL060 "Fylke
+  og kommune"` table is genuinely kommune-resolved, confirmed live by direct download. Licence CC
+  BY 4.0, confirmed against this table's own `"Kilde: NAV"` provenance, not assumed by family
+  resemblance. A fourth distinct pivot shape within the NAV-Excel family, but the simplest to
+  classify: neither the bare fylke header row nor the "I alt <name>" total row carries any digit
+  at all, so "exactly 4 leading digits" alone separates kommune rows with no "I alt" prefix check
+  needed. Two sentinel shapes present (Svalbard's `2100`, a bare `Ukjent` bucket) both already have
+  exact precedent from prior sources this session — no new `classify_region_code` branch needed.
+  No licence blocker.
 - [ ] Optionally: pre-write outreach emails to Bufdir, NAV, IMDi, Helsedirektoratet asking whether richer machine-readable distributions exist than what's surfaced publicly. (Pattern reused from [`INVESTIGATE-folkehjelp-supply` § A.4](./INVESTIGATE-folkehjelp-supply.md#a4-craft-cms-graphql-probe--q2-outreach-worth-pursuing) — non-blocking; we ship around the public surface either way.)
 
 ---

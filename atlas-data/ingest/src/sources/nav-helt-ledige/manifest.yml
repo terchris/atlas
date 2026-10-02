@@ -1,0 +1,109 @@
+# Hand-authored catalogue metadata for NAV HL060 (helt ledige kommune monthly statistics).
+# Ingest runs do not modify this file.
+
+source_id: nav-helt-ledige
+upstream_id: HL060
+upstream_url: https://www.nav.no/no/nav-og-samfunn/statistikk/arbeidssokere-og-stillinger-statistikk/helt-ledige
+upstream_landing_page: https://www.nav.no/no/nav-og-samfunn/statistikk/arbeidssokere-og-stillinger-statistikk/helt-ledige
+upstream_title: "HL060 Helt ledige. Fylke og kommune. Tidsserie måned."
+description: |
+  NAV (Arbeids- og velferdsetaten) publishes HL060 on its helt-ledige (fully unemployed)
+  statistics page: the count and share of the labour force registered as fully unemployed, per
+  kommune, as one xlsx workbook covering every month of the current calendar year to date. Atlas
+  downloads that workbook (URL discovered from the page — a relative `/_/attachment/download/...`
+  link, re-resolved each run since it changes with every release) and loads the
+  `3. Kommune Antall` and `4. Kommune Prosent av arbeidsst` sheets into `raw.nav_helt_ledige`.
+  Atlas's fourth NAV-adjacent source, and the third source on the `monthly_sources_refresh`
+  Dagster job built for `nav-uforetrygd` and already reused by `nav-aap` — no new job.
+  v1 tracks the live current-year file only; whether a historical archive exists for this specific
+  table was checked and found inconclusive from a static-HTML scan (same as `nav-aap`, unlike
+  `nav-uforetrygd`'s clean archive) — backfill is deferred, not resolved.
+publisher: Arbeids- og velferdsdirektoratet
+license: CC BY 4.0
+license_url: https://creativecommons.org/licenses/by/4.0/deed.no
+periodicity: P1M
+eu_theme: SOCI
+attribution: "Kilde: NAV, HL060 Helt ledige. Fylke og kommune"
+
+# 🔵 Licence independently confirmed for THIS table specifically, 2026-10-02 —
+# the workbook's own first cell states "Kilde: NAV" directly (no SSB
+# involvement, unlike nav-sykefravaer/ssb-12451), and the file is served
+# from www.nav.no's own attachment system. CC BY 4.0 applies per the same
+# general NAV statistics-practices page fetched during nav-aap's Phase 1 —
+# re-confirmed as applying to HL060 by checking its own provenance cell, not
+# assumed by family resemblance to nav-uforetrygd/nav-aap alone.
+
+tags:
+  provider: nav
+  topic: social
+  geo: kommune
+  cadence: monthly
+
+dimensions:
+  - code: region_code
+    meaning: Geographic code from the workbook row label, or the literal text "Ukjent"
+    value_format: "4-digit kommune code (including the Svalbard pseudo-kommune 2100), or the literal string Ukjent (NAV's own unknown-region bucket)"
+    notes: >
+      Confirmed live 2026-10-02: this table has NO fylke rows (bare "I alt <name>" rollup rows are
+      excluded, not summed) and NO bydel rows at all — every real region row is a 4-digit code,
+      including Svalbard's own pseudo-kommune code 2100. The one exception is "Ukjent" (NAV's own
+      region-not-determinable bucket), which carries no numeric code at all and — unusually for
+      this session — is ALSO the literal label of its own fylke-level header row (that header row
+      carries zero data and is dropped by the ingest's existing hasData guard; only the
+      data-bearing kommune-level "Ukjent" leaf row survives). region_kind is derived downstream via
+      classify_region_code, which correctly falls through to its existing `unknown` branch for a
+      non-numeric label — no macro change needed; 2100 resolves via the existing `^21\d{2}$`
+      svalbard branch.
+      ⚠️ Unlike nav-aap, "Ukjent" is present in BOTH sheets here (359 distinct regions in both
+      Antall and Prosent — 357 kommuner + Svalbard's 2100 + Ukjent) — but every one of its month
+      cells in the Prosent sheet is NAV's own suppression marker (`*`), not a real share. Do not
+      assume the nav-aap asymmetry (357 vs 358) carries over to this source; it was checked
+      independently and does not hold.
+  - code: category_format
+    meaning: Which sheet the row came from, not a column within a sheet
+    value_format: antall or prosent
+    notes: >
+      antall = "3. Kommune Antall" (count); prosent = "4. Kommune Prosent av arbeidsst" (share of
+      the labour force). Named "prosent" rather than nav-aap's "andel" to match this table's own
+      sheet-name vocabulary.
+  - code: year
+    meaning: "Calendar year, read from the sheet's own period-label cell (e.g. 'Januar - august 2026')"
+    value_format: 4-digit integer
+    notes: >
+      One year per file — the live file is replaced in place as the year progresses. ⚠️ A
+      different period-label shape than AAP155's "Periode: <year> <mm> - <year> <mm>" cell — this
+      table's own cell reads "<Month> - <month> <year>", confirmed live. Each NAV table's own cell
+      was read directly, not assumed uniform across the family.
+  - code: month
+    meaning: Calendar month, from the sheet's own Norwegian month-name header row
+    value_format: 1-12 integer
+    notes: A plain integer column, same shape as nav-uforetrygd/nav-aap — no dim_period reference.
+  - code: values_json
+    meaning: Parsed month->value map for the region and category_format slice, for this sheet's year
+    value_format: JSON object with string month-number keys; suppressed cells (NAV's own `*` marker) as null
+    notes: Matches the full month spine present in the live file (partial-year, growing monthly).
+
+lifecycle: stable
+time_coverage:
+  start: null
+  end: null
+keywords:
+  - helt-ledige
+  - arbeidsledighet
+  - unemployment
+  - kommune
+  - monthly
+methodology_notes: |
+  Count and share of the labour force registered as fully unemployed with NAV, per kommune,
+  monthly. Slots between nav-uforetrygd (long-tail disability outcome) and nav-aap (transitional
+  work-assessment benefit) as the short-tail labour-market signal, per the investigation's own
+  framing. Small cells are suppressed with `*` — the workbook's own methodology sheet states the
+  exact rule: any cell representing fewer than 4 people, per Statistikklovens § 7-1 (a different
+  paragraph than AAP155's § 2-6 — read from this table's own methodology sheet, not assumed
+  identical). Two trend breaks are documented in the workbook's own methodology sheet and carried
+  here verbatim rather than corrected: (1) a January 2024 kommune/fylke structural reform — figures
+  are presented under the currently valid kommune/fylke structure; (2) a labour-force-methodology
+  break from November 2018 (new registration method) and a further one from April 2025 (a larger
+  modernisation of NAV's labour-market statistics) — two distinct breaks in the same series, not
+  one.
+suggested_joins: []

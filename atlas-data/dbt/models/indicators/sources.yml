@@ -1573,6 +1573,57 @@ sources:
               - not_null
           - name: loaded_at
             data_type: timestamp with time zone
+      - name: nav_helt_ledige
+        description: |
+          NAV HL060 — "Helt ledige. Fylke og kommune. Tidsserie måned": count and share of the
+          labour force registered as fully unemployed, per kommune, monthly. Atlas's fourth
+          NAV-adjacent source, third P1M-cadence source. Single xlsx workbook, re-discovered each
+          run (relative download link, changes with every release). Populated by
+          atlas-data/ingest/src/sources/nav-helt-ledige.
+        loaded_at_field: loaded_at
+        meta:
+          ingest_cadence: monthly
+        freshness:
+          warn_after: {count: 45, period: day}
+          error_after: {count: 90, period: day}
+        columns:
+          - name: region_code
+            description: >-
+              NAV's own region code from the workbook row label — a 4-digit kommune code
+              (including the Svalbard pseudo-kommune 2100), or the literal string "Ukjent" (NAV's
+              own unknown-region bucket, no numeric code). No fylke or bydel rows exist in this
+              table.
+            data_tests:
+              - not_null
+          - name: category_format
+            description: >-
+              Which sheet the row came from — antall (count) or prosent (share of the labour
+              force) — not a column within a sheet. Unlike nav_aap, "Ukjent" is present under
+              both antall and prosent here (every prosent cell for it is NAV's own suppression
+              marker, not omitted).
+            data_tests:
+              - not_null
+          - name: year
+            description: Calendar year, read from the sheet's own period-label cell.
+            data_tests:
+              - not_null
+          - name: month
+            description: >-
+              Calendar month (1-12), from the sheet's own Norwegian month-name header row. A plain
+              integer — no dim_period reference exists in the codebase.
+            data_tests:
+              - not_null
+          - name: value
+            description: Numeric value for this year/month; NULL when NAV suppresses the cell (*).
+            data_type: numeric
+          - name: values_json
+            description: >-
+              Parsed month-to-value map for this region and category_format slice, for the sheet's
+              one covered year (NAV's suppression marker * and blanks → JSON null).
+            data_tests:
+              - not_null
+          - name: loaded_at
+            data_type: timestamp with time zone
       - name: imdi_bosetting
         description: |
           IMDi bosettingstall — kommune-level refugee resettlement figures (requested, decided,

@@ -3,8 +3,8 @@ Schedules for the Atlas pipeline.
 
 Cadence is derived from what the upstreams actually publish, not from a blanket
 nightly. Every source declares a `periodicity` in its manifest.yml, and across
-Atlas's 50 sources that is: 42 × P1Y (annual), 3 × P1D (daily, the Brreg
-sources), 2 × P1M (monthly, nav-uforetrygd and nav-aap), and 3 × irregular. Fetching an
+Atlas's 51 sources that is: 42 × P1Y (annual), 3 × P1D (daily, the Brreg
+sources), 3 × P1M (monthly, nav-uforetrygd, nav-aap and nav-helt-ledige), and 3 × irregular. Fetching an
 annual SSB or FHI table every night would be ~15,000 pointless requests a year
 against public-sector APIs Atlas depends on staying welcome at.
 
@@ -211,6 +211,7 @@ _KLASS_SOURCE_IDS = list(raw_ssb.SSB_KLASS_SOURCES)
 # Atlas's first monthly-cadence source outside KLASS/seeds.
 _MONTHLY_SOURCE_IDS = [
     "nav-aap",
+    "nav-helt-ledige",
     "nav-uforetrygd",
 ]
 
@@ -267,7 +268,7 @@ monthly_sources_job = define_asset_job(
     description=(
         "Sources whose manifest declares periodicity P1M — genuinely monthly "
         "data (nav-uforetrygd: NAV republishes PST302 once a month, early in "
-        "the following month; nav-aap: same cadence, AAP155). Distinct from klass_refresh and "
+        "the following month; nav-aap and nav-helt-ledige: same cadence, AAP155/HL060). Distinct from klass_refresh and "
         "seed_sources_refresh, which are also monthly-polled but for annual- "
         "or irregular-cadence data; this job is for data that is actually "
         "monthly. No dedicated cron schedule — automatic materialisation "
