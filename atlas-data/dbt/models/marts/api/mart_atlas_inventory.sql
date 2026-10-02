@@ -98,6 +98,7 @@
 -- depends_on: {{ ref('mart_indicators__fhi_vgs_gjennomforing') }}
 -- depends_on: {{ ref('mart_indicators__husbanken_bostotte') }}
 -- depends_on: {{ ref('mart_indicators__imdi_bosetting') }}
+-- depends_on: {{ ref('mart_indicators__nav_aap') }}
 -- depends_on: {{ ref('mart_indicators__nav_uforetrygd') }}
 -- depends_on: {{ ref('mart_indicators__ssb_06083') }}
 -- depends_on: {{ ref('mart_indicators__ssb_06913') }}
@@ -195,6 +196,7 @@
   {'relation': 'indicators__fhi_vgs_gjennomforing', 'mart': 'mart_indicators__fhi_vgs_gjennomforing'},
   {'relation': 'indicators__husbanken_bostotte', 'mart': 'mart_indicators__husbanken_bostotte'},
   {'relation': 'indicators__imdi_bosetting', 'mart': 'mart_indicators__imdi_bosetting'},
+  {'relation': 'indicators__nav_aap', 'mart': 'mart_indicators__nav_aap'},
   {'relation': 'indicators__nav_uforetrygd', 'mart': 'mart_indicators__nav_uforetrygd'},
   {'relation': 'indicators__ssb_06083', 'mart': 'mart_indicators__ssb_06083'},
   {'relation': 'indicators__ssb_06913', 'mart': 'mart_indicators__ssb_06913'},

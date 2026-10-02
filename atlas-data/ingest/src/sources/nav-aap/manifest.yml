@@ -1,0 +1,90 @@
+# Hand-authored catalogue metadata for NAV AAP155 (arbeidsavklaringspenger kommune monthly statistics).
+# Ingest runs do not modify this file.
+
+source_id: nav-aap
+upstream_id: AAP155
+upstream_url: https://www.nav.no/no/nav-og-samfunn/statistikk/aap-nedsatt-arbeidsevne-og-uforetrygd-statistikk/arbeidsavklaringspenger
+upstream_landing_page: https://www.nav.no/no/nav-og-samfunn/statistikk/aap-nedsatt-arbeidsevne-og-uforetrygd-statistikk/arbeidsavklaringspenger
+upstream_title: "AAP155 Mottakere av arbeidsavklaringspenger. Kommune."
+description: |
+  NAV (Arbeids- og velferdsetaten) publishes AAP155 on its arbeidsavklaringspenger (AAP —
+  work-assessment allowance, a transitional benefit paid while NAV assesses someone's capacity for
+  work) statistics page: the count and share of the population receiving AAP, per kommune, as one
+  xlsx workbook covering every month of the current calendar year to date. Atlas downloads that
+  workbook (URL discovered from the page — a relative `/_/attachment/inline/...` link, re-resolved
+  each run since it changes with every release) and loads the `1. Kommune. Antall` and
+  `2. Kommune. Andel` sheets into `raw.nav_aap`. Atlas's second NAV source and second
+  monthly-cadence source, reusing the `monthly_sources_refresh` job built for `nav-uforetrygd`.
+  v1 tracks the live current-year file only; whether a historical archive exists for this specific
+  table was checked and not found (unlike `nav-uforetrygd`'s PST302, which has one) — backfill is
+  unresolved, not just deferred by convention.
+publisher: Arbeids- og velferdsdirektoratet
+license: CC BY 4.0
+license_url: https://creativecommons.org/licenses/by/4.0/deed.no
+periodicity: P1M
+eu_theme: SOCI
+attribution: "Kilde: NAV, AAP155 Mottakere av arbeidsavklaringspenger"
+
+# 🔵 Licence independently re-confirmed for AAP specifically, 2026-10-02 —
+# fetched NAV's general statistics-practices page directly ("Statistikk fra
+# Nav på nav.no er åpne data og lisens for bruk er Creative Commons
+# Navngivelse 4.0 Internasjonal", linking creativecommons.org/licenses/by/4.0/deed.no).
+# This is a blanket statement covering all NAV statistics, not a per-table
+# citation — but it was re-fetched and read for THIS source rather than
+# inherited by assumption from nav-uforetrygd's own 2026-10-01 correction.
+
+tags:
+  provider: nav
+  topic: social
+  geo: kommune
+  cadence: monthly
+
+dimensions:
+  - code: region_code
+    meaning: Geographic code from the workbook row label, or the literal text "Ukjent"
+    value_format: "4-digit kommune code, or the literal string Ukjent (NAV's own unknown-region bucket)"
+    notes: >
+      Confirmed live 2026-10-02: this table has NO fylke rows and NO bydel rows at all (unlike
+      nav-uforetrygd's PST302) — every real region row is a 4-digit kommune code. The one exception
+      is "Ukjent" (NAV's own region-not-determinable bucket, a real and substantial count — 1,500+
+      people nationally per month, not a rounding artifact), which carries no numeric code at all.
+      region_kind is derived downstream via classify_region_code, which correctly falls through to
+      its existing `unknown` branch for a non-numeric label — no macro change needed.
+      ⚠️ "Ukjent" exists only in the Antall (count) sheet — the Andel (share) sheet omits it
+      entirely (357 regions there, 358 in Antall), presumably because there is no population
+      denominator to compute a share against for a non-geographic bucket.
+  - code: category_format
+    meaning: Which sheet the row came from, not a column within a sheet
+    value_format: antall or andel
+    notes: Same convention as nav-uforetrygd — NAV publishes count and share as two separate sheets.
+  - code: year
+    meaning: "Calendar year, read from the sheet's own period-label cell (e.g. 'Periode: 2026 01 - 2026 08')"
+    value_format: 4-digit integer
+    notes: One year per file — the live file is replaced in place as the year progresses.
+  - code: month
+    meaning: Calendar month, from the sheet's own Norwegian month-name header row
+    value_format: 1-12 integer
+    notes: A plain integer column, same shape as nav-uforetrygd — no dim_period reference.
+  - code: values_json
+    meaning: Parsed month->value map for the region and category_format slice, for this sheet's year
+    value_format: JSON object with string month-number keys; suppressed cells (NAV's own `*` marker) as null
+    notes: Matches the full month spine present in the live file (partial-year, growing monthly).
+
+lifecycle: stable
+time_coverage:
+  start: null
+  end: null
+keywords:
+  - arbeidsavklaringspenger
+  - aap
+  - welfare
+  - kommune
+  - monthly
+methodology_notes: |
+  Count and share of people receiving arbeidsavklaringspenger (AAP) per kommune. AAP is a
+  transitional benefit paid while NAV assesses someone's remaining capacity for work — distinct
+  from `nav-uforetrygd`'s uføretrygd, which is the longer-term outcome once that assessment
+  concludes someone cannot work. Small cells are suppressed with `*` — the workbook's own
+  methodology sheet states the exact rule: any cell representing fewer than 4 people, per
+  Statistikklovens § 2-6.
+suggested_joins: []

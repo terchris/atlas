@@ -12,7 +12,7 @@ correction, and that re-check is done below.
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Backlog — Phase 1 complete, ready to move to active/ for Phase 2
+## Status: Active — Phase 2 IN PROGRESS
 
 **Goal**: Add `nav-aap` as a served Atlas source, giving Report #4 (Mental-Health Triangulation)
 and Report #5 (Income & Welfare Trajectory) the *transitional* welfare-claim signal that sits
@@ -20,7 +20,7 @@ between acute unemployment and `nav-uforetrygd`'s long-tail disability outcome.
 
 **Last Updated**: 2026-10-02
 
-**Investigation**: [INVESTIGATE-new-norwegian-public-sources.md](INVESTIGATE-new-norwegian-public-sources.md) §Tier 1 #2 ([Q4]–[Q7], [Q32])
+**Investigation**: [INVESTIGATE-new-norwegian-public-sources.md](../backlog/INVESTIGATE-new-norwegian-public-sources.md) §Tier 1 #2 ([Q4]–[Q7], [Q32])
 
 **Prerequisites**: None. `nav` is already a valid `publishers.yaml` provider (#486), `topics.yaml`
 already has `social` validated (`nav-uforetrygd`), and the `monthly_sources_refresh` Dagster job

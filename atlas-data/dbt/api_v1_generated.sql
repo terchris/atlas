@@ -37,8 +37,8 @@ than that it guessed the wrong URL. Ask for the base URL instead.
 schema change a breaking API change, and the modelled layer above exists
 precisely so consumers do not depend on that shape.
 
-⚠️ THIS IS WRITTEN DOWN BECAUSE THE ALTERNATIVE IS 57 SILENT 404s. Atlas holds
-57 raw tables. A consumer who guesses one of their names gets the same PGRST205
+⚠️ THIS IS WRITTEN DOWN BECAUSE THE ALTERNATIVE IS 58 SILENT 404s. Atlas holds
+58 raw tables. A consumer who guesses one of their names gets the same PGRST205
 described above — "Could not find the table" — which reads as *this endpoint is
 broken or not built yet*, when it is a decision that will not be revisited. An
 absence cannot say why it is absent, so the reason is stated here rather than
@@ -142,13 +142,13 @@ SUPPLY — voluntary-sector presence:
   distrikt_summary             chapters by district.
   kommune_local_chapters       chapters resolved to a kommune.
 
-PER-SOURCE INDICATOR RELATIONS — 45 of them, one per upstream table, at the
+PER-SOURCE INDICATOR RELATIONS — 46 of them, one per upstream table, at the
 grain the publisher actually uses. The cross-source views above impose ONE
 shape on every source; these keep the source''s own dimensions, so a breakdown
 those views flatten away (a sex, an age band, a household or family type, a
 parental-education split) is only answerable here.
 
-🔴 ALL 45 ARE stability:source. THE COLUMN SET FOLLOWS THE PUBLISHER, NOT
+🔴 ALL 46 ARE stability:source. THE COLUMN SET FOLLOWS THE PUBLISHER, NOT
 ATLAS. If SSB, FHI or Bufdir adds, renames or drops a dimension, these change
 with it — that is the deliberate trade for getting the real grain. Filter
 `meta_endpoints?tags=cs.{stability:curated}` for the relations whose shape
@@ -174,8 +174,8 @@ same source_id, and through the ref_* lists above where one exists.
     indicators__husbanken_bostotte
   imdi (1):
     indicators__imdi_bosetting
-  nav (1):
-    indicators__nav_uforetrygd
+  nav (2):
+    indicators__nav_aap indicators__nav_uforetrygd
   ssb (18):
     indicators__ssb_06083 indicators__ssb_06913 indicators__ssb_06944
     indicators__ssb_06947 indicators__ssb_07459 indicators__ssb_08484
@@ -1935,6 +1935,31 @@ COMMENT ON COLUMN api_v1.indicators__imdi_bosetting.contents_code IS 'Atlas-norm
 COMMENT ON COLUMN api_v1.indicators__imdi_bosetting.contents_label IS 'Human-readable Norwegian label for the metric.';
 COMMENT ON COLUMN api_v1.indicators__imdi_bosetting.value IS 'The metric''s value for this kommune and year. NULL when IMDi suppressed the cell (its own marker, the literal character ":") or published free text instead of a number.';
 COMMENT ON COLUMN api_v1.indicators__imdi_bosetting.updated_at IS 'Timestamp when the row was last written by ingest (from raw.loaded_at).';
+
+-- indicators__nav_aap  ←  marts.mart_indicators__nav_aap
+CREATE OR REPLACE VIEW api_v1.indicators__nav_aap AS SELECT * FROM marts.mart_indicators__nav_aap;
+COMMENT ON VIEW api_v1.indicators__nav_aap IS 'Per-source indicator data for nav-aap (Arbeids- og velferdsdirektoratet), at the publisher''s own grain.
+
+Per-source indicator relation for `nav-aap` (Arbeids- og velferdsdirektoratet), published at the grain the publisher
+actually uses rather than flattened into the cross-source views. Atlas''s second monthly-cadence
+source. No fylke_nr column — this table has no fylke-level rows at all, unlike nav_uforetrygd.
+🔴 stability:source — the column set here follows Arbeids- og velferdsdirektoratet, not Atlas. If the
+publisher adds, renames or drops a dimension, this relation changes with it. That is
+the deliberate trade for getting the real grain; prefer a stability:curated relation
+if you need a shape Atlas promises to hold still. Decode codes through
+meta_dimensions filtered to source_id=nav-aap.';
+COMMENT ON COLUMN api_v1.indicators__nav_aap.source_id IS 'Atlas catalogue id for this ingest — always nav-aap.';
+COMMENT ON COLUMN api_v1.indicators__nav_aap.region_code IS 'NAV''s own region code, verbatim from the workbook row label — a 4-digit kommune code, or the literal string "Ukjent" (NAV''s own unknown-region bucket).';
+COMMENT ON COLUMN api_v1.indicators__nav_aap.kommune_nr IS 'Four-digit kommune code, derived through region_code_to_kommune_nr. NULL for "Ukjent".';
+COMMENT ON COLUMN api_v1.indicators__nav_aap.region_kind IS 'What region_code is, from classify_region_code: kommune or unknown — no fylke/bydel rows exist in this table.';
+COMMENT ON COLUMN api_v1.indicators__nav_aap.category_format IS 'Which sheet the row came from — antall (count) or andel (share) — not a column within a sheet. "Ukjent" exists only under antall; andel omits it entirely.';
+COMMENT ON COLUMN api_v1.indicators__nav_aap.year IS 'Calendar year of the observation.';
+COMMENT ON COLUMN api_v1.indicators__nav_aap.month IS 'Calendar month (1-12) of the observation. A plain integer, not a dim_period reference.';
+COMMENT ON COLUMN api_v1.indicators__nav_aap.contents_code IS 'Atlas-normalised variable code: fixed prefix `nav_aap__` joined with category_format, so each measure is filter-stable in the catalogue.';
+COMMENT ON COLUMN api_v1.indicators__nav_aap.contents_label IS 'Human-readable label combining "Arbeidsavklaringspenger" with the antall/andel format.';
+COMMENT ON COLUMN api_v1.indicators__nav_aap.value IS 'Numeric value for this year/month; NULL when NAV suppresses the cell (*).';
+COMMENT ON COLUMN api_v1.indicators__nav_aap.values_json IS 'Parse of the sheet''s rows into month keys for this region/category_format/year slice (NAV''s suppression marker * and blanks → JSON null values).';
+COMMENT ON COLUMN api_v1.indicators__nav_aap.updated_at IS 'Timestamp when the row was last written by ingest (from raw.loaded_at).';
 
 -- indicators__nav_uforetrygd  ←  marts.mart_indicators__nav_uforetrygd
 CREATE OR REPLACE VIEW api_v1.indicators__nav_uforetrygd AS SELECT * FROM marts.mart_indicators__nav_uforetrygd;
