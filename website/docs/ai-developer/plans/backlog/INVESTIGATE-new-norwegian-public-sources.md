@@ -126,15 +126,17 @@ drafting `PLAN-004-nav-uforetrygd.md`:**
 
 ### 4. Udir — school-level data (Grunnskolens informasjonssystem + Elevundersøkelsen + Nasjonale prøver)
 
-🔴 **PLAN-010 drafted 2026-10-02 — Phase 1 live-verified this entire section and found a real,
-working API this section didn't know existed.** See
-[`PLAN-010-udir-gsi.md`](../active/PLAN-010-udir-gsi.md) for the full research. Headline corrections:
-Udir's own public docs name a **dead** API hostname (`api.udir-statistikkbanken.no` — TLS cert
-mismatch, Azure 404 page); the real, working host is `api.statistikkbanken.udir.no`
-(`statistikkportalen.udir.no/api/rapportering` for the Swagger-documented endpoints). That one API
-covers GSI, Elevundersøkelsen, Nasjonale prøver, `udir-fravar` ([Q39]) and `udir-sluttet-vgs`
-([Q40]) — not five separate acquisition problems, one client with different table-name parameters.
-`kommune_nr` is a real SSB code straight off the API, no crosswalk needed.
+✅ **`udir-gsi` shipped end to end, 2026-10-02 — Phase 1 live-verified this entire section and
+found a real working API this section didn't know existed.** See
+[`PLAN-010-udir-gsi.md`](../completed/PLAN-010-udir-gsi.md) for the full research. Headline
+corrections: Udir's own public docs name a **dead** API hostname
+(`api.udir-statistikkbanken.no` — TLS cert mismatch, Azure 404 page); the real, working host is
+`api.statistikkbanken.udir.no` (`statistikkportalen.udir.no/api/rapportering` for the
+Swagger-documented endpoints). That one API covers GSI, Elevundersøkelsen, Nasjonale prøver,
+`udir-fravar` ([Q39]) and `udir-sluttet-vgs` ([Q40]) — not five separate acquisition problems, one
+client with different table-name parameters. `kommune_nr` needs no crosswalk, but IS resolved
+through a derivation macro (`classify_region_code`), not passed straight through — Svalbard sits
+at the same API hierarchy depth as genuine kommuner, caught during implementation.
 
 - **URL**: `https://www.udir.no/om-udir/data` (portal; old `data.udir.no` redirects here)
 - **Datasets in scope**: GSI (grunnskolens informasjonssystem — enrolment, pupil-teacher ratio, special-ed share); Elevundersøkelsen (pupil survey — trivsel, mobbing); Nasjonale prøver (national tests, 2022→ resumed); Barnehagefakta (BAF — kindergarten coverage)
