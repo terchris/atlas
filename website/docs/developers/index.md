@@ -6,12 +6,12 @@ This section is for **anyone consuming Atlas's public PostgREST API** to build t
 
 <!-- BEGIN holdings (generated) -->
 
-**49 upstream sources** from **9 publishers**, served as **86 read-only relations**.
+**50 upstream sources** from **9 publishers**, served as **87 read-only relations**.
 
 | publisher | sources | broadly |
 |---|---|---|
 | Folkehelseinstituttet | 21 | public health, and the Ungdata youth surveys |
-| Statistisk sentralbyrå | 17 | population, income, families, housing, education, crime |
+| Statistisk sentralbyrå | 18 | population, income, families, housing, education, crime |
 | Brønnøysundregistrene | 3 | the company and voluntary-organisation registers |
 | Barne-, ungdoms- og familiedirektoratet | 2 | child poverty |
 | Arbeids- og velferdsdirektoratet | 2 | — |
@@ -20,9 +20,9 @@ This section is for **anyone consuming Atlas's public PostgREST API** to build t
 | Norges Røde Kors | 1 | local chapters and their activities |
 | Utdanningsdirektoratet | 1 | — |
 
-By EU data theme: **SOCI** 25 (society) · **HEAL** 12 (health) · **EDUC** 6 (education) · **GOVE** 5 (government) · **JUST** 1 (justice).
+By EU data theme: **SOCI** 26 (society) · **HEAL** 12 (health) · **EDUC** 6 (education) · **GOVE** 5 (government) · **JUST** 1 (justice).
 
-Licences: **NLOD** for 46 of 49 — Norwegian public data, free to reuse with attribution. The exceptions are `nav-aap` (CC BY 4.0) and `nav-uforetrygd` (CC BY 4.0) and `redcross-branches` (permissive) — Red Cross's own data rather than the state's.
+Licences: **NLOD** for 47 of 50 — Norwegian public data, free to reuse with attribution. The exceptions are `nav-aap` (CC BY 4.0) and `nav-uforetrygd` (CC BY 4.0) and `redcross-branches` (permissive) — Red Cross's own data rather than the state's.
 
 ### What you can query
 
@@ -87,6 +87,7 @@ Licences: **NLOD** for 46 of 49 — Norwegian public data, free to reuse with at
 | `indicators__ssb_12131` | Per-source indicator data for ssb-12131 (Statistisk sentralbyrå), at the publisher's own grain. |
 | `indicators__ssb_12132` | Per-source indicator data for ssb-12132 (Statistisk sentralbyrå), at the publisher's own grain. |
 | `indicators__ssb_12292` | Per-source indicator data for ssb-12292 (Statistisk sentralbyrå), at the publisher's own grain. |
+| `indicators__ssb_12451` | Per-source indicator data for ssb-12451 (Statistisk sentralbyrå), at the publisher's own grain. |
 | `indicators__ssb_12944` | Per-source indicator data for ssb-12944 (Statistisk sentralbyrå), at the publisher's own grain. |
 | `indicators__ssb_13995` | Per-source indicator data for ssb-13995 (Statistisk sentralbyrå), at the publisher's own grain. |
 | `indicators__udir_gsi` | Per-source indicator data for udir-gsi (Utdanningsdirektoratet), at the publisher's own grain. |

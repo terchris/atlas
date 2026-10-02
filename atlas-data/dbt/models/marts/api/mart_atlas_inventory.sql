@@ -116,6 +116,7 @@
 -- depends_on: {{ ref('mart_indicators__ssb_12131') }}
 -- depends_on: {{ ref('mart_indicators__ssb_12132') }}
 -- depends_on: {{ ref('mart_indicators__ssb_12292') }}
+-- depends_on: {{ ref('mart_indicators__ssb_12451') }}
 -- depends_on: {{ ref('mart_indicators__ssb_12944') }}
 -- depends_on: {{ ref('mart_indicators__ssb_13995') }}
 -- depends_on: {{ ref('mart_indicators__udir_gsi') }}
@@ -214,6 +215,7 @@
   {'relation': 'indicators__ssb_12131', 'mart': 'mart_indicators__ssb_12131'},
   {'relation': 'indicators__ssb_12132', 'mart': 'mart_indicators__ssb_12132'},
   {'relation': 'indicators__ssb_12292', 'mart': 'mart_indicators__ssb_12292'},
+  {'relation': 'indicators__ssb_12451', 'mart': 'mart_indicators__ssb_12451'},
   {'relation': 'indicators__ssb_12944', 'mart': 'mart_indicators__ssb_12944'},
   {'relation': 'indicators__ssb_13995', 'mart': 'mart_indicators__ssb_13995'},
   {'relation': 'indicators__udir_gsi', 'mart': 'mart_indicators__udir_gsi'},

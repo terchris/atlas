@@ -3,7 +3,7 @@ Schedules for the Atlas pipeline.
 
 Cadence is derived from what the upstreams actually publish, not from a blanket
 nightly. Every source declares a `periodicity` in its manifest.yml, and across
-Atlas's 49 sources that is: 41 × P1Y (annual), 3 × P1D (daily, the Brreg
+Atlas's 50 sources that is: 42 × P1Y (annual), 3 × P1D (daily, the Brreg
 sources), 2 × P1M (monthly, nav-uforetrygd and nav-aap), and 3 × irregular. Fetching an
 annual SSB or FHI table every night would be ~15,000 pointless requests a year
 against public-sector APIs Atlas depends on staying welcome at.
@@ -16,7 +16,7 @@ live in a tenant. **The first half of that was wrong.** The imac tester measured
 what actually happens:
 
 - `max_concurrent_runs: 4` bounds concurrent **runs**, i.e. run pods.
-- `annual_sources_refresh` is **one run** → one pod → 41 steps as *subprocesses
+- `annual_sources_refresh` is **one run** → one pod → 42 steps as *subprocesses
   inside it*, bounded by the multiprocess executor's `max_concurrent`, which
   defaults to the pod's CPU count.
 
@@ -237,10 +237,10 @@ annual_sources_job = define_asset_job(
     selection=_asset_selection(_ANNUAL_SOURCE_IDS),
     executor_def=_ingest_executor(),
     description=(
-        "The 41 sources whose manifest declares periodicity P1Y. Polled weekly "
+        "The 42 sources whose manifest declares periodicity P1Y. Polled weekly "
         "rather than annually: publication dates drift by weeks and nobody wants "
         "to discover a new release eleven months late. Weekly means a new "
-        "release is picked up within 7 days for ~41 requests a week, which is "
+        "release is picked up within 7 days for ~42 requests a week, which is "
         "nothing to SSB or FHI. The ingests upsert, so a poll that finds "
         "nothing new is a no-op."
     ),

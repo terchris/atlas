@@ -43,7 +43,7 @@
       "description": "Social assistance use, household composition, overcrowded housing,\nand integration indicators. The bridge between need and the services\nthat respond to it.\n",
       "emoji": "🏘️",
       "order": 50,
-      "source_count": 9
+      "source_count": 10
     },
     {
       "id": "ngo-supply",
@@ -141,7 +141,7 @@
       "logo": "/img/publishers/ssb.svg",
       "feedback_url": "https://www.ssb.no/omssb/kontakt-oss",
       "notes": "Norway's national statistics office. Maintains the StatBank\n(statistikkbanken) — the canonical source of demographic, economic,\nand social indicators at kommune, fylke, and national resolution.\nData released under NLOD; tables identified by numeric IDs preserved\nwith leading zeros (e.g. table 07459).\n",
-      "source_count": 17
+      "source_count": 18
     },
     {
       "id": "udir",
@@ -12947,6 +12947,182 @@
     },
     {
       "kind": "source",
+      "source_id": "ssb-12451",
+      "upstream_id": "12451",
+      "upstream_url": "https://www.ssb.no/statbank/table/12451",
+      "upstream_landing_page": "https://www.ssb.no/sykefratot",
+      "upstream_title": "12451: Bostedskommune- og kjønnsfordelt sykefravær (legemeldt) for lønnstakere (K) 2000K2-2026K2",
+      "description": "SSB table 12451 — legemeldt (physician-certified) sick-leave, percentage and lost workdays, per\nkommune of residence, quarterly. Atlas's third NAV-adjacent welfare-claim source (after\n`nav-uforetrygd` and `nav-aap`), but reached through SSB's PXWebAPI rather than a NAV Excel\ndownload — NAV's own sykefravær/sykepenger statistics pages publish no kommune-level table at\nall (checked live 2026-10-02; every downloadable table there is fylke-level or coarser). SSB\nrepublishes NAV's underlying register data at kommune resolution instead. Fetched via this\nproject's existing `lib/pxweb.ts` client — the same mechanism every other `ssb-*` source uses,\nnot a new NAV-family parser. v1 scope: `Sykefraversprosent` and `Sykefraversdagsverk` only\n(two of the table's nine measures — the rest are a different metric family or pure\nyear-over-year deltas, deferred, see PLAN-013 [Q2]), `Kjonn=0` (Begge kjønn total, not the\nsex-split), full `Tid` history (105 quarters, 2000K2-2026K2).\n",
+      "atlas_summary": null,
+      "publisher": {
+        "id": "ssb",
+        "display_name": "Statistisk sentralbyrå",
+        "homepage": "https://www.ssb.no/",
+        "logo": "/img/publishers/ssb.svg"
+      },
+      "category": {
+        "id": "social",
+        "name": "Social & housing",
+        "emoji": "🏘️"
+      },
+      "license": "NLOD",
+      "license_url": "https://data.norge.no/nlod/no/2.0",
+      "periodicity": "P1Y",
+      "eu_theme": "SOCI",
+      "attribution": "Kilde: Statistisk sentralbyrå, tabell 12451",
+      "tags": {
+        "provider": "ssb",
+        "topic": "social",
+        "geo": "kommune",
+        "cadence": "annual"
+      },
+      "keywords": [
+        "sykefravaer",
+        "sick-leave",
+        "legemeldt",
+        "welfare",
+        "kommune"
+      ],
+      "lifecycle": "stable",
+      "time_coverage": {
+        "start": 2000,
+        "end": null
+      },
+      "methodology_notes": "Legemeldt (physician-certified) sick leave only — does not include egenmeldt (self-certified)\nshort absences. SSB's own metadata documents two data-quality notes, represented here verbatim\nrather than corrected or omitted: (1) a trend break 2007→2008 (industry-standard SN2007\nintroduced) and 2014→2015 (NAV's Aa-register replaced by A-ordningen as the data source); (2)\na since-corrected error affecting Q1 2026 (25,656 employment relationships were briefly\nmisassigned from kommune 3118 Indre Østfold to 3216 Vestby when using bostedskommune, corrected\nby SSB before this source's Phase 1 research — nothing for Atlas to fix). Kjonn=0 selects\n\"Begge kjønn\" (both sexes combined); the table also supports a sex-split, not ingested in v1.\n",
+      "suggested_joins": [
+        "nav-uforetrygd",
+        "nav-aap"
+      ],
+      "related_by_topic": [
+        "bufdir-barnevern",
+        "husbanken-bostotte",
+        "imdi-bosetting",
+        "nav-aap",
+        "nav-uforetrygd",
+        "ssb-12131"
+      ],
+      "dimensions": [
+        {
+          "code": "region_code",
+          "meaning": "Kommune of residence (bostedskommune), SSB-format",
+          "value_format": "Numeric code: 4-digit kommune, plus SSB's own sentinel shapes",
+          "notes": "937 codes total, spanning the full 2000-2026 series including historical (pre-merger) kommune codes — same convention as every other SSB Region dimension in this project. Confirmed live 2026-10-02 that the sentinel codes present already match classify_region_code's existing patterns exactly: XX99 (\"Uoppgitt kommune <fylke>\"), 9999 (\"Uoppgitt kommune\" national), 2111 (Longyearbyen/Svalbard), 2199/2299 (Svalbard/Jan Mayen unspecified). One exception: `0716u` (\"Våle (-2001)\") — SSB's own disambiguation suffix for a historical kommune whose numeric code was later reused by a different kommune (0716 is Re, 2002-2019). Not digit-only, so it correctly falls through to classify_region_code's `unknown` branch rather than a dedicated new one — a single discontinued code, not a new sentinel class.\n"
+        },
+        {
+          "code": "period",
+          "meaning": "Quarter, SSB's own code (e.g. 2026K2 = 2026, 2nd quarter)",
+          "value_format": "YYYYKQ text, stored verbatim — not parsed into year+quarter columns",
+          "notes": "Same convention as ssb-12944's \"period stored as text, not parsed\" — keeps this module a faithful passthrough. 105 distinct values at ingest time, 2000K2 through 2026K2.\n"
+        },
+        {
+          "code": "contents_code",
+          "meaning": "Which sykefravær figure this row's value is — not a format variant",
+          "value_format": "Sykefraversprosent | Sykefraversdagsverk",
+          "notes": "v1 scope is these two headline measures only. The table also has ArbeidstakereSykefra / ArbeidstakereSykePro (a different metric — count/share of employees with ANY sick-leave spell, not days-weighted) and four *Endr* variants that are pure year-over-year deltas of the measures above, trivially re-derivable from the raw quarterly series — none ingested, per PLAN-013's [Q2].\n"
+        },
+        {
+          "code": "value",
+          "meaning": "The measure's value for this kommune and quarter",
+          "value_format": "Numeric (percent for Sykefraversprosent, lost workdays for Sykefraversdagsverk)",
+          "notes": "No suppression marker observed on any cell checked live, including Norway's smallest kommune by population (Utsira) — not a blanket claim that no cell in this table is ever suppressed, just what the sampled cells showed. `status` carries SSB's own cell-level flag when one exists (none observed at ingest time).\n"
+        }
+      ],
+      "raw_tables": null,
+      "sample_query": null,
+      "citation": {
+        "text": "Statistisk sentralbyrå. (n.d.). 12451: Bostedskommune- og kjønnsfordelt sykefravær (legemeldt) for lønnstakere (K) 2000K2-2026K2. Retrieved from https://www.ssb.no/sykefratot. Available in Atlas at https://atlas.sovereignsky.no/datasets/ssb-12451.",
+        "bibtex": "@misc{atlas_ssb_12451,\n  author = {Statistisk sentralbyrå},\n  title  = {12451: Bostedskommune- og kjønnsfordelt sykefravær (legemeldt) for lønnstakere (K) 2000K2-2026K2},\n  year   = {n.d.},\n  url    = {https://www.ssb.no/sykefratot},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/ssb-12451}\n}"
+      },
+      "feedback_url": "https://www.ssb.no/omssb/kontakt-oss",
+      "consuming_marts": [
+        {
+          "mart_name": "mart_atlas_inventory",
+          "api_v1_name": "atlas_inventory",
+          "title": null,
+          "description_short": "What Atlas publishes: one row per endpoint with its row count, freshness and origin.",
+          "description_full": "What Atlas publishes: one row per endpoint with its row count, freshness and origin.\n\nWhat Atlas publishes, one row per queryable endpoint: how many records it\nserves, when its data last arrived, and where those rows came from.\nAsked for by Røde Kors — \"validate that all datasets that are ingested has\nan endpoint and it can be queried … count the number of records each\nendpoint has and update the last time it ingested data.\"\n⚠️ THE GRAIN IS PER ENDPOINT, NOT PER SOURCE. meta_sources answers \"what\ndid Atlas ingest\"; this answers \"what can I query, and is there anything\nin it\". One source can feed several endpoints and one endpoint can draw on\nseveral sources, so the two row counts are not comparable and summing\nsources will not reproduce an endpoint's count.\n⚠️ atlas_inventory does not list ITSELF. It is built from the same seed it\nreports on, so counting itself would be circular and the number would be\nwhatever the table held mid-build. 19 endpoints are listed; 20 are\npublished.",
+          "sample_query": "https://api-atlas.urbalurba.com/atlas_inventory?limit=5"
+        },
+        {
+          "mart_name": "mart_indicators__ssb_12451",
+          "api_v1_name": "indicators__ssb_12451",
+          "title": "12451: Bostedskommune- og kjønnsfordelt sykefravær (legemeldt)",
+          "description_short": "Per-source indicator data for ssb-12451 (Statistisk sentralbyrå), at the publisher's own grain.",
+          "description_full": "Per-source indicator data for ssb-12451 (Statistisk sentralbyrå), at the publisher's own grain.\n\nPer-source indicator relation for `ssb-12451` (Statistisk sentralbyrå), published at the\ngrain the publisher actually uses rather than flattened into the cross-source views. Reached\nvia lib/pxweb.ts, not a NAV Excel download — NAV's own sykefravær statistics pages publish\nno kommune-level table at all (PLAN-013-nav-sykefravaer.md Phase 1). v1 scope: Kjonn=0,\nSykefraversprosent + Sykefraversdagsverk only.\n🔴 stability:source — the column set here follows Statistisk sentralbyrå, not Atlas. If the\npublisher adds, renames or drops a dimension, this relation changes with it. That is\nthe deliberate trade for getting the real grain; prefer a stability:curated relation\nif you need a shape Atlas promises to hold still. Decode codes through\nmeta_dimensions filtered to source_id=ssb-12451.",
+          "sample_query": "https://api-atlas.urbalurba.com/indicators__ssb_12451?limit=5"
+        }
+      ],
+      "consuming_models": [
+        {
+          "name": "indicators__ssb_12451",
+          "kind": "indicators"
+        },
+        {
+          "name": "mart_atlas_inventory",
+          "kind": "mart"
+        },
+        {
+          "name": "mart_indicators__ssb_12451",
+          "kind": "mart"
+        }
+      ],
+      "joined_with": [
+        {
+          "source_id": "brreg-enheter-alle",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "brreg-frivillige",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "brreg-oppdateringer",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "bufdir-barnefattigdom",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "bufdir-barnevern",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "fhi-alkohol",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "fhi-befolkning",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "fhi-befolkningsvekst",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        }
+      ],
+      "last_ingested_at": null,
+      "latest_row_count": null,
+      "total_runs": null,
+      "downstream_model_count": null
+    },
+    {
+      "kind": "source",
       "source_id": "ssb-12944",
       "upstream_id": "12944",
       "upstream_url": "https://www.ssb.no/statbank/table/12944",
@@ -15363,6 +15539,12 @@
           "model_name": "mart_indicators__ssb_12292",
           "title": "12292: Omsorgstjenester - supplerende grunnlagstall (K) 2015-2024",
           "description_short": "Per-source indicator data for ssb-12292 (Statistisk sentralbyrå), at the publisher's own grain."
+        },
+        {
+          "parent_kind": "model",
+          "model_name": "mart_indicators__ssb_12451",
+          "title": "12451: Bostedskommune- og kjønnsfordelt sykefravær (legemeldt)",
+          "description_short": "Per-source indicator data for ssb-12451 (Statistisk sentralbyrå), at the publisher's own grain."
         },
         {
           "parent_kind": "model",
@@ -20024,6 +20206,67 @@
       ],
       "sample_query": "https://api-atlas.urbalurba.com/indicators__ssb_12292?limit=5",
       "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__ssb_12292"
+    },
+    {
+      "kind": "view",
+      "view_id": "indicators__ssb_12451",
+      "mart_name": "mart_indicators__ssb_12451",
+      "api_v1_name": "indicators__ssb_12451",
+      "title": "12451: Bostedskommune- og kjønnsfordelt sykefravær (legemeldt)",
+      "description_short": "Per-source indicator data for ssb-12451 (Statistisk sentralbyrå), at the publisher's own grain.",
+      "description_full": "Per-source indicator data for ssb-12451 (Statistisk sentralbyrå), at the publisher's own grain.\n\nPer-source indicator relation for `ssb-12451` (Statistisk sentralbyrå), published at the\ngrain the publisher actually uses rather than flattened into the cross-source views. Reached\nvia lib/pxweb.ts, not a NAV Excel download — NAV's own sykefravær statistics pages publish\nno kommune-level table at all (PLAN-013-nav-sykefravaer.md Phase 1). v1 scope: Kjonn=0,\nSykefraversprosent + Sykefraversdagsverk only.\n🔴 stability:source — the column set here follows Statistisk sentralbyrå, not Atlas. If the\npublisher adds, renames or drops a dimension, this relation changes with it. That is\nthe deliberate trade for getting the real grain; prefer a stability:curated relation\nif you need a shape Atlas promises to hold still. Decode codes through\nmeta_dimensions filtered to source_id=ssb-12451.",
+      "columns": [
+        {
+          "name": "source_id",
+          "description": "Atlas catalogue id for this ingest — always ssb-12451."
+        },
+        {
+          "name": "region_code",
+          "description": "SSB's own region code, verbatim from the Region dimension. May not be a kommune — region_kind says which."
+        },
+        {
+          "name": "kommune_nr",
+          "description": "Four-digit kommune code, derived through region_code_to_kommune_nr. NULL for every non-kommune sentinel."
+        },
+        {
+          "name": "region_kind",
+          "description": "What region_code is, from classify_region_code: kommune, unspecified_within_fylke, unspecified_national, svalbard, jan_mayen, continental_shelf, or unknown (the one discontinued-code exception, 0716u)."
+        },
+        {
+          "name": "period",
+          "description": "Quarter, SSB's own code (e.g. 2026K2), stored verbatim."
+        },
+        {
+          "name": "contents_code",
+          "description": "Which sykefravær figure this row's value is — Sykefraversprosent or Sykefraversdagsverk (v1 scope)."
+        },
+        {
+          "name": "contents_label",
+          "description": "Human-readable label from SSB's own ContentsCode metadata."
+        },
+        {
+          "name": "value",
+          "description": "The measure's value for this kommune and quarter. No suppression observed live."
+        },
+        {
+          "name": "status",
+          "description": "SSB's own cell-level status flag, when one exists (none observed at ingest time)."
+        },
+        {
+          "name": "updated_at",
+          "description": "Timestamp when the row was last written by ingest (from raw.loaded_at)."
+        }
+      ],
+      "built_from": [
+        {
+          "parent_kind": "model",
+          "model_name": "indicators__ssb_12451",
+          "title": null,
+          "description_short": "Per-source passthrough for SSB 12451 (Bostedskommune- og kjønnsfordelt sykefravær, legemeldt)."
+        }
+      ],
+      "sample_query": "https://api-atlas.urbalurba.com/indicators__ssb_12451?limit=5",
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__ssb_12451"
     },
     {
       "kind": "view",

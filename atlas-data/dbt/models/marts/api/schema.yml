@@ -4977,6 +4977,45 @@ the assertion became true rather than the test being relaxed
       - name: updated_at
         description: "When Atlas last loaded this row from the upstream."
 
+  - name: mart_indicators__ssb_12451
+    meta:
+      title: "12451: Bostedskommune- og kjønnsfordelt sykefravær (legemeldt)"
+      stability: source
+    description: |
+      Per-source indicator data for ssb-12451 (Statistisk sentralbyrå), at the publisher's own grain.
+
+      Per-source indicator relation for `ssb-12451` (Statistisk sentralbyrå), published at the
+      grain the publisher actually uses rather than flattened into the cross-source views. Reached
+      via lib/pxweb.ts, not a NAV Excel download — NAV's own sykefravær statistics pages publish
+      no kommune-level table at all (PLAN-013-nav-sykefravaer.md Phase 1). v1 scope: Kjonn=0,
+      Sykefraversprosent + Sykefraversdagsverk only.
+      🔴 stability:source — the column set here follows Statistisk sentralbyrå, not Atlas. If the
+      publisher adds, renames or drops a dimension, this relation changes with it. That is
+      the deliberate trade for getting the real grain; prefer a stability:curated relation
+      if you need a shape Atlas promises to hold still. Decode codes through
+      meta_dimensions filtered to source_id=ssb-12451.
+    columns:
+      - name: source_id
+        description: "Atlas catalogue id for this ingest — always ssb-12451."
+      - name: region_code
+        description: "SSB's own region code, verbatim from the Region dimension. May not be a kommune — region_kind says which."
+      - name: kommune_nr
+        description: "Four-digit kommune code, derived through region_code_to_kommune_nr. NULL for every non-kommune sentinel."
+      - name: region_kind
+        description: "What region_code is, from classify_region_code: kommune, unspecified_within_fylke, unspecified_national, svalbard, jan_mayen, continental_shelf, or unknown (the one discontinued-code exception, 0716u)."
+      - name: period
+        description: "Quarter, SSB's own code (e.g. 2026K2), stored verbatim."
+      - name: contents_code
+        description: "Which sykefravær figure this row's value is — Sykefraversprosent or Sykefraversdagsverk (v1 scope)."
+      - name: contents_label
+        description: "Human-readable label from SSB's own ContentsCode metadata."
+      - name: value
+        description: "The measure's value for this kommune and quarter. No suppression observed live."
+      - name: status
+        description: "SSB's own cell-level status flag, when one exists (none observed at ingest time)."
+      - name: updated_at
+        description: "Timestamp when the row was last written by ingest (from raw.loaded_at)."
+
   - name: mart_indicators__ssb_12944
     meta:
       title: "12944: Personer i husholdninger med vedvarende lavinntekt (EU-skala…"

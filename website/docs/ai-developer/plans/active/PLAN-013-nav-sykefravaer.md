@@ -15,7 +15,7 @@ uses, not a new NAV-family Excel parser. **Recommendation: build this as `ssb-12
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Backlog — Phase 1 complete, ready to move to active/ for Phase 2
+## Status: Active — Phase 2 IN PROGRESS
 
 **Goal**: Add kommune-level sick-leave statistics to Atlas, completing the NAV-adjacent welfare
 triad alongside `nav-uforetrygd` (long-tail disability outcome) and `nav-aap` (transitional
