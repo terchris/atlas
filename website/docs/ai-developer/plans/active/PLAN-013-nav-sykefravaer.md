@@ -225,12 +225,20 @@ rather than assuming the existing macro "just works" without checking.
 
 ---
 
-## Phase 4: Deploy and verify arrival (not started)
+## Phase 4: Deploy and verify arrival (deploy request filed)
 
-Same shape as every prior source's Phase 4 this session — name exact relations, both image
-digests labelled, `LANDS WITH` derived via `atlas-data/uis/lands-with.sh`, a row-count prediction
-stated explicitly. Independently re-verify against the live public API before closing the deploy
-task — do not take a deploy report alone as sufficient, per this session's standing discipline.
+Deploy request sent to imac, 2026-10-02: [urb-agents#1811](https://github.com/terchris/urb-agents/issues/1811).
+Tag `v20261002-15e7b13`, both digests labelled, `LANDS WITH` derived via `lands-with.sh`
+(`annual_sources_refresh` then `transform_and_publish`), row-count prediction stated (196,770 for
+`raw.ssb_12451` / `indicators__ssb_12451` / `mart_indicators__ssb_12451`, confirmed via a real
+local-Postgres ingest run). Also flagged and explained a false-positive in the derived range —
+`lands-with.sh` named `nav-aap` as "ingest changed" too, traced to a one-line README link fix from
+PLAN-012's close-out commit, not a code or data-path change.
+
+⚠️ **Self-caught transcription error**: the code-location digest in the first message to imac was
+mistyped (`...16705b8120f...` instead of the real `...16705b2120f...`). Caught by re-verifying
+against the build log immediately after sending, before any reply — corrected with a follow-up
+comment on the same task rather than leaving the wrong value standing.
 
 ---
 
