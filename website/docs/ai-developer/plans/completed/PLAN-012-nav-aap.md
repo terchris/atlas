@@ -12,7 +12,7 @@ correction, and that re-check is done below.
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Active — Phase 2 IN PROGRESS
+## Status: Completed
 
 **Goal**: Add `nav-aap` as a served Atlas source, giving Report #4 (Mental-Health Triangulation)
 and Report #5 (Income & Welfare Trajectory) the *transitional* welfare-claim signal that sits
@@ -226,18 +226,42 @@ Real local Postgres, not an empty schema. Explicitly check the `Ukjent` rows res
 
 ---
 
-## Phase 4: Deploy and verify arrival (deploy request filed)
+## Phase 4: Deploy and verify arrival (COMPLETE, 2026-10-02)
 
-Deploy request sent to imac, 2026-10-02: [urb-agents#1810](https://github.com/terchris/urb-agents/issues/1810).
+Deploy request filed to imac: [urb-agents#1810](https://github.com/terchris/urb-agents/issues/1810).
 Tag `v20261002-ddeca2d`, both digests labelled, `LANDS WITH` derived via `lands-with.sh`
 (`monthly_sources_refresh` then `transform_and_publish`), row-count prediction stated (5,720 for
 `raw.nav_aap` / `indicators__nav_aap` / `mart_indicators__nav_aap`, confirmed via a real
-local-Postgres ingest run; flagged that NAV's live file grows a column every month, so a run in a
-different month would legitimately see a different total). Also flagged and explained a
-false-positive in the derived range: `lands-with.sh` named `husbanken-bostotte` as "ingest
-changed" too, traced to a one-line README link fix from PLAN-011's close-out commit, not a code or
-data-path change — husbanken-bostotte does not need `annual_sources_refresh` re-run for this
-release.
+local-Postgres ingest run). Also flagged and explained a false-positive in the derived range:
+`lands-with.sh` named `husbanken-bostotte` as "ingest changed" too, traced to a one-line README
+link fix from PLAN-011's close-out commit, not a code or data-path change.
+
+`monthly_sources_refresh` succeeded on the first attempt — `raw.nav_aap` landed 5,720 rows, exact
+match to the prediction. `transform_and_publish` then hit a genuine, unrelated platform incident:
+PostgreSQL detected real checksum-verified data-page corruption on `marts.dim_brreg_enhet` (the
+~1.17M-row Brreg register), the second such incident that day on the same relation, different
+blocks, five hours apart. imac correctly treated this as **not theirs to repair** — no `REINDEX`,
+no `VACUUM`, no `zero_damaged_pages`, since all carry real data-loss risk on shared production
+data — and raised it `auth-required` rather than retrying blind. Terje verified the table clean
+with a forced full sequential scan (index scans disabled, so every heap page including the earlier
+failure's block was actually read) before retrying; the rebuild then ran clean end to end with
+PostgreSQL's own log watched throughout, and `transform_and_publish` succeeded
+(`369ba1ae-f47e-4495-8023-3c0fe0810528`, 501.1s).
+
+**Independently verified live** (not just trusting the report), 2026-10-02, against
+`https://api-atlas.urbalurba.com`:
+- `GET /meta_sources?source_id=eq.nav-aap&select=served_as` → `["indicators__nav_aap"]`
+- `GET /indicators__nav_aap?limit=1` → a real row (Oslo, 0301, kommune, antall, 22311)
+- `HEAD` with `Prefer: count=exact` → `content-range: 0-5719/5720` — 5,720, exact
+- `GET /atlas_inventory?endpoint=eq.indicators__nav_aap` → `row_count=5720, is_empty=false, origin="ingest"`
+
+All four match the deploy report exactly. No regression on the 48 other sources.
+
+⚠️ **The `dim_brreg_enhet` corruption's root cause remains open** — Terje's own words: *"real SSD
+wear present, no proof of causation... I haven't done anything to address that; this just confirms
+the symptom isn't actively recurring right now."* This is a platform-level concern outside this
+plan's scope (and outside this agent's cluster access entirely) — noted here for visibility, not
+pursued further.
 
 ---
 
@@ -245,18 +269,19 @@ release.
 
 - [x] **Licence independently confirmed for this specific source** — CC BY 4.0, Phase 1.2, not
   inherited by assumption from `nav-uforetrygd`.
-- [ ] `nav-aap` ingests cleanly from the live AAP155 workbook with zero rows silently dropped,
+- [x] `nav-aap` ingests cleanly from the live AAP155 workbook with zero rows silently dropped,
   including the fylke-rollup rows being skipped (not double-counted) and the `Ukjent` block being
-  represented (not dropped).
-- [ ] `raw.nav_aap` stores `region_code` as NAV publishes it, including the literal `Ukjent` label
+  represented (not dropped) — 5,720 rows, confirmed live and against a real local Postgres.
+- [x] `raw.nav_aap` stores `region_code` as NAV publishes it, including the literal `Ukjent` label
   with no numeric code — represented, not normalised away.
-- [ ] `indicators__nav_aap` and `mart_indicators__nav_aap` build and test clean against real loaded
-  data, with `Ukjent` rows correctly carrying `region_kind = 'unknown'` and a null `kommune_nr`.
-- [ ] `nav-aap` appears in `meta_sources.served_as` after a real deploy, independently verified via
+- [x] `indicators__nav_aap` and `mart_indicators__nav_aap` build and test clean against real loaded
+  data (20/20 PASS), with `Ukjent` rows correctly carrying `region_kind = 'unknown'` and a null
+  `kommune_nr`.
+- [x] `nav-aap` appears in `meta_sources.served_as` after a real deploy, independently verified via
   live `curl`.
-- [ ] Golden-file tests cover: an ordinary kommune row, a fylke rollup row (must not be summed into
-  the output), the `Ukjent` block, and the suppressed `1151 Utsira` row.
-- [ ] The investigation and `1PRIORITY.md` are updated to mark this candidate shipped.
+- [x] Golden-file tests cover: an ordinary kommune row, a fylke rollup row (must not be summed into
+  the output), the `Ukjent` block, and the suppressed `1151 Utsira` row (23 tests total).
+- [x] The investigation and `1PRIORITY.md` are updated to mark this candidate shipped.
 
 ---
 
@@ -278,6 +303,37 @@ release.
 
 ---
 
+## Outcome
+
+Shipped end to end, 2026-10-02: ingest (5,720 rows, zero dropped) → dbt staging and api_v1
+publication → live cluster deploy → independently verified arrival. Atlas's second NAV source and
+second monthly-cadence source, reusing the `monthly_sources_refresh` job built for
+`nav-uforetrygd` — no new Dagster infrastructure needed.
+
+Two real findings during implementation Phase 1's research didn't fully anticipate: (1) the
+`Ukjent` (unknown-region) bucket exists only in the Antall (count) sheet, not Andel (share) — 358
+regions vs 357 — caught by a real test failure against the actual fixture, not assumed; NAV
+omits it from the share sheet because there is no population denominator to compute a percentage
+against for a non-geographic bucket; (2) the deploy itself landed clean on the first attempt for
+`nav-aap`'s own ingest, but `transform_and_publish` was blocked by an unrelated platform incident
+— checksum-verified PostgreSQL page corruption on `marts.dim_brreg_enhet`, the second such
+incident that day. imac correctly declined to repair shared production data unilaterally and
+raised it `auth-required`; Terje verified the table clean with a forced full sequential scan
+before retrying, and the rebuild then succeeded cleanly. The corruption's root cause (disk wear
+suspected, not proven) remains open as a platform-level concern outside this plan's scope.
+
+Also applied, not just inherited: the `ingest:nav-aap` npm script was added and verified via the
+real `npm run` invocation from the very start, directly applying the lesson from
+`husbanken-bostotte`'s deploy (`PLAN-011`, urb-agents#1807) — confirmed against the new
+`check-every-source-has-an-ingest-script.sh` CI gate before any other Phase 2 work began, rather
+than discovering the gap on a real deploy a second time.
+
+Plugs the transitional welfare-claim signal Report #4 (Mental-Health Triangulation) and Report #5
+(Income & Welfare Trajectory) were missing between acute unemployment and `nav-uforetrygd`'s
+long-tail disability outcome.
+
+---
+
 ## Files to Modify
 
 - `atlas-data/ingest/src/sources/nav-aap/manifest.yml` (new)
@@ -286,9 +342,9 @@ release.
 - `atlas-data/ingest/src/sources/nav-aap/fetch_retry.ts` (new, copied)
 - `atlas-data/ingest/src/sources/nav-aap/README.md` (new)
 - `atlas-data/ingest/src/sources/nav-aap/__tests__/` (new)
-- `atlas-data/ingest/package.json` (`ingest:nav-aap` script — add this BEFORE shipping, per Phase
-  2's validation note; verify with `npm run ingest:nav-aap`, not a direct `tsx` call)
-- `atlas-data/migrations/<next>_raw_nav_aap.sql` (new)
+- `atlas-data/ingest/package.json` (`ingest:nav-aap` script, added first, verified via
+  `check-every-source-has-an-ingest-script.sh`)
+- `atlas-data/migrations/061_raw_nav_aap.sql` (new)
 - `atlas-data/dagster/atlas_data/assets/raw_other.py`, `schedules.py` (asset registration — monthly
   cadence, existing job)
 - `atlas-data/dbt/models/indicators/sources.yml`, `indicators__nav_aap.sql` (new), `schema.yml`
