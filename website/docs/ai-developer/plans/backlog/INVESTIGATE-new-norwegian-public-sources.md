@@ -214,6 +214,21 @@ required to reach it — and it carries real, non-suppressed data, so v1 include
 dropping it. Both Udir sentinels (Svalbard's `2100`, `Utlandet, uspesifisert`'s `2599`) resolved
 exactly as predicted via `classify_region_code`'s existing branches, no macro changes needed.
 
+✅ **`udir-fravar` (PLAN-017) shipped end to end, 2026-10-03/04 — the grunnskole (10th-grade)
+half of [Q39] only.** Ingested (21,290 rows, zero dropped), published to `api_v1`, deployed to
+the live cluster by imac ([urb-agents#1827](https://github.com/terchris/urb-agents/issues/1827)),
+independently re-verified against the public API. Same `EnhetID`-row-hierarchy shape as
+`udir-gsi`. Two real corrections caught during Phase 2, not Phase 1: backfills all 11 available
+years (`udir-gsi`'s own code, not its README's prose, backfills fully when the call cost is
+cheap, and this report's cost matches — a correction to this session's own earlier "latest year
+only" convention); and the `Utlandet`/`2599` anchor's apparent empty response was a Phase 1
+testing bug (a conflicting `EnhetID(-12)` filter alongside the `-13.*.*` anchor), not a real
+finding — it carries real data every year, same shape `PLAN-016` found. **[Q39]'s videregående
+half is NOT shipped** — `VGO_fravaer`'s `EnhetID` hierarchy has no kommune level at all
+(fylke/school-grain only, confirmed live), the identical structural blocker [Q40]
+(`udir-sluttet-vgs`) will also hit — a cross-cutting decision (fylke-only-grain support, or a
+`dim_school` crosswalk) neither this PLAN nor a future one should resolve unilaterally.
+
 - **URL**: `https://www.udir.no/om-udir/data` (portal; old `data.udir.no` redirects here)
 - **Datasets in scope**: GSI (grunnskolens informasjonssystem — enrolment, pupil-teacher ratio, special-ed share); Elevundersøkelsen (pupil survey — trivsel, mobbing); Nasjonale prøver (national tests, 2022→ resumed); Barnehagefakta (BAF — kindergarten coverage)
 - **Format**: JSON (confirmed live, 2026-10-02 — not CSV/Excel as this entry originally guessed; see `PLAN-010`)
@@ -604,7 +619,7 @@ Phase 2 / Phase 3 unchanged from the original sequencing — but renumber subseq
 
 ### F. Open questions added by the cross-check
 
-27. **[Q39]** `udir-fravar` ingest mechanism — Skoleporten programmatic endpoint vs HTML scrape (Samfunnspuls uses an R-script auto-update). Investigate during the Udir PLAN. **Partially resolved, 2026-10-02**: `skoleporten.udir.no` is **NXDOMAIN** — confirmed by direct DNS lookup, not a fetch-tool glitch; a web-search result pointing at a live-looking `rapportvisning` URL there was stale. Neither of the two options this question posed is the real mechanism — it's the same unified `statistikkportalen.udir.no`/USS API found for GSI (`PLAN-010-udir-gsi.md`). Confirmed live: the `GSK` (grunnskole) schema has a `FravaerG` table, covering the "10. trinn" half. The videregående half's table name under `VGO` wasn't checked (not in the table list pulled for `PLAN-010`'s unrelated `SluttaV` check) — confirm when implementing `udir-fravar`.
+27. **[Q39]** `udir-fravar` ingest mechanism — Skoleporten programmatic endpoint vs HTML scrape (Samfunnspuls uses an R-script auto-update). Investigate during the Udir PLAN. **Resolved, 2026-10-04 — grunnskole half shipped as `PLAN-017-udir-fravar.md`, videregående half genuinely blocked, not just unchecked.** `skoleporten.udir.no` is **NXDOMAIN**; the real mechanism is the same unified `statistikkportalen.udir.no`/USS API found for GSI. The `GSK` schema's `FravaerG` table (10. trinn half) shipped cleanly, same `EnhetID`-row-hierarchy shape as GSI. The `VGO` schema's absence table was checked (confirming the earlier note's "wasn't checked" gap) and its `EnhetID` hierarchy has no kommune level at all — fylke/school-grain only, the identical structural blocker [Q40] will hit, deliberately deferred as a cross-cutting decision rather than resolved per-source.
 28. **[Q40]** `udir-sluttet-vgs` vs `fhi-vgs-gjennomforing` — Atlas already has the completion side; document the methodological difference (annual dropout-during-year vs 3-year-cohort completion) so consumers don't double-count.
 29. **[Q42]** IMDi-extension scope — fold `imdi-innvandringsgrunn-kjonn` into the same `imdi` source family as `imdi-bosetting`, so one PLAN (`PLAN-009-imdi-bosetting`) covers all three IMDi indicators. **Rejected, 2026-10-01**: `PLAN-009` shipped bosettingstall only — the other two need an undocumented API reverse-engineered first. See [`INVESTIGATE-imdikator-api.md`](INVESTIGATE-imdikator-api.md).
 30. **[Q43]** `imdi-landbakgrunn` vs `fhi-innvandrere` — overlap analysis. Recommendation: ingest IMDi only if the methodology gap is meaningful (FHI typically lags IMDi by one cycle). Still open — tracked in [`INVESTIGATE-imdikator-api.md`](INVESTIGATE-imdikator-api.md) [Q4].

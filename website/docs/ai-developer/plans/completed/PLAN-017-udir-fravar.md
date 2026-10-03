@@ -11,7 +11,7 @@ not a parsing gap.
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Active — Phases 1-3 DONE, Phase 4 (deploy) submitted, awaiting imac + ops-dev
+## Status: Completed
 
 **Goal**: Add `udir-fravar` as a served Atlas source — kommune-level 10th-grade absence,
 Atlas's first annual-absence axis (previously only `fhi-vgs-gjennomforing`'s 3-year completion
@@ -298,8 +298,26 @@ stated once, 54 automated sources covered).
 **Only predict `indicators__udir_fravar` as a served relation — never a second
 `mart_indicators__...` entry, see [[mart-prefix-is-never-a-served-endpoint]].**
 
-Awaiting both reports. Independently re-verify against the live public API before closing either
-deploy task — do not take a deploy report alone as sufficient.
+✅ **DONE (verified 2026-10-03).** imac's report (urb-agents#1827): `annual_sources_refresh` hit
+the slow end of this API's latency range (~4-6s/call, confirming
+[[exploratory-calls-dont-reveal-sustained-api-latency]]'s own run-to-run-variance finding again)
+— ~86 minutes total, correctly distinguished from a hang by polling Dagster's own API directly
+rather than trusting the `--wait` client's 3600s timeout. `raw.udir_fravar`: 21,290 rows, exact
+match to prediction. `transform_and_publish` succeeded; zero PostgreSQL corruption events across
+the full window; a 6-source regression check confirmed unchanged.
+
+**Independently re-verified against the live public API, not taken on imac's report alone**:
+`GET /indicators__udir_fravar?limit=1` with `count=exact` → `content-range: 0-0/21290`, exact
+match; real row returned with `region_kind=kommune`/`kommune_nr` correctly resolved.
+`meta_sources?source_id=eq.udir-fravar` → `served_as: [indicators__udir_fravar]` only, no second
+`mart_indicators__...` entry.
+
+ops-dev's pin report (urb-agents#1828): cross-checked every reported number against the actual
+committed `template-info.yaml` diff (`sources: 53→54`, `publishers: 9` unchanged,
+`public_relations: 90→91`, `62/92/78→63/93/79` raw/marts/views, `NLOD for 50 of 54`) — all
+exact, no discrepancy.
+
+Both urb-agents#1827 and #1828 closed with the verification evidence attached as comments.
 
 ---
 
@@ -313,15 +331,15 @@ deploy task — do not take a deploy report alone as sufficient.
   not shipped as a degraded or invented kommune mapping.
 - [x] **Licence independently confirmed for this surface** — NLOD, same portal already confirmed
   explicitly earlier this session, inherited consistent with established discipline.
-- [ ] `udir-fravar` ingests cleanly with zero rows silently dropped, including the `2100` and
+- [x] `udir-fravar` ingests cleanly with zero rows silently dropped, including the `2100` and
   `2599` sentinels (both carrying real data) and at least one suppressed row all represented.
-- [ ] `indicators__udir_fravar` and its mart build and test clean against real loaded data, with
+- [x] `indicators__udir_fravar` and its mart build and test clean against real loaded data, with
   `2100`/`2599` resolving through `classify_region_code` exactly as predicted.
-- [ ] `udir-fravar` appears in `meta_sources.served_as` after a real deploy, independently verified
+- [x] `udir-fravar` appears in `meta_sources.served_as` after a real deploy, independently verified
   via live `curl`.
-- [ ] Golden-file tests cover: an ordinary kommune, a suppressed row, Svalbard, and the Utlandet
+- [x] Golden-file tests cover: an ordinary kommune, a suppressed row, Svalbard, and the Utlandet
   anchor's real data.
-- [ ] The investigation and `1PRIORITY.md` are updated to mark this candidate shipped, with [Q4]
+- [x] The investigation and `1PRIORITY.md` are updated to mark this candidate shipped, with [Q4]
   (the fylke/school-grain `VGO_fravaer` decision) carried forward explicitly as still open.
 
 ---
@@ -346,6 +364,40 @@ deploy task — do not take a deploy report alone as sufficient.
   call cost is cheap, and this report's cost matches. Real call volume is cheap (~22 calls total)
   — verify this holds in Phase 2, don't assume it from Phase 1's sample, per
   [[exploratory-calls-dont-reveal-sustained-api-latency]].
+
+---
+
+## Outcome
+
+Shipped end to end, 2026-10-03/04. Atlas's fourth Udir source: kommune-level, 10th-grade
+documented absence statistics (`GSK_fravaer`), same `EnhetID`-row-hierarchy shape as `udir-gsi`.
+Ingested 21,290 rows (region × year × measure, 11 backfilled school years), published to
+`api_v1`, deployed to the live cluster by imac (urb-agents#1827), independently re-verified
+against the public API — `GET /indicators__udir_fravar?limit=1` with `count=exact` confirms
+`content-range: 0-0/21290`.
+
+Two real corrections, both caught during Phase 2, not Phase 1:
+1. **Backfill convention was wrong.** Phase 1 recommended "latest year only," matching what it
+   believed was every annual Udir source's convention. Checking `udir-gsi`'s own code (not its
+   README's prose) found it backfills fully when the call cost is cheap — this report's cost
+   matches (22 calls total), so v1 ships all 11 available years.
+2. **The `Utlandet`/`2599` anchor's "empty response" finding was a Phase 1 testing bug, not a
+   real finding.** The manual curl test that produced an apparent zero-row result had an
+   explicit, conflicting `EnhetID(-12)` filter alongside the `-13.*.*` radSti anchor — an invalid
+   combination. The real ingest module (which never sets `EnhetID` in the filter string)
+   confirmed `Utlandet` carries real, non-suppressed data every single year, the same shape
+   `udir-nasjonale-prover` already found for its own Utlandet anchor.
+
+`VGO_fravaer` (videregående) was deliberately not shipped — its `EnhetID` hierarchy has no
+kommune level at all (fylke/school-grain only, confirmed live), a structural fact about how
+Norway organises videregående skole, named as [Q4] and carried forward to the investigation doc
+as a cross-cutting decision rather than resolved unilaterally.
+
+Deploy took ~86 minutes for `annual_sources_refresh` — this API's per-call latency hit the slow
+end of its own range again (confirming
+[[exploratory-calls-dont-reveal-sustained-api-latency]]'s run-to-run-variance finding), correctly
+distinguished from a hang by imac polling Dagster's API directly rather than trusting a client
+timeout. Zero data-quality issues; a 6-source regression check confirmed nothing else moved.
 
 ---
 
