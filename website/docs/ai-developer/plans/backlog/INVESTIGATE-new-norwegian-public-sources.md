@@ -307,6 +307,15 @@ move to Tier 3 — not something to resolve unilaterally.
 
 ### 8. DSB Kommuneundersøkelsen — municipal preparedness
 
+⚠️ **Phase 1 checked live 2026-10-04 and found this agent cannot reach `dsb.no` at all — see
+[`PLAN-019-dsb-kommuneundersokelsen.md`](./PLAN-019-dsb-kommuneundersokelsen.md) for the full
+research. Does NOT proceed to Phase 2 without a human fetch.** `dsb.no` sits behind a Cloudflare
+managed JS challenge — confirmed with two independent tools (`curl` with two different
+User-Agent strings, and `WebFetch`), both blocked (challenge page / bare 403). No alternate
+download host or indexed direct-file URL found. Unlike Helfo (§7), this is NOT a "the claimed
+mechanism doesn't exist" finding — the Excel/PDF download this section describes may well be
+exactly real; this agent simply cannot reach it with the tools it has.
+
 - **URL**: `https://www.dsb.no/ros-og-beredskap/kommuner/kommuneundersokelsen/`
 - **Format**: PDF report + Excel raw data
 - **Auth**: none (download)
@@ -640,7 +649,9 @@ Atlas's [PLANS.md `Splitting Investigations into Multiple Plans`](../../PLANS.md
    Helsedirektoratet developer-portal pattern" — that pattern was checked live and does not exist
    for this dataset. Needs outreach to Helsedirektoratet or a Tier-3 redesignation before any
    further work; see §7 above.
-3. `PLAN-014-dsb-kommuneundersokelsen.md`
+3. ⚠️ `PLAN-019-dsb-kommuneundersokelsen.md` — **Phase 1 only, blocked 2026-10-04.** `dsb.no` is
+   behind a Cloudflare JS challenge this agent's tools cannot pass. Needs a human (or
+   browser-capable tool) to fetch the file once; see §8 above.
 4. `PLAN-015-brreg-frivillighetsregisteret-lottstift.md` — **blocked by [`INVESTIGATE-tag-indicators-sdg-icnpo.md`](./INVESTIGATE-tag-indicators-sdg-icnpo.md)** for the ICNPO crosswalk, per [Q26]
 
 **Phase 3 — Tier-3 (only if a stakeholder asks)**
@@ -759,6 +770,13 @@ Each PLAN follows the standard Atlas pattern (per-source folder under `atlas-dat
   extra. (Pattern reused from [`INVESTIGATE-folkehjelp-supply` § A.4](./INVESTIGATE-folkehjelp-supply.md#a4-craft-cms-graphql-probe--q2-outreach-worth-pursuing).)
   Separately, optionally: the same pattern for Bufdir, NAV, IMDi — non-blocking for those, since
   Atlas already ships around their public surfaces.
+- [x] ⚠️ **Phase 1 only, blocked 2026-10-04.**
+  [`PLAN-019-dsb-kommuneundersokelsen.md`](./PLAN-019-dsb-kommuneundersokelsen.md) — Tier-2 item
+  #8. `dsb.no` is behind a Cloudflare managed JS challenge, confirmed blocked with two
+  independent tools (`curl`, `WebFetch`); no alternate download host found. Unlike Helfo, the
+  claimed mechanism (Excel/PDF download) may be entirely real — this agent just cannot reach it.
+  Needs a human, or a tool with a real browser, to fetch
+  `kommuneundersokelsen-2025/`'s files once; resume from Phase 2 at that point.
 
 ---
 
