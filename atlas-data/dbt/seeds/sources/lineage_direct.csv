@@ -96,6 +96,7 @@ indicators__ssb_12292,ssb-12292,source
 indicators__ssb_12451,ssb-12451,source
 indicators__ssb_12944,ssb-12944,source
 indicators__ssb_13995,ssb-13995,source
+indicators__udir_elevundersokelsen_mobbing,udir-elevundersokelsen-mobbing,source
 indicators__udir_gsi,udir-gsi,source
 mart_activity_catalog,dim_activity,model
 mart_activity_catalog,fact_chapter_activities,model
@@ -161,6 +162,7 @@ mart_atlas_inventory,mart_indicators__ssb_12292,model
 mart_atlas_inventory,mart_indicators__ssb_12451,model
 mart_atlas_inventory,mart_indicators__ssb_12944,model
 mart_atlas_inventory,mart_indicators__ssb_13995,model
+mart_atlas_inventory,mart_indicators__udir_elevundersokelsen_mobbing,model
 mart_atlas_inventory,mart_indicators__udir_gsi,model
 mart_atlas_inventory,mart_ingest_health,model
 mart_atlas_inventory,mart_kommune_befolkning_alder,model
@@ -249,6 +251,7 @@ mart_indicators__ssb_12292,indicators__ssb_12292,model
 mart_indicators__ssb_12451,indicators__ssb_12451,model
 mart_indicators__ssb_12944,indicators__ssb_12944,model
 mart_indicators__ssb_13995,indicators__ssb_13995,model
+mart_indicators__udir_elevundersokelsen_mobbing,indicators__udir_elevundersokelsen_mobbing,model
 mart_indicators__udir_gsi,indicators__udir_gsi,model
 mart_kommune_befolkning_alder,dim_fylke,model
 mart_kommune_befolkning_alder,dim_kommune,model
