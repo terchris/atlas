@@ -407,10 +407,35 @@ These are real candidates but each is either narrower in impact or has a known c
 
 ### 13. SSB Sentralitetsindeks (Klass 128)
 
+⚠️ **Partially checked live 2026-10-04 — the real mechanism found, and [Q30]'s own "slowly-changing"
+assumption corrected, but deliberately NOT implemented tonight.** Every other candidate this
+session got a dedicated PLAN; this one explicitly doesn't, per this row's own standing advice —
+and that advice holds up on reflection even with every Tier-1 candidate now shipped: `dim_kommune`
+is the single most depended-upon table in the schema, and enriching it is a different, higher-
+blast-radius kind of change than adding one more `indicators__<source>` relation. Not something
+to do as a side effect of an unattended run; a real future implementer should re-read this note
+and decide deliberately.
+
+**The real mechanism, confirmed live**: `classifications/128/codesAt.json` returns only the 6
+class DEFINITIONS (`01`-`06`), not a per-kommune mapping — the actual kommune→class assignment is
+a **correspondence table** between classification 131 (Kommuner) and 128 (Sentralitet), fetched
+via `GET /classifications/131/corresponds.json?targetClassificationId=128&from=<date>&to=<date>`
+(confirmed live: 492 real mappings for 471 distinct historical kommune codes over 2020-2026).
+⚠️ The point-in-time `correspondsAt.json` equivalent returned an empty result for this exact pair
+for reasons not established — use the date-range `corresponds.json` endpoint, not `correspondsAt`.
+
+⚠️ **[Q30]'s own premise is wrong — checked live, not assumed.** Sentralitet is NOT a
+"slowly-changing one-value-per-kommune attribute" safe for a flat column: a real kommune (e.g.
+`1124`) genuinely changes class at a reclassification boundary within the current correspondence
+window (confirmed live: class `03`→`02` at the 2024 boundary, each with its own real
+`validFrom`/`validTo`). A column on `dim_kommune` would need to be explicitly "current
+classification only," named as a simplification, not "the" value — version boundaries exist at
+2008, 2018, 2020, and 2024.
+
 - **URL**: same Klass v1 endpoint Atlas already uses for `ssb-klass-kommuner` and `ssb-klass-fylker`
 - **What**: 1–6 urban-rural classification per kommune
 - **Why Tier 3**: not a report on its own — but a high-leverage *stratification dimension* for every existing indicator (city vs distrikt). One-shot, trivially small. Land it as a sub-task of any Tier-1 PLAN that motivates urban-rural splits, not a standalone PLAN.
-- **[Q30]** Decide whether `dim_kommune` carries `sentralitet` as a column, or `dim_kommune_attributes` is a separate table. **Recommendation**: column on `dim_kommune` — sentralitet is a slowly-changing one-value-per-kommune attribute.
+- **[Q30]** Decide whether `dim_kommune` carries `sentralitet` as a column, or `dim_kommune_attributes` is a separate table. ⚠️ **"Recommendation: column on dim_kommune — sentralitet is a slowly-changing one-value-per-kommune attribute" is corrected above — it is NOT slowly-changing in the way that sentence assumed.** Whichever shape is chosen, it must represent (or deliberately simplify away) the real reclassification history, not assume there isn't one.
 
 ### 14. Bibliofil / Biblioteksentralen
 
