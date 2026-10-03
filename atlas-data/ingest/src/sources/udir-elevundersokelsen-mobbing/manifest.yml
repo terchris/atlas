@@ -1,0 +1,99 @@
+# Hand-authored catalogue metadata for Udir's Elevundersøkelsen bullying
+# ("mobbing") indicator. Ingest runs do not modify this file.
+
+source_id: udir-elevundersokelsen-mobbing
+upstream_id: GSK_EUG_mobbing
+upstream_url: https://www.udir.no/tall-og-forskning/statistikk/elevundersokelsen/
+upstream_landing_page: https://www.udir.no/tall-og-forskning/statistikk/elevundersokelsen/
+upstream_title: "Elevundersøkelsen - mobbing (EUG)"
+description: |
+  Udir (Utdanningsdirektoratet) runs Elevundersøkelsen, an annual nationwide pupil survey on the
+  school learning environment. Atlas ingests its bullying ("mobbing") indicator and the three
+  underlying survey questions, per kommune, per grade (7th and 10th — matching the existing
+  `fhi-mobbing` axis), for the latest school year. Reached via the same real, Swagger-documented
+  "USS — Udirs StatistikkSystem" API (`statistikkportalen.udir.no/api/rapportering`)
+  `udir-gsi` already proved out — Atlas's second Udir source, but a genuinely different response
+  shape: geography is a column/filter dimension here, not the row hierarchy the way `udir-gsi`'s
+  is, so one HTTP call is made per kommune-equivalent region node per grade (~702 calls for the
+  latest year) rather than one call per year. v1 ingests only the mobbing indicator family and
+  only the latest school year; see this source's README for the full reasoning.
+publisher: Utdanningsdirektoratet
+license: NLOD
+license_url: https://data.norge.no/nlod/no/2.0
+periodicity: P1Y
+eu_theme: EDUC
+attribution: "Kilde: Utdanningsdirektoratet, Elevundersøkelsen"
+
+# 🔵 Licence re-confirmed directly on Udir's own data portal
+# (udir.no/om-udir/data/ — "lisens for offentlig data (NLOD)"), the same
+# portal `udir-gsi` already confirmed NLOD on, 2026-10-03. Same organisation
+# and portal, re-fetched and read for this source rather than assumed to
+# transfer silently from the sibling source.
+
+tags:
+  provider: udir
+  topic: education
+  geo: kommune
+  cadence: annual
+
+dimensions:
+  - code: region_code
+    meaning: Geographic code from Udir's own EnhetID hierarchy (nivaa 3, "kommune-equivalent")
+    value_format: "4-digit kommune code (including Svalbard's pseudo-kommune 2100), or the literal 2599 (Utlandet, uspesifisert — Norwegian schools abroad with no further breakdown)"
+    notes: >
+      Confirmed live 2026-10-03: 351 nivaa-3 nodes total, fewer than the ~357-359 seen in every
+      other kommune-grain Atlas source, because Elevundersøkelsen's own tree only includes a
+      kommune if at least one of its schools reports into this table that year — a kommune with
+      nothing to report is absent from the tree entirely, not present-and-suppressed. Represent
+      exactly what the tree contains. region_kind is derived downstream via classify_region_code:
+      2100 resolves via the existing svalbard branch (same finding as udir-gsi/husbanken-bostotte);
+      2599 resolves via the existing unspecified_within_fylke (^\d{2}99$) branch — confirmed by
+      inspection in Phase 1, no macro change needed either way.
+  - code: grade
+    meaning: Which grade this row's figures are for
+    value_format: "7 or 10 (the real grade number — Udir's own internal TrinnID ids, 6 and 9, are translated to this before storage)"
+    notes: >
+      Matches fhi-mobbing's own established 7th+10th-grade axis. ⚠️ Udir's TrinnID filter has NO
+      "all grades" sentinel for this report — confirmed live, Udir's -10 convention (which means
+      "alle" for udir-gsi's KommunalitetID) silently resolves to a single specific grade here
+      instead of erroring. Every row names its grade explicitly; never assume a combined figure.
+  - code: year
+    meaning: School year code from Udir's own TidID dimension, discovered dynamically
+    value_format: "6-digit integer, e.g. 202512 = school year 2025-26"
+    notes: >
+      v1 ingests the latest available year only (confirmed live: 5 years are equally
+      live-queryable, 2021-22 through 2025-26) — see this source's README for why backfill is
+      deferred, not just a convention carried from the NAV-Excel sources.
+  - code: measure
+    meaning: Stable identifier for the indicator or survey question this row's value answers
+    value_format: "Udir's own code, e.g. EUIndeks_1398 (the composite 'Mobbing på skolen' indicator) or EUSpoersmaal_Q11811/Q11824/Q11816 (the three underlying questions)"
+    notes: >
+      Unlike udir-gsi, which only had a human-readable label at the measure level, this report's
+      own API provides a stable code directly — used here instead of a constructed string.
+  - code: measure_label
+    meaning: The real Norwegian survey question or indicator text, verbatim from the API
+    value_format: free text
+    notes: Kept alongside measure because the literal question wording carries real meaning here.
+  - code: value
+    meaning: Percentage of surveyed pupils reporting this, for the region/grade/year/measure slice
+    value_format: "Percentage (0-100), Norwegian decimal comma in the raw API text, parsed to a plain number"
+    notes: NULL when Udir itself suppressed the cell (its own marker, the literal character '*').
+
+lifecycle: stable
+time_coverage:
+  start: null
+  end: null
+keywords:
+  - elevundersokelsen
+  - mobbing
+  - bullying
+  - school-environment
+  - kommune
+suggested_joins: []
+methodology_notes: |
+  Elevundersøkelsen is Udir's annual nationwide survey of pupils' school and learning environment.
+  This source covers the bullying ("mobbing") indicator family only — a sharper, annual, per-grade
+  complement to the existing fhi-mobbing 3-year-rolling 7th+10th-grade aggregate. Small-cell
+  suppression applies (Udir's own marker, the literal character *) — confirmed live on small
+  kommuner and on Svalbard, suppressed per-row, not per-kommune (a kommune's indicator can be
+  suppressed while one of its own underlying questions is not, in the same response).

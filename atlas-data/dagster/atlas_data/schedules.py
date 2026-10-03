@@ -3,7 +3,7 @@ Schedules for the Atlas pipeline.
 
 Cadence is derived from what the upstreams actually publish, not from a blanket
 nightly. Every source declares a `periodicity` in its manifest.yml, and across
-Atlas's 51 sources that is: 42 × P1Y (annual), 3 × P1D (daily, the Brreg
+Atlas's 52 sources that is: 43 × P1Y (annual), 3 × P1D (daily, the Brreg
 sources), 3 × P1M (monthly, nav-uforetrygd, nav-aap and nav-helt-ledige), and 3 × irregular. Fetching an
 annual SSB or FHI table every night would be ~15,000 pointless requests a year
 against public-sector APIs Atlas depends on staying welcome at.
@@ -199,6 +199,7 @@ _ANNUAL_SOURCE_IDS = [
     "bufdir-barnevern",
     "husbanken-bostotte",
     "imdi-bosetting",
+    "udir-elevundersokelsen-mobbing",
     "udir-gsi",
 ]
 
@@ -238,12 +239,17 @@ annual_sources_job = define_asset_job(
     selection=_asset_selection(_ANNUAL_SOURCE_IDS),
     executor_def=_ingest_executor(),
     description=(
-        "The 42 sources whose manifest declares periodicity P1Y. Polled weekly "
+        "The 43 sources whose manifest declares periodicity P1Y. Polled weekly "
         "rather than annually: publication dates drift by weeks and nobody wants "
         "to discover a new release eleven months late. Weekly means a new "
-        "release is picked up within 7 days for ~42 requests a week, which is "
-        "nothing to SSB or FHI. The ingests upsert, so a poll that finds "
-        "nothing new is a no-op."
+        "release is picked up within 7 days for ~42 requests a week across 42 "
+        "of these sources, which is nothing to SSB or FHI. The 43rd, "
+        "udir-elevundersokelsen-mobbing, is the outlier: one HTTP call per "
+        "kommune-equivalent region node per grade (~702 calls for one run, see "
+        "that source's own README) because its upstream has no bulk-kommune "
+        "query shape for this report — not a cadence or infrastructure change, "
+        "just a much larger per-run request count than every sibling here. "
+        "The ingests upsert, so a poll that finds nothing new is a no-op."
     ),
 )
 

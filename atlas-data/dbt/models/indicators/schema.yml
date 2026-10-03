@@ -2529,6 +2529,90 @@ models:
             - year
             - measure
 
+  - name: indicators__udir_elevundersokelsen_mobbing
+    description: |-
+      Per-source passthrough for Udir's Elevundersøkelsen bullying ("mobbing") indicator and its
+      three underlying questions. One row per (region_code, grade, year, measure). Atlas's second
+      Udir source.
+    columns:
+      - name: source_id
+        description: Atlas catalogue id for this ingest — always udir-elevundersokelsen-mobbing.
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: [udir-elevundersokelsen-mobbing]
+        data_type: text
+      - name: region_code
+        description: >-
+          Udir's own region code, verbatim from the EnhetID hierarchy. May not be a kommune —
+          region_kind says which (Svalbard and "Utlandet, uspesifisert" both report at the same
+          tree depth as genuine kommuner).
+        data_tests:
+          - not_null
+        data_type: text
+      - name: kommune_nr
+        description: >-
+          Four-digit kommune code, derived through region_code_to_kommune_nr. NULL for Svalbard,
+          "Utlandet, uspesifisert", and any other non-kommune region_code.
+        data_tests:
+          - relationships:
+              to: ref('dim_kommune')
+              field: kommune_nr
+        data_type: text
+      - name: region_kind
+        description: |
+          What region_code is, from classify_region_code: kommune · svalbard ·
+          unspecified_within_fylke (only those three observed live for this source).
+        data_tests:
+          - not_null
+          - relationships: {to: ref('ref_region_kind'), field: region_kind}
+        data_type: text
+      - name: grade
+        description: The real grade number, 7 or 10 — matching fhi_mobbing's own established axis.
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: [7, 10]
+        data_type: integer
+      - name: year
+        description: School year code from Udir's own TidID dimension (e.g. 202512 = 2025-26).
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 200000
+              max_value: 210000
+        data_type: integer
+      - name: contents_code
+        description: |
+          Atlas-normalised variable code: fixed prefix `udir_elevundersokelsen_mobbing__` joined
+          with Udir's own stable measure code (e.g. EUIndeks_1398, EUSpoersmaal_Q11811).
+        data_tests:
+          - not_null
+        data_type: text
+      - name: contents_label
+        description: The real Norwegian survey question or indicator text, verbatim from the API.
+        data_tests:
+          - not_null
+        data_type: text
+      - name: value
+        description: >-
+          Percentage of surveyed pupils for this slice. NULL when Udir itself suppressed the cell
+          (its own marker, the literal character "*").
+        data_type: numeric
+      - name: updated_at
+        description: Timestamp when the row was last written by ingest (from raw.loaded_at).
+        data_tests:
+          - not_null
+        data_type: timestamp with time zone
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - source_id
+            - region_code
+            - grade
+            - year
+            - contents_code
+
   - name: indicators__husbanken_bostotte
     description: |-
       Per-source passthrough for Husbanken bostøtte (housing allowance — application, decision,

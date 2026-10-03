@@ -35,7 +35,7 @@
       "description": "Educational outcomes — upper-secondary completion, NEET status,\neducational attainment by region. Includes bullying and youth wellbeing\nindicators that intersect with school context.\n",
       "emoji": "🎓",
       "order": 40,
-      "source_count": 6
+      "source_count": 7
     },
     {
       "id": "social",
@@ -150,7 +150,7 @@
       "logo": "/img/publishers/udir.png",
       "feedback_url": "https://www.udir.no/om-udir/kontakt-oss/",
       "notes": "The Directorate for Education and Training. Publishes school-level\nregister data (GSI — Grunnskolens Informasjonssystem), the annual\npupil survey (Elevundersøkelsen: trivsel, mobbing) and absence\nstatistics, at a sharper resolution than Atlas's existing FHI-mediated\nbullying figure (`fhi-mobbing`, a 3-year rolling 7th+10th-grade\naggregate).\n",
-      "source_count": 1
+      "source_count": 2
     }
   ],
   "sources": [
@@ -5993,6 +5993,7 @@
         "fhi-trangbodd",
         "fhi-vgs-gjennomforing",
         "ssb-09429",
+        "udir-elevundersokelsen-mobbing",
         "udir-gsi"
       ],
       "dimensions": [
@@ -6331,6 +6332,7 @@
         "fhi-trangbodd",
         "fhi-vgs-gjennomforing",
         "ssb-09429",
+        "udir-elevundersokelsen-mobbing",
         "udir-gsi"
       ],
       "dimensions": [
@@ -7680,6 +7682,7 @@
         "fhi-neet",
         "fhi-vgs-gjennomforing",
         "ssb-09429",
+        "udir-elevundersokelsen-mobbing",
         "udir-gsi"
       ],
       "dimensions": [
@@ -8019,6 +8022,7 @@
         "fhi-neet",
         "fhi-trangbodd",
         "ssb-09429",
+        "udir-elevundersokelsen-mobbing",
         "udir-gsi"
       ],
       "dimensions": [
@@ -11395,6 +11399,7 @@
         "fhi-neet",
         "fhi-trangbodd",
         "fhi-vgs-gjennomforing",
+        "udir-elevundersokelsen-mobbing",
         "udir-gsi"
       ],
       "dimensions": [
@@ -15092,6 +15097,191 @@
     },
     {
       "kind": "source",
+      "source_id": "udir-elevundersokelsen-mobbing",
+      "upstream_id": "GSK_EUG_mobbing",
+      "upstream_url": "https://www.udir.no/tall-og-forskning/statistikk/elevundersokelsen/",
+      "upstream_landing_page": "https://www.udir.no/tall-og-forskning/statistikk/elevundersokelsen/",
+      "upstream_title": "Elevundersøkelsen - mobbing (EUG)",
+      "description": "Udir (Utdanningsdirektoratet) runs Elevundersøkelsen, an annual nationwide pupil survey on the\nschool learning environment. Atlas ingests its bullying (\"mobbing\") indicator and the three\nunderlying survey questions, per kommune, per grade (7th and 10th — matching the existing\n`fhi-mobbing` axis), for the latest school year. Reached via the same real, Swagger-documented\n\"USS — Udirs StatistikkSystem\" API (`statistikkportalen.udir.no/api/rapportering`)\n`udir-gsi` already proved out — Atlas's second Udir source, but a genuinely different response\nshape: geography is a column/filter dimension here, not the row hierarchy the way `udir-gsi`'s\nis, so one HTTP call is made per kommune-equivalent region node per grade (~702 calls for the\nlatest year) rather than one call per year. v1 ingests only the mobbing indicator family and\nonly the latest school year; see this source's README for the full reasoning.\n",
+      "atlas_summary": null,
+      "publisher": {
+        "id": "udir",
+        "display_name": "Utdanningsdirektoratet",
+        "homepage": "https://www.udir.no/",
+        "logo": "/img/publishers/udir.png"
+      },
+      "category": {
+        "id": "education",
+        "name": "Education & youth",
+        "emoji": "🎓"
+      },
+      "license": "NLOD",
+      "license_url": "https://data.norge.no/nlod/no/2.0",
+      "periodicity": "P1Y",
+      "eu_theme": "EDUC",
+      "attribution": "Kilde: Utdanningsdirektoratet, Elevundersøkelsen",
+      "tags": {
+        "provider": "udir",
+        "topic": "education",
+        "geo": "kommune",
+        "cadence": "annual"
+      },
+      "keywords": [
+        "elevundersokelsen",
+        "mobbing",
+        "bullying",
+        "school-environment",
+        "kommune"
+      ],
+      "lifecycle": "stable",
+      "time_coverage": {
+        "start": null,
+        "end": null
+      },
+      "methodology_notes": "Elevundersøkelsen is Udir's annual nationwide survey of pupils' school and learning environment.\nThis source covers the bullying (\"mobbing\") indicator family only — a sharper, annual, per-grade\ncomplement to the existing fhi-mobbing 3-year-rolling 7th+10th-grade aggregate. Small-cell\nsuppression applies (Udir's own marker, the literal character *) — confirmed live on small\nkommuner and on Svalbard, suppressed per-row, not per-kommune (a kommune's indicator can be\nsuppressed while one of its own underlying questions is not, in the same response).\n",
+      "suggested_joins": [],
+      "related_by_topic": [
+        "fhi-mobbing",
+        "fhi-neet",
+        "fhi-trangbodd",
+        "fhi-vgs-gjennomforing",
+        "ssb-09429",
+        "udir-gsi"
+      ],
+      "dimensions": [
+        {
+          "code": "region_code",
+          "meaning": "Geographic code from Udir's own EnhetID hierarchy (nivaa 3, \"kommune-equivalent\")",
+          "value_format": "4-digit kommune code (including Svalbard's pseudo-kommune 2100), or the literal 2599 (Utlandet, uspesifisert — Norwegian schools abroad with no further breakdown)",
+          "notes": "Confirmed live 2026-10-03: 351 nivaa-3 nodes total, fewer than the ~357-359 seen in every other kommune-grain Atlas source, because Elevundersøkelsen's own tree only includes a kommune if at least one of its schools reports into this table that year — a kommune with nothing to report is absent from the tree entirely, not present-and-suppressed. Represent exactly what the tree contains. region_kind is derived downstream via classify_region_code: 2100 resolves via the existing svalbard branch (same finding as udir-gsi/husbanken-bostotte); 2599 resolves via the existing unspecified_within_fylke (^\\d{2}99$) branch — confirmed by inspection in Phase 1, no macro change needed either way.\n"
+        },
+        {
+          "code": "grade",
+          "meaning": "Which grade this row's figures are for",
+          "value_format": "7 or 10 (the real grade number — Udir's own internal TrinnID ids, 6 and 9, are translated to this before storage)",
+          "notes": "Matches fhi-mobbing's own established 7th+10th-grade axis. ⚠️ Udir's TrinnID filter has NO \"all grades\" sentinel for this report — confirmed live, Udir's -10 convention (which means \"alle\" for udir-gsi's KommunalitetID) silently resolves to a single specific grade here instead of erroring. Every row names its grade explicitly; never assume a combined figure.\n"
+        },
+        {
+          "code": "year",
+          "meaning": "School year code from Udir's own TidID dimension, discovered dynamically",
+          "value_format": "6-digit integer, e.g. 202512 = school year 2025-26",
+          "notes": "v1 ingests the latest available year only (confirmed live: 5 years are equally live-queryable, 2021-22 through 2025-26) — see this source's README for why backfill is deferred, not just a convention carried from the NAV-Excel sources.\n"
+        },
+        {
+          "code": "measure",
+          "meaning": "Stable identifier for the indicator or survey question this row's value answers",
+          "value_format": "Udir's own code, e.g. EUIndeks_1398 (the composite 'Mobbing på skolen' indicator) or EUSpoersmaal_Q11811/Q11824/Q11816 (the three underlying questions)",
+          "notes": "Unlike udir-gsi, which only had a human-readable label at the measure level, this report's own API provides a stable code directly — used here instead of a constructed string.\n"
+        },
+        {
+          "code": "measure_label",
+          "meaning": "The real Norwegian survey question or indicator text, verbatim from the API",
+          "value_format": "free text",
+          "notes": "Kept alongside measure because the literal question wording carries real meaning here."
+        },
+        {
+          "code": "value",
+          "meaning": "Percentage of surveyed pupils reporting this, for the region/grade/year/measure slice",
+          "value_format": "Percentage (0-100), Norwegian decimal comma in the raw API text, parsed to a plain number",
+          "notes": "NULL when Udir itself suppressed the cell (its own marker, the literal character '*')."
+        }
+      ],
+      "raw_tables": null,
+      "sample_query": null,
+      "citation": {
+        "text": "Utdanningsdirektoratet. (n.d.). Elevundersøkelsen - mobbing (EUG). Retrieved from https://www.udir.no/tall-og-forskning/statistikk/elevundersokelsen/. Available in Atlas at https://atlas.sovereignsky.no/datasets/udir-elevundersokelsen-mobbing.",
+        "bibtex": "@misc{atlas_udir_elevundersokelsen_mobbing,\n  author = {Utdanningsdirektoratet},\n  title  = {Elevundersøkelsen - mobbing (EUG)},\n  year   = {n.d.},\n  url    = {https://www.udir.no/tall-og-forskning/statistikk/elevundersokelsen/},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/udir-elevundersokelsen-mobbing}\n}"
+      },
+      "feedback_url": "https://www.udir.no/om-udir/kontakt-oss/",
+      "consuming_marts": [
+        {
+          "mart_name": "mart_atlas_inventory",
+          "api_v1_name": "atlas_inventory",
+          "title": null,
+          "description_short": "What Atlas publishes: one row per endpoint with its row count, freshness and origin.",
+          "description_full": "What Atlas publishes: one row per endpoint with its row count, freshness and origin.\n\nWhat Atlas publishes, one row per queryable endpoint: how many records it\nserves, when its data last arrived, and where those rows came from.\nAsked for by Røde Kors — \"validate that all datasets that are ingested has\nan endpoint and it can be queried … count the number of records each\nendpoint has and update the last time it ingested data.\"\n⚠️ THE GRAIN IS PER ENDPOINT, NOT PER SOURCE. meta_sources answers \"what\ndid Atlas ingest\"; this answers \"what can I query, and is there anything\nin it\". One source can feed several endpoints and one endpoint can draw on\nseveral sources, so the two row counts are not comparable and summing\nsources will not reproduce an endpoint's count.\n⚠️ atlas_inventory does not list ITSELF. It is built from the same seed it\nreports on, so counting itself would be circular and the number would be\nwhatever the table held mid-build. 19 endpoints are listed; 20 are\npublished.",
+          "sample_query": "https://api-atlas.urbalurba.com/atlas_inventory?limit=5"
+        },
+        {
+          "mart_name": "mart_indicators__udir_elevundersokelsen_mobbing",
+          "api_v1_name": "indicators__udir_elevundersokelsen_mobbing",
+          "title": "Elevundersøkelsen — mobbing",
+          "description_short": "Per-source indicator data for udir-elevundersokelsen-mobbing (Utdanningsdirektoratet), at the publisher's own grain.",
+          "description_full": "Per-source indicator data for udir-elevundersokelsen-mobbing (Utdanningsdirektoratet), at the publisher's own grain.\n\nPer-source indicator relation for `udir-elevundersokelsen-mobbing` (Utdanningsdirektoratet), published at the grain\nthe publisher actually uses rather than flattened into the cross-source views. One row per\n(region_code, grade, year, measure). Atlas's second Udir source.\n🔴 stability:source — the column set here follows Utdanningsdirektoratet, not Atlas. If the\npublisher adds, renames or drops a dimension, this relation changes with it. That is\nthe deliberate trade for getting the real grain; prefer a stability:curated relation\nif you need a shape Atlas promises to hold still. Decode codes through\nmeta_dimensions filtered to source_id=udir-elevundersokelsen-mobbing.",
+          "sample_query": "https://api-atlas.urbalurba.com/indicators__udir_elevundersokelsen_mobbing?limit=5"
+        }
+      ],
+      "consuming_models": [
+        {
+          "name": "indicators__udir_elevundersokelsen_mobbing",
+          "kind": "indicators"
+        },
+        {
+          "name": "mart_atlas_inventory",
+          "kind": "mart"
+        },
+        {
+          "name": "mart_indicators__udir_elevundersokelsen_mobbing",
+          "kind": "mart"
+        }
+      ],
+      "joined_with": [
+        {
+          "source_id": "brreg-enheter-alle",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "brreg-frivillige",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "brreg-oppdateringer",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "bufdir-barnefattigdom",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "bufdir-barnevern",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "fhi-alkohol",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "fhi-befolkning",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "fhi-befolkningsvekst",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        }
+      ],
+      "last_ingested_at": null,
+      "latest_row_count": null,
+      "total_runs": null,
+      "downstream_model_count": null
+    },
+    {
+      "kind": "source",
       "source_id": "udir-gsi",
       "upstream_id": "GSK_Elev_Skol",
       "upstream_url": "https://www.udir.no/tall-og-forskning/statistikk/statistikk-grunnskole/tall-om-elever-og-skoler/",
@@ -15141,7 +15331,8 @@
         "fhi-neet",
         "fhi-trangbodd",
         "fhi-vgs-gjennomforing",
-        "ssb-09429"
+        "ssb-09429",
+        "udir-elevundersokelsen-mobbing"
       ],
       "dimensions": [
         {
@@ -15742,6 +15933,12 @@
           "model_name": "mart_indicators__ssb_13995",
           "title": "13995: Sosialhjelpstilfeller, utbetalt beløp og stønadstid (K) 2022…",
           "description_short": "Per-source indicator data for ssb-13995 (Statistisk sentralbyrå), at the publisher's own grain."
+        },
+        {
+          "parent_kind": "model",
+          "model_name": "mart_indicators__udir_elevundersokelsen_mobbing",
+          "title": "Elevundersøkelsen — mobbing",
+          "description_short": "Per-source indicator data for udir-elevundersokelsen-mobbing (Utdanningsdirektoratet), at the publisher's own grain."
         },
         {
           "parent_kind": "model",
@@ -20666,6 +20863,67 @@
     },
     {
       "kind": "view",
+      "view_id": "indicators__udir_elevundersokelsen_mobbing",
+      "mart_name": "mart_indicators__udir_elevundersokelsen_mobbing",
+      "api_v1_name": "indicators__udir_elevundersokelsen_mobbing",
+      "title": "Elevundersøkelsen — mobbing",
+      "description_short": "Per-source indicator data for udir-elevundersokelsen-mobbing (Utdanningsdirektoratet), at the publisher's own grain.",
+      "description_full": "Per-source indicator data for udir-elevundersokelsen-mobbing (Utdanningsdirektoratet), at the publisher's own grain.\n\nPer-source indicator relation for `udir-elevundersokelsen-mobbing` (Utdanningsdirektoratet), published at the grain\nthe publisher actually uses rather than flattened into the cross-source views. One row per\n(region_code, grade, year, measure). Atlas's second Udir source.\n🔴 stability:source — the column set here follows Utdanningsdirektoratet, not Atlas. If the\npublisher adds, renames or drops a dimension, this relation changes with it. That is\nthe deliberate trade for getting the real grain; prefer a stability:curated relation\nif you need a shape Atlas promises to hold still. Decode codes through\nmeta_dimensions filtered to source_id=udir-elevundersokelsen-mobbing.",
+      "columns": [
+        {
+          "name": "source_id",
+          "description": "Atlas catalogue id for this ingest — always udir-elevundersokelsen-mobbing."
+        },
+        {
+          "name": "region_code",
+          "description": "Udir's own region code, verbatim from the EnhetID hierarchy. May not be a kommune — region_kind says which (Svalbard and \"Utlandet, uspesifisert\" both report at the same tree depth as genuine kommuner)."
+        },
+        {
+          "name": "kommune_nr",
+          "description": "Four-digit kommune code, derived through region_code_to_kommune_nr. NULL for Svalbard, \"Utlandet, uspesifisert\", and any other non-kommune region_code."
+        },
+        {
+          "name": "region_kind",
+          "description": "What region_code is, from classify_region_code: kommune, svalbard or unspecified_within_fylke for this source."
+        },
+        {
+          "name": "grade",
+          "description": "The real grade number, 7 or 10 — matching fhi_mobbing's own established axis."
+        },
+        {
+          "name": "year",
+          "description": "School year code from Udir's own TidID dimension (e.g. 202512 = 2025-26). v1 ingests the latest available year only."
+        },
+        {
+          "name": "contents_code",
+          "description": "Atlas-normalised variable code: fixed prefix `udir_elevundersokelsen_mobbing__` joined with Udir's own stable measure code (e.g. EUIndeks_1398, EUSpoersmaal_Q11811)."
+        },
+        {
+          "name": "contents_label",
+          "description": "The real Norwegian survey question or indicator text, verbatim from the API."
+        },
+        {
+          "name": "value",
+          "description": "Percentage of surveyed pupils for this slice. NULL when Udir suppressed the cell (its own marker, the literal character \"*\")."
+        },
+        {
+          "name": "updated_at",
+          "description": "Timestamp when the row was last written by ingest (from raw.loaded_at)."
+        }
+      ],
+      "built_from": [
+        {
+          "parent_kind": "model",
+          "model_name": "indicators__udir_elevundersokelsen_mobbing",
+          "title": null,
+          "description_short": "Per-source passthrough for Udir's Elevundersøkelsen bullying (\"mobbing\") indicator and its three underlying questions."
+        }
+      ],
+      "sample_query": "https://api-atlas.urbalurba.com/indicators__udir_elevundersokelsen_mobbing?limit=5",
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__udir_elevundersokelsen_mobbing"
+    },
+    {
+      "kind": "view",
       "view_id": "indicators__udir_gsi",
       "mart_name": "mart_indicators__udir_gsi",
       "api_v1_name": "indicators__udir_gsi",
@@ -22763,6 +23021,7 @@
               "fhi-neet",
               "fhi-vgs-gjennomforing",
               "ssb-09429",
+              "udir-elevundersokelsen-mobbing",
               "udir-gsi"
             ],
             "dimensions": [

@@ -8,7 +8,7 @@ a sharper, annual complement to the existing `fhi-mobbing` 3-year-rolling aggreg
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Backlog — Phase 1 complete, ready to move to active/ for Phase 2
+## Status: Active — Phases 2-3 DONE, Phase 4 (deploy) pending
 
 **Goal**: Add `udir-elevundersokelsen-mobbing` as a served Atlas source — an annual, per-grade
 bullying-prevalence signal at kommune resolution, sharper than `fhi-mobbing`'s 3-year-rolling
@@ -63,12 +63,23 @@ the same response shape as its own sibling `udir-gsi` despite sharing one client
     response to **exactly one column, labelled "Alle skoler"** — confirmed this is the kommune's
     own aggregate value, not a drill into its schools, by comparing against the all-of-Norway
     response's column structure for the same kommune.
-  - **Open engineering question, not resolved here — see [Q1].** The per-kommune-collapse
-    technique is verified correct but implies **one HTTP call per kommune** (357+) per
-    grade/year combination to build a full kommune-grain dataset; the wildcard-and-decode route
-    is a single call per grade/year but requires correctly parsing a large nested column tree
-    into (fylke, kommune, school-or-none) tuples aligned to each row's flat `data[]` array —
-    not yet attempted, not yet proven correct. Phase 2 must resolve this before writing `parse.ts`.
+  - **[Q1] resolved 2026-10-03, at the start of Phase 2 — per-kommune calls, deliberately, not the
+    bulk decode.** The wildcard tree's leaf columns were never confirmed to contain a distinct
+    per-kommune aggregate separate from its individual schools — decoding it without that
+    guarantee risks silently extracting a specific school's number as if it were the kommune's,
+    exactly the defect class this project's "verified correct, not merely clever" discipline (see
+    `udir-gsi`'s own README) exists to avoid. The per-entity-collapse technique is unambiguous
+    (`"Alle skoler"` label, cross-checked against the national tree for the same kommune) and
+    costs **one HTTP call per region node per grade** — `filterVerdier`'s own `EnhetID` list has
+    **351 nivaa-3 nodes** (349 real kommuner + Svalbard's `2100` + `Utlandet, uspesifisert`'s
+    `2599` — fewer than the ~357-359 seen in every prior kommune-grain source, because a kommune
+    with zero schools reporting into Elevundersøkelsen that year is simply absent from the tree,
+    not present-and-suppressed; confirm this distinction with a real row-count check in Phase 2)
+    × 2 grades = **~702 calls for one year**, plus 2 setup calls. [Q2]'s scope follows from this:
+    latest year only for v1 (all 5 years would be ~3,510 calls — defer backfill, same as every
+    annual Udir table's own convention). A deliberate pacing delay between calls is warranted
+    given the API's own "not intended for external use" disclaimer — courtesy, not a documented
+    rate limit.
 - [x] 1.4 Confirm the grade ("Trinn") filter semantics. **Confirmed, and this corrects an
   assumption carried from `udir-gsi`.** `udir-gsi`'s `TrinnID(-10)`/`KommunalitetID(-10)` sentinel
   meant "alle" (all grades/ownership types summed). **For this report, `-10` is NOT a valid "alle"
@@ -119,25 +130,24 @@ Rapportside definition, filter values, and real data (Arendal and Bykle, both gr
 
 ## Open Questions
 
-- **[Q1] Bulk-decode vs per-kommune calls — the central engineering decision, unresolved.** One
-  call per kommune (×2 grades × however many years) is verified correct but is 350–3,500+ HTTP
-  requests against an API whose own Swagger doc states *"ikke ment for ekstern bruk i dag"* (not
-  intended for external use today) — a far higher request volume than anything shipped this
-  session (every prior source: 1–7 calls total). The wildcard-and-decode route is a single call
-  per grade/year but needs the nested `columns[]` tree parsed into (fylke, kommune, school-or-none)
-  tuples aligned to each row's flat `data[]` array index — unverified whether a kommune's own
-  aggregate value is even present as a distinct leaf column inside that tree, or whether the tree
-  only enumerates individual schools (in which case bulk-decode would require summing/weighting
-  school-level figures client-side, which `udir-gsi`'s own precedent deliberately avoided doing for
-  any derived figure). **Recommendation: attempt the bulk-decode route first in Phase 2, with the
-  per-kommune-collapse technique (already verified correct) as the fallback if the tree can't be
-  decoded unambiguously — do not default to 3,500 requests without first trying the cheaper path.**
-- **[Q2] Historical backfill — how many of the 5 available years to ingest in v1.** Unlike the
-  NAV-Excel sources (one current-year file, backfill genuinely unresolved), all 5 years here are
-  equally live-queryable today. If [Q1] resolves to bulk-decode, extra years are nearly free
-  (one more call each); if it resolves to per-kommune calls, each extra year multiplies the request
-  count linearly. **Recommendation: defer this decision until [Q1] is settled** — ingest all 5
-  years if bulk-decode works, latest year only if forced onto the per-kommune path.
+- **[Q1] Bulk-decode vs per-kommune calls — RESOLVED 2026-10-03, per-kommune calls.** The
+  wildcard-and-decode route was never confirmed to carry a distinct per-kommune aggregate leaf
+  separate from its individual schools — decoding it on that unverified assumption risks silently
+  extracting one school's figure as if it were the kommune's. The per-entity-collapse technique
+  (`EnhetID` pinned to one specific id → response collapses to one column labelled `"Alle
+  skoler"`) is unambiguous, already cross-checked against the national tree for the same kommune,
+  and costs one call per region node per grade: `filterVerdier`'s own `EnhetID` list has 351
+  nivaa-3 nodes (349 kommuner + Svalbard's `2100` + `Utlandet, uspesifisert`'s `2599`) × 2 grades
+  = **~702 calls for one year** — far more than any prior source. At Phase 1's exploratory pace
+  this looked cheap (tens of ms per call); **a real full run (Phase 2) found that assumption
+  wrong** — only the first ~22 calls stay fast, every call after settles into a steady ~3.5-6s
+  each, for ~60 minutes total wall time. Correctness over call count was still the right call —
+  the alternative (bulk-decode) risked a silent misparse, not just a slower run — but the real
+  cost of this decision turned out to be wall-clock minutes, not request count.
+- **[Q2] Historical backfill — RESOLVED 2026-10-03, latest year only for v1.** Follows directly
+  from [Q1]: per-kommune calls make every extra year ~702 more requests (all 5 years would be
+  ~3,510). Defer backfill, same convention as every other annual Udir table — revisit if a real
+  consumer need for historical Elevundersøkelsen trend data emerges.
 - **[Q3] Scope — mobbing only, or fold in trivsel/other Elevundersøkelsen indicator families too?**
   Elevundersøkelsen covers many indicator families (`GSK_EUG_mobbing`, `GSK_EUG_indikator` /
   learning-environment, `GSK_EUG_tema`, and more) under one survey, structurally closer to
@@ -161,53 +171,83 @@ Rapportside definition, filter values, and real data (Arendal and Bykle, both gr
 
 ---
 
-## Phase 2: Ingest module + raw table (not started)
+## Phase 2: Ingest module + raw table — DONE (verified 2026-10-03)
 
 ### Tasks
 
-- [ ] 2.1 **Resolve [Q1] first, before writing `parse.ts`.** Prototype the wildcard-and-decode
-  response for one kommune against the already-verified per-kommune-collapse value for that same
-  kommune/grade/year — if they agree, build the bulk-decode parser; if the tree can't be decoded
-  unambiguously (e.g. no distinct kommune-aggregate leaf, only school leaves), fall back to one
-  call per kommune, scoped to the latest year only per [Q2]'s fallback branch.
-- [ ] 2.2 Create `atlas-data/ingest/src/sources/udir-elevundersokelsen-mobbing/`: `manifest.yml`
-  (`source_id: udir-elevundersokelsen-mobbing`, `provider: udir`, `periodicity: P1Y`,
-  `license: NLOD`), `index.ts`, `parse.ts`, `fetch_retry.ts` (copied), `README.md`, `__tests__/`
-  with a real captured fixture covering: an ordinary kommune (Arendal), a suppressed row (Bykle),
-  the `Utlandet`/`2599` sentinel, both grades (7th and 10th).
-- [ ] 2.3 Migration `raw.udir_elevundersokelsen_mobbing(region_code, grade, year, measure, value,
-  loaded_at)` or similar — shape depends on [Q1]'s resolution (one row per question/indicator per
-  kommune per grade per year).
-- [ ] 2.4 Dagster registration — annual cadence, existing weekly-polled job pattern (same as
-  `udir-gsi`'s own registration), no new job.
-- [ ] 2.5 Add `ingest:udir-elevundersokelsen-mobbing` npm script FIRST, verify via
-  `check-every-source-has-an-ingest-script.sh` and the real `npm run` invocation before any other
-  Phase 2 work, per this session's standing discipline since `husbanken-bostotte`'s urb-agents#1807.
+- [x] 2.1 **[Q1] resolved — per-kommune calls, not bulk-decode.** See Phase 1.3/[Q1]. ~702 calls
+  for the latest year (351 region nodes × 2 grades), with a deliberate pacing delay between calls.
+- [x] 2.2 Created `atlas-data/ingest/src/sources/udir-elevundersokelsen-mobbing/`: `manifest.yml`,
+  `index.ts`, `parse.ts`, `fetch_retry.ts`, `README.md`, `__tests__/` with real captured fixtures
+  covering: an ordinary kommune (Arendal, both grades), a suppressed row (Bykle), the
+  `Utlandet, uspesifisert`/`2599` sentinel, Svalbard/`2100`, and — found during the first real
+  run, not anticipated in Phase 1 — a region/grade pair with **zero rows at all**
+  (Hægebostad/`4226`, 10th grade: no 10th-grade cohort reports into this table). 24 tests, all
+  passing.
+- [x] 2.3 Migration `064_raw_udir_elevundersokelsen_mobbing.sql` — `raw.udir_elevundersokelsen_mobbing(
+  region_code, grade, year, measure, measure_label, value, loaded_at)`, PK `(region_code, grade,
+  year, measure)`.
+- [x] 2.4 Dagster registration — added to `_ANNUAL_SOURCE_IDS`/`OTHER_SOURCES`'s weekly-polled
+  group alongside `udir-gsi`, no new job. `dagster definitions validate` passes. Flagged explicitly
+  in `raw_other.py`'s own docstring and `schedules.py`'s job description as a real outlier in
+  request count and wall time (see Validation below) — not a hang if a weekly poll looks "stuck"
+  on this asset for 45-60 minutes.
+- [x] 2.5 `ingest:udir-elevundersokelsen-mobbing` npm script added first, verified via
+  `check-every-source-has-an-ingest-script.sh` and the real `npm run` invocation.
 
 ### Validation
 
-Real run against the live API, zero rows silently dropped, suppression and the `Utlandet`
-sentinel both confirmed against real data — same discipline as every prior source.
+**Real run against the live API, completed 2026-10-03: 702 calls, 2,804 rows written, 60.3
+minutes wall time (`duration_ms: 3615723`).** Zero rows silently dropped: 351 regions × 2 grades ×
+4 measures = 2,808 expected if every call returned data; the 4-row deficit is exactly the one
+confirmed-empty call (Hægebostad/10th grade), verified directly against Postgres — every other
+region/grade pair has exactly 4 rows, no partial writes.
+
+**A genuinely new finding, not predicted in Phase 1**: per-call latency was NOT small and fast as
+assumed from the Phase 1 exploratory calls — the first ~22 calls returned in 30-45ms, then every
+call after that settled into a steady ~3.5-6 seconds each, for the rest of the run. No pattern
+found explaining the transition (not fylke-aligned, not a clean request-count threshold). This
+changed the real cost of this source from "~702 small/fast calls" (Phase 1's assumption) to "~702
+calls, ~60 minutes wall time" — documented prominently in the source's own README and the Dagster
+asset docstring so this isn't mistaken for a hang later.
 
 ---
 
-## Phase 3: dbt staging and marts (not started)
+## Phase 3: dbt staging and marts — DONE (verified 2026-10-03)
 
 ### Tasks
 
-- [ ] 3.1 Add `raw.udir_elevundersokelsen_mobbing` to `models/indicators/sources.yml`.
-- [ ] 3.2 `indicators__udir_elevundersokelsen_mobbing.sql` — `kommune_nr`/`region_kind` via
-  `region_code_to_kommune_nr`/`classify_region_code`. Explicitly confirm `2599` resolves to
-  `region_kind='unspecified_within_fylke'` against real loaded data (see [Q5]) — expect this to
-  pass clean, but confirm rather than assume.
-- [ ] 3.3 Document columns in `schema.yml`; `mart_indicators__udir_elevundersokelsen_mobbing.sql`
+- [x] 3.1 Added `raw.udir_elevundersokelsen_mobbing` to `models/indicators/sources.yml`.
+- [x] 3.2 `indicators__udir_elevundersokelsen_mobbing.sql` — `kommune_nr`/`region_kind` via
+  `region_code_to_kommune_nr`/`classify_region_code`. **Passed clean on the first `dbt build`**, as
+  expected — both sentinels resolved exactly as predicted (see Validation below).
+- [x] 3.3 Documented columns in `schema.yml`; `mart_indicators__udir_elevundersokelsen_mobbing.sql`
   api passthrough + `marts/api/schema.yml` entry.
-- [ ] 3.4 `dbt build` against real loaded data.
+- [x] 3.4 `dbt build --select indicators__udir_elevundersokelsen_mobbing
+  mart_indicators__udir_elevundersokelsen_mobbing` against real loaded data —
+  `PASS=16 WARN=0 ERROR=0 SKIP=0 TOTAL=16`.
 
 ### Validation
 
-Real local Postgres. Explicitly confirm the `Utlandet`/`2599` resolution with a direct query,
-same discipline as every prior sentinel this session.
+Real local Postgres, not an empty schema. Explicitly confirmed by direct query:
+
+```
+ region_code | kommune_nr |       region_kind        | count
+-------------+------------+---------------------------+-------
+ 2100        |            | svalbard                  |     8
+ 2599        |            | unspecified_within_fylke  |     8
+```
+
+`2100` resolves to `region_kind='svalbard'` and `2599` resolves to
+`region_kind='unspecified_within_fylke'`, both `kommune_nr=NULL`, exactly as predicted — no macro
+change needed.
+
+Full dbt check-suite (all 17 scripts), a full `dbt build`, the full ingest test suite (351 tests),
+and the website build all pass clean. The only non-pass results in the full build
+(`extracted_columns_are_still_populated`, `raw_sources_were_refreshed_recently`, the
+`mart_atlas_inventory` SKIP cascade) are the same pre-existing environmental staleness confirmed
+unrelated to every prior source this session — `udir_elevundersokelsen_mobbing` does not appear in
+either failing test's result set.
 
 ---
 
@@ -230,16 +270,23 @@ task — do not take a deploy report alone as sufficient.
   five-month-old description.
 - [x] **Licence independently confirmed** — NLOD, re-fetched from Udir's own data portal for this
   source specifically.
-- [ ] The bulk-decode-vs-per-kommune-calls question ([Q1]) is resolved with evidence, not assumed.
-- [ ] `udir-elevundersokelsen-mobbing` ingests cleanly with zero rows silently dropped, including
-  the `Utlandet`/`2599` sentinel and at least one suppressed row both represented.
-- [ ] `indicators__udir_elevundersokelsen_mobbing` and its mart build and test clean against real
-  loaded data, with `2599` resolving through `classify_region_code` exactly as predicted.
+- [x] The bulk-decode-vs-per-kommune-calls question ([Q1]) is resolved with evidence, not assumed
+  — per-kommune calls, correctness over call count, real cost measured at ~60 minutes wall time.
+- [x] `udir-elevundersokelsen-mobbing` ingests cleanly with zero rows silently dropped, including
+  the `2100`/`2599` sentinels and at least one suppressed row both represented — 2,804 rows
+  written, exactly matching 351 regions × 2 grades × 4 measures minus the one confirmed-empty
+  region/grade pair (Hægebostad's 10th grade).
+- [x] `indicators__udir_elevundersokelsen_mobbing` and its mart build and test clean against real
+  loaded data, with `2100`/`2599` resolving through `classify_region_code` exactly as predicted
+  (`PASS=16 WARN=0 ERROR=0`).
 - [ ] `udir-elevundersokelsen-mobbing` appears in `meta_sources.served_as` after a real deploy,
-  independently verified via live `curl`.
-- [ ] Golden-file tests cover: an ordinary kommune, a suppressed row, the `Utlandet` sentinel,
-  both grades.
-- [ ] The investigation and `1PRIORITY.md` are updated to mark this candidate shipped.
+  independently verified via live `curl`. *(Phase 4, pending.)*
+- [x] Golden-file tests cover: an ordinary kommune, a suppressed row, the `Utlandet` sentinel,
+  both grades, and a genuinely-empty region/grade pair (found on the real run, not predicted) —
+  24 tests, all passing.
+- [ ] The investigation and `1PRIORITY.md` are updated to mark this candidate shipped. *(Will be
+  marked shipped at close-out, after Phase 4 verification — same sequencing as every prior
+  source.)*
 
 ---
 
@@ -252,12 +299,18 @@ task — do not take a deploy report alone as sufficient.
   Always pass an explicit grade id (`6` = 7th, `9` = 10th); never carry the `-10`-means-"alle"
   assumption from `udir-gsi`/`nav-aap` into a new Udir report without checking that report's own
   `filterVerdier` first.
-- **[Q1] (bulk-decode vs per-kommune calls) must be resolved before `parse.ts` is written** — this
-  is the one genuinely open engineering question this plan did not resolve in Phase 1, by design:
-  it needs a real prototype comparison, not another round of reading API responses.
+- **[Q1] resolved — per-kommune calls (~702 for the latest year), not bulk-decode.** The cheaper
+  single-call-per-grade route was rejected because it was never confirmed to carry a distinct
+  per-kommune aggregate leaf, only individual schools — correctness over call count. **The real
+  cost of that call count turned out to be ~60 minutes wall time, not request volume** — only the
+  first ~22 calls are fast; every call after settles into a steady ~3.5-6s each, confirmed on the
+  real Phase 2 run. Budget for this; it is not a hang.
+- **A region/grade pair can be genuinely absent, not suppressed.** Confirmed live on Hægebostad's
+  10th grade: zero rows, no column at all for that grade — not predicted in Phase 1, found on the
+  first real run. `parse.ts` returns zero rows for this case rather than throwing.
 - **One new sentinel confirmed, already has precedent**: `Utlandet`/`2599` → `classify_region_code`'s
-  existing `unspecified_within_fylke` branch, no macro change needed — confirm with a real test in
-  Phase 3 anyway.
+  existing `unspecified_within_fylke` branch, no macro change needed — confirmed with a real test
+  in Phase 3.
 
 ---
 

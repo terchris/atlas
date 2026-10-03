@@ -658,9 +658,9 @@ Each PLAN follows the standard Atlas pattern (per-source folder under `atlas-dat
   `2100`, a bare `Ukjent` bucket) both resolved exactly as predicted, zero relationship-test
   failures on the first `dbt build`. One new finding: unlike `nav-aap`, `Ukjent` is present in
   BOTH the Antall and Prosent sheets here — its Prosent cells are suppressed, not omitted.
-- [ ] 🆕 **Drafted 2026-10-03.**
-  [`PLAN-015-udir-elevundersokelsen-mobbing.md`](PLAN-015-udir-elevundersokelsen-mobbing.md), in
-  `backlog/` — Atlas's second Udir source. Phase 1 found this report's response shape is NOT
+- [ ] 🔄 **Drafted 2026-10-03, moved to `active/` — Phase 2 in progress.**
+  [`PLAN-015-udir-elevundersokelsen-mobbing.md`](../active/PLAN-015-udir-elevundersokelsen-mobbing.md)
+  — Atlas's second Udir source. Phase 1 found this report's response shape is NOT
   `udir-gsi`'s shape despite sharing one client: geography (`EnhetID`) is a column dimension here,
   not a row dimension, so `udir-gsi`'s depth-filtered-`radSti` technique doesn't apply (confirmed
   live — a 3-level `radSti` errors with "maksimalt 2 nivåer"). Found and corrected an assumption

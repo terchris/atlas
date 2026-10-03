@@ -1768,6 +1768,63 @@ sources:
             data_type: numeric
           - name: loaded_at
             data_type: timestamp with time zone
+      - name: udir_elevundersokelsen_mobbing
+        description: |
+          Udir Elevundersøkelsen — the annual pupil survey — bullying ("mobbing") indicator and its
+          three underlying questions, per region, per grade (7th and 10th), for the latest school
+          year. Reached through the same statistikkportalen.udir.no client as udir_gsi, but a
+          genuinely different response shape: EnhetID (geography) is a filter/column dimension
+          here, not udir_gsi's row hierarchy, so one HTTP call is made per region node per grade
+          (~702 calls for one run) rather than one call per year.
+          Populated by atlas-data/ingest/src/sources/udir-elevundersokelsen-mobbing.
+        loaded_at_field: loaded_at
+        meta:
+          ingest_cadence: weekly
+        freshness:
+          warn_after: {count: 400, period: day}
+          error_after: {count: 800, period: day}
+        columns:
+          - name: region_code
+            description: >-
+              Udir's own region code from the EnhetID hierarchy (nivaa 3) — a 4-digit kommune code
+              (including Svalbard's pseudo-kommune 2100), or the literal 2599 ("Utlandet,
+              uspesifisert" — Norwegian schools abroad, a sentinel not present in udir_gsi).
+              kommune_nr is resolved downstream via classify_region_code.
+            data_tests:
+              - not_null
+          - name: grade
+            description: >-
+              The real grade number, 7 or 10 — matching fhi_mobbing's own established axis. This
+              report's TrinnID filter has no "all grades" sentinel; every row names its grade
+              explicitly.
+            data_tests:
+              - not_null
+          - name: year
+            description: >-
+              School year code from Udir's own TidID dimension. v1 ingests the latest available
+              year only — see the source's README for why backfill is deferred.
+            data_tests:
+              - not_null
+          - name: measure
+            description: >-
+              Udir's own stable identifier for the indicator or question (e.g. EUIndeks_1398,
+              EUSpoersmaal_Q11811) — unlike udir_gsi, this report's API provides a real code, not
+              just a label, at the measure level.
+            data_tests:
+              - not_null
+          - name: measure_label
+            description: The real Norwegian survey question or indicator text, verbatim from the API.
+            data_tests:
+              - not_null
+          - name: value
+            description: >-
+              Percentage of surveyed pupils, for this region/grade/year/measure slice. NULL when
+              Udir itself suppressed the cell (its own marker, the literal character "*"). A
+              region/grade pair with nothing to report at all (confirmed live on Hægebostad's 10th
+              grade) has no row — absence, not a NULL value.
+            data_type: numeric
+          - name: loaded_at
+            data_type: timestamp with time zone
       - name: husbanken_bostotte
         description: |
           Husbanken bostøtte (housing allowance) — application counts, decision counts, payout

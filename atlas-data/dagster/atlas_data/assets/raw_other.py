@@ -24,6 +24,23 @@ See _factory.make_raw_ingest_asset. Currently:
   Udir's own public docs name a dead hostname for this). Annual data, polled
   weekly like the sources above — see
   atlas-data/ingest/src/sources/udir-gsi/README.md.
+- udir-elevundersokelsen-mobbing: same API/client as udir-gsi, a genuinely
+  different response shape (geography is a filter/column dimension here,
+  not a row dimension — see that source's own README). Annual data, polled
+  weekly like the sources above.
+
+  ⚠️ **A real outlier in request count and wall time, not memory.** This
+  report has no bulk-kommune query shape — building a full kommune-grain
+  dataset costs one HTTP call per kommune-equivalent region node per grade
+  (~702 calls for one run, confirmed live 2026-10-03, PLAN-015's own [Q1]),
+  against every other source here making single digits of requests. Observed
+  per-call latency varies wildly (tens of ms to ~5s, no clean pattern found)
+  — total run time is measured in tens of minutes, not seconds. This does
+  not change the weekly cadence or `ATLAS_MAX_CONCURRENT_INGESTS` (still one
+  subprocess, same as every HTTP-based source above), but a weekly poll that
+  looks "stuck" on this asset specifically for 20-40 minutes is this source
+  behaving normally, not a hang — see its own README before treating that as
+  an incident.
 - husbanken-bostotte: Qlik Engine API (WebSocket JSON-RPC) against Husbanken's
   public "Statistikkbank" app — Atlas's first WebSocket-based ingest. Still
   one subprocess per run, same as every HTTP-based source above; the
@@ -60,6 +77,7 @@ OTHER_SOURCES = [
     "nav-helt-ledige",
     "nav-uforetrygd",
     "redcross-branches",
+    "udir-elevundersokelsen-mobbing",
     "udir-gsi",
 ]
 
@@ -72,6 +90,7 @@ assets = [
             "bufdir-barnevern",
             "husbanken-bostotte",
             "imdi-bosetting",
+            "udir-elevundersokelsen-mobbing",
             "udir-gsi",
         ],
         group_name="raw_other",
