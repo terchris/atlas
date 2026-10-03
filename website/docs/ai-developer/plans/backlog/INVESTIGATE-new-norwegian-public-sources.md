@@ -179,6 +179,16 @@ client with different table-name parameters. `kommune_nr` needs no crosswalk, bu
 through a derivation macro (`classify_region_code`), not passed straight through — Svalbard sits
 at the same API hierarchy depth as genuine kommuner, caught during implementation.
 
+🆕 **`udir-elevundersokelsen-mobbing` (PLAN-015) drafted 2026-10-03** — Phase 1 found the
+Elevundersøkelsen response shape is genuinely different from `udir-gsi`'s despite sharing one
+client: geography is a column dimension here, not a row dimension, so `udir-gsi`'s
+depth-filtered-`radSti` technique doesn't apply (confirmed live). Also found and corrected an
+assumption that would have carried over silently: `udir-gsi`'s `-10` = "alle" sentinel does NOT
+hold for this report's `TrinnID` filter — it resolves to a single specific (wrong) grade without
+erroring. One central engineering question left deliberately open rather than guessed at — see
+the plan's own **[Q1]**: decode one bulk API response per grade/year, or issue one call per
+kommune (350–3,500+ requests against an API marked "not intended for external use").
+
 - **URL**: `https://www.udir.no/om-udir/data` (portal; old `data.udir.no` redirects here)
 - **Datasets in scope**: GSI (grunnskolens informasjonssystem — enrolment, pupil-teacher ratio, special-ed share); Elevundersøkelsen (pupil survey — trivsel, mobbing); Nasjonale prøver (national tests, 2022→ resumed); Barnehagefakta (BAF — kindergarten coverage)
 - **Format**: JSON (confirmed live, 2026-10-02 — not CSV/Excel as this entry originally guessed; see `PLAN-010`)
@@ -648,6 +658,21 @@ Each PLAN follows the standard Atlas pattern (per-source folder under `atlas-dat
   `2100`, a bare `Ukjent` bucket) both resolved exactly as predicted, zero relationship-test
   failures on the first `dbt build`. One new finding: unlike `nav-aap`, `Ukjent` is present in
   BOTH the Antall and Prosent sheets here — its Prosent cells are suppressed, not omitted.
+- [ ] 🆕 **Drafted 2026-10-03.**
+  [`PLAN-015-udir-elevundersokelsen-mobbing.md`](PLAN-015-udir-elevundersokelsen-mobbing.md), in
+  `backlog/` — Atlas's second Udir source. Phase 1 found this report's response shape is NOT
+  `udir-gsi`'s shape despite sharing one client: geography (`EnhetID`) is a column dimension here,
+  not a row dimension, so `udir-gsi`'s depth-filtered-`radSti` technique doesn't apply (confirmed
+  live — a 3-level `radSti` errors with "maksimalt 2 nivåer"). Found and corrected an assumption
+  carried from `udir-gsi`: `TrinnID(-10)` is NOT an "alle" sentinel for this report — it silently
+  resolved to a single wrong grade without erroring, caught only by cross-checking against an
+  explicit grade id, not assumed to transfer from the sibling source. One genuinely new sentinel:
+  Norwegian schools abroad (`Utlandet`, kommune-equivalent kode `2599`) — falls through
+  `classify_region_code`'s existing `unspecified_within_fylke` branch cleanly, no macro change
+  needed. One real open engineering question, deliberately left unresolved rather than guessed
+  at — **[Q1]**: decode a single bulk nested-column API response per grade/year, or issue one call
+  per kommune (350–3,500+ requests against an API marked "not intended for external use") — to be
+  settled with a real prototype comparison in Phase 2, not assumed. Ready to move to `active/`.
 - [ ] Optionally: pre-write outreach emails to Bufdir, NAV, IMDi, Helsedirektoratet asking whether richer machine-readable distributions exist than what's surfaced publicly. (Pattern reused from [`INVESTIGATE-folkehjelp-supply` § A.4](./INVESTIGATE-folkehjelp-supply.md#a4-craft-cms-graphql-probe--q2-outreach-worth-pursuing) — non-blocking; we ship around the public surface either way.)
 
 ---
