@@ -274,8 +274,24 @@ These don't fill an existing report — they enable an *11th, 12th, 13th* report
 
 ### 7. Helfo Fastlegestatistikk — primary-care access
 
-- **URL (verified 2026-05-04)**: `https://www.helfo.no/Fastlegeordninga/fastlegestatistikk` — page is a Power BI dashboard. Open-data API directs to Helsedirektoratet's developer portal at `https://utvikler.helsedirektoratet.no` (where the underlying dataset is registered).
-- **Format**: Power BI dashboard for browse; underlying data via Helsedirektoratet HAPI's data catalogue
+⚠️ **Phase 1 checked live 2026-10-03 and found this section's own mechanism wrong — see
+[`PLAN-018-helfo-fastlegestatistikk.md`](./PLAN-018-helfo-fastlegestatistikk.md) for the full
+research. Does NOT proceed to Phase 2 without a human decision.** The dashboard genuinely is
+Power BI (not a Qlik app wearing a Power-BI-shaped URL, unlike Husbanken's own correction), but
+**"HAPI" is NOT this dataset's backend** — checked directly on
+`helsedirektoratet.no/om-oss/apne-data-api`: HAPI is a content-syndication API for
+helsedirektoratet.no's own editorial website content (guidelines, antibiotic-use model,
+outage notices), unrelated to Fastlegestatistikk. The embed's own token is minted server-side,
+per page load, by an internal undocumented endpoint with roughly a 2-minute validity window —
+not a documented, anonymously-reachable backend the way Qlik's Engine API was. No raw-file
+fallback exists on Helfo's own site (`?tidligere-versjoner` returns "no older versions"), and
+SSB's PxWebApi (checked live, 20 "fastlege" matches) publishes GP demographics and consultation
+patterns, not this list-coverage/vacancy statistic. **Recommendation**: outreach to
+Helsedirektoratet (`HelsedirektoratetAPI@helsedir.no`) before any further Atlas-side work, or
+move to Tier 3 — not something to resolve unilaterally.
+
+- **URL (verified 2026-05-04)**: `https://www.helfo.no/Fastlegeordninga/fastlegestatistikk` — page is a Power BI dashboard. Open-data API directs to Helsedirektoratet's developer portal at `https://utvikler.helsedirektoratet.no` (where the underlying dataset is registered). ⚠️ **The parenthetical is wrong — see the correction above; no dataset for this candidate is registered there.**
+- **Format**: Power BI dashboard for browse; underlying data via Helsedirektoratet HAPI's data catalogue ⚠️ **Wrong, see above — HAPI serves unrelated website content.**
 - **Auth**: free registration on developer portal; specifics per API
 - **Licence**: NLOD
 - **Geo**: kommune, fylke, national; **monthly** cadence (first-of-month snapshots)
@@ -285,8 +301,8 @@ These don't fill an existing report — they enable an *11th, 12th, 13th* report
 **Plugs into**: Report #4 (Mental-Health Triangulation) as a *system-access* axis (does the kommune have GPs at all?), and Report #9 (Care-Services Capacity vs Population) as a complement to KOSTRA omsorg + KPR contacts. Could also seed a new **Report #12 — Primary-Care Access** that combines Fastlege coverage, KPR contact rates, and Helsedirektoratet's NKI quality indicators.
 
 **Source-specific quirks**:
-- **[Q19]** Power-BI-only browse + developer-portal API — same pattern as Husbanken. Use the developer-portal API, not the dashboard. **Recommendation**: register for the Helsedirektoratet developer key as part of the PLAN.
-- **[Q20]** Monthly cadence — same `dim_period` discussion as NAV ([Q5]). If both NAV and Helfo land in the same period, resolve `dim_period` once.
+- **[Q19]** Power-BI-only browse + developer-portal API — ⚠️ **NOT the same pattern as Husbanken, checked live 2026-10-03 — see the correction above. Resolved: no developer-portal path exists for this specific dataset.**
+- **[Q20]** Monthly cadence — same `dim_period` discussion as NAV ([Q5]). If both NAV and Helfo land in the same period, resolve `dim_period` once. Moot until [Q19]'s access question resolves.
 - **[Q21]** "List uten fast lege" definition — Helfo's terminology includes "lister uten fast lege" vs. "ubesatt liste" (subtle distinction). Pin the source's own definitions in the manifest.
 
 ### 8. DSB Kommuneundersøkelsen — municipal preparedness
@@ -620,7 +636,10 @@ Atlas's [PLANS.md `Splitting Investigations into Multiple Plans`](../../PLANS.md
 
 **Phase 2 — Tier-2 (one PLAN per source family)**
 1. `PLAN-012-ssb-crime-tables.md` — ✅ shipped (smallest, closed off Atlas's missing JUST theme)
-2. `PLAN-013-helfo-fastlege.md` (uses Helsedirektoratet developer-portal pattern)
+2. ⚠️ `PLAN-018-helfo-fastlegestatistikk.md` — **Phase 1 only, blocked 2026-10-03.** Not "uses
+   Helsedirektoratet developer-portal pattern" — that pattern was checked live and does not exist
+   for this dataset. Needs outreach to Helsedirektoratet or a Tier-3 redesignation before any
+   further work; see §7 above.
 3. `PLAN-014-dsb-kommuneundersokelsen.md`
 4. `PLAN-015-brreg-frivillighetsregisteret-lottstift.md` — **blocked by [`INVESTIGATE-tag-indicators-sdg-icnpo.md`](./INVESTIGATE-tag-indicators-sdg-icnpo.md)** for the ICNPO crosswalk, per [Q26]
 
@@ -722,7 +741,24 @@ Each PLAN follows the standard Atlas pattern (per-source folder under `atlas-dat
   is required to reach it — and it carries real, non-suppressed data, so v1 includes it. Both
   Udir sentinels (Svalbard's `2100`, `Utlandet, uspesifisert`'s `2599`) resolved exactly as
   predicted via `classify_region_code`'s existing branches.
-- [ ] Optionally: pre-write outreach emails to Bufdir, NAV, IMDi, Helsedirektoratet asking whether richer machine-readable distributions exist than what's surfaced publicly. (Pattern reused from [`INVESTIGATE-folkehjelp-supply` § A.4](./INVESTIGATE-folkehjelp-supply.md#a4-craft-cms-graphql-probe--q2-outreach-worth-pursuing) — non-blocking; we ship around the public surface either way.)
+- [x] ⚠️ **Phase 1 only, blocked 2026-10-03.**
+  [`PLAN-018-helfo-fastlegestatistikk.md`](./PLAN-018-helfo-fastlegestatistikk.md) — Tier-2
+  item #7. Checked live: the investigation's own assumed mechanism ("Power-BI-backed, same
+  pattern as Husbanken, use the developer-portal API") does not hold. The dashboard genuinely is
+  Power BI, but "HAPI" — named as the backend — is Helsedirektoratet's own website-content API,
+  unrelated to this dataset (confirmed directly on its own description page). The embed's token
+  is server-minted per page load by an undocumented internal endpoint with a ~2-minute validity
+  window, not a stable anonymous backend like Qlik's Engine API was for Husbanken. No raw-file
+  fallback on Helfo's own site; SSB's PxWebApi publishes GP demographics/consultation patterns,
+  not this list-coverage statistic. Does not proceed to Phase 2 without outreach to
+  Helsedirektoratet (`HelsedirektoratetAPI@helsedir.no`) or a Tier-3 redesignation — this is now
+  the action the line below was written for, not a non-blocking optional step.
+- [ ] Outreach email to Helsedirektoratet (`HelsedirektoratetAPI@helsedir.no`) asking whether
+  Fastlegestatistikk's underlying dataset — list vacancy/coverage per kommune — exists anywhere
+  outside the Power BI dashboard. This is now **the** blocker for `PLAN-018`, not an optional
+  extra. (Pattern reused from [`INVESTIGATE-folkehjelp-supply` § A.4](./INVESTIGATE-folkehjelp-supply.md#a4-craft-cms-graphql-probe--q2-outreach-worth-pursuing).)
+  Separately, optionally: the same pattern for Bufdir, NAV, IMDi — non-blocking for those, since
+  Atlas already ships around their public surfaces.
 
 ---
 
