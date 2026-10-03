@@ -11,7 +11,7 @@ not a parsing gap.
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Active — Phases 1-3 DONE, Phase 4 (deploy) not yet submitted
+## Status: Active — Phases 1-3 DONE, Phase 4 (deploy) submitted, awaiting imac + ops-dev
 
 **Goal**: Add `udir-fravar` as a served Atlas source — kommune-level 10th-grade absence,
 Atlas's first annual-absence axis (previously only `fhi-vgs-gjennomforing`'s 3-year completion
@@ -267,21 +267,39 @@ standing local-environment gap, same class of thing as this session's own
 
 ---
 
-## Phase 4: Deploy and verify arrival (not started)
+## Phase 4: Deploy and verify arrival — IN PROGRESS (submitted 2026-10-03)
 
-Same shape as every prior source's Phase 4 this session — name exact relations, both image
-digests labelled (copied verbatim from the release's own `uis-artifact.json`, not reconstructed),
-`LANDS WITH` derived via `atlas-data/uis/lands-with.sh`, a row-count prediction stated explicitly.
+PR #536 (Phases 2-3) merged to main as `0ffeb79`. Image build (run 37155371998) completed and
+published:
+
+```
+artifact_digest  sha256:fe8ab71e9dcf91b4b5dc6554a3f79bf198ed494818bab2c9cd78716082866530  ghcr.io/terchris/atlas-data/uis:v20261003-0ffeb79
+image_digest     sha256:bd146257a33a215514e1f8bf99282ff328efb28f2c99973a2de7a4cacba06253  ghcr.io/terchris/atlas-data:v20261003-0ffeb79
+```
+
+Both copied verbatim from the release's own `uis-artifact.json`, not reconstructed.
+`render-template-info.sh v20261003-0ffeb79` confirmed clean (63 raw = migrations, 93 marts
+stated once, 54 automated sources covered).
+
+`atlas-data/uis/lands-with.sh 59e8bc3..0ffeb79` confirmed: `annual_sources_refresh` then
+`transform_and_publish`, plus a separate template-info pin (pin and a run are two actions, see
+[[a-pin-and-a-run-are-two-actions]]).
+
+**Sent:**
+- [urb-agents#1827](https://github.com/terchris/urb-agents/issues/1827) → imac: Dagster deploy
+  request, row-count prediction 21,290 for `raw.udir_fravar`/`indicators__udir_fravar`. This
+  source's call volume (22 calls total across 11 backfilled years, see 1.9) is cheap, unlike
+  `udir-elevundersokelsen-mobbing`'s — measured live in dev at 6.1s wall time, not assumed from a
+  Phase 1 sample (per [[exploratory-calls-dont-reveal-sustained-api-latency]]). No "slow run"
+  warning needed.
+- [urb-agents#1828](https://github.com/terchris/urb-agents/issues/1828) → ops-dev: template-info
+  pin nomination for the same tag.
+
 **Only predict `indicators__udir_fravar` as a served relation — never a second
-`mart_indicators__...` entry, see [[mart-prefix-is-never-a-served-endpoint]].** This source's call
-volume (~22 calls total across 11 backfilled years, see 1.9) is cheap, unlike
-`udir-elevundersokelsen-mobbing`'s — no "slow run" warning
-expected to be needed, but confirm real wall time during Phase 2 before assuming so in the deploy
-request (per [[exploratory-calls-dont-reveal-sustained-api-latency]] — do not assume a handful of
-Phase 1 probe calls predicts the real cost, even though this source's call count is small enough
-that latency variance matters far less than it did for the 702-call sibling). Independently
-re-verify against the live public API before closing the deploy task — do not take a deploy report
-alone as sufficient.
+`mart_indicators__...` entry, see [[mart-prefix-is-never-a-served-endpoint]].**
+
+Awaiting both reports. Independently re-verify against the live public API before closing either
+deploy task — do not take a deploy report alone as sufficient.
 
 ---
 
