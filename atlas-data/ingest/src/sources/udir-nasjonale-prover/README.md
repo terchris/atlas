@@ -84,4 +84,4 @@ grade uniformly from `filterVerdier` for both reports, with no special-casing.
 - Nasjonale prøver page: https://www.udir.no/tall-og-forskning/statistikk/nasjonale-prover/
 - Licence: https://data.norge.no/nlod/no/2.0
 - Shared helpers: `atlas-data/ingest/src/lib/postgres.ts`, `atlas-data/ingest/src/lib/output.ts`, `atlas-data/ingest/src/lib/ingest_run.ts`
-- Plan: [`PLAN-016-udir-nasjonale-prover.md`](../../../../../website/docs/ai-developer/plans/active/PLAN-016-udir-nasjonale-prover.md)
+- Plan: [`PLAN-016-udir-nasjonale-prover.md`](../../../../../website/docs/ai-developer/plans/completed/PLAN-016-udir-nasjonale-prover.md)

@@ -194,17 +194,25 @@ the real run: a region/grade pair can be entirely absent, not suppressed (Hægeb
 10th-grade cohort); and a new sentinel, "Utlandet, uspesifisert" (`2599`), falls through
 `classify_region_code`'s existing `unspecified_within_fylke` branch cleanly.
 
-🆕 **`udir-nasjonale-prover` (PLAN-016) drafted 2026-10-03** — Phase 1 found this report's shape
-matches `udir-gsi`'s, not `udir-elevundersokelsen-mobbing`'s: `EnhetID` is the row hierarchy here
-(confirmed via the response's own `rowHierarchy` metadata, not assumed from either sibling), so
-the cheap `radSti` depth-filter technique applies — ~16 calls for one year, not ~702. Genuinely
-asymmetric grade×subject matrix (English only at 8th grade, not 9th — confirmed live via a real
-empty response, same "absent, not suppressed" shape PLAN-015 found). One genuinely new finding
-neither sibling Udir source needed: `Utlandet` (schools abroad) sits under its own top-level
-node, a sibling of "Hele landet" rather than a descendant, so a second `radSti` anchor
-(`-13.*.*`) is required to reach it — and it carries real, non-suppressed data, so v1 includes it
-rather than dropping it. Both Udir sentinels (Svalbard's `2100`, `Utlandet, uspesifisert`'s
-`2599`) already have exact precedent in `classify_region_code`.
+✅ **`udir-nasjonale-prover` (PLAN-016) shipped end to end, 2026-10-03** — ingest (8,589 rows,
+zero dropped), dbt staging + api_v1 publication, deployed to the live cluster by imac
+([urb-agents#1824](https://github.com/terchris/urb-agents/issues/1824)), independently
+re-verified against the public API. Phase 1 found this report's shape matches `udir-gsi`'s, not
+`udir-elevundersokelsen-mobbing`'s: `EnhetID` is the row hierarchy here (confirmed via the
+response's own `rowHierarchy` metadata, not assumed from either sibling), so the cheap `radSti`
+depth-filter technique applies — 18 calls total, 29.9s in dev, 52.72s in production, no slow-run
+warning needed unlike its sibling. A real correction, caught mid-implementation not in Phase 1:
+the 5th-grade report's own `Rapportside.gyldigeFiltre` omits `TrinnID`, read as "no TrinnID
+filter exists" — wrong; `filterVerdier` still carries one real `TrinnID` entry and the data
+endpoint accepts it explicitly with an identical result, so `parse.ts` discovers grade uniformly
+from `filterVerdier` for both report versions, no special-casing. Genuinely asymmetric
+grade×subject matrix (English only at 8th grade, not 9th — confirmed live via a real empty
+response, same "absent, not suppressed" shape PLAN-015 found). One genuinely new finding neither
+sibling Udir source needed: `Utlandet` (schools abroad) sits under its own top-level node, a
+sibling of "Hele landet" rather than a descendant, so a second `radSti` anchor (`-13.*.*`) is
+required to reach it — and it carries real, non-suppressed data, so v1 includes it rather than
+dropping it. Both Udir sentinels (Svalbard's `2100`, `Utlandet, uspesifisert`'s `2599`) resolved
+exactly as predicted via `classify_region_code`'s existing branches, no macro changes needed.
 
 - **URL**: `https://www.udir.no/om-udir/data` (portal; old `data.udir.no` redirects here)
 - **Datasets in scope**: GSI (grunnskolens informasjonssystem — enrolment, pupil-teacher ratio, special-ed share); Elevundersøkelsen (pupil survey — trivsel, mobbing); Nasjonale prøver (national tests, 2022→ resumed); Barnehagefakta (BAF — kindergarten coverage)
@@ -694,19 +702,26 @@ Each PLAN follows the standard Atlas pattern (per-source folder under `atlas-dat
   sentinel, "Utlandet, uspesifisert" (`2599`, Norwegian schools abroad), falls through
   `classify_region_code`'s existing `unspecified_within_fylke` branch cleanly, alongside the
   already-known Svalbard (`2100`) sentinel.
-- [ ] 🔄 **Drafted 2026-10-03, moved to `active/` — Phase 2 in progress.**
-  [`PLAN-016-udir-nasjonale-prover.md`](../active/PLAN-016-udir-nasjonale-prover.md)
-  — Atlas's third Udir source, and its first direct learning-outcome signal. Phase 1
-  found this report's shape matches `udir-gsi`'s, not `udir-elevundersokelsen-mobbing`'s —
-  `EnhetID` is the row hierarchy here, confirmed via the response's own `rowHierarchy` metadata,
-  not assumed from either sibling — so the cheap `radSti` depth-filter technique applies: ~16
-  calls for one year, not ~702. Genuinely asymmetric grade×subject matrix (English only at 8th
-  grade, not 9th, confirmed live via a real empty response). One genuinely new finding neither
-  sibling Udir source needed: `Utlandet` (schools abroad) sits under its own top-level node, a
-  sibling of "Hele landet" rather than a descendant, so a second `radSti` anchor is required to
-  reach it — and it carries real, non-suppressed data, so v1 includes it. Both Udir sentinels
-  (Svalbard's `2100`, `Utlandet, uspesifisert`'s `2599`) already have exact precedent in
-  `classify_region_code`. No licence blocker; ready to move to `active/`.
+- [x] ✅ **Shipped end to end, 2026-10-03.**
+  [`PLAN-016-udir-nasjonale-prover.md`](../completed/PLAN-016-udir-nasjonale-prover.md)
+  — Atlas's third Udir source, and its first direct learning-outcome signal. Ingested (8,589
+  rows, zero dropped), published to `api_v1`, deployed to the live cluster by imac
+  ([urb-agents#1824](https://github.com/terchris/urb-agents/issues/1824)), independently
+  re-verified against the public API. Phase 1 found this report's shape matches `udir-gsi`'s, not
+  `udir-elevundersokelsen-mobbing`'s — `EnhetID` is the row hierarchy here, confirmed via the
+  response's own `rowHierarchy` metadata, not assumed from either sibling — so the cheap `radSti`
+  depth-filter technique applies: 18 calls total, 29.9s in dev, 52.72s in production, no slow-run
+  warning needed unlike its sibling. A real correction, caught mid-implementation not in Phase 1:
+  the 5th-grade report's own `Rapportside.gyldigeFiltre` omits `TrinnID`, read as "no TrinnID
+  filter exists" — wrong; `filterVerdier` still carries one real `TrinnID` entry and the data
+  endpoint accepts it explicitly with an identical result, so `parse.ts` discovers grade uniformly
+  from `filterVerdier` for both report versions. Genuinely asymmetric grade×subject matrix
+  (English only at 8th grade, not 9th, confirmed live via a real empty response). One genuinely
+  new finding neither sibling Udir source needed: `Utlandet` (schools abroad) sits under its own
+  top-level node, a sibling of "Hele landet" rather than a descendant, so a second `radSti` anchor
+  is required to reach it — and it carries real, non-suppressed data, so v1 includes it. Both
+  Udir sentinels (Svalbard's `2100`, `Utlandet, uspesifisert`'s `2599`) resolved exactly as
+  predicted via `classify_region_code`'s existing branches.
 - [ ] Optionally: pre-write outreach emails to Bufdir, NAV, IMDi, Helsedirektoratet asking whether richer machine-readable distributions exist than what's surfaced publicly. (Pattern reused from [`INVESTIGATE-folkehjelp-supply` § A.4](./INVESTIGATE-folkehjelp-supply.md#a4-craft-cms-graphql-probe--q2-outreach-worth-pursuing) — non-blocking; we ship around the public surface either way.)
 
 ---
