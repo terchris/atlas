@@ -67,8 +67,8 @@ dimensions:
 
 lifecycle: stable
 time_coverage:
-  start: "2019"
-  end: "2024"
+  start: 2019
+  end: 2024
 keywords:
   - momskompensasjon
   - vat-compensation
@@ -86,4 +86,5 @@ methodology_notes: |
   Lottstift's own site and were not attempted, matching this project's established "no PDF
   parser" convention.
 suggested_joins:
-  - dim_brreg_enhet (via organisasjonsnummer, for kommune_nr/region_kind/icnpo_kategori)
+  - brreg-enheter-alle
+  - brreg-frivillige
