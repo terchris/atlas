@@ -3318,6 +3318,46 @@ category_format joined with `__`, so each measure is filter-stable in the catalo
       - name: updated_at
         description: "Timestamp when the row was last written by ingest (from raw.loaded_at)."
 
+  - name: mart_indicators__udir_nasjonale_prover
+    meta:
+      title: "Nasjonale prøver"
+      stability: source
+    description: |
+      Per-source indicator data for udir-nasjonale-prover (Utdanningsdirektoratet), at the publisher's own grain.
+
+      Per-source indicator relation for `udir-nasjonale-prover` (Utdanningsdirektoratet), published at the grain
+      the publisher actually uses rather than flattened into the cross-source views. One row per
+      (region_code, grade, subject, year, measure). Atlas's third Udir source, and its first
+      direct learning-outcome signal.
+      🔴 stability:source — the column set here follows Utdanningsdirektoratet, not Atlas. If the
+      publisher adds, renames or drops a dimension, this relation changes with it. That is
+      the deliberate trade for getting the real grain; prefer a stability:curated relation
+      if you need a shape Atlas promises to hold still. Decode codes through
+      meta_dimensions filtered to source_id=udir-nasjonale-prover.
+    columns:
+      - name: source_id
+        description: "Atlas catalogue id for this ingest — always udir-nasjonale-prover."
+      - name: region_code
+        description: "Udir's own region code, verbatim from the EnhetID hierarchy. May not be a kommune — region_kind says which (Svalbard and \"Utlandet, uspesifisert\" both report at the same tree depth as genuine kommuner)."
+      - name: kommune_nr
+        description: "Four-digit kommune code, derived through region_code_to_kommune_nr. NULL for Svalbard, \"Utlandet, uspesifisert\", and any other non-kommune region_code."
+      - name: region_kind
+        description: "What region_code is, from classify_region_code: kommune, svalbard or unspecified_within_fylke for this source."
+      - name: grade
+        description: "The real grade number — 5, 8, or 9."
+      - name: subject
+        description: "Udir's own stable ProevetypeID code: NPENG (engelsk), NPLES (lesing), or NPREG (regning). Not every grade x subject combination exists upstream (English is 8th-grade only)."
+      - name: year
+        description: "School year code from Udir's own SkoleAarID dimension. v1 ingests the latest available year only."
+      - name: contents_code
+        description: "Atlas-normalised variable code: fixed prefix `udir_nasjonale_prover__` joined with subject and a measure slug (skalapoeng/usikkerhet/deltatt)."
+      - name: contents_label
+        description: "The real measure label, verbatim from the API (Skalapoeng/Usikkerhet/Antall elever deltatt)."
+      - name: value
+        description: "The measure's value for this region/grade/subject/year slice. NULL when Udir suppressed the cell (its own marker, the literal character \"*\")."
+      - name: updated_at
+        description: "Timestamp when the row was last written by ingest (from raw.loaded_at)."
+
   - name: mart_indicators__husbanken_bostotte
     meta:
       title: "Statistikkbank — Bostøtte"

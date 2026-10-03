@@ -73,6 +73,7 @@
     "ingest:ssb-klass-kommuner": "tsx --env-file-if-exists=.env src/sources/ssb-klass-kommuner/index.ts",
     "ingest:udir-elevundersokelsen-mobbing": "tsx --env-file-if-exists=.env src/sources/udir-elevundersokelsen-mobbing/index.ts",
     "ingest:udir-gsi": "tsx --env-file-if-exists=.env src/sources/udir-gsi/index.ts",
+    "ingest:udir-nasjonale-prover": "tsx --env-file-if-exists=.env src/sources/udir-nasjonale-prover/index.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest"

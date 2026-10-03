@@ -1,0 +1,108 @@
+# Hand-authored catalogue metadata for Udir's Nasjonale prøver (national test) results.
+# Ingest runs do not modify this file.
+
+source_id: udir-nasjonale-prover
+upstream_id: NasjonaleProever
+upstream_url: https://www.udir.no/tall-og-forskning/statistikk/nasjonale-prover/
+upstream_landing_page: https://www.udir.no/tall-og-forskning/statistikk/nasjonale-prover/
+upstream_title: "Nasjonale prøver — 5., 8. og 9. trinn"
+description: |
+  Udir (Utdanningsdirektoratet) publishes Nasjonale prøver (national test) results for engelsk
+  (English), lesing (reading) and regning (numeracy), per kommune, per grade. Atlas ingests the
+  scale-score average, its uncertainty margin, and the participant count, for the latest school
+  year. Two genuinely separate report versions under the same upstream table feed this one
+  source: 5th grade (all three subjects) and "ungdomstrinn" 8th+9th grade (English only at 8th,
+  not 9th — confirmed live). Reached via the same real, Swagger-documented "USS — Udirs
+  StatistikkSystem" API (`statistikkportalen.udir.no/api/rapportering`)
+  `udir-gsi`/`udir-elevundersokelsen-mobbing` already proved out. Atlas's third Udir source, and
+  its first direct learning-outcome signal. v1 ingests the latest school year only; see this
+  source's README for the full reasoning.
+publisher: Utdanningsdirektoratet
+license: NLOD
+license_url: https://data.norge.no/nlod/no/2.0
+periodicity: P1Y
+eu_theme: EDUC
+attribution: "Kilde: Utdanningsdirektoratet, Nasjonale prøver"
+
+# 🔵 Licence re-confirmed directly on Udir's own data portal
+# (udir.no/om-udir/data/ — "lisens for offentlig data (NLOD)"), the same
+# portal already confirmed twice this session for udir-gsi and
+# udir-elevundersokelsen-mobbing. Same portal and organisation; not
+# re-fetched a third time, same discipline as the prior source's own 1.9.
+
+tags:
+  provider: udir
+  topic: education
+  geo: kommune
+  cadence: annual
+
+dimensions:
+  - code: region_code
+    meaning: Geographic code from Udir's own EnhetID hierarchy (nivaa 3, "kommune-equivalent")
+    value_format: "4-digit kommune code (including the Svalbard pseudo-kommune 2100), or the literal 2599 (Utlandet, uspesifisert — Norwegian schools abroad)"
+    notes: >
+      Confirmed live 2026-10-03: this report's EnhetID IS the row hierarchy (unlike
+      udir-elevundersokelsen-mobbing's column-dimension shape) — the response's own
+      metadata.rowHierarchy is ["Nasjonalt","Fylke","Kommune","Enhet"]. Svalbard (2100) is
+      reachable through the normal domestic radSti anchor (-12.*.*), same tree depth as udir-gsi's
+      own finding. Utlandet, uspesifisert (2599) sits under its OWN top-level node (a sibling of
+      "Hele landet", not a descendant) and needs a second radSti anchor (-13.*.*) to reach — and
+      it carries real, non-suppressed data (73 real pupils confirmed live), not an empty
+      placeholder. region_kind is derived downstream via classify_region_code: 2100 resolves via
+      the existing svalbard branch, 2599 via the existing unspecified_within_fylke branch — no
+      macro change needed for either, confirmed by inspection.
+  - code: grade
+    meaning: The real grade number this row's figures are for
+    value_format: "5, 8, or 9"
+    notes: >
+      5th grade and "ungdomstrinn" (8th/9th) are two genuinely separate Udir report versions
+      under the same NasjonaleProever table name, queried together under this one source.
+  - code: subject
+    meaning: Which national test subject this row's value is for
+    value_format: "NPENG (engelsk/English), NPLES (lesing/reading), or NPREG (regning/numeracy) — Udir's own stable ProevetypeID code"
+    notes: >
+      NOT every grade×subject combination exists — confirmed live, English exists only at 8th
+      grade, not 9th (the combination returns a genuinely empty response upstream, not a
+      suppressed one). This ingest discovers valid combinations from the API's own filterVerdier
+      response rather than hardcoding which ones are valid, so a future change by Udir is picked
+      up automatically.
+  - code: year
+    meaning: School year code from Udir's own SkoleAarID dimension, discovered dynamically
+    value_format: "8-digit integer, e.g. 20252026 = school year 2025-26"
+    notes: >
+      v1 ingests the latest available year only. Udir's own methodology text states results from
+      before the 2022-23 school year were removed from the statistics bank on 2025-11-13 — not an
+      Atlas backfill decision, the data genuinely does not exist upstream before then.
+  - code: measure
+    meaning: Which figure this row's value is
+    value_format: "Skalapoeng (scale score), Usikkerhet (uncertainty/margin of error), or Antall elever deltatt (participant count)"
+    notes: >
+      No stable measure code is exposed for these three columns by the API (unlike
+      udir-elevundersokelsen-mobbing's EUIndeks_*/EUSpoersmaal_* codes) — only the column label,
+      same shape as udir-gsi's own measure columns.
+  - code: value
+    meaning: The measure's value for this region/grade/subject/year slice
+    value_format: "Numeric — Skalapoeng and Antall elever deltatt are typically whole numbers; Usikkerhet carries a Norwegian decimal comma in the raw API text, parsed to a plain number"
+    notes: NULL when Udir itself suppressed the cell (its own marker, the literal character '*').
+
+lifecycle: stable
+time_coverage:
+  start: null
+  end: null
+keywords:
+  - nasjonale-prover
+  - national-tests
+  - learning-outcomes
+  - kommune
+  - annual
+methodology_notes: |
+  Nasjonale prøver measure pupils' basic skills in engelsk (English), lesing (reading) and regning
+  (numeracy). This is Atlas's first direct learning-outcome signal — every other Udir source
+  measures supply (GSI) or self-reported experience (Elevundersøkelsen), not test performance.
+  Small-cell suppression applies (Udir's own marker, the literal character *) — confirmed live on
+  small kommuner, suppressed per-row like every Atlas source this session. Two documented trend
+  breaks, carried verbatim rather than corrected: results from before the 2022-23 school year were
+  removed from Udir's own statistics bank on 2025-11-13 (upstream's own account, not an Atlas
+  decision); and English is tested only at 8th grade, not 9th — a genuine asymmetry in what Udir
+  measures, not a parsing gap.
+suggested_joins: []

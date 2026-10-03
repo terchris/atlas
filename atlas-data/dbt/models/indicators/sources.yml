@@ -1825,6 +1825,60 @@ sources:
             data_type: numeric
           - name: loaded_at
             data_type: timestamp with time zone
+      - name: udir_nasjonale_prover
+        description: |
+          Udir Nasjonale prøver — national test scale-score results, uncertainty margin, and
+          participant count, per region, per grade (5th, 8th, 9th), per subject
+          (engelsk/lesing/regning), for the latest school year. Two genuinely separate Udir
+          report versions feed this one table (5th grade; "ungdomstrinn" 8th+9th). Reached through
+          the same statistikkportalen.udir.no client as udir_gsi/udir_elevundersokelsen_mobbing —
+          this report's EnhetID is the row hierarchy, like udir_gsi, so one HTTP call per
+          grade/subject/year combination bulk-fetches every kommune (~18 calls for one year, not
+          udir_elevundersokelsen_mobbing's ~702).
+          Populated by atlas-data/ingest/src/sources/udir-nasjonale-prover.
+        loaded_at_field: loaded_at
+        meta:
+          ingest_cadence: weekly
+        freshness:
+          warn_after: {count: 400, period: day}
+          error_after: {count: 800, period: day}
+        columns:
+          - name: region_code
+            description: >-
+              Udir's own region code from the EnhetID hierarchy (nivaa 3) — a 4-digit kommune code
+              (including Svalbard's pseudo-kommune 2100), or the literal 2599 ("Utlandet,
+              uspesifisert" — Norwegian schools abroad, reachable only via a second radSti anchor).
+              kommune_nr is resolved downstream via classify_region_code.
+            data_tests:
+              - not_null
+          - name: grade
+            description: The real grade number — 5, 8, or 9.
+            data_tests:
+              - not_null
+          - name: subject
+            description: >-
+              Udir's own stable ProevetypeID code: NPENG (engelsk), NPLES (lesing), or NPREG
+              (regning). Not every grade x subject combination exists upstream (English is
+              8th-grade only) — a missing combination has no rows here at all.
+            data_tests:
+              - not_null
+          - name: year
+            description: School year code from Udir's own SkoleAarID dimension. Latest year only.
+            data_tests:
+              - not_null
+          - name: measure
+            description: >-
+              Skalapoeng (scale score), Usikkerhet (uncertainty/margin of error), or Antall elever
+              deltatt (participant count). No stable measure code is exposed at this level.
+            data_tests:
+              - not_null
+          - name: value
+            description: >-
+              The measure's value for this region/grade/subject/year slice. NULL when Udir itself
+              suppressed the cell (its own marker, the literal character "*").
+            data_type: numeric
+          - name: loaded_at
+            data_type: timestamp with time zone
       - name: husbanken_bostotte
         description: |
           Husbanken bostøtte (housing allowance) — application counts, decision counts, payout

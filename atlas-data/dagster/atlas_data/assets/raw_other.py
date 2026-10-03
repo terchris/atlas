@@ -41,6 +41,11 @@ See _factory.make_raw_ingest_asset. Currently:
   looks "stuck" on this asset specifically for 20-40 minutes is this source
   behaving normally, not a hang — see its own README before treating that as
   an incident.
+- udir-nasjonale-prover: same API/client as udir-gsi/udir-elevundersokelsen-mobbing,
+  but this report's own shape matches udir-gsi's (EnhetID is the row
+  hierarchy) — cheap, ~18 HTTP calls for one run, not an outlier like
+  udir-elevundersokelsen-mobbing. See
+  atlas-data/ingest/src/sources/udir-nasjonale-prover/README.md.
 - husbanken-bostotte: Qlik Engine API (WebSocket JSON-RPC) against Husbanken's
   public "Statistikkbank" app — Atlas's first WebSocket-based ingest. Still
   one subprocess per run, same as every HTTP-based source above; the
@@ -79,6 +84,7 @@ OTHER_SOURCES = [
     "redcross-branches",
     "udir-elevundersokelsen-mobbing",
     "udir-gsi",
+    "udir-nasjonale-prover",
 ]
 
 # redcross-branches is absent from the scheduled list on purpose — it has no
@@ -92,6 +98,7 @@ assets = [
             "imdi-bosetting",
             "udir-elevundersokelsen-mobbing",
             "udir-gsi",
+            "udir-nasjonale-prover",
         ],
         group_name="raw_other",
         automation_condition=cadence.weekly_polled(),
