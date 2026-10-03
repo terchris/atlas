@@ -8,7 +8,7 @@ a sharper, annual complement to the existing `fhi-mobbing` 3-year-rolling aggreg
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Active — Phases 2-3 DONE, Phase 4 (deploy) submitted, awaiting imac + ops-dev
+## Status: Completed
 
 **Goal**: Add `udir-elevundersokelsen-mobbing` as a served Atlas source — an annual, per-grade
 bullying-prevalence signal at kommune resolution, sharper than `fhi-mobbing`'s 3-year-rolling
@@ -251,7 +251,7 @@ either failing test's result set.
 
 ---
 
-## Phase 4: Deploy and verify arrival — IN PROGRESS (submitted 2026-10-03)
+## Phase 4: Deploy and verify arrival — DONE (verified 2026-10-03)
 
 PR #528 merged to main at `c4a450c`. Image build (run
 [37116024054](https://github.com/terchris/atlas/actions/runs/37116024054)) succeeded; both digests
@@ -278,9 +278,43 @@ image_digest     sha256:d0cb88bf7473dbcbd585d186b034196ee5171890eac69f5f4b103c02
 - Pin nomination to ops-dev: [urb-agents#1823](https://github.com/terchris/urb-agents/issues/1823)
   — both digests copied verbatim from `uis-artifact.json`, not reconstructed.
 
-Independent re-verification against the live public API, and closing both bus tasks, are still
-pending — do not take either task's own report as sufficient, per this session's standing
-discipline.
+**imac's deploy report ([urb-agents#1822](https://github.com/terchris/urb-agents/issues/1822)):**
+`annual_sources_refresh` SUCCESS in **1410.8s (~23.5 minutes)** — well inside the ~60-minute
+envelope flagged in the request, confirming the warning did its job rather than triggering an
+unnecessary escalation; the driver pinged twice mid-run and imac confirmed real progress each
+time instead of guessing. `raw.udir_elevundersokelsen_mobbing` row count 2,804, exact match.
+`transform_and_publish` SUCCESS in 516.9s — watched PostgreSQL's log live throughout both runs for
+#1810-style corruption; zero events. Regression check against 6 prior sources — all unchanged. No
+discrepancy this time (unlike PLAN-014's own Phase 4): the corrected row-count prediction (only
+`indicators__udir_elevundersokelsen_mobbing`, never a second `mart_indicators__...` entry) matched
+exactly.
+
+**ops-dev's pin report ([urb-agents#1823](https://github.com/terchris/urb-agents/issues/1823)):**
+tag `v20261003-c4a450c` pushed to `dev-templates` main cleanly on the first pass — a routine
+single-release bump, no stale markers left over this time. The `operational.automation`
+discrepancy from PLAN-014's own Phase 4 ([urb-agents#1814](https://github.com/terchris/urb-agents/issues/1814))
+is unchanged and correctly not re-litigated — it is unrelated to this source and already tracked
+in `1PRIORITY.md`.
+
+**Both independently re-verified against the live public API before closing either task — neither
+report was taken on its own word:**
+- `GET /indicators__udir_elevundersokelsen_mobbing?limit=1` → real row (Arendal, 7th grade, value
+  `15.8` — matches the captured fixture exactly); `Content-Range` confirms `0-2803/2804`.
+- `GET /meta_sources?source_id=eq.udir-elevundersokelsen-mobbing` →
+  `served_as: ["indicators__udir_elevundersokelsen_mobbing"]`, exactly one endpoint.
+- `GET /mart_indicators__udir_elevundersokelsen_mobbing` → 404, confirming the corrected
+  prediction (no second served endpoint under the `mart_` name).
+- Spot-checked both sentinels and the empty-grade finding directly: Svalbard (`2100` →
+  `region_kind=svalbard`, `kommune_nr=NULL`, `value=NULL`, suppressed) and `Utlandet, uspesifisert`
+  (`2599` → `region_kind=unspecified_within_fylke`, `kommune_nr=NULL`, `value=12.8`) both match
+  the captured fixtures exactly; Hægebostad (`4226`) has exactly 4 rows live, all `grade=7` —
+  confirming the genuinely-empty-10th-grade finding from dev holds in production too, not a
+  local-environment artifact.
+- Independently fetched `dev-templates`' own committed `template-info.yaml` via `gh api` rather
+  than trusting ops-dev's report — tag, digest, and all headline counts (52 sources, 89 relations,
+  61 raw tables) confirmed landed correctly.
+
+Both bus tasks closed with the verification evidence attached as comments.
 
 ---
 
@@ -300,14 +334,12 @@ discipline.
 - [x] `indicators__udir_elevundersokelsen_mobbing` and its mart build and test clean against real
   loaded data, with `2100`/`2599` resolving through `classify_region_code` exactly as predicted
   (`PASS=16 WARN=0 ERROR=0`).
-- [ ] `udir-elevundersokelsen-mobbing` appears in `meta_sources.served_as` after a real deploy,
-  independently verified via live `curl`. *(Phase 4, pending.)*
+- [x] `udir-elevundersokelsen-mobbing` appears in `meta_sources.served_as` after a real deploy,
+  independently verified via live `curl` — `served_as: ["indicators__udir_elevundersokelsen_mobbing"]`.
 - [x] Golden-file tests cover: an ordinary kommune, a suppressed row, the `Utlandet` sentinel,
   both grades, and a genuinely-empty region/grade pair (found on the real run, not predicted) —
   24 tests, all passing.
-- [ ] The investigation and `1PRIORITY.md` are updated to mark this candidate shipped. *(Will be
-  marked shipped at close-out, after Phase 4 verification — same sequencing as every prior
-  source.)*
+- [x] The investigation and `1PRIORITY.md` are updated to mark this candidate shipped.
 
 ---
 
@@ -332,6 +364,40 @@ discipline.
 - **One new sentinel confirmed, already has precedent**: `Utlandet`/`2599` → `classify_region_code`'s
   existing `unspecified_within_fylke` branch, no macro change needed — confirmed with a real test
   in Phase 3.
+
+---
+
+## Outcome
+
+Shipped end to end, 2026-10-03: ingest (2,804 rows, zero dropped) → dbt staging and api_v1
+publication → live cluster deploy → independently re-verified arrival. Atlas's second Udir
+source, reusing the `statistikkportalen.udir.no` client `udir-gsi` already proved out — but a
+genuinely different response shape: geography here is a column/filter dimension, not `udir-gsi`'s
+row hierarchy, resolved in **[Q1]** as one HTTP call per kommune-equivalent region node per grade
+(~702 calls) rather than decoding an unverified bulk response. Correctness over call count was the
+right call, but the real cost of that decision turned out to be wall-clock minutes, not request
+volume — a genuinely new finding for this session, not anticipated in Phase 1's exploratory
+calls: per-call latency settles at ~3.5-6s each after an initial fast burst, for ~60 minutes total
+in dev and ~23.5 minutes in production.
+
+Two genuinely new findings, both caught against real data rather than assumed from Phase 1: a
+region/grade pair can be entirely **absent**, not suppressed (Hægebostad has no 10th-grade cohort
+reporting into this table at all — confirmed in both dev and production); and "Utlandet,
+uspesifisert" (`2599`, Norwegian schools abroad) is a sentinel `udir-gsi` never encountered,
+falling through `classify_region_code`'s existing `unspecified_within_fylke` branch cleanly, no
+macro change needed — alongside the already-known Svalbard (`2100`) sentinel, which did carry over
+from `udir-gsi`.
+
+One deploy-Phase finding applied, not just inherited: PLAN-014's own closing lesson
+([[mart-prefix-is-never-a-served-endpoint]]) was used proactively here — the deploy request
+predicted only `indicators__udir_elevundersokelsen_mobbing` as a served relation from the start,
+and that prediction matched exactly, with no discrepancy to flag this time. The deploy request's
+explicit "SLOW RUN, NOT STUCK (~60min)" warning also did its job — imac confirmed progress on two
+mid-run driver pings rather than escalating, and the real production run finished in 23.5 minutes,
+well inside the flagged envelope.
+
+Plugs a sharper, annual, per-grade bullying-prevalence signal at kommune resolution into Report #3
+(Youth Outcomes), complementing the existing `fhi-mobbing` 3-year-rolling aggregate.
 
 ---
 
