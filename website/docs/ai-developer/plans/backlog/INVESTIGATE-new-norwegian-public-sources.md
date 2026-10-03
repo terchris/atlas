@@ -400,10 +400,23 @@ These are real candidates but each is either narrower in impact or has a known c
 
 ### 12. Helsedirektoratet NKI (Nasjonale Kvalitetsindikatorer)
 
+⚠️ **[Q29] resolved live 2026-10-04 — same blocked mechanism as Helfo Fastlege (§7,
+`PLAN-018-helfo-fastlegestatistikk.md`), confirmed directly rather than assumed from the shared
+developer-portal note.** Fetched a real per-kommune NKI indicator page directly
+(`.../allmennlegetjenesten/andel-fastleger-med-spesialitet`, confirmed per-kommune indicators do
+exist — e.g. a dedicated "...per kommune" article for hospital-readmission rates) and found the
+identical pattern: a genuine Power BI embed (`reportEmbed`) with a token minted server-side per
+page load via the same kind of internal `updatePowerBiToken` endpoint, expiring in minutes — not
+a stable, documented backend. The page's own "Åpne data (API)" link points at the same bare
+`utvikler.helsedirektoratet.no` HAPI portal already confirmed (§7) to serve unrelated
+website-content, not this dataset. **The "export tool" is not a separate mechanism either** — fetched its page directly and found
+it ALSO embeds its own Power BI report with the same `updatePowerBiToken` pattern; "export to
+Excel/CSV" is Power BI's own native viewer button, not a distinct stable API. No part of NKI's
+real data surface is reachable outside the blocked Power BI mechanism.
 - **URL**: `https://utvikler.helsedirektoratet.no` (same developer-portal as Helfo Fastlege; Helsedir HAPI catalogue)
 - **What**: provider-side service-quality indicators
 - **Why Tier 3**: complementary to KOSTRA omsorg (`ssb-12292`), but the value-add is incremental rather than gap-filling. Bundle with Helfo Fastlege under a single Helsedirektoratet provider rollout once that ingest path is wired.
-- **[Q29]** Confirm that NKI's per-kommune indicators are released as machine-readable; NKI is browsed via dashboards similar to Helfo's pattern.
+- **[Q29]** ~~Confirm that NKI's per-kommune indicators are released as machine-readable; NKI is browsed via dashboards similar to Helfo's pattern.~~ **Resolved: no.** Both the browse dashboards and the dedicated export tool are the same Power-BI-embed mechanism, blocked for the identical reason as Helfo. Not viable without outreach to Helsedirektoratet, same as §7.
 
 ### 13. SSB Sentralitetsindeks (Klass 128)
 
