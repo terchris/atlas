@@ -342,7 +342,7 @@ sequencing dependency on the SDG/ICNPO investigation turned out not to matter: B
 supplies ICNPO codes directly, confirmed live, and they are already in production.
 
 ✅ **The Lottstift half shipped as `lottstift-momskompensasjon` — see
-[`PLAN-020-lottstift-momskompensasjon.md`](./PLAN-020-lottstift-momskompensasjon.md).** Not the
+[`PLAN-020-lottstift-momskompensasjon.md`](../active/PLAN-020-lottstift-momskompensasjon.md).** Not the
 Power-BI/GraphQL app at `tilskudd.lottstift.no` the investigation's URL pointed at (no public API
 found there) — the real mechanism is `lottstift.no/nb/om-oss/apne-data/`'s own direct static
 XLSX downloads, one per year. Six years (2019-2024) have a usable recipient organisasjonsnummer;
@@ -671,7 +671,7 @@ Atlas's [PLANS.md `Splitting Investigations into Multiple Plans`](../../PLANS.md
    browser-capable tool) to fetch the file once; see §8 above.
 4. ✅ Frivillighetsregisteret/ICNPO half already shipped (checked live 2026-10-04, see §9); the
    ICNPO-crosswalk block this line described never materialised — Brreg supplies ICNPO
-   directly. [`PLAN-020-lottstift-momskompensasjon.md`](./PLAN-020-lottstift-momskompensasjon.md)
+   directly. [`PLAN-020-lottstift-momskompensasjon.md`](../active/PLAN-020-lottstift-momskompensasjon.md)
    covers the remaining Lottstift half.
 
 **Phase 3 — Tier-3 (only if a stakeholder asks)**

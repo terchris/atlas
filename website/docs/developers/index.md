@@ -6,7 +6,7 @@ This section is for **anyone consuming Atlas's public PostgREST API** to build t
 
 <!-- BEGIN holdings (generated) -->
 
-**54 upstream sources** from **9 publishers**, served as **91 read-only relations**.
+**55 upstream sources** from **10 publishers**, served as **92 read-only relations**.
 
 | publisher | sources | broadly |
 |---|---|---|
@@ -18,11 +18,12 @@ This section is for **anyone consuming Atlas's public PostgREST API** to build t
 | Barne-, ungdoms- og familiedirektoratet | 2 | child poverty |
 | Husbanken | 1 | — |
 | Integrerings- og mangfoldsdirektoratet | 1 | — |
+| Lotteri- og stiftelsestilsynet | 1 | — |
 | Norges Røde Kors | 1 | local chapters and their activities |
 
-By EU data theme: **SOCI** 27 (society) · **HEAL** 12 (health) · **EDUC** 9 (education) · **GOVE** 5 (government) · **JUST** 1 (justice).
+By EU data theme: **SOCI** 28 (society) · **HEAL** 12 (health) · **EDUC** 9 (education) · **GOVE** 5 (government) · **JUST** 1 (justice).
 
-Licences: **NLOD** for 50 of 54 — Norwegian public data, free to reuse with attribution. The exceptions are `nav-aap` (CC BY 4.0) and `nav-helt-ledige` (CC BY 4.0) and `nav-uforetrygd` (CC BY 4.0) and `redcross-branches` (permissive) — Red Cross's own data rather than the state's.
+Licences: **NLOD** for 51 of 55 — Norwegian public data, free to reuse with attribution. The exceptions are `nav-aap` (CC BY 4.0) and `nav-helt-ledige` (CC BY 4.0) and `nav-uforetrygd` (CC BY 4.0) and `redcross-branches` (permissive) — Red Cross's own data rather than the state's.
 
 ### What you can query
 
@@ -69,6 +70,7 @@ Licences: **NLOD** for 50 of 54 — Norwegian public data, free to reuse with at
 | `indicators__fhi_vgs_gjennomforing` | Per-source indicator data for fhi-vgs-gjennomforing (Folkehelseinstituttet), at the publisher's own grain. |
 | `indicators__husbanken_bostotte` | Per-source indicator data for husbanken-bostotte (Husbanken), at the publisher's own grain. |
 | `indicators__imdi_bosetting` | Per-source indicator data for imdi-bosetting (Integrerings- og mangfoldsdirektoratet), at the publisher's own grain. |
+| `indicators__lottstift_momskompensasjon` | Per-source indicator data for lottstift-momskompensasjon (Lotteri- og stiftelsestilsynet), at the publisher's own grain. |
 | `indicators__nav_aap` | Per-source indicator data for nav-aap (Arbeids- og velferdsdirektoratet), at the publisher's own grain. |
 | `indicators__nav_helt_ledige` | Per-source indicator data for nav-helt-ledige (Arbeids- og velferdsdirektoratet), at the publisher's own grain. |
 | `indicators__nav_uforetrygd` | Per-source indicator data for nav-uforetrygd (Arbeids- og velferdsdirektoratet), at the publisher's own grain. |

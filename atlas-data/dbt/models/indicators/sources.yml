@@ -1926,6 +1926,46 @@ sources:
             data_type: numeric
           - name: loaded_at
             data_type: timestamp with time zone
+      - name: lottstift_momskompensasjon
+        description: |
+          Lottstift momskompensasjon — annual VAT-compensation allocations to voluntary
+          organisations. One row per (organisasjonsnummer, year), amounts summed across
+          duplicate-recipient rows within a year. Six years shipped (2019-2024) — the only ones
+          whose published file carries a usable recipient organisasjonsnummer; 2016-2018 are
+          deliberately excluded (recipient identified by name only under an umbrella applicant).
+          Geography and ICNPO category are NOT in this table — resolved downstream via a join to
+          dim_brreg_enhet on organisasjonsnummer.
+          Populated by atlas-data/ingest/src/sources/lottstift-momskompensasjon.
+        loaded_at_field: loaded_at
+        meta:
+          ingest_cadence: weekly
+        freshness:
+          warn_after: {count: 400, period: day}
+          error_after: {count: 800, period: day}
+        columns:
+          - name: organisasjonsnummer
+            description: The recipient organisation's 9-digit Norwegian organisasjonsnummer.
+            data_tests:
+              - not_null
+          - name: year
+            description: The grant year. Six years shipped (2019-2024), not latest-only.
+            data_tests:
+              - not_null
+          - name: amount_nok
+            description: >-
+              The final awarded/paid amount for this organisation/year, summed across every case
+              in that year. A missing amount cell is treated as 0, not an error.
+            data_tests:
+              - not_null
+            data_type: numeric
+          - name: amount_label
+            description: >-
+              Which of that year's own column headers amount_nok was read from — the real
+              meaning (requested/approved/awarded/paid) differs by year.
+            data_tests:
+              - not_null
+          - name: loaded_at
+            data_type: timestamp with time zone
       - name: husbanken_bostotte
         description: |
           Husbanken bostøtte (housing allowance) — application counts, decision counts, payout

@@ -51,7 +51,7 @@
       "description": "Norwegian NGO supply data — chapters, activities, and operational\nfootprint across the civil-society sector. Pairs with the population\nand need indicators to surface coverage gaps.\n",
       "emoji": "🤝",
       "order": 60,
-      "source_count": 3
+      "source_count": 4
     },
     {
       "id": "organisations",
@@ -114,6 +114,15 @@
       "logo": "/img/publishers/imdi.png",
       "feedback_url": "https://www.imdi.no/om-imdi/kontakt-oss/",
       "notes": "The Directorate of Integration and Diversity. Publishes refugee\nresettlement figures (bosettingstall) and immigration statistics by\nreason and country background, per kommune and year. Atlas's existing\nFHI-mediated immigration figures (innvkat, innvandrere) describe *who*;\nIMDi's data is the *when/where* resettlement-flow signal neither of\nthose carries.\n",
+      "source_count": 1
+    },
+    {
+      "id": "lottstift",
+      "display_name": "Lotteri- og stiftelsestilsynet",
+      "homepage": "https://lottstift.no/",
+      "logo": "/img/publishers/lottstift.svg",
+      "feedback_url": "https://lottstift.no/kontakt-oss/",
+      "notes": "The Norwegian Gaming and Foundation Authority. Administers annual\nVAT-compensation allocations to voluntary organisations\n(momskompensasjon) — the financial-resolution half of the Norwegian\nNGO sector that Brreg's own Frivillighetsregisteret (status/ICNPO\ncategory, already in `dim_brreg_enhet`) does not carry on its own.\n",
       "source_count": 1
     },
     {
@@ -257,6 +266,14 @@
           "sample_query": "https://api-atlas.urbalurba.com/brreg_enhet?limit=5"
         },
         {
+          "mart_name": "mart_indicators__lottstift_momskompensasjon",
+          "api_v1_name": "indicators__lottstift_momskompensasjon",
+          "title": "Momskompensasjon for frivillige organisasjoner",
+          "description_short": "Per-source indicator data for lottstift-momskompensasjon (Lotteri- og stiftelsestilsynet), at the publisher's own grain.",
+          "description_full": "Per-source indicator data for lottstift-momskompensasjon (Lotteri- og stiftelsestilsynet), at the publisher's own grain.\n\nPer-source indicator relation for `lottstift-momskompensasjon` (Lotteri- og\nstiftelsestilsynet), published at the grain the publisher actually uses rather than\nflattened into the cross-source views. One row per (organisasjonsnummer, year). Atlas's\nfirst Lottstift source. Geography and ICNPO category are resolved via a join to\ndim_brreg_enhet, not carried in the publisher's own file.\n🔴 stability:source — the column set here follows Lotteri- og stiftelsestilsynet, not\nAtlas. If the publisher adds, renames or drops a dimension, this relation changes with it.\nThat is the deliberate trade for getting the real grain; prefer a stability:curated\nrelation if you need a shape Atlas promises to hold still. Decode codes through\nmeta_dimensions filtered to source_id=lottstift-momskompensasjon.",
+          "sample_query": "https://api-atlas.urbalurba.com/indicators__lottstift_momskompensasjon?limit=5"
+        },
+        {
           "mart_name": "mart_kommune_ngo_summary",
           "api_v1_name": "kommune_ngo_summary",
           "title": "Voluntary organisations per kommune",
@@ -287,11 +304,19 @@
           "kind": "dim"
         },
         {
+          "name": "indicators__lottstift_momskompensasjon",
+          "kind": "indicators"
+        },
+        {
           "name": "mart_atlas_inventory",
           "kind": "mart"
         },
         {
           "name": "mart_brreg_enhet",
+          "kind": "mart"
+        },
+        {
+          "name": "mart_indicators__lottstift_momskompensasjon",
           "kind": "mart"
         },
         {
@@ -312,8 +337,10 @@
           "source_id": "brreg-frivillige",
           "shared_models": [
             "dim_brreg_enhet",
+            "indicators__lottstift_momskompensasjon",
             "mart_atlas_inventory",
             "mart_brreg_enhet",
+            "mart_indicators__lottstift_momskompensasjon",
             "mart_kommune_ngo_summary",
             "mart_kommune_ngo_totals",
             "mart_unattributed_totals"
@@ -323,8 +350,10 @@
           "source_id": "brreg-oppdateringer",
           "shared_models": [
             "dim_brreg_enhet",
+            "indicators__lottstift_momskompensasjon",
             "mart_atlas_inventory",
             "mart_brreg_enhet",
+            "mart_indicators__lottstift_momskompensasjon",
             "mart_kommune_ngo_summary",
             "mart_kommune_ngo_totals",
             "mart_unattributed_totals"
@@ -337,6 +366,14 @@
             "mart_kommune_ngo_summary",
             "mart_kommune_ngo_totals",
             "mart_unattributed_totals"
+          ]
+        },
+        {
+          "source_id": "lottstift-momskompensasjon",
+          "shared_models": [
+            "indicators__lottstift_momskompensasjon",
+            "mart_atlas_inventory",
+            "mart_indicators__lottstift_momskompensasjon"
           ]
         },
         {
@@ -362,13 +399,6 @@
         },
         {
           "source_id": "fhi-bor-alene",
-          "shared_models": [
-            "mart_atlas_inventory",
-            "mart_unattributed_totals"
-          ]
-        },
-        {
-          "source_id": "fhi-depresjon",
           "shared_models": [
             "mart_atlas_inventory",
             "mart_unattributed_totals"
@@ -428,6 +458,7 @@
         "brreg-enheter-alle"
       ],
       "related_by_topic": [
+        "lottstift-momskompensasjon",
         "redcross-branches",
         "ssb-12063"
       ],
@@ -484,6 +515,14 @@
           "sample_query": "https://api-atlas.urbalurba.com/brreg_enhet?limit=5"
         },
         {
+          "mart_name": "mart_indicators__lottstift_momskompensasjon",
+          "api_v1_name": "indicators__lottstift_momskompensasjon",
+          "title": "Momskompensasjon for frivillige organisasjoner",
+          "description_short": "Per-source indicator data for lottstift-momskompensasjon (Lotteri- og stiftelsestilsynet), at the publisher's own grain.",
+          "description_full": "Per-source indicator data for lottstift-momskompensasjon (Lotteri- og stiftelsestilsynet), at the publisher's own grain.\n\nPer-source indicator relation for `lottstift-momskompensasjon` (Lotteri- og\nstiftelsestilsynet), published at the grain the publisher actually uses rather than\nflattened into the cross-source views. One row per (organisasjonsnummer, year). Atlas's\nfirst Lottstift source. Geography and ICNPO category are resolved via a join to\ndim_brreg_enhet, not carried in the publisher's own file.\n🔴 stability:source — the column set here follows Lotteri- og stiftelsestilsynet, not\nAtlas. If the publisher adds, renames or drops a dimension, this relation changes with it.\nThat is the deliberate trade for getting the real grain; prefer a stability:curated\nrelation if you need a shape Atlas promises to hold still. Decode codes through\nmeta_dimensions filtered to source_id=lottstift-momskompensasjon.",
+          "sample_query": "https://api-atlas.urbalurba.com/indicators__lottstift_momskompensasjon?limit=5"
+        },
+        {
           "mart_name": "mart_kommune_ngo_summary",
           "api_v1_name": "kommune_ngo_summary",
           "title": "Voluntary organisations per kommune",
@@ -514,11 +553,19 @@
           "kind": "dim"
         },
         {
+          "name": "indicators__lottstift_momskompensasjon",
+          "kind": "indicators"
+        },
+        {
           "name": "mart_atlas_inventory",
           "kind": "mart"
         },
         {
           "name": "mart_brreg_enhet",
+          "kind": "mart"
+        },
+        {
+          "name": "mart_indicators__lottstift_momskompensasjon",
           "kind": "mart"
         },
         {
@@ -539,8 +586,10 @@
           "source_id": "brreg-enheter-alle",
           "shared_models": [
             "dim_brreg_enhet",
+            "indicators__lottstift_momskompensasjon",
             "mart_atlas_inventory",
             "mart_brreg_enhet",
+            "mart_indicators__lottstift_momskompensasjon",
             "mart_kommune_ngo_summary",
             "mart_kommune_ngo_totals",
             "mart_unattributed_totals"
@@ -550,8 +599,10 @@
           "source_id": "brreg-oppdateringer",
           "shared_models": [
             "dim_brreg_enhet",
+            "indicators__lottstift_momskompensasjon",
             "mart_atlas_inventory",
             "mart_brreg_enhet",
+            "mart_indicators__lottstift_momskompensasjon",
             "mart_kommune_ngo_summary",
             "mart_kommune_ngo_totals",
             "mart_unattributed_totals"
@@ -564,6 +615,14 @@
             "mart_kommune_ngo_summary",
             "mart_kommune_ngo_totals",
             "mart_unattributed_totals"
+          ]
+        },
+        {
+          "source_id": "lottstift-momskompensasjon",
+          "shared_models": [
+            "indicators__lottstift_momskompensasjon",
+            "mart_atlas_inventory",
+            "mart_indicators__lottstift_momskompensasjon"
           ]
         },
         {
@@ -589,13 +648,6 @@
         },
         {
           "source_id": "fhi-bor-alene",
-          "shared_models": [
-            "mart_atlas_inventory",
-            "mart_unattributed_totals"
-          ]
-        },
-        {
-          "source_id": "fhi-depresjon",
           "shared_models": [
             "mart_atlas_inventory",
             "mart_unattributed_totals"
@@ -718,6 +770,14 @@
           "sample_query": "https://api-atlas.urbalurba.com/brreg_enhet?limit=5"
         },
         {
+          "mart_name": "mart_indicators__lottstift_momskompensasjon",
+          "api_v1_name": "indicators__lottstift_momskompensasjon",
+          "title": "Momskompensasjon for frivillige organisasjoner",
+          "description_short": "Per-source indicator data for lottstift-momskompensasjon (Lotteri- og stiftelsestilsynet), at the publisher's own grain.",
+          "description_full": "Per-source indicator data for lottstift-momskompensasjon (Lotteri- og stiftelsestilsynet), at the publisher's own grain.\n\nPer-source indicator relation for `lottstift-momskompensasjon` (Lotteri- og\nstiftelsestilsynet), published at the grain the publisher actually uses rather than\nflattened into the cross-source views. One row per (organisasjonsnummer, year). Atlas's\nfirst Lottstift source. Geography and ICNPO category are resolved via a join to\ndim_brreg_enhet, not carried in the publisher's own file.\n🔴 stability:source — the column set here follows Lotteri- og stiftelsestilsynet, not\nAtlas. If the publisher adds, renames or drops a dimension, this relation changes with it.\nThat is the deliberate trade for getting the real grain; prefer a stability:curated\nrelation if you need a shape Atlas promises to hold still. Decode codes through\nmeta_dimensions filtered to source_id=lottstift-momskompensasjon.",
+          "sample_query": "https://api-atlas.urbalurba.com/indicators__lottstift_momskompensasjon?limit=5"
+        },
+        {
           "mart_name": "mart_kommune_ngo_summary",
           "api_v1_name": "kommune_ngo_summary",
           "title": "Voluntary organisations per kommune",
@@ -748,11 +808,19 @@
           "kind": "dim"
         },
         {
+          "name": "indicators__lottstift_momskompensasjon",
+          "kind": "indicators"
+        },
+        {
           "name": "mart_atlas_inventory",
           "kind": "mart"
         },
         {
           "name": "mart_brreg_enhet",
+          "kind": "mart"
+        },
+        {
+          "name": "mart_indicators__lottstift_momskompensasjon",
           "kind": "mart"
         },
         {
@@ -773,8 +841,10 @@
           "source_id": "brreg-enheter-alle",
           "shared_models": [
             "dim_brreg_enhet",
+            "indicators__lottstift_momskompensasjon",
             "mart_atlas_inventory",
             "mart_brreg_enhet",
+            "mart_indicators__lottstift_momskompensasjon",
             "mart_kommune_ngo_summary",
             "mart_kommune_ngo_totals",
             "mart_unattributed_totals"
@@ -784,8 +854,10 @@
           "source_id": "brreg-frivillige",
           "shared_models": [
             "dim_brreg_enhet",
+            "indicators__lottstift_momskompensasjon",
             "mart_atlas_inventory",
             "mart_brreg_enhet",
+            "mart_indicators__lottstift_momskompensasjon",
             "mart_kommune_ngo_summary",
             "mart_kommune_ngo_totals",
             "mart_unattributed_totals"
@@ -798,6 +870,14 @@
             "mart_kommune_ngo_summary",
             "mart_kommune_ngo_totals",
             "mart_unattributed_totals"
+          ]
+        },
+        {
+          "source_id": "lottstift-momskompensasjon",
+          "shared_models": [
+            "indicators__lottstift_momskompensasjon",
+            "mart_atlas_inventory",
+            "mart_indicators__lottstift_momskompensasjon"
           ]
         },
         {
@@ -823,13 +903,6 @@
         },
         {
           "source_id": "fhi-bor-alene",
-          "shared_models": [
-            "mart_atlas_inventory",
-            "mart_unattributed_totals"
-          ]
-        },
-        {
-          "source_id": "fhi-depresjon",
           "shared_models": [
             "mart_atlas_inventory",
             "mart_unattributed_totals"
@@ -8658,6 +8731,185 @@
     },
     {
       "kind": "source",
+      "source_id": "lottstift-momskompensasjon",
+      "upstream_id": "momskompensasjon",
+      "upstream_url": "https://lottstift.no/nb/om-oss/apne-data/",
+      "upstream_landing_page": "https://lottstift.no/nb/om-oss/apne-data/",
+      "upstream_title": "Momskompensasjon for frivillige organisasjoner — oversikt over tildelinger",
+      "description": "Lotteri- og stiftelsestilsynet (Lottstift) administers the state's annual VAT-compensation\nscheme for voluntary organisations — reimbursing a share of the VAT a voluntary organisation\npays on its own purchases. Atlas ingests, per organisation per year, the final awarded/paid\namount for the six years (2019-2024) whose published file carries a usable recipient\norganisasjonsnummer. Atlas's first Lottstift source. Not the `tilskudd.lottstift.no` search\napp an earlier investigation pointed at (no public API found there) — the real mechanism is\nLottstift's own direct static XLSX downloads at `lottstift.no/nb/om-oss/apne-data/`. Geography\nand ICNPO category are resolved by joining the recipient's organisasjonsnummer against Atlas's\nown `dim_brreg_enhet` (already populated via the separate, already-shipped `brreg-frivillige`\nsource), not from this file's own inconsistent per-year text columns.\n",
+      "atlas_summary": null,
+      "publisher": {
+        "id": "lottstift",
+        "display_name": "Lotteri- og stiftelsestilsynet",
+        "homepage": "https://lottstift.no/",
+        "logo": "/img/publishers/lottstift.svg"
+      },
+      "category": {
+        "id": "ngo-supply",
+        "name": "NGO supply",
+        "emoji": "🤝"
+      },
+      "license": "NLOD",
+      "license_url": "https://data.norge.no/nlod",
+      "periodicity": "P1Y",
+      "eu_theme": "SOCI",
+      "attribution": "Kilde: Lotteri- og stiftelsestilsynet, momskompensasjon for frivillige organisasjoner",
+      "tags": {
+        "provider": "lottstift",
+        "topic": "ngo-supply",
+        "geo": "kommune",
+        "cadence": "annual"
+      },
+      "keywords": [
+        "momskompensasjon",
+        "vat-compensation",
+        "frivillige-organisasjoner",
+        "ngo-supply",
+        "lottstift",
+        "annual"
+      ],
+      "lifecycle": "stable",
+      "time_coverage": {
+        "start": "2019",
+        "end": "2024"
+      },
+      "methodology_notes": "Momskompensasjon reimburses voluntary organisations for a share of the VAT they pay on their\nown purchases — a financial-resolution signal on the Norwegian NGO sector, complementing\nBrreg's own Frivillighetsregisteret (organisational status + ICNPO category, already shipped as\n`brreg-frivillige`). Three years (2016-2018) are deliberately excluded: their published files\nidentify sub-unit recipients (e.g. a national organisation's regional chapters) by name only,\nwith no organisasjonsnummer to join against Brreg reliably. 2010-2015 are PDF-only on\nLottstift's own site and were not attempted, matching this project's established \"no PDF\nparser\" convention.\n",
+      "suggested_joins": [
+        "dim_brreg_enhet (via organisasjonsnummer, for kommune_nr/region_kind/icnpo_kategori)"
+      ],
+      "related_by_topic": [
+        "brreg-frivillige",
+        "redcross-branches",
+        "ssb-12063"
+      ],
+      "dimensions": [
+        {
+          "code": "organisasjonsnummer",
+          "meaning": "The recipient organisation's 9-digit Norwegian organisasjonsnummer",
+          "value_format": "9-digit string",
+          "notes": "Confirmed live 2026-10-04: every one of the six shipped years (2019-2024) carries a real recipient orgnr column, under a different name/position each year (see this source's README for the full per-year map). The three undated years (2016-2018) have no recipient orgnr at all — only a recipient NAME under an umbrella applicant — and are deliberately not ingested; matching by name alone would be unreliable. kommune_nr/region_kind and icnpo_kategori are resolved downstream by joining this column against dim_brreg_enhet, not parsed from this file.\n"
+        },
+        {
+          "code": "year",
+          "meaning": "The grant year",
+          "value_format": "4-digit integer",
+          "notes": "v1 ships all 6 years with a usable recipient orgnr (2019-2024); not latest-only."
+        },
+        {
+          "code": "amount_nok",
+          "meaning": "The final awarded/paid amount for this organisation/year, summed across every case",
+          "value_format": "Numeric, Norwegian kroner",
+          "notes": "A small number of organisations received more than one separate case/grant in the same year (confirmed live: 30 in 2022, 30 in 2023, 14 in 2020) — amounts are summed, not kept as separate rows. The real meaning of \"final amount\" differs by year (requested vs. approved vs. awarded vs. paid) — see amount_label for which of that year's own columns fed this value.\n"
+        },
+        {
+          "code": "amount_label",
+          "meaning": "Which of that year's own column headers amount_nok was read from",
+          "value_format": "Free text, verbatim from the source file's header row",
+          "notes": "Kept because the real meaning of \"amount\" genuinely differs by year — not normalized away."
+        }
+      ],
+      "raw_tables": null,
+      "sample_query": null,
+      "citation": {
+        "text": "Lotteri- og stiftelsestilsynet. (2024). Momskompensasjon for frivillige organisasjoner — oversikt over tildelinger. Retrieved from https://lottstift.no/nb/om-oss/apne-data/. Available in Atlas at https://atlas.sovereignsky.no/datasets/lottstift-momskompensasjon.",
+        "bibtex": "@misc{atlas_lottstift_momskompensasjon,\n  author = {Lotteri- og stiftelsestilsynet},\n  title  = {Momskompensasjon for frivillige organisasjoner — oversikt over tildelinger},\n  year   = {2024},\n  url    = {https://lottstift.no/nb/om-oss/apne-data/},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/lottstift-momskompensasjon}\n}"
+      },
+      "feedback_url": "https://lottstift.no/kontakt-oss/",
+      "consuming_marts": [
+        {
+          "mart_name": "mart_atlas_inventory",
+          "api_v1_name": "atlas_inventory",
+          "title": null,
+          "description_short": "What Atlas publishes: one row per endpoint with its row count, freshness and origin.",
+          "description_full": "What Atlas publishes: one row per endpoint with its row count, freshness and origin.\n\nWhat Atlas publishes, one row per queryable endpoint: how many records it\nserves, when its data last arrived, and where those rows came from.\nAsked for by Røde Kors — \"validate that all datasets that are ingested has\nan endpoint and it can be queried … count the number of records each\nendpoint has and update the last time it ingested data.\"\n⚠️ THE GRAIN IS PER ENDPOINT, NOT PER SOURCE. meta_sources answers \"what\ndid Atlas ingest\"; this answers \"what can I query, and is there anything\nin it\". One source can feed several endpoints and one endpoint can draw on\nseveral sources, so the two row counts are not comparable and summing\nsources will not reproduce an endpoint's count.\n⚠️ atlas_inventory does not list ITSELF. It is built from the same seed it\nreports on, so counting itself would be circular and the number would be\nwhatever the table held mid-build. 19 endpoints are listed; 20 are\npublished.",
+          "sample_query": "https://api-atlas.urbalurba.com/atlas_inventory?limit=5"
+        },
+        {
+          "mart_name": "mart_indicators__lottstift_momskompensasjon",
+          "api_v1_name": "indicators__lottstift_momskompensasjon",
+          "title": "Momskompensasjon for frivillige organisasjoner",
+          "description_short": "Per-source indicator data for lottstift-momskompensasjon (Lotteri- og stiftelsestilsynet), at the publisher's own grain.",
+          "description_full": "Per-source indicator data for lottstift-momskompensasjon (Lotteri- og stiftelsestilsynet), at the publisher's own grain.\n\nPer-source indicator relation for `lottstift-momskompensasjon` (Lotteri- og\nstiftelsestilsynet), published at the grain the publisher actually uses rather than\nflattened into the cross-source views. One row per (organisasjonsnummer, year). Atlas's\nfirst Lottstift source. Geography and ICNPO category are resolved via a join to\ndim_brreg_enhet, not carried in the publisher's own file.\n🔴 stability:source — the column set here follows Lotteri- og stiftelsestilsynet, not\nAtlas. If the publisher adds, renames or drops a dimension, this relation changes with it.\nThat is the deliberate trade for getting the real grain; prefer a stability:curated\nrelation if you need a shape Atlas promises to hold still. Decode codes through\nmeta_dimensions filtered to source_id=lottstift-momskompensasjon.",
+          "sample_query": "https://api-atlas.urbalurba.com/indicators__lottstift_momskompensasjon?limit=5"
+        }
+      ],
+      "consuming_models": [
+        {
+          "name": "indicators__lottstift_momskompensasjon",
+          "kind": "indicators"
+        },
+        {
+          "name": "mart_atlas_inventory",
+          "kind": "mart"
+        },
+        {
+          "name": "mart_indicators__lottstift_momskompensasjon",
+          "kind": "mart"
+        }
+      ],
+      "joined_with": [
+        {
+          "source_id": "brreg-enheter-alle",
+          "shared_models": [
+            "indicators__lottstift_momskompensasjon",
+            "mart_atlas_inventory",
+            "mart_indicators__lottstift_momskompensasjon"
+          ]
+        },
+        {
+          "source_id": "brreg-frivillige",
+          "shared_models": [
+            "indicators__lottstift_momskompensasjon",
+            "mart_atlas_inventory",
+            "mart_indicators__lottstift_momskompensasjon"
+          ]
+        },
+        {
+          "source_id": "brreg-oppdateringer",
+          "shared_models": [
+            "indicators__lottstift_momskompensasjon",
+            "mart_atlas_inventory",
+            "mart_indicators__lottstift_momskompensasjon"
+          ]
+        },
+        {
+          "source_id": "bufdir-barnefattigdom",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "bufdir-barnevern",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "fhi-alkohol",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "fhi-befolkning",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "fhi-befolkningsvekst",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        }
+      ],
+      "last_ingested_at": null,
+      "latest_row_count": null,
+      "total_runs": null,
+      "downstream_model_count": null
+    },
+    {
+      "kind": "source",
       "source_id": "nav-aap",
       "upstream_id": "AAP155",
       "upstream_url": "https://www.nav.no/no/nav-og-samfunn/statistikk/aap-nedsatt-arbeidsevne-og-uforetrygd-statistikk/arbeidsavklaringspenger",
@@ -9240,6 +9492,7 @@
       "suggested_joins": [],
       "related_by_topic": [
         "brreg-frivillige",
+        "lottstift-momskompensasjon",
         "ssb-12063"
       ],
       "dimensions": [
@@ -11907,6 +12160,7 @@
       "suggested_joins": [],
       "related_by_topic": [
         "brreg-frivillige",
+        "lottstift-momskompensasjon",
         "redcross-branches"
       ],
       "dimensions": [
@@ -16163,6 +16417,12 @@
         },
         {
           "parent_kind": "model",
+          "model_name": "mart_indicators__lottstift_momskompensasjon",
+          "title": "Momskompensasjon for frivillige organisasjoner",
+          "description_short": "Per-source indicator data for lottstift-momskompensasjon (Lotteri- og stiftelsestilsynet), at the publisher's own grain."
+        },
+        {
+          "parent_kind": "model",
           "model_name": "mart_indicators__nav_aap",
           "title": "Arbeidsavklaringspenger månedsstatistikk (AAP155)",
           "description_short": "Per-source indicator data for nav-aap (Arbeids- og velferdsdirektoratet), at the publisher's own grain."
@@ -19765,6 +20025,71 @@
       ],
       "sample_query": "https://api-atlas.urbalurba.com/indicators__imdi_bosetting?limit=5",
       "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__imdi_bosetting"
+    },
+    {
+      "kind": "view",
+      "view_id": "indicators__lottstift_momskompensasjon",
+      "mart_name": "mart_indicators__lottstift_momskompensasjon",
+      "api_v1_name": "indicators__lottstift_momskompensasjon",
+      "title": "Momskompensasjon for frivillige organisasjoner",
+      "description_short": "Per-source indicator data for lottstift-momskompensasjon (Lotteri- og stiftelsestilsynet), at the publisher's own grain.",
+      "description_full": "Per-source indicator data for lottstift-momskompensasjon (Lotteri- og stiftelsestilsynet), at the publisher's own grain.\n\nPer-source indicator relation for `lottstift-momskompensasjon` (Lotteri- og\nstiftelsestilsynet), published at the grain the publisher actually uses rather than\nflattened into the cross-source views. One row per (organisasjonsnummer, year). Atlas's\nfirst Lottstift source. Geography and ICNPO category are resolved via a join to\ndim_brreg_enhet, not carried in the publisher's own file.\n🔴 stability:source — the column set here follows Lotteri- og stiftelsestilsynet, not\nAtlas. If the publisher adds, renames or drops a dimension, this relation changes with it.\nThat is the deliberate trade for getting the real grain; prefer a stability:curated\nrelation if you need a shape Atlas promises to hold still. Decode codes through\nmeta_dimensions filtered to source_id=lottstift-momskompensasjon.",
+      "columns": [
+        {
+          "name": "source_id",
+          "description": "Atlas catalogue id for this ingest — always lottstift-momskompensasjon."
+        },
+        {
+          "name": "organisasjonsnummer",
+          "description": "The recipient organisation's 9-digit Norwegian organisasjonsnummer."
+        },
+        {
+          "name": "kommune_nr",
+          "description": "Four-digit kommune code, via dim_brreg_enhet and region_code_to_kommune_nr. NULL when the recipient has no match in dim_brreg_enhet, or is registered outside a kommune."
+        },
+        {
+          "name": "region_kind",
+          "description": "What the recipient's dim_brreg_enhet kommune_nr is, from classify_region_code — 'unknown' when the recipient has no match at all."
+        },
+        {
+          "name": "icnpo_nummer",
+          "description": "Brreg Frivillighetsregisteret's own ICNPO category code, via dim_brreg_enhet. NULL when unmatched or not Frivillighetsregisteret-registered."
+        },
+        {
+          "name": "icnpo_kategori",
+          "description": "Brreg's own ICNPO category label, via dim_brreg_enhet."
+        },
+        {
+          "name": "year",
+          "description": "The grant year. Six years shipped (2019-2024), not latest-only."
+        },
+        {
+          "name": "contents_code",
+          "description": "Atlas-normalised variable code — fixed, this source has one measure."
+        },
+        {
+          "name": "contents_label",
+          "description": "Which of that year's own column headers the value was read from — the real meaning (requested/approved/awarded/paid) differs by year."
+        },
+        {
+          "name": "value",
+          "description": "The final awarded/paid amount (NOK) for this organisation/year, summed across every case in that year."
+        },
+        {
+          "name": "updated_at",
+          "description": "Timestamp when the row was last written by ingest (from raw.loaded_at)."
+        }
+      ],
+      "built_from": [
+        {
+          "parent_kind": "model",
+          "model_name": "indicators__lottstift_momskompensasjon",
+          "title": null,
+          "description_short": "Per-source passthrough for Lottstift's momskompensasjon (annual VAT-compensation allocations to voluntary organisations)."
+        }
+      ],
+      "sample_query": "https://api-atlas.urbalurba.com/indicators__lottstift_momskompensasjon?limit=5",
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__lottstift_momskompensasjon"
     },
     {
       "kind": "view",
