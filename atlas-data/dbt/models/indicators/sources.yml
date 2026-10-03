@@ -1879,6 +1879,53 @@ sources:
             data_type: numeric
           - name: loaded_at
             data_type: timestamp with time zone
+      - name: udir_fravar
+        description: |
+          Udir Fravær i grunnskole — median/average days and hours of documented absence, plus
+          participant count, for 10th-grade pupils only, per region, per school year. Structurally
+          10th-grade-only (Udir's own FravaerG table has no other grade to select) — not an Atlas
+          filter. Reached through the same statistikkportalen.udir.no client as udir_gsi/
+          udir_nasjonale_prover — this report's EnhetID is the row hierarchy, like udir_gsi, so one
+          HTTP call per year bulk-fetches every kommune (~22 calls total across 11 backfilled
+          years). A genuinely separate sibling report, VGO_fravaer (videregående), is NOT covered:
+          its EnhetID hierarchy has no kommune level at all (fylke/school-grain only), deliberately
+          deferred.
+          Populated by atlas-data/ingest/src/sources/udir-fravar.
+        loaded_at_field: loaded_at
+        meta:
+          ingest_cadence: weekly
+        freshness:
+          warn_after: {count: 400, period: day}
+          error_after: {count: 800, period: day}
+        columns:
+          - name: region_code
+            description: >-
+              Udir's own region code from the EnhetID hierarchy (nivaa 3) — a 4-digit kommune code
+              (including Svalbard's pseudo-kommune 2100), or the literal 2599 ("Utlandet,
+              uspesifisert" — Norwegian schools abroad, reachable only via a second radSti anchor,
+              carrying real data every year). kommune_nr is resolved downstream via
+              classify_region_code.
+            data_tests:
+              - not_null
+          - name: year
+            description: >-
+              School year code from Udir's own TidID dimension. Every discovered year is
+              backfilled (11, 2014-15 through 2024-25), not just the latest.
+            data_tests:
+              - not_null
+          - name: measure
+            description: >-
+              Median dager, Median timer, Snitt dager, Snitt timer, or Antall elever. No stable
+              measure code is exposed at this level.
+            data_tests:
+              - not_null
+          - name: value
+            description: >-
+              The measure's value for this region/year slice. NULL when Udir itself suppressed
+              the cell (its own marker, the literal character "*").
+            data_type: numeric
+          - name: loaded_at
+            data_type: timestamp with time zone
       - name: husbanken_bostotte
         description: |
           Husbanken bostøtte (housing allowance) — application counts, decision counts, payout

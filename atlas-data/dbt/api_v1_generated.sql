@@ -142,13 +142,13 @@ SUPPLY — voluntary-sector presence:
   distrikt_summary             chapters by district.
   kommune_local_chapters       chapters resolved to a kommune.
 
-PER-SOURCE INDICATOR RELATIONS — 50 of them, one per upstream table, at the
+PER-SOURCE INDICATOR RELATIONS — 51 of them, one per upstream table, at the
 grain the publisher actually uses. The cross-source views above impose ONE
 shape on every source; these keep the source''s own dimensions, so a breakdown
 those views flatten away (a sex, an age band, a household or family type, a
 parental-education split) is only answerable here.
 
-🔴 ALL 50 ARE stability:source. THE COLUMN SET FOLLOWS THE PUBLISHER, NOT
+🔴 ALL 51 ARE stability:source. THE COLUMN SET FOLLOWS THE PUBLISHER, NOT
 ATLAS. If SSB, FHI or Bufdir adds, renames or drops a dimension, these change
 with it — that is the deliberate trade for getting the real grain. Filter
 `meta_endpoints?tags=cs.{stability:curated}` for the relations whose shape
@@ -184,9 +184,9 @@ same source_id, and through the ref_* lists above where one exists.
     indicators__ssb_12063 indicators__ssb_12131 indicators__ssb_12132
     indicators__ssb_12292 indicators__ssb_12451 indicators__ssb_12944
     indicators__ssb_13995
-  udir (3):
-    indicators__udir_elevundersokelsen_mobbing indicators__udir_gsi
-    indicators__udir_nasjonale_prover
+  udir (4):
+    indicators__udir_elevundersokelsen_mobbing indicators__udir_fravar
+    indicators__udir_gsi indicators__udir_nasjonale_prover
 
 REFERENCE:
   dim_kommune                  the municipality dimension. Keeps SSB''s 9999
@@ -2485,6 +2485,29 @@ COMMENT ON COLUMN api_v1.indicators__udir_elevundersokelsen_mobbing.contents_cod
 COMMENT ON COLUMN api_v1.indicators__udir_elevundersokelsen_mobbing.contents_label IS 'The real Norwegian survey question or indicator text, verbatim from the API.';
 COMMENT ON COLUMN api_v1.indicators__udir_elevundersokelsen_mobbing.value IS 'Percentage of surveyed pupils for this slice. NULL when Udir suppressed the cell (its own marker, the literal character "*").';
 COMMENT ON COLUMN api_v1.indicators__udir_elevundersokelsen_mobbing.updated_at IS 'Timestamp when the row was last written by ingest (from raw.loaded_at).';
+
+-- indicators__udir_fravar  ←  marts.mart_indicators__udir_fravar
+CREATE OR REPLACE VIEW api_v1.indicators__udir_fravar AS SELECT * FROM marts.mart_indicators__udir_fravar;
+COMMENT ON VIEW api_v1.indicators__udir_fravar IS 'Per-source indicator data for udir-fravar (Utdanningsdirektoratet), at the publisher''s own grain.
+
+Per-source indicator relation for `udir-fravar` (Utdanningsdirektoratet), published at the grain
+the publisher actually uses rather than flattened into the cross-source views. One row per
+(region_code, year, measure). Atlas''s fourth Udir source. Structurally 10th-grade-only —
+Udir''s own FravaerG table has no other grade to select.
+🔴 stability:source — the column set here follows Utdanningsdirektoratet, not Atlas. If the
+publisher adds, renames or drops a dimension, this relation changes with it. That is
+the deliberate trade for getting the real grain; prefer a stability:curated relation
+if you need a shape Atlas promises to hold still. Decode codes through
+meta_dimensions filtered to source_id=udir-fravar.';
+COMMENT ON COLUMN api_v1.indicators__udir_fravar.source_id IS 'Atlas catalogue id for this ingest — always udir-fravar.';
+COMMENT ON COLUMN api_v1.indicators__udir_fravar.region_code IS 'Udir''s own region code, verbatim from the EnhetID hierarchy. May not be a kommune — region_kind says which (Svalbard and "Utlandet, uspesifisert" both report at the same tree depth as genuine kommuner).';
+COMMENT ON COLUMN api_v1.indicators__udir_fravar.kommune_nr IS 'Four-digit kommune code, derived through region_code_to_kommune_nr. NULL for Svalbard, "Utlandet, uspesifisert", and any other non-kommune region_code.';
+COMMENT ON COLUMN api_v1.indicators__udir_fravar.region_kind IS 'What region_code is, from classify_region_code: kommune, svalbard or unspecified_within_fylke for this source.';
+COMMENT ON COLUMN api_v1.indicators__udir_fravar.year IS 'School year code from Udir''s own TidID dimension. Every discovered year is backfilled (11, 2014-15 through 2024-25), not just the latest.';
+COMMENT ON COLUMN api_v1.indicators__udir_fravar.contents_code IS 'Atlas-normalised variable code: fixed prefix `udir_fravar__` joined with a measure slug (median_dager/median_timer/snitt_dager/snitt_timer/antall_elever).';
+COMMENT ON COLUMN api_v1.indicators__udir_fravar.contents_label IS 'The real measure label, verbatim from the API (Median dager/Median timer/Snitt dager/Snitt timer/Antall elever).';
+COMMENT ON COLUMN api_v1.indicators__udir_fravar.value IS 'The measure''s value for this region/year slice. NULL when Udir suppressed the cell (its own marker, the literal character "*").';
+COMMENT ON COLUMN api_v1.indicators__udir_fravar.updated_at IS 'Timestamp when the row was last written by ingest (from raw.loaded_at).';
 
 -- indicators__udir_gsi  ←  marts.mart_indicators__udir_gsi
 CREATE OR REPLACE VIEW api_v1.indicators__udir_gsi AS SELECT * FROM marts.mart_indicators__udir_gsi;

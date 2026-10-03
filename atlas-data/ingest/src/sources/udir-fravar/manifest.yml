@@ -1,0 +1,107 @@
+# Hand-authored catalogue metadata for Udir's Fravær i grunnskole (10th-grade absence) results.
+# Ingest runs do not modify this file.
+
+source_id: udir-fravar
+upstream_id: FravaerG
+upstream_url: https://www.udir.no/tall-og-forskning/statistikk/statistikk-grunnskole/fravarstall/
+upstream_landing_page: https://www.udir.no/tall-og-forskning/statistikk/statistikk-grunnskole/fravarstall/
+upstream_title: "Fravær i grunnskole"
+description: |
+  Udir (Utdanningsdirektoratet) publishes median and average days/hours of documented absence,
+  plus participant count, for 10th-grade pupils only, per kommune, for every available school
+  year. This is Atlas's fourth Udir source and structurally 10th-grade-only — Udir's own
+  `FravaerG` table has no other grade to select, confirmed by its Rapportside's own
+  `gyldigeFiltre` list carrying no `TrinnID` filter at all. A genuinely separate sibling report,
+  `VGO_fravaer` (videregående), is NOT covered by this source: its `EnhetID` hierarchy has no
+  kommune level at all (fylke/school-grain only, confirmed live) — a structural fact about how
+  Norway organises videregående skole (fylkeskommune-run, not kommune-run), not a parsing gap,
+  deliberately deferred pending a cross-cutting decision (see this source's README). Reached via
+  the same real, Swagger-documented "USS — Udirs StatistikkSystem" API
+  (`statistikkportalen.udir.no/api/rapportering`) `udir-gsi`/`udir-elevundersokelsen-mobbing`/
+  `udir-nasjonale-prover` already proved out. v1 backfills every available year (11, confirmed
+  live) — see this source's README for the correction that led to that decision.
+publisher: Utdanningsdirektoratet
+license: NLOD
+license_url: https://data.norge.no/nlod/no/2.0
+periodicity: P1Y
+eu_theme: EDUC
+attribution: "Kilde: Utdanningsdirektoratet, Fravær i grunnskole"
+
+# 🔵 Licence re-confirmed directly on Udir's own data portal
+# (udir.no/om-udir/data/ — "lisens for offentlig data (NLOD)"), the same
+# portal already confirmed explicitly for udir-gsi/
+# udir-elevundersokelsen-mobbing and inherited for udir-nasjonale-prover
+# and this source. Same portal and organisation; not re-fetched a fourth
+# time.
+
+tags:
+  provider: udir
+  topic: education
+  geo: kommune
+  cadence: annual
+
+dimensions:
+  - code: region_code
+    meaning: Geographic code from Udir's own EnhetID hierarchy (nivaa 3, "kommune-equivalent")
+    value_format: "4-digit kommune code (including the Svalbard pseudo-kommune 2100), or the literal 2599 (Utlandet, uspesifisert — Norwegian schools abroad)"
+    notes: >
+      Confirmed live 2026-10-03: this report's EnhetID IS the row hierarchy (same shape as
+      udir-gsi/udir-nasjonale-prover, not udir-elevundersokelsen-mobbing's column-dimension
+      shape) — the response's own metadata.rowHierarchy is
+      ["Nasjonalt","Fylke","Kommune","Enhet"]. Svalbard (2100) is reachable through the normal
+      domestic radSti anchor (-12.*.*). Utlandet, uspesifisert (2599) sits under its OWN
+      top-level node (a sibling of "Hele landet", not a descendant) and needs a second radSti
+      anchor (-13.*.*) to reach — and it carries real, non-suppressed data every year (65 real
+      pupils for 2024-25, confirmed live), not an empty placeholder. A kommune can also be
+      entirely ABSENT from the row set without the response being empty overall (confirmed live:
+      Utsira, likely too small a 10th-grade cohort to report that year) — a real absence, not a
+      suppressed row. region_kind is derived downstream via classify_region_code: 2100 resolves
+      via the existing svalbard branch, 2599 via the existing unspecified_within_fylke branch —
+      no macro change needed for either, confirmed by inspection.
+  - code: year
+    meaning: School year code from Udir's own TidID dimension, discovered dynamically
+    value_format: "6-digit integer, e.g. 202506 = school year 2024-25"
+    notes: >
+      v1 backfills every discovered year (11, confirmed live: 2014-15 through 2024-25) — a real
+      correction from this source's own Phase 1 recommendation of "latest year only," made after
+      finding udir-gsi's own real code (not its README's prose) backfills fully when the call
+      cost is cheap, which this report's cost (2 calls/year) matches.
+  - code: measure
+    meaning: Which figure this row's value is
+    value_format: "Median dager, Median timer, Snitt dager, Snitt timer, or Antall elever"
+    notes: >
+      No stable measure code is exposed for these five columns by the API — only the column
+      label, same shape as udir-gsi's/udir-nasjonale-prover's own measure columns. All five are
+      returned in a single call per region/year (VisAntallPersoner(1)_VisMaaltall(1) both set) —
+      more columns than filterVerdier's own VisMaaltall value list suggested (it names only
+      "Snitt timer" as the id:1 option's label; the real response carries all four day/hour
+      statistics plus the participant count under that one flag), confirmed live.
+  - code: value
+    meaning: The measure's value for this region/year slice
+    value_format: "Numeric — Antall elever is a whole number; the four day/hour measures carry a Norwegian decimal comma in the raw API text, parsed to a plain number"
+    notes: NULL when Udir itself suppressed the cell (its own marker, the literal character '*').
+
+lifecycle: stable
+time_coverage:
+  start: null
+  end: null
+keywords:
+  - fravaer
+  - absence
+  - grunnskole
+  - 10-trinn
+  - kommune
+  - annual
+methodology_notes: |
+  "Fravær i grunnskole" measures documented absence for 10th-grade pupils only, as recorded on
+  the diploma ("slik det er ført på vitnemålet") — this is structurally the report's own scope,
+  not an Atlas filter. Small-cell suppression applies (Udir's own marker, the literal character
+  *) — confirmed live on Modalen, suppressed per-row like every Atlas source this session. A
+  kommune (confirmed live: Utsira) can be entirely absent from a given year's response without
+  any suppression marker at all — a genuine upstream absence, likely too small a cohort that
+  year, not a parsing gap. A genuinely separate sibling report for videregående skole
+  (VGO_fravaer) exists upstream but is NOT ingested by this source — its geography resolves only
+  to fylke or individual school, never kommune, a structural fact about how Norway organises
+  videregående skole (fylkeskommune-run), deliberately deferred rather than shipped as a
+  degraded or invented kommune mapping.
+suggested_joins: []

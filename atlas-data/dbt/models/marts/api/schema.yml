@@ -3358,6 +3358,42 @@ category_format joined with `__`, so each measure is filter-stable in the catalo
       - name: updated_at
         description: "Timestamp when the row was last written by ingest (from raw.loaded_at)."
 
+  - name: mart_indicators__udir_fravar
+    meta:
+      title: "Fravær i grunnskole"
+      stability: source
+    description: |
+      Per-source indicator data for udir-fravar (Utdanningsdirektoratet), at the publisher's own grain.
+
+      Per-source indicator relation for `udir-fravar` (Utdanningsdirektoratet), published at the grain
+      the publisher actually uses rather than flattened into the cross-source views. One row per
+      (region_code, year, measure). Atlas's fourth Udir source. Structurally 10th-grade-only —
+      Udir's own FravaerG table has no other grade to select.
+      🔴 stability:source — the column set here follows Utdanningsdirektoratet, not Atlas. If the
+      publisher adds, renames or drops a dimension, this relation changes with it. That is
+      the deliberate trade for getting the real grain; prefer a stability:curated relation
+      if you need a shape Atlas promises to hold still. Decode codes through
+      meta_dimensions filtered to source_id=udir-fravar.
+    columns:
+      - name: source_id
+        description: "Atlas catalogue id for this ingest — always udir-fravar."
+      - name: region_code
+        description: "Udir's own region code, verbatim from the EnhetID hierarchy. May not be a kommune — region_kind says which (Svalbard and \"Utlandet, uspesifisert\" both report at the same tree depth as genuine kommuner)."
+      - name: kommune_nr
+        description: "Four-digit kommune code, derived through region_code_to_kommune_nr. NULL for Svalbard, \"Utlandet, uspesifisert\", and any other non-kommune region_code."
+      - name: region_kind
+        description: "What region_code is, from classify_region_code: kommune, svalbard or unspecified_within_fylke for this source."
+      - name: year
+        description: "School year code from Udir's own TidID dimension. Every discovered year is backfilled (11, 2014-15 through 2024-25), not just the latest."
+      - name: contents_code
+        description: "Atlas-normalised variable code: fixed prefix `udir_fravar__` joined with a measure slug (median_dager/median_timer/snitt_dager/snitt_timer/antall_elever)."
+      - name: contents_label
+        description: "The real measure label, verbatim from the API (Median dager/Median timer/Snitt dager/Snitt timer/Antall elever)."
+      - name: value
+        description: "The measure's value for this region/year slice. NULL when Udir suppressed the cell (its own marker, the literal character \"*\")."
+      - name: updated_at
+        description: "Timestamp when the row was last written by ingest (from raw.loaded_at)."
+
   - name: mart_indicators__husbanken_bostotte
     meta:
       title: "Statistikkbank — Bostøtte"
