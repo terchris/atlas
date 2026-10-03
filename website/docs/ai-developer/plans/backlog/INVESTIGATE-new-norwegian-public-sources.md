@@ -386,10 +386,22 @@ These are real candidates but each is either narrower in impact or has a known c
 
 ### 10. Skatteetaten åpne data
 
-- **URL**: `https://data.skatteetaten.no/`
-- **What**: aggregate inntekt / formue per kommune; a-ordningen aggregates
+⚠️ **Checked live 2026-10-04 — this row's own "What" is wrong, and the real barrier is stronger
+than "Tier 3, low marginal value."** `https://data.skatteetaten.no/` itself returns an empty
+`200` response (zero-length body) — not a real open-data portal. The real surface
+(`skatteetaten.no/deling/...`, "Bruke data fra Skatteetaten") is a **restricted, authorized
+data-sharing scheme for named institutional partners** (banks, municipalities doing
+means-testing) — queried per PERSON or per ORGANISATION number under a signed "Bruksvilkår for
+utlevering av opplysninger" (terms for DISCLOSURE of information) agreement, not a public
+aggregate statistics API. This is not "Atlas could ingest this but SSB already covers it better"
+— **Atlas could never ingest this at all**, regardless of value: it is person-level data shared
+under formal authorization to named partners, categorically outside what an anonymous public
+project can or should access. The "aggregate inntekt/formue per kommune" dataset this row
+described was not found and may not exist in this form.
+- **URL**: `https://data.skatteetaten.no/` ⚠️ **empty/non-functional, see correction above**
+- **What**: aggregate inntekt / formue per kommune; a-ordningen aggregates ⚠️ **not confirmed to exist publicly — see correction above**
 - **Why Tier 3**: substantially overlapping with `ssb-06944` (median household income), which Atlas already ingests. Skatteetaten updates faster but the marginal analytical value over SSB is small for the existing reports. Worth ingesting later for *trend velocity* (within-year change) but not gap-fill.
-- **[Q27]** Decide later whether the within-year cadence justifies a separate ingest path.
+- **[Q27]** ~~Decide later whether the within-year cadence justifies a separate ingest path.~~ Moot — no public aggregate path was found to decide about.
 
 ### 11. Valgresultat API
 
