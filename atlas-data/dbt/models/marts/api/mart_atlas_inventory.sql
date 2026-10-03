@@ -122,6 +122,7 @@
 -- depends_on: {{ ref('mart_indicators__ssb_13995') }}
 -- depends_on: {{ ref('mart_indicators__udir_elevundersokelsen_mobbing') }}
 -- depends_on: {{ ref('mart_indicators__udir_gsi') }}
+-- depends_on: {{ ref('mart_indicators__udir_nasjonale_prover') }}
 -- depends_on: {{ ref('mart_ingest_health') }}
 -- depends_on: {{ ref('mart_kommune_befolkning_alder') }}
 -- depends_on: {{ ref('mart_kommune_local_chapters') }}
@@ -223,6 +224,7 @@
   {'relation': 'indicators__ssb_13995', 'mart': 'mart_indicators__ssb_13995'},
   {'relation': 'indicators__udir_elevundersokelsen_mobbing', 'mart': 'mart_indicators__udir_elevundersokelsen_mobbing'},
   {'relation': 'indicators__udir_gsi', 'mart': 'mart_indicators__udir_gsi'},
+  {'relation': 'indicators__udir_nasjonale_prover', 'mart': 'mart_indicators__udir_nasjonale_prover'},
   {'relation': 'ingest_health', 'mart': 'mart_ingest_health'},
   {'relation': 'kommune_befolkning_alder', 'mart': 'mart_kommune_befolkning_alder'},
   {'relation': 'kommune_local_chapters', 'mart': 'mart_kommune_local_chapters'},

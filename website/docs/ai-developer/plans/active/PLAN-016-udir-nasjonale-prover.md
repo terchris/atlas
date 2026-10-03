@@ -9,7 +9,7 @@ signal.
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Backlog — Phase 1 complete, ready to move to active/ for Phase 2
+## Status: Active — Phases 2-3 DONE, Phase 4 (deploy) pending
 
 **Goal**: Add `udir-nasjonale-prover` as a served Atlas source — the only direct learning-outcome
 measurement in Atlas today, at kommune resolution, per grade and subject. Plugs Report #3 (Youth
@@ -151,53 +151,81 @@ sibling Udir source's shape.
 
 ---
 
-## Phase 2: Ingest module + raw table (not started)
+## Phase 2: Ingest module + raw table — DONE (verified 2026-10-03)
 
 ### Tasks
 
-- [ ] 2.1 Create `atlas-data/ingest/src/sources/udir-nasjonale-prover/`: `manifest.yml`
-  (`source_id: udir-nasjonale-prover`, `provider: udir`, `periodicity: P1Y`, `license: NLOD`),
-  `index.ts`, `parse.ts`, `fetch_retry.ts` (copied), `README.md`, `__tests__/` with real captured
-  fixtures covering: an ordinary kommune (Arendal or similar) at 5th/8th/9th grade, a suppressed
-  row (Bygland or Utsira), Svalbard (`2100`), `Utlandet, uspesifisert` (`2599`, via the `-13.*.*`
-  anchor), and the genuinely-empty 9th-grade-English case.
-- [ ] 2.2 `parse.ts` — reuse `udir-gsi`'s depth-by-segment-count row filter directly (confirmed
-  the same shape in Phase 1.2), extended to issue **16 data calls for one year** (8 valid
-  grade×subject combinations × 2 radSti anchors, `-12.*.*` and `-13.*.*` — see [Q1]/Phase 1.5),
-  merging the two anchors' results per combination. Parse all three measure columns
-  (`Skalapoeng`/`Usikkerhet`/`Antall elever deltatt`) per row.
-- [ ] 2.3 Migration `raw.udir_nasjonale_prover(region_code, grade, subject, year, measure, value,
-  loaded_at)` — one row per region/grade/subject/year/measure.
-- [ ] 2.4 Dagster registration — annual cadence, existing weekly-polled job pattern (same group as
-  `udir-gsi`/`udir-elevundersokelsen-mobbing`), no new job.
-- [ ] 2.5 Add `ingest:udir-nasjonale-prover` npm script FIRST, verify via
-  `check-every-source-has-an-ingest-script.sh` and the real `npm run` invocation before any other
-  Phase 2 work, per this session's standing discipline since `husbanken-bostotte`'s urb-agents#1807.
+- [x] 2.1 Created `atlas-data/ingest/src/sources/udir-nasjonale-prover/`: `manifest.yml`,
+  `index.ts`, `parse.ts`, `fetch_retry.ts`, `README.md`, `__tests__/` with real captured fixtures
+  covering: Arendal at 5th/8th grade (two different real values, confirmed distinct), a suppressed
+  row (Bygland, Bykle, Utsira), Svalbard (`2100`), `Utlandet, uspesifisert` (`2599`, via the
+  `-13.*.*` anchor), and the genuinely-empty 9th-grade-English case. 23 tests, all passing.
+- [x] 2.2 **A real correction, caught mid-implementation, not in Phase 1.** The 5th-grade report's
+  own `Rapportside.gyldigeFiltre` omits `TrinnID`, which Phase 1.1 read as "grade 5 is implicit, no
+  TrinnID filter exists." Verified live this is wrong: `filterVerdier` for that same report still
+  carries one real `TrinnID` entry (`{id:4, kode:"5"}`), and passing it explicitly succeeds with an
+  identical result. `parse.ts` discovers grade uniformly from `filterVerdier` for both reports —
+  no special-casing on `gyldigeFiltre`, which describes the UI's valid-filter list, not what the
+  data endpoint actually accepts. `parse.ts` reuses `udir-gsi`'s depth-by-segment-count row filter
+  directly, issuing one call per discovered grade×subject combination × 2 radSti anchors (`-12.*.*`
+  domestic, `-13.*.*` Utlandet) — **9 valid combinations discovered live (6 ungdomstrinn + 3
+  trinn5) × 2 anchors = 18 calls**, not the 16 estimated in Phase 1 (which assumed only 8 valid
+  combinations; the real discovery also issues a call for the one invalid 9th-grade-English
+  combination, which correctly returns zero rows rather than being skipped).
+- [x] 2.3 Migration `065_raw_udir_nasjonale_prover.sql` —
+  `raw.udir_nasjonale_prover(region_code, grade, subject, year, measure, value, loaded_at)`, PK
+  `(region_code, grade, subject, year, measure)`.
+- [x] 2.4 Dagster registration — added to the existing weekly-polled annual group alongside
+  `udir-gsi`/`udir-elevundersokelsen-mobbing`, no new job. `dagster definitions validate` passes.
+- [x] 2.5 `ingest:udir-nasjonale-prover` npm script added first, verified via
+  `check-every-source-has-an-ingest-script.sh` and the real `npm run` invocation.
 
 ### Validation
 
-Real run against the live API, zero rows silently dropped, suppression, both sentinels, and the
-empty 9th-grade-English case all confirmed against real data.
+**Real run against the live API, completed 2026-10-03: 18 calls, 8,589 rows written, 29.9 seconds
+wall time** — confirming Phase 1's "cheap" prediction, unlike `udir-elevundersokelsen-mobbing`'s
+~60-minute cost (per [[exploratory-calls-dont-reveal-sustained-api-latency]]). 359 distinct
+regions, 8 valid grade×subject combinations (confirmed: 9th-grade English genuinely absent, zero
+rows). Both sentinels (`2100`, `2599`) present across all 8 valid combinations with exactly 3
+measures each, verified directly against Postgres — zero rows silently dropped.
 
 ---
 
-## Phase 3: dbt staging and marts (not started)
+## Phase 3: dbt staging and marts — DONE (verified 2026-10-03)
 
 ### Tasks
 
-- [ ] 3.1 Add `raw.udir_nasjonale_prover` to `models/indicators/sources.yml`.
-- [ ] 3.2 `indicators__udir_nasjonale_prover.sql` — `kommune_nr`/`region_kind` via
-  `region_code_to_kommune_nr`/`classify_region_code`. Explicitly confirm `2100` and `2599` resolve
-  to `svalbard`/`unspecified_within_fylke` against real loaded data (see [Q4]) — expect this to
-  pass clean, but confirm rather than assume.
-- [ ] 3.3 Document columns in `schema.yml`; `mart_indicators__udir_nasjonale_prover.sql` api
+- [x] 3.1 Added `raw.udir_nasjonale_prover` to `models/indicators/sources.yml`.
+- [x] 3.2 `indicators__udir_nasjonale_prover.sql` — `kommune_nr`/`region_kind` via
+  `region_code_to_kommune_nr`/`classify_region_code`. **Passed clean on the first `dbt build`**, as
+  expected — both sentinels resolved exactly as predicted (see Validation below).
+- [x] 3.3 Documented columns in `schema.yml`; `mart_indicators__udir_nasjonale_prover.sql` api
   passthrough + `marts/api/schema.yml` entry.
-- [ ] 3.4 `dbt build` against real loaded data.
+- [x] 3.4 `dbt build --select indicators__udir_nasjonale_prover
+  mart_indicators__udir_nasjonale_prover` against real loaded data —
+  `PASS=16 WARN=0 ERROR=0 SKIP=0 TOTAL=18`.
 
 ### Validation
 
-Real local Postgres, not an empty schema. Explicitly confirm `2100`/`2599` resolution with a
-direct query, same discipline as every prior sentinel this session.
+Real local Postgres, not an empty schema. Explicitly confirmed by direct query:
+
+```
+ region_code | kommune_nr |       region_kind        | count
+-------------+------------+---------------------------+-------
+ 2100        |            | svalbard                  |    24
+ 2599        |            | unspecified_within_fylke  |    24
+```
+
+`2100` resolves to `region_kind='svalbard'` and `2599` resolves to
+`region_kind='unspecified_within_fylke'`, both `kommune_nr=NULL`, exactly as predicted — no macro
+change needed.
+
+Full dbt check-suite (all 17 scripts), a full `dbt build`, the full ingest test suite (374 tests),
+and the website build all pass clean. The only non-pass results in the full build
+(`extracted_columns_are_still_populated`, `raw_sources_were_refreshed_recently`, the
+`mart_atlas_inventory` SKIP cascade) are the same pre-existing environmental staleness confirmed
+unrelated to every prior source this session — `udir_nasjonale_prover` does not appear in either
+failing test's result set.
 
 ---
 
@@ -208,12 +236,12 @@ digests labelled (copied verbatim from the release's own `uis-artifact.json`, no
 `LANDS WITH` derived via `atlas-data/uis/lands-with.sh`, a row-count prediction stated explicitly.
 **Only predict `indicators__udir_nasjonale_prover` as a served relation — never a second
 `mart_indicators__...` entry, see [[mart-prefix-is-never-a-served-endpoint]] (PLAN-014's own
-closing finding).** This source's call volume (~16 calls) is cheap, unlike
-`udir-elevundersokelsen-mobbing`'s — no "slow run" warning expected to be needed, but confirm real
-wall time during Phase 2 before assuming so in the deploy request (per
-[[exploratory-calls-dont-reveal-sustained-api-latency]] — do not assume a handful of Phase 1 probe
-calls predicts the real cost). Independently re-verify against the live public API before closing
-the deploy task — do not take a deploy report alone as sufficient.
+closing finding).** This source's call volume (18 calls, confirmed live in Phase 2 — 29.9 seconds
+wall time) is genuinely cheap, unlike `udir-elevundersokelsen-mobbing`'s ~702/~60min — no "slow
+run" warning needed this time, confirmed by a real Phase 2 run rather than assumed from Phase 1's
+exploratory calls (per [[exploratory-calls-dont-reveal-sustained-api-latency]]). Independently
+re-verify against the live public API before closing the deploy task — do not take a deploy report
+alone as sufficient.
 
 ---
 
@@ -224,16 +252,20 @@ the deploy task — do not take a deploy report alone as sufficient.
   assumed from either sibling Udir source's shape.
 - [x] **Licence independently confirmed for this surface** — NLOD, same portal already confirmed
   twice this session.
-- [ ] `udir-nasjonale-prover` ingests cleanly with zero rows silently dropped, including the
+- [x] `udir-nasjonale-prover` ingests cleanly with zero rows silently dropped, including the
   `2100`/`2599` sentinels, the genuinely-empty 9th-grade-English case, and at least one suppressed
-  row all represented.
-- [ ] `indicators__udir_nasjonale_prover` and its mart build and test clean against real loaded
-  data, with `2100`/`2599` resolving through `classify_region_code` exactly as predicted.
+  row all represented — 8,589 rows written, exactly matching 359 regions × 8 valid combinations ×
+  3 measures.
+- [x] `indicators__udir_nasjonale_prover` and its mart build and test clean against real loaded
+  data, with `2100`/`2599` resolving through `classify_region_code` exactly as predicted
+  (`PASS=16 WARN=0 ERROR=0`).
 - [ ] `udir-nasjonale-prover` appears in `meta_sources.served_as` after a real deploy,
-  independently verified via live `curl`.
-- [ ] Golden-file tests cover: an ordinary kommune at each grade, a suppressed row, both
-  sentinels, and the genuinely-empty grade×subject case.
-- [ ] The investigation and `1PRIORITY.md` are updated to mark this candidate shipped.
+  independently verified via live `curl`. *(Phase 4, pending.)*
+- [x] Golden-file tests cover: an ordinary kommune at each grade, a suppressed row, both
+  sentinels, and the genuinely-empty grade×subject case — 23 tests, all passing.
+- [ ] The investigation and `1PRIORITY.md` are updated to mark this candidate shipped. *(Will be
+  marked shipped at close-out, after Phase 4 verification — same sequencing as every prior
+  source.)*
 
 ---
 
@@ -250,10 +282,14 @@ the deploy task — do not take a deploy report alone as sufficient.
   needed this because its own data has no schools-abroad entries at all; do not assume a single
   `-12.*.*` call is complete for every Udir report.**
 - **No new Dagster job.** Same weekly-polled group as `udir-gsi`/`udir-elevundersokelsen-mobbing`.
-- **Two sentinels, both already have exact precedent** — confirm with a real test in Phase 3
-  anyway, same discipline as every prior source.
-- **Real call volume is cheap (~16/year) — verify this holds, don't assume it from the Phase 1
-  sample size**, per [[exploratory-calls-dont-reveal-sustained-api-latency]].
+- **Two sentinels, both already have exact precedent** — confirmed with a real test in Phase 3,
+  same discipline as every prior source.
+- **Real call volume is cheap (18 calls, 29.9s — confirmed live in Phase 2, not assumed from the
+  Phase 1 sample size)**, per [[exploratory-calls-dont-reveal-sustained-api-latency]].
+- **`Rapportside.gyldigeFiltre` is not a reliable signal for what a data endpoint accepts.** The
+  5th-grade report's own `gyldigeFiltre` omits `TrinnID`; its `filterVerdier` still carries one
+  real entry, and passing it explicitly works. Discover filters from `filterVerdier`, not from
+  `gyldigeFiltre` — a real correction caught mid-Phase-2, not in Phase 1.
 
 ---
 

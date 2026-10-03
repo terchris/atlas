@@ -694,8 +694,9 @@ Each PLAN follows the standard Atlas pattern (per-source folder under `atlas-dat
   sentinel, "Utlandet, uspesifisert" (`2599`, Norwegian schools abroad), falls through
   `classify_region_code`'s existing `unspecified_within_fylke` branch cleanly, alongside the
   already-known Svalbard (`2100`) sentinel.
-- [ ] 🆕 **Drafted 2026-10-03.** [`PLAN-016-udir-nasjonale-prover.md`](PLAN-016-udir-nasjonale-prover.md),
-  in `backlog/` — Atlas's third Udir source, and its first direct learning-outcome signal. Phase 1
+- [ ] 🔄 **Drafted 2026-10-03, moved to `active/` — Phase 2 in progress.**
+  [`PLAN-016-udir-nasjonale-prover.md`](../active/PLAN-016-udir-nasjonale-prover.md)
+  — Atlas's third Udir source, and its first direct learning-outcome signal. Phase 1
   found this report's shape matches `udir-gsi`'s, not `udir-elevundersokelsen-mobbing`'s —
   `EnhetID` is the row hierarchy here, confirmed via the response's own `rowHierarchy` metadata,
   not assumed from either sibling — so the cheap `radSti` depth-filter technique applies: ~16

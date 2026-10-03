@@ -6,7 +6,7 @@ This section is for **anyone consuming Atlas's public PostgREST API** to build t
 
 <!-- BEGIN holdings (generated) -->
 
-**52 upstream sources** from **9 publishers**, served as **89 read-only relations**.
+**53 upstream sources** from **9 publishers**, served as **90 read-only relations**.
 
 | publisher | sources | broadly |
 |---|---|---|
@@ -14,15 +14,15 @@ This section is for **anyone consuming Atlas's public PostgREST API** to build t
 | Statistisk sentralbyrå | 18 | population, income, families, housing, education, crime |
 | Brønnøysundregistrene | 3 | the company and voluntary-organisation registers |
 | Arbeids- og velferdsdirektoratet | 3 | — |
+| Utdanningsdirektoratet | 3 | — |
 | Barne-, ungdoms- og familiedirektoratet | 2 | child poverty |
-| Utdanningsdirektoratet | 2 | — |
 | Husbanken | 1 | — |
 | Integrerings- og mangfoldsdirektoratet | 1 | — |
 | Norges Røde Kors | 1 | local chapters and their activities |
 
-By EU data theme: **SOCI** 27 (society) · **HEAL** 12 (health) · **EDUC** 7 (education) · **GOVE** 5 (government) · **JUST** 1 (justice).
+By EU data theme: **SOCI** 27 (society) · **HEAL** 12 (health) · **EDUC** 8 (education) · **GOVE** 5 (government) · **JUST** 1 (justice).
 
-Licences: **NLOD** for 48 of 52 — Norwegian public data, free to reuse with attribution. The exceptions are `nav-aap` (CC BY 4.0) and `nav-helt-ledige` (CC BY 4.0) and `nav-uforetrygd` (CC BY 4.0) and `redcross-branches` (permissive) — Red Cross's own data rather than the state's.
+Licences: **NLOD** for 49 of 53 — Norwegian public data, free to reuse with attribution. The exceptions are `nav-aap` (CC BY 4.0) and `nav-helt-ledige` (CC BY 4.0) and `nav-uforetrygd` (CC BY 4.0) and `redcross-branches` (permissive) — Red Cross's own data rather than the state's.
 
 ### What you can query
 
@@ -93,6 +93,7 @@ Licences: **NLOD** for 48 of 52 — Norwegian public data, free to reuse with at
 | `indicators__ssb_13995` | Per-source indicator data for ssb-13995 (Statistisk sentralbyrå), at the publisher's own grain. |
 | `indicators__udir_elevundersokelsen_mobbing` | Per-source indicator data for udir-elevundersokelsen-mobbing (Utdanningsdirektoratet), at the publisher's own grain. |
 | `indicators__udir_gsi` | Per-source indicator data for udir-gsi (Utdanningsdirektoratet), at the publisher's own grain. |
+| `indicators__udir_nasjonale_prover` | Per-source indicator data for udir-nasjonale-prover (Utdanningsdirektoratet), at the publisher's own grain. |
 | `ingest_health` | One row per source: its most recent completed ingest run, and whether that run succeeded. |
 | `kommune_befolkning_alder` | Population by kommune, year and age band — the denominator layer for rates. |
 | `kommune_local_chapters` | One row per local chapter resolved to a kommune, with its NGO and category. |

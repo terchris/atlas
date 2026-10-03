@@ -35,14 +35,14 @@ params:
 
 # BEGIN holdings (generated)
 data:
-  sources: 52
+  sources: 53
   publishers: 9
-  public_relations: 89
+  public_relations: 90
   holds: >-
     Norwegian public data at kommune level, joined into one semantic layer:
-    Folkehelseinstituttet (21); Statistisk sentralbyrå (18); Brønnøysundregistrene (3); Arbeids- og velferdsdirektoratet (3); Barne-, ungdoms- og familiedirektoratet (2); Utdanningsdirektoratet (2); Husbanken (1); Integrerings- og mangfoldsdirektoratet (1); Norges Røde Kors (1).
+    Folkehelseinstituttet (21); Statistisk sentralbyrå (18); Brønnøysundregistrene (3); Arbeids- og velferdsdirektoratet (3); Utdanningsdirektoratet (3); Barne-, ungdoms- og familiedirektoratet (2); Husbanken (1); Integrerings- og mangfoldsdirektoratet (1); Norges Røde Kors (1).
     Published as read-only PostgREST relations under api_v1. NLOD for
-    48 of 52 — Norwegian public data, free to reuse with
+    49 of 53 — Norwegian public data, free to reuse with
     attribution. The exceptions are `nav-aap` (CC BY 4.0) and `nav-helt-ledige` (CC BY 4.0) and `nav-uforetrygd` (CC BY 4.0) and `redcross-branches` (permissive) — Red Cross's own data rather than the state's.
   discover: >-
     GET /meta_endpoints for what is queryable, /meta_sources for every upstream
@@ -441,7 +441,7 @@ operational:
     # UIS surface (imac, urb-agents #793). A figure whose "this is out of date"
     # note is invisible is worse than no figure — the stale number reaches the
     # reader and the correction does not.
-    takes: "~30 minutes on a COLD install: six first-data jobs, 1772 s wall, measured end to end by imac on a factory-reset cluster (urb-agents #1027). ⚠️ NOW SEVEN JOBS, NOT SIX — monthly_sources_refresh (nav-uforetrygd) was added 2026-10-01 and the 1772 s figure has not been re-measured with it included; nav-uforetrygd is one xlsx download and parse, so the real addition to wall time is expected to be small, but that is an expectation, not a measurement. The Brreg bulk load is 501 s of the original six-job figure and is no longer the unmeasured part. ~4.1M rows across 61 raw BASE TABLEs and 91 marts BASE TABLEs (plus 77 marts views). An earlier figure of ~11 minutes is still in circulation and understates a cold install by nearly 3x: it was imac's measurement of the first FOUR jobs (#507: 11.1 min, 2,906,194 rows) and it predates brreg_bootstrap entirely. The individual jobs vary far more than the total suggests - annual_sources_refresh alone is 474 s and transform_and_publish 484 s - so a run that looks stalled at 8 minutes may be normal. If you need to tell slow from stuck, run the check command rather than waiting: it reports what has been pulled against what has been applied."
+    takes: "~30 minutes on a COLD install: six first-data jobs, 1772 s wall, measured end to end by imac on a factory-reset cluster (urb-agents #1027). ⚠️ NOW SEVEN JOBS, NOT SIX — monthly_sources_refresh (nav-uforetrygd) was added 2026-10-01 and the 1772 s figure has not been re-measured with it included; nav-uforetrygd is one xlsx download and parse, so the real addition to wall time is expected to be small, but that is an expectation, not a measurement. The Brreg bulk load is 501 s of the original six-job figure and is no longer the unmeasured part. ~4.1M rows across 62 raw BASE TABLEs and 92 marts BASE TABLEs (plus 78 marts views). An earlier figure of ~11 minutes is still in circulation and understates a cold install by nearly 3x: it was imac's measurement of the first FOUR jobs (#507: 11.1 min, 2,906,194 rows) and it predates brreg_bootstrap entirely. The individual jobs vary far more than the total suggests - annual_sources_refresh alone is 474 s and transform_and_publish 484 s - so a run that looks stalled at 8 minutes may be normal. If you need to tell slow from stuck, run the check command rather than waiting: it reports what has been pulled against what has been applied."
 
   # 🔴 first_data ABOVE IS FOR AN EMPTY INSTALL. This is the other case, and it
   # did not exist until 2026-09-22 — `operational:` described a first install
@@ -497,8 +497,8 @@ operational:
     # deciding whether to install and how much disk to give it. Splitting them
     # across two keys was the reason one of them could go missing unnoticed.
     first_load: >-
-      ~4.1M rows across 61 raw BASE TABLEs and 91 marts BASE TABLEs (plus 77
-      marts views), from 52 sources. That is imac's measured 2,906,194 on a clean install
+      ~4.1M rows across 62 raw BASE TABLEs and 92 marts BASE TABLEs (plus 78
+      marts views), from 53 sources. That is imac's measured 2,906,194 on a clean install
       (urb-agents #496, #507) plus the 1,173,878-record Enhetsregisteret bulk
       load added in PLAN-001. The row count is arithmetic on two measured
       figures. The combined WALL TIME IS now measured — a cold install is ~30
@@ -508,9 +508,9 @@ operational:
       other AND with the database while no method was written down (urb-agents
       #824): a "table" here is a BASE TABLE, views excluded and counted
       separately. raw = distinct `create table raw.*` across atlas-data/migrations
-      (61). marts = dbt models materialised table or incremental into schema marts,
-      models=73 plus seeds, which are always tables, seeds=18; a further
-      views=77 are materialised as views instead and are the "77 marts views"
+      (62). marts = dbt models materialised table or incremental into schema marts,
+      models=74 plus seeds, which are always tables, seeds=18; a further
+      views=78 are materialised as views instead and are the "78 marts views"
       above.
       ⚠️ THIS SENTENCE HAS CONTRADICTED ITSELF THREE TIMES (#824, #1263, and
       #1353 on 2026-09-21, when it read 81 in the headline, "= 62" in the rule,
