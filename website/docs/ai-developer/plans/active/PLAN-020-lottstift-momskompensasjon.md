@@ -11,7 +11,7 @@ Phase 1.1).
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Active — Phases 1-3 DONE, Phase 4 (deploy) not yet submitted
+## Status: Active — Phases 1-3 DONE, Phase 4 (deploy) submitted, awaiting imac + ops-dev
 
 **Goal**: Add `lottstift-momskompensasjon` as a served Atlas source — per-kommune, per-year state
 grant totals to voluntary organisations, completing the "Norwegian NGO sector at organisational +
@@ -182,13 +182,34 @@ is actually populated. Flagged explicitly for Phase 4's verification step, not g
 
 ---
 
-## Phase 4: Deploy and verify arrival (not started)
+## Phase 4: Deploy and verify arrival — IN PROGRESS (submitted 2026-10-03)
 
-Same shape as every prior source's Phase 4 this session — name exact relations, both image
-digests labelled, `LANDS WITH` derived via `atlas-data/uis/lands-with.sh`, a row-count prediction
-stated explicitly. **Only predict `indicators__lottstift_momskompensasjon` as a served relation.**
-This source's call volume (6 static file downloads total) is trivially cheap. Independently
-re-verify against the live public API before closing the deploy task.
+PR #541 (Phases 2-3) merged to main as `37769d0`. Image build (run 37159513743) completed and
+published:
+
+```
+artifact_digest  sha256:c93b25499370d521fb490ae69cc6f83fb7f03c287ca5b9f4655726d4eb0d7903  ghcr.io/terchris/atlas-data/uis:v20261003-37769d0
+image_digest     sha256:19a24a104ae864e3e1729400b4ff82b82092999b197eed4524783dc557be07be  ghcr.io/terchris/atlas-data:v20261003-37769d0
+```
+
+Both copied verbatim from the release's own `uis-artifact.json`. `render-template-info.sh
+v20261003-37769d0` confirmed clean (64 raw = migrations, 94 marts stated once, 55 automated
+sources covered).
+
+**Sent:**
+- [urb-agents#1830](https://github.com/terchris/urb-agents/issues/1830) → imac: Dagster deploy
+  request, row-count prediction 116,074 for `raw.lottstift_momskompensasjon`/
+  `indicators__lottstift_momskompensasjon`. Explicitly flagged the one thing this agent could
+  not verify locally (Phase 3's own caveat) — asked imac to spot-check that a well-known
+  recipient (Norges Røde Kors, `864139442`) resolves to a real, non-null `kommune_nr` in
+  production, not just locally-untestable NULLs.
+- [urb-agents#1829](https://github.com/terchris/urb-agents/issues/1829) → ops-dev: template-info
+  pin nomination for the same tag.
+
+**Only predict `indicators__lottstift_momskompensasjon` as a served relation.** Awaiting both
+reports. Independently re-verify against the live public API before closing either deploy
+task — do not take a deploy report alone as sufficient, and do not accept "the join works" on
+imac's say-so alone either, given the specific thing this agent flagged as unverified.
 
 ---
 
