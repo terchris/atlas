@@ -3394,6 +3394,47 @@ category_format joined with `__`, so each measure is filter-stable in the catalo
       - name: updated_at
         description: "Timestamp when the row was last written by ingest (from raw.loaded_at)."
 
+  - name: mart_indicators__lottstift_momskompensasjon
+    meta:
+      title: "Momskompensasjon for frivillige organisasjoner"
+      stability: source
+    description: |
+      Per-source indicator data for lottstift-momskompensasjon (Lotteri- og stiftelsestilsynet), at the publisher's own grain.
+
+      Per-source indicator relation for `lottstift-momskompensasjon` (Lotteri- og
+      stiftelsestilsynet), published at the grain the publisher actually uses rather than
+      flattened into the cross-source views. One row per (organisasjonsnummer, year). Atlas's
+      first Lottstift source. Geography and ICNPO category are resolved via a join to
+      dim_brreg_enhet, not carried in the publisher's own file.
+      🔴 stability:source — the column set here follows Lotteri- og stiftelsestilsynet, not
+      Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it.
+      That is the deliberate trade for getting the real grain; prefer a stability:curated
+      relation if you need a shape Atlas promises to hold still. Decode codes through
+      meta_dimensions filtered to source_id=lottstift-momskompensasjon.
+    columns:
+      - name: source_id
+        description: "Atlas catalogue id for this ingest — always lottstift-momskompensasjon."
+      - name: organisasjonsnummer
+        description: "The recipient organisation's 9-digit Norwegian organisasjonsnummer."
+      - name: kommune_nr
+        description: "Four-digit kommune code, via dim_brreg_enhet and region_code_to_kommune_nr. NULL when the recipient has no match in dim_brreg_enhet, or is registered outside a kommune."
+      - name: region_kind
+        description: "What the recipient's dim_brreg_enhet kommune_nr is, from classify_region_code — 'unknown' when the recipient has no match at all."
+      - name: icnpo_nummer
+        description: "Brreg Frivillighetsregisteret's own ICNPO category code, via dim_brreg_enhet. NULL when unmatched or not Frivillighetsregisteret-registered."
+      - name: icnpo_kategori
+        description: "Brreg's own ICNPO category label, via dim_brreg_enhet."
+      - name: year
+        description: "The grant year. Six years shipped (2019-2024), not latest-only."
+      - name: contents_code
+        description: "Atlas-normalised variable code — fixed, this source has one measure."
+      - name: contents_label
+        description: "Which of that year's own column headers the value was read from — the real meaning (requested/approved/awarded/paid) differs by year."
+      - name: value
+        description: "The final awarded/paid amount (NOK) for this organisation/year, summed across every case in that year."
+      - name: updated_at
+        description: "Timestamp when the row was last written by ingest (from raw.loaded_at)."
+
   - name: mart_indicators__husbanken_bostotte
     meta:
       title: "Statistikkbank — Bostøtte"

@@ -11,7 +11,7 @@ Phase 1.1).
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Backlog — Phase 1 complete, ready to move to active/ for Phase 2
+## Status: Active — Phases 1-3 DONE, Phase 4 (deploy) not yet submitted
 
 **Goal**: Add `lottstift-momskompensasjon` as a served Atlas source — per-kommune, per-year state
 grant totals to voluntary organisations, completing the "Norwegian NGO sector at organisational +
@@ -110,57 +110,75 @@ one sample year), real column names, real duplicate-row counts, real format chec
 
 ---
 
-## Phase 2: Ingest module + raw table (not started)
+## Phase 2: Ingest module + raw table — DONE (verified 2026-10-04)
 
 ### Tasks
 
-- [ ] 2.1 Create `atlas-data/ingest/src/sources/lottstift-momskompensasjon/`: `manifest.yml`
+- [x] 2.1 Created `atlas-data/ingest/src/sources/lottstift-momskompensasjon/`: `manifest.yml`
   (`source_id: lottstift-momskompensasjon`, `provider: lottstift`, `periodicity: P1Y`,
   `license: NLOD`), `index.ts`, `parse.ts`, `fetch_retry.ts` (copied), `README.md`, `__tests__/`
-  with real captured fixtures for all 6 shipped years (2019-2024), each with its own distinct
-  column layout.
-- [ ] 2.2 `parse.ts` — a per-year config table (`{year, url, sheetName, headerRow, orgnrCol,
-  amountCol, amountLabel}`, see Implementation Notes for the real values found in Phase 1.3), one
-  generic row extractor reused across years. Sum amounts for duplicate orgnr-within-year rows
-  (confirmed real in 2020/2022/2023).
-- [ ] 2.3 Migration `raw.lottstift_momskompensasjon(organisasjonsnummer, year, amount_nok,
-  amount_label, loaded_at)` — one row per org/year (post-aggregation). `amount_label` records
-  which of the year's own column names fed `amount_nok`, since the real meaning differs by year
-  (see 1.3) — not silently hidden.
-- [ ] 2.4 Dagster registration — annual cadence, new `provider: lottstift` tag (not yet in
-  `publishers.yaml`/`topics.yaml` — add it, matching every other new-provider PLAN's first
-  commit this session).
-- [ ] 2.5 Add `ingest:lottstift-momskompensasjon` npm script FIRST, verify via
-  `check-every-source-has-an-ingest-script.sh` and the real `npm run` invocation before any other
-  Phase 2 work.
+  with real, trimmed-but-genuine fixtures for all 6 shipped years (2019-2024) — each XLSX built
+  from the real downloaded file's own header plus its first ~15 real data rows, plus every real
+  duplicate-recipient case found live (2020, 2022, 2023). 14 tests, all passing.
+- [x] 2.2 `parse.ts` — a per-year `YEAR_CONFIGS` table (`{year, url, sheetName, orgnrCol,
+  amountCol, amountLabel}`, the real values found in Phase 1.3), one generic row extractor
+  (`parseYearRows`) reused across years. Sums amounts for duplicate orgnr-within-year rows
+  (confirmed real in 2020/2022/2023); a missing amount cell is treated as 0, not an error
+  (confirmed real on at least one row per affected year).
+- [x] 2.3 Migration `067_raw_lottstift_momskompensasjon.sql`:
+  `raw.lottstift_momskompensasjon(organisasjonsnummer, year, amount_nok, amount_label,
+  loaded_at)` — one row per org/year (post-aggregation), as planned.
+- [x] 2.4 Dagster registration — `raw_other.py`/`schedules.py`, annual cadence. Added
+  `lottstift` to `publishers.yaml` (with a real logo verified live from `lottstift.no`'s own
+  site, `lottstift.svg`) and confirmed `ngo-supply`/`SOCI` are already valid
+  `topic`/`eu_theme` values (reused from `redcross-branches`'s own precedent) — no schema bump
+  needed.
+- [x] 2.5 Added `ingest:lottstift-momskompensasjon` npm script FIRST, verified via
+  `check-every-source-has-an-ingest-script.sh` (✓ all 55 covered) and the real
+  `npm run ingest:lottstift-momskompensasjon` invocation before any other Phase 2 work.
 
 ### Validation
 
-Real run against the live files, zero rows silently dropped, at least one duplicate-orgnr-summed
-case confirmed against real data for each affected year.
+✅ Confirmed 2026-10-04. Real run against the live files into local scratch Postgres: **6 HTTP
+calls, 5.2s wall time, 116,074 rows written, zero rows silently dropped.** Norges Røde Kors
+(`864139442`) confirmed present with real, plausible, varying amounts across all 6 years.
 
 ---
 
-## Phase 3: dbt staging and marts (not started)
+## Phase 3: dbt staging and marts — DONE (verified 2026-10-04)
 
 ### Tasks
 
-- [ ] 3.1 Add `raw.lottstift_momskompensasjon` to `models/indicators/sources.yml`.
-- [ ] 3.2 `indicators__lottstift_momskompensasjon.sql` — LEFT JOIN
-  `{{ ref('dim_brreg_enhet') }}` on `organisasjonsnummer` for `kommune_nr`/`region_kind` (via the
-  dimension's own already-resolved columns, not re-deriving `classify_region_code` here — this
-  model's geography is "wherever Brreg says this org is registered," already settled upstream)
-  and `icnpo_kategori`/`icnpo_nummer`. Confirm against real loaded data that most recipients
-  match (not assumed) and that an unmatched orgnr resolves to NULL cleanly, not an error.
-- [ ] 3.3 Document columns in `schema.yml`; `mart_indicators__lottstift_momskompensasjon.sql` api
-  passthrough + `marts/api/schema.yml` entry.
-- [ ] 3.4 `dbt build` against real loaded data.
+- [x] 3.1 Added `raw.lottstift_momskompensasjon` to `models/indicators/sources.yml`.
+- [x] 3.2 `indicators__lottstift_momskompensasjon.sql` — LEFT JOIN `{{ ref('dim_brreg_enhet') }}`
+  on `organisasjonsnummer`. ⚠️ **A real correction to this plan's own Phase 3.2 assumption**:
+  `dim_brreg_enhet.kommune_nr` is NOT already resolved through `classify_region_code` — checked
+  its own SQL directly and found it is Brreg's raw `forretningsadresse.kommunenummer` field,
+  verbatim, same as every other source's own raw region code. This model applies
+  `classify_region_code`/`region_code_to_kommune_nr` itself, exactly like every other
+  kommune-grain source — not a special case.
+- [x] 3.3 Documented columns in `schema.yml`; `mart_indicators__lottstift_momskompensasjon.sql`
+  api passthrough + `marts/api/schema.yml` entry. `mart_atlas_inventory.sql` depends_on +
+  relation list updated — confirmed its own `contributing_sources` correctly names the full
+  Brreg lineage chain (`brreg-enheter-alle`, `brreg-frivillige`, `brreg-oppdateringer`) alongside
+  `lottstift-momskompensasjon` itself. `generate_api_v1.py`'s `SCHEMA_COMMENT` bumped (51→52
+  total, new `lottstift (1)` provider group).
+- [x] 3.4 `dbt build` against real loaded data — clean (14/14 for the targeted build;
+  `mart_atlas_inventory` and its full upstream dependency tree also rebuilt clean). Full
+  17-script `atlas-data/dbt/check-*.sh` suite — all 17 pass clean. Full ingest test suite (405
+  tests) and `tsc --noEmit` both pass clean. `website/npm run build` completes clean (after
+  fixing this plan's own `active/` cross-reference links, broken by the backlog→active move).
 
 ### Validation
 
-Real local Postgres, not an empty schema. Confirm the `dim_brreg_enhet` join resolves real
-kommune_nr/icnpo values for a known real organisation (e.g. a large, well-known recipient from
-the 2024 sample like Norges Røde Kors, orgnr `864139442`).
+⚠️ **A real, honest limitation, not a false-positive pass**: this local scratch Postgres's
+`dim_brreg_enhet` has **zero rows** (the full ~1.17M-row Brreg bulk load has never been run in
+this environment) — every recipient in the local build resolves to `region_kind='unknown'`,
+`kommune_nr`/`icnpo_*` all NULL, confirmed directly via query, not silently accepted. This is the
+expected, correct behaviour of a LEFT JOIN against an empty table, not a defect — but it means
+the real kommune_nr/ICNPO resolution for real recipients is **not yet verified against real
+Brreg data** and can only be confirmed after a real production deploy, where `dim_brreg_enhet`
+is actually populated. Flagged explicitly for Phase 4's verification step, not glossed over.
 
 ---
 

@@ -56,6 +56,12 @@ See _factory.make_raw_ingest_asset. Currently:
   WebSocket session opens and closes entirely inside that one process. Annual
   data, polled weekly like the sources above — see
   atlas-data/ingest/src/sources/husbanken-bostotte/README.md.
+- lottstift-momskompensasjon: six direct static XLSX downloads from
+  lottstift.no (not the tilskudd.lottstift.no search app an earlier
+  investigation pointed at — no public API found there). Atlas's first
+  Lottstift source. Trivially cheap — 6 HTTP calls for one run, annual
+  data, polled weekly like the sources above — see
+  atlas-data/ingest/src/sources/lottstift-momskompensasjon/README.md.
 - redcross-branches: Crawlee-based scraper of Red Cross chapter pages.
   Heavier resource profile (per UIS Dagster INVESTIGATE — headless browser
   state, ~512MiB working set).
@@ -82,6 +88,7 @@ OTHER_SOURCES = [
     "bufdir-barnevern",
     "husbanken-bostotte",
     "imdi-bosetting",
+    "lottstift-momskompensasjon",
     "nav-aap",
     "nav-helt-ledige",
     "nav-uforetrygd",
@@ -101,6 +108,7 @@ assets = [
             "bufdir-barnevern",
             "husbanken-bostotte",
             "imdi-bosetting",
+            "lottstift-momskompensasjon",
             "udir-elevundersokelsen-mobbing",
             "udir-fravar",
             "udir-gsi",

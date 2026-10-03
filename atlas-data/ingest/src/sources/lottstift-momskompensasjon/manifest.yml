@@ -1,0 +1,90 @@
+# Hand-authored catalogue metadata for Lottstift's annual VAT-compensation allocations to
+# voluntary organisations (momskompensasjon).
+# Ingest runs do not modify this file.
+
+source_id: lottstift-momskompensasjon
+upstream_id: momskompensasjon
+upstream_url: https://lottstift.no/nb/om-oss/apne-data/
+upstream_landing_page: https://lottstift.no/nb/om-oss/apne-data/
+upstream_title: "Momskompensasjon for frivillige organisasjoner — oversikt over tildelinger"
+description: |
+  Lotteri- og stiftelsestilsynet (Lottstift) administers the state's annual VAT-compensation
+  scheme for voluntary organisations — reimbursing a share of the VAT a voluntary organisation
+  pays on its own purchases. Atlas ingests, per organisation per year, the final awarded/paid
+  amount for the six years (2019-2024) whose published file carries a usable recipient
+  organisasjonsnummer. Atlas's first Lottstift source. Not the `tilskudd.lottstift.no` search
+  app an earlier investigation pointed at (no public API found there) — the real mechanism is
+  Lottstift's own direct static XLSX downloads at `lottstift.no/nb/om-oss/apne-data/`. Geography
+  and ICNPO category are resolved by joining the recipient's organisasjonsnummer against Atlas's
+  own `dim_brreg_enhet` (already populated via the separate, already-shipped `brreg-frivillige`
+  source), not from this file's own inconsistent per-year text columns.
+publisher: Lotteri- og stiftelsestilsynet
+license: NLOD
+license_url: https://data.norge.no/nlod
+periodicity: P1Y
+eu_theme: SOCI
+attribution: "Kilde: Lotteri- og stiftelsestilsynet, momskompensasjon for frivillige organisasjoner"
+
+# 🔵 Licence confirmed directly on the registered data.norge.no catalogue entry for "Åpne
+# datasett fra Lotteri- og stiftelsestilsynet" (NLOD 2.0), whose own description names the
+# momskompensasjon scheme specifically — not inferred from the investigation's unverified claim.
+
+tags:
+  provider: lottstift
+  topic: ngo-supply
+  geo: kommune
+  cadence: annual
+
+dimensions:
+  - code: organisasjonsnummer
+    meaning: The recipient organisation's 9-digit Norwegian organisasjonsnummer
+    value_format: "9-digit string"
+    notes: >
+      Confirmed live 2026-10-04: every one of the six shipped years (2019-2024) carries a real
+      recipient orgnr column, under a different name/position each year (see this source's
+      README for the full per-year map). The three undated years (2016-2018) have no recipient
+      orgnr at all — only a recipient NAME under an umbrella applicant — and are deliberately not
+      ingested; matching by name alone would be unreliable. kommune_nr/region_kind and
+      icnpo_kategori are resolved downstream by joining this column against dim_brreg_enhet, not
+      parsed from this file.
+  - code: year
+    meaning: The grant year
+    value_format: "4-digit integer"
+    notes: v1 ships all 6 years with a usable recipient orgnr (2019-2024); not latest-only.
+  - code: amount_nok
+    meaning: The final awarded/paid amount for this organisation/year, summed across every case
+    value_format: "Numeric, Norwegian kroner"
+    notes: >
+      A small number of organisations received more than one separate case/grant in the same
+      year (confirmed live: 30 in 2022, 30 in 2023, 14 in 2020) — amounts are summed, not kept as
+      separate rows. The real meaning of "final amount" differs by year (requested vs. approved
+      vs. awarded vs. paid) — see amount_label for which of that year's own columns fed this
+      value.
+  - code: amount_label
+    meaning: Which of that year's own column headers amount_nok was read from
+    value_format: "Free text, verbatim from the source file's header row"
+    notes: Kept because the real meaning of "amount" genuinely differs by year — not normalized away.
+
+lifecycle: stable
+time_coverage:
+  start: 2019
+  end: 2024
+keywords:
+  - momskompensasjon
+  - vat-compensation
+  - frivillige-organisasjoner
+  - ngo-supply
+  - lottstift
+  - annual
+methodology_notes: |
+  Momskompensasjon reimburses voluntary organisations for a share of the VAT they pay on their
+  own purchases — a financial-resolution signal on the Norwegian NGO sector, complementing
+  Brreg's own Frivillighetsregisteret (organisational status + ICNPO category, already shipped as
+  `brreg-frivillige`). Three years (2016-2018) are deliberately excluded: their published files
+  identify sub-unit recipients (e.g. a national organisation's regional chapters) by name only,
+  with no organisasjonsnummer to join against Brreg reliably. 2010-2015 are PDF-only on
+  Lottstift's own site and were not attempted, matching this project's established "no PDF
+  parser" convention.
+suggested_joins:
+  - brreg-enheter-alle
+  - brreg-frivillige

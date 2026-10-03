@@ -49,6 +49,7 @@
     "ingest:fhi-vgs-gjennomforing": "tsx --env-file-if-exists=.env src/sources/fhi-vgs-gjennomforing/index.ts",
     "ingest:husbanken-bostotte": "tsx --env-file-if-exists=.env src/sources/husbanken-bostotte/index.ts",
     "ingest:imdi-bosetting": "tsx --env-file-if-exists=.env src/sources/imdi-bosetting/index.ts",
+    "ingest:lottstift-momskompensasjon": "tsx --env-file-if-exists=.env src/sources/lottstift-momskompensasjon/index.ts",
     "ingest:nav-aap": "tsx --env-file-if-exists=.env src/sources/nav-aap/index.ts",
     "ingest:nav-helt-ledige": "tsx --env-file-if-exists=.env src/sources/nav-helt-ledige/index.ts",
     "ingest:nav-uforetrygd": "tsx --env-file-if-exists=.env src/sources/nav-uforetrygd/index.ts",

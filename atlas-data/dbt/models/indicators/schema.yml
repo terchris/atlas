@@ -2783,6 +2783,88 @@ models:
             - year
             - contents_code
 
+  - name: indicators__lottstift_momskompensasjon
+    description: |-
+      Per-source passthrough for Lottstift's momskompensasjon (annual VAT-compensation
+      allocations to voluntary organisations). One row per (organisasjonsnummer, year). Atlas's
+      first Lottstift source. Geography and ICNPO category are resolved via a join to
+      dim_brreg_enhet, not carried in the raw table.
+    columns:
+      - name: source_id
+        description: Atlas catalogue id for this ingest — always lottstift-momskompensasjon.
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: [lottstift-momskompensasjon]
+        data_type: text
+      - name: organisasjonsnummer
+        description: The recipient organisation's 9-digit Norwegian organisasjonsnummer.
+        data_tests:
+          - not_null
+        data_type: text
+      - name: kommune_nr
+        description: >-
+          Four-digit kommune code, derived from dim_brreg_enhet's own forretningsadresse-based
+          kommune_nr through region_code_to_kommune_nr. NULL when the recipient has no match in
+          dim_brreg_enhet, or is registered outside a kommune (e.g. Svalbard, abroad).
+        data_tests:
+          - relationships:
+              to: ref('dim_kommune')
+              field: kommune_nr
+        data_type: text
+      - name: region_kind
+        description: |
+          What the recipient's dim_brreg_enhet kommune_nr is, from classify_region_code —
+          'unknown' when the recipient has no match in dim_brreg_enhet at all.
+        data_tests:
+          - not_null
+          - relationships: {to: ref('ref_region_kind'), field: region_kind}
+        data_type: text
+      - name: icnpo_nummer
+        description: >-
+          Brreg Frivillighetsregisteret's own ICNPO category code, via dim_brreg_enhet. NULL when
+          the recipient has no match or is not registered in the Frivillighetsregisteret.
+        data_type: text
+      - name: icnpo_kategori
+        description: Brreg's own ICNPO category label, via dim_brreg_enhet.
+        data_type: text
+      - name: year
+        description: The grant year. Six years shipped (2019-2024), not latest-only.
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 2015
+              max_value: 2030
+        data_type: integer
+      - name: contents_code
+        description: Atlas-normalised variable code — fixed, this source has one measure.
+        data_tests:
+          - not_null
+        data_type: text
+      - name: contents_label
+        description: >-
+          Which of that year's own column headers the value was read from — the real meaning
+          (requested/approved/awarded/paid) differs by year.
+        data_tests:
+          - not_null
+        data_type: text
+      - name: value
+        description: >-
+          The final awarded/paid amount (NOK) for this organisation/year, summed across every
+          case in that year.
+        data_type: numeric
+      - name: updated_at
+        description: Timestamp when the row was last written by ingest (from raw.loaded_at).
+        data_tests:
+          - not_null
+        data_type: timestamp with time zone
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - source_id
+            - organisasjonsnummer
+            - year
+
   - name: indicators__husbanken_bostotte
     description: |-
       Per-source passthrough for Husbanken bostøtte (housing allowance — application, decision,

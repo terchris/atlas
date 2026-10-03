@@ -142,13 +142,13 @@ SUPPLY — voluntary-sector presence:
   distrikt_summary             chapters by district.
   kommune_local_chapters       chapters resolved to a kommune.
 
-PER-SOURCE INDICATOR RELATIONS — 51 of them, one per upstream table, at the
+PER-SOURCE INDICATOR RELATIONS — 52 of them, one per upstream table, at the
 grain the publisher actually uses. The cross-source views above impose ONE
 shape on every source; these keep the source''s own dimensions, so a breakdown
 those views flatten away (a sex, an age band, a household or family type, a
 parental-education split) is only answerable here.
 
-🔴 ALL 51 ARE stability:source. THE COLUMN SET FOLLOWS THE PUBLISHER, NOT
+🔴 ALL 52 ARE stability:source. THE COLUMN SET FOLLOWS THE PUBLISHER, NOT
 ATLAS. If SSB, FHI or Bufdir adds, renames or drops a dimension, these change
 with it — that is the deliberate trade for getting the real grain. Filter
 `meta_endpoints?tags=cs.{stability:curated}` for the relations whose shape
@@ -174,6 +174,8 @@ same source_id, and through the ref_* lists above where one exists.
     indicators__husbanken_bostotte
   imdi (1):
     indicators__imdi_bosetting
+  lottstift (1):
+    indicators__lottstift_momskompensasjon
   nav (3):
     indicators__nav_aap indicators__nav_helt_ledige indicators__nav_uforetrygd
   ssb (19):
@@ -1937,6 +1939,32 @@ COMMENT ON COLUMN api_v1.indicators__imdi_bosetting.contents_code IS 'Atlas-norm
 COMMENT ON COLUMN api_v1.indicators__imdi_bosetting.contents_label IS 'Human-readable Norwegian label for the metric.';
 COMMENT ON COLUMN api_v1.indicators__imdi_bosetting.value IS 'The metric''s value for this kommune and year. NULL when IMDi suppressed the cell (its own marker, the literal character ":") or published free text instead of a number.';
 COMMENT ON COLUMN api_v1.indicators__imdi_bosetting.updated_at IS 'Timestamp when the row was last written by ingest (from raw.loaded_at).';
+
+-- indicators__lottstift_momskompensasjon  ←  marts.mart_indicators__lottstift_momskompensasjon
+CREATE OR REPLACE VIEW api_v1.indicators__lottstift_momskompensasjon AS SELECT * FROM marts.mart_indicators__lottstift_momskompensasjon;
+COMMENT ON VIEW api_v1.indicators__lottstift_momskompensasjon IS 'Per-source indicator data for lottstift-momskompensasjon (Lotteri- og stiftelsestilsynet), at the publisher''s own grain.
+
+Per-source indicator relation for `lottstift-momskompensasjon` (Lotteri- og
+stiftelsestilsynet), published at the grain the publisher actually uses rather than
+flattened into the cross-source views. One row per (organisasjonsnummer, year). Atlas''s
+first Lottstift source. Geography and ICNPO category are resolved via a join to
+dim_brreg_enhet, not carried in the publisher''s own file.
+🔴 stability:source — the column set here follows Lotteri- og stiftelsestilsynet, not
+Atlas. If the publisher adds, renames or drops a dimension, this relation changes with it.
+That is the deliberate trade for getting the real grain; prefer a stability:curated
+relation if you need a shape Atlas promises to hold still. Decode codes through
+meta_dimensions filtered to source_id=lottstift-momskompensasjon.';
+COMMENT ON COLUMN api_v1.indicators__lottstift_momskompensasjon.source_id IS 'Atlas catalogue id for this ingest — always lottstift-momskompensasjon.';
+COMMENT ON COLUMN api_v1.indicators__lottstift_momskompensasjon.organisasjonsnummer IS 'The recipient organisation''s 9-digit Norwegian organisasjonsnummer.';
+COMMENT ON COLUMN api_v1.indicators__lottstift_momskompensasjon.kommune_nr IS 'Four-digit kommune code, via dim_brreg_enhet and region_code_to_kommune_nr. NULL when the recipient has no match in dim_brreg_enhet, or is registered outside a kommune.';
+COMMENT ON COLUMN api_v1.indicators__lottstift_momskompensasjon.region_kind IS 'What the recipient''s dim_brreg_enhet kommune_nr is, from classify_region_code — ''unknown'' when the recipient has no match at all.';
+COMMENT ON COLUMN api_v1.indicators__lottstift_momskompensasjon.icnpo_nummer IS 'Brreg Frivillighetsregisteret''s own ICNPO category code, via dim_brreg_enhet. NULL when unmatched or not Frivillighetsregisteret-registered.';
+COMMENT ON COLUMN api_v1.indicators__lottstift_momskompensasjon.icnpo_kategori IS 'Brreg''s own ICNPO category label, via dim_brreg_enhet.';
+COMMENT ON COLUMN api_v1.indicators__lottstift_momskompensasjon.year IS 'The grant year. Six years shipped (2019-2024), not latest-only.';
+COMMENT ON COLUMN api_v1.indicators__lottstift_momskompensasjon.contents_code IS 'Atlas-normalised variable code — fixed, this source has one measure.';
+COMMENT ON COLUMN api_v1.indicators__lottstift_momskompensasjon.contents_label IS 'Which of that year''s own column headers the value was read from — the real meaning (requested/approved/awarded/paid) differs by year.';
+COMMENT ON COLUMN api_v1.indicators__lottstift_momskompensasjon.value IS 'The final awarded/paid amount (NOK) for this organisation/year, summed across every case in that year.';
+COMMENT ON COLUMN api_v1.indicators__lottstift_momskompensasjon.updated_at IS 'Timestamp when the row was last written by ingest (from raw.loaded_at).';
 
 -- indicators__nav_aap  ←  marts.mart_indicators__nav_aap
 CREATE OR REPLACE VIEW api_v1.indicators__nav_aap AS SELECT * FROM marts.mart_indicators__nav_aap;

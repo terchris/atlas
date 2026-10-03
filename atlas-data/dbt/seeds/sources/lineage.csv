@@ -71,6 +71,10 @@ indicators__fhi_vgs_gjennomforing,fhi-vgs-gjennomforing
 indicators__husbanken_bostotte,husbanken-bostotte
 indicators__imdi_bosetting,imdi-bosetting
 indicators__imdi_bosetting,ssb-klass-kommuner
+indicators__lottstift_momskompensasjon,brreg-enheter-alle
+indicators__lottstift_momskompensasjon,brreg-frivillige
+indicators__lottstift_momskompensasjon,brreg-oppdateringer
+indicators__lottstift_momskompensasjon,lottstift-momskompensasjon
 indicators__nav_aap,nav-aap
 indicators__nav_helt_ledige,nav-helt-ledige
 indicators__nav_uforetrygd,nav-uforetrygd
@@ -126,6 +130,7 @@ mart_atlas_inventory,fhi-trangbodd
 mart_atlas_inventory,fhi-vgs-gjennomforing
 mart_atlas_inventory,husbanken-bostotte
 mart_atlas_inventory,imdi-bosetting
+mart_atlas_inventory,lottstift-momskompensasjon
 mart_atlas_inventory,nav-aap
 mart_atlas_inventory,nav-helt-ledige
 mart_atlas_inventory,nav-uforetrygd
@@ -334,6 +339,10 @@ mart_indicators__fhi_vgs_gjennomforing,fhi-vgs-gjennomforing
 mart_indicators__husbanken_bostotte,husbanken-bostotte
 mart_indicators__imdi_bosetting,imdi-bosetting
 mart_indicators__imdi_bosetting,ssb-klass-kommuner
+mart_indicators__lottstift_momskompensasjon,brreg-enheter-alle
+mart_indicators__lottstift_momskompensasjon,brreg-frivillige
+mart_indicators__lottstift_momskompensasjon,brreg-oppdateringer
+mart_indicators__lottstift_momskompensasjon,lottstift-momskompensasjon
 mart_indicators__nav_aap,nav-aap
 mart_indicators__nav_helt_ledige,nav-helt-ledige
 mart_indicators__nav_uforetrygd,nav-uforetrygd

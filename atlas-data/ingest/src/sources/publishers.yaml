@@ -117,3 +117,15 @@ publishers:
       statistikkbank data (bostøtte, startlån) per kommune — the housing
       half of the income/welfare picture Atlas's SSB and NAV sources do not
       carry on their own.
+
+  - id: lottstift
+    display_name: Lotteri- og stiftelsestilsynet
+    homepage: https://lottstift.no/
+    logo: /img/publishers/lottstift.svg
+    feedback_url: https://lottstift.no/kontakt-oss/
+    notes: |
+      The Norwegian Gaming and Foundation Authority. Administers annual
+      VAT-compensation allocations to voluntary organisations
+      (momskompensasjon) — the financial-resolution half of the Norwegian
+      NGO sector that Brreg's own Frivillighetsregisteret (status/ICNPO
+      category, already in `dim_brreg_enhet`) does not carry on its own.
