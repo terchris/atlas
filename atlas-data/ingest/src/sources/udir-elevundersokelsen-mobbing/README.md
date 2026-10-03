@@ -100,4 +100,4 @@ a structurally different problem (row-hierarchy depth filtering, not per-entity 
 - Swagger: https://statistikkportalen.udir.no/api/rapportering/swagger/v1/swagger.json
 - Licence: https://data.norge.no/nlod/no/2.0
 - Shared helpers: `atlas-data/ingest/src/lib/postgres.ts`, `atlas-data/ingest/src/lib/output.ts`, `atlas-data/ingest/src/lib/ingest_run.ts`
-- Plan: [`PLAN-015-udir-elevundersokelsen-mobbing.md`](../../../../../website/docs/ai-developer/plans/active/PLAN-015-udir-elevundersokelsen-mobbing.md)
+- Plan: [`PLAN-015-udir-elevundersokelsen-mobbing.md`](../../../../../website/docs/ai-developer/plans/completed/PLAN-015-udir-elevundersokelsen-mobbing.md)
