@@ -9,7 +9,7 @@ signal.
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Active — Phases 2-3 DONE, Phase 4 (deploy) pending
+## Status: Active — Phases 2-3 DONE, Phase 4 (deploy) submitted, awaiting imac + ops-dev
 
 **Goal**: Add `udir-nasjonale-prover` as a served Atlas source — the only direct learning-outcome
 measurement in Atlas today, at kommune resolution, per grade and subject. Plugs Report #3 (Youth
@@ -229,19 +229,33 @@ failing test's result set.
 
 ---
 
-## Phase 4: Deploy and verify arrival (not started)
+## Phase 4: Deploy and verify arrival — IN PROGRESS (submitted 2026-10-03)
 
-Same shape as every prior source's Phase 4 this session — name exact relations, both image
-digests labelled (copied verbatim from the release's own `uis-artifact.json`, not reconstructed),
-`LANDS WITH` derived via `atlas-data/uis/lands-with.sh`, a row-count prediction stated explicitly.
-**Only predict `indicators__udir_nasjonale_prover` as a served relation — never a second
-`mart_indicators__...` entry, see [[mart-prefix-is-never-a-served-endpoint]] (PLAN-014's own
-closing finding).** This source's call volume (18 calls, confirmed live in Phase 2 — 29.9 seconds
-wall time) is genuinely cheap, unlike `udir-elevundersokelsen-mobbing`'s ~702/~60min — no "slow
-run" warning needed this time, confirmed by a real Phase 2 run rather than assumed from Phase 1's
-exploratory calls (per [[exploratory-calls-dont-reveal-sustained-api-latency]]). Independently
-re-verify against the live public API before closing the deploy task — do not take a deploy report
-alone as sufficient.
+PR #532 merged to main at `d7a59cb`. Image build (run
+[37128561025](https://github.com/terchris/atlas/actions/runs/37128561025)) succeeded; both digests
+read from the release's own `uis-artifact.json`, not reconstructed, and cross-checked against the
+full build log before sending:
+
+```
+artifact_digest  sha256:a7b13360e3433890fc69666669a3802912439f9e7b78d8f8085b5831354e93ef  ghcr.io/terchris/atlas-data/uis:v20261003-d7a59cb
+image_digest     sha256:51e4e5f7af0743cee616d59a77761af21e90d81d24834e5937c29a19bd9fc341  ghcr.io/terchris/atlas-data:v20261003-d7a59cb
+```
+
+`lands-with.sh 5192623..d7a59cb` output was clean: `annual_sources_refresh` (re-fetch) then
+`transform_and_publish`, plus a template-info pin.
+
+**Two tasks filed, per the pin/run split ([[a-pin-and-a-run-are-two-actions]]):**
+- Deploy request to imac: [urb-agents#1824](https://github.com/terchris/urb-agents/issues/1824)
+  — no "slow run" warning needed this time (unlike PLAN-015's), confirmed by the real Phase 2 run
+  (18 calls, 29.9s) rather than assumed. Names `raw.udir_nasjonale_prover` (8,589 rows as of
+  today's validation run), and predicts only `indicators__udir_nasjonale_prover` as served, per
+  [[mart-prefix-is-never-a-served-endpoint]] (PLAN-014's own closing finding).
+- Pin nomination to ops-dev: [urb-agents#1825](https://github.com/terchris/urb-agents/issues/1825)
+  — both digests copied verbatim from `uis-artifact.json`, not reconstructed.
+
+Independent re-verification against the live public API, and closing both bus tasks, are still
+pending — do not take either task's own report as sufficient, per this session's standing
+discipline.
 
 ---
 
