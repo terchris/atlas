@@ -8,7 +8,7 @@ a sharper, annual complement to the existing `fhi-mobbing` 3-year-rolling aggreg
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Active — Phases 2-3 DONE, Phase 4 (deploy) pending
+## Status: Active — Phases 2-3 DONE, Phase 4 (deploy) submitted, awaiting imac + ops-dev
 
 **Goal**: Add `udir-elevundersokelsen-mobbing` as a served Atlas source — an annual, per-grade
 bullying-prevalence signal at kommune resolution, sharper than `fhi-mobbing`'s 3-year-rolling
@@ -251,15 +251,36 @@ either failing test's result set.
 
 ---
 
-## Phase 4: Deploy and verify arrival (not started)
+## Phase 4: Deploy and verify arrival — IN PROGRESS (submitted 2026-10-03)
 
-Same shape as every prior source's Phase 4 this session — name exact relations, both image
-digests labelled (copied verbatim from the release's own `uis-artifact.json`, not reconstructed),
-`LANDS WITH` derived via `atlas-data/uis/lands-with.sh`, a row-count prediction stated explicitly.
-**Only predict `indicators__udir_elevundersokelsen_mobbing` as a served relation — never a second
-`mart_indicators__...` entry, see [[mart-prefix-is-never-a-served-endpoint]] (PLAN-014's own
-closing finding).** Independently re-verify against the live public API before closing the deploy
-task — do not take a deploy report alone as sufficient.
+PR #528 merged to main at `c4a450c`. Image build (run
+[37116024054](https://github.com/terchris/atlas/actions/runs/37116024054)) succeeded; both digests
+read from the release's own `uis-artifact.json`, not reconstructed, and cross-checked against the
+full build log before sending:
+
+```
+artifact_digest  sha256:a31efe43001d7bd5d0ee8fb72ffb012b8d9e5e754f0282eb2424c466f0a3de53  ghcr.io/terchris/atlas-data/uis:v20261003-c4a450c
+image_digest     sha256:d0cb88bf7473dbcbd585d186b034196ee5171890eac69f5f4b103c020269b573  ghcr.io/terchris/atlas-data:v20261003-c4a450c
+```
+
+`lands-with.sh 7de652a..c4a450c` output was clean: `annual_sources_refresh` (re-fetch) then
+`transform_and_publish`, plus a template-info pin.
+
+**Two tasks filed, per the pin/run split ([[a-pin-and-a-run-are-two-actions]]):**
+- Deploy request to imac: [urb-agents#1822](https://github.com/terchris/urb-agents/issues/1822)
+  — titled explicitly with a "SLOW RUN, NOT STUCK (~60min)" warning, and led with that same warning
+  in the body, before the digests — this source makes ~702 HTTP calls and the real run took 60.3
+  minutes in dev (see Phase 2's Validation). Names `raw.udir_elevundersokelsen_mobbing` (2,804
+  rows as of today's validation run), and — learning from
+  [[mart-prefix-is-never-a-served-endpoint]] (PLAN-014's own closing finding) — predicts only
+  `indicators__udir_elevundersokelsen_mobbing` as a served relation, never a second
+  `mart_indicators__...` entry.
+- Pin nomination to ops-dev: [urb-agents#1823](https://github.com/terchris/urb-agents/issues/1823)
+  — both digests copied verbatim from `uis-artifact.json`, not reconstructed.
+
+Independent re-verification against the live public API, and closing both bus tasks, are still
+pending — do not take either task's own report as sufficient, per this session's standing
+discipline.
 
 ---
 
