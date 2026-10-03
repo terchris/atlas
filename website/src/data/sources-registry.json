@@ -35,7 +35,7 @@
       "description": "Educational outcomes — upper-secondary completion, NEET status,\neducational attainment by region. Includes bullying and youth wellbeing\nindicators that intersect with school context.\n",
       "emoji": "🎓",
       "order": 40,
-      "source_count": 8
+      "source_count": 9
     },
     {
       "id": "social",
@@ -150,7 +150,7 @@
       "logo": "/img/publishers/udir.png",
       "feedback_url": "https://www.udir.no/om-udir/kontakt-oss/",
       "notes": "The Directorate for Education and Training. Publishes school-level\nregister data (GSI — Grunnskolens Informasjonssystem), the annual\npupil survey (Elevundersøkelsen: trivsel, mobbing) and absence\nstatistics, at a sharper resolution than Atlas's existing FHI-mediated\nbullying figure (`fhi-mobbing`, a 3-year rolling 7th+10th-grade\naggregate).\n",
-      "source_count": 3
+      "source_count": 4
     }
   ],
   "sources": [
@@ -5994,7 +5994,7 @@
         "fhi-vgs-gjennomforing",
         "ssb-09429",
         "udir-elevundersokelsen-mobbing",
-        "udir-gsi"
+        "udir-fravar"
       ],
       "dimensions": [
         {
@@ -6333,7 +6333,7 @@
         "fhi-vgs-gjennomforing",
         "ssb-09429",
         "udir-elevundersokelsen-mobbing",
-        "udir-gsi"
+        "udir-fravar"
       ],
       "dimensions": [
         {
@@ -7683,7 +7683,7 @@
         "fhi-vgs-gjennomforing",
         "ssb-09429",
         "udir-elevundersokelsen-mobbing",
-        "udir-gsi"
+        "udir-fravar"
       ],
       "dimensions": [
         {
@@ -8023,7 +8023,7 @@
         "fhi-trangbodd",
         "ssb-09429",
         "udir-elevundersokelsen-mobbing",
-        "udir-gsi"
+        "udir-fravar"
       ],
       "dimensions": [
         {
@@ -11400,7 +11400,7 @@
         "fhi-trangbodd",
         "fhi-vgs-gjennomforing",
         "udir-elevundersokelsen-mobbing",
-        "udir-gsi"
+        "udir-fravar"
       ],
       "dimensions": [
         {
@@ -15146,7 +15146,7 @@
         "fhi-trangbodd",
         "fhi-vgs-gjennomforing",
         "ssb-09429",
-        "udir-gsi"
+        "udir-fravar"
       ],
       "dimensions": [
         {
@@ -15222,6 +15222,180 @@
         },
         {
           "name": "mart_indicators__udir_elevundersokelsen_mobbing",
+          "kind": "mart"
+        }
+      ],
+      "joined_with": [
+        {
+          "source_id": "brreg-enheter-alle",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "brreg-frivillige",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "brreg-oppdateringer",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "bufdir-barnefattigdom",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "bufdir-barnevern",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "fhi-alkohol",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "fhi-befolkning",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "fhi-befolkningsvekst",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        }
+      ],
+      "last_ingested_at": null,
+      "latest_row_count": null,
+      "total_runs": null,
+      "downstream_model_count": null
+    },
+    {
+      "kind": "source",
+      "source_id": "udir-fravar",
+      "upstream_id": "FravaerG",
+      "upstream_url": "https://www.udir.no/tall-og-forskning/statistikk/statistikk-grunnskole/fravarstall/",
+      "upstream_landing_page": "https://www.udir.no/tall-og-forskning/statistikk/statistikk-grunnskole/fravarstall/",
+      "upstream_title": "Fravær i grunnskole",
+      "description": "Udir (Utdanningsdirektoratet) publishes median and average days/hours of documented absence,\nplus participant count, for 10th-grade pupils only, per kommune, for every available school\nyear. This is Atlas's fourth Udir source and structurally 10th-grade-only — Udir's own\n`FravaerG` table has no other grade to select, confirmed by its Rapportside's own\n`gyldigeFiltre` list carrying no `TrinnID` filter at all. A genuinely separate sibling report,\n`VGO_fravaer` (videregående), is NOT covered by this source: its `EnhetID` hierarchy has no\nkommune level at all (fylke/school-grain only, confirmed live) — a structural fact about how\nNorway organises videregående skole (fylkeskommune-run, not kommune-run), not a parsing gap,\ndeliberately deferred pending a cross-cutting decision (see this source's README). Reached via\nthe same real, Swagger-documented \"USS — Udirs StatistikkSystem\" API\n(`statistikkportalen.udir.no/api/rapportering`) `udir-gsi`/`udir-elevundersokelsen-mobbing`/\n`udir-nasjonale-prover` already proved out. v1 backfills every available year (11, confirmed\nlive) — see this source's README for the correction that led to that decision.\n",
+      "atlas_summary": null,
+      "publisher": {
+        "id": "udir",
+        "display_name": "Utdanningsdirektoratet",
+        "homepage": "https://www.udir.no/",
+        "logo": "/img/publishers/udir.png"
+      },
+      "category": {
+        "id": "education",
+        "name": "Education & youth",
+        "emoji": "🎓"
+      },
+      "license": "NLOD",
+      "license_url": "https://data.norge.no/nlod/no/2.0",
+      "periodicity": "P1Y",
+      "eu_theme": "EDUC",
+      "attribution": "Kilde: Utdanningsdirektoratet, Fravær i grunnskole",
+      "tags": {
+        "provider": "udir",
+        "topic": "education",
+        "geo": "kommune",
+        "cadence": "annual"
+      },
+      "keywords": [
+        "fravaer",
+        "absence",
+        "grunnskole",
+        "10-trinn",
+        "kommune",
+        "annual"
+      ],
+      "lifecycle": "stable",
+      "time_coverage": {
+        "start": null,
+        "end": null
+      },
+      "methodology_notes": "\"Fravær i grunnskole\" measures documented absence for 10th-grade pupils only, as recorded on\nthe diploma (\"slik det er ført på vitnemålet\") — this is structurally the report's own scope,\nnot an Atlas filter. Small-cell suppression applies (Udir's own marker, the literal character\n*) — confirmed live on Modalen, suppressed per-row like every Atlas source this session. A\nkommune (confirmed live: Utsira) can be entirely absent from a given year's response without\nany suppression marker at all — a genuine upstream absence, likely too small a cohort that\nyear, not a parsing gap. A genuinely separate sibling report for videregående skole\n(VGO_fravaer) exists upstream but is NOT ingested by this source — its geography resolves only\nto fylke or individual school, never kommune, a structural fact about how Norway organises\nvideregående skole (fylkeskommune-run), deliberately deferred rather than shipped as a\ndegraded or invented kommune mapping.\n",
+      "suggested_joins": [],
+      "related_by_topic": [
+        "fhi-mobbing",
+        "fhi-neet",
+        "fhi-trangbodd",
+        "fhi-vgs-gjennomforing",
+        "ssb-09429",
+        "udir-elevundersokelsen-mobbing"
+      ],
+      "dimensions": [
+        {
+          "code": "region_code",
+          "meaning": "Geographic code from Udir's own EnhetID hierarchy (nivaa 3, \"kommune-equivalent\")",
+          "value_format": "4-digit kommune code (including the Svalbard pseudo-kommune 2100), or the literal 2599 (Utlandet, uspesifisert — Norwegian schools abroad)",
+          "notes": "Confirmed live 2026-10-03: this report's EnhetID IS the row hierarchy (same shape as udir-gsi/udir-nasjonale-prover, not udir-elevundersokelsen-mobbing's column-dimension shape) — the response's own metadata.rowHierarchy is [\"Nasjonalt\",\"Fylke\",\"Kommune\",\"Enhet\"]. Svalbard (2100) is reachable through the normal domestic radSti anchor (-12.*.*). Utlandet, uspesifisert (2599) sits under its OWN top-level node (a sibling of \"Hele landet\", not a descendant) and needs a second radSti anchor (-13.*.*) to reach — and it carries real, non-suppressed data every year (65 real pupils for 2024-25, confirmed live), not an empty placeholder. A kommune can also be entirely ABSENT from the row set without the response being empty overall (confirmed live: Utsira, likely too small a 10th-grade cohort to report that year) — a real absence, not a suppressed row. region_kind is derived downstream via classify_region_code: 2100 resolves via the existing svalbard branch, 2599 via the existing unspecified_within_fylke branch — no macro change needed for either, confirmed by inspection.\n"
+        },
+        {
+          "code": "year",
+          "meaning": "School year code from Udir's own TidID dimension, discovered dynamically",
+          "value_format": "6-digit integer, e.g. 202506 = school year 2024-25",
+          "notes": "v1 backfills every discovered year (11, confirmed live: 2014-15 through 2024-25) — a real correction from this source's own Phase 1 recommendation of \"latest year only,\" made after finding udir-gsi's own real code (not its README's prose) backfills fully when the call cost is cheap, which this report's cost (2 calls/year) matches.\n"
+        },
+        {
+          "code": "measure",
+          "meaning": "Which figure this row's value is",
+          "value_format": "Median dager, Median timer, Snitt dager, Snitt timer, or Antall elever",
+          "notes": "No stable measure code is exposed for these five columns by the API — only the column label, same shape as udir-gsi's/udir-nasjonale-prover's own measure columns. All five are returned in a single call per region/year (VisAntallPersoner(1)_VisMaaltall(1) both set) — more columns than filterVerdier's own VisMaaltall value list suggested (it names only \"Snitt timer\" as the id:1 option's label; the real response carries all four day/hour statistics plus the participant count under that one flag), confirmed live.\n"
+        },
+        {
+          "code": "value",
+          "meaning": "The measure's value for this region/year slice",
+          "value_format": "Numeric — Antall elever is a whole number; the four day/hour measures carry a Norwegian decimal comma in the raw API text, parsed to a plain number",
+          "notes": "NULL when Udir itself suppressed the cell (its own marker, the literal character '*')."
+        }
+      ],
+      "raw_tables": null,
+      "sample_query": null,
+      "citation": {
+        "text": "Utdanningsdirektoratet. (n.d.). Fravær i grunnskole. Retrieved from https://www.udir.no/tall-og-forskning/statistikk/statistikk-grunnskole/fravarstall/. Available in Atlas at https://atlas.sovereignsky.no/datasets/udir-fravar.",
+        "bibtex": "@misc{atlas_udir_fravar,\n  author = {Utdanningsdirektoratet},\n  title  = {Fravær i grunnskole},\n  year   = {n.d.},\n  url    = {https://www.udir.no/tall-og-forskning/statistikk/statistikk-grunnskole/fravarstall/},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/udir-fravar}\n}"
+      },
+      "feedback_url": "https://www.udir.no/om-udir/kontakt-oss/",
+      "consuming_marts": [
+        {
+          "mart_name": "mart_atlas_inventory",
+          "api_v1_name": "atlas_inventory",
+          "title": null,
+          "description_short": "What Atlas publishes: one row per endpoint with its row count, freshness and origin.",
+          "description_full": "What Atlas publishes: one row per endpoint with its row count, freshness and origin.\n\nWhat Atlas publishes, one row per queryable endpoint: how many records it\nserves, when its data last arrived, and where those rows came from.\nAsked for by Røde Kors — \"validate that all datasets that are ingested has\nan endpoint and it can be queried … count the number of records each\nendpoint has and update the last time it ingested data.\"\n⚠️ THE GRAIN IS PER ENDPOINT, NOT PER SOURCE. meta_sources answers \"what\ndid Atlas ingest\"; this answers \"what can I query, and is there anything\nin it\". One source can feed several endpoints and one endpoint can draw on\nseveral sources, so the two row counts are not comparable and summing\nsources will not reproduce an endpoint's count.\n⚠️ atlas_inventory does not list ITSELF. It is built from the same seed it\nreports on, so counting itself would be circular and the number would be\nwhatever the table held mid-build. 19 endpoints are listed; 20 are\npublished.",
+          "sample_query": "https://api-atlas.urbalurba.com/atlas_inventory?limit=5"
+        },
+        {
+          "mart_name": "mart_indicators__udir_fravar",
+          "api_v1_name": "indicators__udir_fravar",
+          "title": "Fravær i grunnskole",
+          "description_short": "Per-source indicator data for udir-fravar (Utdanningsdirektoratet), at the publisher's own grain.",
+          "description_full": "Per-source indicator data for udir-fravar (Utdanningsdirektoratet), at the publisher's own grain.\n\nPer-source indicator relation for `udir-fravar` (Utdanningsdirektoratet), published at the grain\nthe publisher actually uses rather than flattened into the cross-source views. One row per\n(region_code, year, measure). Atlas's fourth Udir source. Structurally 10th-grade-only —\nUdir's own FravaerG table has no other grade to select.\n🔴 stability:source — the column set here follows Utdanningsdirektoratet, not Atlas. If the\npublisher adds, renames or drops a dimension, this relation changes with it. That is\nthe deliberate trade for getting the real grain; prefer a stability:curated relation\nif you need a shape Atlas promises to hold still. Decode codes through\nmeta_dimensions filtered to source_id=udir-fravar.",
+          "sample_query": "https://api-atlas.urbalurba.com/indicators__udir_fravar?limit=5"
+        }
+      ],
+      "consuming_models": [
+        {
+          "name": "indicators__udir_fravar",
+          "kind": "indicators"
+        },
+        {
+          "name": "mart_atlas_inventory",
+          "kind": "mart"
+        },
+        {
+          "name": "mart_indicators__udir_fravar",
           "kind": "mart"
         }
       ],
@@ -16124,6 +16298,12 @@
           "model_name": "mart_indicators__udir_elevundersokelsen_mobbing",
           "title": "Elevundersøkelsen — mobbing",
           "description_short": "Per-source indicator data for udir-elevundersokelsen-mobbing (Utdanningsdirektoratet), at the publisher's own grain."
+        },
+        {
+          "parent_kind": "model",
+          "model_name": "mart_indicators__udir_fravar",
+          "title": "Fravær i grunnskole",
+          "description_short": "Per-source indicator data for udir-fravar (Utdanningsdirektoratet), at the publisher's own grain."
         },
         {
           "parent_kind": "model",
@@ -21115,6 +21295,63 @@
     },
     {
       "kind": "view",
+      "view_id": "indicators__udir_fravar",
+      "mart_name": "mart_indicators__udir_fravar",
+      "api_v1_name": "indicators__udir_fravar",
+      "title": "Fravær i grunnskole",
+      "description_short": "Per-source indicator data for udir-fravar (Utdanningsdirektoratet), at the publisher's own grain.",
+      "description_full": "Per-source indicator data for udir-fravar (Utdanningsdirektoratet), at the publisher's own grain.\n\nPer-source indicator relation for `udir-fravar` (Utdanningsdirektoratet), published at the grain\nthe publisher actually uses rather than flattened into the cross-source views. One row per\n(region_code, year, measure). Atlas's fourth Udir source. Structurally 10th-grade-only —\nUdir's own FravaerG table has no other grade to select.\n🔴 stability:source — the column set here follows Utdanningsdirektoratet, not Atlas. If the\npublisher adds, renames or drops a dimension, this relation changes with it. That is\nthe deliberate trade for getting the real grain; prefer a stability:curated relation\nif you need a shape Atlas promises to hold still. Decode codes through\nmeta_dimensions filtered to source_id=udir-fravar.",
+      "columns": [
+        {
+          "name": "source_id",
+          "description": "Atlas catalogue id for this ingest — always udir-fravar."
+        },
+        {
+          "name": "region_code",
+          "description": "Udir's own region code, verbatim from the EnhetID hierarchy. May not be a kommune — region_kind says which (Svalbard and \"Utlandet, uspesifisert\" both report at the same tree depth as genuine kommuner)."
+        },
+        {
+          "name": "kommune_nr",
+          "description": "Four-digit kommune code, derived through region_code_to_kommune_nr. NULL for Svalbard, \"Utlandet, uspesifisert\", and any other non-kommune region_code."
+        },
+        {
+          "name": "region_kind",
+          "description": "What region_code is, from classify_region_code: kommune, svalbard or unspecified_within_fylke for this source."
+        },
+        {
+          "name": "year",
+          "description": "School year code from Udir's own TidID dimension. Every discovered year is backfilled (11, 2014-15 through 2024-25), not just the latest."
+        },
+        {
+          "name": "contents_code",
+          "description": "Atlas-normalised variable code: fixed prefix `udir_fravar__` joined with a measure slug (median_dager/median_timer/snitt_dager/snitt_timer/antall_elever)."
+        },
+        {
+          "name": "contents_label",
+          "description": "The real measure label, verbatim from the API (Median dager/Median timer/Snitt dager/Snitt timer/Antall elever)."
+        },
+        {
+          "name": "value",
+          "description": "The measure's value for this region/year slice. NULL when Udir suppressed the cell (its own marker, the literal character \"*\")."
+        },
+        {
+          "name": "updated_at",
+          "description": "Timestamp when the row was last written by ingest (from raw.loaded_at)."
+        }
+      ],
+      "built_from": [
+        {
+          "parent_kind": "model",
+          "model_name": "indicators__udir_fravar",
+          "title": null,
+          "description_short": "Per-source passthrough for Udir's \"Fravær i grunnskole\" — median/average days and hours of documented absence, plus participant count, for 10th-grade pupils only."
+        }
+      ],
+      "sample_query": "https://api-atlas.urbalurba.com/indicators__udir_fravar?limit=5",
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__udir_fravar"
+    },
+    {
+      "kind": "view",
       "view_id": "indicators__udir_gsi",
       "mart_name": "mart_indicators__udir_gsi",
       "api_v1_name": "indicators__udir_gsi",
@@ -23278,7 +23515,7 @@
               "fhi-vgs-gjennomforing",
               "ssb-09429",
               "udir-elevundersokelsen-mobbing",
-              "udir-gsi"
+              "udir-fravar"
             ],
             "dimensions": [
               {

@@ -121,6 +121,7 @@
 -- depends_on: {{ ref('mart_indicators__ssb_12944') }}
 -- depends_on: {{ ref('mart_indicators__ssb_13995') }}
 -- depends_on: {{ ref('mart_indicators__udir_elevundersokelsen_mobbing') }}
+-- depends_on: {{ ref('mart_indicators__udir_fravar') }}
 -- depends_on: {{ ref('mart_indicators__udir_gsi') }}
 -- depends_on: {{ ref('mart_indicators__udir_nasjonale_prover') }}
 -- depends_on: {{ ref('mart_ingest_health') }}
@@ -223,6 +224,7 @@
   {'relation': 'indicators__ssb_12944', 'mart': 'mart_indicators__ssb_12944'},
   {'relation': 'indicators__ssb_13995', 'mart': 'mart_indicators__ssb_13995'},
   {'relation': 'indicators__udir_elevundersokelsen_mobbing', 'mart': 'mart_indicators__udir_elevundersokelsen_mobbing'},
+  {'relation': 'indicators__udir_fravar', 'mart': 'mart_indicators__udir_fravar'},
   {'relation': 'indicators__udir_gsi', 'mart': 'mart_indicators__udir_gsi'},
   {'relation': 'indicators__udir_nasjonale_prover', 'mart': 'mart_indicators__udir_nasjonale_prover'},
   {'relation': 'ingest_health', 'mart': 'mart_ingest_health'},

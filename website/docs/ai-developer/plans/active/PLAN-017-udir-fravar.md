@@ -11,7 +11,7 @@ not a parsing gap.
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Backlog — Phase 1 complete, ready to move to active/ for Phase 2
+## Status: Active — Phases 1-3 DONE, Phase 4 (deploy) not yet submitted
 
 **Goal**: Add `udir-fravar` as a served Atlas source — kommune-level 10th-grade absence,
 Atlas's first annual-absence axis (previously only `fhi-vgs-gjennomforing`'s 3-year completion
@@ -91,26 +91,41 @@ previously seen in any Udir source this session.**
 - [x] 1.7 Confirm the suppression marker and sentinel codes for `GSK_fravaer`. **Confirmed** —
   literal `*` (same convention as every Atlas source this session), verified on Modalen (fully
   suppressed, all 5 measures). Svalbard (`2100`) present at the same tree depth as genuine
-  kommuner, 10,0% real data (26 pupils) — same precedent as every prior Udir source, resolves
+  kommuner, with real data (26 pupils) — same precedent as every prior Udir source, resolves
   through `classify_region_code`'s existing `svalbard` branch, no new macro code needed. Utsira
   entirely **absent** from the row set (not suppressed — the "real absence, not suppression" shape
   `udir-elevundersokelsen-mobbing`/`udir-nasjonale-prover` already found, likely too small a 10th-
   grade cohort to report at all that year).
-- [x] 1.8 Confirm `Utlandet`/`2599` for `GSK_fravaer`. **Confirmed present in the `EnhetID`
-  hierarchy but carrying zero rows this year** — `filterVerdier`'s `EnhetID` list has the full
-  `-13`("Utlandet")→`-34`("25")→`-476`("2599", "Utlandet, uspesifisert") chain, same shape as
-  `udir-nasjonale-prover`'s own finding, but `radSti=-13.*.*` returns **0 rows** for `GSK_fravaer`
-  specifically (unlike `udir-nasjonale-prover`, where the identical anchor carried 73 real pupils).
-  **v1 decision: still query the `-13.*.*` anchor every run and represent a zero result as zero
-  rows, not skip it** — the same "never pre-emptively omit, never assume absence without checking"
-  discipline this project applies everywhere; if Norwegian schools abroad ever do report fravær
-  data, this ingest picks it up automatically rather than silently excluding the node because this
-  year happened to be empty.
+- [x] 1.8 Confirm `Utlandet`/`2599` for `GSK_fravaer`. **Confirmed present AND carrying real,
+  non-suppressed data every year** — same `-13`("Utlandet")→`-34`("25")→`-476`("2599", "Utlandet,
+  uspesifisert") chain `udir-nasjonale-prover` found, and the same "carries real data" shape, not
+  an empty one. ⚠️ **A real correction, caught at the start of Phase 2, not Phase 1**: this plan
+  originally reported `radSti=-13.*.*` as returning 0 rows for this report. That manual test had
+  an explicit, conflicting `EnhetID(-12)` filter alongside the `-13.*.*` radSti anchor — an
+  invalid combination, not a real empty response. Re-tested without the conflicting filter
+  (confirmed live, 65 real pupils for 2024-25) and the real data appeared immediately; the real
+  ingest module (which never sets `EnhetID` in the filter string) confirmed this again
+  independently on its first real run — `Utlandet` returns 5 real measure rows for every one of
+  the 11 backfilled years. **v1 decision unchanged in substance: query the `-13.*.*` anchor every
+  run and include it** — it is real, non-suppressed, upstream-published data, same discipline as
+  `udir-nasjonale-prover`'s own [Q1]/1.5 decision.
 - [x] 1.9 Confirm available years. **Confirmed** — `GSK_fravaer`'s `TidID` lists **11 school
   years** (2014-15 through 2024-25); `VGO_fravaer`'s lists 12 (2013-14 through 2024-25) — far more
-  history than `udir-nasjonale-prover`'s 4. **Recommendation unchanged: latest year only for v1**,
-  matching every other annual Udir source's convention; the extra history is noted for a future
-  backfill decision, not acted on now.
+  history than `udir-nasjonale-prover`'s 4. ⚠️ **A real correction, caught during Phase 2 start,
+  not Phase 1**: this plan originally recommended "latest year only, matching every other annual
+  Udir source's convention" — that claim was wrong, found by actually reading `udir-gsi`'s own
+  `index.ts` rather than trusting its README's prose. `udir-gsi` does NOT defer backfill — its
+  main loop (`for (const year of years)`) issues one data call **per discovered year** and
+  ingests all 12, confirmed live (`GSK/GSI/1/8/filterVerdier` really does return 12 `TidID`
+  entries, and the shipped row count, 18,816, is consistent with multi-year, not one). The real
+  pattern across Udir sources is **backfill fully when the call cost is cheap, defer only when it
+  is not** — `udir-elevundersokelsen-mobbing` deferred because of its ~702-call/year cost (a
+  real, stated reason), not because of a universal "latest year only" convention; whether
+  `udir-nasjonale-prover`'s own "deferred by convention" claim holds up to the same scrutiny is
+  not re-litigated here, but not inherited either. **Revised recommendation: backfill all 11
+  years for `GSK_fravaer`** — this report's call cost is cheap (2 radSti calls per year, same
+  shape as `udir-gsi`), so there is no cost reason to withhold the real history, and `udir-gsi`'s
+  own actual behavior is the closer precedent than any sibling's prose claim.
 - [x] 1.10 Confirm licence. **NLOD**, same portal (`udir.no/om-udir/data/`) already confirmed
   explicitly for `udir-gsi`/`udir-elevundersokelsen-mobbing` and inherited (not re-fetched a fourth
   time) for `udir-nasjonale-prover` — inherited again here for the identical reason: same portal,
@@ -148,6 +163,10 @@ sibling Udir source's shape.
   **Recommendation: all 5** — no extra cost (same single call per kommune), and `Antall elever`
   is needed context for interpreting the other four (a median over 11 pupils reads differently
   than one over 400).
+- **[Q3b] Historical backfill — RESOLVED during Phase 2 start, 2026-10-03.** See 1.9's
+  correction: back fill all 11 available years, not latest-only. `udir-gsi`'s own real behavior
+  (checked by reading its code, not its prose) is cheap-backfill-fully, and `GSK_fravaer`'s call
+  cost matches `udir-gsi`'s shape exactly.
 - **[Q4] The fylke/school-grain `VGO_fravaer` decision — cross-cutting, not this plan's to
   make.** Flagging for `1PRIORITY.md`/the investigation doc rather than deciding unilaterally:
   does Atlas want to (a) support a fylke-only-resolution indicator relation as a new first-class
@@ -162,57 +181,89 @@ sibling Udir source's shape.
 
 ---
 
-## Phase 2: Ingest module + raw table (not started)
+## Phase 2: Ingest module + raw table — DONE (verified 2026-10-03)
 
 ### Tasks
 
-- [ ] 2.1 Create `atlas-data/ingest/src/sources/udir-fravar/`: `manifest.yml`
+- [x] 2.1 Created `atlas-data/ingest/src/sources/udir-fravar/`: `manifest.yml`
   (`source_id: udir-fravar`, `provider: udir`, `periodicity: P1Y`, `license: NLOD`, description
   stating "10th grade, grunnskole only — see [Q2]"), `index.ts`, `parse.ts`, `fetch_retry.ts`
   (copied), `README.md`, `__tests__/` with real captured fixtures covering: an ordinary kommune
-  (Agder's Arendal or similar), a fully-suppressed row (Modalen), Svalbard (`2100`), and the
-  `Utlandet` anchor's genuinely-empty response.
-- [ ] 2.2 `parse.ts` — reuse `udir-gsi`'s depth-by-segment-count row filter directly (confirmed the
-  same shape in Phase 1.2), issuing **2 data calls for one year** (`radSti=-12.*.*` +
-  `radSti=-13.*.*`, same anchor pair `udir-nasjonale-prover` uses, even though the second is
-  expected to return zero rows this year — see 1.8). Parse all 5 measure columns per row; same
-  `parseCell` comma-decimal/space-thousands handling as `udir-nasjonale-prover`.
-- [ ] 2.3 Migration `raw.udir_fravar(region_code, year, measure, value, loaded_at)` — one row per
-  region/year/measure. No `grade` column: this source is structurally 10th-grade-only (see 1.5),
-  not a filtered slice of a multi-grade table, so a constant column would only invite confusion
-  once/if a `VGO_fravaer` or other-grade source is shipped separately under its own id.
-- [ ] 2.4 Dagster registration — annual cadence, existing weekly-polled job pattern (same group as
-  the other three Udir sources), no new job.
-- [ ] 2.5 Add `ingest:udir-fravar` npm script FIRST, verify via
-  `check-every-source-has-an-ingest-script.sh` and the real `npm run` invocation before any other
-  Phase 2 work, per this session's standing discipline since `husbanken-bostotte`'s
-  urb-agents#1807.
+  (Agder's Arendal), a fully-suppressed row (Modalen), Svalbard (`2100`), and the `Utlandet`
+  anchor's real data (`2599`). 17 tests, all passing.
+- [x] 2.2 `parse.ts` — reused `udir-gsi`'s depth-by-segment-count row filter directly (confirmed
+  the same shape in Phase 1.2), issuing **2 data calls per year** (`radSti=-12.*.*` +
+  `radSti=-13.*.*`, same anchor pair `udir-nasjonale-prover` uses — both carry real data, see
+  1.8's correction), looped over **all 11 discovered years** (see 1.9's correction — 22 calls
+  total, confirmed live in 6.1s wall time, still cheap, matching `udir-gsi`'s own real
+  backfill-fully behavior rather than a "latest year only" convention that turned out not to be
+  universal). All 5 measure columns parsed per row; same `parseCell` comma-decimal/space-thousands
+  handling as `udir-nasjonale-prover`.
+- [x] 2.3 Migration `066_raw_udir_fravar.sql`: `raw.udir_fravar(region_code, year, measure, value,
+  loaded_at)` — one row per region/year/measure. No `grade` column, as planned (see 1.5) — this
+  source is structurally 10th-grade-only.
+- [x] 2.4 Dagster registration — `raw_other.py`/`schedules.py`, annual cadence, existing
+  weekly-polled job pattern (same group as the other three Udir sources), no new job.
+- [x] 2.5 Added `ingest:udir-fravar` npm script FIRST, verified via
+  `check-every-source-has-an-ingest-script.sh` (✓ all 54 ingest source directories covered) and
+  the real `npm run ingest:udir-fravar` invocation before any other Phase 2 work, per this
+  session's standing discipline since `husbanken-bostotte`'s urb-agents#1807.
 
 ### Validation
 
-Real run against the live API, zero rows silently dropped, Svalbard, the Utlandet anchor's
-(expected) empty result, and at least one suppressed row all confirmed against real data.
+✅ Confirmed 2026-10-03. Real run against the live API against local scratch Postgres: **22
+calls, 21,290 rows written, zero rows silently dropped.** Svalbard (`2100`, real data, present in
+6 of 11 years), the Utlandet anchor's real data (`2599`, present in all 11 years), and Modalen's
+fully-suppressed row all confirmed against real loaded data, not fixtures alone.
+
+⚠️ **A genuinely important correction, caught during this exact validation step**: Phase 1's own
+1.8 finding that the `Utlandet` anchor returns zero rows was WRONG — see 1.8/1.9's corrected
+text above. The real ingest module's first live run (which never sets `EnhetID` in its filter
+string, unlike the flawed manual Phase 1 test) returned 5 real measure rows for `2599` on every
+single one of the 11 years, immediately. Caught before this plan's Phase 3 work began, not
+after.
 
 ---
 
-## Phase 3: dbt staging and marts (not started)
+## Phase 3: dbt staging and marts — DONE (verified 2026-10-03)
 
 ### Tasks
 
-- [ ] 3.1 Add `raw.udir_fravar` to `models/indicators/sources.yml`.
-- [ ] 3.2 `indicators__udir_fravar.sql` — `kommune_nr`/`region_kind` via
-  `region_code_to_kommune_nr`/`classify_region_code`. Explicitly confirm `2100` resolves to
-  `svalbard` against real loaded data — expect this to pass clean, but confirm rather than assume.
-  Clean `contents_code` slugs for the 5 measures (`median_dager`/`median_timer`/`snitt_dager`/
+- [x] 3.1 Added `raw.udir_fravar` to `models/indicators/sources.yml`.
+- [x] 3.2 `indicators__udir_fravar.sql` — `kommune_nr`/`region_kind` via
+  `region_code_to_kommune_nr`/`classify_region_code`. Confirmed against real loaded data:
+  `region_code='2100'` → `region_kind='svalbard'`, `kommune_nr` NULL (30 rows, present 6 of 11
+  years); `region_code='2599'` → `region_kind='unspecified_within_fylke'`, `kommune_nr` NULL (55
+  rows, present every year) — both exactly as predicted, no macro change needed. Clean
+  `contents_code` slugs for the 5 measures (`median_dager`/`median_timer`/`snitt_dager`/
   `snitt_timer`/`antall_elever`), same CASE WHEN convention `udir-nasjonale-prover` used.
-- [ ] 3.3 Document columns in `schema.yml`; `mart_indicators__udir_fravar.sql` api passthrough +
-  `marts/api/schema.yml` entry.
-- [ ] 3.4 `dbt build` against real loaded data.
+- [x] 3.3 Documented columns in `models/indicators/schema.yml`; `mart_indicators__udir_fravar.sql`
+  api passthrough + `marts/api/schema.yml` entry. `mart_atlas_inventory.sql` depends_on + relation
+  list updated; `generate_api_v1.py`'s `SCHEMA_COMMENT` bumped (50→51 total, `udir (3)→udir (4)`).
+- [x] 3.4 `dbt build` against real loaded data — clean (14/14 for the targeted build;
+  `mart_atlas_inventory` and its full upstream dependency tree also rebuilt clean, confirming
+  `indicators__udir_fravar` reports `row_count=21290`, `is_empty=false`,
+  `contributing_sources={udir-fravar}`). Full 17-script `atlas-data/dbt/check-*.sh` suite run —
+  all 17 pass clean (updated counts: 91 wrappers, 54 sources, 51 fact relations). Full ingest
+  test suite (391 tests, 27 files) and `tsc --noEmit` both pass clean. `website/npm run build`
+  completes clean, no broken links.
 
 ### Validation
 
-Real local Postgres, not an empty schema. Explicitly confirm `2100` resolution with a direct
-query, same discipline as every prior sentinel this session.
+✅ Confirmed 2026-10-03. Real local Postgres, not an empty schema. `2100`/`2599` resolution
+confirmed with a direct query against the built `marts.indicators__udir_fravar` table, same
+discipline as every prior sentinel this session — not assumed from the macro's existing branches
+alone.
+
+⚠️ **Two pre-existing, unrelated test failures observed during the full `dbt build` run**
+(`extracted_columns_are_still_populated`, `raw_sources_were_refreshed_recently`) — both are
+local-scratch-Postgres staleness (most sources in this environment were never loaded, and the
+Brreg-enriched jsonb columns were populated once on 2026-09-24 and have gone stale since). Neither
+names `udir-fravar` or `udir_fravar` anywhere in their output; isolated by excluding both and
+confirming `mart_atlas_inventory` and its full dependency tree then build 100% clean (PASS=1639,
+WARN=1 pre-existing dim_postnummer relationship, ERROR=0). Not this plan's defect to fix — a
+standing local-environment gap, same class of thing as this session's own
+[[local-postgres-for-real-dbt-evidence]] note.
 
 ---
 
@@ -223,7 +274,8 @@ digests labelled (copied verbatim from the release's own `uis-artifact.json`, no
 `LANDS WITH` derived via `atlas-data/uis/lands-with.sh`, a row-count prediction stated explicitly.
 **Only predict `indicators__udir_fravar` as a served relation — never a second
 `mart_indicators__...` entry, see [[mart-prefix-is-never-a-served-endpoint]].** This source's call
-volume (2 calls/year) is cheap, unlike `udir-elevundersokelsen-mobbing`'s — no "slow run" warning
+volume (~22 calls total across 11 backfilled years, see 1.9) is cheap, unlike
+`udir-elevundersokelsen-mobbing`'s — no "slow run" warning
 expected to be needed, but confirm real wall time during Phase 2 before assuming so in the deploy
 request (per [[exploratory-calls-dont-reveal-sustained-api-latency]] — do not assume a handful of
 Phase 1 probe calls predicts the real cost, even though this source's call count is small enough
@@ -243,14 +295,14 @@ alone as sufficient.
   not shipped as a degraded or invented kommune mapping.
 - [x] **Licence independently confirmed for this surface** — NLOD, same portal already confirmed
   explicitly earlier this session, inherited consistent with established discipline.
-- [ ] `udir-fravar` ingests cleanly with zero rows silently dropped, including the `2100` sentinel,
-  the Utlandet anchor's (expected) empty result, and at least one suppressed row all represented.
+- [ ] `udir-fravar` ingests cleanly with zero rows silently dropped, including the `2100` and
+  `2599` sentinels (both carrying real data) and at least one suppressed row all represented.
 - [ ] `indicators__udir_fravar` and its mart build and test clean against real loaded data, with
-  `2100` resolving through `classify_region_code` exactly as predicted.
+  `2100`/`2599` resolving through `classify_region_code` exactly as predicted.
 - [ ] `udir-fravar` appears in `meta_sources.served_as` after a real deploy, independently verified
   via live `curl`.
 - [ ] Golden-file tests cover: an ordinary kommune, a suppressed row, Svalbard, and the Utlandet
-  anchor's empty response.
+  anchor's real data.
 - [ ] The investigation and `1PRIORITY.md` are updated to mark this candidate shipped, with [Q4]
   (the fylke/school-grain `VGO_fravaer` decision) carried forward explicitly as still open.
 
@@ -263,15 +315,19 @@ alone as sufficient.
   without re-reading [Q1]/[Q4] first.
 - **This report's `EnhetID` is a row hierarchy, like `udir-gsi`/`udir-nasjonale-prover` — confirmed
   fresh via `rowHierarchy` in the response metadata, not inherited by assumption.**
-- **The `Utlandet`/`-13` anchor must still be queried even though it returns zero rows for this
-  report this year** — a confirmed-empty result is not the same claim as "this node doesn't
-  exist," and the ingest should not special-case it away.
+- **The `Utlandet`/`-13` anchor carries real, non-suppressed data every year** — the opposite of
+  this plan's own original Phase 1 finding, which was a buggy manual test (an explicit,
+  conflicting `EnhetID(-12)` filter alongside the `-13.*.*` radSti anchor). Corrected at the start
+  of Phase 2; see 1.8.
 - **No new Dagster job.** Same weekly-polled group as the other three Udir sources.
 - **This source is structurally 10th-grade-only** — not a filtered slice Atlas chose, Udir's own
   `FravaerG` table has no other grade to select. Do not add a `grade` column that would imply
   otherwise.
-- **Real call volume is cheap (2 calls/year) — verify this holds in Phase 2, don't assume it from
-  Phase 1's sample**, per [[exploratory-calls-dont-reveal-sustained-api-latency]].
+- **Backfills all 11 available years, not latest-only** — a correction made at the start of
+  Phase 2 (see 1.9): `udir-gsi`'s real behavior (checked in its code) backfills fully when the
+  call cost is cheap, and this report's cost matches. Real call volume is cheap (~22 calls total)
+  — verify this holds in Phase 2, don't assume it from Phase 1's sample, per
+  [[exploratory-calls-dont-reveal-sustained-api-latency]].
 
 ---
 

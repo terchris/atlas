@@ -46,6 +46,10 @@ See _factory.make_raw_ingest_asset. Currently:
   hierarchy) — cheap, ~18 HTTP calls for one run, not an outlier like
   udir-elevundersokelsen-mobbing. See
   atlas-data/ingest/src/sources/udir-nasjonale-prover/README.md.
+- udir-fravar: same API/client and shape as udir-gsi/udir-nasjonale-prover
+  (EnhetID is the row hierarchy) — cheap, ~22 HTTP calls for one run
+  (backfills all 11 available years, unlike udir-nasjonale-prover's
+  latest-year-only). See atlas-data/ingest/src/sources/udir-fravar/README.md.
 - husbanken-bostotte: Qlik Engine API (WebSocket JSON-RPC) against Husbanken's
   public "Statistikkbank" app — Atlas's first WebSocket-based ingest. Still
   one subprocess per run, same as every HTTP-based source above; the
@@ -83,6 +87,7 @@ OTHER_SOURCES = [
     "nav-uforetrygd",
     "redcross-branches",
     "udir-elevundersokelsen-mobbing",
+    "udir-fravar",
     "udir-gsi",
     "udir-nasjonale-prover",
 ]
@@ -97,6 +102,7 @@ assets = [
             "husbanken-bostotte",
             "imdi-bosetting",
             "udir-elevundersokelsen-mobbing",
+            "udir-fravar",
             "udir-gsi",
             "udir-nasjonale-prover",
         ],
