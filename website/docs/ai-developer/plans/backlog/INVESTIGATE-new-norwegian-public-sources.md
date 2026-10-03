@@ -420,10 +420,20 @@ described was not found and may not exist in this form.
 
 ### 11. Valgresultat API
 
-- **URL**: `https://www.valg.no/om-valgdirektoratet/om-valgdirektoratet/pressesider/API-med-valgresultater/`
-- **What**: Stortings-/kommune-/sameting-/fylkestingsvalg per kommune back to 1999; turnout
+✅ **Phase 1 checked live 2026-10-04 — real, reachable, genuinely different mechanism and
+coverage than this row describes. Drafted as [`PLAN-021-valgresultat-kommunestyrevalg.md`](./PLAN-021-valgresultat-kommunestyrevalg.md).**
+The URL below is a press/info page, not the API — the real base is `https://valgresultat.no/api/`,
+a real anonymous HAL+JSON REST API confirmed live. Coverage starts **2009**, not 1999 (the API's
+own root listing has nothing earlier). Hierarchy is `land → fylke → kommune`, one HTTP call per
+kommune (no bulk-fetch shape — confirmed live, `?dybde=2` has no effect) — ~371 calls for one
+`ko` (kommunestyrevalg) cycle. [Q28]'s `dim_period` "event-cohort" concern turned out not to be
+needed for v1 — a plain integer election year is sufficient. v1 scope: `ko` only, 2023 only
+(latest cycle) — see the PLAN for the full reasoning.
+
+- **URL**: `https://www.valg.no/om-valgdirektoratet/om-valgdirektoratet/pressesider/API-med-valgresultater/` ⚠️ **not the API itself — see correction above**
+- **What**: Stortings-/kommune-/sameting-/fylkestingsvalg per kommune back to 1999; turnout ⚠️ **back to 2009, not 1999 — see correction above**
 - **Why Tier 3**: civic-engagement proxy useful for an NGO-recruitment overlay on Report #7, but not a need-side or supply-side measurement. Add when Atlas grows the audience-side analytics surface.
-- **[Q28]** Cadence is event-driven (every valg), not periodic. Atlas's `dim_period` will need an "event-cohort" classifier, similar to FHI's projection year.
+- **[Q28]** ~~Cadence is event-driven (every valg), not periodic. Atlas's `dim_period` will need an "event-cohort" classifier, similar to FHI's projection year.~~ Checked live: not needed for v1 — a plain integer election year is sufficient; no consumer has asked for an "inter-election period" construct.
 
 ### 12. Helsedirektoratet NKI (Nasjonale Kvalitetsindikatorer)
 
