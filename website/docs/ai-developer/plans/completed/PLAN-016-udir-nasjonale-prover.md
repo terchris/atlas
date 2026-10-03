@@ -9,7 +9,7 @@ signal.
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Active — Phases 2-3 DONE, Phase 4 (deploy) submitted, awaiting imac + ops-dev
+## Status: Completed
 
 **Goal**: Add `udir-nasjonale-prover` as a served Atlas source — the only direct learning-outcome
 measurement in Atlas today, at kommune resolution, per grade and subject. Plugs Report #3 (Youth
@@ -229,7 +229,7 @@ failing test's result set.
 
 ---
 
-## Phase 4: Deploy and verify arrival — IN PROGRESS (submitted 2026-10-03)
+## Phase 4: Deploy and verify arrival — DONE (verified 2026-10-03)
 
 PR #532 merged to main at `d7a59cb`. Image build (run
 [37128561025](https://github.com/terchris/atlas/actions/runs/37128561025)) succeeded; both digests
@@ -253,9 +253,48 @@ image_digest     sha256:51e4e5f7af0743cee616d59a77761af21e90d81d24834e5937c29a19
 - Pin nomination to ops-dev: [urb-agents#1825](https://github.com/terchris/urb-agents/issues/1825)
   — both digests copied verbatim from `uis-artifact.json`, not reconstructed.
 
-Independent re-verification against the live public API, and closing both bus tasks, are still
-pending — do not take either task's own report as sufficient, per this session's standing
-discipline.
+**imac's deploy report ([urb-agents#1824](https://github.com/terchris/urb-agents/issues/1824)):**
+`raw__udir_nasjonale_prover` STEP_SUCCESS in 52.72s, row count 8,589, exact match to prediction.
+`transform_and_publish` SUCCESS in 574.8s, 170 dbt models built, zero corruption events watched
+live. The job-level `annual_sources_refresh` run reported FAILURE overall, but imac correctly
+isolated this to an unrelated, pre-existing step (`raw__udir_elevundersokelsen_mobbing`, PLAN-015's
+own source) rather than treating it as blocking this deploy — filed separately as
+[urb-agents#1826](https://github.com/terchris/urb-agents/issues/1826). No discrepancy to flag
+this time: the corrected row-count prediction (only `indicators__udir_nasjonale_prover`, never a
+second `mart_indicators__...` entry) matched exactly.
+
+**ops-dev's pin report ([urb-agents#1825](https://github.com/terchris/urb-agents/issues/1825)):**
+tag `v20261003-d7a59cb` pushed to `dev-templates` main cleanly — the third routine single-release
+bump that day, all consistent with the prior two.
+
+**Both independently re-verified against the live public API before closing either task — neither
+report was taken on its own word:**
+- `GET /indicators__udir_nasjonale_prover?limit=1` → real row; `Content-Range` confirms
+  `0-8588/8589`.
+- `GET /meta_sources?source_id=eq.udir-nasjonale-prover` →
+  `served_as: ["indicators__udir_nasjonale_prover"]`, exactly one endpoint; `latest_row_count:
+  8589`.
+- `GET /mart_indicators__udir_nasjonale_prover` → 404, confirming the corrected prediction.
+- Spot-checked both sentinels directly: Svalbard (`2100` → `region_kind=svalbard`,
+  `kommune_nr=NULL`, `skalapoeng=52`) and `Utlandet, uspesifisert` (`2599` →
+  `region_kind=unspecified_within_fylke`, `kommune_nr=NULL`, `skalapoeng=47`) both match the
+  captured fixtures exactly. Confirmed the 9th-grade-English combination is genuinely absent live
+  (empty result, not suppressed rows) — matches Phase 1's finding.
+- Independently fetched `dev-templates`' own committed `template-info.yaml` via `gh api` rather
+  than trusting ops-dev's report — tag, digest, and all headline counts (53 sources, 90
+  relations, 62 raw tables) confirmed landed correctly.
+
+**One related finding, triaged separately, not a defect in this source**: imac's own deploy
+verification surfaced [urb-agents#1826](https://github.com/terchris/urb-agents/issues/1826) — a
+single transient HTTP 400 from `statistikkportalen.udir.no` on `udir-elevundersokelsen-mobbing`
+(PLAN-015's source, unaffected data). Reproduced the exact failing request live (3/3 success);
+confirmed a one-off upstream blip, no code change warranted. Also surfaced a genuinely useful
+correction: that run did ~650+ calls at 30-50ms each, contradicting both of this session's prior
+full-run latency measurements for that source (60min dev, 23.5min production) — this API's real
+cost varies run-to-run even in production, not just hard to estimate from a small sample. Updated
+the relevant memory note rather than letting a now-contradicted generalization stand.
+
+Both bus tasks closed with the verification evidence attached as comments.
 
 ---
 
@@ -273,13 +312,11 @@ discipline.
 - [x] `indicators__udir_nasjonale_prover` and its mart build and test clean against real loaded
   data, with `2100`/`2599` resolving through `classify_region_code` exactly as predicted
   (`PASS=16 WARN=0 ERROR=0`).
-- [ ] `udir-nasjonale-prover` appears in `meta_sources.served_as` after a real deploy,
-  independently verified via live `curl`. *(Phase 4, pending.)*
+- [x] `udir-nasjonale-prover` appears in `meta_sources.served_as` after a real deploy,
+  independently verified via live `curl` — `served_as: ["indicators__udir_nasjonale_prover"]`.
 - [x] Golden-file tests cover: an ordinary kommune at each grade, a suppressed row, both
   sentinels, and the genuinely-empty grade×subject case — 23 tests, all passing.
-- [ ] The investigation and `1PRIORITY.md` are updated to mark this candidate shipped. *(Will be
-  marked shipped at close-out, after Phase 4 verification — same sequencing as every prior
-  source.)*
+- [x] The investigation and `1PRIORITY.md` are updated to mark this candidate shipped.
 
 ---
 
@@ -304,6 +341,47 @@ discipline.
   5th-grade report's own `gyldigeFiltre` omits `TrinnID`; its `filterVerdier` still carries one
   real entry, and passing it explicitly works. Discover filters from `filterVerdier`, not from
   `gyldigeFiltre` — a real correction caught mid-Phase-2, not in Phase 1.
+
+---
+
+## Outcome
+
+Shipped end to end, 2026-10-03: ingest (8,589 rows, zero dropped) → dbt staging and api_v1
+publication → live cluster deploy → independently re-verified arrival. Atlas's third Udir
+source, and its first direct learning-outcome signal — every other Udir source measures supply
+(`udir-gsi`) or self-reported experience (`udir-elevundersokelsen-mobbing`), not test performance.
+
+Unlike `udir-elevundersokelsen-mobbing`, this report's shape matches `udir-gsi`'s — `EnhetID` is
+the row hierarchy (confirmed via the response's own `rowHierarchy` metadata, not assumed from
+either sibling), so the cheap `radSti` depth-filter technique applied directly: **18 real calls,
+29.9 seconds in dev, 52.72 seconds in production** — a genuinely cheap source, confirmed by a
+real run rather than assumed, in sharp contrast to PLAN-015's ~702-call/~60-minute cost.
+
+One real correction caught mid-implementation, not in Phase 1: the 5th-grade report's own
+`Rapportside.gyldigeFiltre` omits `TrinnID`, which Phase 1 read as "grade 5 is implicit, no
+TrinnID filter exists." That was wrong — `filterVerdier` for that same report still carries one
+real `TrinnID` entry, and passing it explicitly succeeds with an identical result. Fixed by
+discovering grade uniformly from `filterVerdier` for both report versions, with no special-casing
+on `gyldigeFiltre` — which describes the UI's own valid-filter list, not what the data endpoint
+actually accepts.
+
+Both known Udir sentinels resolved exactly as predicted on the first `dbt build`: Svalbard
+(`2100`) via `classify_region_code`'s existing svalbard branch, and `Utlandet, uspesifisert`
+(`2599`, reachable only via a second `radSti` anchor since it sits under its own top-level node,
+a sibling of "Hele landet" rather than a descendant) via the existing unspecified_within_fylke
+branch. A genuine upstream asymmetry — English is tested only at 8th grade, not 9th — was
+confirmed live and represented as a real absence (zero rows), not suppression.
+
+A related finding surfaced during this source's own deploy verification, triaged and resolved
+separately: imac found a single transient HTTP 400 on the sibling `udir-elevundersokelsen-mobbing`
+source ([urb-agents#1826](https://github.com/terchris/urb-agents/issues/1826)), confirmed by live
+reproduction to be a one-off upstream blip rather than a code defect. That investigation also
+surfaced a genuinely useful correction to this session's own understanding of
+`statistikkportalen.udir.no`'s latency: it varies run-to-run even in production, not just hard to
+estimate from a small Phase 1 sample — updated the relevant memory note rather than letting a
+now-contradicted generalization stand.
+
+Plugs the only direct learning-outcome signal into Report #3 (Youth Outcomes).
 
 ---
 
