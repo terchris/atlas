@@ -333,7 +333,24 @@ exactly real; this agent simply cannot reach it with the tools it has.
 
 ### 9. Brreg Frivillighetsregisteret + Lottstift Tilskudd — voluntary-sector supply
 
-- **URLs**: Frivillighetsregisteret API at `https://data.brreg.no/frivillighetsregisteret/` (note: `https://www.brreg.no/produkter-og-tjenester/apne-data/` is the new browse portal — see [Moves & deprecations](https://github.com/terchris/atlas/tree/main/docs/research/data-sources.md#moves-and-deprecations-what-changed-since-the-prior-pass)); Lottstift Tilskudd at `https://tilskudd.lottstift.no/`
+✅ **The Frivillighetsregisteret/ICNPO half is already shipped — checked live 2026-10-04, not
+previously marked here.** `raw.brreg_frivillige` (migration 054) and the `brreg-frivillige`
+Dagster asset already exist, already daily-polled, and are already joined into `dim_brreg_enhet`
+("Frivillighetsregisteret enrichment", an older pre-renumbering PLAN-003 — this document's own
+numbering warning at the top of "Sequencing recommendation" applies here too). [Q26]'s
+sequencing dependency on the SDG/ICNPO investigation turned out not to matter: Brreg's own API
+supplies ICNPO codes directly, confirmed live, and they are already in production.
+
+✅ **The Lottstift half shipped as `lottstift-momskompensasjon` — see
+[`PLAN-020-lottstift-momskompensasjon.md`](./PLAN-020-lottstift-momskompensasjon.md).** Not the
+Power-BI/GraphQL app at `tilskudd.lottstift.no` the investigation's URL pointed at (no public API
+found there) — the real mechanism is `lottstift.no/nb/om-oss/apne-data/`'s own direct static
+XLSX downloads, one per year. Six years (2019-2024) have a usable recipient organisasjonsnummer;
+2016-2018 don't (name-only recipients under an umbrella applicant) and are deliberately deferred.
+Geography and ICNPO category come from joining the recipient's orgnr against the already-shipped
+`dim_brreg_enhet`, not from each year's own inconsistent text columns.
+
+- **URLs**: Frivillighetsregisteret API at `https://data.brreg.no/frivillighetsregisteret/` (note: `https://www.brreg.no/produkter-og-tjenester/apne-data/` is the new browse portal — see [Moves & deprecations](https://github.com/terchris/atlas/tree/main/docs/research/data-sources.md#moves-and-deprecations-what-changed-since-the-prior-pass)); Lottstift Tilskudd at `https://tilskudd.lottstift.no/` ⚠️ **Wrong surface for the data — see the correction above; the real files are at `lottstift.no/nb/om-oss/apne-data/`.**
 - **Format**: JSON (Brreg) + Excel (Lottstift momskompensasjon lists)
 - **Auth**: none
 - **Licence**: NLOD
@@ -652,7 +669,10 @@ Atlas's [PLANS.md `Splitting Investigations into Multiple Plans`](../../PLANS.md
 3. ⚠️ `PLAN-019-dsb-kommuneundersokelsen.md` — **Phase 1 only, blocked 2026-10-04.** `dsb.no` is
    behind a Cloudflare JS challenge this agent's tools cannot pass. Needs a human (or
    browser-capable tool) to fetch the file once; see §8 above.
-4. `PLAN-015-brreg-frivillighetsregisteret-lottstift.md` — **blocked by [`INVESTIGATE-tag-indicators-sdg-icnpo.md`](./INVESTIGATE-tag-indicators-sdg-icnpo.md)** for the ICNPO crosswalk, per [Q26]
+4. ✅ Frivillighetsregisteret/ICNPO half already shipped (checked live 2026-10-04, see §9); the
+   ICNPO-crosswalk block this line described never materialised — Brreg supplies ICNPO
+   directly. [`PLAN-020-lottstift-momskompensasjon.md`](./PLAN-020-lottstift-momskompensasjon.md)
+   covers the remaining Lottstift half.
 
 **Phase 3 — Tier-3 (only if a stakeholder asks)**
 - Skatteetaten / Valgresultat / NKI / Sentralitetsindeks / Bibliofil — pull from the deferred list when motivated.
@@ -793,7 +813,8 @@ Each PLAN follows the standard Atlas pattern (per-source folder under `atlas-dat
 ## Cross-references
 
 - [`INVESTIGATE-reports-and-indicators-from-catalogue.md`](./INVESTIGATE-reports-and-indicators-from-catalogue.md) — the report menu that motivates every Tier-1 candidate's gap-fill claim.
-- [`INVESTIGATE-tag-indicators-sdg-icnpo.md`](./INVESTIGATE-tag-indicators-sdg-icnpo.md) — must resolve before `PLAN-015-brreg-frivillighetsregisteret-lottstift`.
+- [`INVESTIGATE-tag-indicators-sdg-icnpo.md`](./INVESTIGATE-tag-indicators-sdg-icnpo.md) — the
+  blocking relationship this line described never materialised; see §9's correction, 2026-10-04.
 - [`INVESTIGATE-felles-datakatalog-classification.md`](./INVESTIGATE-felles-datakatalog-classification.md) — DCAT-AP-NO classification on the source side; every new source must keep its `eu_theme` consistent with the federated classification.
 - [`INVESTIGATE-data-discovery-surface.md`](./INVESTIGATE-data-discovery-surface.md) — the broader discovery / governance surface stack; new sources must be discoverable through the same MCP / API surface.
 - [`INVESTIGATE-folkehjelp-supply.md`](./INVESTIGATE-folkehjelp-supply.md) — pattern reference for HTML-scrape sources (IMDi PLAN reuses the same scraping infra).
