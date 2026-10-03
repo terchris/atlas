@@ -99,4 +99,4 @@ represent.
 - Fravær i grunnskole page: https://www.udir.no/tall-og-forskning/statistikk/statistikk-grunnskole/fravarstall/
 - Licence: https://data.norge.no/nlod/no/2.0
 - Shared helpers: `atlas-data/ingest/src/lib/postgres.ts`, `atlas-data/ingest/src/lib/output.ts`, `atlas-data/ingest/src/lib/ingest_run.ts`
-- Plan: [`PLAN-017-udir-fravar.md`](../../../../../website/docs/ai-developer/plans/active/PLAN-017-udir-fravar.md)
+- Plan: [`PLAN-017-udir-fravar.md`](../../../../../website/docs/ai-developer/plans/completed/PLAN-017-udir-fravar.md)
