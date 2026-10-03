@@ -8770,12 +8770,13 @@
       ],
       "lifecycle": "stable",
       "time_coverage": {
-        "start": "2019",
-        "end": "2024"
+        "start": 2019,
+        "end": 2024
       },
       "methodology_notes": "Momskompensasjon reimburses voluntary organisations for a share of the VAT they pay on their\nown purchases — a financial-resolution signal on the Norwegian NGO sector, complementing\nBrreg's own Frivillighetsregisteret (organisational status + ICNPO category, already shipped as\n`brreg-frivillige`). Three years (2016-2018) are deliberately excluded: their published files\nidentify sub-unit recipients (e.g. a national organisation's regional chapters) by name only,\nwith no organisasjonsnummer to join against Brreg reliably. 2010-2015 are PDF-only on\nLottstift's own site and were not attempted, matching this project's established \"no PDF\nparser\" convention.\n",
       "suggested_joins": [
-        "dim_brreg_enhet (via organisasjonsnummer, for kommune_nr/region_kind/icnpo_kategori)"
+        "brreg-enheter-alle",
+        "brreg-frivillige"
       ],
       "related_by_topic": [
         "brreg-frivillige",
