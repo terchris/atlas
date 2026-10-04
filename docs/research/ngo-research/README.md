@@ -23,6 +23,7 @@ public. Figures are dated where they appear. The research's complete ingest code
 | [`ingestion-specs/description-redaction.md`](ingestion-specs/description-redaction.md) | **How to show an NGO's text without the people in it** — measured on 2 176 texts |
 | [`ingestion-specs/geocoding-input.md`](ingestion-specs/geocoding-input.md) | **Every place we know, one file** — the input for one general geocoder |
 | [`atlas-model-proposals.md`](atlas-model-proposals.md) | **What Atlas should change** — thirteen ranked proposals from measuring eleven NGOs, each with its evidence |
+| [`taxonomy/README.md`](taxonomy/README.md) | **The activity taxonomy and the crosswalk** — 38 categories, Norwegian as people search it and English; all 500 NGO activities mapped (proposed, not yet reviewed) |
 | [`search-demand-report.md`](search-demand-report.md) | **What people in Norway search for** — the evidence for the cross-NGO activity taxonomy (Google Keyword Planner, 1 418 phrases) |
 | [`atlas-storage-design.md`](atlas-storage-design.md) | How the tables should look so people can search activities across all NGOs |
 | [`atlas-handover.md`](atlas-handover.md) | What the research still has to work out, and how the handover is divided |
