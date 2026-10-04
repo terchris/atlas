@@ -132,25 +132,53 @@ Røde Kors and Speiderforbundet not given a registry-only count in that spec; us
 
 ## Phase 3: `brreg-underenheter` ingest + `int_ngo_chapter_subunits`
 
+**3.1–3.3 done 2026-10-04/05** (atlas) — the ingest half, ahead of Phase 1/2 at Terje's explicit
+instruction ("do the underenheter... you must also create a job that updates it, just like the
+other"). 3.4–3.5 (the actual reconciliation model) wait on Phase 1's `dim_ngo.structure` column,
+not yet built.
+
 ### Tasks
 
-- [ ] 3.1 New migration `raw.brreg_underenheter_*`, same shape/pattern as the existing
-      `brreg-enheter-alle` migration — check that migration file first and mirror it field-for-field
-      rather than redesigning.
-- [ ] 3.2 New ingest module `atlas-data/ingest/src/sources/brreg-underenheter/` — bulk file +
-      change feed, same pattern as `brreg-enheter-alle`'s own ingest module (copy its structure, this
-      is explicitly "the same pattern" per the spec, not a novel design).
-- [ ] 3.3 Register in Dagster (`raw_brreg.py` or wherever `brreg-enheter-alle` is registered —
-      follow the exact pattern that broke silently for `ssb-10501`/`ssb-12891` earlier this session:
-      **verify the new source is in a named job's selection, not just defined as an asset**, using
-      `atlas-data/uis/lands-with.sh` before calling this done).
+- [x] 3.1 New migrations `072_raw_brreg_underenheter_snapshot.sql` +
+      `073_raw_brreg_underenheter_change_feed.sql`, mirroring `brreg-enheter-alle`'s 052/053 field for
+      field (snapshot table, feed watermark, oppdateringer log, versions history — all as separate
+      tables from enheter's own, independent id space).
+- [x] 3.2 New ingest modules `brreg-underenheter/` (bootstrap) and
+      `brreg-underenheter-oppdateringer/` (change feed poller), mirroring `brreg-enheter-alle`'s and
+      `brreg-oppdateringer`'s structure. One real finding beyond the mirror: a `Fjernet` entity can
+      answer HTTP 410 rather than the HTTP-200 stub documented for `Sletting` — confirmed live, and
+      the SAME is true for the existing enheter feed (its own "not 404 or 410" claim was wrong,
+      corrected in `brreg-oppdateringer/parse.ts` while building this).
+- [x] 3.3 Registered in Dagster — added to the EXISTING `BRREG_BULK_SOURCES` / `BRREG_DAILY_SOURCES`
+      / `BRREG_FEED_SOURCES` lists in `raw_brreg.py`, so both sources ride the already-named
+      `brreg_bootstrap` / `brreg_change_feed` jobs rather than needing a new job name. Verified, not
+      assumed: `render-template-info.sh` reports "first_data covers all 59 automated sources" and
+      `lands-with.sh` (once committed) names the right job — the exact gap that bit
+      `ssb-10501`/`ssb-12891` on PR #550 does not recur here.
 - [ ] 3.4 `int_ngo_chapter_subunits.sql`: filter `overordnet_enhet in (select orgnr from dim_ngo
       where structure = 'unitary')`, emit the parent entity as the national row (spec rule 2 — 723
       orphans in the research without this), split `<BRAND> <AREA> AVD <UNIT>` per spec rule 3
       (longest area first), classify owned companies (`FRETEX…AS`) as `related_entity` not chapter.
+      Waits on Phase 1.
 - [ ] 3.5 Same column shape as Phase 2's output, so a later `UNION ALL` needs no reshaping.
 
-### Validation
+### Validation — 3.1–3.3, done for real against live data, not simulated
+
+- `npm run migrate` against a real local Postgres: all 73 migrations apply, `073` idempotent.
+- `npm run ingest:brreg-underenheter` (no `--sample`): **867,000 rows** upserted from the real
+  bulk file, matching the live API's `page.totalElements` exactly; watermark seeded at
+  oppdateringsid 21,390,729. Re-run: identical row count, watermark correctly left alone
+  ("a feed already ahead of this snapshot must not be moved").
+- `npm run ingest:brreg-underenheter-oppdateringer`: caught up from the seeded watermark to the
+  live feed's head in one run, **671 real changes** (Endring 441, Ny 127, Sletting 93, Fjernet 10),
+  correctly reached the absent-`_embedded` caught-up state. Re-run: 0 changes, correctly caught up,
+  no error. 10 of 671 entity fetches failed with HTTP 410 (all `Fjernet`) — handled as designed
+  (`doc = null`, `classify(endringstype)` unaffected).
+- `npx vitest run` on both new source directories: 29/29 pass.
+- `render-template-info.sh`: fully green, "table counts agree (70 raw = migrations, 96 marts
+  stated once)", "first_data covers all 59 automated sources".
+
+Phase 3's own remaining validation (3.4/3.5, once built):
 
 ```bash
 dbt build --select brreg_underenheter+ int_ngo_chapter_subunits
@@ -160,22 +188,21 @@ Expect 175 (Frelsesarmeen) and 151 (Kirkens Bymisjon), per `acceptance-targets.c
 `brreg-underenheter.md`'s own table — a fresh run will differ somewhat; a large gap is the signal
 per [Q9], not a number to force.
 
-Separately: run `atlas-data/uis/lands-with.sh origin/main..HEAD` before this PLAN's PR and confirm
-`brreg-underenheter` is named under a real Dagster job, not only `__ASSET_JOB` — the exact gap this
-session caught for `ssb-10501`/`ssb-12891` on PR #550.
-
 ---
 
-## ⚠️ Overlap with INVESTIGATE-all-brreg-organisations — check before starting Phase 3
+## Overlap with INVESTIGATE-all-brreg-organisations — resolved 2026-10-04/05
 
-`INVESTIGATE-all-brreg-organisations.md` is an **already-decided, larger, separate initiative**:
-Terje decided 2026-09-11 to ingest the **full** Enhetsregisteret (1,174,098 `enheter`, already
-shipped as `PLAN-001-brreg-bulk-snapshot`) **and** the full `underenheter` register (862,903 rows),
-with `underenheter` explicitly named as "a named follow-on" — not yet spawned as its own PLAN at
-the time of writing, but decided and scoped.
+`INVESTIGATE-all-brreg-organisations.md`'s own "underenheter, a named follow-on" is this: Phase
+3.1–3.3 ingests the **full** underenheter register (867,024 rows, measured live), not a filtered
+subset — `raw.brreg_underenheter_snapshot` holds every sub-unit in the country, and the NGO-specific
+filter (`structure = 'unitary'`) only ever applies downstream, in the not-yet-built
+`int_ngo_chapter_subunits` (3.4). That investigation's own follow-on is satisfied by this ingest;
+its own doc has been updated to point here rather than naming a separate, still-to-be-spawned PLAN.
 
-This PLAN's Phase 3 proposes a **narrower** `brreg-underenheter` source, filtered in practice to
-two NGOs (~326 rows). Building it independently risks either duplicating that follow-on PLAN when
+Original note, kept for the reasoning that shaped the design above:
+
+This PLAN's Phase 3 proposed a **narrower** `brreg-underenheter` source, filtered in practice to
+two NGOs (~326 rows). Building it independently risked either duplicating that follow-on PLAN when
 it lands, or needing to be torn out and replaced by it. **Before starting Phase 3**, check whether
 `INVESTIGATE-all-brreg-organisations.md`'s underenheter follow-on has a PLAN number yet:
 
@@ -191,8 +218,10 @@ it lands, or needing to be torn out and replaced by it. **Before starting Phase 
 
 ## Open questions carried from the investigation
 
-- `brreg-underenheter` benefits every unitary organisation in the register, not just these two —
-  out of scope for this PLAN, noted for whoever next needs unitary-org data.
+- `raw.brreg_underenheter_snapshot` already holds every unitary organisation in the register, not
+  just the two NGOs this PLAN cares about — the ingest is unfiltered by design (see the overlap
+  note above). Whoever next needs unitary-org data for a different purpose has the raw table
+  already; only a new downstream model is needed, not a new ingest.
 - Precision for the nine federated NGOs' registry match is only measured end-to-end for Røde Kors
   (93.6%/95.4%); the other eight are validated via `both` (confirmed by their own site) in the next
   PLAN, not by an independent precision figure here.

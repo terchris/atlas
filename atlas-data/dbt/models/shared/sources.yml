@@ -170,6 +170,83 @@ sources:
             data_type: jsonb
           - name: fetched_at
             data_type: timestamp with time zone
+      - name: brreg_underenheter_snapshot
+        description: >-
+          The complete underenheter register — ~867k sub-units registered under a parent
+          organisation, stored verbatim as jsonb. Loaded by
+          ingest/src/sources/brreg-underenheter from Brreg's daily bulk download. Sibling to
+          brreg_enheter_snapshot — independent id space, independent change feed, see
+          migrations/072's header for why they are not merged. ⚠️ A bulk file cannot express a
+          deletion, so removals arrive through brreg_underenheter_versions, never by a row
+          disappearing from here.
+        loaded_at_field: loaded_at
+        meta:
+          ingest_cadence: manual
+          cadence_note: >-
+            Bootstrap only. Run once by hand via the brreg_bootstrap job, same cadence note as
+            brreg_enheter_snapshot and for the same reason. Currency comes from
+            brreg_underenheter_oppdateringer.
+        columns:
+          - name: organisasjonsnummer
+            data_type: text
+          - name: doc
+            data_type: jsonb
+          - name: snapshot_file_date
+            data_type: date
+          - name: loaded_at
+            data_type: timestamp with time zone
+      - name: brreg_underenheter_oppdateringer
+        description: >-
+          Append-only log of every change Brreg reported to the underenheter register, one row
+          per oppdateringsid. Loaded by ingest/src/sources/brreg-underenheter-oppdateringer.
+          ⚠️ Its own independent oppdateringsid sequence — not comparable to
+          brreg_oppdateringer's (the real bootstrap run against live data on 2026-10-04 seeded
+          this feed's watermark at 21,390,729, an entirely separate counter). Sparse like the
+          enheter feed's; never compute a backlog by subtracting ids.
+        loaded_at_field: processed_at
+        meta:
+          ingest_cadence: half_hourly
+          cadence_note: >-
+            Same cadence and same caveat as brreg_oppdateringer: measures upstream ACTIVITY, not
+            pipeline health. The tight pipeline-health signal is Dagster's FreshnessPolicy at 2h
+            warn / 6h fail.
+        columns:
+          - name: oppdateringsid
+            data_type: bigint
+          - name: dato
+            data_type: timestamp with time zone
+          - name: organisasjonsnummer
+            data_type: text
+          - name: endringstype
+            data_type: text
+          - name: processed_at
+            data_type: timestamp with time zone
+          - name: process_status
+            data_type: text
+      - name: brreg_underenheter_versions
+        description: >-
+          Append-only version history: each sub-unit's document as it stood at each change. The
+          only place deletions are expressible for this register — Sletting and Fjernet rows are
+          tombstones. ⚠️ For a tombstone, doc is Brreg's deletion stub, NULL, or neither a full
+          Underenhet: confirmed live 2026-10-04, a Sletting (920045154) answers HTTP 200 with a
+          6-key stub, a Fjernet (934464524) answers HTTP 410 and is stored here as NULL. Branch on
+          endringstype, never on whether doc is present.
+        loaded_at_field: fetched_at
+        meta:
+          ingest_cadence: half_hourly
+          cadence_note: >-
+            Same cadence and same caveat as brreg_enheter_versions.
+        columns:
+          - name: oppdateringsid
+            data_type: bigint
+          - name: organisasjonsnummer
+            data_type: text
+          - name: endringstype
+            data_type: text
+          - name: doc
+            data_type: jsonb
+          - name: fetched_at
+            data_type: timestamp with time zone
       - name: brreg_enheter
         description: >-
           Cross-NGO Brreg Enhetsregister landing. Populated by ingest/src/seed-sources/brreg-enheter/

@@ -26,7 +26,8 @@ description: |
 
   This is the **bootstrap** load: a complete point-in-time copy. Keeping it current
   is the change feed's job (PLAN-002, `/oppdateringer/enheter`), which reads only
-  what moved. Underenheter (~863k sub-units) are a separate follow-on.
+  what moved. Underenheter (~867k sub-units) are a sibling register — see
+  `brreg-underenheter`.
 
   Nothing is flattened, renamed or re-encoded on the way in. Typed columns for the
   fields Atlas actually queries are built in dbt (PLAN-003).
@@ -116,3 +117,4 @@ methodology_notes: |
   an assumption made here.
 suggested_joins:
   - redcross-branches
+  - brreg-underenheter

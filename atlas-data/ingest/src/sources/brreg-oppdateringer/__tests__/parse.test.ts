@@ -107,9 +107,16 @@ describe("classify", () => {
 
 describe("looksDeleted", () => {
   it("detects the deletion stub that still returns HTTP 200", () => {
-    // 🔴 Measured 2026-09-12: fetching a deleted organisation gives 200 with ~6
-    // keys and a `slettedato`, not 404 or 410. An implementation that reads the
-    // status code sees a healthy record and writes the stub over a full one.
+    // 🔴 Measured 2026-09-12: fetching a `Sletting` deletion gives 200 with ~6
+    // keys and a `slettedato`. An implementation that reads the status code
+    // sees a healthy record and writes the stub over a full one.
+    //
+    // ⚠️ NOT EVERY DELETION ANSWERS THIS WAY. A `Fjernet` entity can answer 410
+    // instead (confirmed live 2026-10-04, organisasjonsnummer 928856062, body
+    // `{_links, organisasjonsnummer, slettedato}` — no `respons_klasse`), which
+    // is exactly the `looksDeleted(null)` case below: the entity fetch fails,
+    // `doc` is null, and `looksDeleted` correctly declines to say anything —
+    // `classify(endringstype)` is what still gets this right.
     expect(looksDeleted({ organisasjonsnummer: "929915224", navn: "X", slettedato: "2026-09-10" })).toBe(true);
     expect(looksDeleted({ organisasjonsnummer: "938461023", navn: "X", slettedato: null })).toBe(false);
     expect(looksDeleted({ organisasjonsnummer: "938461023", navn: "X" })).toBe(false);

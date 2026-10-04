@@ -74,7 +74,16 @@ EXEMPT=""
 #                          aggregate code, which the manifest says to verify
 #                          against FHI's reference. Guessing it would publish a
 #                          population figure for the wrong origin group.
-BACKLOG="bufdir-barnefattigdom ssb-10826"
+#   brreg-underenheter          bulk register + change feed, built 2026-10-04 so
+#   brreg-underenheter-oppdateringer  the NGO chapter work (PLAN-001-brreg-
+#                          chapter-matching-and-underenheter.md) has registry
+#                          data to join against before any site is scraped.
+#                          The reconciliation model that actually reaches a
+#                          consumer (int_ngo_chapter_subunits -> dim_chapter)
+#                          is that PLAN's Phase 1/3, not yet built — ingesting
+#                          first and modelling second is the explicit sequencing
+#                          Terje chose for this plan, not an oversight.
+BACKLOG="bufdir-barnefattigdom ssb-10826 brreg-underenheter brreg-underenheter-oppdateringer"
 
 # 🔴 "HAS A MODEL" IS NOT "REACHES A CONSUMER", AND THIS GATE USED TO CONFLATE
 # THEM. It counted any lineage edge as served. fhi-innvandrere has an indicator

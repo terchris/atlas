@@ -1,8 +1,14 @@
 """
-@asset wrapper for the full Enhetsregisteret bulk load.
+@asset wrapper for the full Enhetsregisteret bulk load — both registers.
 
-One source, `brreg-enheter-alle`, materialising ~1.17M organisations into
-`raw.brreg_enheter_snapshot`. PLAN-001 phase 3.
+Two sources: `brreg-enheter-alle` (~1.17M organisations into
+`raw.brreg_enheter_snapshot`, PLAN-001 phase 3) and `brreg-underenheter`
+(~867k sub-units into `raw.brreg_underenheter_snapshot`), named as a follow-on
+when the first shipped and built once its bulk+change-feed machinery had run in
+production (see `atlas-data/migrations/072_raw_brreg_underenheter_snapshot.sql`'s
+header, PLAN-001-brreg-chapter-matching-and-underenheter.md). The two registers
+have independent id spaces and independent change feeds — see that migration
+for why they are separate tables rather than one.
 
 ## 🔴 No automation condition and no freshness policy — deliberately
 
@@ -35,12 +41,19 @@ a source that is neither parked nor covered by a first-data job fails the build.
 That is the property that matters here, and it is why this file does not take the
 easy route of parking the source to keep the gate quiet.
 
-## Running it costs ~210 MB over the wire
+## Running it costs ~210 MB + ~85 MB over the wire
 
-Measured 2026-09-11: 210,132,682 bytes compressed, 2,005,028,121 uncompressed,
-1,173,878 records, ~33 MB resident. The download is 52 s; the parse is seconds.
-The database write time on a cluster is not yet measured — see PLAN-001 phase 2's
-validation section for what imac is verifying.
+enheter, measured 2026-09-11: 210,132,682 bytes compressed, 2,005,028,121
+uncompressed, 1,173,878 records, ~33 MB resident. The download is 52 s; the
+parse is seconds.
+
+underenheter, measured 2026-10-04: 89,059,481 bytes compressed, 867,024
+records live via the API (the bulk file's own count will differ by the day's
+churn, same as enheter's). Same streaming approach, same resident-memory
+profile expected.
+
+The database write time for underenheter on a cluster is not yet measured —
+same open item as enheter's own PLAN-001 phase 2 validation section.
 """
 
 from atlas_data.assets._factory import make_raw_ingest_assets
@@ -48,6 +61,7 @@ from atlas_data import cadence
 
 BRREG_BULK_SOURCES = [
     "brreg-enheter-alle",
+    "brreg-underenheter",
 ]
 
 # The daily Brreg sources. Opposite treatment to the bootstrap above, and the
@@ -58,10 +72,15 @@ BRREG_BULK_SOURCES = [
 #
 # They are safe to automate precisely because they are small and additive.
 #
-#   brreg-oppdateringer — the change feed (PLAN-002). ~3,000 changes a day
-#     (measured median over 30 days), appended to raw.brreg_oppdateringer and
-#     raw.brreg_enheter_versions, never touching the 1.17M-row snapshot. A bug
-#     here cannot damage the expensive table.
+#   brreg-oppdateringer — the enheter change feed (PLAN-002). ~3,000 changes a
+#     day (measured median over 30 days), appended to raw.brreg_oppdateringer
+#     and raw.brreg_enheter_versions, never touching the 1.17M-row snapshot. A
+#     bug here cannot damage the expensive table.
+#
+#   brreg-underenheter-oppdateringer — the underenheter change feed, same
+#     cadence and same shape, its own independent watermark and id space (see
+#     072/073's migration headers). A bug here cannot damage the ~867k-row
+#     underenheter snapshot for the same reason.
 #
 #   brreg-frivillige — Frivillighetsregisteret (PLAN-003 phase 3). Daily for a
 #     different reason: it has NO change feed and no bulk download of its own, so
@@ -76,20 +95,25 @@ BRREG_BULK_SOURCES = [
 # the call site — resolves to nothing, and the gate then reports the sources as
 # uncovered. That is the gate failing safe, and it is still a gate you have to go
 # and fix. Keep the literal.
-# The job's selection covers both Brreg ingests, so first_data and a manual run
-# reach them together. Their CADENCES differ and must stay separate — see below.
+# The job's selection covers all three daily Brreg ingests, so first_data and a
+# manual run reach them together. Their CADENCES differ and must stay separate —
+# see below.
 #
 # ⚠️ One flat list of string literals: uis/check-first-data-coverage.py parses
 # this file rather than importing it, and resolves `NAME = ["a", "b"]` only.
 BRREG_DAILY_SOURCES = [
     "brreg-oppdateringer",
+    "brreg-underenheter-oppdateringer",
     "brreg-frivillige",
 ]
 
-# Half-hourly. The change feed reads only what moved: ~114 changes per cycle at
-# the measured 3.8/minute, each costing one entity fetch.
+# Half-hourly. Each change feed reads only what moved: ~114 changes per cycle
+# for enheter at the measured 3.8/minute, each costing one entity fetch.
+# underenheter rides the same cadence — same API, same politeness constraints,
+# no reason for a different cron.
 BRREG_FEED_SOURCES = [
     "brreg-oppdateringer",
+    "brreg-underenheter-oppdateringer",
 ]
 
 # 🔴 Daily, NOT half-hourly, and the difference is 48x load on someone else's

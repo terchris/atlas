@@ -1,0 +1,104 @@
+# Hand-authored catalogue metadata for the underenheter bulk load.
+# Ingest runs do not modify this file.
+
+source_id: brreg-underenheter
+upstream_id: enhetsregisteret-underenheter
+upstream_url: https://data.brreg.no/enhetsregisteret/api/underenheter/lastned
+upstream_landing_page: https://data.brreg.no/enhetsregisteret/api/dokumentasjon
+upstream_title: "Enhetsregisteret — underenheter (alle)"
+description: |
+  Brønnøysundregistrene's underenheter register holds every sub-unit registered
+  under a parent organisation — local branches, establishments and divisions
+  (organisasjonsform BEDR and others) — around 867,000 of them (measured
+  2026-10-04). Brreg regenerates a complete gzipped JSON export daily; Atlas
+  downloads that file, streams it, and stores each record verbatim as jsonb in
+  `raw.brreg_underenheter_snapshot`, keyed on the sub-unit's own
+  organisasjonsnummer.
+
+  This is the sibling of brreg-enheter-alle (the parent-entity register) and was
+  named as a follow-on when that source shipped (PLAN-001,
+  INVESTIGATE-all-brreg-organisations.md): deferred until enheter's own
+  bulk+change-feed machinery had run in production, which it has. Some
+  organisations — including local branches of unitary NGOs such as Frelsesarmeen
+  and Kirkens Bymisjon — are registered as underenheter rather than as enheter,
+  so a copy of enheter alone has a population gap exactly where Atlas's NGO work
+  cares (docs/research/ngo-research/ingestion-specs/brreg-underenheter.md).
+
+  This is the **bootstrap** load: a complete point-in-time copy. Keeping it
+  current is brreg-underenheter-oppdateringer's job
+  (`/oppdateringer/underenheter`), which reads only what moved.
+
+  Nothing is flattened, renamed or re-encoded on the way in. Typed columns for
+  the fields Atlas actually queries belong in dbt.
+publisher: Brønnøysundregistrene
+license: NLOD
+license_url: https://data.norge.no/nlod/no/2.0
+periodicity: P1D
+eu_theme: GOVE
+attribution: "Inneholder data under norsk lisens for offentlige data (NLOD) tilgjengeliggjort av Brønnøysundregistrene"
+
+tags:
+  provider: brreg
+  topic: organisations
+  geo: kommune
+  cadence: daily
+
+raw_tables:
+  - brreg_underenheter_snapshot
+
+dimensions:
+  - code: organisasjonsnummer
+    meaning: The sub-unit's own nine-digit national identifier, and the table's primary key
+    value_format: 9 digits, leading zeros significant — always text, never a number
+    notes: >-
+      Distinct from the parent's organisasjonsnummer, which lives inside doc as
+      overordnetEnhet (a plain string field, verified live 2026-10-04 — not a
+      nested object carrying its own organisasjonsnummer key). Stable for the
+      life of the sub-unit and retained after deletion.
+  - code: doc
+    meaning: The upstream Underenhet object exactly as Brreg published it
+    value_format: jsonb object
+    notes: >-
+      Not flattened and not indexed, for the same measured reason as
+      brreg_enheter_snapshot.doc. Contains navn, organisasjonsform,
+      overordnetEnhet, beliggenhetsadresse, naeringskode1, oppstartsdato,
+      nedleggelsesdato and more.
+  - code: snapshot_file_date
+    meaning: The date of the bulk file this row was loaded from
+    value_format: date, or null when the download sent no Last-Modified
+    notes: Provenance of the transfer, not of the sub-unit.
+  - code: loaded_at
+    meaning: When Atlas last wrote this row
+    value_format: timestamptz
+    notes: Updated by every upsert, so it tracks Atlas's load rather than any upstream event.
+
+lifecycle: beta
+time_coverage:
+  start: null
+  end: null
+keywords:
+  - enhetsregisteret
+  - underenheter
+  - organisasjonsnummer
+  - organisations
+  - brreg
+methodology_notes: |
+  Source file: GET https://data.brreg.no/enhetsregisteret/api/underenheter/lastned
+  — one gzipped, pretty-printed JSON array, regenerated daily. Measured
+  2026-10-04: 867,024 records live via the API (`?size=1`'s page.totalElements);
+  the bulk file's own count will differ by the day's churn, the same way
+  enheter's bulk file and live API disagree (see brreg-enheter-alle's
+  methodology_notes) — not a defect in either number.
+
+  Same streaming approach as brreg-enheter-alle and the same reason: the file is
+  one JSON array, not newline-delimited, and whole-file JSON.parse would need
+  the entire document resident. No delimited format anywhere in the path; a test
+  asserts a record containing a pipe, a newline and a double quote survives
+  byte-identical.
+
+  Personal names can appear in this register for the same reason as enheter
+  (roles, sole proprietorships as sub-units) — the same 2026-09-11 ruling from
+  Terje that they are lawfully public applies here; this is the same register,
+  not a new question.
+suggested_joins:
+  - brreg-enheter-alle

@@ -6,14 +6,14 @@ This section is for **anyone consuming Atlas's public PostgREST API** to build t
 
 <!-- BEGIN holdings (generated) -->
 
-**57 upstream sources** from **10 publishers**, served as **94 read-only relations**.
+**59 upstream sources** from **10 publishers**, served as **94 read-only relations**.
 
 | publisher | sources | broadly |
 |---|---|---|
 | Folkehelseinstituttet | 21 | public health, and the Ungdata youth surveys |
 | Statistisk sentralbyrå | 20 | population, income, families, housing, education, crime |
+| Brønnøysundregistrene | 5 | the company and voluntary-organisation registers |
 | Utdanningsdirektoratet | 4 | — |
-| Brønnøysundregistrene | 3 | the company and voluntary-organisation registers |
 | Arbeids- og velferdsdirektoratet | 3 | — |
 | Barne-, ungdoms- og familiedirektoratet | 2 | child poverty |
 | Husbanken | 1 | — |
@@ -21,9 +21,9 @@ This section is for **anyone consuming Atlas's public PostgREST API** to build t
 | Lotteri- og stiftelsestilsynet | 1 | — |
 | Norges Røde Kors | 1 | local chapters and their activities |
 
-By EU data theme: **SOCI** 30 (society) · **HEAL** 12 (health) · **EDUC** 9 (education) · **GOVE** 5 (government) · **JUST** 1 (justice).
+By EU data theme: **SOCI** 30 (society) · **HEAL** 12 (health) · **EDUC** 9 (education) · **GOVE** 7 (government) · **JUST** 1 (justice).
 
-Licences: **NLOD** for 53 of 57 — Norwegian public data, free to reuse with attribution. The exceptions are `nav-aap` (CC BY 4.0) and `nav-helt-ledige` (CC BY 4.0) and `nav-uforetrygd` (CC BY 4.0) and `redcross-branches` (permissive) — Red Cross's own data rather than the state's.
+Licences: **NLOD** for 55 of 59 — Norwegian public data, free to reuse with attribution. The exceptions are `nav-aap` (CC BY 4.0) and `nav-helt-ledige` (CC BY 4.0) and `nav-uforetrygd` (CC BY 4.0) and `redcross-branches` (permissive) — Red Cross's own data rather than the state's.
 
 ### What you can query
 

@@ -164,11 +164,15 @@ export function classify(endringstype: string): ChangeAction {
  * Is this entity body Brreg's deleted-organisation stub rather than a live
  * record?
  *
- * 🔴 A deleted organisation answers **HTTP 200**, not 404 or 410, with ~6 keys
- * instead of ~30. Status codes cannot detect deletion here. This is a
- * corroborating check on top of `endringstype`, never a substitute for it: it
- * catches the case where the feed says `Endring` but the entity has since been
- * deleted, which would otherwise write a stub over a full record.
+ * 🔴 A `Sletting` deletion answers **HTTP 200**, not 404, with ~6 keys instead
+ * of ~30 — confirmed live, organisasjonsnummer 920045154 (this file's original
+ * claim additionally said "not … 410"; disproven building the underenheter
+ * sibling feed, 2026-10-04: a `Fjernet` enhet, organisasjonsnummer 928856062,
+ * answers HTTP **410** with an even more minimal 3-key body, no
+ * `respons_klasse` at all). Status codes cannot be trusted to detect deletion
+ * either way. This is a corroborating check on top of `endringstype`, never a
+ * substitute for it — including when the entity fetch fails outright (`doc`
+ * null here), which `classify(endringstype)` upstream does not depend on.
  */
 export function looksDeleted(doc: Record<string, unknown> | null): boolean {
   if (!doc) return false;
