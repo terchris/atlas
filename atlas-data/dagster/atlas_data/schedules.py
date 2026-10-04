@@ -3,7 +3,7 @@ Schedules for the Atlas pipeline.
 
 Cadence is derived from what the upstreams actually publish, not from a blanket
 nightly. Every source declares a `periodicity` in its manifest.yml, and across
-Atlas's 55 sources that is: 46 × P1Y (annual), 3 × P1D (daily, the Brreg
+Atlas's 57 sources that is: 48 × P1Y (annual), 3 × P1D (daily, the Brreg
 sources), 3 × P1M (monthly, nav-uforetrygd, nav-aap and nav-helt-ledige), and 3 × irregular. Fetching an
 annual SSB or FHI table every night would be ~15,000 pointless requests a year
 against public-sector APIs Atlas depends on staying welcome at.
@@ -219,7 +219,6 @@ _MONTHLY_SOURCE_IDS = [
     "nav-uforetrygd",
 ]
 
-
 def _asset_selection(source_ids: list[str]) -> AssetSelection:
     """
     AssetSelection over raw/<source_id> keys, matching the factory's naming.
@@ -242,7 +241,7 @@ annual_sources_job = define_asset_job(
     selection=_asset_selection(_ANNUAL_SOURCE_IDS),
     executor_def=_ingest_executor(),
     description=(
-        "The 46 sources whose manifest declares periodicity P1Y. Polled weekly "
+        "The 48 sources whose manifest declares periodicity P1Y. Polled weekly "
         "rather than annually: publication dates drift by weeks and nobody wants "
         "to discover a new release eleven months late. Weekly means a new "
         "release is picked up within 7 days for ~60 requests a week across 45 "
@@ -372,7 +371,6 @@ redcross_branches_job = define_asset_job(
         "fetches."
     ),
 )
-
 # ── The transform split ──────────────────────────────────────────────────────
 #
 # transform_and_publish used to carry the dbt build, all the dbt checks and the

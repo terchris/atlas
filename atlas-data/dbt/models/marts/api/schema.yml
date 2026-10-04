@@ -3435,6 +3435,77 @@ category_format joined with `__`, so each measure is filter-stable in the catalo
       - name: updated_at
         description: "Timestamp when the row was last written by ingest (from raw.loaded_at)."
 
+  - name: mart_indicators__ssb_10501
+    meta:
+      title: "Personer, etter jente- eller guttenavn"
+      stability: source
+    description: |
+      Per-source indicator data for ssb-10501 (SSB), at the publisher's own grain.
+
+      Persons by first name, per year — a reference list added for identifying Norwegian first
+      names in free text, not a kommune-level demographic indicator. One row per (first_name,
+      year). Nationwide only; SSB publishes no kommune/fylke breakdown for this table.
+
+      🔴 NOT AN EXHAUSTIVE NAME LIST. Only first names used by 200 or more persons in Norway at
+      year-end appear as a row, in any year — a name with fewer bearers never appears here at
+      all. This list is a useful floor for catching common names, not a ceiling for catching
+      every real one.
+      🔵 stability:source — the column set here follows SSB table 10501, not Atlas.
+    columns:
+      - name: source_id
+        description: "Atlas catalogue id for this ingest — always ssb-10501."
+      - name: first_name
+        description: "The first name, properly cased as SSB publishes it. Only names used by 200+ persons in Norway at year-end appear here — this is NOT an exhaustive list of Norwegian first names."
+      - name: sex
+        description: "male / female, derived from SSB's name-code gender prefix. Never 'all' — every row here is gender-specific."
+      - name: year
+        description: "Calendar year. 2013-2025."
+      - name: contents_code
+        description: "SSB ContentsCode — degenerate, always 'Personer' for this table."
+      - name: contents_label
+        description: "Human-readable gloss for contents_code."
+      - name: value
+        description: "Count of persons with this first name at year-end. NULL where SSB suppressed the cell (200 or fewer bearers that year)."
+      - name: status
+        description: "SSB's own suppression or quality marker for this cell. NULL when value is present."
+      - name: updated_at
+        description: "When Atlas last loaded this row from the upstream."
+
+  - name: mart_indicators__ssb_12891
+    meta:
+      title: "Etternavn brukt av 200 personer eller flere"
+      stability: source
+    description: |
+      Per-source indicator data for ssb-12891 (SSB), at the publisher's own grain.
+
+      Surnames used by 200 or more persons, per year — a reference list added for identifying
+      Norwegian surnames in free text, alongside mart_indicators__ssb_10501 (first names). One
+      row per (surname, year). Nationwide only; SSB publishes no kommune/fylke breakdown for this
+      table.
+
+      🔴 NOT AN EXHAUSTIVE SURNAME LIST. Only surnames used by 200 or more persons appear as a
+      row. Unlike the first-name caveat above, this threshold is not an arbitrary
+      disclosure-avoidance cutoff — it is the exact threshold Norwegian naming law uses to
+      protect rarer surnames from being freely adopted by others.
+      🔵 stability:source — the column set here follows SSB table 12891, not Atlas.
+    columns:
+      - name: source_id
+        description: "Atlas catalogue id for this ingest — always ssb-12891."
+      - name: surname
+        description: "The surname, properly cased as SSB publishes it. Only surnames used by 200+ persons appear here — this is NOT an exhaustive list of Norwegian surnames, and the 200-person floor is Norwegian naming law's own protection boundary."
+      - name: year
+        description: "Calendar year. 2018-2025."
+      - name: contents_code
+        description: "SSB ContentsCode — degenerate, always 'Personer' for this table."
+      - name: contents_label
+        description: "Human-readable gloss for contents_code."
+      - name: value
+        description: "Count of persons with this surname at year-end. NULL where SSB suppressed the cell (200 or fewer bearers that year)."
+      - name: status
+        description: "SSB's own suppression or quality marker for this cell. NULL when value is present."
+      - name: updated_at
+        description: "When Atlas last loaded this row from the upstream."
+
   - name: mart_indicators__husbanken_bostotte
     meta:
       title: "Statistikkbank — Bostøtte"

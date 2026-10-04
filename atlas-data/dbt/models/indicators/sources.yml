@@ -299,6 +299,43 @@ sources:
             data_type: text
           - name: loaded_at
             data_type: timestamp with time zone
+      - name: ssb_10501
+        description: |
+          SSB statistikkbanktabell 10501 — Personer, etter jente- eller guttenavn
+          (persons by first name, per year). Only names used by 200+ persons at
+          year-end appear at all — NOT an exhaustive name list.
+          Populated by atlas-data/ingest/src/sources/ssb-10501.
+        loaded_at_field: loaded_at
+        meta:
+          ingest_cadence: weekly
+        freshness:
+          warn_after: {count: 400, period: day}
+          error_after: {count: 800, period: day}
+        columns:
+          - name: name_code
+            description: SSB's composite code — leading digit 1=girl name, 2=boy name, then the uppercased name.
+            data_tests:
+              - not_null
+          - name: name_label
+            data_type: text
+          - name: year
+            description: Calendar year (from SSB's Tid dimension).
+            data_tests:
+              - not_null
+          - name: contents_code
+            description: SSB ContentsCode — degenerate, always "Personer" for this table.
+            data_tests:
+              - not_null
+              - accepted_values:
+                  values: [Personer]
+          - name: contents_label
+            data_type: text
+          - name: value
+            data_type: numeric
+          - name: status
+            data_type: text
+          - name: loaded_at
+            data_type: timestamp with time zone
       - name: ssb_12063
         description: SSB KOSTRA 12063 — municipal leisure services / voluntary youth associations.
         loaded_at_field: loaded_at
@@ -415,6 +452,43 @@ sources:
             data_tests: [not_null]
           - name: contents_code
             data_tests: [not_null]
+          - name: contents_label
+            data_type: text
+          - name: value
+            data_type: numeric
+          - name: status
+            data_type: text
+          - name: loaded_at
+            data_type: timestamp with time zone
+      - name: ssb_12891
+        description: |
+          SSB statistikkbanktabell 12891 — Etternavn brukt av 200 personer eller
+          flere (surnames used by 200+ persons, per year). NOT an exhaustive
+          surname list — the 200-person threshold is Norwegian naming law's own
+          protection boundary. Populated by atlas-data/ingest/src/sources/ssb-12891.
+        loaded_at_field: loaded_at
+        meta:
+          ingest_cadence: weekly
+        freshness:
+          warn_after: {count: 400, period: day}
+          error_after: {count: 800, period: day}
+        columns:
+          - name: name_code
+            description: SSB's uppercased surname code, no gender prefix (unlike ssb_10501.name_code).
+            data_tests:
+              - not_null
+          - name: name_label
+            data_type: text
+          - name: year
+            description: Calendar year (from SSB's Tid dimension).
+            data_tests:
+              - not_null
+          - name: contents_code
+            description: SSB ContentsCode — degenerate, always "Personer" for this table.
+            data_tests:
+              - not_null
+              - accepted_values:
+                  values: [Personer]
           - name: contents_label
             data_type: text
           - name: value

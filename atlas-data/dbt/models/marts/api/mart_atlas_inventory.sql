@@ -113,12 +113,14 @@
 -- depends_on: {{ ref('mart_indicators__ssb_09405') }}
 -- depends_on: {{ ref('mart_indicators__ssb_09406') }}
 -- depends_on: {{ ref('mart_indicators__ssb_09429') }}
+-- depends_on: {{ ref('mart_indicators__ssb_10501') }}
 -- depends_on: {{ ref('mart_indicators__ssb_10826') }}
 -- depends_on: {{ ref('mart_indicators__ssb_12063') }}
 -- depends_on: {{ ref('mart_indicators__ssb_12131') }}
 -- depends_on: {{ ref('mart_indicators__ssb_12132') }}
 -- depends_on: {{ ref('mart_indicators__ssb_12292') }}
 -- depends_on: {{ ref('mart_indicators__ssb_12451') }}
+-- depends_on: {{ ref('mart_indicators__ssb_12891') }}
 -- depends_on: {{ ref('mart_indicators__ssb_12944') }}
 -- depends_on: {{ ref('mart_indicators__ssb_13995') }}
 -- depends_on: {{ ref('mart_indicators__udir_elevundersokelsen_mobbing') }}
@@ -217,12 +219,14 @@
   {'relation': 'indicators__ssb_09405', 'mart': 'mart_indicators__ssb_09405'},
   {'relation': 'indicators__ssb_09406', 'mart': 'mart_indicators__ssb_09406'},
   {'relation': 'indicators__ssb_09429', 'mart': 'mart_indicators__ssb_09429'},
+  {'relation': 'indicators__ssb_10501', 'mart': 'mart_indicators__ssb_10501'},
   {'relation': 'indicators__ssb_10826', 'mart': 'mart_indicators__ssb_10826'},
   {'relation': 'indicators__ssb_12063', 'mart': 'mart_indicators__ssb_12063'},
   {'relation': 'indicators__ssb_12131', 'mart': 'mart_indicators__ssb_12131'},
   {'relation': 'indicators__ssb_12132', 'mart': 'mart_indicators__ssb_12132'},
   {'relation': 'indicators__ssb_12292', 'mart': 'mart_indicators__ssb_12292'},
   {'relation': 'indicators__ssb_12451', 'mart': 'mart_indicators__ssb_12451'},
+  {'relation': 'indicators__ssb_12891', 'mart': 'mart_indicators__ssb_12891'},
   {'relation': 'indicators__ssb_12944', 'mart': 'mart_indicators__ssb_12944'},
   {'relation': 'indicators__ssb_13995', 'mart': 'mart_indicators__ssb_13995'},
   {'relation': 'indicators__udir_elevundersokelsen_mobbing', 'mart': 'mart_indicators__udir_elevundersokelsen_mobbing'},

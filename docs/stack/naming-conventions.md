@@ -80,6 +80,8 @@ Use these **exact names** when the concept is present. Never invent variants.
 | Postal-area name | `post_office` | `text` | From `dim_postnummer`; ALLCAPS as published by Bring. |
 | Free-text municipality name | `name` | `text` | Used in `marts.crosswalk_kommune_name` to resolve upstream text to `kommune_nr`. |
 | Kind of resolved name | `name_kind` | `text` | One of `"canonical"`, `"alternative"`, `"historical"` in `crosswalk_kommune_name`. |
+| Person's first name (SSB 10501) | `first_name` | `text` | Properly-cased, e.g. `"Abigail"`. Pairs with `sex`; only names used by 200+ persons in Norway at year-end appear at all — not exhaustive. |
+| Person's surname (SSB 12891) | `surname` | `text` | Properly-cased, e.g. `"Abbas"`. Only surnames used by 200+ persons appear at all — not exhaustive, and the threshold is Norwegian naming law's own protection boundary, not an arbitrary cutoff. |
 | NGO Brreg organisasjonsnummer | `ngo_orgnr` | `text` | 9 chars; must exist in `marts.dim_ngo`. Same shape as `orgnr` but namespaced when used as a foreign key in supply-side facts/dims. |
 | NGO URL slug | `ngo_slug` | `text` | kebab-case, lowercase, unique in `dim_ngo`. URL-friendly; what filters and routes use (`'redcross'`, `'kirkens-bymisjon'`, `'sanitetskvinnene'`). |
 | NGO structural-fit tier | `tier` | `text` | One of `"A"`, `"B"`, `"B-minus"`, `"C-donor"`, `"C-petition"`, `"C-industry"`, `"C-quasigovernmental"` (per `docs/research/ngo-landscape.md`). |

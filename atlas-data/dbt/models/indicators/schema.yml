@@ -344,6 +344,123 @@ models:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns: [source_id, region_code, education_level, sex, year, contents_code]
 
+  - name: indicators__ssb_10501
+    description: |
+      Per-source indicator passthrough for SSB 10501 — persons by first name, per
+      year. One row per (first_name, year). Nationwide only; no kommune/fylke
+      breakdown exists in this table.
+
+      ⚠️ NOT AN EXHAUSTIVE NAME LIST. Only first names used by 200 or more
+      persons in Norway at year-end appear as a row, in any year. Added as a
+      reference list for identifying Norwegian first names in free text
+      (name-scrubbing), not as a demographic indicator in the usual Atlas sense.
+    columns:
+      - name: source_id
+        description: "Atlas source identifier for the upstream table this row came from — the same id used by meta_sources and meta_dimensions."
+        data_tests:
+          - not_null
+          - accepted_values: {values: [ssb-10501]}
+        data_type: text
+      - name: first_name
+        description: "The first name, properly cased as SSB publishes it (e.g. \"Abigail\"). Only names used by 200+ persons in Norway at year-end appear here at all — this is NOT an exhaustive list of Norwegian first names."
+        data_tests:
+          - not_null
+        data_type: text
+      - name: sex
+        description: "male / female, derived from SSB's name-code gender prefix (1=girl, 2=boy). Never \"all\" — every row in this table is gender-specific."
+        data_tests:
+          - not_null
+          - accepted_values: {values: [male, female]}
+        data_type: text
+      - name: year
+        description: "Calendar year (from SSB's Tid dimension)."
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range: {min_value: 2013, max_value: 2040}
+        data_type: integer
+      - name: contents_code
+        description: "SSB ContentsCode — degenerate, always \"Personer\" for this table."
+        data_tests:
+          - not_null
+          - accepted_values: {values: [Personer]}
+        data_type: text
+      - name: contents_label
+        description: "Human-readable gloss for contents_code."
+        data_type: text
+      - name: value
+        description: "Count of persons with this first name at year-end. NULL where SSB suppressed the cell (200 or fewer bearers that year) — see status."
+        data_type: numeric
+      - name: status
+        description: "SSB's own suppression or quality marker for this cell, passed through verbatim. NULL when value is present."
+        data_type: text
+      - name: updated_at
+        description: "When Atlas last loaded this row from the upstream."
+        data_tests: [not_null]
+        data_type: timestamp with time zone
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          # ⚠️ `sex` IS PART OF THE KEY, NOT (source_id, first_name, year,
+          # contents_code). Measured, not assumed: 8 names in this table are
+          # genuinely unisex (Alaa, Inge, Isa, Kim, Marian, Nikola, Thanh, X) —
+          # each carries its own SSB code per sex (e.g. 1KIM and 2KIM) and a
+          # shared label ("Kim"). Omitting sex from the PK produced 104 false
+          # "duplicates" (8 names × 13 years) on first build of this model.
+          combination_of_columns: [source_id, first_name, sex, year, contents_code]
+
+  - name: indicators__ssb_12891
+    description: |
+      Per-source indicator passthrough for SSB 12891 — surnames used by 200+
+      persons, per year. One row per (surname, year). Nationwide only; no
+      kommune/fylke breakdown exists in this table. Companion to
+      indicators__ssb_10501 (first names).
+
+      ⚠️ NOT AN EXHAUSTIVE SURNAME LIST. Only surnames used by 200 or more
+      persons appear as a row. Unlike the first-name caveat above, this
+      threshold is not an arbitrary disclosure-avoidance cutoff — it is the
+      exact threshold Norwegian naming law uses to protect rarer surnames from
+      being freely adopted by others. Added as a reference list for identifying
+      Norwegian surnames in free text (name-scrubbing).
+    columns:
+      - name: source_id
+        description: "Atlas source identifier for the upstream table this row came from — the same id used by meta_sources and meta_dimensions."
+        data_tests:
+          - not_null
+          - accepted_values: {values: [ssb-12891]}
+        data_type: text
+      - name: surname
+        description: "The surname, properly cased as SSB publishes it (e.g. \"Abbas\"). Only surnames used by 200+ persons appear here at all — this is NOT an exhaustive list of Norwegian surnames, and the 200-person floor is Norwegian naming law's own protection boundary."
+        data_tests:
+          - not_null
+        data_type: text
+      - name: year
+        description: "Calendar year (from SSB's Tid dimension)."
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range: {min_value: 2018, max_value: 2040}
+        data_type: integer
+      - name: contents_code
+        description: "SSB ContentsCode — degenerate, always \"Personer\" for this table."
+        data_tests:
+          - not_null
+          - accepted_values: {values: [Personer]}
+        data_type: text
+      - name: contents_label
+        description: "Human-readable gloss for contents_code."
+        data_type: text
+      - name: value
+        description: "Count of persons with this surname at year-end. NULL where SSB suppressed the cell (200 or fewer bearers that year) — see status."
+        data_type: numeric
+      - name: status
+        description: "SSB's own suppression or quality marker for this cell, passed through verbatim. NULL when value is present."
+        data_type: text
+      - name: updated_at
+        description: "When Atlas last loaded this row from the upstream."
+        data_tests: [not_null]
+        data_type: timestamp with time zone
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [source_id, surname, year, contents_code]
+
   - name: indicators__ssb_12063
     description: Per-source indicator passthrough for SSB KOSTRA 12063 (municipal leisure services).
     columns:
