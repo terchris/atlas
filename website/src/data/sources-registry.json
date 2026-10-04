@@ -59,7 +59,7 @@
       "description": "The Norwegian register of legal entities — Brønnøysundregistrene's\nEnhetsregisteret, held in full. Not an indicator: it is the population\nof organisations that every other NGO and sector question is asked\nabout, and the join target for organisasjonsnummer.\n",
       "emoji": "🏛️",
       "order": 65,
-      "source_count": 2
+      "source_count": 4
     },
     {
       "id": "reference",
@@ -78,7 +78,7 @@
       "logo": "/img/publishers/brreg.svg",
       "feedback_url": "https://www.brreg.no/om-oss/kontakt-oss/",
       "notes": "The Brønnøysund Register Centre — the Norwegian government agency that\noperates the country's central registers. Atlas reads Enhetsregisteret\n(every registered legal entity, ~1.17M) and Frivillighetsregisteret (the\nvoluntary-organisation register, a filtered view of the same entities).\nData released under NLOD 2.0; `organisasjonsnummer` is the join key that\nmakes organisational data from any Norwegian source line up.\n\nNo logo: Brreg's mark is not offered under the same open licence as the\ndata, so the publisher page renders without one rather than\nredistributing it.\n",
-      "source_count": 3
+      "source_count": 5
     },
     {
       "id": "bufdir",
@@ -170,7 +170,7 @@
       "upstream_url": "https://data.brreg.no/enhetsregisteret/api/enheter/lastned",
       "upstream_landing_page": "https://data.brreg.no/enhetsregisteret/api/dokumentasjon",
       "upstream_title": "Enhetsregisteret — alle registrerte enheter",
-      "description": "Brønnøysundregistrene's Enhetsregisteret holds every legal entity registered in\nNorway — companies, foundations, associations, public bodies and sole\nproprietorships — around 1.17 million of them. Brreg regenerates a complete\ngzipped JSON export daily; Atlas downloads that file, streams it, and stores each\nrecord verbatim as jsonb in `raw.brreg_enheter_snapshot`, keyed on\norganisasjonsnummer.\n\nAtlas previously held 122 organisational units, selected by a curated list of 11\nNGOs. Holding the whole register instead means any Norwegian organisation can be\nresolved from its organisasjonsnummer without a new ingest, and it is what makes\norganisational data from unrelated sources join at all.\n\nThis is the **bootstrap** load: a complete point-in-time copy. Keeping it current\nis the change feed's job (PLAN-002, `/oppdateringer/enheter`), which reads only\nwhat moved. Underenheter (~863k sub-units) are a separate follow-on.\n\nNothing is flattened, renamed or re-encoded on the way in. Typed columns for the\nfields Atlas actually queries are built in dbt (PLAN-003).\n",
+      "description": "Brønnøysundregistrene's Enhetsregisteret holds every legal entity registered in\nNorway — companies, foundations, associations, public bodies and sole\nproprietorships — around 1.17 million of them. Brreg regenerates a complete\ngzipped JSON export daily; Atlas downloads that file, streams it, and stores each\nrecord verbatim as jsonb in `raw.brreg_enheter_snapshot`, keyed on\norganisasjonsnummer.\n\nAtlas previously held 122 organisational units, selected by a curated list of 11\nNGOs. Holding the whole register instead means any Norwegian organisation can be\nresolved from its organisasjonsnummer without a new ingest, and it is what makes\norganisational data from unrelated sources join at all.\n\nThis is the **bootstrap** load: a complete point-in-time copy. Keeping it current\nis the change feed's job (PLAN-002, `/oppdateringer/enheter`), which reads only\nwhat moved. Underenheter (~867k sub-units) are a sibling register — see\n`brreg-underenheter`.\n\nNothing is flattened, renamed or re-encoded on the way in. Typed columns for the\nfields Atlas actually queries are built in dbt (PLAN-003).\n",
       "atlas_summary": null,
       "publisher": {
         "id": "brreg",
@@ -208,10 +208,13 @@
       },
       "methodology_notes": "Source file: GET https://data.brreg.no/enhetsregisteret/api/enheter/lastned —\none gzipped, pretty-printed JSON array, regenerated daily. Measured 2026-09-11:\n210,132,682 bytes compressed, 2,005,028,121 uncompressed, 1,173,878 records.\n\nIt is not newline-delimited, so the loader streams it with a depth-aware scanner\nand parses one element at a time; the whole register loads in ~33 MB of resident\nmemory.\n\n🔴 One thing this load deliberately does not do. The reference implementation\n(terchris/shadow-brreg) converted the JSON to pipe-delimited CSV and stripped\nevery `|` from the source first, so any organisation with a pipe in its name or\naddress was silently altered. There is no delimited format anywhere in Atlas's\npath, and a test asserts a record containing a pipe, a newline and a double quote\nsurvives byte-identical.\n\nThe bulk file and the live API do not agree exactly: on 2026-09-11 the file held\n1,173,878 records against the API's 1,174,098 — a 220-record gap, the day's churn\nbetween the file's generation and the query. Closing it is what the change feed is\nfor, not a defect in either number.\n\nPersonal names appear in this register (roles, sole proprietorships). They are\nlawfully public: Norwegian law requires the persons connected to a registered\norganisation to be in the register. That is a ruling from Terje on 2026-09-11, not\nan assumption made here.\n",
       "suggested_joins": [
-        "redcross-branches"
+        "redcross-branches",
+        "brreg-underenheter"
       ],
       "related_by_topic": [
-        "brreg-oppdateringer"
+        "brreg-oppdateringer",
+        "brreg-underenheter",
+        "brreg-underenheter-oppdateringer"
       ],
       "dimensions": [
         {
@@ -707,7 +710,9 @@
         "brreg-enheter-alle"
       ],
       "related_by_topic": [
-        "brreg-enheter-alle"
+        "brreg-enheter-alle",
+        "brreg-underenheter",
+        "brreg-underenheter-oppdateringer"
       ],
       "dimensions": [
         {
@@ -913,6 +918,205 @@
       "latest_row_count": 0,
       "total_runs": 414,
       "downstream_model_count": 5
+    },
+    {
+      "kind": "source",
+      "source_id": "brreg-underenheter",
+      "upstream_id": "enhetsregisteret-underenheter",
+      "upstream_url": "https://data.brreg.no/enhetsregisteret/api/underenheter/lastned",
+      "upstream_landing_page": "https://data.brreg.no/enhetsregisteret/api/dokumentasjon",
+      "upstream_title": "Enhetsregisteret — underenheter (alle)",
+      "description": "Brønnøysundregistrene's underenheter register holds every sub-unit registered\nunder a parent organisation — local branches, establishments and divisions\n(organisasjonsform BEDR and others) — around 867,000 of them (measured\n2026-10-04). Brreg regenerates a complete gzipped JSON export daily; Atlas\ndownloads that file, streams it, and stores each record verbatim as jsonb in\n`raw.brreg_underenheter_snapshot`, keyed on the sub-unit's own\norganisasjonsnummer.\n\nThis is the sibling of brreg-enheter-alle (the parent-entity register) and was\nnamed as a follow-on when that source shipped (PLAN-001,\nINVESTIGATE-all-brreg-organisations.md): deferred until enheter's own\nbulk+change-feed machinery had run in production, which it has. Some\norganisations — including local branches of unitary NGOs such as Frelsesarmeen\nand Kirkens Bymisjon — are registered as underenheter rather than as enheter,\nso a copy of enheter alone has a population gap exactly where Atlas's NGO work\ncares (docs/research/ngo-research/ingestion-specs/brreg-underenheter.md).\n\nThis is the **bootstrap** load: a complete point-in-time copy. Keeping it\ncurrent is brreg-underenheter-oppdateringer's job\n(`/oppdateringer/underenheter`), which reads only what moved.\n\nNothing is flattened, renamed or re-encoded on the way in. Typed columns for\nthe fields Atlas actually queries belong in dbt.\n",
+      "atlas_summary": null,
+      "publisher": {
+        "id": "brreg",
+        "display_name": "Brønnøysundregistrene",
+        "homepage": "https://www.brreg.no/",
+        "logo": "/img/publishers/brreg.svg"
+      },
+      "category": {
+        "id": "organisations",
+        "name": "Organisations register",
+        "emoji": "🏛️"
+      },
+      "license": "NLOD",
+      "license_url": "https://data.norge.no/nlod/no/2.0",
+      "periodicity": "P1D",
+      "eu_theme": "GOVE",
+      "attribution": "Inneholder data under norsk lisens for offentlige data (NLOD) tilgjengeliggjort av Brønnøysundregistrene",
+      "tags": {
+        "provider": "brreg",
+        "topic": "organisations",
+        "geo": "kommune",
+        "cadence": "daily"
+      },
+      "keywords": [
+        "enhetsregisteret",
+        "underenheter",
+        "organisasjonsnummer",
+        "organisations",
+        "brreg"
+      ],
+      "lifecycle": "beta",
+      "time_coverage": {
+        "start": null,
+        "end": null
+      },
+      "methodology_notes": "Source file: GET https://data.brreg.no/enhetsregisteret/api/underenheter/lastned\n— one gzipped, pretty-printed JSON array, regenerated daily. Measured\n2026-10-04: 867,024 records live via the API (`?size=1`'s page.totalElements);\nthe bulk file's own count will differ by the day's churn, the same way\nenheter's bulk file and live API disagree (see brreg-enheter-alle's\nmethodology_notes) — not a defect in either number.\n\nSame streaming approach as brreg-enheter-alle and the same reason: the file is\none JSON array, not newline-delimited, and whole-file JSON.parse would need\nthe entire document resident. No delimited format anywhere in the path; a test\nasserts a record containing a pipe, a newline and a double quote survives\nbyte-identical.\n\nPersonal names can appear in this register for the same reason as enheter\n(roles, sole proprietorships as sub-units) — the same 2026-09-11 ruling from\nTerje that they are lawfully public applies here; this is the same register,\nnot a new question.\n",
+      "suggested_joins": [
+        "brreg-enheter-alle"
+      ],
+      "related_by_topic": [
+        "brreg-enheter-alle",
+        "brreg-oppdateringer",
+        "brreg-underenheter-oppdateringer"
+      ],
+      "dimensions": [
+        {
+          "code": "organisasjonsnummer",
+          "meaning": "The sub-unit's own nine-digit national identifier, and the table's primary key",
+          "value_format": "9 digits, leading zeros significant — always text, never a number",
+          "notes": "Distinct from the parent's organisasjonsnummer, which lives inside doc as overordnetEnhet (a plain string field, verified live 2026-10-04 — not a nested object carrying its own organisasjonsnummer key). Stable for the life of the sub-unit and retained after deletion."
+        },
+        {
+          "code": "doc",
+          "meaning": "The upstream Underenhet object exactly as Brreg published it",
+          "value_format": "jsonb object",
+          "notes": "Not flattened and not indexed, for the same measured reason as brreg_enheter_snapshot.doc. Contains navn, organisasjonsform, overordnetEnhet, beliggenhetsadresse, naeringskode1, oppstartsdato, nedleggelsesdato and more."
+        },
+        {
+          "code": "snapshot_file_date",
+          "meaning": "The date of the bulk file this row was loaded from",
+          "value_format": "date, or null when the download sent no Last-Modified",
+          "notes": "Provenance of the transfer, not of the sub-unit."
+        },
+        {
+          "code": "loaded_at",
+          "meaning": "When Atlas last wrote this row",
+          "value_format": "timestamptz",
+          "notes": "Updated by every upsert, so it tracks Atlas's load rather than any upstream event."
+        }
+      ],
+      "raw_tables": [
+        "brreg_underenheter_snapshot"
+      ],
+      "sample_query": null,
+      "citation": {
+        "text": "Brønnøysundregistrene. (n.d.). Enhetsregisteret — underenheter (alle). Retrieved from https://data.brreg.no/enhetsregisteret/api/dokumentasjon. Available in Atlas at https://atlas.sovereignsky.no/datasets/brreg-underenheter.",
+        "bibtex": "@misc{atlas_brreg_underenheter,\n  author = {Brønnøysundregistrene},\n  title  = {Enhetsregisteret — underenheter (alle)},\n  year   = {n.d.},\n  url    = {https://data.brreg.no/enhetsregisteret/api/dokumentasjon},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/brreg-underenheter}\n}"
+      },
+      "feedback_url": "https://www.brreg.no/om-oss/kontakt-oss/",
+      "consuming_marts": [],
+      "consuming_models": [],
+      "joined_with": [],
+      "last_ingested_at": null,
+      "latest_row_count": null,
+      "total_runs": null,
+      "downstream_model_count": null
+    },
+    {
+      "kind": "source",
+      "source_id": "brreg-underenheter-oppdateringer",
+      "upstream_id": "enhetsregisteret-underenheter-oppdateringer",
+      "upstream_url": "https://data.brreg.no/enhetsregisteret/api/oppdateringer/underenheter",
+      "upstream_landing_page": "https://data.brreg.no/enhetsregisteret/api/dokumentasjon",
+      "upstream_title": "Enhetsregisteret — underenheter, oppdateringer (endringsfeed)",
+      "description": "Brønnøysundregistrene publishes every change to the underenheter register as\nits own ordered feed, independent of the enheter feed `brreg-oppdateringer`\nreads — a real bootstrap run against live data on 2026-10-04 seeded this\nfeed's watermark at 21,390,729, an entirely separate counter from enheter's\nown feed. Atlas walks it forward from a durable watermark, recording each\nchange in `raw.brreg_underenheter_oppdateringer` and the sub-unit's document\nat that moment in `raw.brreg_underenheter_versions`.\n\nThis is what keeps the bulk snapshot (`brreg-underenheter`) from going stale.\nThe snapshot is a point in time; a bulk file cannot express a deletion. Those\narrive here, as `Sletting` and `Fjernet` change types — confirmed live\n2026-10-04 (a 100-row sample at the current cursor held Ny 51, Endring 35,\nSletting 14).\n\nThe feed reaches back to its own id 1 (2018, same era as the enheter feed),\nso a missed cycle catches up completely on the next run.\n",
+      "atlas_summary": null,
+      "publisher": {
+        "id": "brreg",
+        "display_name": "Brønnøysundregistrene",
+        "homepage": "https://www.brreg.no/",
+        "logo": "/img/publishers/brreg.svg"
+      },
+      "category": {
+        "id": "organisations",
+        "name": "Organisations register",
+        "emoji": "🏛️"
+      },
+      "license": "NLOD",
+      "license_url": "https://data.norge.no/nlod/no/2.0",
+      "periodicity": "P1D",
+      "eu_theme": "GOVE",
+      "attribution": "Inneholder data under norsk lisens for offentlige data (NLOD) tilgjengeliggjort av Brønnøysundregistrene",
+      "tags": {
+        "provider": "brreg",
+        "topic": "organisations",
+        "geo": "kommune",
+        "cadence": "daily"
+      },
+      "keywords": [
+        "enhetsregisteret",
+        "underenheter",
+        "change-feed",
+        "oppdateringer",
+        "organisasjonsnummer",
+        "brreg"
+      ],
+      "lifecycle": "beta",
+      "time_coverage": {
+        "start": 2018,
+        "end": null
+      },
+      "methodology_notes": "Walked by CURSOR ONLY — `?oppdateringsid=<last+1>&size=10000` — same trap as\nthe enheter feed and verified against this one independently 2026-10-04:\n`page` is capped, `_links.next` is built with `page=`, and a caught-up\nresponse has no `_embedded` key at all rather than an empty array.\n\n🔴 Uses `_embedded.oppdaterteUnderenheter` and `_links.underenhet`, NOT the\nenheter feed's `oppdaterteEnheter` / `_links.enhet` — upstream naming, not a\ndesign choice, and asserted in this source's own tests.\n\nThe watermark lives in `raw.brreg_underenheter_feed_watermark` — its own\nsingle-row table, not a shared one with the enheter feed's watermark, because\nthe two id spaces are independent. Same reasoning as the enheter feed for why\nthis is a Postgres row and not a Dagster cursor.\n\nA run is capped at 50,000 changes (`BRREG_UNDERENHETER_FEED_MAX_CHANGES`),\nsame reasoning as the enheter feed's cap.\n",
+      "suggested_joins": [
+        "brreg-underenheter"
+      ],
+      "related_by_topic": [
+        "brreg-enheter-alle",
+        "brreg-oppdateringer",
+        "brreg-underenheter"
+      ],
+      "dimensions": [
+        {
+          "code": "oppdateringsid",
+          "meaning": "Brreg's monotonic change identifier for the underenheter feed, and the cursor it is walked by",
+          "value_format": "bigint, sparse",
+          "notes": "🔴 Its own id space, not comparable to the enheter feed's oppdateringsid — a real bootstrap run against live data on 2026-10-04 seeded this feed's watermark at 21,390,729, an entirely separate counter from enheter's own. Sparse like the enheter feed's; never compute a backlog by subtracting ids, read page.totalElements at the cursor."
+        },
+        {
+          "code": "endringstype",
+          "meaning": "What kind of change Brreg recorded",
+          "value_format": "Ny, Endring, Sletting, Fjernet or Ukjent",
+          "notes": "Same five values as the enheter feed. Ny, Endring and Sletting all confirmed in a live 2026-10-04 sample at the current cursor. Stored verbatim and not constrained to an enum — a sixth value must land and be counted, not rejected at the door."
+        },
+        {
+          "code": "organisasjonsnummer",
+          "meaning": "The sub-unit the change is about",
+          "value_format": "9 digits, leading zeros significant — always text",
+          "notes": "Joins to raw.brreg_underenheter_snapshot. Retained after deletion."
+        },
+        {
+          "code": "doc",
+          "meaning": "The sub-unit's document as it stood when the change was received",
+          "value_format": "jsonb, or null when the entity fetch failed",
+          "notes": "⚠️ For a Sletting/Fjernet this is NOT a full record, and it is not even consistently a stub. Confirmed live 2026-10-04: a Sletting (organisasjonsnummer 920045154) answers HTTP 200 with a 6-key stub (respons_klasse \"SlettetUnderEnhet\", slettedato set); a Fjernet (organisasjonsnummer 934464524) answers HTTP 410 with an even more minimal 3-key body and is stored here as NULL. Branch on endringstype; never assume doc is complete or present, never detect deletion from a status code."
+        },
+        {
+          "code": "process_status",
+          "meaning": "What Atlas did with the change",
+          "value_format": "applied, tombstoned or skipped_unknown",
+          "notes": "Derived from endringstype at load time."
+        }
+      ],
+      "raw_tables": [
+        "brreg_underenheter_oppdateringer",
+        "brreg_underenheter_versions",
+        "brreg_underenheter_feed_watermark"
+      ],
+      "sample_query": null,
+      "citation": {
+        "text": "Brønnøysundregistrene. (n.d.). Enhetsregisteret — underenheter, oppdateringer (endringsfeed). Retrieved from https://data.brreg.no/enhetsregisteret/api/dokumentasjon. Available in Atlas at https://atlas.sovereignsky.no/datasets/brreg-underenheter-oppdateringer.",
+        "bibtex": "@misc{atlas_brreg_underenheter_oppdateringer,\n  author = {Brønnøysundregistrene},\n  title  = {Enhetsregisteret — underenheter, oppdateringer (endringsfeed)},\n  year   = {n.d.},\n  url    = {https://data.brreg.no/enhetsregisteret/api/dokumentasjon},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/brreg-underenheter-oppdateringer}\n}"
+      },
+      "feedback_url": "https://www.brreg.no/om-oss/kontakt-oss/",
+      "consuming_marts": [],
+      "consuming_models": [],
+      "joined_with": [],
+      "last_ingested_at": null,
+      "latest_row_count": null,
+      "total_runs": null,
+      "downstream_model_count": null
     },
     {
       "kind": "source",

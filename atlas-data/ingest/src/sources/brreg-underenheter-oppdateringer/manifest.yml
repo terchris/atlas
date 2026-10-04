@@ -1,0 +1,112 @@
+# Hand-authored catalogue metadata for the underenheter change feed.
+# Ingest runs do not modify this file.
+
+source_id: brreg-underenheter-oppdateringer
+upstream_id: enhetsregisteret-underenheter-oppdateringer
+upstream_url: https://data.brreg.no/enhetsregisteret/api/oppdateringer/underenheter
+upstream_landing_page: https://data.brreg.no/enhetsregisteret/api/dokumentasjon
+upstream_title: "Enhetsregisteret — underenheter, oppdateringer (endringsfeed)"
+description: |
+  Brønnøysundregistrene publishes every change to the underenheter register as
+  its own ordered feed, independent of the enheter feed `brreg-oppdateringer`
+  reads — a real bootstrap run against live data on 2026-10-04 seeded this
+  feed's watermark at 21,390,729, an entirely separate counter from enheter's
+  own feed. Atlas walks it forward from a durable watermark, recording each
+  change in `raw.brreg_underenheter_oppdateringer` and the sub-unit's document
+  at that moment in `raw.brreg_underenheter_versions`.
+
+  This is what keeps the bulk snapshot (`brreg-underenheter`) from going stale.
+  The snapshot is a point in time; a bulk file cannot express a deletion. Those
+  arrive here, as `Sletting` and `Fjernet` change types — confirmed live
+  2026-10-04 (a 100-row sample at the current cursor held Ny 51, Endring 35,
+  Sletting 14).
+
+  The feed reaches back to its own id 1 (2018, same era as the enheter feed),
+  so a missed cycle catches up completely on the next run.
+publisher: Brønnøysundregistrene
+license: NLOD
+license_url: https://data.norge.no/nlod/no/2.0
+periodicity: P1D
+eu_theme: GOVE
+attribution: "Inneholder data under norsk lisens for offentlige data (NLOD) tilgjengeliggjort av Brønnøysundregistrene"
+
+tags:
+  provider: brreg
+  topic: organisations
+  geo: kommune
+  cadence: daily
+
+raw_tables:
+  - brreg_underenheter_oppdateringer
+  - brreg_underenheter_versions
+  - brreg_underenheter_feed_watermark
+
+dimensions:
+  - code: oppdateringsid
+    meaning: Brreg's monotonic change identifier for the underenheter feed, and the cursor it is walked by
+    value_format: bigint, sparse
+    notes: >-
+      🔴 Its own id space, not comparable to the enheter feed's oppdateringsid —
+      a real bootstrap run against live data on 2026-10-04 seeded this feed's
+      watermark at 21,390,729, an entirely separate counter from enheter's own.
+      Sparse like the enheter feed's; never compute a backlog by subtracting
+      ids, read page.totalElements at the cursor.
+  - code: endringstype
+    meaning: What kind of change Brreg recorded
+    value_format: Ny, Endring, Sletting, Fjernet or Ukjent
+    notes: >-
+      Same five values as the enheter feed. Ny, Endring and Sletting all
+      confirmed in a live 2026-10-04 sample at the current cursor. Stored
+      verbatim and not constrained to an enum — a sixth value must land and be
+      counted, not rejected at the door.
+  - code: organisasjonsnummer
+    meaning: The sub-unit the change is about
+    value_format: 9 digits, leading zeros significant — always text
+    notes: Joins to raw.brreg_underenheter_snapshot. Retained after deletion.
+  - code: doc
+    meaning: The sub-unit's document as it stood when the change was received
+    value_format: jsonb, or null when the entity fetch failed
+    notes: >-
+      ⚠️ For a Sletting/Fjernet this is NOT a full record, and it is not even
+      consistently a stub. Confirmed live 2026-10-04: a Sletting
+      (organisasjonsnummer 920045154) answers HTTP 200 with a 6-key stub
+      (respons_klasse "SlettetUnderEnhet", slettedato set); a Fjernet
+      (organisasjonsnummer 934464524) answers HTTP 410 with an even more
+      minimal 3-key body and is stored here as NULL. Branch on endringstype;
+      never assume doc is complete or present, never detect deletion from a
+      status code.
+  - code: process_status
+    meaning: What Atlas did with the change
+    value_format: applied, tombstoned or skipped_unknown
+    notes: Derived from endringstype at load time.
+
+lifecycle: beta
+time_coverage:
+  start: 2018
+  end: null
+keywords:
+  - enhetsregisteret
+  - underenheter
+  - change-feed
+  - oppdateringer
+  - organisasjonsnummer
+  - brreg
+methodology_notes: |
+  Walked by CURSOR ONLY — `?oppdateringsid=<last+1>&size=10000` — same trap as
+  the enheter feed and verified against this one independently 2026-10-04:
+  `page` is capped, `_links.next` is built with `page=`, and a caught-up
+  response has no `_embedded` key at all rather than an empty array.
+
+  🔴 Uses `_embedded.oppdaterteUnderenheter` and `_links.underenhet`, NOT the
+  enheter feed's `oppdaterteEnheter` / `_links.enhet` — upstream naming, not a
+  design choice, and asserted in this source's own tests.
+
+  The watermark lives in `raw.brreg_underenheter_feed_watermark` — its own
+  single-row table, not a shared one with the enheter feed's watermark, because
+  the two id spaces are independent. Same reasoning as the enheter feed for why
+  this is a Postgres row and not a Dagster cursor.
+
+  A run is capped at 50,000 changes (`BRREG_UNDERENHETER_FEED_MAX_CHANGES`),
+  same reasoning as the enheter feed's cap.
+suggested_joins:
+  - brreg-underenheter

@@ -24,6 +24,8 @@
     "ingest:brreg-enheter-alle": "tsx --env-file-if-exists=.env src/sources/brreg-enheter-alle/index.ts",
     "ingest:brreg-frivillige": "tsx --env-file-if-exists=.env src/sources/brreg-frivillige/index.ts",
     "ingest:brreg-oppdateringer": "tsx --env-file-if-exists=.env src/sources/brreg-oppdateringer/index.ts",
+    "ingest:brreg-underenheter": "tsx --env-file-if-exists=.env src/sources/brreg-underenheter/index.ts",
+    "ingest:brreg-underenheter-oppdateringer": "tsx --env-file-if-exists=.env src/sources/brreg-underenheter-oppdateringer/index.ts",
     "ingest:bufdir-barnefattigdom": "tsx --env-file-if-exists=.env src/sources/bufdir-barnefattigdom/index.ts",
     "ingest:bufdir-barnevern": "tsx --env-file-if-exists=.env src/sources/bufdir-barnevern/index.ts",
     "ingest:fhi-alkohol": "tsx --env-file-if-exists=.env src/sources/fhi-alkohol/index.ts",
