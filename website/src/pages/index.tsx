@@ -9,6 +9,7 @@ import PublisherStrip from '../components/sources/PublisherStrip';
 import RecentlyRefreshedStrip from '../components/sources/RecentlyRefreshedStrip';
 import CollectionsStrip from '../components/sources/CollectionsStrip';
 import PersonaPagesStrip from '../components/sources/PersonaPagesStrip';
+import LiveStatsHero from '../components/sources/LiveStats';
 
 import styles from './index.module.css';
 
@@ -68,6 +69,7 @@ function Hero() {
             <br />
             <span className={styles.heroLead}>The humanitarian needs that shape it, and the NGOs that respond.</span>
           </p>
+          <LiveStatsHero />
           <div className={styles.buttons}>
             <Link className={clsx('button button--lg button--primary', styles.heroButton)} to="/datasets">
               Browse datasets

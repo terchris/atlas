@@ -1,5 +1,41 @@
 /* Shared styles for the sources catalog. */
 
+/* ── Live stats (homepage hero) ──────────────────────────────────────────── */
+
+.liveStats {
+  display: flex;
+  gap: 2rem;
+  margin: 1.5rem 0;
+}
+
+@media screen and (max-width: 996px) {
+  .liveStats {
+    justify-content: center;
+  }
+}
+
+.liveStat {
+  display: flex;
+  flex-direction: column;
+}
+
+.liveStatValue {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1.1;
+}
+
+.liveStatLabel {
+  font-size: 0.85rem;
+  color: #9ad6c2;
+}
+
+.liveStatDivider {
+  width: 1px;
+  background: rgba(255, 255, 255, 0.25);
+}
+
 /* ── Badges ───────────────────────────────────────────────────────────── */
 
 .badge {
