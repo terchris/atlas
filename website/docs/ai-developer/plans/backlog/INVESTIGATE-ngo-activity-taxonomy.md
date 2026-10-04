@@ -4,7 +4,10 @@
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Backlog
+## Status: Backlog — validated 2026-10-04 (atlas, urb-agents #1844); merged as #555 (#554 had to
+be replaced after a squash-merge ancestry conflict — same content, sha256-verified). [Q1]–[Q4] and
+[Q6] answered below; [Q5] (the crosswalk's candidate categories and its row-by-row content) is the
+owner's decision, not atlas's — nothing here should be read as pre-empting it.
 
 **Goal**: Let a person search for a kind of help — *leksehjelp*, *besøksvenn*, *gratis mat* — and find
 it across every NGO, whatever each NGO calls it, by replacing the 22-code `ref_atlas_service_category`
@@ -61,27 +64,42 @@ people search (`elderly_visiting`: *Besøksvenn*; `family_support`: *Åpen barne
 
 ## Questions to Answer
 
-- **[Q1]** *Adopt the 38-category taxonomy* as the successor of `ref_atlas_service_category`, codes
-  stable, with families as a second level?
-- **[Q2]** *Labels.* Norwegian (bokmål) from search evidence, English as given; nynorsk drafts in
-  `categories-v2.csv` wait for a native writer. Which languages does `api_v1` serve?
-- **[Q3]** *Search terms as data.* Ship `search_terms_nb`, `need_terms_nb`, `volunteer_terms_nb`
-  and `terms_en` as a term table the search index uses — so *ikke råd til mat* finds `food_distribution`?
-- **[Q4]** *The crosswalk replaces the `CASE`*, as a seed keyed on Atlas's activity id; primary plus
-  secondary categories (a many-to-many, revisiting single-category Q34)?
-- **[Q5]** *Candidate categories* — decided by the owner before adoption (`crosswalk-review.md`):
-  free equipment lending (BUA, *Utstyrsbanken*, Kirkens Bymisjon's *Skattkammeret*), help with
-  public services, practical help (shopping, transport, digital help), volunteers in hospitals,
-  residential care for older people, alternative education.
-- **[Q6]** *Review.* The owner signs off rows in `reviewed_by` / `reviewed_at`; Atlas loads only
-  reviewed rows, or all rows with their confidence?
+- **[Q1]** *Adopt the 38-category taxonomy.* **Accept.** Verified directly: the 22 existing codes
+  are all present unchanged in the new 38; `ref_atlas_service_category.csv` has exactly 22 rows
+  today, the new `taxonomy-nb-en.csv` exactly 38 across exactly 10 `family_code` values. Nothing
+  existing breaks; families are additive.
+- **[Q2]** *Labels, and which languages `api_v1` serves.* Checked directly:
+  `ref_atlas_service_category.csv`'s only columns today are `label_no`/`label_en` — there is no
+  nynorsk column anywhere in `api_v1` to land a draft in. **Accept bokmål + English now**; nynorsk
+  has nowhere to go until a column is added, so `categories-v2.csv`'s drafts correctly wait — this
+  isn't a decision deferred without reason, it's blocked on schema that doesn't exist yet.
+- **[Q3]** *Search terms as data.* **Accept** the term-table design; it's additive and the search
+  index is a separate PLAN regardless (Next Steps already says so).
+- **[Q4]** *Crosswalk replaces the CASE, many-to-many with `is_primary`.* **Accept the design.**
+  Checked the actual file: 500 distinct `activity_id` across 589 rows, `is_primary` true for 471,
+  false for 89, and correctly blank for the 29 `is_service = false` rows — the shape already matches
+  what's proposed. Loading its *content* is [Q5]/[Q6], not this.
+- **[Q5]** *Candidate categories.* **The owner's decision, not atlas's** — see Status above. Not
+  assessed here beyond confirming the file is structurally ready for a decision: every one of the
+  7 named Røde Kors reclassifications (Visitor, EVA, Døråpner, Habil, Turgruppe, Møteplasser,
+  Akuttovernatting) was checked against the *current*, live `supply__redcross_branch_activities.sql`
+  CASE and matches the "Today" column exactly — the "what changes" table above is accurate, not
+  aspirational.
+- **[Q6]** *Review / load policy.* Checked: `reviewed_by` is empty on **all 589 rows** right now — 0
+  reviewed. A rule of "Atlas loads only reviewed rows" means `dim_activity.service_category_code`
+  stays unpopulated via the crosswalk until the owner reviews at least some rows; "load all rows
+  with their confidence" means it's populated today but some of it is [Q5]-pending. **Recommend the
+  second** (load all rows, confidence visible) so Atlas isn't silently uncategorized while review is
+  in progress — but flagging this explicitly as the owner's call, since it trades a visible
+  "pending review" state for not blocking on review. State a preference when deciding [Q5].
 
 ---
 
 ## Next Steps
 
-- [ ] Owner: review the crosswalk (start with the LOW rows) and decide [Q5].
-- [ ] Settle [Q1]–[Q4], [Q6].
+- [ ] Owner: review the crosswalk (start with the LOW rows, 92 of them) and decide [Q5], and state
+      a preference on [Q6]'s load policy.
+- [x] Settle [Q1]–[Q4] — done above.
 - [ ] PLAN: taxonomy seeds (`ref_activity_category`, `…_family`, `…_term`) and the crosswalk seed;
-      retire the `CASE`; `dim_activity` gets its categories through the crosswalk.
+      retire the `CASE`; `dim_activity` gets its categories through the crosswalk. Depends on [Q5]/[Q6].
 - [ ] PLAN: the search index uses the term table (with PostGIS distance, per the handover plan).

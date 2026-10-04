@@ -4,7 +4,9 @@
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Backlog
+## Status: Backlog — validated and accepted 2026-10-04 (atlas, urb-agents #1844); PR 2
+(taxonomy) merged as #555. Q7–Q12 and P1–P13 answered below. No child PLAN drafted yet —
+see Next Steps.
 
 **Goal**: Fill `dim_chapter`, `dim_activity` and `fact_chapter_activities` for the eleven NGOs in
 `dim_ngo` with Atlas's own ingestion, built from the method the atlas-research project worked out,
@@ -70,31 +72,106 @@ texts — 0 matches. The only numbers in it are national office switchboards, us
 
 ---
 
+## Validation (atlas, 2026-10-04, urb-agents #1844)
+
+Checked directly against this repo, not taken on the research's word — every quantitative claim
+below was independently re-derived, not re-read:
+
+- `dim_ngo.csv` has exactly 11 rows, matching the 11 NGOs named throughout. Its `chapter_data_shape`
+  column is wrong exactly as P8 describes: `nasjonalforeningen` = `programme_only` despite its
+  WordPress API yielding per-chapter activities; `fire-h`, `lhl`, `diabetesforbundet`,
+  `mental-helse` = `cms_bins` despite carrying no activity bins; `kirkens-bymisjon` = `cms_bins`
+  despite being a WordPress taxonomy API. **One gap P8 doesn't name**: `redcross` is seeded as
+  `api_canonical`, which [Q3] (scraping, not the API) makes wrong too — flagging for whoever writes
+  P8's PLAN.
+- `dim_chapter.sql` and `dim_activity.sql` are thin wrappers over `supply__redcross_branches` /
+  `supply__redcross_branch_activities` only (PLAN-002/003-era scaffolding) — confirms "has never
+  held a row": their only upstream source, `redcross-branches`, is the one source CLAUDE.md
+  documents as permanently excluded ("no data to arrive").
+- `supply__redcross_branch_activities.sql`'s CASE matches every one of the taxonomy PR's 7 named
+  Red Cross examples exactly, including both "today" and "not a service" values (`Visitor` →
+  `elderly_visiting`, `Habil` → `family_support`, `Turgruppe` → `youth_activity_groups`,
+  `Møteplasser` → `family_support`, `Akuttovernatting for bostedsløse tilreisende` →
+  `housing_outreach`, `Døråpner` and `EVA` both `is_service = false`).
+- `ref_atlas_service_category.csv` has exactly the 22 codes P2 describes, all present unchanged in
+  the taxonomy PR's 38; `chapter_kommune_coverage.sql`'s own header comment says "no sources produce
+  this yet" (P6); only `brreg-enheter-alle`/`brreg-frivillige`/`brreg-oppdateringer` exist, zero
+  mention of `underenheter` anywhere (P1); `lib/scraping/` exists in full (`robots.ts`, `ua.ts`,
+  `kv.ts`, `sitemap_log.ts`, `ingest_runs.ts`, `html_raw_hash.ts`) and is imported by zero sources
+  (`scraping-practice.md`'s claim). PostGIS's installation ([Q4]) is independently corroborated —
+  unrelated to this task, urb-agents #1830–#1841 this same week turned entirely on PostGIS catalog
+  views existing in this cluster's Postgres.
+- `api_v1`'s only language columns anywhere today are `label_no`/`label_en` — informs [Q2] of the
+  taxonomy PR below: nynorsk has no existing column to land in.
+- The reference ingest code: `npm ci` clean (0 vulnerabilities), `tsc --noEmit` zero errors. All
+  four politeness claims verified by reading the code, not the docs: robots.txt checked before
+  every fetch (`lib/http.ts:146-147`), Crawl-delay is a real `sleep()`, not just parsed
+  (`lib/http.ts:90-95`, called at `:152`), User-Agent carries `ATLAS_SCRAPE_CONTACT_EMAIL`
+  (`lib/http.ts:48`), and the code refuses to run without that var set (`lib/http.ts:43-47`). A live
+  smoke test (`npm run site -- folkehjelp --limit 10`, real HTTP to folkehjelp.no) parsed 10/10
+  chapters correctly, including correctly flagging a `c/o` address as `containsPersonalData: true`.
+  Not run at full scale against any site — 10 of folkehjelp's 114 isn't a meaningful comparison
+  against `acceptance-targets.csv`'s 128; that's for the per-NGO PLAN to do.
+
+**Could not verify**: the taxonomy crosswalk's own content (deliberately — [Q5] of PR 2 below is
+the owner's); the geocoder (R9, not built yet, nothing to run); a full-scale run of any single
+source against its real `acceptance-targets.csv` row (only a 10-chapter smoke test was run, by
+design — see above).
+
 ## Questions to Answer
 
-- **[Q7]** *Build order.* Proposed: Brreg chapter matching (a dbt model over `dim_brreg_enhet` — no
-  new ingest) and `brreg-underenheter` first; then the NGO sites in the order of
-  `ingestion-specs/README.md`. Accept?
-- **[Q8]** *Where reconciliation lives.* The specs put registry × website joining, hierarchy and
-  classification in dbt (`int_` models), keeping `raw.*` verbatim. Accept the layering, and the
-  `bridge_chapter_source` design of proposal P4?
-- **[Q9]** *Acceptance tolerance.* Proposed rule: a source lands when its counts are within ±10% of
-  `acceptance-targets.csv`, or the gap is explained in the source README.
-- **[Q10]** *Amend §D.3* of `INVESTIGATE-ngo-scraping-infrastructure.md` per [Q2].
-- **[Q11]** *Public text.* Accept the two-version design of `description-redaction.md` — verbatim text
-  in `private_raw`, the public text in `dim_activity.description`, held texts not shown?
-- **[Q12]** *Geocoding.* Accept `geocoding-input.md` as the one input for a general geocoder, with a
-  stated `max_precision` per place (registry addresses never finer than the postal-code area)?
-- **[Q13]**–**[Q25]** *The thirteen model proposals* (P1–P13 in `atlas-model-proposals.md`).
+- **[Q7]** *Build order.* **Accept.** Matches the real dependency order (reconciliation needs
+  registry rows first) and Atlas's own "derive, don't edit" discipline — brreg-underenheter is new
+  NLOD data, nothing scraped yet.
+- **[Q8]** *Where reconciliation lives.* **Accept** the dbt layering and `bridge_chapter_source`.
+  This is the one proposal (P4) that has to land before any second source of any NGO, including
+  Røde Kors's own site crawl replacing its current thin `dim_chapter` wrapper — sequence the first
+  PLAN to build this, not a per-NGO staging model straight into `dim_chapter`.
+- **[Q9]** *Acceptance tolerance.* **Accept** ±10% or an explained gap, with the same discipline
+  this repo already runs deploys under: a gap not explained in the source's own README is a defect,
+  not a rounding error.
+- **[Q10]** *Amend §D.3.* **Done** — `INVESTIGATE-ngo-scraping-infrastructure.md` §D.3 now points
+  here instead of restating the old rule; see that file's diff in this same change.
+- **[Q11]** *Public text.* **Accept.** Measured on 1 676 texts with a stated false-negative class
+  (an unlisted first name standing alone) rather than a claimed zero — the honest kind of "0 found".
+- **[Q12]** *Geocoding.* **Accept** the input file and the `max_precision` rule. The general
+  geocoder itself (R9) is correctly scoped as not-yet-built; nothing here commits Atlas to Kartverket
+  specifically, only to the input shape.
+- **[Q13]** P1 (Brreg underenheter). **Accept.** Verified no existing source overlaps it.
+- **[Q14]** P2 (Taxonomy). **Accept the framework; defer the crosswalk** — see PR 2's own [Q5], the
+  owner's review, not this one.
+- **[Q15]** P3 (Programme activities). **Accept.** `dim_activity.scope` + a programme table; confirmed
+  the gap is real (7 NGOs' `chapter_data_shape` already mismeasures this, per P8 above).
+- **[Q16]** P4 (Identity resolution). **Accept** — see [Q8].
+- **[Q17]** P5 (Lifecycle status). **Accept.** Backward compatible (`is_active` stays derived).
+- **[Q18]** P6 (Several kommuner per chapter). **Accept.** `chapter_kommune_coverage` already has the
+  `source` column designed for this value; only the local-row restriction lifts.
+- **[Q19]** P7 (Non-geographic units). **Accept.** `chapter_subtype` promotion to tested vocabulary.
+- **[Q20]** P8 (`chapter_data_shape`). **Accept**, plus the `redcross` gap noted above.
+- **[Q21]** P9 (Three clocks). **Accept.** Directly consistent with this repo's own existing
+  three-clock discipline elsewhere (`fetched_at`/`source_updated_at`/`asserted_at` is not a new
+  pattern here).
+- **[Q22]** P10 (Published contact persons). **Accept the shape** — already decided in substance by
+  [Q2]; this is its implementation (`private_marts`, never public).
+- **[Q23]** P11 (Deeper hierarchy). **Accept.** No new `chapter_level` values, `parent_chapter_id`
+  carries depth.
+- **[Q24]** P12 (Separate NGO-facing standard). **Accept the principle, defer the work** — this is
+  "before the standard [is offered]" by the proposal's own timing; does not block any PLAN below.
+- **[Q25]** P13 (Location with precision). **Accept.** PostGIS confirmed installed independently
+  (see Validation above); `location_precision` mirrors the `max_precision` design in [Q12].
 
 ---
 
 ## Next Steps
 
-- [ ] Settle [Q7]–[Q12] and choose which proposals to take into PLANs.
-- [ ] PLAN: Brreg chapter matching + `brreg-underenheter` — first chapters, no scraping.
-- [ ] PLAN per NGO site, from its spec; each checked against `acceptance-targets.csv`.
+- [x] Settle [Q7]–[Q12] and choose which proposals to take into PLANs — done above.
+- [ ] PLAN: Brreg chapter matching + `brreg-underenheter` + `int_ngo_chapter_reconciled` /
+      `bridge_chapter_source` (P1, P4, P8's `redcross` correction) — first chapters, no scraping.
+- [ ] PLAN per NGO site, from its spec; each checked against `acceptance-targets.csv` at full scale
+      (not the 10-chapter smoke test this validation ran).
 - [ ] PLAN: public text without people (`description-redaction.md`), on `raw.ssb_10501` / `raw.ssb_12891`.
 - [ ] PLAN: geocoding from `geocoding-input.md` (PostGIS points with a precision).
-- [ ] PLAN: contacts via the private path ([Q2], [Q10]).
-- [ ] PR 2: activity taxonomy (Norwegian as people search it, English) and the crosswalk.
+- [ ] PLAN: contacts via the private path ([Q2], [Q10] — done).
+- [x] PR 2: activity taxonomy and the crosswalk — merged as #555 (#554 had to be replaced after a
+      squash-merge ancestry conflict; same content, sha256-verified). Crosswalk still
+      **proposed, not adopted** — see that file's own Next Steps for the owner's review.

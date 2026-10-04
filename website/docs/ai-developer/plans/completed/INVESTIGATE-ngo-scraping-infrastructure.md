@@ -383,13 +383,29 @@ For ~hundred-page sources (typical NGO size) this means 2–3 minutes per full c
 
 ### D.3 No PII / contact information
 
-NGO chapter pages frequently list a kontaktperson with name, email, and phone. **We do not store this.** Atlas's marts contain organisations, not individuals. The parser extracts only:
+⚠️ **Superseded 2026-10-03 for published contacts — this section no longer states Atlas's rule
+for a contact an NGO publishes on its own site.**
+Terje, 2026-10-03 (recorded in `docs/research/ngo-research/scraping-practice.md` and
+[Q2] of `INVESTIGATE-ngo-research-handover.md`): a name, role, phone number or e-mail address an
+NGO publishes as the contact for a chapter or activity **is collected and stored** — the person
+listed there published those details so they would be contacted, and Atlas exists to connect
+people with them. Stored only in `private_raw` / `private_marts`, never in public tables or this
+public repo; the owner carries the responsibility for the legal basis. Implementation:
+`dim_chapter_contact` (P10 of `atlas-model-proposals.md`), flagged
+`provenance.containsPersonalData`, removed on the run after the source page drops the person.
+
+The rule below is what it was written for — **every other kind of personal data this scraping
+infrastructure was not built to collect** (anything not a published organisational contact) — and
+still holds exactly as written.
+
+NGO chapter pages frequently list a kontaktperson with name, email, and phone. **We do not store this**, except as amended above. Atlas's marts contain organisations, not individuals. The parser extracts only:
 
 - Chapter name, slug, URL, postal address, public phone (if attached to the org, not a person)
 - Activity labels and counts
 - Brreg-derived org metadata
+- Published contact persons, per the amendment above — private tables only
 
-If a future feature needs per-chapter contact info, it's a separate investigation with privacy review.
+If a future feature needs per-chapter contact info beyond a published contact, it's a separate investigation with privacy review.
 
 ### D.4 Re-check `robots.txt` on every run
 
