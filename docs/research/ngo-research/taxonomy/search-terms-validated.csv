@@ -1,0 +1,859 @@
+code,term,intent,band_mid,other_meaning,round
+_volunteering_general,frivillig arbeid,volunteer,500,,3
+_volunteering_general,frivillig røde kors,volunteer,500,yes,3
+_volunteering_general,frivillig organisasjon,volunteer,500,,3
+_volunteering_general,bli frivillig,volunteer,50,,3
+_volunteering_general,frivillig jobb,volunteer,50,,3
+_volunteering_general,frivillig ungdom,volunteer,50,,3
+_volunteering_general,hvordan bli frivillig,volunteer,0,,3
+_volunteering_general,frivillig pensjonist,volunteer,0,,3
+_volunteering_general,frivillig student,volunteer,0,,3
+addiction_support,rusbehandling,label,500,,1
+addiction_support,rusomsorg,label,50,,1
+addiction_support,rusomsorgen,autocomplete,50,,1
+addiction_support,rusomsorg vest,autocomplete,50,,1
+addiction_support,rusproblemer hjelp,autocomplete,50,,1
+addiction_support,rusbehandling institusjon,autocomplete,50,,1
+addiction_support,rusbehandling privat,autocomplete,50,,1
+addiction_support,frivillig rusomsorg,volunteer,50,,3
+addiction_support,frelsesarmeen rusomsorg,discovered,50,,2
+addiction_support,frelsesarmeens rusomsorg,discovered,50,,2
+addiction_support,hjelp ved rusproblemer,label,0,,1
+addiction_support,hjelp rusproblemer,label,0,,1
+addiction_support,pårørende rus,label,0,,1
+addiction_support,rusfritt treffsted,label,0,,1
+addiction_support,rusfri møteplass,label,0,,1
+addiction_support,pårørende rus hjelpetelefon,autocomplete,0,,1
+addiction_support,pårørende rus og psykiatri,autocomplete,0,,1
+addiction_support,pårørende rus telefon,autocomplete,0,,1
+addiction_support,slutte å ruse seg,need,0,,3
+addiction_support,rusavhengig hjelp,need,0,,3
+bullying_prevention,mobbing,label,5000,yes,3
+bullying_prevention,mobbeforebygging i et fellesskapsperspektiv,autocomplete,50,,1
+bullying_prevention,mobbeforebygging i et fellesskapsperspektiv nye stemmer i praksis,autocomplete,50,,1
+bullying_prevention,mobbeforebygging,label,0,,1
+bullying_prevention,hjelp mot mobbing,label,0,,1
+bullying_prevention,barnet blir mobbet,need,0,,3
+child_welfare,fosterhjem,label,5000,yes,1
+child_welfare,barnehjem,label,500,yes,1
+child_welfare,barnehjem i norge,autocomplete,500,,1
+child_welfare,fosterhjemsforeningen,autocomplete,500,,1
+child_welfare,bli fosterhjem,volunteer,500,,3
+child_welfare,barneverntiltak,label,50,,1
+child_welfare,fosterhjem hund,autocomplete,50,,1
+child_welfare,myrsnipa samværssted,autocomplete,50,,1
+child_welfare,tilsyn ved samvær,autocomplete,50,,1
+child_welfare,barnevern og omsorgstiltak,label,0,,1
+child_welfare,samværssted,label,0,,1
+child_welfare,tilsyn samvær,label,0,,1
+child_welfare,tilsyn samvær barnevern,autocomplete,0,,1
+child_welfare,privat tilsyn samvær,autocomplete,0,,1
+child_welfare,støttet tilsyn samvær,autocomplete,0,,1
+child_welfare,frivillig fosterhjem,volunteer,0,,3
+creative_crafts,strikkekafe,label,500,,1
+creative_crafts,sy og strikkebui,autocomplete,500,,1
+creative_crafts,hobbygruppe,label,50,,1
+creative_crafts,sy og strikk,label,50,,1
+creative_crafts,sy og strikkedilla,autocomplete,50,,1
+creative_crafts,strikke sammen,need,50,,3
+creative_crafts,strikking og kreative grupper,label,0,,1
+creative_crafts,strikkekafé,label,0,,1
+creative_crafts,strikkegruppe,label,0,,1
+creative_crafts,strikk med oss,label,0,,1
+creative_crafts,frivillig strikkekafe,volunteer,0,,3
+crisis_helpline,kirkens sos,label,5000,,1
+crisis_helpline,kors på halsen,label,500,,1
+crisis_helpline,hjelpetelefon,label,500,,1
+crisis_helpline,kirkens sos telefon,autocomplete,500,,1
+crisis_helpline,kirkens sos portal,autocomplete,500,,1
+crisis_helpline,kirkens sos chat,autocomplete,500,,1
+crisis_helpline,hjelpetelefon chat,autocomplete,50,,1
+crisis_helpline,kors på halsen røde kors,autocomplete,50,,1
+crisis_helpline,kors på halsen chat,autocomplete,50,,1
+crisis_helpline,hvor kan jeg snakke med noen anonymt,autocomplete,50,,1
+crisis_helpline,kirkens sos frivillig,autocomplete,50,,1
+crisis_helpline,selvmordstanker hjelp,need,50,,3
+crisis_helpline,frivillig hjelpetelefon,volunteer,50,,3
+crisis_helpline,frivillig kirkens sos,volunteer,50,,3
+crisis_helpline,hjelpetelefon døgnåpent,discovered,50,,2
+crisis_helpline,hjelpetelefon rus,discovered,50,,2
+crisis_helpline,psykisk helse hjelpetelefon,discovered,50,,2
+crisis_helpline,hjelpetelefon ensom,discovered,50,,2
+crisis_helpline,anonym hjelpetelefon,discovered,50,,2
+crisis_helpline,gratis hjelpetelefon,discovered,50,,2
+crisis_helpline,hjelpetelefon barn,discovered,50,,2
+crisis_helpline,hjelpetelefon for barn,discovered,50,,2
+crisis_helpline,hjelpetelefon for psykisk helse,discovered,50,,2
+crisis_helpline,hjelpetelefon for ungdom,discovered,50,,2
+crisis_helpline,hjelpetelefon foreldre,discovered,50,,2
+crisis_helpline,hjelpetelefon frivillig,discovered,50,,2
+crisis_helpline,hjelpetelefon røde kors,discovered,50,,2
+crisis_helpline,hjelpetelefon ungdom,discovered,50,,2
+crisis_helpline,hjelpetelefon voksne,discovered,50,,2
+crisis_helpline,kirkens sos hjelpetelefon,discovered,50,,2
+crisis_helpline,mental hjelpetelefon,discovered,50,,2
+crisis_helpline,sos hjelpetelefon,discovered,50,,2
+crisis_helpline,hjelpetelefon og chat,label,0,,1
+crisis_helpline,snakke med noen anonymt,label,0,,1
+crisis_helpline,mental helse hjelpetelefon,label,0,,1
+crisis_helpline,hjelpetelefon psykisk helse,autocomplete,0,,1
+crisis_helpline,hjelpetelefon pårørende psykisk helse,autocomplete,0,,1
+crisis_helpline,mental helse hjelpetelefon erfaringer,autocomplete,0,,1
+crisis_helpline,mental helse hjelpetelefonen 116 123,autocomplete,0,,1
+crisis_helpline,mental helse hjelpetelefon frivillig,autocomplete,0,,1
+crisis_helpline,snakke med noen,need,0,,3
+crisis_helpline,noen å snakke med,need,0,,3
+crisis_helpline,trenger noen å snakke med,need,0,,3
+crisis_preparedness,omsorgsberedskap,label,50,,1
+crisis_preparedness,frivillig beredskap,label,50,,1
+crisis_preparedness,psykososial støtte,alternative,50,,4
+crisis_preparedness,støtte etter krise,alternative,50,,4
+crisis_preparedness,krisehjelp,alternative,50,,4
+crisis_preparedness,psykososial støtte krise,label,0,,1
+crisis_preparedness,omsorgsberedskap nks,autocomplete,0,,1
+crisis_preparedness,sanitetskvinnene omsorgsberedskap,autocomplete,0,,1
+crisis_preparedness,beredskapsgruppe,label,0,,3
+crisis_preparedness,hjelp ved krise,need,0,,3
+crisis_preparedness,støtte etter ulykke,need,0,,3
+crisis_preparedness,krisestøtte,alternative,0,,4
+crisis_preparedness,beredskap frivillige,alternative,0,,4
+crisis_shelter,krisesenter,label,5000,,1
+crisis_shelter,krisesenter for kvinner,label,500,,1
+crisis_shelter,vold i nære relasjoner,need,500,,3
+crisis_shelter,utsatt for vold,need,50,,3
+crisis_shelter,hjelp vold,need,0,,3
+crisis_shelter,frivillig krisesenter,volunteer,0,,3
+dementia_support,demensforeningen,autocomplete,500,,1
+dementia_support,demensvennlig samfunn,autocomplete,500,,1
+dementia_support,demenskoordinator,alternative,500,,4
+dementia_support,demensforening,label,50,,1
+dementia_support,aktivitetsvenn,label,50,,1
+dementia_support,demensforeninger,autocomplete,50,,1
+dementia_support,demensvennlig kommune,autocomplete,50,,1
+dementia_support,demensvennlige omgivelser,autocomplete,50,,1
+dementia_support,aktivitetsvenner,autocomplete,50,,1
+dementia_support,aktivitetsvenn nasjonalforeningen,autocomplete,50,,1
+dementia_support,aktivitetsvenn demens,autocomplete,50,,1
+dementia_support,bli aktivitetsvenn,volunteer,50,,3
+dementia_support,demens aktiviteter,alternative,50,,4
+dementia_support,demensvennlig tilbud,label,0,,1
+dementia_support,demensvennlig,label,0,,1
+dementia_support,pårørende demens,label,0,,1
+dementia_support,demenskafé,label,0,,1
+dementia_support,demenskafe,label,0,,1
+dementia_support,demensforeningen pårørende,autocomplete,0,,1
+dementia_support,demensvennlig samfunn kurs,autocomplete,0,,1
+dementia_support,demensvennlig bibliotek,autocomplete,0,,1
+dementia_support,aktivitetsvenn min side,autocomplete,0,,1
+dementia_support,pårørende demens stress,autocomplete,0,,1
+dementia_support,demens hjelp,need,0,,3
+dementia_support,demens aktivitet,need,0,,3
+dementia_support,frivillig aktivitetsvenn,volunteer,0,,3
+dementia_support,demens,alternative,0,yes,4
+dementia_support,dagsenter demens,alternative,0,,4
+elderly_visiting,ensomhet,need,5000,,3
+elderly_visiting,besøksvenn,label,500,,1
+elderly_visiting,besøksvenn røde kors,autocomplete,500,,1
+elderly_visiting,ensom,need,500,,3
+elderly_visiting,røde kors besøksvenn,discovered,500,,2
+elderly_visiting,besøkstjeneste,label,50,,1
+elderly_visiting,besøksvenn med hund,label,50,,1
+elderly_visiting,ensomme eldre,label,50,,1
+elderly_visiting,besøksvenn for eldre,autocomplete,50,,1
+elderly_visiting,besøkstjeneste røde kors,autocomplete,50,,1
+elderly_visiting,besøksvenn med hund røde kors,autocomplete,50,,1
+elderly_visiting,besøksvenn med hund kurs,autocomplete,50,,1
+elderly_visiting,besøke eldre på sykehjem,autocomplete,50,,1
+elderly_visiting,frivillig eldreomsorg,autocomplete,50,,1
+elderly_visiting,frivillig besøksvenn,volunteer,50,,3
+elderly_visiting,bli besøksvenn,volunteer,50,,3
+elderly_visiting,besøke ensomme eldre,discovered,50,,2
+elderly_visiting,besøksvenn eldre,discovered,50,,2
+elderly_visiting,besøksvenn på sykehjem,discovered,50,,2
+elderly_visiting,besøksvenn sykehjem,discovered,50,,2
+elderly_visiting,bli besøksvenn røde kors,discovered,50,,2
+elderly_visiting,få besøksvenn,discovered,50,,2
+elderly_visiting,besøksvenn og besøkstjeneste,label,0,,1
+elderly_visiting,besøke eldre,label,0,,1
+elderly_visiting,frivillig eldre,label,0,,1
+elderly_visiting,besøksven,label,0,,1
+elderly_visiting,besøkstjeneste eldre,autocomplete,0,,1
+elderly_visiting,besøkstjeneste fengsel,autocomplete,0,,1
+elderly_visiting,tilbud til ensomme eldre,autocomplete,0,,1
+elderly_visiting,er eldre ensomme,autocomplete,0,,1
+elderly_visiting,frivillig eldresenter,autocomplete,0,,1
+elderly_visiting,eldre frivillig arbeid,autocomplete,0,,1
+elderly_visiting,frivillig på eldrehjem,autocomplete,0,,1
+elderly_visiting,ensom pensjonist,need,0,,3
+emergency_shelter,hospits,label,500,yes,1
+emergency_shelter,herberge,alternative,500,,4
+emergency_shelter,akuttovernatting,label,50,,1
+emergency_shelter,natthjem,label,50,,1
+emergency_shelter,akuttovernatting kirkens bymisjon,autocomplete,50,,1
+emergency_shelter,natthjemmet,autocomplete,50,,1
+emergency_shelter,har ikke sted å bo,need,50,,3
+emergency_shelter,sove ute,need,50,,3
+emergency_shelter,hjemløs i oslo,need,50,,3
+emergency_shelter,sovested,alternative,50,,4
+emergency_shelter,røde kors akuttovernatting,discovered,50,,2
+emergency_shelter,nødovernatting,label,0,,1
+emergency_shelter,sted å sove gratis,label,0,,1
+emergency_shelter,overnatting hjemløse,alternative,0,,4
+family_support,åpen barnehage,label,5000,,1
+family_support,familiesenteret,autocomplete,500,,1
+family_support,home start,label,500,,3
+family_support,home start familiekontakt,label,50,,1
+family_support,familiesenter,label,50,,1
+family_support,mentorfamilie,label,50,,1
+family_support,barseltreff,label,50,,1
+family_support,home start familiekontakten,autocomplete,50,,1
+family_support,home start familiekontakten norge,autocomplete,50,,1
+family_support,vennefamilie røde kors,autocomplete,50,,1
+family_support,salem åpen barnehage,discovered,50,,2
+family_support,stokka åpen barnehage,discovered,50,,2
+family_support,åpen barnehage near me,discovered,50,,2
+family_support,familiestøtte og familiesenter,label,0,,1
+family_support,vennefamilie,label,0,,1
+family_support,mentorfamilie røde kors,autocomplete,0,,1
+family_support,barseltreff helsestasjon,autocomplete,0,,1
+family_support,støtte småbarnsforeldre,need,0,,3
+family_support,hjelp nybakte foreldre,need,0,,3
+family_support,avlastning familie,need,0,,3
+family_support,frivillig familiekontakt,volunteer,0,,3
+family_support,bli familiekontakt,volunteer,0,,3
+family_support,frivillig home start,volunteer,0,,3
+first_aid_standby,sanitet,alternative,500,yes,4
+first_aid_standby,sanitetsvakt,label,50,,1
+first_aid_standby,sanitetsvakt røde kors,autocomplete,50,,1
+first_aid_standby,sanitetsvakt og beredskapsvakt,label,0,,1
+first_aid_standby,førstehjelpsvakt,label,0,,1
+first_aid_standby,beredskapsvakt arrangement,label,0,,1
+first_aid_standby,førstehjelp arrangement,label,0,,3
+first_aid_standby,førstehjelp på arrangement,need,0,,3
+first_aid_standby,frivillig sanitetsvakt,volunteer,0,,3
+first_aid_standby,bli sanitetsvakt,volunteer,0,,3
+first_aid_standby,førstehjelp på stevne,alternative,0,,4
+first_aid_standby,vakthold førstehjelp,alternative,0,,4
+first_aid_training,førstehjelpskurs,label,5000,,1
+first_aid_training,hlr kurs,label,500,,1
+first_aid_training,røde kors førstehjelpskurs,discovered,500,,2
+first_aid_training,førstehjelpskurs gratis,label,50,,1
+first_aid_training,førstehjelpskurs barn,autocomplete,50,,1
+first_aid_training,førstehjelpskurs røde kors,autocomplete,50,,1
+first_aid_training,gratis førstehjelpskurs på nett,autocomplete,50,,1
+first_aid_training,gratis førstehjelpskurs røde kors,autocomplete,50,,1
+first_aid_training,hjerte lunge redning kurs,autocomplete,50,,1
+first_aid_training,hlr kurs helsepersonell,autocomplete,50,,1
+first_aid_training,hlr kurs gratis,autocomplete,50,,1
+first_aid_training,hlr kurs barn,autocomplete,50,,1
+first_aid_training,førstehjelpskurs bedrift,discovered,50,,2
+first_aid_training,førstehjelpskurs på nett,discovered,50,,2
+first_aid_training,førstehjelpskurs for bedrifter,discovered,50,,2
+first_aid_training,førstehjelpskurs pris,discovered,50,,2
+first_aid_training,digitalt førstehjelpskurs,discovered,50,,2
+first_aid_training,førstehjelpskurs privatpersoner,discovered,50,,2
+first_aid_training,gratis førstehjelpskurs,discovered,50,,2
+first_aid_training,pris førstehjelpskurs,discovered,50,,2
+first_aid_training,førstehjelpskurs offshore,discovered,50,,2
+first_aid_training,nettbasert førstehjelpskurs,discovered,50,,2
+first_aid_training,førstehjelpskurs for barn,discovered,50,,2
+first_aid_training,grunnleggende førstehjelpskurs,discovered,50,,2
+first_aid_training,40 timers førstehjelpskurs,discovered,50,,2
+first_aid_training,lovpålagt førstehjelpskurs,discovered,50,,2
+first_aid_training,førstehjelpskurs baby,autocomplete,0,,1
+first_aid_training,førstehjelpskurs baby gratis,autocomplete,0,,1
+first_aid_training,lære førstehjelp,need,0,,3
+first_aid_training,førstehjelp kurs gratis,need,0,,3
+first_aid_training,frivillig førstehjelpsinstruktør,volunteer,0,,3
+first_aid_training,bli førstehjelpsinstruktør,volunteer,0,,3
+food_distribution,matkasse,label,5000,yes,1
+food_distribution,matkasser,autocomplete,5000,,1
+food_distribution,gratis mat,label,500,,1
+food_distribution,matsentral,label,500,,1
+food_distribution,matsentralen,autocomplete,500,,1
+food_distribution,matsentralen norge,autocomplete,500,,1
+food_distribution,matkasse for 1 person,autocomplete,500,,1
+food_distribution,matutdeling,label,50,,1
+food_distribution,gratis middag,label,50,,1
+food_distribution,suppekjøkken,label,50,,1
+food_distribution,gratis mat app,autocomplete,50,yes,1
+food_distribution,hjelp med mat,need,50,,3
+food_distribution,ikke råd til mat,need,50,,3
+food_distribution,matkø,need,50,,3
+food_distribution,frivillig matsentralen,volunteer,50,,3
+food_distribution,frelsesarmeen matutdeling,discovered,50,,2
+food_distribution,få gratis mat,discovered,50,,2
+food_distribution,gratis matutdeling,discovered,50,,2
+food_distribution,kirkens bymisjon matutdeling,discovered,50,,2
+food_distribution,matsentralen catering,discovered,50,,2
+food_distribution,matsentralen sør,discovered,50,,2
+food_distribution,matutdeling frelsesarmeen,discovered,50,,2
+food_distribution,matutdeling gjøvik,discovered,50,,2
+food_distribution,røde kors matutdeling,discovered,50,,2
+food_distribution,frivillig matutdeling,volunteer,0,,3
+health_information,helseopplysning,label,500,,1
+health_information,mestringskurs,label,50,,1
+health_information,diabeteskurs,label,50,,1
+health_information,mestringskurs asperger,autocomplete,50,,1
+health_information,kurs diabetes,need,50,,3
+health_information,helseopplysning og kurs,label,0,,1
+health_information,kvinnehelse,label,0,,1
+health_information,hjertekurs,label,0,,1
+health_information,helseopplysninger 16 år,autocomplete,0,,1
+health_information,kvinnehelse fysioterapi,autocomplete,0,,1
+health_information,mestringskurs adhd,autocomplete,0,,1
+health_information,mestringskurs tinnitus,autocomplete,0,,1
+health_information,kurs hjertesykdom,need,0,,3
+health_services,gatehospitalet,autocomplete,500,,1
+health_services,gatehospital,label,50,,1
+health_services,helsesenter for papirløse,label,50,,1
+health_services,helsesenter for papirløse migranter,autocomplete,50,,1
+health_services,gratis lege,need,50,,3
+health_services,gratis helsehjelp,alternative,50,,4
+health_services,lavterskel helsetilbud og behandling,label,0,,1
+health_services,feltsykepleie,label,0,,1
+health_services,gratis lege uten fastlege,label,0,,1
+health_services,lavterskel helsetilbud,label,0,,1
+health_services,røde kors helsesenter for papirløse,autocomplete,0,,1
+health_services,feltsykepleien,autocomplete,0,,1
+health_services,feltsykepleier,autocomplete,0,,1
+health_services,lavterskel psykisk helsetilbud,autocomplete,0,,1
+health_services,lege uten fastlege,need,0,,3
+health_services,helsehjelp uten id,need,0,,3
+health_services,helsehjelp papirløse,alternative,0,,4
+health_services,helsetilbud papirløse,alternative,0,,4
+health_services,legehjelp uten id,alternative,0,,4
+health_services,helsehjelp rusavhengige,alternative,0,,4
+health_services,helsehjelp hjemløse,alternative,0,,4
+holiday_camps_low_income,ferie for alle,label,500,,1
+holiday_camps_low_income,ferie for alle røde kors,autocomplete,500,,1
+holiday_camps_low_income,sommerleir,label,500,,3
+holiday_camps_low_income,røde kors ferie for alle,discovered,500,,2
+holiday_camps_low_income,ferie for alle røde kors 2026,autocomplete,50,,1
+holiday_camps_low_income,ferie for alle østlandet,autocomplete,50,,1
+holiday_camps_low_income,gratis sommerleir for barn,autocomplete,50,,1
+holiday_camps_low_income,gratis ferie,need,50,,3
+holiday_camps_low_income,råd til ferie,need,50,,3
+holiday_camps_low_income,røde kors ferie for alle østlandet,discovered,50,,2
+holiday_camps_low_income,gratis ferie barnefamilier,label,0,,1
+holiday_camps_low_income,ferietilbud lavinntekt,label,0,,1
+holiday_camps_low_income,sommerleir gratis,label,0,,1
+holiday_camps_low_income,ferie lav inntekt,need,0,,3
+holiday_camps_low_income,frivillig ferie for alle,volunteer,0,,3
+homework_help,leksehjelp,label,500,,1
+homework_help,digital leksehjelp,label,500,,1
+homework_help,røde kors leksehjelp,discovered,500,,2
+homework_help,gratis leksehjelp,label,50,,1
+homework_help,leksehjelp røde kors,label,50,,1
+homework_help,leksehjelp i matte,autocomplete,50,,1
+homework_help,leksehjelp barneskole,autocomplete,50,,1
+homework_help,digital leksehjelp no,autocomplete,50,,1
+homework_help,digital leksehjelp røde kors,autocomplete,50,,1
+homework_help,hjelp med lekser,need,50,,3
+homework_help,hjelp med matte,need,50,,3
+homework_help,frivillig leksehjelp,volunteer,50,,3
+homework_help,privat leksehjelp,discovered,50,,2
+homework_help,leksehjelp på nett,discovered,50,,2
+homework_help,enter leksehjelp,discovered,50,,2
+homework_help,leksehjelp matte,discovered,50,,2
+homework_help,mentor leksehjelp,discovered,50,,2
+homework_help,leksehjelp matematikk,discovered,50,,2
+homework_help,online leksehjelp,discovered,50,,2
+homework_help,leksehjelpen,discovered,50,,2
+homework_help,leksehjelp online,discovered,50,,2
+homework_help,matematikk leksehjelp,discovered,50,,2
+homework_help,leksehjelp videregående skole,discovered,50,,2
+homework_help,digitalleksehjelp,discovered,50,,2
+homework_help,leksehjelp gratis,discovered,50,,2
+homework_help,leksehjelp i matematikk,discovered,50,,2
+homework_help,bli leksehjelp,discovered,50,,2
+homework_help,norsk leksehjelp,discovered,50,,2
+homework_help,leksehjelp for voksne,discovered,50,,2
+homework_help,røde kors digital leksehjelp,discovered,50,,2
+homework_help,digitalleksehjelp no,discovered,50,,2
+homework_help,engelsk leksehjelp,discovered,50,,2
+homework_help,ent3r leksehjelp,discovered,50,,2
+homework_help,gratis leksehjelp på nett,discovered,50,,2
+homework_help,håvard tjora leksehjelp i matematikk,discovered,50,,2
+homework_help,leksehjelp engelsk,discovered,50,,2
+homework_help,leksehjelp hjemme,discovered,50,,2
+homework_help,leksehjelp i skolen,discovered,50,,2
+homework_help,leksehjelp på engelsk,discovered,50,,2
+homework_help,leksehjelp sølvberget,discovered,50,,2
+homework_help,leksehjelp udir,discovered,50,,2
+homework_help,leksehjelpen no,discovered,50,,2
+homework_help,leksehjelper,discovered,50,,2
+homework_help,røde kors leksehjelp digital,discovered,50,,2
+homework_help,sonans leksehjelp,discovered,50,,2
+homework_help,spansk leksehjelp,discovered,50,,2
+homework_help,udir leksehjelp,discovered,50,,2
+homework_help,leksehjelp frivillig,label,0,,1
+homework_help,gratis leksehjelp røde kors,autocomplete,0,,1
+homework_help,enter gratis leksehjelp,autocomplete,0,,1
+homework_help,digital leksehjelp gratis,autocomplete,0,,1
+homework_help,røde kors leksehjelp frivillig,autocomplete,0,,1
+housing_outreach,bostedsløs,label,500,,1
+housing_outreach,bolighjelpen,autocomplete,500,,1
+housing_outreach,bostedsløse,autocomplete,500,,1
+housing_outreach,bolighjelp,label,50,,1
+housing_outreach,oppsøkende arbeid,label,50,,1
+housing_outreach,bostedsløse i norge,autocomplete,50,,1
+housing_outreach,hjemløs,label,50,,3
+housing_outreach,bostedsløs folkeregisteret,discovered,50,,2
+housing_outreach,bolighjelp og oppsøkende arbeid,label,0,,1
+housing_outreach,hjemløs hjelp,label,0,,1
+housing_outreach,gatearbeid,label,0,,1
+housing_outreach,bostedsløse barnefamilier,autocomplete,0,,1
+housing_outreach,oppsøkende arbeid ungdom,autocomplete,0,,1
+housing_outreach,hjelp med bolig,need,0,,3
+housing_outreach,miste boligen,need,0,,3
+housing_outreach,hjelp hjemløse,need,0,,3
+language_practice,språkkafe,label,500,,1
+language_practice,gratis norskkurs,label,500,,1
+language_practice,språkkafé,label,50,,1
+language_practice,norsktrening,label,50,,1
+language_practice,språkvenn,label,50,,1
+language_practice,språktrening,label,50,,1
+language_practice,lære norsk gratis,label,50,,1
+language_practice,norsk språkkafe,label,50,,1
+language_practice,norsktrening røde kors,autocomplete,50,,1
+language_practice,språktrening barn,autocomplete,50,,1
+language_practice,språktrening barnehage,autocomplete,50,,1
+language_practice,lære norsk gratis online,autocomplete,50,,1
+language_practice,lære norsk grammatikk gratis,autocomplete,50,,1
+language_practice,gratis norskkurs på nett,autocomplete,50,,1
+language_practice,gratis norskkurs b1,autocomplete,50,,1
+language_practice,gratis norskkurs nav,autocomplete,50,,1
+language_practice,gratis norskkurs imdi,autocomplete,50,,1
+language_practice,snakke norsk,need,50,,3
+language_practice,språkkafé og norsktrening,label,0,,1
+language_practice,språkven,label,0,,1
+language_practice,språktrening nav,autocomplete,0,,1
+language_practice,språktrening autisme,autocomplete,0,,1
+language_practice,lære norsk app gratis,autocomplete,0,,1
+language_practice,lære norsk c1 gratis,autocomplete,0,,1
+language_practice,norsk språkkafe online,autocomplete,0,,1
+language_practice,øve på norsk,need,0,,3
+language_practice,frivillig språkkafe,volunteer,0,,3
+language_practice,frivillig språkvenn,volunteer,0,,3
+language_practice,bli språkvenn,volunteer,0,,3
+language_practice,frivillig norsktrening,volunteer,0,,3
+legal_aid,juss buss,label,5000,yes,1
+legal_aid,fri rettshjelp,label,5000,,3
+legal_aid,gratis rettshjelp,label,500,,1
+legal_aid,gatejuristen,label,500,,1
+legal_aid,jusshjelpa,autocomplete,500,,1
+legal_aid,gratis advokat,need,500,,3
+legal_aid,jushjelpa,label,50,,1
+legal_aid,gratis juridisk hjelp,label,50,,1
+legal_aid,gratis juridisk hjelp for kvinner,autocomplete,50,,1
+legal_aid,gratis rettshjelp nav,discovered,50,,2
+legal_aid,gratis rettshjelp student,discovered,50,,2
+legal_aid,gratis rettshjelp kvinner,autocomplete,0,,1
+legal_aid,hjelp med klage nav,need,0,,3
+legal_aid,frivillig rettshjelp,volunteer,0,,3
+legal_witness_support,vitnestøtte,label,50,,1
+legal_witness_support,vitnestøtte røde kors,autocomplete,50,,1
+legal_witness_support,vitne i retten,need,50,,3
+legal_witness_support,vitne i rettssak,alternative,50,,4
+legal_witness_support,støtte vitne rettssak,label,0,,1
+legal_witness_support,vitnestøtte domstol,autocomplete,0,,1
+legal_witness_support,frivillig vitnestøtte,volunteer,0,,3
+legal_witness_support,bli vitnestøtte,volunteer,0,,3
+legal_witness_support,støtte i retten,alternative,0,,4
+legal_witness_support,være vitne,alternative,0,,4
+meeting_place,møteplass,label,500,,1
+meeting_place,møteplass skilt,autocomplete,500,,1
+meeting_place,åpen kafe,label,500,,3
+meeting_place,treffpunkt,alternative,500,,4
+meeting_place,aktiviteter for eldre,alternative,500,,4
+meeting_place,møteplassen kontakt,discovered,500,,2
+meeting_place,sosial møteplass,label,50,,1
+meeting_place,treffsted,label,50,,1
+meeting_place,formiddagstreff,label,50,,1
+meeting_place,seniortreff,label,50,,1
+meeting_place,treffstedet,autocomplete,50,,1
+meeting_place,åpen kafe nær meg,autocomplete,50,,1
+meeting_place,åpen kafe søndag,autocomplete,50,,1
+meeting_place,ensom og alene,need,50,,3
+meeting_place,sosiale aktiviteter,alternative,50,,4
+meeting_place,aktiviteter for voksne,alternative,50,,4
+meeting_place,ensom voksen,alternative,50,,4
+meeting_place,sosialt fellesskap,alternative,50,,4
+meeting_place,eldretreff,alternative,50,,4
+meeting_place,møteplassen pris,discovered,50,,2
+meeting_place,finn møteplassen,discovered,50,,2
+meeting_place,pris møteplassen,discovered,50,,2
+meeting_place,finn no møteplassen,discovered,50,,2
+meeting_place,match eller møteplassen,discovered,50,,2
+meeting_place,møteplassen eller match,discovered,50,,2
+meeting_place,møteplassen finn,discovered,50,,2
+meeting_place,møteplassen finn no,discovered,50,,2
+meeting_place,møteplassen i norden ab,discovered,50,,2
+meeting_place,om møteplassen,discovered,50,,2
+meeting_place,presentasjon møteplassen,discovered,50,,2
+meeting_place,møteplass og kafé,label,0,,1
+meeting_place,åpen kafé,label,0,,1
+meeting_place,middagsfellesskap,label,0,,1
+meeting_place,ensomhet møteplass,label,0,,1
+meeting_place,møtestad,label,0,,1
+meeting_place,treffsted for småbarnsforeldre,autocomplete,0,,1
+meeting_place,seniortreff egersund,autocomplete,0,,1
+meeting_place,nye venner voksen,need,0,,3
+meeting_place,irl møteplasser,discovered,0,,2
+meeting_place,irl møteplass,discovered,0,,2
+meeting_place,møteplassenno,discovered,0,,2
+migrant_mentoring,flyktninger,alternative,5000,,4
+migrant_mentoring,asylmottak,alternative,5000,,4
+migrant_mentoring,integrering,alternative,500,yes,4
+migrant_mentoring,flyktningguide,label,50,,1
+migrant_mentoring,flyktningvenn,label,50,,1
+migrant_mentoring,frivillig flyktninger,label,50,,1
+migrant_mentoring,frivillig asylmottak,label,50,,1
+migrant_mentoring,flyktningguide røde kors,autocomplete,50,,1
+migrant_mentoring,hjelp til flyktninger,need,50,,3
+migrant_mentoring,røde kors flyktningguide,discovered,50,,2
+migrant_mentoring,frivillig flyktninger oslo,discovered,50,,2
+migrant_mentoring,jobbe frivillig flyktninger,discovered,50,,2
+migrant_mentoring,røde kors frivillig flyktninger,discovered,50,,2
+migrant_mentoring,flyktningguide og integreringsvenn,label,0,,1
+migrant_mentoring,integreringsvenn,label,0,,1
+migrant_mentoring,aktiviteter asylmottak,label,0,,1
+migrant_mentoring,flyktningguide tjenesten,autocomplete,0,,1
+migrant_mentoring,aktiviteter på asylmottak,autocomplete,0,,1
+migrant_mentoring,ny i norge hjelp,need,0,,3
+migrant_mentoring,frivillig flyktningguide,volunteer,0,,3
+migrant_mentoring,bli flyktningguide,volunteer,0,,3
+migrant_mentoring,frivillig integrering,alternative,0,,4
+migrant_mentoring,hjelp til innvandrere,alternative,0,,4
+music_choir,kor,label,5000,yes,3
+music_choir,syng med oss,label,500,,1
+music_choir,hornorkester,label,50,,1
+music_choir,musikkgruppe,label,50,,1
+music_choir,syng med oss koret,autocomplete,50,,1
+music_choir,hornorkesteret,autocomplete,50,,1
+music_choir,musikkgrupper,autocomplete,50,,1
+music_choir,synge i kor,need,50,,3
+music_choir,kor for voksne,label,0,,1
+music_choir,korps for voksne,label,0,,1
+music_choir,begynne i kor,need,0,,3
+music_choir,frivillig kor,volunteer,0,,3
+peer_support,likeperson,label,500,,1
+peer_support,likemann,label,50,,1
+peer_support,samtalegruppe,label,50,,1
+peer_support,selvhjelpsgruppe,label,50,,1
+peer_support,pårørendegruppe,label,50,,1
+peer_support,støttegruppe,label,50,,1
+peer_support,likepersonslogg,autocomplete,50,,1
+peer_support,likepersonsarbeid,autocomplete,50,,1
+peer_support,likepersonskurs,autocomplete,50,,1
+peer_support,likepersoner,autocomplete,50,,1
+peer_support,likemannsarbeid,autocomplete,50,,1
+peer_support,samtalegrupper,autocomplete,50,,1
+peer_support,selvhjelpsgrupper,autocomplete,50,,1
+peer_support,støttegruppen,autocomplete,50,,1
+peer_support,pårørendestøtte,alternative,50,,4
+peer_support,hlf likeperson,discovered,50,,2
+peer_support,pårørendegrupper,discovered,50,,2
+peer_support,likepersonarbeid,label,0,,1
+peer_support,samtalegruppe for menn,autocomplete,0,,1
+peer_support,samtalegrupper for pårørende til personer med demens,autocomplete,0,,1
+peer_support,selvhjelpsgrupper psykisk helse,autocomplete,0,,1
+peer_support,pårørendegruppe demens,autocomplete,0,,1
+peer_support,pårørendegruppe kreft,autocomplete,0,,1
+peer_support,pårørendegruppe for rusmisbrukere,autocomplete,0,,1
+peer_support,pårørendegruppe psykisk syke,autocomplete,0,,1
+peer_support,pårørendegruppe als,autocomplete,0,,1
+peer_support,snakke med noen i samme situasjon,need,0,,3
+peer_support,frivillig likeperson,volunteer,0,,3
+peer_support,bli likeperson,volunteer,0,,3
+peer_support,snakke med likesinnede,alternative,0,,4
+physical_activity,turvenn,label,50000,yes,1
+physical_activity,gåfotball,label,500,,1
+physical_activity,trening for eldre,label,500,,1
+physical_activity,gåfotball norge,autocomplete,500,,1
+physical_activity,turvenn app,autocomplete,500,,1
+physical_activity,turvenner,autocomplete,500,,1
+physical_activity,balansetrening eldre,need,500,,3
+physical_activity,trimøvelser for eldre,need,500,,3
+physical_activity,styrketrening for eldre,discovered,500,,2
+physical_activity,styrketrening for eldre hjemme,discovered,500,,2
+physical_activity,tung styrketrening for eldre,discovered,500,,2
+physical_activity,turgruppe,label,50,,1
+physical_activity,gågruppe,label,50,,1
+physical_activity,trimgruppe,label,50,,1
+physical_activity,seniortrim,label,50,,1
+physical_activity,kløvertur,label,50,,1
+physical_activity,gågrupper,autocomplete,50,,1
+physical_activity,gåfotball regler,autocomplete,50,,1
+physical_activity,trening for eldre øvelser,autocomplete,50,,1
+physical_activity,gruppetrening for eldre,discovered,50,,2
+physical_activity,balansetrening for eldre,discovered,50,,2
+physical_activity,dnt turgruppe,discovered,50,,2
+physical_activity,funksjonell trening for eldre,discovered,50,,2
+physical_activity,fysisk aktivitet og trening for eldre,discovered,50,,2
+physical_activity,hjemmetrening for eldre,discovered,50,,2
+physical_activity,styrketrening for eldre øvelser,discovered,50,,2
+physical_activity,sykkeltrening for eldre,discovered,50,,2
+physical_activity,trening for eldre program,discovered,50,,2
+physical_activity,turgrupper,discovered,50,,2
+physical_activity,turgrupper og fysisk aktivitet,label,0,,1
+physical_activity,kløverturer,autocomplete,0,,1
+physical_activity,gå tur sammen,need,0,,3
+physical_activity,frivillig turleder,volunteer,0,,3
+physical_activity,bli turleder,volunteer,0,,3
+physical_activity,frivillig turgruppe,volunteer,0,,3
+political_advocacy,menneskerettigheter,alternative,5000,yes,4
+political_advocacy,folkerett,alternative,500,,4
+political_advocacy,politisk påvirkning,label,50,,1
+political_advocacy,humanitær rett,label,50,,1
+political_advocacy,politisk påvirkningsarbeid,autocomplete,50,,1
+political_advocacy,internasjonal humanitær rett,autocomplete,50,,1
+political_advocacy,påvirkningsarbeid,label,50,,3
+political_advocacy,humanitær hjelp,alternative,50,,4
+political_advocacy,politisk påvirkning frivillig,label,0,,1
+political_advocacy,politisk påvirkning af markedsmekanismen,autocomplete,0,,1
+prison_reintegration,nettverk etter soning,label,500,,1
+prison_reintegration,røde kors nettverk etter soning,discovered,50,,2
+prison_reintegration,etter soning hjelp,label,0,,1
+prison_reintegration,innsattes barn,label,0,,1
+prison_reintegration,besøk fengsel frivillig,label,0,,1
+prison_reintegration,nettverk etter soning røde kors,autocomplete,0,,1
+prison_reintegration,hjelp etter soning,autocomplete,0,,1
+prison_reintegration,innsattes barn kirkens bymisjon,autocomplete,0,,1
+prison_reintegration,etter soning,need,0,,3
+prison_reintegration,løslatt fra fengsel hjelp,need,0,,3
+reading_friend,lesevenn,label,50,,1
+reading_friend,leseombud,label,50,,1
+reading_friend,lesevenn app,autocomplete,50,,1
+reading_friend,lese for barn,need,50,,3
+reading_friend,lesehjelp,alternative,50,,4
+reading_friend,lesetrening barn,alternative,50,,4
+reading_friend,lesestund,alternative,50,,4
+reading_friend,lingdys lesevenn,discovered,50,,2
+reading_friend,lesestund barn frivillig,label,0,,1
+reading_friend,lesevenn sanitetskvinnene,autocomplete,0,,1
+reading_friend,frivillig lesevenn,volunteer,0,,3
+reading_friend,bli lesevenn,volunteer,0,,3
+reading_friend,frivillig leseombud,volunteer,0,,3
+reading_friend,bli leseombud,volunteer,0,,3
+reading_friend,lesehjelp barn,alternative,0,,4
+reading_friend,lese med barn,alternative,0,,4
+rescue_corps,røde kors hjelpekorps,label,500,,1
+rescue_corps,hjelpekorpset,autocomplete,500,,1
+rescue_corps,leteaksjon,need,500,,3
+rescue_corps,rødekors hjelpekorps,discovered,500,,2
+rescue_corps,hjelpekorps,label,50,,1
+rescue_corps,norsk folkehjelp sanitet,label,50,,1
+rescue_corps,hjelpekorpset røde kors,autocomplete,50,,1
+rescue_corps,hjelpekorpset tv2,autocomplete,50,,1
+rescue_corps,røde kors hjelpekorps kurs,autocomplete,50,,1
+rescue_corps,redningskorps,label,50,,3
+rescue_corps,søk etter savnet,need,50,,3
+rescue_corps,frivillig redningstjeneste,volunteer,50,,3
+rescue_corps,røde kors butikken hjelpekorps,discovered,50,,2
+rescue_corps,hjelpekorps butikken,discovered,50,,2
+rescue_corps,røde kors hjelpekorps klær,discovered,50,,2
+rescue_corps,røde kors hjelpekorps uniform,discovered,50,,2
+rescue_corps,søk og redning frivillig,label,0,,1
+rescue_corps,leteaksjon frivillig,label,0,,1
+rescue_corps,frivillig søk og redning,autocomplete,0,,1
+rescue_corps,frivillig leteaksjon,autocomplete,0,,1
+rescue_corps,norsk folkehjelp sanitetsungdom,autocomplete,0,,1
+rescue_corps,frivillig hjelpekorps,volunteer,0,,3
+street_mediation,natteravn,label,5000,yes,1
+street_mediation,natteravnene,label,500,,1
+street_mediation,gatemegling,label,50,,1
+street_mediation,nattevandring,label,50,,1
+street_mediation,gatemegling røde kors,autocomplete,50,,1
+street_mediation,natteravnene norge,autocomplete,50,,1
+street_mediation,frivillig natteravn,volunteer,50,,3
+street_mediation,gatemegling og nattevandring,label,0,,1
+street_mediation,gatemegling kurs,autocomplete,0,,1
+street_mediation,konflikt ungdom,need,0,,3
+street_mediation,bli natteravn,volunteer,0,,3
+street_mediation,frivillig nattevandring,volunteer,0,,3
+thrift_shop,bruktbutikk,label,50000,,1
+thrift_shop,fretex,label,50000,yes,1
+thrift_shop,fretex bruktbutikk,discovered,50000,,2
+thrift_shop,gjenbruksbutikk,label,5000,,1
+thrift_shop,skattkammeret,label,5000,yes,1
+thrift_shop,brukt butikk,label,5000,,3
+thrift_shop,billige klær,need,500,,3
+thrift_shop,bruktbutikker,discovered,500,,2
+thrift_shop,bergans bruktbutikk,discovered,500,,2
+thrift_shop,bruktbutikk gjøvik,discovered,500,,2
+thrift_shop,bruktbutikk i nærheten,discovered,500,,2
+thrift_shop,bruktbutikk lumber,discovered,500,,2
+thrift_shop,bruktbutikken,discovered,500,,2
+thrift_shop,bruktbutikken kirkens bymisjon,discovered,500,,2
+thrift_shop,bruktbutikken mamilla,discovered,500,,2
+thrift_shop,ikea bruktbutikk,discovered,500,,2
+thrift_shop,instituttets bruktbutikk,discovered,500,,2
+thrift_shop,kontakten bruktbutikk,discovered,500,,2
+thrift_shop,tise bruktbutikk,discovered,500,,2
+thrift_shop,ås bruktbutikk,discovered,500,,2
+thrift_shop,levere klær,need,50,,3
+thrift_shop,bruktbutikk nett,discovered,50,,2
+thrift_shop,bruktbutikk online,discovered,50,,2
+thrift_shop,blå kors bruktbutikk,discovered,50,,2
+thrift_shop,bruktbutikk ensjø,discovered,50,,2
+thrift_shop,bruktbutikk grenland,discovered,50,,2
+thrift_shop,bruktbutikk grim,discovered,50,,2
+thrift_shop,bruktbutikk kjørbekk,discovered,50,,2
+thrift_shop,bruktbutikk lofoten,discovered,50,,2
+thrift_shop,bruktbutikk no,discovered,50,,2
+thrift_shop,bruktbutikk søndagsåpent,discovered,50,,2
+thrift_shop,bruktbutikk sørlandet,discovered,50,,2
+thrift_shop,bruktbutikk ulven,discovered,50,,2
+thrift_shop,bruktbutikk østlandet,discovered,50,,2
+thrift_shop,bruktbutikker i grenland,discovered,50,,2
+thrift_shop,bærekraftig bruktbutikk,discovered,50,,2
+thrift_shop,dansk bruktbutikk på nett,discovered,50,,2
+thrift_shop,egna bruktbutikk,discovered,50,,2
+thrift_shop,frelsesarmeen bruktbutikk,discovered,50,,2
+thrift_shop,fretex online,discovered,50,,2
+thrift_shop,gnisten bruktbutikk,discovered,50,,2
+thrift_shop,grim bruktbutikk,discovered,50,,2
+thrift_shop,hjelpende hender bruktbutikk,discovered,50,,2
+thrift_shop,lumber bruktbutikk,discovered,50,,2
+thrift_shop,maritastiftelsen bruktbutikk,discovered,50,,2
+thrift_shop,me bruktbutikk,discovered,50,,2
+thrift_shop,nlm bruktbutikk,discovered,50,,2
+thrift_shop,nms bruktbutikk,discovered,50,,2
+thrift_shop,normisjon bruktbutikk,discovered,50,,2
+thrift_shop,olgars bruktbutikk,discovered,50,,2
+thrift_shop,os bruktbutikk,discovered,50,,2
+thrift_shop,remiks gjenbruksbutikk,discovered,50,,2
+thrift_shop,råde bruktbutikk,discovered,50,,2
+thrift_shop,second chance bruktbutikk,discovered,50,,2
+thrift_shop,sirkula bruktbutikk,discovered,50,,2
+thrift_shop,solvoll bruktbutikk,discovered,50,,2
+thrift_shop,ulven bruktbutikk,discovered,50,,2
+thrift_shop,vel bevart bruktbutikk møbel,discovered,50,,2
+thrift_shop,bruktbutikk røde kors,label,0,,1
+thrift_shop,frivillig bruktbutikk,volunteer,0,,3
+thrift_shop,fjong bruktbutikk,discovered,0,,2
+thrift_shop,ikea bruktbutikk furuset,discovered,0,,2
+violence_support,ressursvenn,label,50,,1
+violence_support,erstatning etter vold i nære relasjoner,autocomplete,50,,1
+violence_support,støtte etter vold,label,0,,1
+violence_support,hjelp etter vold i nære relasjoner,label,0,,1
+violence_support,menneskehandel hjelp,label,0,,1
+violence_support,ressursvenn sanitetskvinnene,autocomplete,0,,1
+violence_support,ptsd etter vold i nære relasjoner,autocomplete,0,,1
+violence_support,reaksjoner etter vold i nære relasjoner,autocomplete,0,,1
+violence_support,hjelp etter vold,need,0,,3
+violence_support,frivillig ressursvenn,volunteer,0,,3
+violence_support,bli ressursvenn,volunteer,0,,3
+violence_support,hjelp til voldsutsatte,alternative,0,,4
+violence_support,voldsutsatt,alternative,0,,4
+violence_support,hjelp etter samlivsbrudd,alternative,0,,4
+violence_support,etter brudd med voldelig partner,alternative,0,,4
+violence_support,menneskehandel,alternative,0,,4
+volunteer_centre,frivilligsentral,label,500,,1
+volunteer_centre,frivilligsentralen,label,500,,1
+volunteer_centre,frivillighetssentral,label,50,,3
+volunteer_centre,byåsen frivilligsentral,discovered,50,,2
+volunteer_centre,frivilligsentral no,discovered,50,,2
+volunteer_centre,jekken frivilligsentral,discovered,50,,2
+volunteer_centre,vestre aker frivilligsentral,discovered,50,,2
+volunteer_centre,frivillig i nærheten,need,0,,3
+women_migrant_network,kvinnegruppe,alternative,50,,4
+women_migrant_network,kvinnenettverk,alternative,50,,4
+women_migrant_network,møteplass for innvandrerkvinner,label,0,,1
+women_migrant_network,kvinnekafé,label,0,,1
+women_migrant_network,kvinnekafe,label,0,,1
+women_migrant_network,innvandrerkvinner møteplass,label,0,,1
+women_migrant_network,kvinnegruppe innvandrere,label,0,,1
+women_migrant_network,kvinner innvandrer,alternative,0,,4
+work_inclusion,arbeidstrening,label,500,,1
+work_inclusion,arbeidsinkludering,label,500,,1
+work_inclusion,arbeidspraksis,label,500,,1
+work_inclusion,arbeidstrening nav,autocomplete,500,,1
+work_inclusion,nav arbeidstrening,discovered,500,,2
+work_inclusion,jobbtrening,label,50,,1
+work_inclusion,vekst bedrift,label,50,,1
+work_inclusion,arbeidsinkludering i sosialt arbeid,autocomplete,50,,1
+work_inclusion,arbeidsinkluderingsbedrifter,autocomplete,50,,1
+work_inclusion,arbeidspraksis nav,autocomplete,50,,1
+work_inclusion,jobbtrening nav,autocomplete,50,,1
+work_inclusion,hjelp til å få jobb,need,50,,3
+work_inclusion,alf arbeidstrening,discovered,50,,2
+work_inclusion,arbeidspraksis gjennom nav,discovered,50,,2
+work_inclusion,arbeidspraksis nav lønn,discovered,50,,2
+work_inclusion,arbeidstrening bedrift,discovered,50,,2
+work_inclusion,arbeidstrening gjennom nav,discovered,50,,2
+work_inclusion,arbeidstrening lønnstilskudd,discovered,50,,2
+work_inclusion,arbeidstrening nav varighet,discovered,50,,2
+work_inclusion,arbeidstrening via nav,discovered,50,,2
+work_inclusion,nav arbeidspraksis,discovered,50,,2
+work_inclusion,nav arbeidstrening bedrift,discovered,50,,2
+work_inclusion,arbeidstrening og arbeidsinkludering,label,0,,1
+work_inclusion,nav tiltak arbeidstrening,label,0,,1
+work_inclusion,arbeidstrening aap,autocomplete,0,,1
+work_inclusion,arbeidspraksis ungdomsskole,autocomplete,0,,1
+work_inclusion,komme i jobb,need,0,,3
+work_inclusion,frivillig arbeidsinkludering,volunteer,0,,3
+work_inclusion,arbeidstrening nav satser,discovered,0,,2
+worship_open_church,gudstjeneste,label,5000,,1
+worship_open_church,gudstjenestelisten,autocomplete,500,,1
+worship_open_church,gudstjeneste søndag,autocomplete,500,,1
+worship_open_church,åpen kirke,label,50,,1
+worship_open_church,tenne lys i kirken,need,50,,3
+worship_open_church,gudstjeneste og åpen kirke,label,0,,1
+worship_open_church,frelsesarmeen gudstjeneste,label,0,,1
+worship_open_church,open kyrkje,label,0,,1
+youth_activity_groups,speider,label,5000,,1
+youth_activity_groups,4h,label,5000,yes,1
+youth_activity_groups,røff,label,500,,1
+youth_activity_groups,fritidsaktiviteter barn,label,500,,1
+youth_activity_groups,4h norge,autocomplete,500,,1
+youth_activity_groups,4h gård,autocomplete,500,,1
+youth_activity_groups,speiding,label,500,,3
+youth_activity_groups,speidergruppe,label,50,,1
+youth_activity_groups,4h klubb,label,50,,1
+youth_activity_groups,barnas røde kors,label,50,,1
+youth_activity_groups,hva er 4h klubb,autocomplete,50,,1
+youth_activity_groups,røff røde kors,autocomplete,50,,1
+youth_activity_groups,røfflig,autocomplete,50,,1
+youth_activity_groups,friluftsliv ungdomsskolen,autocomplete,50,,1
+youth_activity_groups,gratis aktiviteter barn,need,50,,3
+youth_activity_groups,gratis fritidsaktiviteter,need,50,,3
+youth_activity_groups,bli speider,discovered,50,,2
+youth_activity_groups,club 4h,discovered,50,,2
+youth_activity_groups,km speider,discovered,50,,2
+youth_activity_groups,landsleir speider,discovered,50,,2
+youth_activity_groups,landsleir speider 2022,discovered,50,,2
+youth_activity_groups,leirbålskappe speider,discovered,50,,2
+youth_activity_groups,skjold speider,discovered,50,,2
+youth_activity_groups,speidere,discovered,50,,2
+youth_activity_groups,speiderforbund,discovered,50,,2
+youth_activity_groups,speiderne,discovered,50,,2
+youth_activity_groups,www 4h com,discovered,50,,2
+youth_activity_groups,friluftsliv ungdom,label,0,,1
+youth_activity_groups,speidergrupper i norge,autocomplete,0,,1
+youth_activity_groups,klubbrådgiver 4h,autocomplete,0,,1
+youth_activity_groups,barnas røde kors bark,autocomplete,0,,1
+youth_activity_groups,frivillig speiderleder,volunteer,0,,3
+youth_activity_groups,bli speiderleder,volunteer,0,,3
+youth_activity_groups,frivillig barn og unge,volunteer,0,,3
+youth_activity_groups,gnist speider,discovered,0,,2
+youth_drop_in,ungdomsklubb,label,500,,1
+youth_drop_in,fritidsklubb,label,500,,1
+youth_drop_in,fritidsklubben,autocomplete,50,,1
+youth_drop_in,møteplass for ungdom,autocomplete,50,,1
+youth_drop_in,hjørnet ungdomskafé,autocomplete,50,,1
+youth_drop_in,ungdomshus,alternative,50,,4
+youth_drop_in,ungdomskafe,alternative,50,,4
+youth_drop_in,aktiviteter for ungdomsklubb,discovered,50,,2
+youth_drop_in,brack ungdomsklubb,discovered,50,,2
+youth_drop_in,lerdal fritidsklubb,discovered,50,,2
+youth_drop_in,ungdomsklubb og treffpunkt for ungdom,label,0,,1
+youth_drop_in,treffpunkt ungdom,label,0,,1
+youth_drop_in,møteplass ungdom,label,0,,1
+youth_drop_in,ungdomskafé,label,0,,1
+youth_drop_in,ungdom ingenting å gjøre,need,0,,3
+youth_drop_in,frivillig ungdomsklubb,volunteer,0,,3
+youth_drop_in,frivillig fritidsklubb,volunteer,0,,3
+youth_drop_in,møtested ungdom,alternative,0,,4
