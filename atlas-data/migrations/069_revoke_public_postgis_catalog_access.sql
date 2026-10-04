@@ -1,5 +1,42 @@
 -- 069_revoke_public_postgis_catalog_access.sql
 --
+-- 🔴 DEPLOYED (v20261004-013e912) AND DOES NOT YET TAKE EFFECT. READ THIS
+-- BEFORE ASSUMING THE CHECK BELOW SHOULD BE GREEN.
+--
+-- `public_role_reaches_only_api_v1` is STILL RED after this migration ran
+-- successfully (imac, urb-agents #1834). The migration runner connects as the
+-- `atlas` role; PostGIS's install script creates these three objects owned by
+-- whoever ran `CREATE EXTENSION postgis` — `postgres` on this cluster, not
+-- `atlas`. A `REVOKE` issued by a role that is neither the object's owner nor
+-- a superuser and holds no GRANT OPTION **silently no-ops in Postgres**: the
+-- command returns `REVOKE` with no error (only a WARNING, which a migration
+-- runner's success/fail logging does not surface), and the ACL is unchanged.
+-- Reproduced exactly, twice independently (imac against the real cluster
+-- roles; this agent against a throwaway Postgres built to match: object
+-- owned by one role, REVOKE attempted by a different non-superuser role with
+-- no GRANT OPTION — same silent no-op both times).
+--
+-- This is why the throwaway-Postgres test this file originally shipped with
+-- did not catch it: that test ran as the Postgres superuser throughout, so
+-- it owned the object it was revoking on. Testing the REVOKE's SQL semantics
+-- is not the same as testing it under the PRIVILEGE the migration runner
+-- actually holds in production — that gap is the whole defect.
+--
+-- THE FIX ATLAS'S OWN MIGRATION PIPELINE CANNOT PERFORM: this REVOKE needs
+-- to run once, as the Postgres superuser (or as these objects' owner), by
+-- whoever administers the cluster — not as part of this repo's migration
+-- pipeline, and not by widening `atlas`'s own role (transferring ownership
+-- of `geometry_columns`/`geography_columns` to `atlas` so a future
+-- migration-as-`atlas` REVOKE would work was considered and rejected: those
+-- two are PostGIS's own shared system VIEWS, not atlas's objects, and
+-- handing the `atlas` role DROP/ALTER rights over them to buy one
+-- convenience is a larger privilege expansion than the one-time manual step
+-- it would replace). Left in the repo as the explicit, tested, already-
+-- correct intent — the moment these objects' ownership or grants are ever
+-- fixed at the cluster level, this migration becomes a harmless no-op
+-- confirming the fix stays applied, and it is the thing that will catch a
+-- regression if PostGIS is ever reinstalled and the PUBLIC grant reappears.
+--
 -- WHAT THIS FIXES
 --
 -- `public_role_reaches_only_api_v1` (atlas-data/dagster/atlas_data/assets/api_v1.py)
@@ -76,12 +113,16 @@
 -- re-applies every file (by design, per migration 050's own note) — a
 -- database where the fix is already applied sees no change on reapply.
 --
--- Tested end to end against a throwaway Postgres 15: a `public.spatial_ref_sys`
--- table GRANTed to PUBLIC exactly as PostGIS's own install script does,
--- confirmed readable by PUBLIC before this migration, confirmed unreadable
--- after, confirmed the revoke in one database leaves an identically-named
--- table in a second database on the same cluster untouched, and confirmed
--- re-running the migration is a harmless no-op.
+-- Tested end to end against a throwaway Postgres 15, AS THE SUPERUSER THAT
+-- OWNED THE TEST OBJECTS: confirmed readable by PUBLIC before this migration,
+-- confirmed unreadable after, confirmed the revoke in one database leaves an
+-- identically-named table in a second database on the same cluster
+-- untouched, and confirmed re-running the migration is a harmless no-op.
+--
+-- ⚠️ THAT TEST DID NOT COVER, AND SHOULD HAVE: whether the role the migration
+-- actually connects as in production can perform this REVOKE at all — it
+-- cannot, see the note at the top of this file. The SQL is correct; the
+-- privilege to run it as shipped is not present.
 
 DO $$
 BEGIN
