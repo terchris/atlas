@@ -381,9 +381,10 @@ For ~hundred-page sources (typical NGO size) this means 2–3 minutes per full c
 - The host's `robots.txt` declares a stricter `Crawl-Delay` for our UA → honour it.
 - The host actively asks us to slow down (operator email, 429 patterns) → halve the rate, document in the source README.
 
-### D.3 No PII / contact information — **superseded 2026-10-03 for published contacts**
+### D.3 No PII / contact information
 
-⚠️ **This section no longer states Atlas's rule for a contact an NGO publishes on its own site.**
+⚠️ **Superseded 2026-10-03 for published contacts — this section no longer states Atlas's rule
+for a contact an NGO publishes on its own site.**
 Terje, 2026-10-03 (recorded in `docs/research/ngo-research/scraping-practice.md` and
 [Q2] of `INVESTIGATE-ngo-research-handover.md`): a name, role, phone number or e-mail address an
 NGO publishes as the contact for a chapter or activity **is collected and stored** — the person
