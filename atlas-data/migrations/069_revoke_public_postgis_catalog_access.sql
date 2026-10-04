@@ -1,41 +1,71 @@
 -- 069_revoke_public_postgis_catalog_access.sql
 --
--- 🔴 DEPLOYED (v20261004-013e912) AND DOES NOT YET TAKE EFFECT. READ THIS
--- BEFORE ASSUMING THE CHECK BELOW SHOULD BE GREEN.
+-- 🔴 A NON-OWNER REVOKE OF AN ALREADY-REVOKED PUBLIC GRANT IS NOT A NO-OP —
+-- IT IS A HARD ERROR. READ THIS BEFORE TOUCHING THE DO BLOCK BELOW.
 --
--- `public_role_reaches_only_api_v1` is STILL RED after this migration ran
--- successfully (imac, urb-agents #1834). The migration runner connects as the
--- `atlas` role; PostGIS's install script creates these three objects owned by
+-- `public_role_reaches_only_api_v1` was red after this migration first ran
+-- (imac, urb-agents #1834): the migration runner connects as the `atlas`
+-- role; PostGIS's install script creates these three objects owned by
 -- whoever ran `CREATE EXTENSION postgis` — `postgres` on this cluster, not
 -- `atlas`. A `REVOKE` issued by a role that is neither the object's owner nor
--- a superuser and holds no GRANT OPTION **silently no-ops in Postgres**: the
--- command returns `REVOKE` with no error (only a WARNING, which a migration
--- runner's success/fail logging does not surface), and the ACL is unchanged.
--- Reproduced exactly, twice independently (imac against the real cluster
--- roles; this agent against a throwaway Postgres built to match: object
--- owned by one role, REVOKE attempted by a different non-superuser role with
--- no GRANT OPTION — same silent no-op both times).
+-- a superuser and holds no GRANT OPTION silently no-ops *while PUBLIC still
+-- holds the grant*: the command returns `REVOKE` with only a WARNING (which
+-- a migration runner's success/fail logging does not surface), and the ACL
+-- is unchanged.
+--
+-- imac then applied the real fix as the Postgres superuser directly
+-- (#1835) — and the next ingest job's migration step broke the entire
+-- cluster: `annual_sources_refresh` failed in 31.4s with
+-- `ERROR: permission denied for table geometry_columns` (SQLSTATE 42501) on
+-- this exact migration, taking every downstream `raw__*` asset down with it
+-- (urb-agents #1841). **The REVOKE's behavior under non-owner privilege is
+-- NOT uniform — it depends on whether PUBLIC currently holds the grant**:
+-- while PUBLIC still has it, the statement WARNs and no-ops (as above); once
+-- PUBLIC's grant is actually gone, the identical statement raises a hard
+-- `insufficient_privilege` error instead. Reproduced directly, not guessed
+-- (imac against the real cluster roles in both states; this agent against a
+-- throwaway Postgres 15 with plain objects of the same kind — a table and a
+-- view, owned by a superuser-equivalent role, REVOKE attempted by a second
+-- non-owner role with no GRANT OPTION — same WARNING-then-ERROR transition
+-- both times, confirmed SQLSTATE 42501 via `\set VERBOSITY verbose`).
+--
+-- **THE FIX: each REVOKE is now wrapped in its own `BEGIN...EXCEPTION WHEN
+-- insufficient_privilege THEN NULL; END;` block.** Verified end to end
+-- against the throwaway Postgres in all three states a stateless,
+-- every-job-reapplies migration runner will actually hit: (1) PUBLIC still
+-- holds the grant — WARNING, silent no-op, ACL unchanged, exit 0; (2)
+-- PUBLIC's grant just removed by the superuser — the exception is caught,
+-- silent, ACL stays correctly revoked (does NOT regrant anything), exit 0;
+-- (3) re-run again immediately after in the same (2) state — still silent,
+-- still exit 0. This is the fix imac asked for on #1841 without attempting
+-- themselves ("that's your code"), applied and tested before being merged
+-- rather than reasoned about in the abstract — the first version of this
+-- file shipped from exactly that kind of reasoning gap (see below) and this
+-- is the second one, so both fixes here were verified against a real
+-- non-owner role before being trusted.
 --
 -- This is why the throwaway-Postgres test this file originally shipped with
--- did not catch it: that test ran as the Postgres superuser throughout, so
--- it owned the object it was revoking on. Testing the REVOKE's SQL semantics
--- is not the same as testing it under the PRIVILEGE the migration runner
--- actually holds in production — that gap is the whole defect.
+-- did not catch the FIRST defect: that test ran as the Postgres superuser
+-- throughout, so it owned the object it was revoking on. Testing the
+-- REVOKE's SQL semantics is not the same as testing it under the PRIVILEGE
+-- the migration runner actually holds in production — that gap was the
+-- whole defect, and the second defect above is the same family one layer
+-- deeper: testing a non-owner REVOKE against only ONE of the two ACL states
+-- it will actually run under in production.
 --
--- THE FIX ATLAS'S OWN MIGRATION PIPELINE CANNOT PERFORM: this REVOKE needs
--- to run once, as the Postgres superuser (or as these objects' owner), by
--- whoever administers the cluster — not as part of this repo's migration
--- pipeline, and not by widening `atlas`'s own role (transferring ownership
--- of `geometry_columns`/`geography_columns` to `atlas` so a future
--- migration-as-`atlas` REVOKE would work was considered and rejected: those
--- two are PostGIS's own shared system VIEWS, not atlas's objects, and
--- handing the `atlas` role DROP/ALTER rights over them to buy one
--- convenience is a larger privilege expansion than the one-time manual step
--- it would replace). Left in the repo as the explicit, tested, already-
--- correct intent — the moment these objects' ownership or grants are ever
--- fixed at the cluster level, this migration becomes a harmless no-op
--- confirming the fix stays applied, and it is the thing that will catch a
--- regression if PostGIS is ever reinstalled and the PUBLIC grant reappears.
+-- THE REAL REVOKE STILL HAPPENS OUTSIDE THIS REPO'S PIPELINE: this REVOKE
+-- needs to run once, for real, as the Postgres superuser (or as these
+-- objects' owner), by whoever administers the cluster — not by widening
+-- `atlas`'s own role (transferring ownership of `geometry_columns`/
+-- `geography_columns` to `atlas` so a future migration-as-`atlas` REVOKE
+-- would work was considered and rejected: those two are PostGIS's own
+-- shared system VIEWS, not atlas's objects, and handing the `atlas` role
+-- DROP/ALTER rights over them to buy one convenience is a larger privilege
+-- expansion than the one-time manual step it would replace). This file's
+-- job is only ever to (a) no-op harmlessly before that manual step happens,
+-- and (b) no-op harmlessly forever after, confirming the fix stays applied
+-- and catching a regression if PostGIS is ever reinstalled and the PUBLIC
+-- grant reappears — never to apply the real fix itself.
 --
 -- WHAT THIS FIXES
 --
@@ -104,35 +134,51 @@
 -- PostgREST schema config changes and this would otherwise become live with
 -- no further warning.
 --
--- WHY A DO BLOCK WITH to_regclass GUARDS
+-- WHY A DO BLOCK WITH to_regclass GUARDS, AND A NESTED EXCEPTION BLOCK PER REVOKE
 --
 -- The three views only exist if `CREATE EXTENSION postgis` has run. REVOKE on
 -- a relation that does not exist is an error, not a no-op, so each is
--- guarded. REVOKE on a privilege PUBLIC was never granted IS a no-op in
--- Postgres (no error), so this is safe to run every time the migration runner
--- re-applies every file (by design, per migration 050's own note) — a
--- database where the fix is already applied sees no change on reapply.
+-- guarded by `to_regclass`. That guard alone is not enough: REVOKE on a
+-- privilege PUBLIC still holds is a no-op in Postgres (WARNING, no error),
+-- but REVOKE on a privilege PUBLIC no longer holds, run by a non-owner role,
+-- is a hard `insufficient_privilege` error (#1841, see above) — so each
+-- REVOKE additionally gets its own `BEGIN...EXCEPTION WHEN
+-- insufficient_privilege THEN NULL; END;` block. This is what makes the
+-- migration safe to re-apply on every single job regardless of which of the
+-- two ACL states the real superuser-applied fix has reached.
 --
--- Tested end to end against a throwaway Postgres 15, AS THE SUPERUSER THAT
--- OWNED THE TEST OBJECTS: confirmed readable by PUBLIC before this migration,
--- confirmed unreadable after, confirmed the revoke in one database leaves an
--- identically-named table in a second database on the same cluster
--- untouched, and confirmed re-running the migration is a harmless no-op.
---
--- ⚠️ THAT TEST DID NOT COVER, AND SHOULD HAVE: whether the role the migration
--- actually connects as in production can perform this REVOKE at all — it
--- cannot, see the note at the top of this file. The SQL is correct; the
--- privilege to run it as shipped is not present.
+-- Tested end to end against a throwaway Postgres 15, as a NON-OWNER,
+-- NON-SUPERUSER role (not the superuser that owned the test objects — that
+-- was the first version's gap): confirmed WARNING + silent no-op while
+-- PUBLIC holds the grant; confirmed the superuser's real revoke is correctly
+-- preserved (not re-granted) and the migration itself raises nothing once
+-- PUBLIC's grant is gone; confirmed re-running it again immediately after,
+-- in that same state, is still a harmless no-op. All three states a
+-- stateless, every-job migration runner will actually encounter in
+-- production, not just the one state the first version happened to ship
+-- having tested.
 
 DO $$
 BEGIN
   IF to_regclass('public.geometry_columns') IS NOT NULL THEN
-    REVOKE SELECT ON public.geometry_columns FROM PUBLIC;
+    BEGIN
+      REVOKE SELECT ON public.geometry_columns FROM PUBLIC;
+    EXCEPTION WHEN insufficient_privilege THEN
+      NULL;
+    END;
   END IF;
   IF to_regclass('public.geography_columns') IS NOT NULL THEN
-    REVOKE SELECT ON public.geography_columns FROM PUBLIC;
+    BEGIN
+      REVOKE SELECT ON public.geography_columns FROM PUBLIC;
+    EXCEPTION WHEN insufficient_privilege THEN
+      NULL;
+    END;
   END IF;
   IF to_regclass('public.spatial_ref_sys') IS NOT NULL THEN
-    REVOKE SELECT ON public.spatial_ref_sys FROM PUBLIC;
+    BEGIN
+      REVOKE SELECT ON public.spatial_ref_sys FROM PUBLIC;
+    EXCEPTION WHEN insufficient_privilege THEN
+      NULL;
+    END;
   END IF;
 END $$;
