@@ -142,13 +142,13 @@ SUPPLY — voluntary-sector presence:
   distrikt_summary             chapters by district.
   kommune_local_chapters       chapters resolved to a kommune.
 
-PER-SOURCE INDICATOR RELATIONS — 52 of them, one per upstream table, at the
+PER-SOURCE INDICATOR RELATIONS — 54 of them, one per upstream table, at the
 grain the publisher actually uses. The cross-source views above impose ONE
 shape on every source; these keep the source''s own dimensions, so a breakdown
 those views flatten away (a sex, an age band, a household or family type, a
 parental-education split) is only answerable here.
 
-🔴 ALL 52 ARE stability:source. THE COLUMN SET FOLLOWS THE PUBLISHER, NOT
+🔴 ALL 54 ARE stability:source. THE COLUMN SET FOLLOWS THE PUBLISHER, NOT
 ATLAS. If SSB, FHI or Bufdir adds, renames or drops a dimension, these change
 with it — that is the deliberate trade for getting the real grain. Filter
 `meta_endpoints?tags=cs.{stability:curated}` for the relations whose shape
@@ -178,14 +178,14 @@ same source_id, and through the ref_* lists above where one exists.
     indicators__lottstift_momskompensasjon
   nav (3):
     indicators__nav_aap indicators__nav_helt_ledige indicators__nav_uforetrygd
-  ssb (19):
+  ssb (21):
     indicators__ssb_06083 indicators__ssb_06913 indicators__ssb_06944
     indicators__ssb_06947 indicators__ssb_07459 indicators__ssb_08484
     indicators__ssb_08487 indicators__ssb_08764 indicators__ssb_09405
-    indicators__ssb_09406 indicators__ssb_09429 indicators__ssb_10826
-    indicators__ssb_12063 indicators__ssb_12131 indicators__ssb_12132
-    indicators__ssb_12292 indicators__ssb_12451 indicators__ssb_12944
-    indicators__ssb_13995
+    indicators__ssb_09406 indicators__ssb_09429 indicators__ssb_10501
+    indicators__ssb_10826 indicators__ssb_12063 indicators__ssb_12131
+    indicators__ssb_12132 indicators__ssb_12292 indicators__ssb_12451
+    indicators__ssb_12891 indicators__ssb_12944 indicators__ssb_13995
   udir (4):
     indicators__udir_elevundersokelsen_mobbing indicators__udir_fravar
     indicators__udir_gsi indicators__udir_nasjonale_prover
@@ -2301,6 +2301,29 @@ COMMENT ON COLUMN api_v1.indicators__ssb_09429.value IS 'The measured value. NUL
 COMMENT ON COLUMN api_v1.indicators__ssb_09429.status IS 'The publisher''s own suppression or quality marker for this cell, passed through verbatim.';
 COMMENT ON COLUMN api_v1.indicators__ssb_09429.updated_at IS 'When Atlas last loaded this row from the upstream.';
 
+-- indicators__ssb_10501  ←  marts.mart_indicators__ssb_10501
+CREATE OR REPLACE VIEW api_v1.indicators__ssb_10501 AS SELECT * FROM marts.mart_indicators__ssb_10501;
+COMMENT ON VIEW api_v1.indicators__ssb_10501 IS 'Per-source indicator data for ssb-10501 (SSB), at the publisher''s own grain.
+
+Persons by first name, per year — a reference list added for identifying Norwegian first
+names in free text, not a kommune-level demographic indicator. One row per (first_name,
+year). Nationwide only; SSB publishes no kommune/fylke breakdown for this table.
+
+🔴 NOT AN EXHAUSTIVE NAME LIST. Only first names used by 200 or more persons in Norway at
+year-end appear as a row, in any year — a name with fewer bearers never appears here at
+all. This list is a useful floor for catching common names, not a ceiling for catching
+every real one.
+🔵 stability:source — the column set here follows SSB table 10501, not Atlas.';
+COMMENT ON COLUMN api_v1.indicators__ssb_10501.source_id IS 'Atlas catalogue id for this ingest — always ssb-10501.';
+COMMENT ON COLUMN api_v1.indicators__ssb_10501.first_name IS 'The first name, properly cased as SSB publishes it. Only names used by 200+ persons in Norway at year-end appear here — this is NOT an exhaustive list of Norwegian first names.';
+COMMENT ON COLUMN api_v1.indicators__ssb_10501.sex IS 'male / female, derived from SSB''s name-code gender prefix. Never ''all'' — every row here is gender-specific.';
+COMMENT ON COLUMN api_v1.indicators__ssb_10501.year IS 'Calendar year. 2013-2025.';
+COMMENT ON COLUMN api_v1.indicators__ssb_10501.contents_code IS 'SSB ContentsCode — degenerate, always ''Personer'' for this table.';
+COMMENT ON COLUMN api_v1.indicators__ssb_10501.contents_label IS 'Human-readable gloss for contents_code.';
+COMMENT ON COLUMN api_v1.indicators__ssb_10501.value IS 'Count of persons with this first name at year-end. NULL where SSB suppressed the cell (200 or fewer bearers that year).';
+COMMENT ON COLUMN api_v1.indicators__ssb_10501.status IS 'SSB''s own suppression or quality marker for this cell. NULL when value is present.';
+COMMENT ON COLUMN api_v1.indicators__ssb_10501.updated_at IS 'When Atlas last loaded this row from the upstream.';
+
 -- indicators__ssb_10826  ←  marts.mart_indicators__ssb_10826
 CREATE OR REPLACE VIEW api_v1.indicators__ssb_10826 AS SELECT * FROM marts.mart_indicators__ssb_10826;
 COMMENT ON VIEW api_v1.indicators__ssb_10826 IS 'Per-source indicator data for ssb-10826 (Statistisk sentralbyrå), at the publisher''s own grain.
@@ -2441,6 +2464,29 @@ COMMENT ON COLUMN api_v1.indicators__ssb_12451.contents_label IS 'Human-readable
 COMMENT ON COLUMN api_v1.indicators__ssb_12451.value IS 'The measure''s value for this kommune and quarter. No suppression observed live.';
 COMMENT ON COLUMN api_v1.indicators__ssb_12451.status IS 'SSB''s own cell-level status flag, when one exists (none observed at ingest time).';
 COMMENT ON COLUMN api_v1.indicators__ssb_12451.updated_at IS 'Timestamp when the row was last written by ingest (from raw.loaded_at).';
+
+-- indicators__ssb_12891  ←  marts.mart_indicators__ssb_12891
+CREATE OR REPLACE VIEW api_v1.indicators__ssb_12891 AS SELECT * FROM marts.mart_indicators__ssb_12891;
+COMMENT ON VIEW api_v1.indicators__ssb_12891 IS 'Per-source indicator data for ssb-12891 (SSB), at the publisher''s own grain.
+
+Surnames used by 200 or more persons, per year — a reference list added for identifying
+Norwegian surnames in free text, alongside mart_indicators__ssb_10501 (first names). One
+row per (surname, year). Nationwide only; SSB publishes no kommune/fylke breakdown for this
+table.
+
+🔴 NOT AN EXHAUSTIVE SURNAME LIST. Only surnames used by 200 or more persons appear as a
+row. Unlike the first-name caveat above, this threshold is not an arbitrary
+disclosure-avoidance cutoff — it is the exact threshold Norwegian naming law uses to
+protect rarer surnames from being freely adopted by others.
+🔵 stability:source — the column set here follows SSB table 12891, not Atlas.';
+COMMENT ON COLUMN api_v1.indicators__ssb_12891.source_id IS 'Atlas catalogue id for this ingest — always ssb-12891.';
+COMMENT ON COLUMN api_v1.indicators__ssb_12891.surname IS 'The surname, properly cased as SSB publishes it. Only surnames used by 200+ persons appear here — this is NOT an exhaustive list of Norwegian surnames, and the 200-person floor is Norwegian naming law''s own protection boundary.';
+COMMENT ON COLUMN api_v1.indicators__ssb_12891.year IS 'Calendar year. 2018-2025.';
+COMMENT ON COLUMN api_v1.indicators__ssb_12891.contents_code IS 'SSB ContentsCode — degenerate, always ''Personer'' for this table.';
+COMMENT ON COLUMN api_v1.indicators__ssb_12891.contents_label IS 'Human-readable gloss for contents_code.';
+COMMENT ON COLUMN api_v1.indicators__ssb_12891.value IS 'Count of persons with this surname at year-end. NULL where SSB suppressed the cell (200 or fewer bearers that year).';
+COMMENT ON COLUMN api_v1.indicators__ssb_12891.status IS 'SSB''s own suppression or quality marker for this cell. NULL when value is present.';
+COMMENT ON COLUMN api_v1.indicators__ssb_12891.updated_at IS 'When Atlas last loaded this row from the upstream.';
 
 -- indicators__ssb_12944  ←  marts.mart_indicators__ssb_12944
 CREATE OR REPLACE VIEW api_v1.indicators__ssb_12944 AS SELECT * FROM marts.mart_indicators__ssb_12944;

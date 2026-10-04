@@ -6,6 +6,17 @@
 
 ## Status: Backlog
 
+🔴 **2026-10-04 — `ssb-10501` and `ssb-12891` added, and deliberately OUT OF SCOPE for this
+document's per-report framework.** Per the maintenance checklist's own item 4 ("do not define
+[a report] without flagging it for human review"): these two sources are reference lists (first
+names / surnames used by 200+ persons, added for a name-scrubbing text-processing use case), not
+kommune/fylke-resolved demographic indicators. They carry no geography and feed none of the 10
+reports below — there is no column gap to close and no new report to propose. Not slotted into
+"the N-source catalogue at a glance" or any report's source list for that reason, not an
+oversight. The rest of this document's source count (the "41" throughout) predates this change
+and was already stale before it — reconciling that is a separate, larger pass this edit does not
+attempt.
+
 **Goal**: Survey the 41 sources Atlas now ingests, identify the **reports and composite indicators** they enable end-to-end (catalogue → ingest → mart → frontend), and document the **conformed dimensions, crosswalks, and reference seeds** that have to land in dbt before those indicators become queryable. Output: a sequenced list of indicator-PLAN candidates the user can pick from, plus a clean inventory of the dimensional plumbing each one depends on.
 
 **Last Updated**: 2026-05-04 (onboarded `bufdir-barnefattigdom` — Bufdir Barnefattigdom kommunemonitor API; catalogue is now 41 sources)

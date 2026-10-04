@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-03",
+  "generated_at": "2026-10-04",
   "manifest_schema_id": "https://atlas.sovereignsky.no/schemas/manifest.schema.json",
   "atlas_base_url": "https://atlas.sovereignsky.no",
   "postgrest_base_url": "https://api-atlas.urbalurba.com",
@@ -19,7 +19,7 @@
       "description": "Population structure by age, sex, kommune, and bydel. Core denominators\nfor any rate-based analysis. Includes SSB resident counts and FHI\npopulation projections.\n",
       "emoji": "👥",
       "order": 20,
-      "source_count": 10
+      "source_count": 12
     },
     {
       "id": "income",
@@ -150,7 +150,7 @@
       "logo": "/img/publishers/ssb.svg",
       "feedback_url": "https://www.ssb.no/omssb/kontakt-oss",
       "notes": "Norway's national statistics office. Maintains the StatBank\n(statistikkbanken) — the canonical source of demographic, economic,\nand social indicators at kommune, fylke, and national resolution.\nData released under NLOD; tables identified by numeric IDs preserved\nwith leading zeros (e.g. table 07459).\n",
-      "source_count": 18
+      "source_count": 20
     },
     {
       "id": "udir",
@@ -11936,6 +11936,175 @@
     },
     {
       "kind": "source",
+      "source_id": "ssb-10501",
+      "upstream_id": "10501",
+      "upstream_url": "https://www.ssb.no/statbank/table/10501",
+      "upstream_landing_page": "https://www.ssb.no/statbank/table/10501",
+      "upstream_title": "10501: Personer, etter jentenavn og guttenavn 2013-2025",
+      "description": "Persons by first name, per year — 2,152 first names used by 200 or more persons in Norway at year-end, 2013-2025. NOT an exhaustive name list: a name held by fewer than 200 people never appears. Added as a reference list for identifying Norwegian first names in free text.",
+      "atlas_summary": null,
+      "publisher": {
+        "id": "ssb",
+        "display_name": "Statistisk sentralbyrå",
+        "homepage": "https://www.ssb.no/",
+        "logo": "/img/publishers/ssb.svg"
+      },
+      "category": {
+        "id": "demographics",
+        "name": "Demographics",
+        "emoji": "👥"
+      },
+      "license": "NLOD",
+      "license_url": "https://data.norge.no/nlod/no/2.0",
+      "periodicity": "P1Y",
+      "eu_theme": "SOCI",
+      "attribution": "Kilde: Statistisk sentralbyrå, tabell 10501",
+      "tags": {
+        "provider": "ssb",
+        "topic": "demographics",
+        "geo": "national",
+        "cadence": "annual"
+      },
+      "keywords": [
+        "names",
+        "first-name",
+        "demographics",
+        "text-scrubbing",
+        "reference-list"
+      ],
+      "lifecycle": "beta",
+      "time_coverage": {
+        "start": 2013,
+        "end": 2025
+      },
+      "methodology_notes": "Covers first names used by 200 or more persons in Norway at year-end — NOT an exhaustive list of\nNorwegian first names. A name with fewer than 200 bearers in a given year does not appear as a row\nat all, in any year. Within the names that do appear, per-year suppression still applies: a name\ncan clear the threshold in some years and fall below it in others (measured: 13.6% of cells are\nsuppressed). Gender is encoded as a leading digit on the composite `Fornavn` code (1=girl, 2=boy),\nnot as a separate dimension. Hyphenated names are counted together with the name before the hyphen\nfor 2021-2024 specifically (SSB's own table note). Added primarily as a name-scrubbing reference\nlist, not as a demographic indicator in the usual Atlas sense — it carries no kommune/fylke\nbreakdown because SSB publishes it at national resolution only.\n",
+      "suggested_joins": [
+        "ssb-12891"
+      ],
+      "related_by_topic": [
+        "fhi-befolkning",
+        "fhi-befolkningsvekst",
+        "fhi-bor-alene",
+        "fhi-innvandrere",
+        "fhi-innvkat",
+        "fhi-prognose"
+      ],
+      "dimensions": [
+        {
+          "code": "Fornavn",
+          "meaning": "First name, as a composite code (leading digit 1=girl name, 2=boy name, then the uppercased name)",
+          "value_format": "e.g. 1ABIGAIL (girl), 2ADRIAN (boy); 2,152 codes total, 1,134 girl + 1,018 boy",
+          "notes": "Only names used by 200+ persons at year-end appear at all. The paired label (e.g. \"Abigail\") is properly cased with no gender prefix."
+        },
+        {
+          "code": "ContentsCode",
+          "meaning": "Statistic measure",
+          "value_format": "1 code",
+          "notes": "Degenerate — the table exposes exactly one statistic, \"Personer\" (count of persons with this name)."
+        },
+        {
+          "code": "Tid",
+          "meaning": "Year",
+          "value_format": "4-digit year as text",
+          "notes": "2013-2025 (13 years). 13.6% of cells are suppressed (value null, status \".\") where a name's count dropped to 200 or fewer in that year."
+        }
+      ],
+      "raw_tables": null,
+      "sample_query": null,
+      "citation": {
+        "text": "Statistisk sentralbyrå. (2025). 10501: Personer, etter jentenavn og guttenavn 2013-2025. Retrieved from https://www.ssb.no/statbank/table/10501. Available in Atlas at https://atlas.sovereignsky.no/datasets/ssb-10501.",
+        "bibtex": "@misc{atlas_ssb_10501,\n  author = {Statistisk sentralbyrå},\n  title  = {10501: Personer, etter jentenavn og guttenavn 2013-2025},\n  year   = {2025},\n  url    = {https://www.ssb.no/statbank/table/10501},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/ssb-10501}\n}"
+      },
+      "feedback_url": "https://www.ssb.no/omssb/kontakt-oss",
+      "consuming_marts": [
+        {
+          "mart_name": "mart_atlas_inventory",
+          "api_v1_name": "atlas_inventory",
+          "title": null,
+          "description_short": "What Atlas publishes: one row per endpoint with its row count, freshness and origin.",
+          "description_full": "What Atlas publishes: one row per endpoint with its row count, freshness and origin.\n\nWhat Atlas publishes, one row per queryable endpoint: how many records it\nserves, when its data last arrived, and where those rows came from.\nAsked for by Røde Kors — \"validate that all datasets that are ingested has\nan endpoint and it can be queried … count the number of records each\nendpoint has and update the last time it ingested data.\"\n⚠️ THE GRAIN IS PER ENDPOINT, NOT PER SOURCE. meta_sources answers \"what\ndid Atlas ingest\"; this answers \"what can I query, and is there anything\nin it\". One source can feed several endpoints and one endpoint can draw on\nseveral sources, so the two row counts are not comparable and summing\nsources will not reproduce an endpoint's count.\n⚠️ atlas_inventory does not list ITSELF. It is built from the same seed it\nreports on, so counting itself would be circular and the number would be\nwhatever the table held mid-build. 19 endpoints are listed; 20 are\npublished.",
+          "sample_query": "https://api-atlas.urbalurba.com/atlas_inventory?limit=5"
+        },
+        {
+          "mart_name": "mart_indicators__ssb_10501",
+          "api_v1_name": "indicators__ssb_10501",
+          "title": "Personer, etter jente- eller guttenavn",
+          "description_short": "Per-source indicator data for ssb-10501 (SSB), at the publisher's own grain.",
+          "description_full": "Per-source indicator data for ssb-10501 (SSB), at the publisher's own grain.\n\nPersons by first name, per year — a reference list added for identifying Norwegian first\nnames in free text, not a kommune-level demographic indicator. One row per (first_name,\nyear). Nationwide only; SSB publishes no kommune/fylke breakdown for this table.\n\n🔴 NOT AN EXHAUSTIVE NAME LIST. Only first names used by 200 or more persons in Norway at\nyear-end appear as a row, in any year — a name with fewer bearers never appears here at\nall. This list is a useful floor for catching common names, not a ceiling for catching\nevery real one.\n🔵 stability:source — the column set here follows SSB table 10501, not Atlas.",
+          "sample_query": "https://api-atlas.urbalurba.com/indicators__ssb_10501?limit=5"
+        }
+      ],
+      "consuming_models": [
+        {
+          "name": "indicators__ssb_10501",
+          "kind": "indicators"
+        },
+        {
+          "name": "mart_atlas_inventory",
+          "kind": "mart"
+        },
+        {
+          "name": "mart_indicators__ssb_10501",
+          "kind": "mart"
+        }
+      ],
+      "joined_with": [
+        {
+          "source_id": "brreg-enheter-alle",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "brreg-frivillige",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "brreg-oppdateringer",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "bufdir-barnefattigdom",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "bufdir-barnevern",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "fhi-alkohol",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "fhi-befolkning",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "fhi-befolkningsvekst",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        }
+      ],
+      "last_ingested_at": null,
+      "latest_row_count": null,
+      "total_runs": null,
+      "downstream_model_count": null
+    },
+    {
+      "kind": "source",
       "source_id": "ssb-10826",
       "upstream_id": "10826",
       "upstream_url": "https://www.ssb.no/statbank/table/10826",
@@ -13502,6 +13671,175 @@
         },
         {
           "name": "mart_indicators__ssb_12451",
+          "kind": "mart"
+        }
+      ],
+      "joined_with": [
+        {
+          "source_id": "brreg-enheter-alle",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "brreg-frivillige",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "brreg-oppdateringer",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "bufdir-barnefattigdom",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "bufdir-barnevern",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "fhi-alkohol",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "fhi-befolkning",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "fhi-befolkningsvekst",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        }
+      ],
+      "last_ingested_at": null,
+      "latest_row_count": null,
+      "total_runs": null,
+      "downstream_model_count": null
+    },
+    {
+      "kind": "source",
+      "source_id": "ssb-12891",
+      "upstream_id": "12891",
+      "upstream_url": "https://www.ssb.no/statbank/table/12891",
+      "upstream_landing_page": "https://www.ssb.no/statbank/table/12891",
+      "upstream_title": "12891: Etternavn brukt av 200 personer eller flere 2018-2025",
+      "description": "Surnames used by 200 or more persons in Norway, per year — 3,706 surnames, 2018-2025. NOT an exhaustive surname list: Norwegian naming law protects surnames held by 200 or fewer people, which is exactly why this table's threshold sits there. Added as a reference list for identifying Norwegian surnames in free text, alongside ssb-10501 (first names).",
+      "atlas_summary": null,
+      "publisher": {
+        "id": "ssb",
+        "display_name": "Statistisk sentralbyrå",
+        "homepage": "https://www.ssb.no/",
+        "logo": "/img/publishers/ssb.svg"
+      },
+      "category": {
+        "id": "demographics",
+        "name": "Demographics",
+        "emoji": "👥"
+      },
+      "license": "NLOD",
+      "license_url": "https://data.norge.no/nlod/no/2.0",
+      "periodicity": "P1Y",
+      "eu_theme": "SOCI",
+      "attribution": "Kilde: Statistisk sentralbyrå, tabell 12891",
+      "tags": {
+        "provider": "ssb",
+        "topic": "demographics",
+        "geo": "national",
+        "cadence": "annual"
+      },
+      "keywords": [
+        "names",
+        "surname",
+        "demographics",
+        "text-scrubbing",
+        "reference-list"
+      ],
+      "lifecycle": "beta",
+      "time_coverage": {
+        "start": 2018,
+        "end": 2025
+      },
+      "methodology_notes": "Covers surnames used by 200 or more persons in Norway at year-end — NOT an exhaustive list of\nNorwegian surnames. The 200-person threshold is not an arbitrary disclosure-avoidance cutoff: it\nis the exact threshold Norwegian naming law uses to protect rarer surnames from being freely\nadopted by others (a surname held by 200 or fewer people is protected; this table's coverage\nboundary follows that legal line). A surname with fewer than 200 bearers never appears as a row,\nin any year. Added primarily as a name-scrubbing reference list alongside ssb-10501 (first names),\nnot as a demographic indicator in the usual Atlas sense — it carries no kommune/fylke breakdown\nbecause SSB publishes it at national resolution only.\n",
+      "suggested_joins": [
+        "ssb-10501"
+      ],
+      "related_by_topic": [
+        "fhi-befolkning",
+        "fhi-befolkningsvekst",
+        "fhi-bor-alene",
+        "fhi-innvandrere",
+        "fhi-innvkat",
+        "fhi-prognose"
+      ],
+      "dimensions": [
+        {
+          "code": "Etternavn",
+          "meaning": "Surname code, uppercased, no gender prefix (unlike ssb-10501's Fornavn)",
+          "value_format": "e.g. ABBAS; 3,706 codes total",
+          "notes": "Only surnames used by 200+ persons at year-end appear at all. The paired label (e.g. \"Abbas\") is properly cased."
+        },
+        {
+          "code": "ContentsCode",
+          "meaning": "Statistic measure",
+          "value_format": "1 code",
+          "notes": "Degenerate — the table exposes exactly one statistic, \"Personer\" (count of persons with this surname)."
+        },
+        {
+          "code": "Tid",
+          "meaning": "Year",
+          "value_format": "4-digit year as text",
+          "notes": "2018-2025 (8 years) — a shorter series than ssb-10501's 2013-2025; SSB started publishing this table later."
+        }
+      ],
+      "raw_tables": null,
+      "sample_query": null,
+      "citation": {
+        "text": "Statistisk sentralbyrå. (2025). 12891: Etternavn brukt av 200 personer eller flere 2018-2025. Retrieved from https://www.ssb.no/statbank/table/12891. Available in Atlas at https://atlas.sovereignsky.no/datasets/ssb-12891.",
+        "bibtex": "@misc{atlas_ssb_12891,\n  author = {Statistisk sentralbyrå},\n  title  = {12891: Etternavn brukt av 200 personer eller flere 2018-2025},\n  year   = {2025},\n  url    = {https://www.ssb.no/statbank/table/12891},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/ssb-12891}\n}"
+      },
+      "feedback_url": "https://www.ssb.no/omssb/kontakt-oss",
+      "consuming_marts": [
+        {
+          "mart_name": "mart_atlas_inventory",
+          "api_v1_name": "atlas_inventory",
+          "title": null,
+          "description_short": "What Atlas publishes: one row per endpoint with its row count, freshness and origin.",
+          "description_full": "What Atlas publishes: one row per endpoint with its row count, freshness and origin.\n\nWhat Atlas publishes, one row per queryable endpoint: how many records it\nserves, when its data last arrived, and where those rows came from.\nAsked for by Røde Kors — \"validate that all datasets that are ingested has\nan endpoint and it can be queried … count the number of records each\nendpoint has and update the last time it ingested data.\"\n⚠️ THE GRAIN IS PER ENDPOINT, NOT PER SOURCE. meta_sources answers \"what\ndid Atlas ingest\"; this answers \"what can I query, and is there anything\nin it\". One source can feed several endpoints and one endpoint can draw on\nseveral sources, so the two row counts are not comparable and summing\nsources will not reproduce an endpoint's count.\n⚠️ atlas_inventory does not list ITSELF. It is built from the same seed it\nreports on, so counting itself would be circular and the number would be\nwhatever the table held mid-build. 19 endpoints are listed; 20 are\npublished.",
+          "sample_query": "https://api-atlas.urbalurba.com/atlas_inventory?limit=5"
+        },
+        {
+          "mart_name": "mart_indicators__ssb_12891",
+          "api_v1_name": "indicators__ssb_12891",
+          "title": "Etternavn brukt av 200 personer eller flere",
+          "description_short": "Per-source indicator data for ssb-12891 (SSB), at the publisher's own grain.",
+          "description_full": "Per-source indicator data for ssb-12891 (SSB), at the publisher's own grain.\n\nSurnames used by 200 or more persons, per year — a reference list added for identifying\nNorwegian surnames in free text, alongside mart_indicators__ssb_10501 (first names). One\nrow per (surname, year). Nationwide only; SSB publishes no kommune/fylke breakdown for this\ntable.\n\n🔴 NOT AN EXHAUSTIVE SURNAME LIST. Only surnames used by 200 or more persons appear as a\nrow. Unlike the first-name caveat above, this threshold is not an arbitrary\ndisclosure-avoidance cutoff — it is the exact threshold Norwegian naming law uses to\nprotect rarer surnames from being freely adopted by others.\n🔵 stability:source — the column set here follows SSB table 12891, not Atlas.",
+          "sample_query": "https://api-atlas.urbalurba.com/indicators__ssb_12891?limit=5"
+        }
+      ],
+      "consuming_models": [
+        {
+          "name": "indicators__ssb_12891",
+          "kind": "indicators"
+        },
+        {
+          "name": "mart_atlas_inventory",
+          "kind": "mart"
+        },
+        {
+          "name": "mart_indicators__ssb_12891",
           "kind": "mart"
         }
       ],
@@ -16508,6 +16846,12 @@
         },
         {
           "parent_kind": "model",
+          "model_name": "mart_indicators__ssb_10501",
+          "title": "Personer, etter jente- eller guttenavn",
+          "description_short": "Per-source indicator data for ssb-10501 (SSB), at the publisher's own grain."
+        },
+        {
+          "parent_kind": "model",
           "model_name": "mart_indicators__ssb_10826",
           "title": "10826: Alders- og kjønnsfordeling for befolkningen i bydeler (B) 20…",
           "description_short": "Per-source indicator data for ssb-10826 (Statistisk sentralbyrå), at the publisher's own grain."
@@ -16541,6 +16885,12 @@
           "model_name": "mart_indicators__ssb_12451",
           "title": "12451: Bostedskommune- og kjønnsfordelt sykefravær (legemeldt)",
           "description_short": "Per-source indicator data for ssb-12451 (Statistisk sentralbyrå), at the publisher's own grain."
+        },
+        {
+          "parent_kind": "model",
+          "model_name": "mart_indicators__ssb_12891",
+          "title": "Etternavn brukt av 200 personer eller flere",
+          "description_short": "Per-source indicator data for ssb-12891 (SSB), at the publisher's own grain."
         },
         {
           "parent_kind": "model",
@@ -21028,6 +21378,63 @@
     },
     {
       "kind": "view",
+      "view_id": "indicators__ssb_10501",
+      "mart_name": "mart_indicators__ssb_10501",
+      "api_v1_name": "indicators__ssb_10501",
+      "title": "Personer, etter jente- eller guttenavn",
+      "description_short": "Per-source indicator data for ssb-10501 (SSB), at the publisher's own grain.",
+      "description_full": "Per-source indicator data for ssb-10501 (SSB), at the publisher's own grain.\n\nPersons by first name, per year — a reference list added for identifying Norwegian first\nnames in free text, not a kommune-level demographic indicator. One row per (first_name,\nyear). Nationwide only; SSB publishes no kommune/fylke breakdown for this table.\n\n🔴 NOT AN EXHAUSTIVE NAME LIST. Only first names used by 200 or more persons in Norway at\nyear-end appear as a row, in any year — a name with fewer bearers never appears here at\nall. This list is a useful floor for catching common names, not a ceiling for catching\nevery real one.\n🔵 stability:source — the column set here follows SSB table 10501, not Atlas.",
+      "columns": [
+        {
+          "name": "source_id",
+          "description": "Atlas catalogue id for this ingest — always ssb-10501."
+        },
+        {
+          "name": "first_name",
+          "description": "The first name, properly cased as SSB publishes it. Only names used by 200+ persons in Norway at year-end appear here — this is NOT an exhaustive list of Norwegian first names."
+        },
+        {
+          "name": "sex",
+          "description": "male / female, derived from SSB's name-code gender prefix. Never 'all' — every row here is gender-specific."
+        },
+        {
+          "name": "year",
+          "description": "Calendar year. 2013-2025."
+        },
+        {
+          "name": "contents_code",
+          "description": "SSB ContentsCode — degenerate, always 'Personer' for this table."
+        },
+        {
+          "name": "contents_label",
+          "description": "Human-readable gloss for contents_code."
+        },
+        {
+          "name": "value",
+          "description": "Count of persons with this first name at year-end. NULL where SSB suppressed the cell (200 or fewer bearers that year)."
+        },
+        {
+          "name": "status",
+          "description": "SSB's own suppression or quality marker for this cell. NULL when value is present."
+        },
+        {
+          "name": "updated_at",
+          "description": "When Atlas last loaded this row from the upstream."
+        }
+      ],
+      "built_from": [
+        {
+          "parent_kind": "model",
+          "model_name": "indicators__ssb_10501",
+          "title": null,
+          "description_short": "Per-source indicator passthrough for SSB 10501 — persons by first name, per year."
+        }
+      ],
+      "sample_query": "https://api-atlas.urbalurba.com/indicators__ssb_10501?limit=5",
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__ssb_10501"
+    },
+    {
+      "kind": "view",
       "view_id": "indicators__ssb_10826",
       "mart_name": "mart_indicators__ssb_10826",
       "api_v1_name": "indicators__ssb_10826",
@@ -21415,6 +21822,59 @@
       ],
       "sample_query": "https://api-atlas.urbalurba.com/indicators__ssb_12451?limit=5",
       "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__ssb_12451"
+    },
+    {
+      "kind": "view",
+      "view_id": "indicators__ssb_12891",
+      "mart_name": "mart_indicators__ssb_12891",
+      "api_v1_name": "indicators__ssb_12891",
+      "title": "Etternavn brukt av 200 personer eller flere",
+      "description_short": "Per-source indicator data for ssb-12891 (SSB), at the publisher's own grain.",
+      "description_full": "Per-source indicator data for ssb-12891 (SSB), at the publisher's own grain.\n\nSurnames used by 200 or more persons, per year — a reference list added for identifying\nNorwegian surnames in free text, alongside mart_indicators__ssb_10501 (first names). One\nrow per (surname, year). Nationwide only; SSB publishes no kommune/fylke breakdown for this\ntable.\n\n🔴 NOT AN EXHAUSTIVE SURNAME LIST. Only surnames used by 200 or more persons appear as a\nrow. Unlike the first-name caveat above, this threshold is not an arbitrary\ndisclosure-avoidance cutoff — it is the exact threshold Norwegian naming law uses to\nprotect rarer surnames from being freely adopted by others.\n🔵 stability:source — the column set here follows SSB table 12891, not Atlas.",
+      "columns": [
+        {
+          "name": "source_id",
+          "description": "Atlas catalogue id for this ingest — always ssb-12891."
+        },
+        {
+          "name": "surname",
+          "description": "The surname, properly cased as SSB publishes it. Only surnames used by 200+ persons appear here — this is NOT an exhaustive list of Norwegian surnames, and the 200-person floor is Norwegian naming law's own protection boundary."
+        },
+        {
+          "name": "year",
+          "description": "Calendar year. 2018-2025."
+        },
+        {
+          "name": "contents_code",
+          "description": "SSB ContentsCode — degenerate, always 'Personer' for this table."
+        },
+        {
+          "name": "contents_label",
+          "description": "Human-readable gloss for contents_code."
+        },
+        {
+          "name": "value",
+          "description": "Count of persons with this surname at year-end. NULL where SSB suppressed the cell (200 or fewer bearers that year)."
+        },
+        {
+          "name": "status",
+          "description": "SSB's own suppression or quality marker for this cell. NULL when value is present."
+        },
+        {
+          "name": "updated_at",
+          "description": "When Atlas last loaded this row from the upstream."
+        }
+      ],
+      "built_from": [
+        {
+          "parent_kind": "model",
+          "model_name": "indicators__ssb_12891",
+          "title": null,
+          "description_short": "Per-source indicator passthrough for SSB 12891 — surnames used by 200+ persons, per year."
+        }
+      ],
+      "sample_query": "https://api-atlas.urbalurba.com/indicators__ssb_12891?limit=5",
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__ssb_12891"
     },
     {
       "kind": "view",

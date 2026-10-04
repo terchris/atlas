@@ -1,0 +1,58 @@
+# Bootstrapped by bootstrap-manifest.ts; auto-fillable fields populated by fill-manifest-todos.ts.
+# The dimensions: block is hand-authored — editorial semantics the catalogue can't compute.
+# After commit, this file is human-authored — ingest runs do NOT modify it.
+
+source_id: ssb-12891
+upstream_id: "12891"
+upstream_url: https://www.ssb.no/statbank/table/12891
+upstream_landing_page: https://www.ssb.no/statbank/table/12891
+upstream_title: "12891: Etternavn brukt av 200 personer eller flere 2018-2025"
+description: "Surnames used by 200 or more persons in Norway, per year — 3,706 surnames, 2018-2025. NOT an exhaustive surname list: Norwegian naming law protects surnames held by 200 or fewer people, which is exactly why this table's threshold sits there. Added as a reference list for identifying Norwegian surnames in free text, alongside ssb-10501 (first names)."
+publisher: Statistisk sentralbyrå
+license: NLOD
+license_url: https://data.norge.no/nlod/no/2.0
+periodicity: P1Y
+eu_theme: SOCI
+attribution: "Kilde: Statistisk sentralbyrå, tabell 12891"
+
+tags:
+  provider: ssb
+  topic: demographics
+  geo: national
+  cadence: annual
+
+dimensions:
+  - code: Etternavn
+    meaning: Surname code, uppercased, no gender prefix (unlike ssb-10501's Fornavn)
+    value_format: "e.g. ABBAS; 3,706 codes total"
+    notes: Only surnames used by 200+ persons at year-end appear at all. The paired label (e.g. "Abbas") is properly cased.
+  - code: ContentsCode
+    meaning: Statistic measure
+    value_format: 1 code
+    notes: Degenerate — the table exposes exactly one statistic, "Personer" (count of persons with this surname).
+  - code: Tid
+    meaning: Year
+    value_format: 4-digit year as text
+    notes: 2018-2025 (8 years) — a shorter series than ssb-10501's 2013-2025; SSB started publishing this table later.
+
+lifecycle: beta
+time_coverage:
+  start: 2018
+  end: 2025
+keywords:
+  - names
+  - surname
+  - demographics
+  - text-scrubbing
+  - reference-list
+methodology_notes: |
+  Covers surnames used by 200 or more persons in Norway at year-end — NOT an exhaustive list of
+  Norwegian surnames. The 200-person threshold is not an arbitrary disclosure-avoidance cutoff: it
+  is the exact threshold Norwegian naming law uses to protect rarer surnames from being freely
+  adopted by others (a surname held by 200 or fewer people is protected; this table's coverage
+  boundary follows that legal line). A surname with fewer than 200 bearers never appears as a row,
+  in any year. Added primarily as a name-scrubbing reference list alongside ssb-10501 (first names),
+  not as a demographic indicator in the usual Atlas sense — it carries no kommune/fylke breakdown
+  because SSB publishes it at national resolution only.
+suggested_joins:
+  - ssb-10501

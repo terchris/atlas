@@ -214,6 +214,9 @@ ssb-09429,Nivaa,Education level (NUS2000),7 codes,"Grunnskole (primary), videreg
 ssb-09429,Kjonn,Sex,3 codes,"""0"" both, ""1"" men, ""2"" women"
 ssb-09429,ContentsCode,Statistic measure,2 codes,Person count and percentage share at the given education level
 ssb-09429,Tid,Year,4-digit year as text,1970–2024 (55 years)
+ssb-10501,Fornavn,"First name, as a composite code (leading digit 1=girl name, 2=boy name, then the uppercased name)","e.g. 1ABIGAIL (girl), 2ADRIAN (boy); 2,152 codes total, 1,134 girl + 1,018 boy","Only names used by 200+ persons at year-end appear at all. The paired label (e.g. ""Abigail"") is properly cased with no gender prefix."
+ssb-10501,ContentsCode,Statistic measure,1 code,"Degenerate — the table exposes exactly one statistic, ""Personer"" (count of persons with this name)."
+ssb-10501,Tid,Year,4-digit year as text,"2013-2025 (13 years). 13.6% of cells are suppressed (value null, status ""."") where a name's count dropped to 200 or fewer in that year."
 ssb-10826,Region,Region (city-total / bydel / unknown-bydel / historical bydel),Alphanumeric SSB bydel-region code,"99 codes covering Oslo, Stavanger, Bergen and Trondheim, including historical rows and city-total rows."
 ssb-10826,Kjonn,Sex,2 codes,"""1"" Menn (men), ""2"" Kvinner (women)"
 ssb-10826,Alder,Single-year age,3-character text code,"""000"" through ""104"" + ""105+"" residual; 106 codes total"
@@ -235,6 +238,9 @@ ssb-12451,region_code,"Kommune of residence (bostedskommune), SSB-format","Numer
 ssb-12451,period,"Quarter, SSB's own code (e.g. 2026K2 = 2026, 2nd quarter)","YYYYKQ text, stored verbatim — not parsed into year+quarter columns","Same convention as ssb-12944's ""period stored as text, not parsed"" — keeps this module a faithful passthrough. 105 distinct values at ingest time, 2000K2 through 2026K2."
 ssb-12451,contents_code,Which sykefravær figure this row's value is — not a format variant,Sykefraversprosent | Sykefraversdagsverk,"v1 scope is these two headline measures only. The table also has ArbeidstakereSykefra / ArbeidstakereSykePro (a different metric — count/share of employees with ANY sick-leave spell, not days-weighted) and four *Endr* variants that are pure year-over-year deltas of the measures above, trivially re-derivable from the raw quarterly series — none ingested, per PLAN-013's [Q2]."
 ssb-12451,value,The measure's value for this kommune and quarter,"Numeric (percent for Sykefraversprosent, lost workdays for Sykefraversdagsverk)","No suppression marker observed on any cell checked live, including Norway's smallest kommune by population (Utsira) — not a blanket claim that no cell in this table is ever suppressed, just what the sampled cells showed. `status` carries SSB's own cell-level flag when one exists (none observed at ingest time)."
+ssb-12891,Etternavn,"Surname code, uppercased, no gender prefix (unlike ssb-10501's Fornavn)","e.g. ABBAS; 3,706 codes total","Only surnames used by 200+ persons at year-end appear at all. The paired label (e.g. ""Abbas"") is properly cased."
+ssb-12891,ContentsCode,Statistic measure,1 code,"Degenerate — the table exposes exactly one statistic, ""Personer"" (count of persons with this surname)."
+ssb-12891,Tid,Year,4-digit year as text,2018-2025 (8 years) — a shorter series than ssb-10501's 2013-2025; SSB started publishing this table later.
 ssb-12944,Region,Region (kommune / fylke / nasjon / bydel / grunnkrets / historical),"Numeric code: 0 national, 2-digit fylke, 4-digit kommune, 6-digit bydel",1036 codes
 ssb-12944,Alder,Age band,6 codes,"999A (all ages), 00-17, 18-34, 35-49, 50-66, 067+"
 ssb-12944,ContentsCode,Statistic measure,2 codes,"PersonerSeksti (count) and EUskalaSeksti (% below 60% of median, EU scale, 3-year persistent)"

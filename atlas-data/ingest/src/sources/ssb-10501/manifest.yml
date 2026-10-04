@@ -1,0 +1,59 @@
+# Bootstrapped by bootstrap-manifest.ts; auto-fillable fields populated by fill-manifest-todos.ts.
+# The dimensions: block is hand-authored — editorial semantics the catalogue can't compute.
+# After commit, this file is human-authored — ingest runs do NOT modify it.
+
+source_id: ssb-10501
+upstream_id: "10501"
+upstream_url: https://www.ssb.no/statbank/table/10501
+upstream_landing_page: https://www.ssb.no/statbank/table/10501
+upstream_title: "10501: Personer, etter jentenavn og guttenavn 2013-2025"
+description: "Persons by first name, per year — 2,152 first names used by 200 or more persons in Norway at year-end, 2013-2025. NOT an exhaustive name list: a name held by fewer than 200 people never appears. Added as a reference list for identifying Norwegian first names in free text."
+publisher: Statistisk sentralbyrå
+license: NLOD
+license_url: https://data.norge.no/nlod/no/2.0
+periodicity: P1Y
+eu_theme: SOCI
+attribution: "Kilde: Statistisk sentralbyrå, tabell 10501"
+
+tags:
+  provider: ssb
+  topic: demographics
+  geo: national
+  cadence: annual
+
+dimensions:
+  - code: Fornavn
+    meaning: First name, as a composite code (leading digit 1=girl name, 2=boy name, then the uppercased name)
+    value_format: "e.g. 1ABIGAIL (girl), 2ADRIAN (boy); 2,152 codes total, 1,134 girl + 1,018 boy"
+    notes: Only names used by 200+ persons at year-end appear at all. The paired label (e.g. "Abigail") is properly cased with no gender prefix.
+  - code: ContentsCode
+    meaning: Statistic measure
+    value_format: 1 code
+    notes: Degenerate — the table exposes exactly one statistic, "Personer" (count of persons with this name).
+  - code: Tid
+    meaning: Year
+    value_format: 4-digit year as text
+    notes: 2013-2025 (13 years). 13.6% of cells are suppressed (value null, status ".") where a name's count dropped to 200 or fewer in that year.
+
+lifecycle: beta
+time_coverage:
+  start: 2013
+  end: 2025
+keywords:
+  - names
+  - first-name
+  - demographics
+  - text-scrubbing
+  - reference-list
+methodology_notes: |
+  Covers first names used by 200 or more persons in Norway at year-end — NOT an exhaustive list of
+  Norwegian first names. A name with fewer than 200 bearers in a given year does not appear as a row
+  at all, in any year. Within the names that do appear, per-year suppression still applies: a name
+  can clear the threshold in some years and fall below it in others (measured: 13.6% of cells are
+  suppressed). Gender is encoded as a leading digit on the composite `Fornavn` code (1=girl, 2=boy),
+  not as a separate dimension. Hyphenated names are counted together with the name before the hyphen
+  for 2021-2024 specifically (SSB's own table note). Added primarily as a name-scrubbing reference
+  list, not as a demographic indicator in the usual Atlas sense — it carries no kommune/fylke
+  breakdown because SSB publishes it at national resolution only.
+suggested_joins:
+  - ssb-12891
