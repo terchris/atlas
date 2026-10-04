@@ -1,0 +1,11 @@
+code,label_nb,label_en,sort_order
+beredskap,Beredskap og førstehjelp,Emergency preparedness and first aid,1
+sosialt,Sosialt fellesskap,Social connection,2
+inkludering,Språk og inkludering,Language and inclusion,3
+barn_unge,"Barn, unge og familier","Children, youth and families",4
+helse,Helse og mestring,Health and coping,5
+rus_bolig,"Rus, bolig og fattigdom","Addiction, housing and poverty",6
+arbeid,Arbeid og aktivitet,Work and activity,7
+rettigheter,Rettigheter og trygghet,Rights and safety,8
+kultur,"Kultur, tro og fellesskap","Culture, faith and community",9
+samfunn,Påvirkning og samfunn,Advocacy and society,10
