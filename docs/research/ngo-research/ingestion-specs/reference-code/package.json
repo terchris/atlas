@@ -1,0 +1,44 @@
+{
+  "name": "atlas-ngo-ingest",
+  "version": "0.1.0",
+  "description": "Extractors that produce the NGO datasets. Output conforms to the generated JSON Schema in dist/schema/.",
+  "private": true,
+  "license": "ISC",
+  "scripts": {
+    "chapters": "ts-node src/sources/brreg-chapters.ts",
+    "nks": "ts-node src/sources/nks-chapters.ts",
+    "nks:activities": "ts-node src/sources/nks-activities.ts",
+    "icnpo": "ts-node src/sources/brreg-icnpo.ts",
+    "validate": "cd ../schemas/build && npm run validate:data",
+    "reconcile": "ts-node src/sources/reconcile-chapters.ts",
+    "nasjonalforeningen": "ts-node src/sources/nasjonalforeningen-chapters.ts",
+    "subunits": "ts-node src/sources/brreg-subunits.ts",
+    "frelsesarmeen": "ts-node src/sources/frelsesarmeen-chapters.ts",
+    "kirkens-bymisjon": "ts-node src/sources/kirkens-bymisjon-tilbud.ts",
+    "site": "ts-node src/sources/site-chapters.ts",
+    "hierarchy": "ts-node src/sources/upgrade-hierarchy.ts",
+    "catalogue": "ts-node src/sources/build-activity-catalogue.ts",
+    "organizations": "ts-node src/sources/build-organizations.ts",
+    "classify": "ts-node src/sources/classify-units.ts",
+    "reconciliation-csv": "ts-node src/sources/reconciliation-csv.ts",
+    "derive": "ts-node src/sources/derive-fields.ts",
+    "export:atlas": "ts-node src/sources/export-atlas.ts",
+    "descriptions": "ts-node src/sources/activity-descriptions.ts",
+    "facts": "ts-node src/sources/activity-facts.ts",
+    "redact": "ts-node src/sources/redact-descriptions.ts",
+    "redcross": "ts-node src/sources/redcross-branches.ts",
+    "chapter-activities": "ts-node src/sources/chapter-activities.ts",
+    "geocode-input": "ts-node src/sources/geocode-input.ts",
+    "speiderforbundet": "ts-node src/sources/speiderforbundet-groups.ts"
+  },
+  "dependencies": {
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
+    "cheerio": "^1.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.2"
+  }
+}
