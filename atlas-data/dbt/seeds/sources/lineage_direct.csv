@@ -104,6 +104,9 @@ indicators__udir_elevundersokelsen_mobbing,udir-elevundersokelsen-mobbing,source
 indicators__udir_fravar,udir-fravar,source
 indicators__udir_gsi,udir-gsi,source
 indicators__udir_nasjonale_prover,udir-nasjonale-prover,source
+int_ngo_chapter_registry_match,dim_brreg_enhet,model
+int_ngo_chapter_subunits,brreg-underenheter,source
+int_ngo_chapter_subunits,dim_brreg_enhet,model
 mart_activity_catalog,dim_activity,model
 mart_activity_catalog,fact_chapter_activities,model
 mart_atlas_inventory,mart_activity_catalog,model

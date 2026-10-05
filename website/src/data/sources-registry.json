@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-04",
+  "generated_at": "2026-10-05",
   "manifest_schema_id": "https://atlas.sovereignsky.no/schemas/manifest.schema.json",
   "atlas_base_url": "https://atlas.sovereignsky.no",
   "postgrest_base_url": "https://api-atlas.urbalurba.com",
@@ -311,6 +311,14 @@
           "kind": "indicators"
         },
         {
+          "name": "int_ngo_chapter_registry_match",
+          "kind": "other"
+        },
+        {
+          "name": "int_ngo_chapter_subunits",
+          "kind": "other"
+        },
+        {
           "name": "mart_atlas_inventory",
           "kind": "mart"
         },
@@ -341,6 +349,8 @@
           "shared_models": [
             "dim_brreg_enhet",
             "indicators__lottstift_momskompensasjon",
+            "int_ngo_chapter_registry_match",
+            "int_ngo_chapter_subunits",
             "mart_atlas_inventory",
             "mart_brreg_enhet",
             "mart_indicators__lottstift_momskompensasjon",
@@ -354,6 +364,8 @@
           "shared_models": [
             "dim_brreg_enhet",
             "indicators__lottstift_momskompensasjon",
+            "int_ngo_chapter_registry_match",
+            "int_ngo_chapter_subunits",
             "mart_atlas_inventory",
             "mart_brreg_enhet",
             "mart_indicators__lottstift_momskompensasjon",
@@ -560,6 +572,14 @@
           "kind": "indicators"
         },
         {
+          "name": "int_ngo_chapter_registry_match",
+          "kind": "other"
+        },
+        {
+          "name": "int_ngo_chapter_subunits",
+          "kind": "other"
+        },
+        {
           "name": "mart_atlas_inventory",
           "kind": "mart"
         },
@@ -590,6 +610,8 @@
           "shared_models": [
             "dim_brreg_enhet",
             "indicators__lottstift_momskompensasjon",
+            "int_ngo_chapter_registry_match",
+            "int_ngo_chapter_subunits",
             "mart_atlas_inventory",
             "mart_brreg_enhet",
             "mart_indicators__lottstift_momskompensasjon",
@@ -603,6 +625,8 @@
           "shared_models": [
             "dim_brreg_enhet",
             "indicators__lottstift_momskompensasjon",
+            "int_ngo_chapter_registry_match",
+            "int_ngo_chapter_subunits",
             "mart_atlas_inventory",
             "mart_brreg_enhet",
             "mart_indicators__lottstift_momskompensasjon",
@@ -817,6 +841,14 @@
           "kind": "indicators"
         },
         {
+          "name": "int_ngo_chapter_registry_match",
+          "kind": "other"
+        },
+        {
+          "name": "int_ngo_chapter_subunits",
+          "kind": "other"
+        },
+        {
           "name": "mart_atlas_inventory",
           "kind": "mart"
         },
@@ -847,6 +879,8 @@
           "shared_models": [
             "dim_brreg_enhet",
             "indicators__lottstift_momskompensasjon",
+            "int_ngo_chapter_registry_match",
+            "int_ngo_chapter_subunits",
             "mart_atlas_inventory",
             "mart_brreg_enhet",
             "mart_indicators__lottstift_momskompensasjon",
@@ -860,6 +894,8 @@
           "shared_models": [
             "dim_brreg_enhet",
             "indicators__lottstift_momskompensasjon",
+            "int_ngo_chapter_registry_match",
+            "int_ngo_chapter_subunits",
             "mart_atlas_inventory",
             "mart_brreg_enhet",
             "mart_indicators__lottstift_momskompensasjon",
@@ -1007,8 +1043,32 @@
       },
       "feedback_url": "https://www.brreg.no/om-oss/kontakt-oss/",
       "consuming_marts": [],
-      "consuming_models": [],
-      "joined_with": [],
+      "consuming_models": [
+        {
+          "name": "int_ngo_chapter_subunits",
+          "kind": "other"
+        }
+      ],
+      "joined_with": [
+        {
+          "source_id": "brreg-enheter-alle",
+          "shared_models": [
+            "int_ngo_chapter_subunits"
+          ]
+        },
+        {
+          "source_id": "brreg-frivillige",
+          "shared_models": [
+            "int_ngo_chapter_subunits"
+          ]
+        },
+        {
+          "source_id": "brreg-oppdateringer",
+          "shared_models": [
+            "int_ngo_chapter_subunits"
+          ]
+        }
+      ],
       "last_ingested_at": null,
       "latest_row_count": null,
       "total_runs": null,
