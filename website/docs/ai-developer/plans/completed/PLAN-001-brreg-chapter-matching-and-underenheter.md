@@ -13,7 +13,7 @@ scope for this PLAN and is a separate, not-yet-started PLAN.
 federated NGOs from `dim_brreg_enhet` (already ingested, pure dbt derivation, no new ingest) and the
 two unitary NGOs (Frelsesarmeen, Kirkens Bymisjon) from a new `brreg-underenheter` source — *before*
 any NGO site is scraped. This is explicitly first in the build order per
-[Q7](INVESTIGATE-ngo-research-handover.md#questions-to-answer) and lands P1 and P4 of
+[Q7](../backlog/INVESTIGATE-ngo-research-handover.md#questions-to-answer) and lands P1 and P4 of
 `atlas-model-proposals.md`.
 
 **Last Updated**: 2026-10-04
