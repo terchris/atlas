@@ -103,6 +103,13 @@ indicators__udir_elevundersokelsen_mobbing,udir-elevundersokelsen-mobbing
 indicators__udir_fravar,udir-fravar
 indicators__udir_gsi,udir-gsi
 indicators__udir_nasjonale_prover,udir-nasjonale-prover
+int_ngo_chapter_registry_match,brreg-enheter-alle
+int_ngo_chapter_registry_match,brreg-frivillige
+int_ngo_chapter_registry_match,brreg-oppdateringer
+int_ngo_chapter_subunits,brreg-enheter-alle
+int_ngo_chapter_subunits,brreg-frivillige
+int_ngo_chapter_subunits,brreg-oppdateringer
+int_ngo_chapter_subunits,brreg-underenheter
 mart_activity_catalog,redcross-branches
 mart_atlas_inventory,brreg-enheter-alle
 mart_atlas_inventory,brreg-frivillige

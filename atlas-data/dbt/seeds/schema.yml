@@ -1,5 +1,46 @@
 version: 2
 seeds:
+  - name: ref_atlas_ngo_match_rule
+    description: >-
+      One row per federated NGO (dim_ngo.structure = 'federated'), transcribed verbatim from
+      docs/research/ngo-research/ingestion-specs/brreg-chapter-matching.md's per-NGO rule table.
+      Patterns are PRE-FOLDED (Æ/Ø/Å already written as plain letters, e.g. "RODE KORS" not
+      "RØDE KORS") — int_ngo_chapter_registry_match folds the registry name the same way before
+      comparing, via the fold_norwegian_for_matching macro. A pattern author writing a real Ø
+      here would silently un-fold one side of the comparison.
+    columns:
+      - name: ngo_orgnr
+        description: The NGO's own Brreg organisasjonsnummer — matches dim_ngo.orgnr.
+        data_tests:
+          - not_null
+          - unique
+          - relationships:
+              to: ref('dim_ngo')
+              field: orgnr
+      - name: ngo_slug
+        data_tests: [not_null, unique]
+      - name: include_pattern
+        description: POSIX regex (already Æ/Ø/Å-folded) a candidate's folded name must match.
+        data_tests: [not_null]
+      - name: exclude_pattern
+        description: >-
+          POSIX regex excluding a different organisation that happens to share a word (e.g. plain
+          SPEIDER matching KFUK-KFUM too). Empty in the CSV when the NGO needs none — which dbt's
+          seed loader reads as NULL, not ''. A consumer comparing `exclude_pattern != ''` without
+          coalescing first gets NULL for those rows, and a WHERE clause treats NULL like false,
+          silently dropping every candidate row for that NGO regardless of include_pattern — a
+          real bug this exact column caused in int_ngo_chapter_registry_match, fixed there with
+          coalesce(exclude_pattern, ''), not by changing what this column contains.
+      - name: strong_pattern
+        description: >-
+          A tighter regex than include_pattern — matching it alone is "medium" confidence (no site
+          crawl exists yet to corroborate it to "high"); matching only include_pattern is "low".
+        data_tests: [not_null]
+      - name: website_host
+        description: >-
+          The NGO's own site host, used once a crawl exists to corroborate a strong name match to
+          "high" confidence. Not yet load-bearing in int_ngo_chapter_registry_match alone.
+        data_tests: [not_null]
   - name: ref_ssb_family_type
     description: SSB FamilieType labels for table 06083. 9 codes.
     columns:
@@ -204,6 +245,19 @@ seeds:
               to: ref('ref_brreg_icnpo')
               field: code
               config: {where: icnpo_code_3 != ''}
+      - name: structure
+        description: >-
+          How this NGO is registered at Brreg — federated (every local chapter its own legal
+          entity, found via brreg-chapter-matching.md) or unitary (chapters are Brreg
+          underenheter of one national entity, found via brreg-underenheter.md). Drives which of
+          the two registry-matching methods applies; PLAN-001-brreg-chapter-matching-and-
+          underenheter.md. 9 federated, 2 unitary (Frelsesarmeen, Kirkens Bymisjon) as of
+          2026-10-05 — confirmed directly against Brreg's enheter/underenheter counts for each,
+          not assumed from org type.
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: [federated, unitary]
     data_tests:
       - dbt_utils.expression_is_true:
           expression: length(orgnr) = 9

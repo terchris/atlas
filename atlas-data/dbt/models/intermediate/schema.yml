@@ -1,0 +1,119 @@
+version: 2
+models:
+  - name: int_ngo_chapter_registry_match
+    description: >-
+      The registered chapters of the nine federated NGOs, found by name pattern in
+      dim_brreg_enhet — PLAN-001-brreg-chapter-matching-and-underenheter.md phase 2. Not public;
+      an intermediate step dim_chapter's reconciliation will join against a future site-crawl
+      layer. Confidence tops out at medium here (see the model's own header) — no NGO site has
+      been crawled yet to corroborate a strong name match to high.
+    columns:
+      - name: chapter_orgnr
+        description: The chapter's own 9-digit organisasjonsnummer.
+        data_tests:
+          - not_null
+          - unique
+      - name: chapter_id
+        description: "'<ngo_slug>-<chapter_orgnr>', the conformed cross-NGO chapter identifier."
+        data_tests:
+          - not_null
+          - unique
+      - name: ngo_orgnr
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_ngo')
+              field: orgnr
+      - name: name
+        description: Legal name from Brreg, verbatim.
+        data_tests: [not_null]
+      - name: chapter_level
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: [national, regional, local, related_entity]
+      - name: is_active
+        data_tests: [not_null]
+      - name: confidence
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: [high, medium, low]
+      - name: match_method
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: [orgnr, "nameStrong+website", nameStrong, nameWeak]
+      - name: registration
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: [legal_entity]
+      - name: reconciliation
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: [registry_only]
+      - name: parent_chapter_id
+        description: The NGO's own national row's chapter_id. Null for the national row itself.
+        data_tests:
+          - relationships:
+              to: ref('int_ngo_chapter_registry_match')
+              field: chapter_id
+              config: {where: "parent_chapter_id is not null"}
+
+  - name: int_ngo_chapter_subunits
+    description: >-
+      The local units of the two unitary NGOs (Frelsesarmeen, Kirkens Bymisjon), found as Brreg
+      underenheter of their own national enhet — PLAN-001 phase 3.4. 100% precision by
+      construction (overordnetEnhet is a declared link, no name matching involved), unlike
+      int_ngo_chapter_registry_match's name-pattern approach for the federated NGOs. See the
+      model's own header for the known reconciliation gap (no dim_brreg_underenhet yet) and the
+      simplified area-splitting.
+    columns:
+      - name: chapter_orgnr
+        data_tests:
+          - not_null
+          - unique
+      - name: chapter_id
+        data_tests:
+          - not_null
+          - unique
+      - name: ngo_orgnr
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_ngo')
+              field: orgnr
+      - name: name
+        data_tests: [not_null]
+      - name: chapter_level
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: [national, regional, local, related_entity]
+      - name: is_active
+        data_tests: [not_null]
+      - name: confidence
+        description: Always 'high' — see the model header on why this register needs no tiering.
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: [high]
+      - name: registration
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: [legal_entity, sub_unit]
+      - name: reconciliation
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: [registry_only]
+      - name: parent_chapter_id
+        description: The NGO's own national row's chapter_id. Null for the national row itself.
+        data_tests:
+          - relationships:
+              to: ref('int_ngo_chapter_subunits')
+              field: chapter_id
+              config: {where: "parent_chapter_id is not null"}
