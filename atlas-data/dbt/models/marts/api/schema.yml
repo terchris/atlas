@@ -2,6 +2,7 @@ version: 2
 models:
   - name: mart_indicator_summary
     meta:
+      publisher: atlas
       stability: curated
       title: "Indicator coverage summary"
     description: |
@@ -241,6 +242,7 @@ models:
 
   - name: mart_indicator_latest_values
     meta:
+      publisher: atlas
       stability: curated
       title: "Latest indicator values per kommune"
     description: |
@@ -343,6 +345,7 @@ models:
 
   - name: mart_indicator_missing_kommuner
     meta:
+      publisher: atlas
       stability: curated
       title: "Indicator coverage gaps per kommune"
     description: |
@@ -401,6 +404,7 @@ models:
 
   - name: mart_coverage_gap_barnefattigdom
     meta:
+      publisher: atlas
       stability: curated
       title: "Child-poverty coverage gap (kommune)"
     description: |
@@ -507,6 +511,7 @@ models:
                 where: "barn_i_lavinntekt is not null and personer is not null"
   - name: mart_ngo_index
     meta:
+      publisher: atlas
       stability: curated
       title: "NGO registry"
     description: |
@@ -654,6 +659,7 @@ models:
 
   - name: mart_ngo_overview
     meta:
+      publisher: atlas
       stability: curated
       title: "NGO overview"
     description: |
@@ -709,6 +715,7 @@ models:
 
   - name: mart_activity_catalog
     meta:
+      publisher: atlas
       stability: curated
       title: "Activity catalogue (cross-NGO)"
     description: |
@@ -781,6 +788,7 @@ models:
 
   - name: mart_distrikt_summary
     meta:
+      publisher: atlas
       stability: curated
       title: "Distrikt summary"
     description: |
@@ -855,6 +863,7 @@ models:
 
   - name: mart_kommune_local_chapters
     meta:
+      publisher: atlas
       stability: curated
       title: "Local NGO chapters per kommune"
     description: |
@@ -1054,6 +1063,7 @@ models:
 
   - name: mart_atlas_inventory
     meta:
+      publisher: atlas
       stability: curated
     description: |
       What Atlas publishes: one row per endpoint with its row count, freshness and origin.
@@ -1160,6 +1170,7 @@ models:
 
   - name: mart_meta_sources
     meta:
+      publisher: atlas
       stability: curated
     description: |
       One row per ingested source: publisher, licence, coverage, freshness and what it feeds.
@@ -1399,6 +1410,7 @@ models:
         data_tests: [not_null]
   - name: mart_meta_endpoints
     meta:
+      publisher: atlas
       stability: curated
     description: |
       One row per queryable endpoint, with filterable tags. The index of this API.
@@ -1501,6 +1513,7 @@ models:
         data_tests: [not_null]
   - name: mart_meta_dimensions
     meta:
+      publisher: atlas
       stability: curated
     description: |
       One row per source and coded dimension, explaining what that column's codes mean.
@@ -2165,6 +2178,7 @@ models:
 
   - name: mart_kommune_ngo_summary
     meta:
+      publisher: atlas
       stability: curated
       title: "Voluntary organisations per kommune"
     description: |
@@ -2234,6 +2248,7 @@ models:
 
   - name: mart_kommune_ngo_totals
     meta:
+      publisher: atlas
       stability: curated
       title: "Voluntary organisations per kommune, total"
     description: |
@@ -2392,6 +2407,7 @@ models:
 
   - name: mart_unattributed_totals
     meta:
+      publisher: atlas
       stability: curated
     description: |
       The part of a published quantity that belongs to no municipality.
@@ -2499,6 +2515,7 @@ models:
           combination_of_columns: [relation, measure, reason, year]
   - name: mart_source_freshness
     meta:
+      publisher: atlas
       stability: curated
       title: "Source freshness"
     description: |
@@ -2570,6 +2587,7 @@ models:
 
   - name: mart_ingest_health
     meta:
+      publisher: atlas
       stability: curated
       title: "Ingest health"
     description: |
@@ -2677,6 +2695,7 @@ models:
 
   - name: mart_ref_atlas_service_category
     meta:
+      publisher: atlas
       stability: curated
       title: "Atlas service categories"
     description: |
@@ -2712,6 +2731,7 @@ models:
 
   - name: mart_ref_region_kind
     meta:
+      publisher: atlas
       stability: curated
       title: "Region kinds"
     description: |
@@ -5463,6 +5483,7 @@ verbatim. NULL when upstream didn't supply one."
 
   - name: mart_supply__redcross_chapter_kommune_coverage
     meta:
+      publisher: atlas
       title: "Røde Kors chapter coverage"
       stability: source
     description: |
@@ -5492,6 +5513,7 @@ All rows are 'inferred' in v1."
 
   - name: mart_dim_chapter
     meta:
+      publisher: atlas
       title: "Chapter dimension"
       stability: curated
     description: |
@@ -5563,6 +5585,7 @@ it consistently (per INVESTIGATE-multi-ngo-supply-model-extensions Q1)."
 
   - name: mart_dim_activity
     meta:
+      publisher: atlas
       title: "Activity dimension"
       stability: curated
     description: |
@@ -5596,6 +5619,7 @@ fact_chapter_activities rows can still resolve activity_id."
 
   - name: mart_chapter_kommune_coverage
     meta:
+      publisher: atlas
       title: "Chapter coverage by kommune"
       stability: curated
     description: |
@@ -5626,6 +5650,7 @@ the regional parent)."
 
   - name: mart_fact_chapter_activities
     meta:
+      publisher: atlas
       title: "Chapter activities fact"
       stability: curated
     description: |

@@ -53,6 +53,10 @@ export function viewById(id: string): View | undefined {
   return registry.views.find((v) => v.view_id === id);
 }
 
+export function viewsByPublisher(publisherId: string): View[] {
+  return registry.views.filter((v) => v.publisher?.id === publisherId);
+}
+
 /**
  * Find every view (Atlas-built dataset) reachable from this source. Walks
  * transitively through the dbt model graph: a view "uses" a source if the

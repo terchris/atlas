@@ -9,6 +9,22 @@
 # individual manifests can override via the per-source `feedback_url` field.
 
 publishers:
+  - id: atlas
+    display_name: Atlas
+    homepage: https://atlas.sovereignsky.no/
+    logo: /img/logo.svg
+    feedback_url: https://github.com/terchris/atlas/issues
+    notes: |
+      Atlas itself, for the relations it authors rather than republishes:
+      classification schemes (the NGO activity taxonomy, the chapter and
+      activity dimensions), cross-source syntheses that exist only because
+      Atlas combined multiple publishers' data (indicator coverage,
+      kommune/NGO rollups), and Atlas's own self-description (meta_sources,
+      ingest_health). No source manifest declares `publisher: Atlas` — this
+      entry is resolved by a model's `meta.publisher` field instead, read by
+      generate-sources-registry.mjs, not by the manifest cross-check every
+      other publisher goes through.
+
   - id: ssb
     display_name: Statistisk sentralbyrå
     homepage: https://www.ssb.no/

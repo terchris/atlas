@@ -72,13 +72,24 @@
   ],
   "publishers": [
     {
+      "id": "atlas",
+      "display_name": "Atlas",
+      "homepage": "https://atlas.sovereignsky.no/",
+      "logo": "/img/logo.svg",
+      "feedback_url": "https://github.com/terchris/atlas/issues",
+      "notes": "Atlas itself, for the relations it authors rather than republishes:\nclassification schemes (the NGO activity taxonomy, the chapter and\nactivity dimensions), cross-source syntheses that exist only because\nAtlas combined multiple publishers' data (indicator coverage,\nkommune/NGO rollups), and Atlas's own self-description (meta_sources,\ningest_health). No source manifest declares `publisher: Atlas` — this\nentry is resolved by a model's `meta.publisher` field instead, read by\ngenerate-sources-registry.mjs, not by the manifest cross-check every\nother publisher goes through.\n",
+      "source_count": 0,
+      "view_count": 25
+    },
+    {
       "id": "brreg",
       "display_name": "Brønnøysundregistrene",
       "homepage": "https://www.brreg.no/",
       "logo": "/img/publishers/brreg.svg",
       "feedback_url": "https://www.brreg.no/om-oss/kontakt-oss/",
       "notes": "The Brønnøysund Register Centre — the Norwegian government agency that\noperates the country's central registers. Atlas reads Enhetsregisteret\n(every registered legal entity, ~1.17M) and Frivillighetsregisteret (the\nvoluntary-organisation register, a filtered view of the same entities).\nData released under NLOD 2.0; `organisasjonsnummer` is the join key that\nmakes organisational data from any Norwegian source line up.\n\nNo logo: Brreg's mark is not offered under the same open licence as the\ndata, so the publisher page renders without one rather than\nredistributing it.\n",
-      "source_count": 5
+      "source_count": 5,
+      "view_count": 0
     },
     {
       "id": "bufdir",
@@ -87,7 +98,8 @@
       "logo": "/img/publishers/bufdir.png",
       "feedback_url": "https://www.bufdir.no/kontakt/",
       "notes": "Directorate for Children, Youth and Family Affairs. Publishes the\nBarnefattigdom kommunemonitor and related family / child-welfare\nindicators at kommune and bydel resolution. Data released under NLOD.\n",
-      "source_count": 2
+      "source_count": 2,
+      "view_count": 0
     },
     {
       "id": "fhi",
@@ -96,7 +108,8 @@
       "logo": "/img/publishers/fhi.png",
       "feedback_url": "https://www.fhi.no/skjema/kontakt-folkehelseinstituttet/",
       "notes": "Norwegian Institute of Public Health. Publishes the Folkehelseprofiler\nand the underlying Folkehelsestatistikk via statistikk.fhi.no.\nMost tables use 3-year rolling averages and standardised ratios (SMR)\nto compare kommune-level health outcomes.\n",
-      "source_count": 21
+      "source_count": 21,
+      "view_count": 0
     },
     {
       "id": "husbanken",
@@ -105,7 +118,8 @@
       "logo": "/img/publishers/husbanken.svg",
       "feedback_url": "https://www.husbanken.no/om-husbanken/kontakt/",
       "notes": "The Norwegian State Housing Bank. Publishes housing-support\nstatistikkbank data (bostøtte, startlån) per kommune — the housing\nhalf of the income/welfare picture Atlas's SSB and NAV sources do not\ncarry on their own.\n",
-      "source_count": 1
+      "source_count": 1,
+      "view_count": 0
     },
     {
       "id": "imdi",
@@ -114,7 +128,8 @@
       "logo": "/img/publishers/imdi.png",
       "feedback_url": "https://www.imdi.no/om-imdi/kontakt-oss/",
       "notes": "The Directorate of Integration and Diversity. Publishes refugee\nresettlement figures (bosettingstall) and immigration statistics by\nreason and country background, per kommune and year. Atlas's existing\nFHI-mediated immigration figures (innvkat, innvandrere) describe *who*;\nIMDi's data is the *when/where* resettlement-flow signal neither of\nthose carries.\n",
-      "source_count": 1
+      "source_count": 1,
+      "view_count": 0
     },
     {
       "id": "lottstift",
@@ -123,7 +138,8 @@
       "logo": "/img/publishers/lottstift.svg",
       "feedback_url": "https://lottstift.no/kontakt-oss/",
       "notes": "The Norwegian Gaming and Foundation Authority. Administers annual\nVAT-compensation allocations to voluntary organisations\n(momskompensasjon) — the financial-resolution half of the Norwegian\nNGO sector that Brreg's own Frivillighetsregisteret (status/ICNPO\ncategory, already in `dim_brreg_enhet`) does not carry on its own.\n",
-      "source_count": 1
+      "source_count": 1,
+      "view_count": 0
     },
     {
       "id": "nav",
@@ -132,7 +148,8 @@
       "logo": "/img/publishers/nav.svg",
       "feedback_url": "https://www.nav.no/kontaktoss",
       "notes": "The Norwegian Labour and Welfare Administration. Publishes open\nlabour-market and benefits statistics — registered unemployment,\ndisability benefit (uføretrygd), work-assessment allowance (AAP) and\nsick-leave figures — mostly as monthly Excel releases per kommune.\n`display_name` is the formal directorate name; the public brand is\n\"NAV\", used in `publisher:` on every NAV manifest to match.\n",
-      "source_count": 3
+      "source_count": 3,
+      "view_count": 0
     },
     {
       "id": "redcross",
@@ -141,7 +158,8 @@
       "logo": "/img/publishers/redcross.svg",
       "feedback_url": "https://www.rodekors.no/kontakt-oss/",
       "notes": "Norwegian Red Cross. Source of NGO-supply data via the public\nOrganizations API (branches and per-branch activities).\n",
-      "source_count": 1
+      "source_count": 1,
+      "view_count": 0
     },
     {
       "id": "ssb",
@@ -150,7 +168,8 @@
       "logo": "/img/publishers/ssb.svg",
       "feedback_url": "https://www.ssb.no/omssb/kontakt-oss",
       "notes": "Norway's national statistics office. Maintains the StatBank\n(statistikkbanken) — the canonical source of demographic, economic,\nand social indicators at kommune, fylke, and national resolution.\nData released under NLOD; tables identified by numeric IDs preserved\nwith leading zeros (e.g. table 07459).\n",
-      "source_count": 20
+      "source_count": 20,
+      "view_count": 0
     },
     {
       "id": "udir",
@@ -159,7 +178,8 @@
       "logo": "/img/publishers/udir.png",
       "feedback_url": "https://www.udir.no/om-udir/kontakt-oss/",
       "notes": "The Directorate for Education and Training. Publishes school-level\nregister data (GSI — Grunnskolens Informasjonssystem), the annual\npupil survey (Elevundersøkelsen: trivsel, mobbing) and absence\nstatistics, at a sharper resolution than Atlas's existing FHI-mediated\nbullying figure (`fhi-mobbing`, a 3-year rolling 7th+10th-grade\naggregate).\n",
-      "source_count": 4
+      "source_count": 4,
+      "view_count": 0
     }
   ],
   "sources": [
@@ -16725,7 +16745,13 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/activity_catalog?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_activity_catalog"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_activity_catalog",
+      "publisher": {
+        "id": "atlas",
+        "display_name": "Atlas",
+        "homepage": "https://atlas.sovereignsky.no/",
+        "logo": "/img/logo.svg"
+      }
     },
     {
       "kind": "view",
@@ -17338,7 +17364,13 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/atlas_inventory?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_atlas_inventory"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_atlas_inventory",
+      "publisher": {
+        "id": "atlas",
+        "display_name": "Atlas",
+        "homepage": "https://atlas.sovereignsky.no/",
+        "logo": "/img/logo.svg"
+      }
     },
     {
       "kind": "view",
@@ -17747,7 +17779,8 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/brreg_enhet?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_brreg_enhet"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_brreg_enhet",
+      "publisher": null
     },
     {
       "kind": "view",
@@ -17777,7 +17810,8 @@
       ],
       "built_from": [],
       "sample_query": "https://api-atlas.urbalurba.com/bufdir_indicator_alias?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_bufdir_indicator_alias"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_bufdir_indicator_alias",
+      "publisher": null
     },
     {
       "kind": "view",
@@ -17814,7 +17848,13 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/chapter_kommune_coverage?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_chapter_kommune_coverage"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_chapter_kommune_coverage",
+      "publisher": {
+        "id": "atlas",
+        "display_name": "Atlas",
+        "homepage": "https://atlas.sovereignsky.no/",
+        "logo": "/img/logo.svg"
+      }
     },
     {
       "kind": "view",
@@ -17863,7 +17903,13 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/coverage_gap_barnefattigdom?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_coverage_gap_barnefattigdom"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_coverage_gap_barnefattigdom",
+      "publisher": {
+        "id": "atlas",
+        "display_name": "Atlas",
+        "homepage": "https://atlas.sovereignsky.no/",
+        "logo": "/img/logo.svg"
+      }
     },
     {
       "kind": "view",
@@ -17904,7 +17950,13 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/dim_activity?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_dim_activity"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_dim_activity",
+      "publisher": {
+        "id": "atlas",
+        "display_name": "Atlas",
+        "homepage": "https://atlas.sovereignsky.no/",
+        "logo": "/img/logo.svg"
+      }
     },
     {
       "kind": "view",
@@ -17989,7 +18041,13 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/dim_chapter?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_dim_chapter"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_dim_chapter",
+      "publisher": {
+        "id": "atlas",
+        "display_name": "Atlas",
+        "homepage": "https://atlas.sovereignsky.no/",
+        "logo": "/img/logo.svg"
+      }
     },
     {
       "kind": "view",
@@ -18046,7 +18104,8 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/dim_fylke?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_dim_fylke"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_dim_fylke",
+      "publisher": null
     },
     {
       "kind": "view",
@@ -18113,7 +18172,8 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/dim_kommune?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_dim_kommune"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_dim_kommune",
+      "publisher": null
     },
     {
       "kind": "view",
@@ -18143,7 +18203,8 @@
       ],
       "built_from": [],
       "sample_query": "https://api-atlas.urbalurba.com/dim_postnummer?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_dim_postnummer"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_dim_postnummer",
+      "publisher": null
     },
     {
       "kind": "view",
@@ -18198,7 +18259,13 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/distrikt_summary?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_distrikt_summary"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_distrikt_summary",
+      "publisher": {
+        "id": "atlas",
+        "display_name": "Atlas",
+        "homepage": "https://atlas.sovereignsky.no/",
+        "logo": "/img/logo.svg"
+      }
     },
     {
       "kind": "view",
@@ -18255,7 +18322,13 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/fact_chapter_activities?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_fact_chapter_activities"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_fact_chapter_activities",
+      "publisher": {
+        "id": "atlas",
+        "display_name": "Atlas",
+        "homepage": "https://atlas.sovereignsky.no/",
+        "logo": "/img/logo.svg"
+      }
     },
     {
       "kind": "view",
@@ -18312,7 +18385,13 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/indicator_latest_values?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicator_latest_values"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicator_latest_values",
+      "publisher": {
+        "id": "atlas",
+        "display_name": "Atlas",
+        "homepage": "https://atlas.sovereignsky.no/",
+        "logo": "/img/logo.svg"
+      }
     },
     {
       "kind": "view",
@@ -18355,7 +18434,13 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/indicator_missing_kommuner?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicator_missing_kommuner"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicator_missing_kommuner",
+      "publisher": {
+        "id": "atlas",
+        "display_name": "Atlas",
+        "homepage": "https://atlas.sovereignsky.no/",
+        "logo": "/img/logo.svg"
+      }
     },
     {
       "kind": "view",
@@ -18438,7 +18523,13 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/indicator_summary?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicator_summary"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicator_summary",
+      "publisher": {
+        "id": "atlas",
+        "display_name": "Atlas",
+        "homepage": "https://atlas.sovereignsky.no/",
+        "logo": "/img/logo.svg"
+      }
     },
     {
       "kind": "view",
@@ -18531,7 +18622,8 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/indicators__bufdir_barnefattigdom?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__bufdir_barnefattigdom"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__bufdir_barnefattigdom",
+      "publisher": null
     },
     {
       "kind": "view",
@@ -18624,7 +18716,8 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/indicators__bufdir_barnevern?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__bufdir_barnevern"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__bufdir_barnevern",
+      "publisher": null
     },
     {
       "kind": "view",
@@ -18717,7 +18810,8 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/indicators__fhi_alkohol?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__fhi_alkohol"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__fhi_alkohol",
+      "publisher": null
     },
     {
       "kind": "view",
@@ -18802,7 +18896,8 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/indicators__fhi_befolkning?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__fhi_befolkning"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__fhi_befolkning",
+      "publisher": null
     },
     {
       "kind": "view",
@@ -18887,7 +18982,8 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/indicators__fhi_befolkningsvekst?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__fhi_befolkningsvekst"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__fhi_befolkningsvekst",
+      "publisher": null
     },
     {
       "kind": "view",
@@ -18972,7 +19068,8 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/indicators__fhi_bor_alene?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__fhi_bor_alene"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__fhi_bor_alene",
+      "publisher": null
     },
     {
       "kind": "view",
@@ -19065,7 +19162,8 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/indicators__fhi_depresjon?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__fhi_depresjon"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__fhi_depresjon",
+      "publisher": null
     },
     {
       "kind": "view",
@@ -19158,7 +19256,8 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/indicators__fhi_fortrolig_venn?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__fhi_fortrolig_venn"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__fhi_fortrolig_venn",
+      "publisher": null
     },
     {
       "kind": "view",
@@ -19251,7 +19350,8 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/indicators__fhi_hasj?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__fhi_hasj"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__fhi_hasj",
+      "publisher": null
     },
     {
       "kind": "view",
@@ -19336,7 +19436,8 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/indicators__fhi_innvandrere?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__fhi_innvandrere"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__fhi_innvandrere",
+      "publisher": null
     },
     {
       "kind": "view",
@@ -19425,7 +19526,8 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/indicators__fhi_innvkat?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__fhi_innvkat"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__fhi_innvkat",
+      "publisher": null
     },
     {
       "kind": "view",
@@ -19514,7 +19616,8 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/indicators__fhi_kpr_1aar?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__fhi_kpr_1aar"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__fhi_kpr_1aar",
+      "publisher": null
     },
     {
       "kind": "view",
@@ -19607,7 +19710,8 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/indicators__fhi_livskvalitet?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__fhi_livskvalitet"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__fhi_livskvalitet",
+      "publisher": null
     },
     {
       "kind": "view",
@@ -19700,7 +19804,8 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/indicators__fhi_mediebruk_some?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__fhi_mediebruk_some"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__fhi_mediebruk_some",
+      "publisher": null
     },
     {
       "kind": "view",
@@ -19793,7 +19898,8 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/indicators__fhi_mediebruk_spill?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__fhi_mediebruk_spill"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__fhi_mediebruk_spill",
+      "publisher": null
     },
     {
       "kind": "view",
@@ -19886,7 +19992,8 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/indicators__fhi_mediebruk_underhold?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__fhi_mediebruk_underhold"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__fhi_mediebruk_underhold",
+      "publisher": null
     },
     {
       "kind": "view",
@@ -19971,7 +20078,8 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/indicators__fhi_mobbing?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__fhi_mobbing"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__fhi_mobbing",
+      "publisher": null
     },
     {
       "kind": "view",
@@ -20060,7 +20168,8 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/indicators__fhi_neet?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__fhi_neet"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__fhi_neet",
+      "publisher": null
     },
     {
       "kind": "view",
@@ -20149,7 +20258,8 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/indicators__fhi_prognose?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__fhi_prognose"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__fhi_prognose",
+      "publisher": null
     },
     {
       "kind": "view",
@@ -20238,7 +20348,8 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/indicators__fhi_selvmord?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__fhi_selvmord"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__fhi_selvmord",
+      "publisher": null
     },
     {
       "kind": "view",
@@ -20331,7 +20442,8 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/indicators__fhi_smertestillende?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__fhi_smertestillende"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__fhi_smertestillende",
+      "publisher": null
     },
     {
       "kind": "view",
@@ -20428,7 +20540,8 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/indicators__fhi_trangbodd?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__fhi_trangbodd"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__fhi_trangbodd",
+      "publisher": null
     },
     {
       "kind": "view",
@@ -20521,7 +20634,8 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/indicators__fhi_vgs_gjennomforing?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__fhi_vgs_gjennomforing"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__fhi_vgs_gjennomforing",
+      "publisher": null
     },
     {
       "kind": "view",
@@ -20582,7 +20696,8 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/indicators__husbanken_bostotte?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__husbanken_bostotte"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__husbanken_bostotte",
+      "publisher": null
     },
     {
       "kind": "view",
@@ -20639,7 +20754,8 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/indicators__imdi_bosetting?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__imdi_bosetting"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__imdi_bosetting",
+      "publisher": null
     },
     {
       "kind": "view",
@@ -20704,7 +20820,8 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/indicators__lottstift_momskompensasjon?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__lottstift_momskompensasjon"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__lottstift_momskompensasjon",
+      "publisher": null
     },
     {
       "kind": "view",
@@ -20773,7 +20890,8 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/indicators__nav_aap?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__nav_aap"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__nav_aap",
+      "publisher": null
     },
     {
       "kind": "view",
@@ -20842,7 +20960,8 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/indicators__nav_helt_ledige?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__nav_helt_ledige"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__nav_helt_ledige",
+      "publisher": null
     },
     {
       "kind": "view",
@@ -20915,7 +21034,8 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/indicators__nav_uforetrygd?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__nav_uforetrygd"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__nav_uforetrygd",
+      "publisher": null
     },
     {
       "kind": "view",
@@ -20988,7 +21108,8 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/indicators__ssb_06083?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__ssb_06083"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__ssb_06083",
+      "publisher": null
     },
     {
       "kind": "view",
@@ -21053,7 +21174,8 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/indicators__ssb_06913?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__ssb_06913"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__ssb_06913",
+      "publisher": null
     },
     {
       "kind": "view",
@@ -21126,7 +21248,8 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/indicators__ssb_06944?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__ssb_06944"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__ssb_06944",
+      "publisher": null
     },
     {
       "kind": "view",
@@ -21187,7 +21310,8 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/indicators__ssb_06947?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__ssb_06947"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__ssb_06947",
+      "publisher": null
     },
     {
       "kind": "view",
@@ -21268,7 +21392,8 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/indicators__ssb_07459?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__ssb_07459"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__ssb_07459",
+      "publisher": null
     },
     {
       "kind": "view",
@@ -21325,7 +21450,8 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/indicators__ssb_08484?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__ssb_08484"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__ssb_08484",
+      "publisher": null
     },
     {
       "kind": "view",
@@ -21386,7 +21512,8 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/indicators__ssb_08487?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__ssb_08487"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__ssb_08487",
+      "publisher": null
     },
     {
       "kind": "view",
@@ -21447,7 +21574,8 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/indicators__ssb_08764?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__ssb_08764"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__ssb_08764",
+      "publisher": null
     },
     {
       "kind": "view",
@@ -21504,7 +21632,8 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/indicators__ssb_09405?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__ssb_09405"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__ssb_09405",
+      "publisher": null
     },
     {
       "kind": "view",
@@ -21561,7 +21690,8 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/indicators__ssb_09406?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__ssb_09406"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__ssb_09406",
+      "publisher": null
     },
     {
       "kind": "view",
@@ -21638,7 +21768,8 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/indicators__ssb_09429?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__ssb_09429"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__ssb_09429",
+      "publisher": null
     },
     {
       "kind": "view",
@@ -21695,7 +21826,8 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/indicators__ssb_10501?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__ssb_10501"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__ssb_10501",
+      "publisher": null
     },
     {
       "kind": "view",
@@ -21780,7 +21912,8 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/indicators__ssb_10826?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__ssb_10826"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__ssb_10826",
+      "publisher": null
     },
     {
       "kind": "view",
@@ -21841,7 +21974,8 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/indicators__ssb_12063?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__ssb_12063"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__ssb_12063",
+      "publisher": null
     },
     {
       "kind": "view",
@@ -21902,7 +22036,8 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/indicators__ssb_12131?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__ssb_12131"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__ssb_12131",
+      "publisher": null
     },
     {
       "kind": "view",
@@ -21963,7 +22098,8 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/indicators__ssb_12132?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__ssb_12132"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__ssb_12132",
+      "publisher": null
     },
     {
       "kind": "view",
@@ -22024,7 +22160,8 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/indicators__ssb_12292?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__ssb_12292"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__ssb_12292",
+      "publisher": null
     },
     {
       "kind": "view",
@@ -22085,7 +22222,8 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/indicators__ssb_12451?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__ssb_12451"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__ssb_12451",
+      "publisher": null
     },
     {
       "kind": "view",
@@ -22138,7 +22276,8 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/indicators__ssb_12891?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__ssb_12891"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__ssb_12891",
+      "publisher": null
     },
     {
       "kind": "view",
@@ -22219,7 +22358,8 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/indicators__ssb_12944?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__ssb_12944"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__ssb_12944",
+      "publisher": null
     },
     {
       "kind": "view",
@@ -22280,7 +22420,8 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/indicators__ssb_13995?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__ssb_13995"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__ssb_13995",
+      "publisher": null
     },
     {
       "kind": "view",
@@ -22341,7 +22482,8 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/indicators__udir_elevundersokelsen_mobbing?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__udir_elevundersokelsen_mobbing"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__udir_elevundersokelsen_mobbing",
+      "publisher": null
     },
     {
       "kind": "view",
@@ -22398,7 +22540,8 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/indicators__udir_fravar?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__udir_fravar"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__udir_fravar",
+      "publisher": null
     },
     {
       "kind": "view",
@@ -22459,7 +22602,8 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/indicators__udir_gsi?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__udir_gsi"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__udir_gsi",
+      "publisher": null
     },
     {
       "kind": "view",
@@ -22524,7 +22668,8 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/indicators__udir_nasjonale_prover?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__udir_nasjonale_prover"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__udir_nasjonale_prover",
+      "publisher": null
     },
     {
       "kind": "view",
@@ -22550,7 +22695,13 @@
       ],
       "built_from": [],
       "sample_query": "https://api-atlas.urbalurba.com/ingest_health?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_ingest_health"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_ingest_health",
+      "publisher": {
+        "id": "atlas",
+        "display_name": "Atlas",
+        "homepage": "https://atlas.sovereignsky.no/",
+        "logo": "/img/logo.svg"
+      }
     },
     {
       "kind": "view",
@@ -22639,7 +22790,8 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/kommune_befolkning_alder?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_kommune_befolkning_alder"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_kommune_befolkning_alder",
+      "publisher": null
     },
     {
       "kind": "view",
@@ -22708,7 +22860,13 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/kommune_local_chapters?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_kommune_local_chapters"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_kommune_local_chapters",
+      "publisher": {
+        "id": "atlas",
+        "display_name": "Atlas",
+        "homepage": "https://atlas.sovereignsky.no/",
+        "logo": "/img/logo.svg"
+      }
     },
     {
       "kind": "view",
@@ -22755,7 +22913,13 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/kommune_ngo_summary?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_kommune_ngo_summary"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_kommune_ngo_summary",
+      "publisher": {
+        "id": "atlas",
+        "display_name": "Atlas",
+        "homepage": "https://atlas.sovereignsky.no/",
+        "logo": "/img/logo.svg"
+      }
     },
     {
       "kind": "view",
@@ -22788,7 +22952,13 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/kommune_ngo_totals?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_kommune_ngo_totals"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_kommune_ngo_totals",
+      "publisher": {
+        "id": "atlas",
+        "display_name": "Atlas",
+        "homepage": "https://atlas.sovereignsky.no/",
+        "logo": "/img/logo.svg"
+      }
     },
     {
       "kind": "view",
@@ -22822,7 +22992,13 @@
       ],
       "built_from": [],
       "sample_query": "https://api-atlas.urbalurba.com/meta_dimensions?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_meta_dimensions"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_meta_dimensions",
+      "publisher": {
+        "id": "atlas",
+        "display_name": "Atlas",
+        "homepage": "https://atlas.sovereignsky.no/",
+        "logo": "/img/logo.svg"
+      }
     },
     {
       "kind": "view",
@@ -22867,7 +23043,13 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/meta_endpoints?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_meta_endpoints"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_meta_endpoints",
+      "publisher": {
+        "id": "atlas",
+        "display_name": "Atlas",
+        "homepage": "https://atlas.sovereignsky.no/",
+        "logo": "/img/logo.svg"
+      }
     },
     {
       "kind": "view",
@@ -22964,7 +23146,13 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/meta_sources?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_meta_sources"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_meta_sources",
+      "publisher": {
+        "id": "atlas",
+        "display_name": "Atlas",
+        "homepage": "https://atlas.sovereignsky.no/",
+        "logo": "/img/logo.svg"
+      }
     },
     {
       "kind": "view",
@@ -23041,7 +23229,13 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/ngo_index?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_ngo_index"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_ngo_index",
+      "publisher": {
+        "id": "atlas",
+        "display_name": "Atlas",
+        "homepage": "https://atlas.sovereignsky.no/",
+        "logo": "/img/logo.svg"
+      }
     },
     {
       "kind": "view",
@@ -23096,7 +23290,13 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/ngo_overview?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_ngo_overview"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_ngo_overview",
+      "publisher": {
+        "id": "atlas",
+        "display_name": "Atlas",
+        "homepage": "https://atlas.sovereignsky.no/",
+        "logo": "/img/logo.svg"
+      }
     },
     {
       "kind": "view",
@@ -23130,7 +23330,13 @@
       ],
       "built_from": [],
       "sample_query": "https://api-atlas.urbalurba.com/ref_atlas_service_category?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_ref_atlas_service_category"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_ref_atlas_service_category",
+      "publisher": {
+        "id": "atlas",
+        "display_name": "Atlas",
+        "homepage": "https://atlas.sovereignsky.no/",
+        "logo": "/img/logo.svg"
+      }
     },
     {
       "kind": "view",
@@ -23164,7 +23370,8 @@
       ],
       "built_from": [],
       "sample_query": "https://api-atlas.urbalurba.com/ref_brreg_icnpo?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_ref_brreg_icnpo"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_ref_brreg_icnpo",
+      "publisher": null
     },
     {
       "kind": "view",
@@ -23194,7 +23401,8 @@
       ],
       "built_from": [],
       "sample_query": "https://api-atlas.urbalurba.com/ref_fhi_innvkat?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_ref_fhi_innvkat"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_ref_fhi_innvkat",
+      "publisher": null
     },
     {
       "kind": "view",
@@ -23224,7 +23432,8 @@
       ],
       "built_from": [],
       "sample_query": "https://api-atlas.urbalurba.com/ref_fhi_utdann?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_ref_fhi_utdann"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_ref_fhi_utdann",
+      "publisher": null
     },
     {
       "kind": "view",
@@ -23262,7 +23471,13 @@
       ],
       "built_from": [],
       "sample_query": "https://api-atlas.urbalurba.com/ref_region_kind?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_ref_region_kind"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_ref_region_kind",
+      "publisher": {
+        "id": "atlas",
+        "display_name": "Atlas",
+        "homepage": "https://atlas.sovereignsky.no/",
+        "logo": "/img/logo.svg"
+      }
     },
     {
       "kind": "view",
@@ -23292,7 +23507,8 @@
       ],
       "built_from": [],
       "sample_query": "https://api-atlas.urbalurba.com/ref_ssb_family_type?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_ref_ssb_family_type"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_ref_ssb_family_type",
+      "publisher": null
     },
     {
       "kind": "view",
@@ -23322,7 +23538,8 @@
       ],
       "built_from": [],
       "sample_query": "https://api-atlas.urbalurba.com/ref_ssb_household_type?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_ref_ssb_household_type"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_ref_ssb_household_type",
+      "publisher": null
     },
     {
       "kind": "view",
@@ -23352,7 +23569,8 @@
       ],
       "built_from": [],
       "sample_query": "https://api-atlas.urbalurba.com/ref_ssb_nivaa?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_ref_ssb_nivaa"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_ref_ssb_nivaa",
+      "publisher": null
     },
     {
       "kind": "view",
@@ -23382,7 +23600,8 @@
       ],
       "built_from": [],
       "sample_query": "https://api-atlas.urbalurba.com/ref_un_sdg?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_ref_un_sdg"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_ref_un_sdg",
+      "publisher": null
     },
     {
       "kind": "view",
@@ -23424,7 +23643,13 @@
       ],
       "built_from": [],
       "sample_query": "https://api-atlas.urbalurba.com/source_freshness?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_source_freshness"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_source_freshness",
+      "publisher": {
+        "id": "atlas",
+        "display_name": "Atlas",
+        "homepage": "https://atlas.sovereignsky.no/",
+        "logo": "/img/logo.svg"
+      }
     },
     {
       "kind": "view",
@@ -23473,7 +23698,8 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/supply__redcross_branch_activities?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_supply__redcross_branch_activities"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_supply__redcross_branch_activities",
+      "publisher": null
     },
     {
       "kind": "view",
@@ -23558,7 +23784,8 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/supply__redcross_branches?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_supply__redcross_branches"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_supply__redcross_branches",
+      "publisher": null
     },
     {
       "kind": "view",
@@ -23595,7 +23822,13 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/supply__redcross_chapter_kommune_coverage?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_supply__redcross_chapter_kommune_coverage"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_supply__redcross_chapter_kommune_coverage",
+      "publisher": {
+        "id": "atlas",
+        "display_name": "Atlas",
+        "homepage": "https://atlas.sovereignsky.no/",
+        "logo": "/img/logo.svg"
+      }
     },
     {
       "kind": "view",
@@ -23660,7 +23893,13 @@
         }
       ],
       "sample_query": "https://api-atlas.urbalurba.com/unattributed_totals?limit=5",
-      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_unattributed_totals"
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_unattributed_totals",
+      "publisher": {
+        "id": "atlas",
+        "display_name": "Atlas",
+        "homepage": "https://atlas.sovereignsky.no/",
+        "logo": "/img/logo.svg"
+      }
     }
   ],
   "collections": [
@@ -24901,7 +25140,13 @@
               }
             ],
             "sample_query": "https://api-atlas.urbalurba.com/coverage_gap_barnefattigdom?limit=5",
-            "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_coverage_gap_barnefattigdom"
+            "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_coverage_gap_barnefattigdom",
+            "publisher": {
+              "id": "atlas",
+              "display_name": "Atlas",
+              "homepage": "https://atlas.sovereignsky.no/",
+              "logo": "/img/logo.svg"
+            }
           }
         }
       ],

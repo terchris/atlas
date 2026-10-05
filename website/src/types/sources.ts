@@ -108,6 +108,14 @@ export interface View {
   built_from: ViewBuiltFromEntry[];
   sample_query: string;
   lineage_url: string;
+  /**
+   * Set only for the relations Atlas authors itself (a classification
+   * scheme, a cross-source synthesis, Atlas's own self-description) rather
+   * than republishes — from the model's `meta.publisher` in schema.yml.
+   * Absent for the majority of views, which belong to whichever upstream
+   * publisher(s) their `built_from` sources already attribute them to.
+   */
+  publisher?: ResolvedPublisher | null;
 }
 
 export interface Source {
@@ -159,6 +167,8 @@ export interface Publisher {
   feedback_url: string;
   notes: string;
   source_count: number;
+  /** Views whose model declares `meta.publisher: <this id>` — see View.publisher. */
+  view_count: number;
 }
 
 export interface Category {

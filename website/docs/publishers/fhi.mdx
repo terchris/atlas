@@ -10,6 +10,7 @@ sidebar_label: "Folkehelseinstituttet"
     To refresh, run: npm run sources:generate */}
 
 import SourcePublisherList from '@site/src/components/sources/SourcePublisherList';
+import ViewPublisherList from '@site/src/components/sources/ViewPublisherList';
 
 # Folkehelseinstituttet
 
@@ -26,3 +27,11 @@ to compare kommune-level health outcomes.
 ## Atlas sources from Folkehelseinstituttet
 
 <SourcePublisherList publisherId={"fhi"} />
+
+## Atlas-authored relations credited to Folkehelseinstituttet
+
+Classification schemes, cross-source syntheses or self-description that Folkehelseinstituttet
+authors rather than republishes from elsewhere — set per-relation via a model's `meta.publisher`,
+not derived from any ingest.
+
+<ViewPublisherList publisherId={"fhi"} />

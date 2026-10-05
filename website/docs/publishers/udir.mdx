@@ -10,6 +10,7 @@ sidebar_label: "Utdanningsdirektoratet"
     To refresh, run: npm run sources:generate */}
 
 import SourcePublisherList from '@site/src/components/sources/SourcePublisherList';
+import ViewPublisherList from '@site/src/components/sources/ViewPublisherList';
 
 # Utdanningsdirektoratet
 
@@ -28,3 +29,11 @@ aggregate).
 ## Atlas sources from Utdanningsdirektoratet
 
 <SourcePublisherList publisherId={"udir"} />
+
+## Atlas-authored relations credited to Utdanningsdirektoratet
+
+Classification schemes, cross-source syntheses or self-description that Utdanningsdirektoratet
+authors rather than republishes from elsewhere — set per-relation via a model's `meta.publisher`,
+not derived from any ingest.
+
+<ViewPublisherList publisherId={"udir"} />
