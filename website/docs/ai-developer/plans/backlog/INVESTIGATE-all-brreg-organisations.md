@@ -24,7 +24,7 @@ This investigation stays in `backlog/` until every child PLAN has shipped (`PLAN
 | [PLAN-001-brreg-bulk-snapshot](../completed/PLAN-001-brreg-bulk-snapshot.md) | ✅ **Completed** | the one-time load of 1,174,098 enheter into `raw`, streaming, no CSV stage |
 | [PLAN-002-brreg-change-feed](../active/PLAN-002-brreg-change-feed.md) | **Active** | the daily poller — `oppdateringsid` watermark in Postgres, append-only, cursor only (never `page`), `Sletting` and `Fjernet` as the deletions |
 | [PLAN-003-brreg-dim-and-frivillig](../active/PLAN-003-brreg-dim-and-frivillig.md) | **Active** | dbt incremental → `marts.dim_brreg_enhet`, Frivillighetsregisteret enrichment, `dim_ngo` derived |
-| [PLAN-001-brreg-chapter-matching-and-underenheter](PLAN-001-brreg-chapter-matching-and-underenheter.md) | **Backlog** (3.1–3.3 of 5 done) | the underenheter follow-on below — full register, unfiltered, own change feed. Spawned from a different investigation (the NGO research handover), not this one, but delivers exactly what this one named |
+| [PLAN-001-brreg-chapter-matching-and-underenheter](../completed/PLAN-001-brreg-chapter-matching-and-underenheter.md) | ✅ **Completed** | the underenheter follow-on below — full register, unfiltered, own change feed. Spawned from a different investigation (the NGO research handover), not this one, but delivers exactly what this one named |
 
 **Three decisions taken by ops-dev on 2026-09-11** under Terje's delegation (#711), so they are
 settled rather than open: **enheter only** in the first plan (underenheter a named follow-on),
