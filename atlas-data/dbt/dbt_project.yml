@@ -189,7 +189,9 @@ seeds:
       name: text
       name_kind: text
       orgnr: text
+      ngo_orgnr: text
       slug: text
+      ngo_slug: text
       brand_name: text
       website_url: text
       tier: text

@@ -1,0 +1,10 @@
+ngo_orgnr,ngo_slug,include_pattern,exclude_pattern,strong_pattern,website_host
+864139442,redcross,\bRODE KORS\b,,\bRODE KORS\b,rodekors.no
+871033552,folkehjelp,\bNORSK FOLKEHJELP\b,,^NORSK FOLKEHJELP\b,folkehjelp.no
+970169113,diabetesforbundet,\bDIABETESFORBUNDET\b,,^DIABETESFORBUNDET\b,diabetes.no
+971322926,mental-helse,\bMENTAL HELSE\b,\bMENTAL HELSE UNGDOM\b,\bMENTAL HELSE\b,mentalhelse.no
+940190738,lhl,\bLHL\b,,^LHL\b,lhl.no
+943838240,fire-h,\b4H\b,,\b4H$,4h.no
+954877841,speiderforbundet,SPEIDER,\b(KFUK|KFUM)\b,\b(SPEIDERGRUPPE|SPEIDERGRUPPA)\b|\bNSF\b,speiding.no
+970168001,sanitetskvinnene,SANITETSFORENING|SANITETSKVINNER,,\bN K S\b|SANITETSFORENING,sanitetskvinnene.no
+938429863,nasjonalforeningen,\bHELSELAG\b|\bNASJONALFORENINGEN\b|\bDEMENSFORENING\b,,\bNASJONALFORENINGEN\b,nasjonalforeningen.no
