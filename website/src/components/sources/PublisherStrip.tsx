@@ -10,6 +10,7 @@ export default function PublisherStrip() {
     <div className={styles.publisherGrid}>
       {publishers.map((p) => {
         const logo = useBaseUrl(p.logo);
+        const total = p.source_count + p.view_count;
         return (
           <Link key={p.id} to={`/publishers/${p.id}`} className={styles.publisherCard}>
             <img
@@ -21,7 +22,7 @@ export default function PublisherStrip() {
             <h3 className={styles.publisherCardName}>{p.display_name}</h3>
             <p className={styles.publisherCardDescription}>{p.notes}</p>
             <div className={styles.publisherCardCount}>
-              {p.source_count} {p.source_count === 1 ? 'dataset' : 'datasets'}
+              {total} {total === 1 ? 'dataset' : 'datasets'}
             </div>
           </Link>
         );

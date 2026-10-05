@@ -10,6 +10,7 @@ sidebar_label: "Lotteri- og stiftelsestilsynet"
     To refresh, run: npm run sources:generate */}
 
 import SourcePublisherList from '@site/src/components/sources/SourcePublisherList';
+import ViewPublisherList from '@site/src/components/sources/ViewPublisherList';
 
 # Lotteri- og stiftelsestilsynet
 
@@ -27,3 +28,11 @@ category, already in `dim_brreg_enhet`) does not carry on its own.
 ## Atlas sources from Lotteri- og stiftelsestilsynet
 
 <SourcePublisherList publisherId={"lottstift"} />
+
+## Atlas-authored relations credited to Lotteri- og stiftelsestilsynet
+
+Classification schemes, cross-source syntheses or self-description that Lotteri- og stiftelsestilsynet
+authors rather than republishes from elsewhere — set per-relation via a model's `meta.publisher`,
+not derived from any ingest.
+
+<ViewPublisherList publisherId={"lottstift"} />

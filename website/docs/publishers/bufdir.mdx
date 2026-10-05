@@ -10,6 +10,7 @@ sidebar_label: "Barne-, ungdoms- og familiedirektoratet"
     To refresh, run: npm run sources:generate */}
 
 import SourcePublisherList from '@site/src/components/sources/SourcePublisherList';
+import ViewPublisherList from '@site/src/components/sources/ViewPublisherList';
 
 # Barne-, ungdoms- og familiedirektoratet
 
@@ -25,3 +26,11 @@ indicators at kommune and bydel resolution. Data released under NLOD.
 ## Atlas sources from Barne-, ungdoms- og familiedirektoratet
 
 <SourcePublisherList publisherId={"bufdir"} />
+
+## Atlas-authored relations credited to Barne-, ungdoms- og familiedirektoratet
+
+Classification schemes, cross-source syntheses or self-description that Barne-, ungdoms- og familiedirektoratet
+authors rather than republishes from elsewhere — set per-relation via a model's `meta.publisher`,
+not derived from any ingest.
+
+<ViewPublisherList publisherId={"bufdir"} />

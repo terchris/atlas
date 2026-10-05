@@ -10,6 +10,7 @@ sidebar_label: "Integrerings- og mangfoldsdirektoratet"
     To refresh, run: npm run sources:generate */}
 
 import SourcePublisherList from '@site/src/components/sources/SourcePublisherList';
+import ViewPublisherList from '@site/src/components/sources/ViewPublisherList';
 
 # Integrerings- og mangfoldsdirektoratet
 
@@ -28,3 +29,11 @@ those carries.
 ## Atlas sources from Integrerings- og mangfoldsdirektoratet
 
 <SourcePublisherList publisherId={"imdi"} />
+
+## Atlas-authored relations credited to Integrerings- og mangfoldsdirektoratet
+
+Classification schemes, cross-source syntheses or self-description that Integrerings- og mangfoldsdirektoratet
+authors rather than republishes from elsewhere — set per-relation via a model's `meta.publisher`,
+not derived from any ingest.
+
+<ViewPublisherList publisherId={"imdi"} />

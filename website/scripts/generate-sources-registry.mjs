@@ -362,6 +362,7 @@ sidebar_label: ${yamlScalar(publisher.display_name)}
 ${GENERATED_HEADER_COMMENT}
 
 import SourcePublisherList from '@site/src/components/sources/SourcePublisherList';
+import ViewPublisherList from '@site/src/components/sources/ViewPublisherList';
 
 # ${publisher.display_name}
 
@@ -374,6 +375,14 @@ ${publisher.notes ?? ''}
 ## Atlas sources from ${publisher.display_name}
 
 <SourcePublisherList publisherId={${JSON.stringify(publisher.id)}} />
+
+## Atlas-authored relations credited to ${publisher.display_name}
+
+Classification schemes, cross-source syntheses or self-description that ${publisher.display_name}
+authors rather than republishes from elsewhere — set per-relation via a model's \`meta.publisher\`,
+not derived from any ingest.
+
+<ViewPublisherList publisherId={${JSON.stringify(publisher.id)}} />
 `;
 }
 
@@ -478,9 +487,12 @@ function loadLineage() {
 
 /**
  * Read every mart schema.yml file and extract per-mart details for the
- * model entries: editorial title (from meta.title), description (short
- * preview + full), and columns. Returns
- * `Map<mart_name, { title, short, full, columns[] }>`.
+ * model entries: editorial title (from meta.title), the id of the
+ * publisher this mart is attributed to (from meta.publisher — set only
+ * for the relations Atlas authors itself, resolved against publishers.yaml
+ * where the `views` array is built below), description (short preview +
+ * full), and columns. Returns
+ * `Map<mart_name, { title, publisherId, short, full, columns[] }>`.
  */
 function loadMartDetails() {
   const out = new Map();
@@ -499,6 +511,7 @@ function loadMartDetails() {
         ? flat.slice(0, firstStop + 1)
         : flat.length > 200 ? flat.slice(0, 197).trimEnd() + '…' : flat;
       const title = m.meta?.title ?? null;
+      const publisherId = m.meta?.publisher ?? null;
       const columns = Array.isArray(m.columns)
         ? m.columns
             .filter((c) => typeof c?.name === 'string')
@@ -509,7 +522,7 @@ function loadMartDetails() {
                 : '',
             }))
         : [];
-      out.set(m.name, { title, short, full, columns });
+      out.set(m.name, { title, publisherId, short, full, columns });
     }
   }
   return out;
@@ -692,6 +705,7 @@ function listManifestFiles() {
 
 function main() {
   const publishers = loadPublishers();
+  const publishersById = new Map(publishers.map((p) => [p.id, p]));
   const categories = loadCategories();
   const schemaId = loadSchemaId();
   const lineage = loadLineage();
@@ -877,6 +891,22 @@ function main() {
         .map(resolveDirectParent)
         .filter(Boolean);
 
+      // meta.publisher is opt-in and rare — set only on the relations Atlas
+      // authors itself (PLAN-atlas-as-provider). An id that doesn't resolve
+      // fails the build loudly, same discipline as a manifest's `publisher:`
+      // field — a silently-dropped value is indistinguishable from "no
+      // publisher was ever set" and would misattribute nothing to no one.
+      let publisher = null;
+      if (detail.publisherId) {
+        publisher = publishersById.get(detail.publisherId);
+        if (!publisher) {
+          throw new Error(
+            `${martName}: meta.publisher '${detail.publisherId}' not found in publishers.yaml`,
+          );
+        }
+        publisher = { id: publisher.id, display_name: publisher.display_name, homepage: publisher.homepage, logo: publisher.logo };
+      }
+
       return {
         kind: 'view',
         view_id: apiV1Name,
@@ -889,13 +919,18 @@ function main() {
         built_from: builtFromParents,
         sample_query: `${POSTGREST_BASE_URL}/${apiV1Name}?limit=5`,
         lineage_url: `pathname:///lineage/#!/model/model.atlas.${martName}`,
+        publisher,
       };
     })
     .filter(Boolean);
 
   // Sort publishers by id for deterministic output.
   const publishersOut = publishers
-    .map((p) => ({ ...p, source_count: sources.filter((s) => s.publisher.id === p.id).length }))
+    .map((p) => ({
+      ...p,
+      source_count: sources.filter((s) => s.publisher.id === p.id).length,
+      view_count: views.filter((v) => v.publisher?.id === p.id).length,
+    }))
     .sort((a, b) => a.id.localeCompare(b.id));
 
   // Sort categories by order, then by id.
