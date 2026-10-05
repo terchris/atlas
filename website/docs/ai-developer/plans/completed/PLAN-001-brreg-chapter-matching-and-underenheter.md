@@ -4,18 +4,21 @@
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Backlog
+## Status: Completed 2026-10-05 (#557, #558). All three deliverables shipped: `dim_ngo.structure`,
+`int_ngo_chapter_registry_match`, `brreg-underenheter` + `int_ngo_chapter_subunits`.
+`int_ngo_chapter_reconciled` (joining against each NGO's own site crawl) was explicitly out of
+scope for this PLAN and is a separate, not-yet-started PLAN.
 
 **Goal**: Give every one of the 11 NGOs in `dim_ngo` a registry-sourced chapter row — the nine
 federated NGOs from `dim_brreg_enhet` (already ingested, pure dbt derivation, no new ingest) and the
 two unitary NGOs (Frelsesarmeen, Kirkens Bymisjon) from a new `brreg-underenheter` source — *before*
 any NGO site is scraped. This is explicitly first in the build order per
-[Q7](INVESTIGATE-ngo-research-handover.md#questions-to-answer) and lands P1 and P4 of
+[Q7](../backlog/INVESTIGATE-ngo-research-handover.md#questions-to-answer) and lands P1 and P4 of
 `atlas-model-proposals.md`.
 
 **Last Updated**: 2026-10-04
 
-**Investigation**: [INVESTIGATE-ngo-research-handover.md](INVESTIGATE-ngo-research-handover.md)
+**Investigation**: [INVESTIGATE-ngo-research-handover.md](../backlog/INVESTIGATE-ngo-research-handover.md)
 (method: `docs/research/ngo-research/ingestion-specs/brreg-chapter-matching.md` and
 `brreg-underenheter.md`)
 **Prerequisites**: None — `dim_brreg_enhet` is live today; `brreg-underenheter` is new NLOD data,
@@ -77,13 +80,11 @@ these registry rows — this PLAN populates `int_` models only, nothing public-f
 
 ### Tasks
 
-- [ ] 1.1 Add `structure` column to `atlas-data/dbt/seeds/dim_ngo.csv`: `unitary` for
+- [x] 1.1 Add `structure` column to `atlas-data/dbt/seeds/dim_ngo.csv`: `unitary` for
       `frelsesarmeen` and `kirkens-bymisjon`, `federated` for the other 9.
-- [ ] 1.2 `schema.yml`: `accepted_values` test (`federated`, `unitary`), `not_null`.
-- [ ] 1.3 While touching this seed: correct `redcross`'s `chapter_data_shape` from `api_canonical`
-      (wrong since [Q3] — Røde Kors is scraped like every other NGO now) to whatever the site-crawl
-      PLAN will actually use (flag as a note for that PLAN if the value isn't decidable yet; don't
-      guess a value this PLAN can't verify).
+- [x] 1.2 `schema.yml`: `accepted_values` test (`federated`, `unitary`), `not_null`.
+- [x] 1.3 While touching this seed: corrected `redcross`'s AND `nasjonalforeningen`'s
+      `chapter_data_shape` to `cms_bins` (both are scraped, not API-sourced, per [Q3]/P8).
 
 ### Validation
 
@@ -100,22 +101,25 @@ Confirms 9 `federated` / 2 `unitary`, matching the NGO list above exactly.
 
 ### Tasks
 
-- [ ] 2.1 `ref_atlas_ngo_match_rule.csv`: one row per federated NGO —
-      `ngo_orgnr, include_pattern, exclude_pattern, strong_pattern, website_host`, transcribed
-      verbatim from `brreg-chapter-matching.md`'s per-NGO rule table (9 rows).
-- [ ] 2.2 `int_ngo_chapter_registry_match.sql` over `dim_brreg_enhet` filtered to
-      `registrert_i_frivillighetsregisteret = true`: fold Ø/Æ/Å before pattern matching (the spec's
-      rule 1 — Atlas's existing `kommune` folding macro may already do this; check before writing a
-      second one), apply include/exclude/strong per NGO, emit `chapter_level` from the
-      DISTRIKT/FYLKESLAG/… keyword rule, `related_entity` for `organisasjonsform_kode` in
-      (`AS`,`STI`), `confidence` per the spec's three-tier rule (never present `low` as fact — carry
-      the column, let the consuming query decide what to trust).
-- [ ] 2.3 Test: a parametrised `dbt_utils.accepted_range` or custom test per NGO against
-      `acceptance-targets.csv`'s `enheter`/registered-chapters column, ±10% per [Q9] (or an explained
-      gap in this PLAN's own notes — the register moves between the research's measurement and this
-      build).
-- [ ] 2.4 Confirm Ø/Æ/Å folding specifically on Røde Kors (the spec's own example of a silent
-      all-zero match) and Sanitetskvinnene (N K S acronym variant).
+- [x] 2.1 `ref_atlas_ngo_match_rule.csv`: one row per federated NGO —
+      `ngo_orgnr, ngo_slug, include_pattern, exclude_pattern, strong_pattern, website_host`,
+      transcribed verbatim from `brreg-chapter-matching.md`'s per-NGO rule table (9 rows).
+- [x] 2.2 `int_ngo_chapter_registry_match.sql` over `dim_brreg_enhet` filtered to
+      `registrert_i_frivillighetsregisteret = true`: folds Ø/Æ/Å via a new
+      `fold_norwegian_for_matching` macro (no existing one did this for matching keys), applies
+      include/exclude/strong per NGO, emits `chapter_level` from the DISTRIKT/FYLKESLAG/… keyword
+      rule, `related_entity` for `organisasjonsform_kode` in (`AS`,`STI`), `confidence` per the
+      spec's three-tier rule.
+      ⚠️ Two real bugs found building this, both against live data not fixtures: Postgres's `~`
+      uses Tcl ARE, where `\b` is not a word boundary (`\y` is) — silently zeroed 8 of 9 NGOs'
+      matches until translated in a `patterns_pg` CTE. And dbt's seed loader reads an empty CSV
+      field as `NULL`, not `''` — `exclude_pattern != ''` was `NULL` (not `false`) for the 7 NGOs
+      with no exclude pattern, and `WHERE NULL` drops the row exactly like `WHERE false`; fixed
+      with `coalesce(exclude_pattern, '')`.
+- [x] 2.3 `ngo_chapter_registry_counts_match_acceptance_targets.sql`: a singular test per NGO
+      against the spec's targets, ±10% per [Q9].
+- [x] 2.4 Confirmed Ø/Æ/Å folding on Røde Kors and Sanitetskvinnene — both land within 1 of target
+      (382/381, 465/463) once the two bugs above were fixed; before the fix both were zero.
 
 ### Validation
 
@@ -155,12 +159,18 @@ not yet built.
       assumed: `render-template-info.sh` reports "first_data covers all 59 automated sources" and
       `lands-with.sh` (once committed) names the right job — the exact gap that bit
       `ssb-10501`/`ssb-12891` on PR #550 does not recur here.
-- [ ] 3.4 `int_ngo_chapter_subunits.sql`: filter `overordnet_enhet in (select orgnr from dim_ngo
-      where structure = 'unitary')`, emit the parent entity as the national row (spec rule 2 — 723
-      orphans in the research without this), split `<BRAND> <AREA> AVD <UNIT>` per spec rule 3
-      (longest area first), classify owned companies (`FRETEX…AS`) as `related_entity` not chapter.
-      Waits on Phase 1.
-- [ ] 3.5 Same column shape as Phase 2's output, so a later `UNION ALL` needs no reshaping.
+- [x] 3.4 `int_ngo_chapter_subunits.sql`: filters `raw.brreg_underenheter_snapshot` by
+      `overordnetEnhet` to the two unitary NGOs (via `dim_ngo.structure`), emits the parent entity
+      (from `dim_brreg_enhet`, since the national row is an ENHET not an UNDERENHET) as the
+      national row, classifies `organisasjonsform_kode = 'AS'` (checked first, for Fretex) and
+      HOVEDKONTOR/ADM-type names as `related_entity`, DIVISJON/REGION-type names as `regional`,
+      else `local`. Lands within 1 of target (176/175 Frelsesarmeen, 151/151 Kirkens Bymisjon).
+      **Two deliberate, documented gaps, deferred not silent**: no incremental reconciliation yet
+      (reads the bootstrap snapshot only — deletions via the change feed aren't reflected here);
+      area-splitting from spec rule 3 is simplified to literal `AVD`-suffix extraction, since
+      nothing downstream renders chapter service areas yet.
+- [x] 3.5 Same column shape as Phase 2's output — verified by construction (both models' final
+      `select` lists match column-for-column) and by the acceptance tests passing identically.
 
 ### Validation — 3.1–3.3, done for real against live data, not simulated
 
