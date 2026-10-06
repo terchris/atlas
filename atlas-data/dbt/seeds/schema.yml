@@ -316,9 +316,19 @@ seeds:
         data_tests:
           - accepted_values: {values: ["yes", "no"]}
       - name: search_entry
-        description: "'yes' if this category is a likely entry point for a site search feature, 'no', or 'merged' if it was folded into another category during curation. Added 2026-10-06."
+        description: >-
+          'yes' if this category is a likely entry point for a site search feature; 'no' for
+          classification-only categories; 'sensitive' when Google Keyword Planner hides the search
+          volume entirely (dementia, addiction, low-threshold health services, bullying) — also
+          classification-only, for a different reason. Added 2026-10-06. ⚠️ CORRECTED
+          2026-10-06: the original accepted_values list included 'merged' (seen in a draft research
+          file, categories-v2.csv) and omitted 'sensitive' — neither was checked against the actual
+          taxonomy-nb-en.csv this seed loads from, which has zero 'merged' rows (categories merged
+          away during curation never reached this file) and 4 'sensitive' rows. Caught by imac
+          during the #1871 deploy, not by this repo's own CI — `dbt build` from an empty CI
+          database can't fail a test on data it never loaded.
         data_tests:
-          - accepted_values: {values: ["yes", "no", "merged"]}
+          - accepted_values: {values: ["yes", "no", "sensitive"]}
       - name: previous_label_no
         description: The label this category had before the 2026-10-06 taxonomy revision, where it changed. Empty for the 16 categories that are new, not renamed.
 

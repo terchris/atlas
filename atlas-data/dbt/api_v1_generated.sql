@@ -3366,7 +3366,7 @@ COMMENT ON COLUMN api_v1.ref_atlas_service_category.volunteer_terms_no IS 'Same 
 COMMENT ON COLUMN api_v1.ref_atlas_service_category.terms_en IS 'English-language search terms, same evidence base as search_terms_no. Added 2026-10-06.';
 COMMENT ON COLUMN api_v1.ref_atlas_service_category.label_no_evidence IS 'The one or two anchor search terms (with volume) that justified this category''s Norwegian label. Added 2026-10-06.';
 COMMENT ON COLUMN api_v1.ref_atlas_service_category.en_measured IS '''yes'' if the English label/terms have their own independent search-volume measurement, ''no'' if translated from the Norwegian evidence only. Added 2026-10-06.';
-COMMENT ON COLUMN api_v1.ref_atlas_service_category.search_entry IS '''yes'' if this category is a likely entry point for a site search feature, ''no'', or ''merged'' if it was folded into another category during curation. Added 2026-10-06.';
+COMMENT ON COLUMN api_v1.ref_atlas_service_category.search_entry IS '''yes'' if this category is a likely entry point for a site search feature; ''no'' for classification-only categories; ''sensitive'' when Google Keyword Planner hides the search volume entirely (dementia, addiction, low-threshold health services, bullying) — also classification-only, for a different reason. Added 2026-10-06.';
 COMMENT ON COLUMN api_v1.ref_atlas_service_category.previous_label_no IS 'The label this category had before the 2026-10-06 taxonomy revision, where it changed. Empty for the 16 categories that are new, not renamed.';
 
 -- ref_brreg_icnpo  ←  marts.mart_ref_brreg_icnpo
