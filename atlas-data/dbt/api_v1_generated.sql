@@ -135,6 +135,11 @@ deploy.
 
 SUPPLY — voluntary-sector presence:
   ngo_index, ngo_overview      organisations and their summary.
+  ngo_chapter_registry_match   the 9 federated NGOs'' chapters, by Brreg name
+                                match. Registry-only — confidence tops out at
+                                medium; no NGO site has corroborated these yet.
+  ngo_chapter_subunits         the 2 unitary NGOs'' sub-units, by Brreg''s own
+                                parent-entity link. confidence is always high.
   activity_catalog             what each organisation does.
   kommune_ngo_summary          per-kommune rollup.
   kommune_ngo_totals           national totals; reconcile these against
@@ -3167,11 +3172,11 @@ why this column had to be written at all.';
 
 -- ngo_chapter_registry_match  ←  marts.mart_ngo_chapter_registry_match
 CREATE OR REPLACE VIEW api_v1.ngo_chapter_registry_match AS SELECT * FROM marts.mart_ngo_chapter_registry_match;
-COMMENT ON VIEW api_v1.ngo_chapter_registry_match IS 'The 9 federated NGOs'' chapters, found by name pattern in Brønnøysundregistrene''s
-organisation register. Registry-only: confidence tops out at `medium` (`high` only for an
-NGO''s own national row) — no NGO''s own website has been crawled yet to corroborate a
-strong name match. See the model''s own header (int_ngo_chapter_registry_match.sql) for the
-matching method.';
+COMMENT ON VIEW api_v1.ngo_chapter_registry_match IS 'The 9 federated NGOs'' chapters, found by name pattern in Brønnøysundregistrene''s register.
+
+Registry-only: confidence tops out at `medium` (`high` only for an NGO''s own national
+row) — no NGO''s own website has been crawled yet to corroborate a strong name match.
+See the model''s own header (int_ngo_chapter_registry_match.sql) for the matching method.';
 COMMENT ON COLUMN api_v1.ngo_chapter_registry_match.chapter_orgnr IS 'The chapter''s own 9-digit organisasjonsnummer. Natural key for this view.';
 COMMENT ON COLUMN api_v1.ngo_chapter_registry_match.chapter_id IS '''<ngo_slug>-<chapter_orgnr>'', the conformed cross-NGO chapter identifier.';
 COMMENT ON COLUMN api_v1.ngo_chapter_registry_match.ngo_orgnr IS '9-digit Brreg organisasjonsnummer of the parent NGO.';
@@ -3190,12 +3195,12 @@ COMMENT ON COLUMN api_v1.ngo_chapter_registry_match.source_url IS 'The live Brre
 
 -- ngo_chapter_subunits  ←  marts.mart_ngo_chapter_subunits
 CREATE OR REPLACE VIEW api_v1.ngo_chapter_subunits AS SELECT * FROM marts.mart_ngo_chapter_subunits;
-COMMENT ON VIEW api_v1.ngo_chapter_subunits IS 'The local units of the 2 unitary NGOs (Frelsesarmeen, Kirkens Bymisjon), found as Brreg
-underenheter of their own national enhet. confidence is always `high` here — Brreg''s own
-overordnetEnhet field is a declared structural link, not a fuzzy name match. Still
-registry-only in a different sense: reads the underenheter bootstrap snapshot only, no
-incremental reconciliation yet — see the model''s own header
-(int_ngo_chapter_subunits.sql) for the known gaps.';
+COMMENT ON VIEW api_v1.ngo_chapter_subunits IS 'The local units of the 2 unitary NGOs (Frelsesarmeen, Kirkens Bymisjon), found as Brreg underenheter.
+
+confidence is always `high` here — Brreg''s own overordnetEnhet field is a declared
+structural link, not a fuzzy name match. Still registry-only in a different sense: reads
+the underenheter bootstrap snapshot only, no incremental reconciliation yet — see the
+model''s own header (int_ngo_chapter_subunits.sql) for the known gaps.';
 COMMENT ON COLUMN api_v1.ngo_chapter_subunits.chapter_orgnr IS 'The sub-unit''s own 9-digit organisasjonsnummer. Natural key for this view.';
 COMMENT ON COLUMN api_v1.ngo_chapter_subunits.chapter_id IS '''<ngo_slug>-<chapter_orgnr>'', the conformed cross-NGO chapter identifier.';
 COMMENT ON COLUMN api_v1.ngo_chapter_subunits.ngo_orgnr IS '9-digit Brreg organisasjonsnummer of the parent NGO.';

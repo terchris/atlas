@@ -719,11 +719,11 @@ models:
       stability: curated
       title: "NGO chapter registry match (federated)"
     description: |
-      The 9 federated NGOs' chapters, found by name pattern in Brønnøysundregistrene's
-      organisation register. Registry-only: confidence tops out at `medium` (`high` only for an
-      NGO's own national row) — no NGO's own website has been crawled yet to corroborate a
-      strong name match. See the model's own header (int_ngo_chapter_registry_match.sql) for the
-      matching method.
+      The 9 federated NGOs' chapters, found by name pattern in Brønnøysundregistrene's register.
+
+      Registry-only: confidence tops out at `medium` (`high` only for an NGO's own national
+      row) — no NGO's own website has been crawled yet to corroborate a strong name match.
+      See the model's own header (int_ngo_chapter_registry_match.sql) for the matching method.
     columns:
       - name: chapter_orgnr
         description: The chapter's own 9-digit organisasjonsnummer. Natural key for this view.
@@ -801,12 +801,12 @@ models:
       stability: curated
       title: "NGO chapter subunits (unitary)"
     description: |
-      The local units of the 2 unitary NGOs (Frelsesarmeen, Kirkens Bymisjon), found as Brreg
-      underenheter of their own national enhet. confidence is always `high` here — Brreg's own
-      overordnetEnhet field is a declared structural link, not a fuzzy name match. Still
-      registry-only in a different sense: reads the underenheter bootstrap snapshot only, no
-      incremental reconciliation yet — see the model's own header
-      (int_ngo_chapter_subunits.sql) for the known gaps.
+      The local units of the 2 unitary NGOs (Frelsesarmeen, Kirkens Bymisjon), found as Brreg underenheter.
+
+      confidence is always `high` here — Brreg's own overordnetEnhet field is a declared
+      structural link, not a fuzzy name match. Still registry-only in a different sense: reads
+      the underenheter bootstrap snapshot only, no incremental reconciliation yet — see the
+      model's own header (int_ngo_chapter_subunits.sql) for the known gaps.
     columns:
       - name: chapter_orgnr
         description: The sub-unit's own 9-digit organisasjonsnummer. Natural key for this view.
