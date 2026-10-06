@@ -139,6 +139,7 @@
 -- depends_on: {{ ref('mart_ngo_chapter_subunits') }}
 -- depends_on: {{ ref('mart_ngo_index') }}
 -- depends_on: {{ ref('mart_ngo_overview') }}
+-- depends_on: {{ ref('mart_ref_activity_family') }}
 -- depends_on: {{ ref('mart_ref_atlas_service_category') }}
 -- depends_on: {{ ref('mart_ref_brreg_icnpo') }}
 -- depends_on: {{ ref('mart_ref_fhi_innvkat') }}
@@ -247,6 +248,7 @@
   {'relation': 'ngo_chapter_subunits', 'mart': 'mart_ngo_chapter_subunits'},
   {'relation': 'ngo_index', 'mart': 'mart_ngo_index'},
   {'relation': 'ngo_overview', 'mart': 'mart_ngo_overview'},
+  {'relation': 'ref_activity_family', 'mart': 'mart_ref_activity_family'},
   {'relation': 'ref_atlas_service_category', 'mart': 'mart_ref_atlas_service_category'},
   {'relation': 'ref_brreg_icnpo', 'mart': 'mart_ref_brreg_icnpo'},
   {'relation': 'ref_fhi_innvkat', 'mart': 'mart_ref_fhi_innvkat'},

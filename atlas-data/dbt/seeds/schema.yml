@@ -266,28 +266,168 @@ seeds:
 
   - name: ref_atlas_service_category
     description: >-
-      Atlas's curated cross-NGO service-category vocabulary. 22 rows. Each NGO's dim_activity row points
-      at one category code; cross-NGO queries (Coverage-gap, 'find X near me') filter on category_code.
-      Threshold rule: a category exists if at least 2 NGOs offer programmes in it. See Appendix A in INVESTIGATE-ngo-supply-data-model.md
-      for the curation rationale.
+      Atlas's curated cross-NGO service-category vocabulary. 38 rows (grew from the original 22 on
+      2026-10-06, INVESTIGATE-ngo-activity-taxonomy.md — every original code kept unchanged, 16
+      added, built from the terms people actually search for). Each NGO's dim_activity row points at
+      one category code; cross-NGO queries (Coverage-gap, 'find X near me') filter on category_code.
+      See docs/research/ngo-research/taxonomy/ for the full evidence behind the labels and terms.
     columns:
       - name: code
         description: snake_case identifier; stable across seed updates.
         data_tests: [not_null, unique]
+      - name: family_code
+        description: Groups categories into one of 10 families (ref_activity_family). Added 2026-10-06.
+        data_tests:
+          - not_null
+          - relationships: {to: ref('ref_activity_family'), field: code}
       - name: label_no
-        description: Norwegian (bokmål) label suitable for UI display.
+        description: Norwegian (bokmål) label suitable for UI display — now written to match what people search for, not just a category name.
         data_tests: [not_null]
       - name: label_en
         description: English label.
         data_tests: [not_null]
       - name: description
-        description: One-line summary of what services in this category typically include.
+        description: One-line summary of what services in this category typically include, in English.
+        data_tests: [not_null]
+      - name: description_no
+        description: The same summary in Norwegian (bokmål). Added 2026-10-06.
+        data_tests: [not_null]
+      - name: sort_order
+        description: Row order in the source taxonomy (grouped by family). Not a measure of importance.
+        data_tests:
+          - not_null
+          - unique
+          - dbt_utils.accepted_range: {min_value: 1, max_value: 38}
+      - name: search_terms_no
+        description: >-
+          Pipe-separated `term (volume_band)` pairs — real Google Keyword Planner search terms that
+          find this category, Norwegian. Added 2026-10-06; loaded as proposed evidence, not reviewed
+          row by row. Empty for categories with no measured search demand.
+      - name: need_terms_no
+        description: Same shape as search_terms_no, for terms describing the NEED rather than the service name (e.g. "ensomhet" for elderly_visiting). Added 2026-10-06.
+      - name: volunteer_terms_no
+        description: Same shape, for terms a prospective VOLUNTEER (not a service-seeker) would search. Added 2026-10-06.
+      - name: terms_en
+        description: English-language search terms, same evidence base as search_terms_no. Added 2026-10-06.
+      - name: label_no_evidence
+        description: The one or two anchor search terms (with volume) that justified this category's Norwegian label. Added 2026-10-06.
+      - name: en_measured
+        description: "'yes' if the English label/terms have their own independent search-volume measurement, 'no' if translated from the Norwegian evidence only. Added 2026-10-06."
+        data_tests:
+          - accepted_values: {values: ["yes", "no"]}
+      - name: search_entry
+        description: "'yes' if this category is a likely entry point for a site search feature, 'no', or 'merged' if it was folded into another category during curation. Added 2026-10-06."
+        data_tests:
+          - accepted_values: {values: ["yes", "no", "merged"]}
+      - name: previous_label_no
+        description: The label this category had before the 2026-10-06 taxonomy revision, where it changed. Empty for the 16 categories that are new, not renamed.
+
+  - name: ref_activity_family
+    description: >-
+      The 10 families ref_atlas_service_category.family_code groups into. Added 2026-10-06,
+      INVESTIGATE-ngo-activity-taxonomy.md.
+    columns:
+      - name: code
+        data_tests: [not_null, unique]
+      - name: label_no
+        data_tests: [not_null]
+      - name: label_en
         data_tests: [not_null]
       - name: sort_order
         data_tests:
           - not_null
           - unique
-          - dbt_utils.accepted_range: {min_value: 1, max_value: 22}
+          - dbt_utils.accepted_range: {min_value: 1, max_value: 10}
+
+  - name: ref_atlas_activity_crosswalk
+    description: >-
+      Maps each of the 11 NGOs' own named activities (500 distinct activity_id across 589 rows —
+      many-to-many via is_primary, since one activity can serve two categories) to
+      ref_atlas_service_category. Added 2026-10-06, INVESTIGATE-ngo-activity-taxonomy.md.
+      🔴 UNREVIEWED: reviewed_by is empty on all 589 rows — loaded with confidence visible, per
+      Terje's instruction ("publish what we have, we will improve on it later"), not blocked on
+      review. 92 rows are LOW confidence. Drives supply__redcross_branch_activities.sql's
+      service_category_code and is_service for Røde Kors only — the other 10 NGOs have no activity
+      staging model in the warehouse yet, so their rows here are real and queryable but don't reach
+      dim_activity this round.
+    columns:
+      - name: activity_id
+        description: "'<ngo_slug>:<activity-slug>', the NGO's own activity identifier."
+        data_tests: [not_null]
+      - name: ngo
+        description: NGO slug (matches dim_ngo.slug).
+        data_tests:
+          - not_null
+          - relationships: {to: ref('dim_ngo'), field: slug}
+      - name: name
+        description: The activity's own display name, verbatim from the NGO (or from raw.redcross_branch_activities.global_activity_name for Røde Kors).
+        data_tests: [not_null]
+      - name: source_group
+        description: Optional grouping label from the research process. Blank for 400 of 589 rows.
+      - name: service_category_code
+        description: Blank exactly when is_service = 'false' (29 rows) — a non-service activity has no category.
+        data_tests:
+          - relationships: {to: ref('ref_atlas_service_category'), field: code, config: {where: "service_category_code is not null"}}
+      - name: is_primary
+        description: "'true' for an activity's main category, 'false' for a secondary one, blank when is_service = 'false'. Text, not boolean — see dbt_project.yml's +column_types comment for why."
+        data_tests:
+          - accepted_values: {values: ["true", "false", ""]}
+      - name: is_service
+        description: "'true'/'false' as text, not boolean — see dbt_project.yml's +column_types comment."
+        data_tests:
+          - not_null
+          - accepted_values: {values: ["true", "false"]}
+      - name: atlas_case_code
+        description: The old 22-code CASE value this activity mapped to before 2026-10-06, where traceable. Blank for 546 of 589 rows (new NGOs the old CASE never covered).
+      - name: method
+        description: Always 'RESEARCH_PROPOSED' today — every row is proposed, none is reviewed-and-confirmed yet.
+        data_tests:
+          - accepted_values: {values: ["RESEARCH_PROPOSED"]}
+      - name: basis
+        description: What the categorisation was derived from.
+        data_tests:
+          - accepted_values: {values: ["name", "description", "source_group", "atlas_case", "none"]}
+      - name: confidence
+        data_tests:
+          - not_null
+          - accepted_values: {values: ["HIGH", "MEDIUM", "LOW"]}
+      - name: note
+        description: Free-text reasoning. Blank for 165 of 589 rows.
+      - name: reviewed_by
+        description: Empty on every row today — see the model description's 🔴 note.
+      - name: reviewed_at
+        description: Empty on every row today — see the model description's 🔴 note.
+
+  - name: ref_activity_search_term
+    description: >-
+      858 real, validated search terms (Google Keyword Planner volumes) behind the taxonomy's
+      labels — what people actually search for. Added 2026-10-06, INVESTIGATE-ngo-activity-taxonomy.md.
+      Loaded as evidence for a later search-index PLAN (the investigation's own Next Steps names
+      it as separate work) — not wired into any published relation yet.
+      ⚠️ `code` is not always a valid ref_atlas_service_category.code: 3 of its distinct values
+      (_volunteering_general, women_migrant_network, violence_support) are a synthetic umbrella
+      term, a category merged away during curation, and a rejected candidate, respectively —
+      kept as evidence, not an FK. Deliberately no relationships test here.
+    columns:
+      - name: code
+        description: Usually a ref_atlas_service_category.code — see the model description's ⚠️ note for the 3 exceptions.
+        data_tests: [not_null]
+      - name: term
+        description: The literal search term, Norwegian.
+        data_tests: [not_null]
+      - name: intent
+        description: What kind of term this is — a category label, a need, a volunteer-side term, an autocomplete suggestion, a raw discovery, or a term for something else entirely.
+        data_tests:
+          - not_null
+          - accepted_values: {values: ["label", "need", "volunteer", "autocomplete", "discovered", "alternative"]}
+      - name: band_mid
+        description: Search-volume band midpoint (e.g. 500 means "100-1000/month").
+      - name: other_meaning
+        description: Set when the term has a common OTHER meaning search volume can't distinguish from this one (e.g. "sanitet" also means a medical kit). Blank for 840 of 858 rows.
+      - name: round
+        description: Which research pass measured this term (1-4). Later rounds filled gaps the earlier ones missed.
+        data_tests:
+          - not_null
 
   - name: ref_brreg_icnpo
     description: >-

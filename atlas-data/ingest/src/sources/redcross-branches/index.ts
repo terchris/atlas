@@ -15,7 +15,7 @@
  *
  * Downstream dbt models (PLAN-002 phases 2-4):
  *   supply__redcross_branches          (reshape → dim_chapter)
- *   supply__redcross_branch_activities (reshape + 50→22 category mapping)
+ *   supply__redcross_branch_activities (reshape + category mapping via ref_atlas_activity_crosswalk)
  *   dim_chapter, dim_activity, fact_chapter_activities
  */
 import { readFile } from "node:fs/promises";

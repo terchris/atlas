@@ -6,7 +6,7 @@ This section is for **anyone consuming Atlas's public PostgREST API** to build t
 
 <!-- BEGIN holdings (generated) -->
 
-**59 upstream sources** from **10 publishers**, served as **96 read-only relations**.
+**59 upstream sources** from **10 publishers**, served as **97 read-only relations**.
 
 | publisher | sources | broadly |
 |---|---|---|
@@ -111,7 +111,8 @@ Licences: **NLOD** for 55 of 59 — Norwegian public data, free to reuse with at
 | `ngo_chapter_subunits` | The local units of the 2 unitary NGOs (Frelsesarmeen, Kirkens Bymisjon), found as Brreg underenheter. |
 | `ngo_index` | One row per voluntary organisation Atlas tracks, with its identity, branding and focus. |
 | `ngo_overview` | One row per NGO with its six headline counts, precomputed for the per-NGO page. |
-| `ref_atlas_service_category` | Atlas's own cross-NGO service vocabulary, 22 categories. |
+| `ref_activity_family` | The 10 families Atlas's service-category vocabulary groups into. |
+| `ref_atlas_service_category` | Atlas's own cross-NGO service vocabulary, 38 categories, built from real search demand. |
 | `ref_brreg_icnpo` | Decoder for the ICNPO category codes in kommune_ngo_summary: 14 groups and 32 subgroups. |
 | `ref_fhi_innvkat` | Decoder for FHI table 360's INNVKAT dimension, which holds only '0'. |
 | `ref_fhi_utdann` | Decoder for FHI's education-level codes; in vgs_gjennomforing this is the parents' education. |

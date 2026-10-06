@@ -179,10 +179,23 @@ seeds:
     +column_types:
       code: text
       parent_code: text
+      family_code: text
       label_no: text
       label_en: text
       description: text
       sort_order: integer
+      activity_id: text
+      ngo: text
+      service_category_code: text
+      # Not boolean: a blank CSV value is not a valid boolean literal, and 29
+      # of 589 crosswalk rows are blank by design (is_service = false rows
+      # carry no category, so is_primary doesn't apply) — same NULL-vs-empty
+      # class of bug this repo already found once in ref_atlas_ngo_match_rule
+      # (coalesce(exclude_pattern, '') fix, PLAN-001). Compared as the literal
+      # strings 'true'/'false' in SQL instead, so the parser never has to
+      # guess at a blank's intended type.
+      is_primary: text
+      is_service: text
       postnummer: text
       post_office: text
       kommune_nr: text

@@ -79,7 +79,7 @@
       "feedback_url": "https://github.com/terchris/atlas/issues",
       "notes": "Atlas itself, for the relations it authors rather than republishes:\nclassification schemes (the NGO activity taxonomy, the chapter and\nactivity dimensions), cross-source syntheses that exist only because\nAtlas combined multiple publishers' data (indicator coverage,\nkommune/NGO rollups), and Atlas's own self-description (meta_sources,\ningest_health). No source manifest declares `publisher: Atlas` — this\nentry is resolved by a model's `meta.publisher` field instead, read by\ngenerate-sources-registry.mjs, not by the manifest cross-check every\nother publisher goes through.\n",
       "source_count": 0,
-      "view_count": 27
+      "view_count": 28
     },
     {
       "id": "brreg",
@@ -17440,9 +17440,15 @@
         },
         {
           "parent_kind": "model",
+          "model_name": "mart_ref_activity_family",
+          "title": "Activity families",
+          "description_short": "The 10 families Atlas's service-category vocabulary groups into."
+        },
+        {
+          "parent_kind": "model",
           "model_name": "mart_ref_atlas_service_category",
           "title": "Atlas service categories",
-          "description_short": "Atlas's own cross-NGO service vocabulary, 22 categories."
+          "description_short": "Atlas's own cross-NGO service vocabulary, 38 categories, built from real search demand."
         },
         {
           "parent_kind": "model",
@@ -18094,7 +18100,7 @@
         },
         {
           "name": "service_category_code",
-          "description": "From the 50→22 CASE WHEN. NULL only if a new globalActivityName appeared in raw that the CASE doesn't cover (catches drift loudly via the not_null filter applied at dim_activity/fact_chapter_activities — those filter is_service = true; a new unmapped service-type activity would still be is_service = true with NULL category, surfacing the gap)."
+          "description": "From ref_atlas_activity_crosswalk's is_primary = 'true' row for this activity (changed 2026-10-06, was a hardcoded CASE). NULL only if a new globalActivityName appeared in raw that the crosswalk doesn't cover yet (catches drift loudly via the not_null filter applied at dim_activity/fact_chapter_activities — those filter is_service = true; a new unmapped service-type activity would still be is_service = true with NULL category, surfacing the gap)."
         },
         {
           "name": "is_active",
@@ -23630,20 +23636,60 @@
     },
     {
       "kind": "view",
+      "view_id": "ref_activity_family",
+      "mart_name": "mart_ref_activity_family",
+      "api_v1_name": "ref_activity_family",
+      "title": "Activity families",
+      "description_short": "The 10 families Atlas's service-category vocabulary groups into.",
+      "description_full": "The 10 families Atlas's service-category vocabulary groups into.\n\nAdded 2026-10-06, INVESTIGATE-ngo-activity-taxonomy.md — decodes\nref_atlas_service_category.family_code. Atlas's own grouping, not an upstream standard,\nsame status as ref_atlas_service_category itself.",
+      "columns": [
+        {
+          "name": "code",
+          "description": "Atlas's family code. Referenced by ref_atlas_service_category.family_code."
+        },
+        {
+          "name": "label_no",
+          "description": "The Norwegian (bokmål) label."
+        },
+        {
+          "name": "label_en",
+          "description": "The English label."
+        },
+        {
+          "name": "sort_order",
+          "description": "Display order."
+        }
+      ],
+      "built_from": [],
+      "sample_query": "https://api-atlas.urbalurba.com/ref_activity_family?limit=5",
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_ref_activity_family",
+      "publisher": {
+        "id": "atlas",
+        "display_name": "Atlas",
+        "homepage": "https://atlas.sovereignsky.no/",
+        "logo": "/img/logo.svg"
+      }
+    },
+    {
+      "kind": "view",
       "view_id": "ref_atlas_service_category",
       "mart_name": "mart_ref_atlas_service_category",
       "api_v1_name": "ref_atlas_service_category",
       "title": "Atlas service categories",
-      "description_short": "Atlas's own cross-NGO service vocabulary, 22 categories.",
-      "description_full": "Atlas's own cross-NGO service vocabulary, 22 categories. Not an upstream standard.\n\n⚠️ ATLAS'S OWN VOCABULARY, NOT AN UPSTREAM STANDARD — the only list here that is\nAtlas's editorial judgement rather than another body's published standard. It exists\nbecause no Norwegian authority publishes a cross-NGO service taxonomy. The other eight\nlists are citable to their publisher; this one is citable to Atlas. 22 rows.",
+      "description_short": "Atlas's own cross-NGO service vocabulary, 38 categories, built from real search demand.",
+      "description_full": "Atlas's own cross-NGO service vocabulary, 38 categories, built from real search demand.\n\n⚠️ ATLAS'S OWN VOCABULARY, NOT AN UPSTREAM STANDARD — the only list here that is\nAtlas's editorial judgement rather than another body's published standard. It exists\nbecause no Norwegian authority publishes a cross-NGO service taxonomy. The other eight\nlists are citable to their publisher; this one is citable to Atlas.\n\n🔴 GREW FROM 22 TO 38 ROWS 2026-10-06 (INVESTIGATE-ngo-activity-taxonomy.md) — every\noriginal code unchanged, 16 added. Labels are written to match what people actually\nsearch for (Google Keyword Planner volumes), not just a category name — see\nsearch_terms_no/need_terms_no/volunteer_terms_no below.",
       "columns": [
         {
           "name": "code",
           "description": "Atlas's category code. Referenced by each NGO's dim_activity row."
         },
         {
+          "name": "family_code",
+          "description": "Groups this category into one of 10 families. Added 2026-10-06."
+        },
+        {
           "name": "label_no",
-          "description": "The Norwegian label, as its publisher writes it. Atlas does not translate or normalise upstream label text."
+          "description": "The Norwegian label — written to match what people actually search for, not just a category name."
         },
         {
           "name": "label_en",
@@ -23651,11 +23697,47 @@
         },
         {
           "name": "description",
-          "description": "What the category covers, in Atlas's words — the editorial definition a consumer needs in order to judge whether an activity was classified as they would."
+          "description": "What the category covers, in Atlas's words, in English — the editorial definition a consumer needs in order to judge whether an activity was classified as they would."
+        },
+        {
+          "name": "description_no",
+          "description": "The same editorial definition in Norwegian (bokmål). Added 2026-10-06."
         },
         {
           "name": "sort_order",
-          "description": "The publisher's own display order. ⚠️ Sort by this, not by `code` — several of these lists do not sort into their intended sequence alphabetically."
+          "description": "Row order in the source taxonomy (grouped by family). ⚠️ Not a measure of importance — sort by this for a stable display order, nothing more."
+        },
+        {
+          "name": "search_terms_no",
+          "description": "Pipe-separated `term (volume_band)` pairs — real, validated search terms that find this category, Norwegian. Added 2026-10-06; loaded as proposed evidence, not reviewed row by row. Empty for categories with no measured search demand."
+        },
+        {
+          "name": "need_terms_no",
+          "description": "Same shape as search_terms_no, for terms describing the NEED rather than the service's own name (e.g. \"ensomhet\" for elderly visiting). Added 2026-10-06."
+        },
+        {
+          "name": "volunteer_terms_no",
+          "description": "Same shape, for terms a prospective volunteer — not a service-seeker — would search. Added 2026-10-06."
+        },
+        {
+          "name": "terms_en",
+          "description": "English-language search terms, same evidence base as search_terms_no. Added 2026-10-06."
+        },
+        {
+          "name": "label_no_evidence",
+          "description": "The one or two anchor search terms (with volume) that justified this category's Norwegian label. Added 2026-10-06."
+        },
+        {
+          "name": "en_measured",
+          "description": "'yes' if the English label/terms have their own independent search-volume measurement, 'no' if translated from the Norwegian evidence only. Added 2026-10-06."
+        },
+        {
+          "name": "search_entry",
+          "description": "'yes' if this category is a likely entry point for a site search feature, 'no', or 'merged' if it was folded into another category during curation. Added 2026-10-06."
+        },
+        {
+          "name": "previous_label_no",
+          "description": "The label this category had before the 2026-10-06 taxonomy revision, where it changed. Empty for the 16 categories that are new, not renamed."
         }
       ],
       "built_from": [],
@@ -24008,7 +24090,7 @@
         },
         {
           "name": "service_category_code",
-          "description": "From the 50→22 CASE WHEN. NULL only if a new globalActivityName appeared in raw that the CASE doesn't cover (catches drift loudly via the not_null filter applied at dim_activity/fact_chapter_activities — those filter is_service = true; a new unmapped service-type activity would still be is_service = true with NULL category, surfacing the gap)."
+          "description": "From ref_atlas_activity_crosswalk's is_primary = 'true' row for this activity (changed 2026-10-06, was a hardcoded CASE). NULL only if a new globalActivityName appeared in raw that the crosswalk doesn't cover yet (catches drift loudly via the not_null filter applied at dim_activity/fact_chapter_activities — those filter is_service = true; a new unmapped service-type activity would still be is_service = true with NULL category, surfacing the gap)."
         },
         {
           "name": "is_service",

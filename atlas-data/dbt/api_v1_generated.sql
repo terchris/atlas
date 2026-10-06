@@ -251,6 +251,9 @@ Every one is small, stable, and safe to cache locally:
   ref_atlas_service_category   ⚠️ ATLAS''S OWN vocabulary, not an upstream
                                standard — the only list here that is Atlas''s
                                editorial judgement. Weigh it accordingly.
+  ref_activity_family          The 10 families ref_atlas_service_category
+                               groups into. Same status as that list — Atlas''s
+                               own grouping, not an upstream standard.
 
 ⚠️ SORT A CODE LIST BY sort_order, NOT BY code. Several carry their
 publisher''s ordering, which is not the alphabetical one — ref_ssb_nivaa
@@ -762,7 +765,7 @@ instruction reached Atlas relayed through the demo consumer, not directly.';
 COMMENT ON COLUMN api_v1.dim_activity.activity_id IS 'Composite slug, namespaced by NGO (e.g. ''redcross-besokstjeneste''). Stable across refreshes. Unique within this table.';
 COMMENT ON COLUMN api_v1.dim_activity.ngo_orgnr IS '9-digit Brreg organisasjonsnummer of the NGO that owns the activity. FK to dim_ngo.';
 COMMENT ON COLUMN api_v1.dim_activity.canonical_name IS 'Red Cross''s globalActivityName, verbatim.';
-COMMENT ON COLUMN api_v1.dim_activity.service_category_code IS 'From the 50→22 CASE WHEN. NULL only if a new globalActivityName appeared in raw that the CASE doesn''t cover (catches drift loudly via the not_null filter applied at dim_activity/fact_chapter_activities — those filter is_service = true; a new unmapped service-type activity would still be is_service = true with NULL category, surfacing the gap).';
+COMMENT ON COLUMN api_v1.dim_activity.service_category_code IS 'From ref_atlas_activity_crosswalk''s is_primary = ''true'' row for this activity (changed 2026-10-06, was a hardcoded CASE). NULL only if a new globalActivityName appeared in raw that the crosswalk doesn''t cover yet (catches drift loudly via the not_null filter applied at dim_activity/fact_chapter_activities — those filter is_service = true; a new unmapped service-type activity would still be is_service = true with NULL category, surfacing the gap).';
 COMMENT ON COLUMN api_v1.dim_activity.is_active IS 'Whether this NGO still offers the activity. False for retired activities kept in the catalog so historical fact_chapter_activities rows can still resolve activity_id.';
 
 -- dim_chapter  ←  marts.mart_dim_chapter
@@ -3325,19 +3328,46 @@ COMMENT ON COLUMN api_v1.ngo_overview.kommune_count IS 'Count of distinct kommun
 chapter for this NGO. The "footprint" metric for coverage-gap
 questions.';
 
+-- ref_activity_family  ←  marts.mart_ref_activity_family
+CREATE OR REPLACE VIEW api_v1.ref_activity_family AS SELECT * FROM marts.mart_ref_activity_family;
+COMMENT ON VIEW api_v1.ref_activity_family IS 'The 10 families Atlas''s service-category vocabulary groups into.
+
+Added 2026-10-06, INVESTIGATE-ngo-activity-taxonomy.md — decodes
+ref_atlas_service_category.family_code. Atlas''s own grouping, not an upstream standard,
+same status as ref_atlas_service_category itself.';
+COMMENT ON COLUMN api_v1.ref_activity_family.code IS 'Atlas''s family code. Referenced by ref_atlas_service_category.family_code.';
+COMMENT ON COLUMN api_v1.ref_activity_family.label_no IS 'The Norwegian (bokmål) label.';
+COMMENT ON COLUMN api_v1.ref_activity_family.label_en IS 'The English label.';
+COMMENT ON COLUMN api_v1.ref_activity_family.sort_order IS 'Display order.';
+
 -- ref_atlas_service_category  ←  marts.mart_ref_atlas_service_category
 CREATE OR REPLACE VIEW api_v1.ref_atlas_service_category AS SELECT * FROM marts.mart_ref_atlas_service_category;
-COMMENT ON VIEW api_v1.ref_atlas_service_category IS 'Atlas''s own cross-NGO service vocabulary, 22 categories. Not an upstream standard.
+COMMENT ON VIEW api_v1.ref_atlas_service_category IS 'Atlas''s own cross-NGO service vocabulary, 38 categories, built from real search demand.
 
 ⚠️ ATLAS''S OWN VOCABULARY, NOT AN UPSTREAM STANDARD — the only list here that is
 Atlas''s editorial judgement rather than another body''s published standard. It exists
 because no Norwegian authority publishes a cross-NGO service taxonomy. The other eight
-lists are citable to their publisher; this one is citable to Atlas. 22 rows.';
+lists are citable to their publisher; this one is citable to Atlas.
+
+🔴 GREW FROM 22 TO 38 ROWS 2026-10-06 (INVESTIGATE-ngo-activity-taxonomy.md) — every
+original code unchanged, 16 added. Labels are written to match what people actually
+search for (Google Keyword Planner volumes), not just a category name — see
+search_terms_no/need_terms_no/volunteer_terms_no below.';
 COMMENT ON COLUMN api_v1.ref_atlas_service_category.code IS 'Atlas''s category code. Referenced by each NGO''s dim_activity row.';
-COMMENT ON COLUMN api_v1.ref_atlas_service_category.label_no IS 'The Norwegian label, as its publisher writes it. Atlas does not translate or normalise upstream label text.';
+COMMENT ON COLUMN api_v1.ref_atlas_service_category.family_code IS 'Groups this category into one of 10 families. Added 2026-10-06.';
+COMMENT ON COLUMN api_v1.ref_atlas_service_category.label_no IS 'The Norwegian label — written to match what people actually search for, not just a category name.';
 COMMENT ON COLUMN api_v1.ref_atlas_service_category.label_en IS 'The English label where the publisher provides one.';
-COMMENT ON COLUMN api_v1.ref_atlas_service_category.description IS 'What the category covers, in Atlas''s words — the editorial definition a consumer needs in order to judge whether an activity was classified as they would.';
-COMMENT ON COLUMN api_v1.ref_atlas_service_category.sort_order IS 'The publisher''s own display order. ⚠️ Sort by this, not by `code` — several of these lists do not sort into their intended sequence alphabetically.';
+COMMENT ON COLUMN api_v1.ref_atlas_service_category.description IS 'What the category covers, in Atlas''s words, in English — the editorial definition a consumer needs in order to judge whether an activity was classified as they would.';
+COMMENT ON COLUMN api_v1.ref_atlas_service_category.description_no IS 'The same editorial definition in Norwegian (bokmål). Added 2026-10-06.';
+COMMENT ON COLUMN api_v1.ref_atlas_service_category.sort_order IS 'Row order in the source taxonomy (grouped by family). ⚠️ Not a measure of importance — sort by this for a stable display order, nothing more.';
+COMMENT ON COLUMN api_v1.ref_atlas_service_category.search_terms_no IS 'Pipe-separated `term (volume_band)` pairs — real, validated search terms that find this category, Norwegian. Added 2026-10-06; loaded as proposed evidence, not reviewed row by row. Empty for categories with no measured search demand.';
+COMMENT ON COLUMN api_v1.ref_atlas_service_category.need_terms_no IS 'Same shape as search_terms_no, for terms describing the NEED rather than the service''s own name (e.g. "ensomhet" for elderly visiting). Added 2026-10-06.';
+COMMENT ON COLUMN api_v1.ref_atlas_service_category.volunteer_terms_no IS 'Same shape, for terms a prospective volunteer — not a service-seeker — would search. Added 2026-10-06.';
+COMMENT ON COLUMN api_v1.ref_atlas_service_category.terms_en IS 'English-language search terms, same evidence base as search_terms_no. Added 2026-10-06.';
+COMMENT ON COLUMN api_v1.ref_atlas_service_category.label_no_evidence IS 'The one or two anchor search terms (with volume) that justified this category''s Norwegian label. Added 2026-10-06.';
+COMMENT ON COLUMN api_v1.ref_atlas_service_category.en_measured IS '''yes'' if the English label/terms have their own independent search-volume measurement, ''no'' if translated from the Norwegian evidence only. Added 2026-10-06.';
+COMMENT ON COLUMN api_v1.ref_atlas_service_category.search_entry IS '''yes'' if this category is a likely entry point for a site search feature, ''no'', or ''merged'' if it was folded into another category during curation. Added 2026-10-06.';
+COMMENT ON COLUMN api_v1.ref_atlas_service_category.previous_label_no IS 'The label this category had before the 2026-10-06 taxonomy revision, where it changed. Empty for the 16 categories that are new, not renamed.';
 
 -- ref_brreg_icnpo  ←  marts.mart_ref_brreg_icnpo
 CREATE OR REPLACE VIEW api_v1.ref_brreg_icnpo AS SELECT * FROM marts.mart_ref_brreg_icnpo;
@@ -3499,7 +3529,7 @@ COMMENT ON COLUMN api_v1.supply__redcross_branch_activities.chapter_id IS '''red
 COMMENT ON COLUMN api_v1.supply__redcross_branch_activities.ngo_orgnr IS 'Organisation number of the owning NGO — constant ''864139442'' (Norges Røde Kors) for every row in this relation, since it carries one organisation''s branches.';
 COMMENT ON COLUMN api_v1.supply__redcross_branch_activities.canonical_name IS 'Red Cross''s globalActivityName, verbatim.';
 COMMENT ON COLUMN api_v1.supply__redcross_branch_activities.local_activity_name IS 'Red Cross''s local-branch display string for the activity (e.g. ''Modum Røde Kors Hjelpekorps''). Free-text; preserved verbatim. NULL when upstream didn''t supply one.';
-COMMENT ON COLUMN api_v1.supply__redcross_branch_activities.service_category_code IS 'From the 50→22 CASE WHEN. NULL only if a new globalActivityName appeared in raw that the CASE doesn''t cover (catches drift loudly via the not_null filter applied at dim_activity/fact_chapter_activities — those filter is_service = true; a new unmapped service-type activity would still be is_service = true with NULL category, surfacing the gap).';
+COMMENT ON COLUMN api_v1.supply__redcross_branch_activities.service_category_code IS 'From ref_atlas_activity_crosswalk''s is_primary = ''true'' row for this activity (changed 2026-10-06, was a hardcoded CASE). NULL only if a new globalActivityName appeared in raw that the crosswalk doesn''t cover yet (catches drift loudly via the not_null filter applied at dim_activity/fact_chapter_activities — those filter is_service = true; a new unmapped service-type activity would still be is_service = true with NULL category, surfacing the gap).';
 COMMENT ON COLUMN api_v1.supply__redcross_branch_activities.is_service IS '🔴 ATLAS''S EDITORIAL JUDGEMENT, not a Red Cross field. False for internal, governance and recruitment activities (Distriktsråd*, Døråpner, EVA, Blodgiververving, Arrangement og reise, Internasjonalt distriktsamarbeid); true otherwise. It answers "is this something a member of the public can receive", and a consumer who disagrees with a particular call should read the list in the model rather than treat the flag as the owner''s own classification.';
 COMMENT ON COLUMN api_v1.supply__redcross_branch_activities.updated_at IS 'When the row was last loaded from the upstream raw table.';
 
