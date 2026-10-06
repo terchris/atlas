@@ -3165,6 +3165,52 @@ arrive". Neither count is written here on purpose — a number in
 a published description goes stale silently, which is most of
 why this column had to be written at all.';
 
+-- ngo_chapter_registry_match  ←  marts.mart_ngo_chapter_registry_match
+CREATE OR REPLACE VIEW api_v1.ngo_chapter_registry_match AS SELECT * FROM marts.mart_ngo_chapter_registry_match;
+COMMENT ON VIEW api_v1.ngo_chapter_registry_match IS 'The 9 federated NGOs'' chapters, found by name pattern in Brønnøysundregistrene''s
+organisation register. Registry-only: confidence tops out at `medium` (`high` only for an
+NGO''s own national row) — no NGO''s own website has been crawled yet to corroborate a
+strong name match. See the model''s own header (int_ngo_chapter_registry_match.sql) for the
+matching method.';
+COMMENT ON COLUMN api_v1.ngo_chapter_registry_match.chapter_orgnr IS 'The chapter''s own 9-digit organisasjonsnummer. Natural key for this view.';
+COMMENT ON COLUMN api_v1.ngo_chapter_registry_match.chapter_id IS '''<ngo_slug>-<chapter_orgnr>'', the conformed cross-NGO chapter identifier.';
+COMMENT ON COLUMN api_v1.ngo_chapter_registry_match.ngo_orgnr IS '9-digit Brreg organisasjonsnummer of the parent NGO.';
+COMMENT ON COLUMN api_v1.ngo_chapter_registry_match.name IS 'Legal name from Brreg, verbatim.';
+COMMENT ON COLUMN api_v1.ngo_chapter_registry_match.chapter_level IS 'national (the NGO''s own row) / regional / local / related_entity (e.g. an owned AS or STI, not a chapter).';
+COMMENT ON COLUMN api_v1.ngo_chapter_registry_match.kommune_nr IS 'Resolved from Brreg''s own kommune field. Null where Brreg carries none.';
+COMMENT ON COLUMN api_v1.ngo_chapter_registry_match.is_active IS 'Whether Brreg''s own registry shows the entity as active (not konkurs/avviklet).';
+COMMENT ON COLUMN api_v1.ngo_chapter_registry_match.web IS 'Brreg''s own hjemmeside field for this entity, verbatim. Null where Brreg carries none.';
+COMMENT ON COLUMN api_v1.ngo_chapter_registry_match.confidence IS 'high only for chapter_orgnr = ngo_orgnr; medium or low for every name-matched row — see the model header.';
+COMMENT ON COLUMN api_v1.ngo_chapter_registry_match.match_method IS 'How this row was matched — Brreg''s own orgnr, a strong name pattern (optionally corroborated by a matching website), or a weaker name pattern.';
+COMMENT ON COLUMN api_v1.ngo_chapter_registry_match.registration IS 'Always ''legal_entity'' — every row here is a Brreg-registered organisation, not a scraped/unregistered unit.';
+COMMENT ON COLUMN api_v1.ngo_chapter_registry_match.reconciliation IS 'Always ''registry_only'' — no NGO site crawl has corroborated these rows yet.';
+COMMENT ON COLUMN api_v1.ngo_chapter_registry_match.parent_chapter_id IS 'The NGO''s own national row''s chapter_id. Null for the national row itself.';
+COMMENT ON COLUMN api_v1.ngo_chapter_registry_match.parent_method IS 'Always null — the registry states no parent link for these rows (reserved for a future reconciliation method).';
+COMMENT ON COLUMN api_v1.ngo_chapter_registry_match.source_url IS 'The live Brreg Enhetsregisteret API URL for this chapter_orgnr.';
+
+-- ngo_chapter_subunits  ←  marts.mart_ngo_chapter_subunits
+CREATE OR REPLACE VIEW api_v1.ngo_chapter_subunits AS SELECT * FROM marts.mart_ngo_chapter_subunits;
+COMMENT ON VIEW api_v1.ngo_chapter_subunits IS 'The local units of the 2 unitary NGOs (Frelsesarmeen, Kirkens Bymisjon), found as Brreg
+underenheter of their own national enhet. confidence is always `high` here — Brreg''s own
+overordnetEnhet field is a declared structural link, not a fuzzy name match. Still
+registry-only in a different sense: reads the underenheter bootstrap snapshot only, no
+incremental reconciliation yet — see the model''s own header
+(int_ngo_chapter_subunits.sql) for the known gaps.';
+COMMENT ON COLUMN api_v1.ngo_chapter_subunits.chapter_orgnr IS 'The sub-unit''s own 9-digit organisasjonsnummer. Natural key for this view.';
+COMMENT ON COLUMN api_v1.ngo_chapter_subunits.chapter_id IS '''<ngo_slug>-<chapter_orgnr>'', the conformed cross-NGO chapter identifier.';
+COMMENT ON COLUMN api_v1.ngo_chapter_subunits.ngo_orgnr IS '9-digit Brreg organisasjonsnummer of the parent NGO.';
+COMMENT ON COLUMN api_v1.ngo_chapter_subunits.name IS 'Legal name from Brreg, verbatim.';
+COMMENT ON COLUMN api_v1.ngo_chapter_subunits.chapter_level IS 'national (the NGO''s own row) / regional / local / related_entity (e.g. Fretex, an owned AS, not a chapter).';
+COMMENT ON COLUMN api_v1.ngo_chapter_subunits.kommune_nr IS 'Resolved from Brreg''s own beliggenhetsadresse, falling back to postadresse. Null where Brreg carries neither.';
+COMMENT ON COLUMN api_v1.ngo_chapter_subunits.is_active IS 'Whether the underenhet''s nedleggelsesdato (closure date) is null.';
+COMMENT ON COLUMN api_v1.ngo_chapter_subunits.web IS 'Always null — the underenheter register carries no website field.';
+COMMENT ON COLUMN api_v1.ngo_chapter_subunits.unit_name IS 'Text after " AVD " in the legal name, when present. Null otherwise — see the model header on why fuller area-splitting isn''t implemented.';
+COMMENT ON COLUMN api_v1.ngo_chapter_subunits.confidence IS 'Always ''high'' — see the model header on why this register needs no tiering.';
+COMMENT ON COLUMN api_v1.ngo_chapter_subunits.registration IS '''legal_entity'' for the NGO''s own national row, ''sub_unit'' for every underenhet.';
+COMMENT ON COLUMN api_v1.ngo_chapter_subunits.reconciliation IS 'Always ''registry_only'' — reads the bootstrap snapshot only, see the model header.';
+COMMENT ON COLUMN api_v1.ngo_chapter_subunits.parent_chapter_id IS 'The NGO''s own national row''s chapter_id. Null for the national row itself.';
+COMMENT ON COLUMN api_v1.ngo_chapter_subunits.source_url IS 'The live Brreg API URL for this chapter_orgnr (enheter for the national row, underenheter for every sub-unit).';
+
 -- ngo_index  ←  marts.mart_ngo_index
 CREATE OR REPLACE VIEW api_v1.ngo_index AS SELECT * FROM marts.mart_ngo_index;
 COMMENT ON VIEW api_v1.ngo_index IS 'One row per voluntary organisation Atlas tracks, with its identity, branding and focus.

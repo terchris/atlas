@@ -6,7 +6,7 @@ This section is for **anyone consuming Atlas's public PostgREST API** to build t
 
 <!-- BEGIN holdings (generated) -->
 
-**59 upstream sources** from **10 publishers**, served as **94 read-only relations**.
+**59 upstream sources** from **10 publishers**, served as **96 read-only relations**.
 
 | publisher | sources | broadly |
 |---|---|---|
@@ -107,6 +107,8 @@ Licences: **NLOD** for 55 of 59 — Norwegian public data, free to reuse with at
 | `meta_dimensions` | One row per source and coded dimension, explaining what that column's codes mean. |
 | `meta_endpoints` | One row per queryable endpoint, with filterable tags. |
 | `meta_sources` | One row per ingested source: publisher, licence, coverage, freshness and what it feeds. |
+| `ngo_chapter_registry_match` | The 9 federated NGOs' chapters, found by name pattern in Brønnøysundregistrene's organisation register. |
+| `ngo_chapter_subunits` | The local units of the 2 unitary NGOs (Frelsesarmeen, Kirkens Bymisjon), found as Brreg underenheter of their own national enhet. |
 | `ngo_index` | One row per voluntary organisation Atlas tracks, with its identity, branding and focus. |
 | `ngo_overview` | One row per NGO with its six headline counts, precomputed for the per-NGO page. |
 | `ref_atlas_service_category` | Atlas's own cross-NGO service vocabulary, 22 categories. |

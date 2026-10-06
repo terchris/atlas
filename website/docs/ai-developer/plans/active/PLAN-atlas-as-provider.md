@@ -104,32 +104,34 @@ registry-only, confidence column intact.
 
 ### Tasks
 
-- [ ] 2.1 Wrap each in a `mart_` model under `models/marts/api/` (this repo's existing
-      `mart_<name>` → `api_v1.<name>` convention, `+post-hook: restore_api_v1_view()`), rather than
-      renaming the `int_` models themselves — keeps the `models/intermediate/` layer as the
-      derivation step and `marts/api/` as the publish step, consistent with every other published
-      relation.
-- [ ] 2.2 `meta.publisher: atlas` on both (this is Atlas's own derived classification, same bucket
-      as Phase 1's list, not a source mirror).
-- [ ] 2.3 `schema.yml` docs + tests for the two new `mart_` wrappers — reuse the column
-      documentation already written for the `int_` models (`models/intermediate/schema.yml`), don't
-      re-derive it.
-- [ ] 2.4 Regenerate `lineage.csv`/`lineage_direct.csv` (new edges: `mart_*` → `int_*`), regenerate
-      `api_v1_generated.sql` / `api_v1_state.json` via `scripts/generate_api_v1.py`, regenerate
-      `template-info.yaml` holdings, regenerate the catalogue (new dataset pages expected this
-      time, since these ARE published relations now — unlike Phase 1 of PLAN-001).
-- [ ] 2.5 Confirm `check-dataset-page-coverage.mjs` passes (two new dataset pages required) and
-      `check-every-source-is-served.sh` reflects brreg-underenheter's status correctly (it already
-      reaches a published relation now, for the first time).
+- [x] 2.1 Wrapped each in a `mart_` model under `models/marts/api/`
+      (`mart_ngo_chapter_registry_match`, `mart_ngo_chapter_subunits` — `+post-hook:
+      restore_api_v1_view()` applies automatically at the directory level, no per-file config
+      needed). The `int_` models are unchanged.
+- [x] 2.2 `meta.publisher: atlas` on both.
+- [x] 2.3 Full `schema.yml` docs + tests for both — one real YAML bug found building this (an
+      unquoted description starting with a single-quoted scalar, broken by an apostrophe later in
+      the same string; fixed by double-quoting the whole value), caught by `dbt parse` failing
+      loud rather than by inspection.
+- [x] 2.4 Lineage, `api_v1_generated.sql`/`api_v1_state.json`, `template-info.yaml`, and the
+      catalogue all regenerated via their own generator scripts, not hand-edited.
+- [x] 2.5 `check-dataset-page-coverage.mjs`: 96 relations (was 94), two new dataset pages.
+      `check-every-source-is-served.sh`: `brreg-underenheter` moved from unserved to served —
+      `brreg-underenheter-oppdateringer` (the change feed, not the bootstrap) remains the one
+      deferred source.
 
-### Validation
+### Validation — done for real against live data, not simulated
 
-Same acceptance-target tests from PLAN-001 still pass unchanged (the `int_` models aren't
-modified, only wrapped) — rerun them as part of this phase's `dbt build` to confirm the wrapper
-didn't somehow change row counts. Confirm via the public API directly once deployed:
-`https://api-atlas.urbalurba.com/ngo_chapter_registry_match?limit=5` (exact relation name TBD —
-match whatever `generate_api_v1.py` derives from the `mart_` name) returns rows with a visible
-`confidence` column, not silently promoted to "verified."
+Built and tested against a fresh real ingest of the full Brreg enhetsregister + underenheter
+register (not fixtures, not the prior session's torn-down instance). Both PLAN-001 acceptance
+tests pass unchanged (`ngo_chapter_registry_match` = 2750 rows, exact sum of the 9 federated
+NGOs' targets; `ngo_chapter_subunits` = 329 rows = 177 + 152) — the wrapper is a pure passthrough,
+confirmed by row count, not assumed from the SQL. All 40 new/existing tests touching these two
+relations pass, independently re-run twice (once by the agent that built this, once standalone
+afterward against the same live database) with identical results both times.
+
+Public API confirmation deferred to the deploy step (per this repo's "a deploy is not successful
+until the data arrives" rule) — not claimed here before it has actually shipped.
 
 ---
 

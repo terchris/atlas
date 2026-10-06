@@ -77,6 +77,8 @@ kommune_ngo_totals,mart_kommune_ngo_totals,false,curated
 meta_dimensions,mart_meta_dimensions,false,curated
 meta_endpoints,mart_meta_endpoints,true,curated
 meta_sources,mart_meta_sources,true,curated
+ngo_chapter_registry_match,mart_ngo_chapter_registry_match,false,curated
+ngo_chapter_subunits,mart_ngo_chapter_subunits,false,curated
 ngo_index,mart_ngo_index,false,curated
 ngo_overview,mart_ngo_overview,false,curated
 ref_atlas_service_category,mart_ref_atlas_service_category,false,curated
