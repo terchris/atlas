@@ -4,10 +4,12 @@
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: All three phases complete (#560, #561, this PR). Approved by Terje 2026-10-05 ("add
-Atlas as a provider and ingest and publish all the datasets"), two scope questions answered the
-same day (see Decisions below). Ready to move to `completed/` once this phase's deploy is
-requested and confirmed, matching this repo's "ingested means served and verified" rule.
+## Status: Completed 2026-10-06. All three phases shipped and deployed-and-verified on the real
+cluster (#560, #561/#562, #563/#564 — the latter two each needed one follow-up fix a deploy
+verification surfaced: #562 fixed a production OOM incident #561's deploy exposed, #564 fixed a
+seed-test gap #563's deploy exposed; both are documented in their own commits). Approved by Terje
+2026-10-05 ("add Atlas as a provider and ingest and publish all the datasets"), two scope
+questions answered the same day (see Decisions below).
 
 **Goal**: Atlas isn't only a republisher of upstream public data — some of what it publishes is
 Atlas's own authored content: classification schemes, cross-source syntheses, and self-description.
