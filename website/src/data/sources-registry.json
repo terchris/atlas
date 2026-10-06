@@ -23733,7 +23733,7 @@
         },
         {
           "name": "search_entry",
-          "description": "'yes' if this category is a likely entry point for a site search feature, 'no', or 'merged' if it was folded into another category during curation. Added 2026-10-06."
+          "description": "'yes' if this category is a likely entry point for a site search feature; 'no' for classification-only categories; 'sensitive' when Google Keyword Planner hides the search volume entirely (dementia, addiction, low-threshold health services, bullying) — also classification-only, for a different reason. Added 2026-10-06."
         },
         {
           "name": "previous_label_no",
