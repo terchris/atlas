@@ -256,6 +256,11 @@ deploy.
 
 SUPPLY — voluntary-sector presence:
   ngo_index, ngo_overview      organisations and their summary.
+  ngo_chapter_registry_match   the 9 federated NGOs' chapters, by Brreg name
+                                match. Registry-only — confidence tops out at
+                                medium; no NGO site has corroborated these yet.
+  ngo_chapter_subunits         the 2 unitary NGOs' sub-units, by Brreg's own
+                                parent-entity link. confidence is always high.
   activity_catalog             what each organisation does.
   kommune_ngo_summary          per-kommune rollup.
   kommune_ngo_totals           national totals; reconcile these against

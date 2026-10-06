@@ -67,6 +67,15 @@ MANIFEST=target/manifest.json
 #                                CODE from a register Atlas republishes
 #                                verbatim. That is editing source data to
 #                                satisfy a gate.
+#   mart_ngo_chapter_registry_match  SAME REASONING AS mart_brreg_enhet, same
+#   mart_ngo_chapter_subunits        source column. Grain is one row per
+#                                chapter (an organisation); kommune_nr is
+#                                `doc -> 'forretningsadresse'/'beliggenhetsadresse'/
+#                                'postadresse' ->> 'kommunenummer'` — Brreg's own
+#                                address field, verbatim, not run through any
+#                                region-code classification. Filtering it would
+#                                curate Brreg's own register, same as
+#                                mart_brreg_enhet above.
 #
 # 🔴 SEVEN PER-SOURCE INDICATOR RELATIONS ARE EXEMPT AS A RECORDED DEFECT, NOT
 # AS A JUDGEMENT THAT THEY ARE FINE. This is the one group here whose exemption
@@ -99,7 +108,7 @@ MANIFEST=target/manifest.json
 # changes values in relations that are already published, which is a deploy
 # with its own acceptance checks -- not a side effect of a publish. Raised on
 # urb-agents #1547.
-EXEMPT="mart_dim_kommune mart_unattributed_totals mart_brreg_enhet mart_distrikt_summary mart_kommune_local_chapters mart_dim_postnummer mart_supply__redcross_branches mart_supply__redcross_chapter_kommune_coverage mart_dim_chapter mart_chapter_kommune_coverage mart_fact_chapter_activities mart_indicators__bufdir_barnefattigdom mart_indicators__fhi_bor_alene mart_indicators__fhi_mobbing mart_indicators__fhi_trangbodd mart_indicators__fhi_vgs_gjennomforing mart_indicators__ssb_08764 mart_indicators__ssb_10826"
+EXEMPT="mart_dim_kommune mart_unattributed_totals mart_brreg_enhet mart_distrikt_summary mart_kommune_local_chapters mart_dim_postnummer mart_supply__redcross_branches mart_supply__redcross_chapter_kommune_coverage mart_dim_chapter mart_chapter_kommune_coverage mart_fact_chapter_activities mart_indicators__bufdir_barnefattigdom mart_indicators__fhi_bor_alene mart_indicators__fhi_mobbing mart_indicators__fhi_trangbodd mart_indicators__fhi_vgs_gjennomforing mart_indicators__ssb_08764 mart_indicators__ssb_10826 mart_ngo_chapter_registry_match mart_ngo_chapter_subunits"
 
 CANDIDATES="$(./.venv/bin/python -c '
 import json, sys

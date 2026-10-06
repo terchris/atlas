@@ -713,6 +713,165 @@ models:
         data_tests:
           - not_null
 
+  - name: mart_ngo_chapter_registry_match
+    meta:
+      publisher: atlas
+      stability: curated
+      title: "NGO chapter registry match (federated)"
+    description: |
+      The 9 federated NGOs' chapters, found by name pattern in Brønnøysundregistrene's register.
+
+      Registry-only: confidence tops out at `medium` (`high` only for an NGO's own national
+      row) — no NGO's own website has been crawled yet to corroborate a strong name match.
+      See the model's own header (int_ngo_chapter_registry_match.sql) for the matching method.
+    columns:
+      - name: chapter_orgnr
+        description: The chapter's own 9-digit organisasjonsnummer. Natural key for this view.
+        data_tests:
+          - not_null
+          - unique
+      - name: chapter_id
+        description: "'<ngo_slug>-<chapter_orgnr>', the conformed cross-NGO chapter identifier."
+        data_tests:
+          - not_null
+          - unique
+      - name: ngo_orgnr
+        description: 9-digit Brreg organisasjonsnummer of the parent NGO.
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_ngo')
+              field: orgnr
+      - name: name
+        description: Legal name from Brreg, verbatim.
+        data_tests: [not_null]
+      - name: chapter_level
+        description: national (the NGO's own row) / regional / local / related_entity (e.g. an owned AS or STI, not a chapter).
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: [national, regional, local, related_entity]
+      - name: kommune_nr
+        description: Resolved from Brreg's own kommune field. Null where Brreg carries none.
+      - name: is_active
+        description: Whether Brreg's own registry shows the entity as active (not konkurs/avviklet).
+        data_tests: [not_null]
+      - name: web
+        description: Brreg's own hjemmeside field for this entity, verbatim. Null where Brreg carries none.
+      - name: confidence
+        description: "high only for chapter_orgnr = ngo_orgnr; medium or low for every name-matched row — see the model header."
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: [high, medium, low]
+      - name: match_method
+        description: How this row was matched — Brreg's own orgnr, a strong name pattern (optionally corroborated by a matching website), or a weaker name pattern.
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: [orgnr, "nameStrong+website", nameStrong, nameWeak]
+      - name: registration
+        description: Always 'legal_entity' — every row here is a Brreg-registered organisation, not a scraped/unregistered unit.
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: [legal_entity]
+      - name: reconciliation
+        description: Always 'registry_only' — no NGO site crawl has corroborated these rows yet.
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: [registry_only]
+      - name: parent_chapter_id
+        description: The NGO's own national row's chapter_id. Null for the national row itself.
+        data_tests:
+          - relationships:
+              to: ref('mart_ngo_chapter_registry_match')
+              field: chapter_id
+              config: {where: "parent_chapter_id is not null"}
+      - name: parent_method
+        description: Always null — the registry states no parent link for these rows (reserved for a future reconciliation method).
+      - name: source_url
+        description: The live Brreg Enhetsregisteret API URL for this chapter_orgnr.
+        data_tests: [not_null]
+
+  - name: mart_ngo_chapter_subunits
+    meta:
+      publisher: atlas
+      stability: curated
+      title: "NGO chapter subunits (unitary)"
+    description: |
+      The local units of the 2 unitary NGOs (Frelsesarmeen, Kirkens Bymisjon), found as Brreg underenheter.
+
+      confidence is always `high` here — Brreg's own overordnetEnhet field is a declared
+      structural link, not a fuzzy name match. Still registry-only in a different sense: reads
+      the underenheter bootstrap snapshot only, no incremental reconciliation yet — see the
+      model's own header (int_ngo_chapter_subunits.sql) for the known gaps.
+    columns:
+      - name: chapter_orgnr
+        description: The sub-unit's own 9-digit organisasjonsnummer. Natural key for this view.
+        data_tests:
+          - not_null
+          - unique
+      - name: chapter_id
+        description: "'<ngo_slug>-<chapter_orgnr>', the conformed cross-NGO chapter identifier."
+        data_tests:
+          - not_null
+          - unique
+      - name: ngo_orgnr
+        description: 9-digit Brreg organisasjonsnummer of the parent NGO.
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_ngo')
+              field: orgnr
+      - name: name
+        description: Legal name from Brreg, verbatim.
+        data_tests: [not_null]
+      - name: chapter_level
+        description: national (the NGO's own row) / regional / local / related_entity (e.g. Fretex, an owned AS, not a chapter).
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: [national, regional, local, related_entity]
+      - name: kommune_nr
+        description: Resolved from Brreg's own beliggenhetsadresse, falling back to postadresse. Null where Brreg carries neither.
+      - name: is_active
+        description: Whether the underenhet's nedleggelsesdato (closure date) is null.
+        data_tests: [not_null]
+      - name: web
+        description: Always null — the underenheter register carries no website field.
+      - name: unit_name
+        description: Text after " AVD " in the legal name, when present. Null otherwise — see the model header on why fuller area-splitting isn't implemented.
+      - name: confidence
+        description: Always 'high' — see the model header on why this register needs no tiering.
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: [high]
+      - name: registration
+        description: "'legal_entity' for the NGO's own national row, 'sub_unit' for every underenhet."
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: [legal_entity, sub_unit]
+      - name: reconciliation
+        description: Always 'registry_only' — reads the bootstrap snapshot only, see the model header.
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: [registry_only]
+      - name: parent_chapter_id
+        description: The NGO's own national row's chapter_id. Null for the national row itself.
+        data_tests:
+          - relationships:
+              to: ref('mart_ngo_chapter_subunits')
+              field: chapter_id
+              config: {where: "parent_chapter_id is not null"}
+      - name: source_url
+        description: The live Brreg API URL for this chapter_orgnr (enheter for the national row, underenheter for every sub-unit).
+        data_tests: [not_null]
+
   - name: mart_activity_catalog
     meta:
       publisher: atlas

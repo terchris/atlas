@@ -114,6 +114,7 @@ mart_activity_catalog,redcross-branches
 mart_atlas_inventory,brreg-enheter-alle
 mart_atlas_inventory,brreg-frivillige
 mart_atlas_inventory,brreg-oppdateringer
+mart_atlas_inventory,brreg-underenheter
 mart_atlas_inventory,bufdir-barnefattigdom
 mart_atlas_inventory,bufdir-barnevern
 mart_atlas_inventory,fhi-alkohol
@@ -466,6 +467,13 @@ mart_meta_sources,ssb-13995
 mart_meta_sources,ssb-crime-tables
 mart_meta_sources,ssb-klass-fylker
 mart_meta_sources,ssb-klass-kommuner
+mart_ngo_chapter_registry_match,brreg-enheter-alle
+mart_ngo_chapter_registry_match,brreg-frivillige
+mart_ngo_chapter_registry_match,brreg-oppdateringer
+mart_ngo_chapter_subunits,brreg-enheter-alle
+mart_ngo_chapter_subunits,brreg-frivillige
+mart_ngo_chapter_subunits,brreg-oppdateringer
+mart_ngo_chapter_subunits,brreg-underenheter
 mart_ngo_index,redcross-branches
 mart_ngo_overview,redcross-branches
 mart_supply__redcross_branch_activities,redcross-branches

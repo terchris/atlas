@@ -79,6 +79,8 @@
     "meta_dimensions",
     "meta_endpoints",
     "meta_sources",
+    "ngo_chapter_registry_match",
+    "ngo_chapter_subunits",
     "ngo_index",
     "ngo_overview",
     "ref_atlas_service_category",

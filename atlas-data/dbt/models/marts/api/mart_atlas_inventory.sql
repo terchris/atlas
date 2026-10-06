@@ -135,6 +135,8 @@
 -- depends_on: {{ ref('mart_meta_dimensions') }}
 -- depends_on: {{ ref('mart_meta_endpoints') }}
 -- depends_on: {{ ref('mart_meta_sources') }}
+-- depends_on: {{ ref('mart_ngo_chapter_registry_match') }}
+-- depends_on: {{ ref('mart_ngo_chapter_subunits') }}
 -- depends_on: {{ ref('mart_ngo_index') }}
 -- depends_on: {{ ref('mart_ngo_overview') }}
 -- depends_on: {{ ref('mart_ref_atlas_service_category') }}
@@ -241,6 +243,8 @@
   {'relation': 'meta_dimensions', 'mart': 'mart_meta_dimensions'},
   {'relation': 'meta_endpoints', 'mart': 'mart_meta_endpoints'},
   {'relation': 'meta_sources', 'mart': 'mart_meta_sources'},
+  {'relation': 'ngo_chapter_registry_match', 'mart': 'mart_ngo_chapter_registry_match'},
+  {'relation': 'ngo_chapter_subunits', 'mart': 'mart_ngo_chapter_subunits'},
   {'relation': 'ngo_index', 'mart': 'mart_ngo_index'},
   {'relation': 'ngo_overview', 'mart': 'mart_ngo_overview'},
   {'relation': 'ref_atlas_service_category', 'mart': 'mart_ref_atlas_service_category'},

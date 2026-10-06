@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-05",
+  "generated_at": "2026-10-06",
   "manifest_schema_id": "https://atlas.sovereignsky.no/schemas/manifest.schema.json",
   "atlas_base_url": "https://atlas.sovereignsky.no",
   "postgrest_base_url": "https://api-atlas.urbalurba.com",
@@ -79,7 +79,7 @@
       "feedback_url": "https://github.com/terchris/atlas/issues",
       "notes": "Atlas itself, for the relations it authors rather than republishes:\nclassification schemes (the NGO activity taxonomy, the chapter and\nactivity dimensions), cross-source syntheses that exist only because\nAtlas combined multiple publishers' data (indicator coverage,\nkommune/NGO rollups), and Atlas's own self-description (meta_sources,\ningest_health). No source manifest declares `publisher: Atlas` — this\nentry is resolved by a model's `meta.publisher` field instead, read by\ngenerate-sources-registry.mjs, not by the manifest cross-check every\nother publisher goes through.\n",
       "source_count": 0,
-      "view_count": 25
+      "view_count": 27
     },
     {
       "id": "brreg",
@@ -313,6 +313,22 @@
           "sample_query": "https://api-atlas.urbalurba.com/kommune_ngo_totals?limit=5"
         },
         {
+          "mart_name": "mart_ngo_chapter_registry_match",
+          "api_v1_name": "ngo_chapter_registry_match",
+          "title": "NGO chapter registry match (federated)",
+          "description_short": "The 9 federated NGOs' chapters, found by name pattern in Brønnøysundregistrene's register.",
+          "description_full": "The 9 federated NGOs' chapters, found by name pattern in Brønnøysundregistrene's register.\n\nRegistry-only: confidence tops out at `medium` (`high` only for an NGO's own national\nrow) — no NGO's own website has been crawled yet to corroborate a strong name match.\nSee the model's own header (int_ngo_chapter_registry_match.sql) for the matching method.",
+          "sample_query": "https://api-atlas.urbalurba.com/ngo_chapter_registry_match?limit=5"
+        },
+        {
+          "mart_name": "mart_ngo_chapter_subunits",
+          "api_v1_name": "ngo_chapter_subunits",
+          "title": "NGO chapter subunits (unitary)",
+          "description_short": "The local units of the 2 unitary NGOs (Frelsesarmeen, Kirkens Bymisjon), found as Brreg underenheter.",
+          "description_full": "The local units of the 2 unitary NGOs (Frelsesarmeen, Kirkens Bymisjon), found as Brreg underenheter.\n\nconfidence is always `high` here — Brreg's own overordnetEnhet field is a declared\nstructural link, not a fuzzy name match. Still registry-only in a different sense: reads\nthe underenheter bootstrap snapshot only, no incremental reconciliation yet — see the\nmodel's own header (int_ngo_chapter_subunits.sql) for the known gaps.",
+          "sample_query": "https://api-atlas.urbalurba.com/ngo_chapter_subunits?limit=5"
+        },
+        {
           "mart_name": "mart_unattributed_totals",
           "api_v1_name": "unattributed_totals",
           "title": null,
@@ -359,6 +375,14 @@
           "kind": "mart"
         },
         {
+          "name": "mart_ngo_chapter_registry_match",
+          "kind": "mart"
+        },
+        {
+          "name": "mart_ngo_chapter_subunits",
+          "kind": "mart"
+        },
+        {
           "name": "mart_unattributed_totals",
           "kind": "mart"
         }
@@ -376,6 +400,8 @@
             "mart_indicators__lottstift_momskompensasjon",
             "mart_kommune_ngo_summary",
             "mart_kommune_ngo_totals",
+            "mart_ngo_chapter_registry_match",
+            "mart_ngo_chapter_subunits",
             "mart_unattributed_totals"
           ]
         },
@@ -391,6 +417,8 @@
             "mart_indicators__lottstift_momskompensasjon",
             "mart_kommune_ngo_summary",
             "mart_kommune_ngo_totals",
+            "mart_ngo_chapter_registry_match",
+            "mart_ngo_chapter_subunits",
             "mart_unattributed_totals"
           ]
         },
@@ -401,6 +429,14 @@
             "mart_kommune_ngo_summary",
             "mart_kommune_ngo_totals",
             "mart_unattributed_totals"
+          ]
+        },
+        {
+          "source_id": "brreg-underenheter",
+          "shared_models": [
+            "int_ngo_chapter_subunits",
+            "mart_atlas_inventory",
+            "mart_ngo_chapter_subunits"
           ]
         },
         {
@@ -427,13 +463,6 @@
         },
         {
           "source_id": "fhi-befolkningsvekst",
-          "shared_models": [
-            "mart_atlas_inventory",
-            "mart_unattributed_totals"
-          ]
-        },
-        {
-          "source_id": "fhi-bor-alene",
           "shared_models": [
             "mart_atlas_inventory",
             "mart_unattributed_totals"
@@ -574,6 +603,22 @@
           "sample_query": "https://api-atlas.urbalurba.com/kommune_ngo_totals?limit=5"
         },
         {
+          "mart_name": "mart_ngo_chapter_registry_match",
+          "api_v1_name": "ngo_chapter_registry_match",
+          "title": "NGO chapter registry match (federated)",
+          "description_short": "The 9 federated NGOs' chapters, found by name pattern in Brønnøysundregistrene's register.",
+          "description_full": "The 9 federated NGOs' chapters, found by name pattern in Brønnøysundregistrene's register.\n\nRegistry-only: confidence tops out at `medium` (`high` only for an NGO's own national\nrow) — no NGO's own website has been crawled yet to corroborate a strong name match.\nSee the model's own header (int_ngo_chapter_registry_match.sql) for the matching method.",
+          "sample_query": "https://api-atlas.urbalurba.com/ngo_chapter_registry_match?limit=5"
+        },
+        {
+          "mart_name": "mart_ngo_chapter_subunits",
+          "api_v1_name": "ngo_chapter_subunits",
+          "title": "NGO chapter subunits (unitary)",
+          "description_short": "The local units of the 2 unitary NGOs (Frelsesarmeen, Kirkens Bymisjon), found as Brreg underenheter.",
+          "description_full": "The local units of the 2 unitary NGOs (Frelsesarmeen, Kirkens Bymisjon), found as Brreg underenheter.\n\nconfidence is always `high` here — Brreg's own overordnetEnhet field is a declared\nstructural link, not a fuzzy name match. Still registry-only in a different sense: reads\nthe underenheter bootstrap snapshot only, no incremental reconciliation yet — see the\nmodel's own header (int_ngo_chapter_subunits.sql) for the known gaps.",
+          "sample_query": "https://api-atlas.urbalurba.com/ngo_chapter_subunits?limit=5"
+        },
+        {
           "mart_name": "mart_unattributed_totals",
           "api_v1_name": "unattributed_totals",
           "title": null,
@@ -620,6 +665,14 @@
           "kind": "mart"
         },
         {
+          "name": "mart_ngo_chapter_registry_match",
+          "kind": "mart"
+        },
+        {
+          "name": "mart_ngo_chapter_subunits",
+          "kind": "mart"
+        },
+        {
           "name": "mart_unattributed_totals",
           "kind": "mart"
         }
@@ -637,6 +690,8 @@
             "mart_indicators__lottstift_momskompensasjon",
             "mart_kommune_ngo_summary",
             "mart_kommune_ngo_totals",
+            "mart_ngo_chapter_registry_match",
+            "mart_ngo_chapter_subunits",
             "mart_unattributed_totals"
           ]
         },
@@ -652,6 +707,8 @@
             "mart_indicators__lottstift_momskompensasjon",
             "mart_kommune_ngo_summary",
             "mart_kommune_ngo_totals",
+            "mart_ngo_chapter_registry_match",
+            "mart_ngo_chapter_subunits",
             "mart_unattributed_totals"
           ]
         },
@@ -662,6 +719,14 @@
             "mart_kommune_ngo_summary",
             "mart_kommune_ngo_totals",
             "mart_unattributed_totals"
+          ]
+        },
+        {
+          "source_id": "brreg-underenheter",
+          "shared_models": [
+            "int_ngo_chapter_subunits",
+            "mart_atlas_inventory",
+            "mart_ngo_chapter_subunits"
           ]
         },
         {
@@ -688,13 +753,6 @@
         },
         {
           "source_id": "fhi-befolkningsvekst",
-          "shared_models": [
-            "mart_atlas_inventory",
-            "mart_unattributed_totals"
-          ]
-        },
-        {
-          "source_id": "fhi-bor-alene",
           "shared_models": [
             "mart_atlas_inventory",
             "mart_unattributed_totals"
@@ -843,6 +901,22 @@
           "sample_query": "https://api-atlas.urbalurba.com/kommune_ngo_totals?limit=5"
         },
         {
+          "mart_name": "mart_ngo_chapter_registry_match",
+          "api_v1_name": "ngo_chapter_registry_match",
+          "title": "NGO chapter registry match (federated)",
+          "description_short": "The 9 federated NGOs' chapters, found by name pattern in Brønnøysundregistrene's register.",
+          "description_full": "The 9 federated NGOs' chapters, found by name pattern in Brønnøysundregistrene's register.\n\nRegistry-only: confidence tops out at `medium` (`high` only for an NGO's own national\nrow) — no NGO's own website has been crawled yet to corroborate a strong name match.\nSee the model's own header (int_ngo_chapter_registry_match.sql) for the matching method.",
+          "sample_query": "https://api-atlas.urbalurba.com/ngo_chapter_registry_match?limit=5"
+        },
+        {
+          "mart_name": "mart_ngo_chapter_subunits",
+          "api_v1_name": "ngo_chapter_subunits",
+          "title": "NGO chapter subunits (unitary)",
+          "description_short": "The local units of the 2 unitary NGOs (Frelsesarmeen, Kirkens Bymisjon), found as Brreg underenheter.",
+          "description_full": "The local units of the 2 unitary NGOs (Frelsesarmeen, Kirkens Bymisjon), found as Brreg underenheter.\n\nconfidence is always `high` here — Brreg's own overordnetEnhet field is a declared\nstructural link, not a fuzzy name match. Still registry-only in a different sense: reads\nthe underenheter bootstrap snapshot only, no incremental reconciliation yet — see the\nmodel's own header (int_ngo_chapter_subunits.sql) for the known gaps.",
+          "sample_query": "https://api-atlas.urbalurba.com/ngo_chapter_subunits?limit=5"
+        },
+        {
           "mart_name": "mart_unattributed_totals",
           "api_v1_name": "unattributed_totals",
           "title": null,
@@ -889,6 +963,14 @@
           "kind": "mart"
         },
         {
+          "name": "mart_ngo_chapter_registry_match",
+          "kind": "mart"
+        },
+        {
+          "name": "mart_ngo_chapter_subunits",
+          "kind": "mart"
+        },
+        {
           "name": "mart_unattributed_totals",
           "kind": "mart"
         }
@@ -906,6 +988,8 @@
             "mart_indicators__lottstift_momskompensasjon",
             "mart_kommune_ngo_summary",
             "mart_kommune_ngo_totals",
+            "mart_ngo_chapter_registry_match",
+            "mart_ngo_chapter_subunits",
             "mart_unattributed_totals"
           ]
         },
@@ -921,6 +1005,8 @@
             "mart_indicators__lottstift_momskompensasjon",
             "mart_kommune_ngo_summary",
             "mart_kommune_ngo_totals",
+            "mart_ngo_chapter_registry_match",
+            "mart_ngo_chapter_subunits",
             "mart_unattributed_totals"
           ]
         },
@@ -931,6 +1017,14 @@
             "mart_kommune_ngo_summary",
             "mart_kommune_ngo_totals",
             "mart_unattributed_totals"
+          ]
+        },
+        {
+          "source_id": "brreg-underenheter",
+          "shared_models": [
+            "int_ngo_chapter_subunits",
+            "mart_atlas_inventory",
+            "mart_ngo_chapter_subunits"
           ]
         },
         {
@@ -957,13 +1051,6 @@
         },
         {
           "source_id": "fhi-befolkningsvekst",
-          "shared_models": [
-            "mart_atlas_inventory",
-            "mart_unattributed_totals"
-          ]
-        },
-        {
-          "source_id": "fhi-bor-alene",
           "shared_models": [
             "mart_atlas_inventory",
             "mart_unattributed_totals"
@@ -1062,30 +1149,91 @@
         "bibtex": "@misc{atlas_brreg_underenheter,\n  author = {Brønnøysundregistrene},\n  title  = {Enhetsregisteret — underenheter (alle)},\n  year   = {n.d.},\n  url    = {https://data.brreg.no/enhetsregisteret/api/dokumentasjon},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/brreg-underenheter}\n}"
       },
       "feedback_url": "https://www.brreg.no/om-oss/kontakt-oss/",
-      "consuming_marts": [],
+      "consuming_marts": [
+        {
+          "mart_name": "mart_atlas_inventory",
+          "api_v1_name": "atlas_inventory",
+          "title": null,
+          "description_short": "What Atlas publishes: one row per endpoint with its row count, freshness and origin.",
+          "description_full": "What Atlas publishes: one row per endpoint with its row count, freshness and origin.\n\nWhat Atlas publishes, one row per queryable endpoint: how many records it\nserves, when its data last arrived, and where those rows came from.\nAsked for by Røde Kors — \"validate that all datasets that are ingested has\nan endpoint and it can be queried … count the number of records each\nendpoint has and update the last time it ingested data.\"\n⚠️ THE GRAIN IS PER ENDPOINT, NOT PER SOURCE. meta_sources answers \"what\ndid Atlas ingest\"; this answers \"what can I query, and is there anything\nin it\". One source can feed several endpoints and one endpoint can draw on\nseveral sources, so the two row counts are not comparable and summing\nsources will not reproduce an endpoint's count.\n⚠️ atlas_inventory does not list ITSELF. It is built from the same seed it\nreports on, so counting itself would be circular and the number would be\nwhatever the table held mid-build. 19 endpoints are listed; 20 are\npublished.",
+          "sample_query": "https://api-atlas.urbalurba.com/atlas_inventory?limit=5"
+        },
+        {
+          "mart_name": "mart_ngo_chapter_subunits",
+          "api_v1_name": "ngo_chapter_subunits",
+          "title": "NGO chapter subunits (unitary)",
+          "description_short": "The local units of the 2 unitary NGOs (Frelsesarmeen, Kirkens Bymisjon), found as Brreg underenheter.",
+          "description_full": "The local units of the 2 unitary NGOs (Frelsesarmeen, Kirkens Bymisjon), found as Brreg underenheter.\n\nconfidence is always `high` here — Brreg's own overordnetEnhet field is a declared\nstructural link, not a fuzzy name match. Still registry-only in a different sense: reads\nthe underenheter bootstrap snapshot only, no incremental reconciliation yet — see the\nmodel's own header (int_ngo_chapter_subunits.sql) for the known gaps.",
+          "sample_query": "https://api-atlas.urbalurba.com/ngo_chapter_subunits?limit=5"
+        }
+      ],
       "consuming_models": [
         {
           "name": "int_ngo_chapter_subunits",
           "kind": "other"
+        },
+        {
+          "name": "mart_atlas_inventory",
+          "kind": "mart"
+        },
+        {
+          "name": "mart_ngo_chapter_subunits",
+          "kind": "mart"
         }
       ],
       "joined_with": [
         {
           "source_id": "brreg-enheter-alle",
           "shared_models": [
-            "int_ngo_chapter_subunits"
+            "int_ngo_chapter_subunits",
+            "mart_atlas_inventory",
+            "mart_ngo_chapter_subunits"
           ]
         },
         {
           "source_id": "brreg-frivillige",
           "shared_models": [
-            "int_ngo_chapter_subunits"
+            "int_ngo_chapter_subunits",
+            "mart_atlas_inventory",
+            "mart_ngo_chapter_subunits"
           ]
         },
         {
           "source_id": "brreg-oppdateringer",
           "shared_models": [
-            "int_ngo_chapter_subunits"
+            "int_ngo_chapter_subunits",
+            "mart_atlas_inventory",
+            "mart_ngo_chapter_subunits"
+          ]
+        },
+        {
+          "source_id": "bufdir-barnefattigdom",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "bufdir-barnevern",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "fhi-alkohol",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "fhi-befolkning",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "fhi-befolkningsvekst",
+          "shared_models": [
+            "mart_atlas_inventory"
           ]
         }
       ],
@@ -1348,6 +1496,12 @@
           ]
         },
         {
+          "source_id": "brreg-underenheter",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
           "source_id": "bufdir-barnevern",
           "shared_models": [
             "mart_atlas_inventory"
@@ -1367,12 +1521,6 @@
         },
         {
           "source_id": "fhi-befolkningsvekst",
-          "shared_models": [
-            "mart_atlas_inventory"
-          ]
-        },
-        {
-          "source_id": "fhi-bor-alene",
           "shared_models": [
             "mart_atlas_inventory"
           ]
@@ -1528,6 +1676,12 @@
           ]
         },
         {
+          "source_id": "brreg-underenheter",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
           "source_id": "bufdir-barnefattigdom",
           "shared_models": [
             "mart_atlas_inventory"
@@ -1547,12 +1701,6 @@
         },
         {
           "source_id": "fhi-befolkningsvekst",
-          "shared_models": [
-            "mart_atlas_inventory"
-          ]
-        },
-        {
-          "source_id": "fhi-bor-alene",
           "shared_models": [
             "mart_atlas_inventory"
           ]
@@ -8804,6 +8952,12 @@
           ]
         },
         {
+          "source_id": "brreg-underenheter",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
           "source_id": "bufdir-barnefattigdom",
           "shared_models": [
             "mart_atlas_inventory"
@@ -8823,12 +8977,6 @@
         },
         {
           "source_id": "fhi-befolkning",
-          "shared_models": [
-            "mart_atlas_inventory"
-          ]
-        },
-        {
-          "source_id": "fhi-befolkningsvekst",
           "shared_models": [
             "mart_atlas_inventory"
           ]
@@ -8984,6 +9132,12 @@
           ]
         },
         {
+          "source_id": "brreg-underenheter",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
           "source_id": "bufdir-barnefattigdom",
           "shared_models": [
             "mart_atlas_inventory"
@@ -8997,12 +9151,6 @@
         },
         {
           "source_id": "fhi-alkohol",
-          "shared_models": [
-            "mart_atlas_inventory"
-          ]
-        },
-        {
-          "source_id": "fhi-befolkning",
           "shared_models": [
             "mart_atlas_inventory"
           ]
@@ -9158,6 +9306,12 @@
           ]
         },
         {
+          "source_id": "brreg-underenheter",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
           "source_id": "bufdir-barnefattigdom",
           "shared_models": [
             "mart_atlas_inventory"
@@ -9177,12 +9331,6 @@
         },
         {
           "source_id": "fhi-befolkning",
-          "shared_models": [
-            "mart_atlas_inventory"
-          ]
-        },
-        {
-          "source_id": "fhi-befolkningsvekst",
           "shared_models": [
             "mart_atlas_inventory"
           ]
@@ -9337,6 +9485,12 @@
           ]
         },
         {
+          "source_id": "brreg-underenheter",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
           "source_id": "bufdir-barnefattigdom",
           "shared_models": [
             "mart_atlas_inventory"
@@ -9356,12 +9510,6 @@
         },
         {
           "source_id": "fhi-befolkning",
-          "shared_models": [
-            "mart_atlas_inventory"
-          ]
-        },
-        {
-          "source_id": "fhi-befolkningsvekst",
           "shared_models": [
             "mart_atlas_inventory"
           ]
@@ -9516,6 +9664,12 @@
           ]
         },
         {
+          "source_id": "brreg-underenheter",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
           "source_id": "bufdir-barnefattigdom",
           "shared_models": [
             "mart_atlas_inventory"
@@ -9535,12 +9689,6 @@
         },
         {
           "source_id": "fhi-befolkning",
-          "shared_models": [
-            "mart_atlas_inventory"
-          ]
-        },
-        {
-          "source_id": "fhi-befolkningsvekst",
           "shared_models": [
             "mart_atlas_inventory"
           ]
@@ -9695,6 +9843,12 @@
           ]
         },
         {
+          "source_id": "brreg-underenheter",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
           "source_id": "bufdir-barnefattigdom",
           "shared_models": [
             "mart_atlas_inventory"
@@ -9714,12 +9868,6 @@
         },
         {
           "source_id": "fhi-befolkning",
-          "shared_models": [
-            "mart_atlas_inventory"
-          ]
-        },
-        {
-          "source_id": "fhi-befolkningsvekst",
           "shared_models": [
             "mart_atlas_inventory"
           ]
@@ -10049,6 +10197,12 @@
           ]
         },
         {
+          "source_id": "brreg-underenheter",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
           "source_id": "bufdir-barnefattigdom",
           "shared_models": [
             "mart_atlas_inventory"
@@ -10062,12 +10216,6 @@
         },
         {
           "source_id": "fhi-alkohol",
-          "shared_models": [
-            "mart_atlas_inventory"
-          ]
-        },
-        {
-          "source_id": "fhi-befolkning",
           "shared_models": [
             "mart_atlas_inventory"
           ]
@@ -11543,6 +11691,12 @@
           ]
         },
         {
+          "source_id": "brreg-underenheter",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
           "source_id": "bufdir-barnefattigdom",
           "shared_models": [
             "mart_atlas_inventory"
@@ -11550,12 +11704,6 @@
         },
         {
           "source_id": "bufdir-barnevern",
-          "shared_models": [
-            "mart_atlas_inventory"
-          ]
-        },
-        {
-          "source_id": "fhi-alkohol",
           "shared_models": [
             "mart_atlas_inventory"
           ]
@@ -12352,6 +12500,12 @@
           ]
         },
         {
+          "source_id": "brreg-underenheter",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
           "source_id": "bufdir-barnefattigdom",
           "shared_models": [
             "mart_atlas_inventory"
@@ -12371,12 +12525,6 @@
         },
         {
           "source_id": "fhi-befolkning",
-          "shared_models": [
-            "mart_atlas_inventory"
-          ]
-        },
-        {
-          "source_id": "fhi-befolkningsvekst",
           "shared_models": [
             "mart_atlas_inventory"
           ]
@@ -12533,6 +12681,12 @@
           ]
         },
         {
+          "source_id": "brreg-underenheter",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
           "source_id": "bufdir-barnefattigdom",
           "shared_models": [
             "mart_atlas_inventory"
@@ -12552,12 +12706,6 @@
         },
         {
           "source_id": "fhi-befolkning",
-          "shared_models": [
-            "mart_atlas_inventory"
-          ]
-        },
-        {
-          "source_id": "fhi-befolkningsvekst",
           "shared_models": [
             "mart_atlas_inventory"
           ]
@@ -13978,6 +14126,12 @@
           ]
         },
         {
+          "source_id": "brreg-underenheter",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
           "source_id": "bufdir-barnefattigdom",
           "shared_models": [
             "mart_atlas_inventory"
@@ -13997,12 +14151,6 @@
         },
         {
           "source_id": "fhi-befolkning",
-          "shared_models": [
-            "mart_atlas_inventory"
-          ]
-        },
-        {
-          "source_id": "fhi-befolkningsvekst",
           "shared_models": [
             "mart_atlas_inventory"
           ]
@@ -14147,6 +14295,12 @@
           ]
         },
         {
+          "source_id": "brreg-underenheter",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
           "source_id": "bufdir-barnefattigdom",
           "shared_models": [
             "mart_atlas_inventory"
@@ -14166,12 +14320,6 @@
         },
         {
           "source_id": "fhi-befolkning",
-          "shared_models": [
-            "mart_atlas_inventory"
-          ]
-        },
-        {
-          "source_id": "fhi-befolkningsvekst",
           "shared_models": [
             "mart_atlas_inventory"
           ]
@@ -16122,6 +16270,12 @@
           ]
         },
         {
+          "source_id": "brreg-underenheter",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
           "source_id": "bufdir-barnefattigdom",
           "shared_models": [
             "mart_atlas_inventory"
@@ -16141,12 +16295,6 @@
         },
         {
           "source_id": "fhi-befolkning",
-          "shared_models": [
-            "mart_atlas_inventory"
-          ]
-        },
-        {
-          "source_id": "fhi-befolkningsvekst",
           "shared_models": [
             "mart_atlas_inventory"
           ]
@@ -16296,6 +16444,12 @@
           ]
         },
         {
+          "source_id": "brreg-underenheter",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
           "source_id": "bufdir-barnefattigdom",
           "shared_models": [
             "mart_atlas_inventory"
@@ -16315,12 +16469,6 @@
         },
         {
           "source_id": "fhi-befolkning",
-          "shared_models": [
-            "mart_atlas_inventory"
-          ]
-        },
-        {
-          "source_id": "fhi-befolkningsvekst",
           "shared_models": [
             "mart_atlas_inventory"
           ]
@@ -16470,6 +16618,12 @@
           ]
         },
         {
+          "source_id": "brreg-underenheter",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
           "source_id": "bufdir-barnefattigdom",
           "shared_models": [
             "mart_atlas_inventory"
@@ -16489,12 +16643,6 @@
         },
         {
           "source_id": "fhi-befolkning",
-          "shared_models": [
-            "mart_atlas_inventory"
-          ]
-        },
-        {
-          "source_id": "fhi-befolkningsvekst",
           "shared_models": [
             "mart_atlas_inventory"
           ]
@@ -16655,6 +16803,12 @@
           ]
         },
         {
+          "source_id": "brreg-underenheter",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
           "source_id": "bufdir-barnefattigdom",
           "shared_models": [
             "mart_atlas_inventory"
@@ -16674,12 +16828,6 @@
         },
         {
           "source_id": "fhi-befolkning",
-          "shared_models": [
-            "mart_atlas_inventory"
-          ]
-        },
-        {
-          "source_id": "fhi-befolkningsvekst",
           "shared_models": [
             "mart_atlas_inventory"
           ]
@@ -17265,6 +17413,18 @@
           "model_name": "mart_meta_sources",
           "title": null,
           "description_short": "One row per ingested source: publisher, licence, coverage, freshness and what it feeds."
+        },
+        {
+          "parent_kind": "model",
+          "model_name": "mart_ngo_chapter_registry_match",
+          "title": "NGO chapter registry match (federated)",
+          "description_short": "The 9 federated NGOs' chapters, found by name pattern in Brønnøysundregistrene's register."
+        },
+        {
+          "parent_kind": "model",
+          "model_name": "mart_ngo_chapter_subunits",
+          "title": "NGO chapter subunits (unitary)",
+          "description_short": "The local units of the 2 unitary NGOs (Frelsesarmeen, Kirkens Bymisjon), found as Brreg underenheter."
         },
         {
           "parent_kind": "model",
@@ -23156,6 +23316,176 @@
     },
     {
       "kind": "view",
+      "view_id": "ngo_chapter_registry_match",
+      "mart_name": "mart_ngo_chapter_registry_match",
+      "api_v1_name": "ngo_chapter_registry_match",
+      "title": "NGO chapter registry match (federated)",
+      "description_short": "The 9 federated NGOs' chapters, found by name pattern in Brønnøysundregistrene's register.",
+      "description_full": "The 9 federated NGOs' chapters, found by name pattern in Brønnøysundregistrene's register.\n\nRegistry-only: confidence tops out at `medium` (`high` only for an NGO's own national\nrow) — no NGO's own website has been crawled yet to corroborate a strong name match.\nSee the model's own header (int_ngo_chapter_registry_match.sql) for the matching method.",
+      "columns": [
+        {
+          "name": "chapter_orgnr",
+          "description": "The chapter's own 9-digit organisasjonsnummer. Natural key for this view."
+        },
+        {
+          "name": "chapter_id",
+          "description": "'<ngo_slug>-<chapter_orgnr>', the conformed cross-NGO chapter identifier."
+        },
+        {
+          "name": "ngo_orgnr",
+          "description": "9-digit Brreg organisasjonsnummer of the parent NGO."
+        },
+        {
+          "name": "name",
+          "description": "Legal name from Brreg, verbatim."
+        },
+        {
+          "name": "chapter_level",
+          "description": "national (the NGO's own row) / regional / local / related_entity (e.g. an owned AS or STI, not a chapter)."
+        },
+        {
+          "name": "kommune_nr",
+          "description": "Resolved from Brreg's own kommune field. Null where Brreg carries none."
+        },
+        {
+          "name": "is_active",
+          "description": "Whether Brreg's own registry shows the entity as active (not konkurs/avviklet)."
+        },
+        {
+          "name": "web",
+          "description": "Brreg's own hjemmeside field for this entity, verbatim. Null where Brreg carries none."
+        },
+        {
+          "name": "confidence",
+          "description": "high only for chapter_orgnr = ngo_orgnr; medium or low for every name-matched row — see the model header."
+        },
+        {
+          "name": "match_method",
+          "description": "How this row was matched — Brreg's own orgnr, a strong name pattern (optionally corroborated by a matching website), or a weaker name pattern."
+        },
+        {
+          "name": "registration",
+          "description": "Always 'legal_entity' — every row here is a Brreg-registered organisation, not a scraped/unregistered unit."
+        },
+        {
+          "name": "reconciliation",
+          "description": "Always 'registry_only' — no NGO site crawl has corroborated these rows yet."
+        },
+        {
+          "name": "parent_chapter_id",
+          "description": "The NGO's own national row's chapter_id. Null for the national row itself."
+        },
+        {
+          "name": "parent_method",
+          "description": "Always null — the registry states no parent link for these rows (reserved for a future reconciliation method)."
+        },
+        {
+          "name": "source_url",
+          "description": "The live Brreg Enhetsregisteret API URL for this chapter_orgnr."
+        }
+      ],
+      "built_from": [
+        {
+          "parent_kind": "model",
+          "model_name": "int_ngo_chapter_registry_match",
+          "title": null,
+          "description_short": null
+        }
+      ],
+      "sample_query": "https://api-atlas.urbalurba.com/ngo_chapter_registry_match?limit=5",
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_ngo_chapter_registry_match",
+      "publisher": {
+        "id": "atlas",
+        "display_name": "Atlas",
+        "homepage": "https://atlas.sovereignsky.no/",
+        "logo": "/img/logo.svg"
+      }
+    },
+    {
+      "kind": "view",
+      "view_id": "ngo_chapter_subunits",
+      "mart_name": "mart_ngo_chapter_subunits",
+      "api_v1_name": "ngo_chapter_subunits",
+      "title": "NGO chapter subunits (unitary)",
+      "description_short": "The local units of the 2 unitary NGOs (Frelsesarmeen, Kirkens Bymisjon), found as Brreg underenheter.",
+      "description_full": "The local units of the 2 unitary NGOs (Frelsesarmeen, Kirkens Bymisjon), found as Brreg underenheter.\n\nconfidence is always `high` here — Brreg's own overordnetEnhet field is a declared\nstructural link, not a fuzzy name match. Still registry-only in a different sense: reads\nthe underenheter bootstrap snapshot only, no incremental reconciliation yet — see the\nmodel's own header (int_ngo_chapter_subunits.sql) for the known gaps.",
+      "columns": [
+        {
+          "name": "chapter_orgnr",
+          "description": "The sub-unit's own 9-digit organisasjonsnummer. Natural key for this view."
+        },
+        {
+          "name": "chapter_id",
+          "description": "'<ngo_slug>-<chapter_orgnr>', the conformed cross-NGO chapter identifier."
+        },
+        {
+          "name": "ngo_orgnr",
+          "description": "9-digit Brreg organisasjonsnummer of the parent NGO."
+        },
+        {
+          "name": "name",
+          "description": "Legal name from Brreg, verbatim."
+        },
+        {
+          "name": "chapter_level",
+          "description": "national (the NGO's own row) / regional / local / related_entity (e.g. Fretex, an owned AS, not a chapter)."
+        },
+        {
+          "name": "kommune_nr",
+          "description": "Resolved from Brreg's own beliggenhetsadresse, falling back to postadresse. Null where Brreg carries neither."
+        },
+        {
+          "name": "is_active",
+          "description": "Whether the underenhet's nedleggelsesdato (closure date) is null."
+        },
+        {
+          "name": "web",
+          "description": "Always null — the underenheter register carries no website field."
+        },
+        {
+          "name": "unit_name",
+          "description": "Text after \" AVD \" in the legal name, when present. Null otherwise — see the model header on why fuller area-splitting isn't implemented."
+        },
+        {
+          "name": "confidence",
+          "description": "Always 'high' — see the model header on why this register needs no tiering."
+        },
+        {
+          "name": "registration",
+          "description": "'legal_entity' for the NGO's own national row, 'sub_unit' for every underenhet."
+        },
+        {
+          "name": "reconciliation",
+          "description": "Always 'registry_only' — reads the bootstrap snapshot only, see the model header."
+        },
+        {
+          "name": "parent_chapter_id",
+          "description": "The NGO's own national row's chapter_id. Null for the national row itself."
+        },
+        {
+          "name": "source_url",
+          "description": "The live Brreg API URL for this chapter_orgnr (enheter for the national row, underenheter for every sub-unit)."
+        }
+      ],
+      "built_from": [
+        {
+          "parent_kind": "model",
+          "model_name": "int_ngo_chapter_subunits",
+          "title": null,
+          "description_short": null
+        }
+      ],
+      "sample_query": "https://api-atlas.urbalurba.com/ngo_chapter_subunits?limit=5",
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_ngo_chapter_subunits",
+      "publisher": {
+        "id": "atlas",
+        "display_name": "Atlas",
+        "homepage": "https://atlas.sovereignsky.no/",
+        "logo": "/img/logo.svg"
+      }
+    },
+    {
+      "kind": "view",
       "view_id": "ngo_index",
       "mart_name": "mart_ngo_index",
       "api_v1_name": "ngo_index",
@@ -24062,6 +24392,12 @@
                 ]
               },
               {
+                "source_id": "brreg-underenheter",
+                "shared_models": [
+                  "mart_atlas_inventory"
+                ]
+              },
+              {
                 "source_id": "bufdir-barnevern",
                 "shared_models": [
                   "mart_atlas_inventory"
@@ -24081,12 +24417,6 @@
               },
               {
                 "source_id": "fhi-befolkningsvekst",
-                "shared_models": [
-                  "mart_atlas_inventory"
-                ]
-              },
-              {
-                "source_id": "fhi-bor-alene",
                 "shared_models": [
                   "mart_atlas_inventory"
                 ]

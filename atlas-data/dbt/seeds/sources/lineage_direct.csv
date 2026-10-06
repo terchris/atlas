@@ -186,6 +186,8 @@ mart_atlas_inventory,mart_kommune_ngo_totals,model
 mart_atlas_inventory,mart_meta_dimensions,model
 mart_atlas_inventory,mart_meta_endpoints,model
 mart_atlas_inventory,mart_meta_sources,model
+mart_atlas_inventory,mart_ngo_chapter_registry_match,model
+mart_atlas_inventory,mart_ngo_chapter_subunits,model
 mart_atlas_inventory,mart_ngo_index,model
 mart_atlas_inventory,mart_ngo_overview,model
 mart_atlas_inventory,mart_ref_atlas_service_category,model
@@ -283,6 +285,8 @@ mart_kommune_ngo_summary,dim_kommune,model
 mart_kommune_ngo_totals,mart_kommune_ngo_summary,model
 mart_meta_endpoints,mart_meta_sources,model
 mart_meta_sources,fact_kommune_indicators,model
+mart_ngo_chapter_registry_match,int_ngo_chapter_registry_match,model
+mart_ngo_chapter_subunits,int_ngo_chapter_subunits,model
 mart_ngo_index,dim_chapter,model
 mart_ngo_overview,dim_activity,model
 mart_ngo_overview,dim_chapter,model
