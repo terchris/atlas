@@ -262,10 +262,12 @@ models:
         data_tests: [not_null]
       - name: service_category_code
         description: >-
-          From the 50→22 CASE WHEN. NULL only if a new globalActivityName appeared in raw that the CASE
-          doesn't cover (catches drift loudly via the not_null filter applied at dim_activity/fact_chapter_activities
-          — those filter is_service = true; a new unmapped service-type activity would still be is_service
-          = true with NULL category, surfacing the gap).
+          From ref_atlas_activity_crosswalk's is_primary = 'true' row for this activity (changed
+          2026-10-06, was a hardcoded CASE). NULL only if a new globalActivityName appeared in raw
+          that the crosswalk doesn't cover yet (catches drift loudly via the not_null filter applied
+          at dim_activity/fact_chapter_activities — those filter is_service = true; a new unmapped
+          service-type activity would still be is_service = true with NULL category, surfacing the
+          gap).
         data_tests:
           - not_null
           - relationships: {to: ref('ref_atlas_service_category'), field: code}

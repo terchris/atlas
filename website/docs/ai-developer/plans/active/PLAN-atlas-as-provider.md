@@ -4,8 +4,10 @@
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Active — approved by Terje 2026-10-05 ("add Atlas as a provider and ingest and publish
-all the datasets"), two scope questions answered the same day (see Decisions below).
+## Status: All three phases complete (#560, #561, this PR). Approved by Terje 2026-10-05 ("add
+Atlas as a provider and ingest and publish all the datasets"), two scope questions answered the
+same day (see Decisions below). Ready to move to `completed/` once this phase's deploy is
+requested and confirmed, matching this repo's "ingested means served and verified" rule.
 
 **Goal**: Atlas isn't only a republisher of upstream public data — some of what it publishes is
 Atlas's own authored content: classification schemes, cross-source syntheses, and self-description.
@@ -144,16 +146,30 @@ categories) + `taxonomy-nb-en-families.csv` (10 families), `crosswalk_activity_s
 
 ### Tasks
 
-- [ ] 3.1 New seeds: `ref_activity_category` (38 rows, from `taxonomy-nb-en.csv`), replacing
-      `ref_atlas_service_category` (22 rows) — confirm first that the 22 existing codes are an
-      exact subset (the investigation already checked this; re-verify against the actual seed
-      files, don't trust the doc's claim unchecked), `ref_activity_family` (10 rows), and
-      `ref_atlas_activity_crosswalk` (589 rows, from `crosswalk_activity_service_category.csv`,
-      `confidence`/`reviewed_by` columns carried through unchanged).
-- [ ] 3.2 `ref_activity_search_term` seed from `search-terms-validated.csv` (859 rows) — loaded as
-      data for a later search-index PLAN (explicitly out of scope here per the investigation's own
-      Next Steps), not wired into anything yet.
-- [ ] 3.3 🔴 **SCOPE CORRECTION, found while implementing, not assumed from the investigation doc.**
+- [x] 3.1 🔴 **DESIGN CORRECTION, found while implementing, better than the draft above.**
+      Checked who actually depends on `ref_atlas_service_category` before creating a parallel seed:
+      it's not just a decoder, it's INNER-JOINed in `mart_activity_catalog.sql` and
+      `mart_kommune_local_chapters.sql`, and relationship-tested against
+      `dim_activity`/`supply__redcross_branch_activities.service_category_code`. A brand-new
+      `ref_activity_category` seed would have meant either leaving those pointed at a now-incomplete
+      22-row decoder (silently dropping every reclassified Red Cross activity from two INNER JOINs)
+      or repointing four files for no benefit. Instead: **upgraded `ref_atlas_service_category.csv`
+      in place** — all 22 original codes kept verbatim (verified an exact subset via Python's `csv`
+      module after a naive `cut -d','` check gave a false mismatch on embedded commas inside quoted
+      fields), 16 added, 10 new columns (family_code, description_no, search_terms_no,
+      need_terms_no, volunteer_terms_no, terms_en, label_no_evidence, en_measured, search_entry,
+      previous_label_no). Every existing join/test keeps working unchanged against the richer
+      38-row vocabulary — no separate decoder, no deprecation decision needed. Also added
+      `ref_activity_family` (10 rows, genuinely new) and `ref_atlas_activity_crosswalk` (589 rows,
+      from `crosswalk_activity_service_category.csv`, confidence/reviewed_by columns carried
+      through unchanged).
+- [x] 3.2 `ref_activity_search_term` seed from `search-terms-validated.csv` (858 data rows) — loaded
+      as data for a later search-index PLAN (explicitly out of scope here per the investigation's
+      own Next Steps), not wired into anything yet. ⚠️ 3 of its `code` values
+      (`_volunteering_general`, `women_migrant_network`, `violence_support`) aren't valid
+      `ref_atlas_service_category` codes — a synthetic umbrella term, a merged-away category, and a
+      rejected candidate — kept as evidence, deliberately no FK test on this column.
+- [x] 3.3 🔴 **SCOPE CORRECTION, found while implementing, not assumed from the investigation doc.**
       `dim_activity.sql`'s own header says it today: *"Source: SELECT DISTINCT from per-NGO
       supply__<ngo>_branch_activities staging models... PLAN-003 will add Folkehjelp; this model
       gains a UNION ALL clause then."* Checked directly — `atlas-data/dbt/models/supply/` has
@@ -162,41 +178,58 @@ categories) + `taxonomy-nb-en-families.csv` (10 families), `crosswalk_activity_s
       crosswalk CSV names all 11 NGOs' activities, but 10 of them have nowhere in the warehouse to
       attach a category to — that requires each NGO's own activity data to be ingested first (the
       per-NGO site-crawl work this session has repeatedly deferred elsewhere), which is NOT what
-      "ingest and publish the taxonomy" asked for. So: retire the Røde-Kors-only `CASE` in
-      `supply__redcross_branch_activities.sql` for Røde Kors only, replacing it with a join against
-      `ref_atlas_activity_crosswalk` filtered to `ngo = 'redcross' and is_primary`. The crosswalk
-      rows for the other 10 NGOs load and publish as real, queryable data (task 3.6) — showing what
-      category each NGO's activities fall under — but do **not** reach `dim_activity` for those
-      NGOs this round. That gap is pre-existing (those NGOs were never in `dim_activity` at all,
-      categorized or not) and not something this plan introduces or is positioned to close.
-- [ ] 3.4 `dbt_project.yml` seed `+column_types`: add any new text-preserving overrides this
-      introduces (check `activity_id`, category/family codes for leading-zero or type-inference
-      risk, same discipline as every prior seed addition this session).
-- [ ] 3.5 `schema.yml` docs + tests for all four new seeds (not_null/unique/accepted_values/
-      relationships, matching this repo's "every marts column is documented" rule).
-- [ ] 3.6 Publish `ref_activity_category` and `ref_activity_family` as decoder marts (same pattern
-      as `mart_ref_brreg_icnpo`), `meta.publisher: atlas` (Atlas's own invented taxonomy, not an
-      external standard). `ref_atlas_activity_crosswalk` and `ref_activity_search_term` stay
-      internal (seeds feeding `dim_activity` and the future search-index PLAN respectively) —
-      a crosswalk audit trail and raw search-term evidence aren't themselves consumer-facing
+      "ingest and publish the taxonomy" asked for. So: retired the Røde-Kors-only `CASE` in
+      `supply__redcross_branch_activities.sql` for Røde Kors only, replaced with a join against
+      `ref_atlas_activity_crosswalk` filtered to `ngo = 'redcross'` (`is_primary = 'true'` for
+      `service_category_code`, a plain `distinct name, is_service` for `is_service` — verified via
+      Python first that neither join can fan out: zero names have 2+ `is_primary='true'` rows, zero
+      names have contradictory `is_service` values). The crosswalk rows for the other 10 NGOs load
+      and publish as real, queryable data (task 3.6) — showing what category each NGO's activities
+      fall under — but do **not** reach `dim_activity` for those NGOs this round. That gap is
+      pre-existing (those NGOs were never in `dim_activity` at all, categorized or not) and not
+      something this plan introduces or is positioned to close.
+- [x] 3.4 `dbt_project.yml` seed `+column_types`: added `family_code`, `activity_id`, `ngo`,
+      `service_category_code` as `text`. `is_primary`/`is_service` also forced to `text`, not
+      `boolean` — 29 of 589 crosswalk rows are blank by design (an `is_service = false` row has no
+      category, so `is_primary` doesn't apply), and a blank CSV value is not a valid boolean
+      literal. Same NULL-vs-empty-string class of bug this repo already found once in
+      `ref_atlas_ngo_match_rule` (PLAN-001) — avoided here by never trying to force a boolean type
+      onto a column that can be legitimately blank.
+- [x] 3.5 `schema.yml` docs + tests for all new/changed seeds (not_null/unique/accepted_values/
+      relationships).
+- [x] 3.6 Published `ref_activity_family` as a new decoder mart (same pattern as
+      `mart_ref_brreg_icnpo`), `meta.publisher: atlas`. No separate `ref_activity_category` mart
+      needed — see 3.1's design correction; `mart_ref_atlas_service_category` already is that mart,
+      now richer. `ref_atlas_activity_crosswalk` and `ref_activity_search_term` stay internal (one
+      feeds `supply__redcross_branch_activities`, the other feeds a future search-index PLAN) — a
+      crosswalk audit trail and raw search-term evidence aren't themselves consumer-facing
       datasets.
-- [ ] 3.7 Regenerate lineage, `api_v1_generated.sql`, `template-info.yaml`, the catalogue — same
-      discipline as every prior change this session (run the generators, don't hand-edit).
+- [x] 3.7 Regenerated lineage, `api_v1_generated.sql`/`api_v1_state.json`, `template-info.yaml`,
+      the catalogue via their own generator scripts. One real gap the generators themselves don't
+      catch automatically: `scripts/generate_api_v1.py`'s hand-written `SCHEMA_COMMENT` (the root
+      OpenAPI document's catalogue text) needed a 3-line entry for `ref_activity_family` added by
+      hand — caught by `check-root-document-indexes-every-relation.sh`, not by inspection.
 
-### Validation
+### Validation — done for real against live data, not simulated
 
-- Verify the 22→38 category claim and the 500/589-row crosswalk shape directly against the real
-  seed files once loaded (dbt `dbt seed` + a row-count query), not by re-reading the investigation
-  doc's own numbers.
-- Before/after row count on `dim_activity.service_category_code` for Røde Kors (the only NGO in
-  `dim_activity` today) — confirm Røde Kors's own 7 reclassifications from the investigation's
-  "what changes" table land exactly as documented, and that `is_primary`-filtered join produces
-  the same row count as the old CASE (one category per activity still, not a fan-out).
-- Confirm `ref_atlas_activity_crosswalk` is queryable and correct for all 11 NGOs even though only
-  Røde Kors's feeds `dim_activity` — e.g. `select ngo, count(*) from ref_atlas_activity_crosswalk
-  group by 1` should show all 11, not just Røde Kors.
-- `dbt build` full suite green, including the two PLAN-001 acceptance tests (unaffected by this
-  phase) and whatever new tests Phase 3.5 adds.
+- 22→38 subset verified directly via Python's `csv` module (not a naive `cut`, which gave a false
+  mismatch on embedded commas inside quoted fields) — zero of the 22 original codes missing from
+  the new 38. Crosswalk shape verified against the real seed file: 589 rows, 500 distinct
+  `activity_id`, confidence HIGH/MEDIUM/LOW = 306/191/92, `reviewed_by` empty on all 589 (matches
+  the investigation's own numbers exactly).
+- **Synthetic control test, not a real-data test** — `raw.redcross_branch_activities` is empty by
+  design (credential-gated ingest, confirmed in `mart_dim_activity.sql`'s own header), so a normal
+  build would pass vacuously. Manually inserted 12 synthetic rows covering 3 unchanged mappings, all
+  7 reclassified activities, one `is_service = false` example, and one name absent from the
+  crosswalk entirely (to confirm the `else true` fallback) — deleted afterward, real state
+  unaffected. **12/12 exact matches** against hand-computed expected values, including all 7
+  reclassifications from the investigation's "what changes" table landing exactly as documented.
+- Both PLAN-001 acceptance tests (`ngo_chapter_registry_counts_match_acceptance_targets`,
+  `ngo_chapter_subunit_counts_match_acceptance_targets`) pass unchanged against a fresh real Brreg
+  ingest (1,176,724 + 72,833 + 867,183 rows) — this phase didn't touch those models, confirming the
+  seed `--full-refresh` this change required didn't regress anything else.
+- Full static-gate battery (16 scripts + `dbt compile`/`check-models-compile.sh` + ingest
+  `check-manifests.sh` + `render-template-info.sh`) green after the one `generate_api_v1.py` fix.
 
 ---
 

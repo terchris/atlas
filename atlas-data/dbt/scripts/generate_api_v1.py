@@ -372,6 +372,9 @@ Every one is small, stable, and safe to cache locally:
   ref_atlas_service_category   ⚠️ ATLAS'S OWN vocabulary, not an upstream
                                standard — the only list here that is Atlas's
                                editorial judgement. Weigh it accordingly.
+  ref_activity_family          The 10 families ref_atlas_service_category
+                               groups into. Same status as that list — Atlas's
+                               own grouping, not an upstream standard.
 
 ⚠️ SORT A CODE LIST BY sort_order, NOT BY code. Several carry their
 publisher's ordering, which is not the alphabetical one — ref_ssb_nivaa
