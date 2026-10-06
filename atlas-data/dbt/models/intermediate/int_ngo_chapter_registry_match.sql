@@ -1,4 +1,15 @@
-{{ config(materialized='view', schema='marts') }}
+{{
+  config(
+    materialized='table',
+    schema='marts',
+    indexes=[
+      {'columns': ['chapter_orgnr'], 'unique': True},
+      {'columns': ['chapter_id'], 'unique': True},
+      {'columns': ['ngo_orgnr']},
+      {'columns': ['parent_chapter_id']},
+    ]
+  )
+}}
 
 -- int_ngo_chapter_registry_match — the registered chapters of the nine
 -- FEDERATED NGOs (dim_ngo.structure = 'federated'), found by name pattern in
@@ -6,6 +17,18 @@
 -- phase 2, per docs/research/ngo-research/ingestion-specs/
 -- brreg-chapter-matching.md. Not a new ingest — dim_brreg_enhet already
 -- holds everything this reads.
+--
+-- 🔴 MATERIALIZED AS A TABLE, changed 2026-10-06 — urb-agents #1857/#1866.
+-- This was a VIEW until an expensive cross-NGO pattern match (9 rules ×
+-- 1.17M dim_brreg_enhet rows, re-executed on every reference) OOM-killed a
+-- Postgres backend and crashed/recovered the whole shared instance during
+-- transform_checks — the self-referencing parent_chapter_id relationship
+-- test is the worst case, since it evaluates this computation on BOTH sides
+-- of a join. Materializing pays the cost once per build instead of once per
+-- reference; the indexes above make that same self-join and the
+-- relationships-to-dim_ngo test cheap instead of a sequential scan.
+-- mart_ngo_chapter_registry_match stays a view — a thin passthrough over an
+-- already-materialized table is free, same pattern as mart_dim_activity.
 --
 -- The two UNITARY NGOs (Frelsesarmeen, Kirkens Bymisjon) are deliberately
 -- excluded here — their local units are Brreg underenheter, not enheter, and
