@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import maplibregl, {
-  type Map as MLMap,
-  type MapLayerMouseEvent,
-} from "maplibre-gl";
+// maplibre-gl v6 dropped its default export — every value (Map, NavigationControl)
+// and type (ExpressionSpecification, etc.) is a named export now. A namespace
+// import keeps every existing `maplibregl.X` call site unchanged.
+import * as maplibregl from "maplibre-gl";
+import type { Map as MLMap, MapLayerMouseEvent } from "maplibre-gl";
+import type { FeatureCollection, Geometry } from "geojson";
 import "maplibre-gl/dist/maplibre-gl.css";
 import type { IndicatorKommuneValue } from "@/lib/indicators";
 
@@ -85,8 +87,8 @@ export function IndicatorMap({
       try {
         const resp = await fetch("/boundaries/kommuner-2024.geojson");
         if (!resp.ok) throw new Error(`boundaries ${resp.status}`);
-        const raw = (await resp.json()) as GeoJSON.FeatureCollection<
-          GeoJSON.Geometry,
+        const raw = (await resp.json()) as FeatureCollection<
+          Geometry,
           Record<string, unknown>
         >;
         for (const f of raw.features) {

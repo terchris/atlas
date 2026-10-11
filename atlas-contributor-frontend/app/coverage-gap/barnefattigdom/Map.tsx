@@ -1,11 +1,16 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import maplibregl, {
-  type Map as MLMap,
-  type GeoJSONSource,
-  type MapLayerMouseEvent,
+// maplibre-gl v6 dropped its default export — every value (Map, NavigationControl)
+// and type (ExpressionSpecification, etc.) is a named export now. A namespace
+// import keeps every existing `maplibregl.X` call site unchanged.
+import * as maplibregl from "maplibre-gl";
+import type {
+  Map as MLMap,
+  GeoJSONSource,
+  MapLayerMouseEvent,
 } from "maplibre-gl";
+import type { FeatureCollection, Geometry } from "geojson";
 import "maplibre-gl/dist/maplibre-gl.css";
 import type { KommuneRow } from "./page";
 
@@ -69,8 +74,8 @@ export function BarnefattigdomMap({ data, year }: Props) {
         if (!resp.ok) {
           throw new Error(`boundaries fetch failed: ${resp.status}`);
         }
-        const raw = (await resp.json()) as GeoJSON.FeatureCollection<
-          GeoJSON.Geometry,
+        const raw = (await resp.json()) as FeatureCollection<
+          Geometry,
           Record<string, unknown>
         >;
 
