@@ -53,9 +53,27 @@ Plus tertiary: Magnus (active volunteer QC), Henrik (corporate partnerships), Å
 
 ## Status
 
-**Research and design phase — not yet implemented.** The repository currently contains working research, data-source verification, and design specs. No code yet.
+**Live.** Atlas serves **80 read-only relations** built from **43 upstream sources** across **5
+publishers**, through a public API that needs no signup and no database:
 
-### What's done
+| what | where |
+|---|---|
+| public API | `https://api-atlas.urbalurba.com` — returns its own OpenAPI document at the root |
+| documentation | `https://atlas.sovereignsky.no` |
+
+42 of the 43 sources are [NLOD](https://data.norge.no/nlod/no/2.0) — Norwegian open data, free to
+reuse with attribution. Values are republished exactly as the upstream publishes them.
+
+⚠️ **This section said "Research and design phase — not yet implemented … No code yet" until
+2026-09-26** — five months and 495 commits after the first one, and while the API was serving 80
+tables. Nobody re-reads the top of a README, which is exactly why a stale line there outlives the
+thing it describes and is read as a claim rather than as history. Recorded rather than quietly
+deleted, because it is the same defect this repository has a rule about.
+
+### What's done — the research phase, kept as history
+
+🔵 The list below described the repository in **April–May 2026**, before implementation. It is
+accurate about that period and is not a description of Atlas today.
 
 - 14 Norwegian NGOs mapped in depth (4 Tier A with activities + indicator matrix; 8 Tier C with profiles; 2 Tier B-minus with profiles)
 - Formal data model ([`docs/research/common-schema.md`](docs/research/common-schema.md))
@@ -66,9 +84,10 @@ Plus tertiary: Magnus (active volunteer QC), Henrik (corporate partnerships), Å
 
 ### What's next
 
-- Business-model decision (foundation grants + state contract + SaaS for internal tools, most likely — see [`website/docs/about/what-is-atlas.md`](website/docs/about/what-is-atlas.md))
-- Public-facing-first vs Lisa-first v1 scoping
-- Implementation: Next.js + TypeScript + [Digdir Designsystemet](https://designsystemet.no)
+Current priorities live in
+[`website/docs/ai-developer/plans/backlog/1PRIORITY.md`](website/docs/ai-developer/plans/backlog/1PRIORITY.md),
+which is kept true on a change rather than on a timer. ⚠️ Read it there rather than here — a
+roadmap copied into a README is the thing that just went stale for five months.
 
 ---
 
