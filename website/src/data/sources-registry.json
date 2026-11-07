@@ -16982,6 +16982,12 @@
         },
         {
           "parent_kind": "model",
+          "model_name": "mart_brreg_underenhet",
+          "title": null,
+          "description_short": "Every sub-unit in Brønnøysundregistrene's underenheter register, mirrored from the bulk download."
+        },
+        {
+          "parent_kind": "model",
           "model_name": "mart_bufdir_indicator_alias",
           "title": null,
           "description_short": "Maps Bufdir indicator ids across releases, so a renumbered indicator still resolves."
