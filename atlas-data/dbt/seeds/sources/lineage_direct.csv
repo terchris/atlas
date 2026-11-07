@@ -5,6 +5,7 @@ dim_activity,supply__redcross_branch_activities,model
 dim_brreg_enhet,brreg-enheter-alle,source
 dim_brreg_enhet,brreg-frivillige,source
 dim_brreg_enhet,brreg-oppdateringer,source
+dim_brreg_underenhet,brreg-underenheter,source
 dim_chapter,supply__redcross_branches,model
 dim_fylke,ssb-klass-fylker,source
 dim_kommune,ssb-klass-kommuner,source
@@ -206,6 +207,7 @@ mart_atlas_inventory,mart_supply__redcross_branches,model
 mart_atlas_inventory,mart_supply__redcross_chapter_kommune_coverage,model
 mart_atlas_inventory,mart_unattributed_totals,model
 mart_brreg_enhet,dim_brreg_enhet,model
+mart_brreg_underenhet,dim_brreg_underenhet,model
 mart_chapter_kommune_coverage,chapter_kommune_coverage,model
 mart_coverage_gap_barnefattigdom,fact_kommune_indicators,model
 mart_dim_activity,dim_activity,model

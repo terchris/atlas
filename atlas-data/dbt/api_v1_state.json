@@ -4,6 +4,7 @@
     "activity_catalog",
     "atlas_inventory",
     "brreg_enhet",
+    "brreg_underenhet",
     "bufdir_indicator_alias",
     "chapter_kommune_coverage",
     "coverage_gap_barnefattigdom",

@@ -2238,6 +2238,103 @@ models:
           a field this view does not surface.
         data_tests: [not_null]
 
+  - name: mart_brreg_underenhet
+    meta:
+      stability: source
+    description: |
+      Every sub-unit in Brønnøysundregistrene's underenheter register, mirrored from the bulk download.
+
+      ~867k rows — local branches, establishments and divisions registered under a parent enhet.
+      Served for urb-agents #2098/#2099 (atlas-scraper's lookups: by organisasjonsnummer, and all
+      sub-units of one overordnet_enhet).
+
+      Kilde: Brønnøysundregistrene. Inneholder data under norsk lisens for offentlige data
+      (NLOD) tilgjengeliggjort av Brønnøysundregistrene — https://data.norge.no/nlod/no/2.0.
+      Re-users must carry this attribution onward; it is a condition of the licence, not a
+      courtesy.
+
+      ⚠️ KNOWN GAP: this is the bootstrap snapshot only, not reconciled against the change feed
+      (raw.brreg_underenheter_oppdateringer) the way mart_brreg_enhet reconciles against its own
+      feed — see dim_brreg_underenhet.sql's header. A sub-unit Brreg has deleted since the last
+      bootstrap run stays here until that reconciliation model is built.
+
+      Scoped to the fields urb-agents #2098 asked for, not every upstream key the way
+      mart_brreg_enhet publishes its own register — that "publish everything" choice was Terje's
+      explicit ruling for the Enhet register specifically. The upstream Underenhet object carries
+      more fields than this view surfaces; they are not dropped, only not yet asked for.
+    columns:
+      - name: organisasjonsnummer
+        description: >-
+          The sub-unit's own nine-digit organisation number. Text, never a number — leading
+          zeros are significant. Distinct from overordnet_enhet, its parent's number.
+        data_tests:
+          - not_null
+          - unique
+      - name: navn
+        description: Registered name of the sub-unit, verbatim from Brreg.
+        data_tests: [not_null]
+      - name: overordnet_enhet
+        description: >-
+          The nine-digit organisation number of the parent enhet this sub-unit is registered
+          under. ⚠️ Not enforced as a foreign key here — every sub-unit is expected to have a
+          parent in mart_brreg_enhet, but that has not been measured against the full ~867k-row
+          population, so no relationship test asserts it yet.
+      - name: organisasjonsform_kode
+        description: >-
+          Legal form code, e.g. BEDR (business unit). The usual filter for distinguishing a
+          genuine sub-unit from other organisasjonsform values that can also appear here.
+      - name: naeringskode1_kode
+        description: Primary NACE industry code (SN2007), verbatim from Brreg. Null where not reported.
+      - name: antall_ansatte
+        description: >-
+          Registered employee count. NULL means "not reported", not zero — read alongside the
+          raw record if that distinction matters for a specific sub-unit.
+      - name: oppstartsdato
+        description: Date the sub-unit started, as registered with Brreg. Null where not reported.
+      - name: nedleggelsesdato
+        description: >-
+          Date the sub-unit was closed, as registered with Brreg. Null for an active sub-unit —
+          see is_active.
+      - name: kommune_nr
+        description: >-
+          Kommune code of the sub-unit's registered location (beliggenhetsadresse.kommunenummer).
+          Same as beliggenhetsadresse_kommune_nr; carried at top level because it is the lookup
+          atlas-scraper actually filters on.
+      - name: is_active
+        description: >-
+          Convenience boolean — true when nedleggelsesdato is null. Means "not registered as
+          closed", not independently verified against any other signal.
+        data_tests: [not_null]
+      - name: beliggenhetsadresse_adresse
+        description: Street-address lines of the sub-unit's physical location, as an array, verbatim from Brreg.
+      - name: beliggenhetsadresse_postnummer
+        description: Postal code of the sub-unit's physical location.
+      - name: beliggenhetsadresse_poststed
+        description: Postal place name of the sub-unit's physical location.
+      - name: beliggenhetsadresse_kommune_nr
+        description: Kommune code of the sub-unit's physical location — same value as the top-level kommune_nr.
+      - name: beliggenhetsadresse_land
+        description: Country name of the sub-unit's physical location.
+      - name: beliggenhetsadresse_landkode
+        description: ISO country code of the sub-unit's physical location.
+      - name: postadresse_adresse
+        description: Postal-address lines of the sub-unit, as an array, verbatim from Brreg. Null where not registered.
+      - name: postadresse_postnummer
+        description: Postal code of the sub-unit's postal address.
+      - name: postadresse_poststed
+        description: Postal place name of the sub-unit's postal address.
+      - name: postadresse_kommune_nr
+        description: Kommune code of the sub-unit's postal address.
+      - name: postadresse_land
+        description: Country name of the sub-unit's postal address.
+      - name: postadresse_landkode
+        description: ISO country code of the sub-unit's postal address.
+      - name: snapshot_file_date
+        description: Date of the bulk file this sub-unit was loaded from. Provenance of the transfer, not of the sub-unit.
+      - name: loaded_at
+        description: When Atlas last wrote this row. Updated on every upsert, so it tracks the load rather than the sub-unit.
+        data_tests: [not_null]
+
   - name: mart_dim_kommune
     meta:
       stability: curated
