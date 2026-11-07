@@ -60,6 +60,7 @@
 -- depends_on: {{ ref('lineage') }}
 -- depends_on: {{ ref('mart_activity_catalog') }}
 -- depends_on: {{ ref('mart_brreg_enhet') }}
+-- depends_on: {{ ref('mart_brreg_underenhet') }}
 -- depends_on: {{ ref('mart_bufdir_indicator_alias') }}
 -- depends_on: {{ ref('mart_chapter_kommune_coverage') }}
 -- depends_on: {{ ref('mart_coverage_gap_barnefattigdom') }}
@@ -169,6 +170,7 @@
 {% set relations = [
   {'relation': 'activity_catalog', 'mart': 'mart_activity_catalog'},
   {'relation': 'brreg_enhet', 'mart': 'mart_brreg_enhet'},
+  {'relation': 'brreg_underenhet', 'mart': 'mart_brreg_underenhet'},
   {'relation': 'bufdir_indicator_alias', 'mart': 'mart_bufdir_indicator_alias'},
   {'relation': 'chapter_kommune_coverage', 'mart': 'mart_chapter_kommune_coverage'},
   {'relation': 'coverage_gap_barnefattigdom', 'mart': 'mart_coverage_gap_barnefattigdom'},
