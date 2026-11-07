@@ -212,6 +212,10 @@ REFERENCE:
                                licence — check Bring''s terms before
                                redistributing rather than assuming NLOD.
   brreg_enhet                  the Bronnoysund register mirror.
+  brreg_underenhet             its sibling: every sub-unit (local branch,
+                               establishment, division) registered under a
+                               parent enhet. Bootstrap snapshot only, not yet
+                               reconciled against the change feed.
 
 MAPS — BOUNDARIES ARE NOT IN THIS API, AND THAT IS ON PURPOSE.
 Full-resolution kommune boundaries are about 38 MB; serving them here would be
@@ -625,6 +629,53 @@ COMMENT ON COLUMN api_v1.brreg_enhet.postadresse_land IS 'Postal address compone
 COMMENT ON COLUMN api_v1.brreg_enhet.postadresse_landkode IS 'Postal address component, as registered with Brreg. Present on 203,770 of 1,175,334 rows (17.34%), counted 2026-09-24.';
 COMMENT ON COLUMN api_v1.brreg_enhet.postadresse_kommune_nr IS 'Postal address component, as registered with Brreg. Present on 203,770 of 1,175,334 rows (17.34%), counted 2026-09-24.';
 COMMENT ON COLUMN api_v1.brreg_enhet.doc IS 'The complete upstream record as Brreg published it, with nothing dropped or renamed — including postal and business addresses, telephone, mobile, email, website, capital, institutional sector code, articles of association and historical names. Responses are large: a document averages ~1.7 kB, so select the typed columns instead unless you need a field this view does not surface.';
+
+-- brreg_underenhet  ←  marts.mart_brreg_underenhet
+CREATE OR REPLACE VIEW api_v1.brreg_underenhet AS SELECT * FROM marts.mart_brreg_underenhet;
+COMMENT ON VIEW api_v1.brreg_underenhet IS 'Every sub-unit in Brønnøysundregistrene''s underenheter register, mirrored from the bulk download.
+
+~867k rows — local branches, establishments and divisions registered under a parent enhet.
+Served for urb-agents #2098/#2099 (atlas-scraper''s lookups: by organisasjonsnummer, and all
+sub-units of one overordnet_enhet).
+
+Kilde: Brønnøysundregistrene. Inneholder data under norsk lisens for offentlige data
+(NLOD) tilgjengeliggjort av Brønnøysundregistrene — https://data.norge.no/nlod/no/2.0.
+Re-users must carry this attribution onward; it is a condition of the licence, not a
+courtesy.
+
+⚠️ KNOWN GAP: this is the bootstrap snapshot only, not reconciled against the change feed
+(raw.brreg_underenheter_oppdateringer) the way mart_brreg_enhet reconciles against its own
+feed — see dim_brreg_underenhet.sql''s header. A sub-unit Brreg has deleted since the last
+bootstrap run stays here until that reconciliation model is built.
+
+Scoped to the fields urb-agents #2098 asked for, not every upstream key the way
+mart_brreg_enhet publishes its own register — that "publish everything" choice was Terje''s
+explicit ruling for the Enhet register specifically. The upstream Underenhet object carries
+more fields than this view surfaces; they are not dropped, only not yet asked for.';
+COMMENT ON COLUMN api_v1.brreg_underenhet.organisasjonsnummer IS 'The sub-unit''s own nine-digit organisation number. Text, never a number — leading zeros are significant. Distinct from overordnet_enhet, its parent''s number.';
+COMMENT ON COLUMN api_v1.brreg_underenhet.navn IS 'Registered name of the sub-unit, verbatim from Brreg.';
+COMMENT ON COLUMN api_v1.brreg_underenhet.overordnet_enhet IS 'The nine-digit organisation number of the parent enhet this sub-unit is registered under. ⚠️ Not enforced as a foreign key here — every sub-unit is expected to have a parent in mart_brreg_enhet, but that has not been measured against the full ~867k-row population, so no relationship test asserts it yet.';
+COMMENT ON COLUMN api_v1.brreg_underenhet.organisasjonsform_kode IS 'Legal form code, e.g. BEDR (business unit). The usual filter for distinguishing a genuine sub-unit from other organisasjonsform values that can also appear here.';
+COMMENT ON COLUMN api_v1.brreg_underenhet.naeringskode1_kode IS 'Primary NACE industry code (SN2007), verbatim from Brreg. Null where not reported.';
+COMMENT ON COLUMN api_v1.brreg_underenhet.antall_ansatte IS 'Registered employee count. NULL means "not reported", not zero — read alongside the raw record if that distinction matters for a specific sub-unit.';
+COMMENT ON COLUMN api_v1.brreg_underenhet.oppstartsdato IS 'Date the sub-unit started, as registered with Brreg. Null where not reported.';
+COMMENT ON COLUMN api_v1.brreg_underenhet.nedleggelsesdato IS 'Date the sub-unit was closed, as registered with Brreg. Null for an active sub-unit — see is_active.';
+COMMENT ON COLUMN api_v1.brreg_underenhet.kommune_nr IS 'Kommune code of the sub-unit''s registered location (beliggenhetsadresse.kommunenummer). Same as beliggenhetsadresse_kommune_nr; carried at top level because it is the lookup atlas-scraper actually filters on.';
+COMMENT ON COLUMN api_v1.brreg_underenhet.is_active IS 'Convenience boolean — true when nedleggelsesdato is null. Means "not registered as closed", not independently verified against any other signal.';
+COMMENT ON COLUMN api_v1.brreg_underenhet.beliggenhetsadresse_adresse IS 'Street-address lines of the sub-unit''s physical location, as an array, verbatim from Brreg.';
+COMMENT ON COLUMN api_v1.brreg_underenhet.beliggenhetsadresse_postnummer IS 'Postal code of the sub-unit''s physical location.';
+COMMENT ON COLUMN api_v1.brreg_underenhet.beliggenhetsadresse_poststed IS 'Postal place name of the sub-unit''s physical location.';
+COMMENT ON COLUMN api_v1.brreg_underenhet.beliggenhetsadresse_kommune_nr IS 'Kommune code of the sub-unit''s physical location — same value as the top-level kommune_nr.';
+COMMENT ON COLUMN api_v1.brreg_underenhet.beliggenhetsadresse_land IS 'Country name of the sub-unit''s physical location.';
+COMMENT ON COLUMN api_v1.brreg_underenhet.beliggenhetsadresse_landkode IS 'ISO country code of the sub-unit''s physical location.';
+COMMENT ON COLUMN api_v1.brreg_underenhet.postadresse_adresse IS 'Postal-address lines of the sub-unit, as an array, verbatim from Brreg. Null where not registered.';
+COMMENT ON COLUMN api_v1.brreg_underenhet.postadresse_postnummer IS 'Postal code of the sub-unit''s postal address.';
+COMMENT ON COLUMN api_v1.brreg_underenhet.postadresse_poststed IS 'Postal place name of the sub-unit''s postal address.';
+COMMENT ON COLUMN api_v1.brreg_underenhet.postadresse_kommune_nr IS 'Kommune code of the sub-unit''s postal address.';
+COMMENT ON COLUMN api_v1.brreg_underenhet.postadresse_land IS 'Country name of the sub-unit''s postal address.';
+COMMENT ON COLUMN api_v1.brreg_underenhet.postadresse_landkode IS 'ISO country code of the sub-unit''s postal address.';
+COMMENT ON COLUMN api_v1.brreg_underenhet.snapshot_file_date IS 'Date of the bulk file this sub-unit was loaded from. Provenance of the transfer, not of the sub-unit.';
+COMMENT ON COLUMN api_v1.brreg_underenhet.loaded_at IS 'When Atlas last wrote this row. Updated on every upsert, so it tracks the load rather than the sub-unit.';
 
 -- bufdir_indicator_alias  ←  marts.mart_bufdir_indicator_alias
 CREATE OR REPLACE VIEW api_v1.bufdir_indicator_alias AS SELECT * FROM marts.mart_bufdir_indicator_alias;

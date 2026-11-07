@@ -5,6 +5,7 @@ dim_activity,redcross-branches
 dim_brreg_enhet,brreg-enheter-alle
 dim_brreg_enhet,brreg-frivillige
 dim_brreg_enhet,brreg-oppdateringer
+dim_brreg_underenhet,brreg-underenheter
 dim_chapter,redcross-branches
 dim_fylke,ssb-klass-fylker
 dim_kommune,ssb-klass-kommuner
@@ -172,6 +173,7 @@ mart_atlas_inventory,udir-nasjonale-prover
 mart_brreg_enhet,brreg-enheter-alle
 mart_brreg_enhet,brreg-frivillige
 mart_brreg_enhet,brreg-oppdateringer
+mart_brreg_underenhet,brreg-underenheter
 mart_chapter_kommune_coverage,redcross-branches
 mart_coverage_gap_barnefattigdom,fhi-alkohol
 mart_coverage_gap_barnefattigdom,fhi-befolkning

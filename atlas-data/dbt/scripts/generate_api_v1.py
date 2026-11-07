@@ -333,6 +333,10 @@ REFERENCE:
                                licence — check Bring's terms before
                                redistributing rather than assuming NLOD.
   brreg_enhet                  the Bronnoysund register mirror.
+  brreg_underenhet             its sibling: every sub-unit (local branch,
+                               establishment, division) registered under a
+                               parent enhet. Bootstrap snapshot only, not yet
+                               reconciled against the change feed.
 
 MAPS — BOUNDARIES ARE NOT IN THIS API, AND THAT IS ON PURPOSE.
 Full-resolution kommune boundaries are about 38 MB; serving them here would be

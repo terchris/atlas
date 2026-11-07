@@ -6,7 +6,7 @@ This section is for **anyone consuming Atlas's public PostgREST API** to build t
 
 <!-- BEGIN holdings (generated) -->
 
-**59 upstream sources** from **10 publishers**, served as **97 read-only relations**.
+**59 upstream sources** from **10 publishers**, served as **98 read-only relations**.
 
 | publisher | sources | broadly |
 |---|---|---|
@@ -32,6 +32,7 @@ Licences: **NLOD** for 55 of 59 — Norwegian public data, free to reuse with at
 | `activity_catalog` | One row per organisation and activity, with its Atlas service category. |
 | `atlas_inventory` | What Atlas publishes: one row per endpoint with its row count, freshness and origin. |
 | `brreg_enhet` | Every organisation registered in Norway, mirrored from Brønnøysundregistrene's Enhetsregisteret. |
+| `brreg_underenhet` | Every sub-unit in Brønnøysundregistrene's underenheter register, mirrored from the bulk download. |
 | `bufdir_indicator_alias` | Maps Bufdir indicator ids across releases, so a renumbered indicator still resolves. |
 | `chapter_kommune_coverage` | Per-kommune rollup of which chapters cover it. |
 | `coverage_gap_barnefattigdom` | Child poverty per kommune for the latest year of SSB 08764, as a share and as counts. |

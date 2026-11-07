@@ -772,3 +772,69 @@ models:
         description: >-
           Postal address component, as registered with Brreg. Present on 203,770 of 1,175,334
           rows (17.34%), counted 2026-09-24.
+
+  - name: dim_brreg_underenhet
+    description: |
+      Current state of every sub-unit in Brønnøysundregistrene's underenheter register — ~867k
+      rows, typed from the daily bootstrap snapshot (raw.brreg_underenheter_snapshot) only.
+
+      ⚠️ Not reconciled against the change feed (raw.brreg_underenheter_oppdateringer) the way
+      dim_brreg_enhet reconciles against the enheter feed — see this model's own header for why
+      that is a stated gap, not an oversight.
+    columns:
+      - name: organisasjonsnummer
+        description: >-
+          The sub-unit's own nine-digit organisation number, and the natural key. Text, never a
+          number — leading zeros are significant.
+        data_tests:
+          - not_null
+          - unique
+      - name: navn
+        description: Registered name of the sub-unit, verbatim from Brreg.
+        data_tests: [not_null]
+      - name: overordnet_enhet
+        description: The parent enhet's organisasjonsnummer, read from doc.overordnetEnhet.
+      - name: organisasjonsform_kode
+        description: Legal form code, e.g. BEDR (business unit).
+      - name: naeringskode1_kode
+        description: Primary NACE industry code (SN2007). Null where not reported.
+      - name: antall_ansatte
+        description: Registered employee count. NULL means "not reported", not zero.
+      - name: oppstartsdato
+        description: Date the sub-unit started, as registered with Brreg.
+      - name: nedleggelsesdato
+        description: Date the sub-unit was closed, as registered with Brreg. Null for an active sub-unit.
+      - name: kommune_nr
+        description: Kommune code of the sub-unit's registered location (beliggenhetsadresse.kommunenummer).
+      - name: beliggenhetsadresse_adresse
+        description: Street-address lines of the sub-unit's physical location, as an array.
+      - name: beliggenhetsadresse_postnummer
+        description: Postal code of the sub-unit's physical location.
+      - name: beliggenhetsadresse_poststed
+        description: Postal place name of the sub-unit's physical location.
+      - name: beliggenhetsadresse_kommune_nr
+        description: Kommune code of the sub-unit's physical location.
+      - name: beliggenhetsadresse_land
+        description: Country name of the sub-unit's physical location.
+      - name: beliggenhetsadresse_landkode
+        description: ISO country code of the sub-unit's physical location.
+      - name: postadresse_adresse
+        description: Postal-address lines of the sub-unit, as an array. Null where not registered.
+      - name: postadresse_postnummer
+        description: Postal code of the sub-unit's postal address.
+      - name: postadresse_poststed
+        description: Postal place name of the sub-unit's postal address.
+      - name: postadresse_kommune_nr
+        description: Kommune code of the sub-unit's postal address.
+      - name: postadresse_land
+        description: Country name of the sub-unit's postal address.
+      - name: postadresse_landkode
+        description: ISO country code of the sub-unit's postal address.
+      - name: is_active
+        description: Convenience boolean — true when nedleggelsesdato is null.
+        data_tests: [not_null]
+      - name: snapshot_file_date
+        description: Date of the bulk file this row was loaded from. Provenance of the transfer, not of the sub-unit.
+      - name: loaded_at
+        description: When Atlas last wrote this row. Updated on every upsert.
+        data_tests: [not_null]
