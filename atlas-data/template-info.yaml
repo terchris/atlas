@@ -894,7 +894,7 @@ operational:
   # Deliberately conservative: an annual statistical table is polled weekly, not
   # nightly. Nightly would be ~15,000 pointless requests a year against
   # public-sector APIs Atlas depends on staying welcome at.
-  external_services: [SSB, FHI, Bufdir, Brønnøysundregistrene]
+  external_services: [SSB, FHI, Bufdir, Brønnøysundregistrene, Kartverket, Posten Bring]
 
   # No automation condition, no freshness policy — these never self-trigger.
   # Parked pending a Red Cross API credential.
