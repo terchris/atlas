@@ -21,6 +21,7 @@
     "refresh:brreg-enheter": "tsx --env-file-if-exists=.env src/seed-sources/brreg-enheter/index.ts",
     "refresh:bring-postnummer": "tsx src/seed-sources/bring-postnummer/index.ts",
     "refresh:atlas-ngo-landscape": "tsx src/seed-sources/atlas-ngo-landscape/index.ts",
+    "ingest:bring-postnummer": "tsx --env-file-if-exists=.env src/sources/bring-postnummer/index.ts",
     "ingest:brreg-enheter-alle": "tsx --env-file-if-exists=.env src/sources/brreg-enheter-alle/index.ts",
     "ingest:brreg-frivillige": "tsx --env-file-if-exists=.env src/sources/brreg-frivillige/index.ts",
     "ingest:brreg-oppdateringer": "tsx --env-file-if-exists=.env src/sources/brreg-oppdateringer/index.ts",

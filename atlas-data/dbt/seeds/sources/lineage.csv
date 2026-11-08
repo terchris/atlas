@@ -2,6 +2,7 @@ model_name,source_id
 chapter_kommune_coverage,redcross-branches
 crosswalk_kommune_name,ssb-klass-kommuner
 dim_activity,redcross-branches
+dim_bring_postnummer,bring-postnummer
 dim_brreg_enhet,brreg-enheter-alle
 dim_brreg_enhet,brreg-frivillige
 dim_brreg_enhet,brreg-oppdateringer
@@ -113,6 +114,7 @@ int_ngo_chapter_subunits,brreg-frivillige
 int_ngo_chapter_subunits,brreg-oppdateringer
 int_ngo_chapter_subunits,brreg-underenheter
 mart_activity_catalog,redcross-branches
+mart_atlas_inventory,bring-postnummer
 mart_atlas_inventory,brreg-enheter-alle
 mart_atlas_inventory,brreg-frivillige
 mart_atlas_inventory,brreg-oppdateringer
@@ -172,6 +174,7 @@ mart_atlas_inventory,udir-elevundersokelsen-mobbing
 mart_atlas_inventory,udir-fravar
 mart_atlas_inventory,udir-gsi
 mart_atlas_inventory,udir-nasjonale-prover
+mart_bring_postnummer,bring-postnummer
 mart_brreg_enhet,brreg-enheter-alle
 mart_brreg_enhet,brreg-frivillige
 mart_brreg_enhet,brreg-oppdateringer

@@ -145,3 +145,14 @@ publishers:
       (momskompensasjon) — the financial-resolution half of the Norwegian
       NGO sector that Brreg's own Frivillighetsregisteret (status/ICNPO
       category, already in `dim_brreg_enhet`) does not carry on its own.
+
+  - id: bring
+    display_name: Posten Bring
+    homepage: https://www.bring.no/
+    logo: /img/publishers/bring.svg
+    feedback_url: https://www.bring.no/kundeservice/kontakt-oss
+    notes: |
+      Norway's national postal and logistics operator. Publishes the
+      canonical Norwegian postcode register (Postnummerregister), with a
+      category per postcode (street address, post box, service address)
+      that SSB's own kommune/fylke classifications do not carry.

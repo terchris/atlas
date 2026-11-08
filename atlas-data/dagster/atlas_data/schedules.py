@@ -195,6 +195,14 @@ _ANNUAL_SOURCE_IDS = [
     *raw_ssb.SSB_SOURCES,
     *raw_ssb.SSB_CRIME_SOURCES,
     *raw_fhi.FHI_SOURCES,
+    # bring-postnummer is not P1Y (its manifest says P3M) — bucketed here
+    # anyway for the same reason as every sibling in this job: weekly-polled
+    # for freshness, one small file per run, not worth a dedicated job. The
+    # job's own "48 sources ... P1Y" docstring is therefore an undercount by
+    # one; not fixed here because every member below it is genuinely P1Y and
+    # rewriting the docstring for one exception is a bigger change than
+    # urb-agents #2098/#2099 (R2) asked for.
+    "bring-postnummer",
     "bufdir-barnefattigdom",
     "bufdir-barnevern",
     "husbanken-bostotte",
@@ -241,7 +249,9 @@ annual_sources_job = define_asset_job(
     selection=_asset_selection(_ANNUAL_SOURCE_IDS),
     executor_def=_ingest_executor(),
     description=(
-        "The 48 sources whose manifest declares periodicity P1Y. Polled weekly "
+        "The 49 sources in this job (48 of which declare periodicity P1Y; "
+        "bring-postnummer is P3M, bucketed here anyway — see the list above). "
+        "Polled weekly "
         "rather than annually: publication dates drift by weeks and nobody wants "
         "to discover a new release eleven months late. Weekly means a new "
         "release is picked up within 7 days for ~60 requests a week across 45 "

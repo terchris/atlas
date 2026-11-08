@@ -96,6 +96,43 @@ models:
       - dbt_utils.expression_is_true:
           expression: length(fylke_nr) = 2
 
+  - name: dim_bring_postnummer
+    description: |
+      Posten Bring's postcode register, typed, including kategori. urb-agents #2098/#2099 (R2).
+
+      Sibling to seeds/dim_postnummer.csv (same upstream, no kategori, no visible refresh date) —
+      see atlas-data/migrations/075_raw_bring_postnummer.sql for why both exist.
+    columns:
+      - name: postnummer
+        description: 4-digit postcode, leading zeros significant. Primary key.
+        data_tests:
+          - not_null
+          - unique
+      - name: poststed
+        description: Post office name, verbatim from Bring.
+        data_tests: [not_null]
+      - name: kommune_nr
+        description: 4-digit kommune code, Bring's own numbering.
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_kommune')
+              field: kommune_nr
+              config:
+                severity: warn
+      - name: kommune_navn
+        description: Kommune name as Bring's file carries it. Not the source of truth — dim_kommune is.
+        data_tests: [not_null]
+      - name: kategori
+        description: "G gateadresse (street addresses), P postboks (post-box only), B both, S service, F flere uses."
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ["G", "P", "B", "S", "F"]
+      - name: loaded_at
+        description: When Atlas fetched this row — Bring's file has no Last-Modified header, so there is no publication date to carry.
+        data_tests: [not_null]
+
   - name: crosswalk_kommune_name
     description: |
       Name → kommune_nr lookup for resolving free-text municipality strings

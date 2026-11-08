@@ -3,6 +3,11 @@
 
 See _factory.make_raw_ingest_asset. Currently:
 
+- bring-postnummer: one plain-text download from Bring's own postnummerregister
+  endpoint (not an xlsx, not a ZIP — see
+  atlas-data/ingest/src/sources/bring-postnummer/index.ts). urb-agents
+  #2098/#2099 (R2); sibling to the existing dim_postnummer seed, not a
+  replacement for it.
 - bufdir-barnefattigdom: zip download from Bufdir's child poverty surface.
 - bufdir-barnevern: zip download from Bufdir's child welfare surface. Same
   delivery mechanism as the sibling above, different internal workbook shape
@@ -84,6 +89,7 @@ from atlas_data.assets._factory import make_raw_ingest_assets
 from atlas_data import cadence
 
 OTHER_SOURCES = [
+    "bring-postnummer",
     "bufdir-barnefattigdom",
     "bufdir-barnevern",
     "husbanken-bostotte",
@@ -104,6 +110,7 @@ OTHER_SOURCES = [
 assets = [
     *make_raw_ingest_assets(
         [
+            "bring-postnummer",
             "bufdir-barnefattigdom",
             "bufdir-barnevern",
             "husbanken-bostotte",
