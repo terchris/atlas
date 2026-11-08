@@ -2765,6 +2765,10 @@ Bands rather than a single "elderly" threshold on purpose. 67 is
 defensible and it is still an editorial claim; publishing the bands
 leaves that claim with whoever makes it, and the same rows serve as
 the denominator for child poverty and working-age dependency.
+alder_0_12 and alder_13_19 are a SECOND, independent pair added for
+urb-agents #2100/#2101 (T6) — they sum to the population aged 0-19, not
+to befolkning_total, and overlap the six bands above. See their own
+column descriptions before combining them with anything.
 ⚠️ Counts are residents, not care recipients, and they are SSB''s
 register population at the start of the year — not an average over
 it. Historical kommune codes are excluded: only kommuner active
@@ -2797,6 +2801,13 @@ ALL, so summing every sex row would double the population of every
 kommune in Norway. The model selects male and female explicitly, and
 the singular test bands_sum_to_the_population_total is what would
 catch it if that ever stopped being true.';
+COMMENT ON COLUMN api_v1.kommune_befolkning_alder.alder_0_12 IS 'Residents aged 0-12. urb-agents #2100/#2101 (T6) — a second, independent pair of bands
+alongside alder_13_19, NOT part of the six disjoint bands above. Together with
+alder_13_19 this sums to the population aged 0-19, not to befolkning_total. ⚠️ Overlaps
+alder_0_5 and part of alder_6_15 — do not add it to those.';
+COMMENT ON COLUMN api_v1.kommune_befolkning_alder.alder_13_19 IS 'Residents aged 13-19. urb-agents #2100/#2101 (T6) — paired with alder_0_12, see that
+column''s description. ⚠️ Overlaps part of alder_6_15, all of alder_16_17, and part of
+alder_18_66 — do not add it to those.';
 
 -- kommune_local_chapters  ←  marts.mart_kommune_local_chapters
 CREATE OR REPLACE VIEW api_v1.kommune_local_chapters AS SELECT * FROM marts.mart_kommune_local_chapters;
