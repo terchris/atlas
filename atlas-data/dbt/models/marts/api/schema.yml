@@ -3513,6 +3513,96 @@ models:
       - name: oppdateringsdato
         description: When this address record was last updated upstream.
 
+  - name: mart_ssb_klass_kommune
+    meta:
+      stability: source
+      title: "Kommune history (SSB Klass)"
+    description: |
+      SSB Klass classification 131's full code history. urb-agents #2098/#2099 (R6).
+
+      "With Sami forms" needs no separate fetch — name already carries the combined form where
+      Klass publishes one; see dim_ssb_klass_kommune's own header for why SSB has no Sami-language
+      option for this classification at all. klass_version_id is an array because a code's
+      validity window does not line up 1:1 with a classification version's.
+    columns:
+      - name: code
+        description: 4-digit kommune code.
+        data_tests: [not_null]
+      - name: name
+        description: Kommune name, verbatim from Klass.
+        data_tests: [not_null]
+      - name: valid_from
+        description: Start of this code period.
+        data_tests: [not_null]
+      - name: valid_to
+        description: End of this code period. Null if still current.
+      - name: klass_version_id
+        description: Every Klass classification version id whose own date range overlaps this code period, as an array.
+        data_tests: [not_null]
+
+  - name: mart_ssb_klass_fylke
+    meta:
+      stability: source
+      title: "Fylke history (SSB Klass)"
+    description: |
+      SSB Klass classification 104's full code history.
+
+      Sibling to mart_ssb_klass_kommune — see that relation's own description. urb-agents
+      #2098/#2099 (R6).
+    columns:
+      - name: code
+        description: 2-digit fylke code.
+        data_tests: [not_null]
+      - name: name
+        description: Fylke name, verbatim from Klass.
+        data_tests: [not_null]
+      - name: valid_from
+        description: Start of this code period.
+        data_tests: [not_null]
+      - name: valid_to
+        description: End of this code period. Null if still current.
+      - name: klass_version_id
+        description: Every Klass classification version id whose own date range overlaps this code period, as an array.
+        data_tests: [not_null]
+
+  - name: mart_ssb_klass_endring
+    meta:
+      stability: source
+      title: "Kommune and fylke code changes (SSB Klass)"
+    description: |
+      SSB Klass's correspondence log for kommune and fylke codes, with the kind of change derived.
+      urb-agents #2098/#2099 (R6).
+
+      "The kind" is not a Klass field — derived from the shape of same-date transitions, validated
+      against the live data (1,285 kommune + 31 fylke transitions since 1950) before being written.
+      split_and_merged and renamed_and_renumbered are real, measured categories beyond the request's
+      own five values, not a catch-all — see dim_ssb_klass_endring's own header for the full
+      distribution and worked examples. atlas-scraper maps old CRM municipality numbers through
+      old_code/new_code here.
+    columns:
+      - name: classification_id
+        description: "131 (Kommuner) or 104 (Fylker)."
+        data_tests: [not_null]
+      - name: old_code
+        description: The code before this transition.
+        data_tests: [not_null]
+      - name: old_name
+        data_tests: [not_null]
+      - name: new_code
+        description: The code after this transition.
+        data_tests: [not_null]
+      - name: new_name
+        data_tests: [not_null]
+      - name: change_occurred
+        description: Date this transition took effect.
+        data_tests: [not_null]
+      - name: kind
+        description: "renamed, renumbered, merged, split, border, split_and_merged, or renamed_and_renumbered."
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ["renamed", "renumbered", "merged", "split", "border", "split_and_merged", "renamed_and_renumbered"]
+
   - name: mart_indicators__bufdir_barnefattigdom
     meta:
       title: "Barnefattigdom kommunemonitor"

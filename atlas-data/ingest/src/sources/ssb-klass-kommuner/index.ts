@@ -7,7 +7,7 @@
  */
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { fetchKlassCodesRange } from "../../lib/klass.js";
+import { fetchKlassCodesRange, fetchKlassClassification } from "../../lib/klass.js";
 import { logger } from "../../lib/logger.js";
 import { writeNdjson } from "../../lib/output.js";
 import { getSql, upsert } from "../../lib/postgres.js";
@@ -114,7 +114,24 @@ export async function run(): Promise<SsbKlassKommunerSummary> {
 
     await writeNdjson(OUTPUT_PATH, rows);
 
+    // Classification version metadata — see migration 080's header for why
+    // this lives in its own table rather than on each code row (no code
+    // returned by /codes.json or /codesAt.json carries a version id).
+    const classification = await fetchKlassClassification(CLASSIFICATION_ID);
+    const versionRows = classification.versions.map((v) => ({
+      classification_id: CLASSIFICATION_ID,
+      version_id: String(v.id),
+      version_name: v.name,
+      valid_from: v.validFrom,
+      // `validTo` is ABSENT from the JSON entirely for the current
+      // (open-ended) version — confirmed live, 2026-11-08: classification
+      // 131's version 3262 has no validTo key at all, not a null one. `??`
+      // normalises that to null; postgres.js refuses a bare `undefined`.
+      valid_to: v.validTo ?? null,
+    }));
+
     let rowsWritten = 0;
+    let versionRowsWritten = 0;
     const wroteToPostgres = Boolean(process.env["DATABASE_URL"]);
     if (wroteToPostgres) {
       const sql = getSql();
@@ -132,6 +149,17 @@ export async function run(): Promise<SsbKlassKommunerSummary> {
         table: TARGET_TABLE,
         rows_written: rowsWritten,
         duration_ms: Date.now() - upsertStart,
+      });
+
+      versionRowsWritten = await upsert(sql, {
+        table: "raw.ssb_klass_versions",
+        rows: versionRows.map((r) => ({ ...r, loaded_at: now })),
+        columns: ["classification_id", "version_id", "version_name", "valid_from", "valid_to", "loaded_at"],
+        conflictKeys: ["classification_id", "version_id"],
+      });
+      logger.info("postgres.upsert.done", {
+        table: "raw.ssb_klass_versions",
+        rows_written: versionRowsWritten,
       });
     } else {
       logger.info("postgres.upsert.skipped", {

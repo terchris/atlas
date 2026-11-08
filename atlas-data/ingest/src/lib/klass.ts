@@ -140,6 +140,85 @@ export async function fetchKlassCodesRange(
   return json;
 }
 
+export type KlassVersion = {
+  name: string;
+  id: number;
+  validFrom: string;
+  validTo: string | null;
+  published: string[];
+};
+
+export type KlassClassification = {
+  name: string;
+  id: number;
+  versions: KlassVersion[];
+};
+
+/**
+ * Fetch a classification's own metadata — currently used for its `versions`
+ * array (id, name, validFrom/validTo). There is no version id on a code
+ * returned by `/codes.json` or `/codesAt.json` — a code's own validity
+ * window has to be matched against this array separately. Confirmed by
+ * inspecting the raw response keys directly, 2026-11-08: no field named
+ * anything like `versionId` exists on a code.
+ */
+export async function fetchKlassClassification(
+  classificationId: string,
+  signal?: AbortSignal,
+): Promise<KlassClassification> {
+  const url = `${KLASS_BASE}/classifications/${classificationId}.json`;
+  const res = await fetchWithRetry(url, { signal });
+  if (!res.ok) {
+    const body = await res.text().catch(() => "<no body>");
+    throw new Error(
+      `Klass returned ${res.status} ${res.statusText} for classification ${classificationId} metadata: ${body.slice(0, 500)}`,
+    );
+  }
+  return (await res.json()) as KlassClassification;
+}
+
+export type KlassCodeChange = {
+  oldCode: string;
+  oldName: string;
+  oldShortName: string;
+  newCode: string;
+  newName: string;
+  newShortName: string;
+  changeOccurred: string;
+};
+
+export type KlassChangesResponse = {
+  codeChanges: KlassCodeChange[];
+};
+
+/**
+ * Fetch a classification's correspondence/change log — every old-code ->
+ * new-code mapping Klass recorded in the range, with the date it took
+ * effect. This is NOT the same thing as `/codes.json`'s history: that gives
+ * every code's own validity window, this gives the actual transitions
+ * between codes (renames, renumberings, mergers, splits, boundary-only
+ * adjustments where the code and name both stay the same).
+ */
+export async function fetchKlassChanges(opts: {
+  classificationId: string;
+  from: string;
+  to?: string;
+  signal?: AbortSignal;
+}): Promise<KlassChangesResponse> {
+  const { classificationId, from, to = "2100-01-01", signal } = opts;
+  const url =
+    `${KLASS_BASE}/classifications/${classificationId}/changes.json` +
+    `?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
+  const res = await fetchWithRetry(url, { signal });
+  if (!res.ok) {
+    const body = await res.text().catch(() => "<no body>");
+    throw new Error(
+      `Klass returned ${res.status} ${res.statusText} for classification ${classificationId} changes: ${body.slice(0, 500)}`,
+    );
+  }
+  return (await res.json()) as KlassChangesResponse;
+}
+
 async function fetchWithRetry(
   url: string,
   init: RequestInit,

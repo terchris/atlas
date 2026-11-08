@@ -1,0 +1,55 @@
+# Hand-authored. The dimensions: block is hand-authored — editorial
+# semantics the catalogue can't compute. After commit, this file is
+# human-authored — ingest runs do NOT modify it.
+
+source_id: ssb-klass-endring
+upstream_id: "131,104"
+upstream_url: https://data.ssb.no/api/klass/v1/classifications/131/changes.json
+upstream_landing_page: https://www.ssb.no/klass/klassifikasjoner/131
+upstream_title: "SSB Klass correspondence tables, classifications 131 og 104"
+description: "SSB Klass's correspondence/change log for kommune (131) and fylke (104) codes — every old-code -> new-code transition Klass recorded, with the date it took effect. Sibling to ssb-klass-kommuner/ssb-klass-fylker, which cover each code's own validity window, not the transitions between codes. urb-agents #2098/#2099 (R6)."
+publisher: Statistisk sentralbyrå
+license: CC BY 4.0
+license_url: https://www.ssb.no/en/diverse/lisens
+periodicity: irregular
+eu_theme: GOVE
+attribution: "Kilde: Statistisk sentralbyrå, Klass (classifications 131 og 104)"
+
+tags:
+  provider: ssb
+  topic: reference
+  geo: kommune
+  cadence: irregular
+
+dimensions:
+  - code: classification_id
+    meaning: Which Klass classification this transition belongs to
+    value_format: "one of: 131 (kommuner), 104 (fylker)"
+    notes: Kept as one relation rather than two, since atlas-scraper maps old CRM numbers through both the same way.
+  - code: oldCode / newCode
+    meaning: The code before and after this transition
+    value_format: 4-digit (kommune) or 2-digit (fylke) numeric string
+    notes: "A code can appear as oldCode in more than one row on the same date (a split) or as newCode in more than one row on the same date (a merger) — 199 of 1,285 kommune transitions measured 2026-11-08 are both at once (a boundary reorganisation, e.g. part of one kommune splitting off to merge into a different one)."
+  - code: oldName / newName
+    meaning: The name before and after this transition
+    value_format: free text
+    notes: Can be identical to each other even when the code also stayed the same — Klass still records these as a dated event (a boundary-only adjustment with no renumbering or rename).
+  - code: changeOccurred
+    meaning: Date this transition took effect
+    value_format: ISO date
+    notes: Earliest measured 2026-11-08 is 1955-01-01; requested from 1950-01-01 but Klass's own change log starts where the first recorded transition does, not at the request's own floor.
+
+lifecycle: beta
+time_coverage:
+  start: null
+  end: null
+keywords:
+  - kommune
+  - fylke
+  - geography
+  - reference
+  - klass
+  - history
+suggested_joins:
+  - ssb-klass-kommuner
+  - ssb-klass-fylker

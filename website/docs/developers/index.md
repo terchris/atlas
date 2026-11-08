@@ -6,12 +6,12 @@ This section is for **anyone consuming Atlas's public PostgREST API** to build t
 
 <!-- BEGIN holdings (generated) -->
 
-**65 upstream sources** from **12 publishers**, served as **104 read-only relations**.
+**66 upstream sources** from **12 publishers**, served as **107 read-only relations**.
 
 | publisher | sources | broadly |
 |---|---|---|
 | Folkehelseinstituttet | 22 | public health, and the Ungdata youth surveys |
-| Statistisk sentralbyrå | 20 | population, income, families, housing, education, crime |
+| Statistisk sentralbyrå | 21 | population, income, families, housing, education, crime |
 | Brønnøysundregistrene | 5 | the company and voluntary-organisation registers |
 | Kartverket | 4 | — |
 | Utdanningsdirektoratet | 4 | — |
@@ -23,9 +23,9 @@ This section is for **anyone consuming Atlas's public PostgREST API** to build t
 | Lotteri- og stiftelsestilsynet | 1 | — |
 | Norges Røde Kors | 1 | local chapters and their activities |
 
-By EU data theme: **SOCI** 31 (society) · **GOVE** 12 (government) · **HEAL** 12 (health) · **EDUC** 9 (education) · **JUST** 1 (justice).
+By EU data theme: **SOCI** 31 (society) · **GOVE** 13 (government) · **HEAL** 12 (health) · **EDUC** 9 (education) · **JUST** 1 (justice).
 
-Licences: **NLOD** for 37 of 65 — Norwegian public data, free to reuse with attribution. The exceptions are `kartverket-fylke` (CC BY 4.0) and `kartverket-kommune` (CC BY 4.0) and `kartverket-matrikkel-adresse` (CC BY 4.0) and `kartverket-postnummeromrade` (CC BY 4.0) and `nav-aap` (CC BY 4.0) and `nav-helt-ledige` (CC BY 4.0) and `nav-uforetrygd` (CC BY 4.0) and `redcross-branches` (permissive) and `ssb-06083` (CC BY 4.0) and `ssb-06913` (CC BY 4.0) and `ssb-06944` (CC BY 4.0) and `ssb-06947` (CC BY 4.0) and `ssb-07459` (CC BY 4.0) and `ssb-08764` (CC BY 4.0) and `ssb-09429` (CC BY 4.0) and `ssb-10501` (CC BY 4.0) and `ssb-10826` (CC BY 4.0) and `ssb-12063` (CC BY 4.0) and `ssb-12131` (CC BY 4.0) and `ssb-12132` (CC BY 4.0) and `ssb-12292` (CC BY 4.0) and `ssb-12451` (CC BY 4.0) and `ssb-12891` (CC BY 4.0) and `ssb-12944` (CC BY 4.0) and `ssb-13995` (CC BY 4.0) and `ssb-crime-tables` (CC BY 4.0) and `ssb-klass-fylker` (CC BY 4.0) and `ssb-klass-kommuner` (CC BY 4.0) — Red Cross's own data rather than the state's.
+Licences: **NLOD** for 37 of 66 — Norwegian public data, free to reuse with attribution. The exceptions are `kartverket-fylke` (CC BY 4.0) and `kartverket-kommune` (CC BY 4.0) and `kartverket-matrikkel-adresse` (CC BY 4.0) and `kartverket-postnummeromrade` (CC BY 4.0) and `nav-aap` (CC BY 4.0) and `nav-helt-ledige` (CC BY 4.0) and `nav-uforetrygd` (CC BY 4.0) and `redcross-branches` (permissive) and `ssb-06083` (CC BY 4.0) and `ssb-06913` (CC BY 4.0) and `ssb-06944` (CC BY 4.0) and `ssb-06947` (CC BY 4.0) and `ssb-07459` (CC BY 4.0) and `ssb-08764` (CC BY 4.0) and `ssb-09429` (CC BY 4.0) and `ssb-10501` (CC BY 4.0) and `ssb-10826` (CC BY 4.0) and `ssb-12063` (CC BY 4.0) and `ssb-12131` (CC BY 4.0) and `ssb-12132` (CC BY 4.0) and `ssb-12292` (CC BY 4.0) and `ssb-12451` (CC BY 4.0) and `ssb-12891` (CC BY 4.0) and `ssb-12944` (CC BY 4.0) and `ssb-13995` (CC BY 4.0) and `ssb-crime-tables` (CC BY 4.0) and `ssb-klass-endring` (CC BY 4.0) and `ssb-klass-fylker` (CC BY 4.0) and `ssb-klass-kommuner` (CC BY 4.0) — Red Cross's own data rather than the state's.
 
 ### What you can query
 
@@ -131,6 +131,9 @@ Licences: **NLOD** for 37 of 65 — Norwegian public data, free to reuse with at
 | `ref_ssb_nivaa` | Decoder for SSB's NUS2000 education levels. |
 | `ref_un_sdg` | The 17 UN Sustainable Development Goals, with Norwegian and English labels. |
 | `source_freshness` | One row per raw source declaring a loaded_at_field: whether it is inside its own declared cadence. |
+| `ssb_klass_endring` | SSB Klass's correspondence log for kommune and fylke codes, with the kind of change derived. |
+| `ssb_klass_fylke` | SSB Klass classification 104's full code history. |
+| `ssb_klass_kommune` | SSB Klass classification 131's full code history. |
 | `supply__redcross_branch_activities` | One row per Røde Kors branch and activity, from a static 2026-04-21 export. |
 | `supply__redcross_branches` | One row per Norges Røde Kors branch, from a static 2026-04-21 export. |
 | `supply__redcross_chapter_kommune_coverage` | Which kommuner each Røde Kors chapter covers, inferred from its local branches. |

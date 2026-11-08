@@ -157,6 +157,9 @@
 -- depends_on: {{ ref('mart_ref_ssb_nivaa') }}
 -- depends_on: {{ ref('mart_ref_un_sdg') }}
 -- depends_on: {{ ref('mart_source_freshness') }}
+-- depends_on: {{ ref('mart_ssb_klass_endring') }}
+-- depends_on: {{ ref('mart_ssb_klass_fylke') }}
+-- depends_on: {{ ref('mart_ssb_klass_kommune') }}
 -- depends_on: {{ ref('mart_supply__redcross_branch_activities') }}
 -- depends_on: {{ ref('mart_supply__redcross_branches') }}
 -- depends_on: {{ ref('mart_supply__redcross_chapter_kommune_coverage') }}
@@ -273,6 +276,9 @@
   {'relation': 'ref_ssb_nivaa', 'mart': 'mart_ref_ssb_nivaa'},
   {'relation': 'ref_un_sdg', 'mart': 'mart_ref_un_sdg'},
   {'relation': 'source_freshness', 'mart': 'mart_source_freshness'},
+  {'relation': 'ssb_klass_endring', 'mart': 'mart_ssb_klass_endring'},
+  {'relation': 'ssb_klass_fylke', 'mart': 'mart_ssb_klass_fylke'},
+  {'relation': 'ssb_klass_kommune', 'mart': 'mart_ssb_klass_kommune'},
   {'relation': 'supply__redcross_branch_activities', 'mart': 'mart_supply__redcross_branch_activities'},
   {'relation': 'supply__redcross_branches', 'mart': 'mart_supply__redcross_branches'},
   {'relation': 'supply__redcross_chapter_kommune_coverage', 'mart': 'mart_supply__redcross_chapter_kommune_coverage'},

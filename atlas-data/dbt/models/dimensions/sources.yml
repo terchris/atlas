@@ -243,3 +243,74 @@ sources:
         data_tests:
           - dbt_utils.unique_combination_of_columns:
               combination_of_columns: [code, valid_from_in_range]
+
+      - name: ssb_klass_versions
+        description: >-
+          SSB Klass classification version metadata (id, name, validity window), for
+          classifications 131 (Kommuner) and 104 (Fylker). Neither /codes.json nor /codesAt.json
+          carries a version id on a code — this is the only place one exists. Populated by
+          atlas-data/ingest/src/sources/ssb-klass-kommuner and ssb-klass-fylker alongside their own
+          code fetch. urb-agents #2098/#2099 (R6).
+        loaded_at_field: loaded_at
+        meta:
+          ingest_cadence: monthly
+        columns:
+          - name: classification_id
+            description: "131 (Kommuner) or 104 (Fylker)."
+            data_tests: [not_null]
+          - name: version_id
+            description: Klass's own numeric version id, as a string.
+            data_tests: [not_null]
+          - name: version_name
+            description: 'Klass''s own version name, e.g. "Kommuneinndeling 2024".'
+            data_tests: [not_null]
+          - name: valid_from
+            data_type: date
+          - name: valid_to
+            data_type: date
+          - name: loaded_at
+            data_type: timestamp with time zone
+        data_tests:
+          - dbt_utils.unique_combination_of_columns:
+              combination_of_columns: [classification_id, version_id]
+
+      - name: ssb_klass_endring
+        description: >-
+          SSB Klass's correspondence/change log, verbatim, for classifications 131 (Kommuner) and
+          104 (Fylker) — every old-code -> new-code transition Klass recorded, with the date it
+          took effect. Different question from ssb_klass_kommuner/_fylker's own code history: this
+          is the transitions BETWEEN codes, not each code's own validity window. Populated by
+          atlas-data/ingest/src/sources/ssb-klass-endring. "The kind" of change is NOT stored
+          here — it is derived in dim_ssb_klass_endring, since Klass gives no such field.
+          urb-agents #2098/#2099 (R6).
+        loaded_at_field: loaded_at
+        meta:
+          ingest_cadence: monthly
+        columns:
+          - name: classification_id
+            description: "131 (Kommuner) or 104 (Fylker)."
+            data_tests: [not_null]
+          - name: old_code
+            description: >-
+              The code before this transition. Not unique alone: measured 2026-11-08, 199 of 1,285
+              kommune transitions share an old_code with another row on the same change_occurred
+              date (a split), or a new_code with another row on the same date (a merger), or both.
+            data_tests: [not_null]
+          - name: old_name
+            data_tests: [not_null]
+          - name: old_short_name
+            data_type: text
+          - name: new_code
+            data_tests: [not_null]
+          - name: new_name
+            data_tests: [not_null]
+          - name: new_short_name
+            data_type: text
+          - name: change_occurred
+            data_type: date
+            data_tests: [not_null]
+          - name: loaded_at
+            data_type: timestamp with time zone
+        data_tests:
+          - dbt_utils.unique_combination_of_columns:
+              combination_of_columns: [classification_id, old_code, new_code, change_occurred]

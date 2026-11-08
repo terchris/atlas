@@ -5,7 +5,7 @@
  */
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { fetchKlassCodesRange } from "../../lib/klass.js";
+import { fetchKlassCodesRange, fetchKlassClassification } from "../../lib/klass.js";
 import { logger } from "../../lib/logger.js";
 import { writeNdjson } from "../../lib/output.js";
 import { getSql, upsert } from "../../lib/postgres.js";
@@ -93,7 +93,22 @@ export async function run(): Promise<SsbKlassFylkerSummary> {
 
     await writeNdjson(OUTPUT_PATH, rows);
 
+    // Classification version metadata — see migration 080's header. Same
+    // reasoning as ssb-klass-kommuner, now a second real consumer of
+    // fetchKlassClassification rather than a one-off.
+    const classification = await fetchKlassClassification(CLASSIFICATION_ID);
+    const versionRows = classification.versions.map((v) => ({
+      classification_id: CLASSIFICATION_ID,
+      version_id: String(v.id),
+      version_name: v.name,
+      valid_from: v.validFrom,
+      // See ssb-klass-kommuner's own comment: `validTo` is absent from the
+      // JSON entirely for the current version, not present as null.
+      valid_to: v.validTo ?? null,
+    }));
+
     let rowsWritten = 0;
+    let versionRowsWritten = 0;
     const wroteToPostgres = Boolean(process.env["DATABASE_URL"]);
     if (wroteToPostgres) {
       const sql = getSql();
@@ -111,6 +126,17 @@ export async function run(): Promise<SsbKlassFylkerSummary> {
         table: TARGET_TABLE,
         rows_written: rowsWritten,
         duration_ms: Date.now() - upsertStart,
+      });
+
+      versionRowsWritten = await upsert(sql, {
+        table: "raw.ssb_klass_versions",
+        rows: versionRows.map((r) => ({ ...r, loaded_at: now })),
+        columns: ["classification_id", "version_id", "version_name", "valid_from", "valid_to", "loaded_at"],
+        conflictKeys: ["classification_id", "version_id"],
+      });
+      logger.info("postgres.upsert.done", {
+        table: "raw.ssb_klass_versions",
+        rows_written: versionRowsWritten,
       });
     } else {
       logger.info("postgres.upsert.skipped", {

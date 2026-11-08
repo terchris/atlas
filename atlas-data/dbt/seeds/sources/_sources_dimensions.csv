@@ -305,6 +305,10 @@ ssb-crime-tables,Tid,"Calendar year (08484, 09405, 09406)",YYYY integer in landi
 ssb-crime-tables,intervall (år),Rolling two-calendar-year window label (08487 only),e.g. 2023-2024 as text interval code,Px dimension name differs from Tid; ingest stores as period_interval_code / period_interval_label.
 ssb-crime-tables,Gjerningssted,Place of offence geography (klass 131),SSB municipality / county / country / historical region code,Present only on 08487; ingest stores as region_code / region_label.
 ssb-crime-tables,PolitiAvgjorelse,Final police investigative outcome bucket,SSB categorical code set,Present only on 09405 alongside national offence totals.
+ssb-klass-endring,classification_id,Which Klass classification this transition belongs to,"one of: 131 (kommuner), 104 (fylker)","Kept as one relation rather than two, since atlas-scraper maps old CRM numbers through both the same way."
+ssb-klass-endring,oldCode / newCode,The code before and after this transition,4-digit (kommune) or 2-digit (fylke) numeric string,"A code can appear as oldCode in more than one row on the same date (a split) or as newCode in more than one row on the same date (a merger) — 199 of 1,285 kommune transitions measured 2026-11-08 are both at once (a boundary reorganisation, e.g. part of one kommune splitting off to merge into a different one)."
+ssb-klass-endring,oldName / newName,The name before and after this transition,free text,Can be identical to each other even when the code also stayed the same — Klass still records these as a dated event (a boundary-only adjustment with no renumbering or rename).
+ssb-klass-endring,changeOccurred,Date this transition took effect,ISO date,"Earliest measured 2026-11-08 is 1955-01-01; requested from 1950-01-01 but Klass's own change log starts where the first recorded transition does, not at the request's own floor."
 ssb-klass-fylker,code,Fylke code,"2-digit numeric, zero-padded","16 codes — 15 real fylker (e.g. 03 Oslo, 11 Rogaland, 50 Trøndelag) + 99 Uoppgitt"
 ssb-klass-fylker,name,Fylke name (bokmål),text,
 ssb-klass-fylker,parent_code,Parent classification code,text or null,Always null (no parent level)

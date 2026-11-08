@@ -80,6 +80,7 @@
     "ingest:ssb-12944": "tsx --env-file-if-exists=.env src/sources/ssb-12944/index.ts",
     "ingest:ssb-13995": "tsx --env-file-if-exists=.env src/sources/ssb-13995/index.ts",
     "ingest:ssb-crime-tables": "tsx --env-file-if-exists=.env src/sources/ssb-crime-tables/index.ts",
+    "ingest:ssb-klass-endring": "tsx --env-file-if-exists=.env src/sources/ssb-klass-endring/index.ts",
     "ingest:ssb-klass-fylker": "tsx --env-file-if-exists=.env src/sources/ssb-klass-fylker/index.ts",
     "ingest:ssb-klass-kommuner": "tsx --env-file-if-exists=.env src/sources/ssb-klass-kommuner/index.ts",
     "ingest:udir-elevundersokelsen-mobbing": "tsx --env-file-if-exists=.env src/sources/udir-elevundersokelsen-mobbing/index.ts",
