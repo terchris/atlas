@@ -2580,6 +2580,10 @@ models:
       defensible and it is still an editorial claim; publishing the bands
       leaves that claim with whoever makes it, and the same rows serve as
       the denominator for child poverty and working-age dependency.
+      alder_0_12 and alder_13_19 are a SECOND, independent pair added for
+      urb-agents #2100/#2101 (T6) — they sum to the population aged 0-19, not
+      to befolkning_total, and overlap the six bands above. See their own
+      column descriptions before combining them with anything.
       ⚠️ Counts are residents, not care recipients, and they are SSB's
       register population at the start of the year — not an average over
       it. Historical kommune codes are excluded: only kommuner active
@@ -2657,6 +2661,19 @@ models:
         data_tests:
           - not_null
           - dbt_utils.accepted_range: {min_value: 0}
+      - name: alder_0_12
+        description: |
+          Residents aged 0-12. urb-agents #2100/#2101 (T6) — a second, independent pair of bands
+          alongside alder_13_19, NOT part of the six disjoint bands above. Together with
+          alder_13_19 this sums to the population aged 0-19, not to befolkning_total. ⚠️ Overlaps
+          alder_0_5 and part of alder_6_15 — do not add it to those.
+        data_tests: [not_null]
+      - name: alder_13_19
+        description: |
+          Residents aged 13-19. urb-agents #2100/#2101 (T6) — paired with alder_0_12, see that
+          column's description. ⚠️ Overlaps part of alder_6_15, all of alder_16_17, and part of
+          alder_18_66 — do not add it to those.
+        data_tests: [not_null]
     data_tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns: [kommune_nr, year]

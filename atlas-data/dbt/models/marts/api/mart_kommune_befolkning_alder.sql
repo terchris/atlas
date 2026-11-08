@@ -41,6 +41,15 @@
 -- otherwise fetch the bands and add them client-side. That is the defect fixed
 -- in kommune_ngo_totals (#1265), not repeated here.
 --
+-- 🔴 alder_0_12 AND alder_13_19 ARE A SECOND PAIR OF BANDS, NOT PART OF THE SIX
+-- ABOVE — urb-agents #2100/#2101 (T6), added for atlas-scraper's own
+-- target-groups bands. Together they sum to the population aged 0-19, NOT to
+-- befolkning_total (there is no band here for 20+). DO NOT SUM THEM WITH
+-- alder_0_5, alder_6_15 OR alder_16_17 — the ranges overlap (0_12 overlaps
+-- 0_5 and part of 6_15; 13_19 overlaps part of 6_15, all of 16_17, and part
+-- of 18_66). The two pairs are two different ways of slicing the same
+-- underlying ages, not two halves of one partition.
+--
 -- 🔴 SEX IS FILTERED, NOT SUMMED. SSB's Kjonn dimension codes '0' as ALL, and
 -- decode_sex maps it to 'all' — so summing every sex row would double the
 -- population of every kommune in Norway. This selects male and female
@@ -60,7 +69,10 @@ with banded as (
     sum(p.value) filter (where p.age_min between 18 and  66) as alder_18_66,
     sum(p.value) filter (where p.age_min between 67 and  79) as alder_67_79,
     sum(p.value) filter (where p.age_min >= 80)              as alder_80_plus,
-    sum(p.value)                                             as befolkning_total
+    sum(p.value)                                             as befolkning_total,
+    -- Second, independent pair of bands — see the header comment above.
+    sum(p.value) filter (where p.age_min between  0 and  12) as alder_0_12,
+    sum(p.value) filter (where p.age_min between 13 and  19) as alder_13_19
   from {{ ref('indicators__ssb_07459') }} p
   where p.kommune_nr is not null
     and p.sex in ('male', 'female')
@@ -82,7 +94,9 @@ select
   (coalesce(b.alder_0_5, 0) + coalesce(b.alder_6_15, 0)
      + coalesce(b.alder_16_17, 0))::int                as alder_0_17,
   (coalesce(b.alder_67_79, 0) + coalesce(b.alder_80_plus, 0))::int as alder_67_plus,
-  coalesce(b.befolkning_total, 0)::int as befolkning_total
+  coalesce(b.befolkning_total, 0)::int as befolkning_total,
+  coalesce(b.alder_0_12,  0)::int as alder_0_12,
+  coalesce(b.alder_13_19, 0)::int as alder_13_19
 from banded b
 join {{ ref('dim_kommune') }} k
   on k.kommune_nr = b.kommune_nr
