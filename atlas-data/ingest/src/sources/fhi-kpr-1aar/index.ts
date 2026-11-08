@@ -47,36 +47,48 @@ const CONFLICT_KEYS = [
   "geo_code", "aar_code", "kjonn_code", "alder_code", "kodegruppe_code", "measure_type",
 ] as const;
 
+// Cell budget: full product is 373 GEO × 8 AAR × 3 KJONN × 10 ALDER ×
+// 11 KODEGRUPPE × 4 MEASURE = 3,938,880 — ~80× FHI's 50k cap. Filtering AAR
+// to bottom(1), KJONN to 0 (combined) and ALDER/KODEGRUPPE/GEO to "all" gets
+// one measure type to 373 × 10 × 11 = 41,030 cells — under the cap, but
+// fetching TWO measure types in one request (82,060) is not. Two requests,
+// same shape otherwise, upserted into the same raw table.
+//
+// RATE was the only measure Atlas ingested until urb-agents #2100/#2101
+// (T4) asked for a COUNT, not a rate, for mental-health/substance-use
+// contacts — TELLER is that count and was already anticipated: the dbt
+// indicator model's `case measure_type when 'TELLER' then 'Antall
+// (personer)'` branch existed before this file ever fetched a TELLER row.
+// SMR / MEIS, sex-stratified, and historical slices remain out of scope,
+// same as before.
+const MEASURE_TYPES = ["RATE", "TELLER"] as const;
+
 export async function run() {
   return recordIngestRun(SOURCE_ID, async () => {
     logger.info("source.start", { source_id: SOURCE_ID });
     const started = Date.now();
 
-    // Cell budget: full product is 373 GEO × 8 AAR × 3 KJONN × 10 ALDER ×
-    // 11 KODEGRUPPE × 4 MEASURE = 3,938,880 — ~80× FHI's 50k cap. Filter:
-    // - AAR=bottom(1) latest year
-    // - KJONN=0 combined sex
-    // - MEASURE_TYPE=RATE (per-1000 contact rate — the headline number)
-    // → 1 × 373 × 1 × 10 × 11 × 1 = 41,030 cells.
-    // SMR / MEIS / TELLER, sex-stratified, and historical slices can be
-    // added as sibling sources; KPR_3 (table 369) carries 3-year averages
-    // if smoother trends are needed.
-    const resp = await fetchFhiTableData({
-      sourceId: FHI_SOURCE_ID,
-      tableId: FHI_TABLE_ID,
-      request: {
-        dimensions: [
-          { code: "AAR", filter: "bottom", values: ["1"] },
-          { code: "KJONN", filter: "item", values: ["0"] },
-          { code: "ALDER", filter: "all", values: ["*"] },
-          { code: "KODEGRUPPE", filter: "all", values: ["*"] },
-          { code: "GEO", filter: "all", values: ["*"] },
-          { code: "MEASURE_TYPE", filter: "item", values: ["RATE"] },
-        ],
-        response: { format: "json-stat2", maxRowCount: 50000 },
-      },
-    });
-    const rows = parseJsonStat2(resp).map(toRow);
+    const rows: Row[] = [];
+    let upstreamUpdated: string | undefined;
+    for (const measureType of MEASURE_TYPES) {
+      const resp = await fetchFhiTableData({
+        sourceId: FHI_SOURCE_ID,
+        tableId: FHI_TABLE_ID,
+        request: {
+          dimensions: [
+            { code: "AAR", filter: "bottom", values: ["1"] },
+            { code: "KJONN", filter: "item", values: ["0"] },
+            { code: "ALDER", filter: "all", values: ["*"] },
+            { code: "KODEGRUPPE", filter: "all", values: ["*"] },
+            { code: "GEO", filter: "all", values: ["*"] },
+            { code: "MEASURE_TYPE", filter: "item", values: [measureType] },
+          ],
+          response: { format: "json-stat2", maxRowCount: 50000 },
+        },
+      });
+      rows.push(...parseJsonStat2(resp).map(toRow));
+      upstreamUpdated = resp.updated;
+    }
     await writeNdjson(OUTPUT_PATH, rows);
 
     let rowsWritten = 0;
@@ -94,14 +106,14 @@ export async function run() {
       source_id: SOURCE_ID, row_count: rows.length,
       duration_ms: Date.now() - started,
       wrote_to_postgres: wroteToPostgres, rows_written: rowsWritten,
-      upstream_updated: resp.updated,
+      upstream_updated: upstreamUpdated,
     });
     return {
       output: undefined,
       record: {
         rowsScraped: rows.length,
         rowsParsed: rows.length,
-        upstreamUpdatedAt: new Date(resp.updated),
+        upstreamUpdatedAt: upstreamUpdated ? new Date(upstreamUpdated) : null,
       },
     };
   });
