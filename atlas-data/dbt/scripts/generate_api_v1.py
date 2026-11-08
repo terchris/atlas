@@ -338,8 +338,26 @@ REFERENCE:
                                establishment, division) registered under a
                                parent enhet. Bootstrap snapshot only, not yet
                                reconciled against the change feed.
+  bring_postnummer             Posten Bring's register with kategori
+                               (G/P/B/S/F) — dim_postnummer's properly
+                               provenanced sibling.
+  kartverket_postnummeromrade  postcode-area polygons, geometry and
+                               geometry_simplified (50 m, see below), one
+                               row per postnummer. urb-agents #2098/#2099.
+                               ⚠️ This is a NARROWER case than the kommune
+                               boundaries excluded below, not a reversal of
+                               that decision: 3,382 point-lookupable rows at
+                               ~7 KB full / ~1 KB simplified each, not one
+                               38 MB bulk file. A consumer filtering to the
+                               one postnummer it needs never touches the
+                               other 3,381; the kommune-boundary exclusion
+                               is about a consumer who has no choice but to
+                               pull the whole country at once. Requested
+                               explicitly, by Terje, served via api_v1 and
+                               not as a static file precisely so point
+                               lookups work (urb-agents #2098).
 
-MAPS — BOUNDARIES ARE NOT IN THIS API, AND THAT IS ON PURPOSE.
+MAPS — BULK NATIONAL BOUNDARIES ARE NOT IN THIS API, AND THAT IS ON PURPOSE.
 Full-resolution kommune boundaries are about 38 MB; serving them here would be
 worse than not having them. A SIMPLIFIED boundary file is published on the
 documentation site instead, keyed so it joins straight onto dim_kommune:

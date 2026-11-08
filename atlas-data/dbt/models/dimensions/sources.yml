@@ -3,6 +3,41 @@ sources:
   - name: raw
     schema: raw
     tables:
+      - name: kartverket_postnummeromrade
+        description: |
+          Kartverket's Postnummerområder, verbatim, one row per upstream GeoJSON
+          feature. Source for dim_kartverket_postnummeromrade. Populated by
+          atlas-data/ingest/src/sources/kartverket-postnummeromrade. urb-agents
+          #2098/#2099 (R3).
+        loaded_at_field: loaded_at
+        meta:
+          ingest_cadence: monthly
+        freshness:
+          warn_after: {count: 60, period: day}
+          error_after: {count: 180, period: day}
+        columns:
+          - name: lokalid
+            description: Kartverket's own feature-local GUID. Primary key.
+            data_tests: [not_null, unique]
+          - name: postnummer
+            description: 4-digit postcode. Not unique — a postnummer with disjoint polygon pieces is more than one row.
+            data_tests: [not_null]
+          - name: poststed
+            description: Post office name, verbatim from Kartverket/Posten.
+            data_tests: [not_null]
+          - name: kommune_nr
+            description: 4-digit kommune code for this specific polygon piece.
+            data_tests: [not_null]
+          - name: oppdateringsdato
+            description: This feature's own last-update date, where published. Null on most rows.
+          - name: versjonid
+            description: Kartverket's own version id for this feature.
+          - name: geometry
+            description: The polygon, verbatim, EPSG:4258.
+            data_tests: [not_null]
+          - name: loaded_at
+            description: When Atlas fetched this row.
+            data_tests: [not_null]
       - name: bring_postnummer
         description: |
           Posten Bring's postcode register, verbatim, including kategori.

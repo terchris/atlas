@@ -67,6 +67,12 @@ MANIFEST=target/manifest.json
 #                                CODE from a register Atlas republishes
 #                                verbatim. That is editing source data to
 #                                satisfy a gate.
+#   mart_kartverket_postnummeromrade  SAME REASONING AS mart_dim_postnummer,
+#                                same upstream subject (postnummer). Grain is
+#                                one row per postnummer; kommune_nr is an
+#                                array attribute, not the grain. Zero 9999
+#                                rows (checked 2026-11-08 — `9999 = any
+#                                (kommune_nr)` on the whole dimension).
 #   mart_bring_postnummer         SAME REASONING AS mart_dim_postnummer, same
 #                                upstream file. Grain is one row per postal
 #                                code; kommune_nr is the attribute. Zero 9999
@@ -125,7 +131,7 @@ MANIFEST=target/manifest.json
 # changes values in relations that are already published, which is a deploy
 # with its own acceptance checks -- not a side effect of a publish. Raised on
 # urb-agents #1547.
-EXEMPT="mart_dim_kommune mart_unattributed_totals mart_brreg_enhet mart_distrikt_summary mart_kommune_local_chapters mart_dim_postnummer mart_bring_postnummer mart_supply__redcross_branches mart_supply__redcross_chapter_kommune_coverage mart_dim_chapter mart_chapter_kommune_coverage mart_fact_chapter_activities mart_indicators__bufdir_barnefattigdom mart_indicators__fhi_bor_alene mart_indicators__fhi_mobbing mart_indicators__fhi_trangbodd mart_indicators__fhi_vgs_gjennomforing mart_indicators__ssb_08764 mart_indicators__ssb_10826 mart_ngo_chapter_registry_match mart_ngo_chapter_subunits mart_brreg_underenhet"
+EXEMPT="mart_dim_kommune mart_unattributed_totals mart_brreg_enhet mart_distrikt_summary mart_kommune_local_chapters mart_dim_postnummer mart_bring_postnummer mart_kartverket_postnummeromrade mart_supply__redcross_branches mart_supply__redcross_chapter_kommune_coverage mart_dim_chapter mart_chapter_kommune_coverage mart_fact_chapter_activities mart_indicators__bufdir_barnefattigdom mart_indicators__fhi_bor_alene mart_indicators__fhi_mobbing mart_indicators__fhi_trangbodd mart_indicators__fhi_vgs_gjennomforing mart_indicators__ssb_08764 mart_indicators__ssb_10826 mart_ngo_chapter_registry_match mart_ngo_chapter_subunits mart_brreg_underenhet"
 
 CANDIDATES="$(./.venv/bin/python -c '
 import json, sys

@@ -3376,6 +3376,37 @@ models:
         description: When Atlas fetched this row. Bring's file has no Last-Modified header, so there is no publication date to carry — this is a fetch date, not a publication date.
         data_tests: [not_null]
 
+  - name: mart_kartverket_postnummeromrade
+    meta:
+      stability: source
+      title: "Postcode-area polygons (full + simplified)"
+    description: |
+      Kartverket's postcode-area polygons, full and simplified, as GeoJSON. urb-agents #2098/#2099.
+
+      One row per postnummer. geometry is the full, unsimplified union of the upstream's polygon
+      pieces; geometry_simplified is the same shape at a 50m tolerance (atlas-scraper's own stated
+      tolerance), computed in EPSG:25833 and reprojected back to EPSG:4258 — see
+      dim_kartverket_postnummeromrade's own description for why a real metres tolerance needs a
+      projected CRS and cannot be applied directly to a geographic one.
+    columns:
+      - name: postnummer
+        description: 4-digit postcode. Primary key.
+        data_tests: [not_null, unique]
+      - name: poststed
+        description: Post office name, verbatim from Kartverket/Posten.
+        data_tests: [not_null]
+      - name: kommune_nr
+        description: "Every kommune this postnummer's area touches, as an array. Measured 2026-11-08: always exactly one element in practice."
+        data_tests: [not_null]
+      - name: oppdateringsdato
+        description: Latest per-feature update date across this postnummer's pieces. Null where none carry one.
+      - name: geometry
+        description: The full, unsimplified polygon(s) as GeoJSON, EPSG:4258.
+        data_tests: [not_null]
+      - name: geometry_simplified
+        description: The same polygon(s) simplified at a 50m tolerance, as GeoJSON, EPSG:4258.
+        data_tests: [not_null]
+
   - name: mart_indicators__bufdir_barnefattigdom
     meta:
       title: "Barnefattigdom kommunemonitor"

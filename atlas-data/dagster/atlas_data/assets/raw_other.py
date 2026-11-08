@@ -94,6 +94,7 @@ OTHER_SOURCES = [
     "bufdir-barnevern",
     "husbanken-bostotte",
     "imdi-bosetting",
+    "kartverket-postnummeromrade",
     "lottstift-momskompensasjon",
     "nav-aap",
     "nav-helt-ledige",
@@ -128,7 +129,7 @@ assets = [
     # nav-uforetrygd, nav-aap and nav-helt-ledige republish monthly, not
     # weekly — polled to match.
     *make_raw_ingest_assets(
-        ["nav-aap", "nav-helt-ledige", "nav-uforetrygd"],
+        ["kartverket-postnummeromrade", "nav-aap", "nav-helt-ledige", "nav-uforetrygd"],
         group_name="raw_other",
         automation_condition=cadence.monthly_polled(),
         freshness_policy=cadence.MONTHLY_FRESHNESS,

@@ -1,0 +1,62 @@
+# Hand-authored. The dimensions: block is hand-authored — editorial
+# semantics the catalogue can't compute. After commit, this file is
+# human-authored — ingest runs do NOT modify it.
+
+source_id: kartverket-postnummeromrade
+upstream_id: "462a5297-33ef-438a-82a5-07fff5799be3"
+upstream_url: https://nedlasting.geonorge.no/api/order
+upstream_landing_page: https://kartkatalog.geonorge.no/metadata/uuid/462a5297-33ef-438a-82a5-07fff5799be3
+upstream_title: "Postnummerområder"
+description: "Kartverket's Postnummerområder (postcode-area polygons), via Geonorge's order-based download API — there is no static file URL; the ingest places an order for the whole country in GeoJSON/EPSG:4258 and downloads the one-time link the order returns. urb-agents #2098/#2099 (R3): served with both full and simplified geometry; see dim_kartverket_postnummeromrade's own model for the simplification method and tolerance."
+publisher: Kartverket
+license: CC BY 4.0
+license_url: https://creativecommons.org/licenses/by/4.0/deed.no
+periodicity: P1M
+eu_theme: GOVE
+attribution: "© Kartverket"
+
+tags:
+  provider: kartverket
+  topic: reference
+  geo: kommune
+  cadence: monthly
+
+dimensions:
+  - code: lokalid
+    meaning: Kartverket's own stable feature-local id (a GUID), and the table's primary key
+    value_format: GUID string
+    notes: Stable across releases for the same polygon piece per Kartverket's own SOSI convention; not independently re-verified across two releases here.
+  - code: postnummer
+    meaning: Four-digit postcode this area belongs to
+    value_format: 4 digits, leading zeros significant — always text
+    notes: "Not unique in this table — 57 of 3,382 postnummer (measured 2026-11-08) are split across 2-3 disjoint polygon pieces, each its own row/feature. The dbt model unions them into one published row per postnummer."
+  - code: poststed
+    meaning: Post office name for this postcode, as Kartverket/Posten publish it
+    value_format: free text
+    notes: Verbatim, not normalised.
+  - code: kommune
+    meaning: Four-digit kommune code this specific polygon piece sits in
+    value_format: 4 digits, leading zeros significant
+    notes: "Every split postnummer measured 2026-11-08 stayed within one kommune across all its pieces — zero genuine multi-kommune cases found, contrary to what the request's own field list (\"every municipality the area touches\") anticipated. Modelled as an array downstream anyway, because this is one snapshot, not a structural guarantee the data will never change."
+  - code: oppdateringsdato
+    meaning: This specific feature's own last-update date, where Kartverket published one
+    value_format: compact date string, e.g. "20261103..."
+    notes: "Null on 3,187 of 3,450 features (measured 2026-11-08) — most polygons carry no individual update date. The whole-dataset extraction date (datauttaksdato) is not stored; it describes the download, and Atlas already has loaded_at for that."
+  - code: geometry
+    meaning: The polygon itself, verbatim from the upstream GeoJSON
+    value_format: GeoJSON Polygon, EPSG:4258 (EUREF89/ETRS89 geographic)
+    notes: Every one of the 3,450 features measured 2026-11-08 was a Polygon, never a MultiPolygon — the ingest treats a different geometry type as a loud error, not a silent acceptance.
+
+lifecycle: beta
+time_coverage:
+  start: null
+  end: null
+keywords:
+  - postnummeromrade
+  - postcode-area
+  - kartverket
+  - geonorge
+  - geometry
+  - kommune
+suggested_joins:
+  - bring-postnummer

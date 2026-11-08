@@ -156,3 +156,14 @@ publishers:
       canonical Norwegian postcode register (Postnummerregister), with a
       category per postcode (street address, post box, service address)
       that SSB's own kommune/fylke classifications do not carry.
+
+  - id: kartverket
+    display_name: Kartverket
+    homepage: https://www.kartverket.no/
+    logo: /img/publishers/kartverket.png
+    feedback_url: https://www.kartverket.no/om-kartverket/kontakt-oss
+    notes: |
+      The Norwegian Mapping Authority. Publishes the national geodata
+      infrastructure through Geonorge — administrative boundaries, postcode
+      areas, and the Matrikkelen address register — the geometry layer none
+      of Atlas's other sources carry.

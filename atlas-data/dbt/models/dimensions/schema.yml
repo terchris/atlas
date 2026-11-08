@@ -133,6 +133,38 @@ models:
         description: When Atlas fetched this row — Bring's file has no Last-Modified header, so there is no publication date to carry.
         data_tests: [not_null]
 
+  - name: dim_kartverket_postnummeromrade
+    description: |
+      Kartverket's postcode-area polygons, one row per postnummer. urb-agents #2098/#2099 (R3).
+
+      Unions the upstream's disjoint polygon pieces (57 of 3,382 postnummer, measured 2026-11-08)
+      into one geometry per postnummer. Carries both the full union and a simplified geometry —
+      see this model's own header for the simplification method (reproject to EPSG:25833 for a
+      real metres tolerance, simplify, reproject back to 4258) and why kommune_nr is an array.
+    columns:
+      - name: postnummer
+        description: 4-digit postcode. Primary key.
+        data_tests:
+          - not_null
+          - unique
+      - name: poststed
+        description: Post office name, verbatim from Kartverket/Posten.
+        data_tests: [not_null]
+      - name: kommune_nr
+        description: "Every kommune this postnummer's pieces touch, as an array. Measured 2026-11-08: always exactly one element — no genuine multi-kommune postnummer found — modelled as an array anyway since the request's own field list names that as a real possibility."
+        data_tests: [not_null]
+      - name: oppdateringsdato
+        description: Latest per-feature update date across this postnummer's pieces, where any carry one. Null where none do.
+      - name: piece_count
+        description: How many upstream features were unioned into this row. 1 for the ordinary case; 2-3 for a postnummer with disjoint polygon pieces.
+        data_tests: [not_null]
+      - name: geometry_full
+        description: The unioned polygon(s), verbatim geometry (no simplification), EPSG:4258, stored as MultiPolygon for a consistent type regardless of piece_count.
+        data_tests: [not_null]
+      - name: geometry_simplified
+        description: The same geometry simplified at a 50m tolerance in EPSG:25833 (EUREF89 UTM 33N), reprojected back to EPSG:4258 for storage. See this model's own header for why 50m could not be applied directly in the geographic CRS.
+        data_tests: [not_null]
+
   - name: crosswalk_kommune_name
     description: |
       Name → kommune_nr lookup for resolving free-text municipality strings
