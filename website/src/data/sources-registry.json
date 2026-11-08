@@ -67,7 +67,7 @@
       "description": "Canonical geographic dimensions used as join keys across every\nindicator: kommune and fylke classifications from SSB Klass.\n",
       "emoji": "🗺️",
       "order": 70,
-      "source_count": 2
+      "source_count": 3
     }
   ],
   "publishers": [
@@ -80,6 +80,16 @@
       "notes": "Atlas itself, for the relations it authors rather than republishes:\nclassification schemes (the NGO activity taxonomy, the chapter and\nactivity dimensions), cross-source syntheses that exist only because\nAtlas combined multiple publishers' data (indicator coverage,\nkommune/NGO rollups), and Atlas's own self-description (meta_sources,\ningest_health). No source manifest declares `publisher: Atlas` — this\nentry is resolved by a model's `meta.publisher` field instead, read by\ngenerate-sources-registry.mjs, not by the manifest cross-check every\nother publisher goes through.\n",
       "source_count": 0,
       "view_count": 28
+    },
+    {
+      "id": "bring",
+      "display_name": "Posten Bring",
+      "homepage": "https://www.bring.no/",
+      "logo": "/img/publishers/bring.svg",
+      "feedback_url": "https://www.bring.no/kundeservice/kontakt-oss",
+      "notes": "Norway's national postal and logistics operator. Publishes the\ncanonical Norwegian postcode register (Postnummerregister), with a\ncategory per postcode (street address, post box, service address)\nthat SSB's own kommune/fylke classifications do not carry.\n",
+      "source_count": 1,
+      "view_count": 0
     },
     {
       "id": "brreg",
@@ -183,6 +193,183 @@
     }
   ],
   "sources": [
+    {
+      "kind": "source",
+      "source_id": "bring-postnummer",
+      "upstream_id": "postnummerregister-ansi",
+      "upstream_url": "https://www.bring.no/postnummerregister-ansi.txt",
+      "upstream_landing_page": "https://www.bring.no/tjenester/adressetjenester/postnummer/postnummertabeller",
+      "upstream_title": "Bring Postnummerregister",
+      "description": "Posten Bring's postcode register — postnummer, poststed, kommune and the kategori Bring itself assigns (G gateadresse, P postboks, B both, S service, F flere uses). urb-agents #2098/#2099 (R2): served separately from the existing dim_postnummer seed, which carries the same upstream without kategori and without a visible refresh date — see atlas-data/migrations/075_raw_bring_postnummer.sql for the full reasoning. Bring's file sends no Last-Modified header, so there is no publication date to record, only Atlas's own fetch date.",
+      "atlas_summary": null,
+      "publisher": {
+        "id": "bring",
+        "display_name": "Posten Bring",
+        "homepage": "https://www.bring.no/",
+        "logo": "/img/publishers/bring.svg"
+      },
+      "category": {
+        "id": "reference",
+        "name": "Reference geographies",
+        "emoji": "🗺️"
+      },
+      "license": "NLOD",
+      "license_url": "https://data.norge.no/nlod/no/2.0",
+      "periodicity": "P3M",
+      "eu_theme": "GOVE",
+      "attribution": "Inneholder data under Norsk lisens for offentlige data (NLOD) tilgjengeliggjort av Posten Bring",
+      "tags": {
+        "provider": "bring",
+        "topic": "reference",
+        "geo": "kommune",
+        "cadence": "quarterly"
+      },
+      "keywords": [
+        "postnummer",
+        "postcode",
+        "bring",
+        "posten",
+        "kommune"
+      ],
+      "lifecycle": "beta",
+      "time_coverage": {
+        "start": null,
+        "end": null
+      },
+      "methodology_notes": null,
+      "suggested_joins": [
+        "ssb-klass-kommuner"
+      ],
+      "related_by_topic": [
+        "ssb-klass-fylker",
+        "ssb-klass-kommuner"
+      ],
+      "dimensions": [
+        {
+          "code": "postnummer",
+          "meaning": "Four-digit Norwegian postcode, and the table's primary key",
+          "value_format": "4 digits, leading zeros significant — always text",
+          "notes": "Stable identifier for the postcode; Bring reassigns kommune_nr on a kommune merger rather than retiring the postnummer."
+        },
+        {
+          "code": "poststed",
+          "meaning": "Post office name for this postcode, as Bring publishes it (ALLCAPS)",
+          "value_format": "free text",
+          "notes": "Verbatim from Bring, not normalised to title case or cross-checked against any other place-name source."
+        },
+        {
+          "code": "kommune_nr",
+          "meaning": "Four-digit kommune code the postcode belongs to",
+          "value_format": "4 digits, leading zeros significant",
+          "notes": "Bring's own kommune numbering, not cross-checked here against dim_kommune at ingest time — the dbt model does that."
+        },
+        {
+          "code": "kommune_navn",
+          "meaning": "Kommune name as Bring's file carries it, kept for provenance",
+          "value_format": "free text",
+          "notes": "Not the source of truth for kommune naming — dim_kommune is. Kept because it is in the upstream row and Atlas does not drop upstream fields."
+        },
+        {
+          "code": "kategori",
+          "meaning": "What kind of addresses this postcode serves",
+          "value_format": "single letter — G, P, B, S or F",
+          "notes": "G gateadresse (street addresses), P postboks (post-box only), B both, S service (a service address, e.g. a large institution with its own code), F flere (more than one use). A loud error, not a silent default, if a sixth letter ever appears — see index.ts."
+        }
+      ],
+      "raw_tables": null,
+      "sample_query": null,
+      "citation": {
+        "text": "Posten Bring. (n.d.). Bring Postnummerregister. Retrieved from https://www.bring.no/tjenester/adressetjenester/postnummer/postnummertabeller. Available in Atlas at https://atlas.sovereignsky.no/datasets/bring-postnummer.",
+        "bibtex": "@misc{atlas_bring_postnummer,\n  author = {Posten Bring},\n  title  = {Bring Postnummerregister},\n  year   = {n.d.},\n  url    = {https://www.bring.no/tjenester/adressetjenester/postnummer/postnummertabeller},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/bring-postnummer}\n}"
+      },
+      "feedback_url": "https://www.bring.no/kundeservice/kontakt-oss",
+      "consuming_marts": [
+        {
+          "mart_name": "mart_atlas_inventory",
+          "api_v1_name": "atlas_inventory",
+          "title": null,
+          "description_short": "What Atlas publishes: one row per endpoint with its row count, freshness and origin.",
+          "description_full": "What Atlas publishes: one row per endpoint with its row count, freshness and origin.\n\nWhat Atlas publishes, one row per queryable endpoint: how many records it\nserves, when its data last arrived, and where those rows came from.\nAsked for by Røde Kors — \"validate that all datasets that are ingested has\nan endpoint and it can be queried … count the number of records each\nendpoint has and update the last time it ingested data.\"\n⚠️ THE GRAIN IS PER ENDPOINT, NOT PER SOURCE. meta_sources answers \"what\ndid Atlas ingest\"; this answers \"what can I query, and is there anything\nin it\". One source can feed several endpoints and one endpoint can draw on\nseveral sources, so the two row counts are not comparable and summing\nsources will not reproduce an endpoint's count.\n⚠️ atlas_inventory does not list ITSELF. It is built from the same seed it\nreports on, so counting itself would be circular and the number would be\nwhatever the table held mid-build. 19 endpoints are listed; 20 are\npublished.",
+          "sample_query": "https://api-atlas.urbalurba.com/atlas_inventory?limit=5"
+        },
+        {
+          "mart_name": "mart_bring_postnummer",
+          "api_v1_name": "bring_postnummer",
+          "title": "Postnummer with category (Bring)",
+          "description_short": "Posten Bring's postcode register with category, properly provenanced.",
+          "description_full": "Posten Bring's postcode register with category, properly provenanced. urb-agents #2098/#2099.\n\nSibling to dim_postnummer (same upstream) — see that relation's own description for the full\nreasoning on why both are served. This one carries kategori and a real meta_sources row with\na visible refresh date; dim_postnummer carries neither. Prefer this relation for new work.",
+          "sample_query": "https://api-atlas.urbalurba.com/bring_postnummer?limit=5"
+        }
+      ],
+      "consuming_models": [
+        {
+          "name": "dim_bring_postnummer",
+          "kind": "dim"
+        },
+        {
+          "name": "mart_atlas_inventory",
+          "kind": "mart"
+        },
+        {
+          "name": "mart_bring_postnummer",
+          "kind": "mart"
+        }
+      ],
+      "joined_with": [
+        {
+          "source_id": "brreg-enheter-alle",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "brreg-frivillige",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "brreg-oppdateringer",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "brreg-underenheter",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "bufdir-barnefattigdom",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "bufdir-barnevern",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "fhi-alkohol",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "fhi-befolkning",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        }
+      ],
+      "last_ingested_at": null,
+      "latest_row_count": null,
+      "total_runs": null,
+      "downstream_model_count": null
+    },
     {
       "kind": "source",
       "source_id": "brreg-enheter-alle",
@@ -1223,6 +1410,12 @@
           ]
         },
         {
+          "source_id": "bring-postnummer",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
           "source_id": "bufdir-barnefattigdom",
           "shared_models": [
             "mart_atlas_inventory"
@@ -1242,12 +1435,6 @@
         },
         {
           "source_id": "fhi-befolkning",
-          "shared_models": [
-            "mart_atlas_inventory"
-          ]
-        },
-        {
-          "source_id": "fhi-befolkningsvekst",
           "shared_models": [
             "mart_atlas_inventory"
           ]
@@ -1494,6 +1681,12 @@
       ],
       "joined_with": [
         {
+          "source_id": "bring-postnummer",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
           "source_id": "brreg-enheter-alle",
           "shared_models": [
             "mart_atlas_inventory"
@@ -1531,12 +1724,6 @@
         },
         {
           "source_id": "fhi-befolkning",
-          "shared_models": [
-            "mart_atlas_inventory"
-          ]
-        },
-        {
-          "source_id": "fhi-befolkningsvekst",
           "shared_models": [
             "mart_atlas_inventory"
           ]
@@ -1674,6 +1861,12 @@
       ],
       "joined_with": [
         {
+          "source_id": "bring-postnummer",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
           "source_id": "brreg-enheter-alle",
           "shared_models": [
             "mart_atlas_inventory"
@@ -1711,12 +1904,6 @@
         },
         {
           "source_id": "fhi-befolkning",
-          "shared_models": [
-            "mart_atlas_inventory"
-          ]
-        },
-        {
-          "source_id": "fhi-befolkningsvekst",
           "shared_models": [
             "mart_atlas_inventory"
           ]
@@ -3541,6 +3728,12 @@
       ],
       "joined_with": [
         {
+          "source_id": "bring-postnummer",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
           "source_id": "brreg-enheter-alle",
           "shared_models": [
             "mart_atlas_inventory"
@@ -3578,12 +3771,6 @@
         },
         {
           "source_id": "fhi-alkohol",
-          "shared_models": [
-            "mart_atlas_inventory"
-          ]
-        },
-        {
-          "source_id": "fhi-befolkning",
           "shared_models": [
             "mart_atlas_inventory"
           ]
@@ -9144,6 +9331,12 @@
       ],
       "joined_with": [
         {
+          "source_id": "bring-postnummer",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
           "source_id": "brreg-enheter-alle",
           "shared_models": [
             "mart_atlas_inventory"
@@ -9181,12 +9374,6 @@
         },
         {
           "source_id": "fhi-alkohol",
-          "shared_models": [
-            "mart_atlas_inventory"
-          ]
-        },
-        {
-          "source_id": "fhi-befolkning",
           "shared_models": [
             "mart_atlas_inventory"
           ]
@@ -9324,6 +9511,12 @@
           ]
         },
         {
+          "source_id": "bring-postnummer",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
           "source_id": "brreg-enheter-alle",
           "shared_models": [
             "mart_atlas_inventory"
@@ -9355,12 +9548,6 @@
         },
         {
           "source_id": "bufdir-barnevern",
-          "shared_models": [
-            "mart_atlas_inventory"
-          ]
-        },
-        {
-          "source_id": "fhi-alkohol",
           "shared_models": [
             "mart_atlas_inventory"
           ]
@@ -9516,6 +9703,12 @@
           ]
         },
         {
+          "source_id": "bring-postnummer",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
           "source_id": "brreg-underenheter",
           "shared_models": [
             "mart_atlas_inventory"
@@ -9535,12 +9728,6 @@
         },
         {
           "source_id": "fhi-alkohol",
-          "shared_models": [
-            "mart_atlas_inventory"
-          ]
-        },
-        {
-          "source_id": "fhi-befolkning",
           "shared_models": [
             "mart_atlas_inventory"
           ]
@@ -9677,6 +9864,12 @@
       ],
       "joined_with": [
         {
+          "source_id": "bring-postnummer",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
           "source_id": "brreg-enheter-alle",
           "shared_models": [
             "mart_atlas_inventory"
@@ -9714,12 +9907,6 @@
         },
         {
           "source_id": "fhi-alkohol",
-          "shared_models": [
-            "mart_atlas_inventory"
-          ]
-        },
-        {
-          "source_id": "fhi-befolkning",
           "shared_models": [
             "mart_atlas_inventory"
           ]
@@ -9856,6 +10043,12 @@
       ],
       "joined_with": [
         {
+          "source_id": "bring-postnummer",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
           "source_id": "brreg-enheter-alle",
           "shared_models": [
             "mart_atlas_inventory"
@@ -9893,12 +10086,6 @@
         },
         {
           "source_id": "fhi-alkohol",
-          "shared_models": [
-            "mart_atlas_inventory"
-          ]
-        },
-        {
-          "source_id": "fhi-befolkning",
           "shared_models": [
             "mart_atlas_inventory"
           ]
@@ -10035,6 +10222,12 @@
       ],
       "joined_with": [
         {
+          "source_id": "bring-postnummer",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
           "source_id": "brreg-enheter-alle",
           "shared_models": [
             "mart_atlas_inventory"
@@ -10072,12 +10265,6 @@
         },
         {
           "source_id": "fhi-alkohol",
-          "shared_models": [
-            "mart_atlas_inventory"
-          ]
-        },
-        {
-          "source_id": "fhi-befolkning",
           "shared_models": [
             "mart_atlas_inventory"
           ]
@@ -10389,6 +10576,12 @@
           ]
         },
         {
+          "source_id": "bring-postnummer",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
           "source_id": "brreg-enheter-alle",
           "shared_models": [
             "mart_atlas_inventory"
@@ -10420,12 +10613,6 @@
         },
         {
           "source_id": "bufdir-barnevern",
-          "shared_models": [
-            "mart_atlas_inventory"
-          ]
-        },
-        {
-          "source_id": "fhi-alkohol",
           "shared_models": [
             "mart_atlas_inventory"
           ]
@@ -11883,6 +12070,12 @@
           ]
         },
         {
+          "source_id": "bring-postnummer",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
           "source_id": "brreg-enheter-alle",
           "shared_models": [
             "mart_atlas_inventory"
@@ -11908,12 +12101,6 @@
         },
         {
           "source_id": "bufdir-barnefattigdom",
-          "shared_models": [
-            "mart_atlas_inventory"
-          ]
-        },
-        {
-          "source_id": "bufdir-barnevern",
           "shared_models": [
             "mart_atlas_inventory"
           ]
@@ -12692,6 +12879,12 @@
       ],
       "joined_with": [
         {
+          "source_id": "bring-postnummer",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
           "source_id": "brreg-enheter-alle",
           "shared_models": [
             "mart_atlas_inventory"
@@ -12729,12 +12922,6 @@
         },
         {
           "source_id": "fhi-alkohol",
-          "shared_models": [
-            "mart_atlas_inventory"
-          ]
-        },
-        {
-          "source_id": "fhi-befolkning",
           "shared_models": [
             "mart_atlas_inventory"
           ]
@@ -12873,6 +13060,12 @@
       ],
       "joined_with": [
         {
+          "source_id": "bring-postnummer",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
           "source_id": "brreg-enheter-alle",
           "shared_models": [
             "mart_atlas_inventory"
@@ -12910,12 +13103,6 @@
         },
         {
           "source_id": "fhi-alkohol",
-          "shared_models": [
-            "mart_atlas_inventory"
-          ]
-        },
-        {
-          "source_id": "fhi-befolkning",
           "shared_models": [
             "mart_atlas_inventory"
           ]
@@ -14318,6 +14505,12 @@
       ],
       "joined_with": [
         {
+          "source_id": "bring-postnummer",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
           "source_id": "brreg-enheter-alle",
           "shared_models": [
             "mart_atlas_inventory"
@@ -14355,12 +14548,6 @@
         },
         {
           "source_id": "fhi-alkohol",
-          "shared_models": [
-            "mart_atlas_inventory"
-          ]
-        },
-        {
-          "source_id": "fhi-befolkning",
           "shared_models": [
             "mart_atlas_inventory"
           ]
@@ -14487,6 +14674,12 @@
       ],
       "joined_with": [
         {
+          "source_id": "bring-postnummer",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
           "source_id": "brreg-enheter-alle",
           "shared_models": [
             "mart_atlas_inventory"
@@ -14524,12 +14717,6 @@
         },
         {
           "source_id": "fhi-alkohol",
-          "shared_models": [
-            "mart_atlas_inventory"
-          ]
-        },
-        {
-          "source_id": "fhi-befolkning",
           "shared_models": [
             "mart_atlas_inventory"
           ]
@@ -15621,6 +15808,7 @@
         "ssb-klass-kommuner"
       ],
       "related_by_topic": [
+        "bring-postnummer",
         "ssb-klass-kommuner"
       ],
       "dimensions": [
@@ -15974,6 +16162,7 @@
         "ssb-klass-fylker"
       ],
       "related_by_topic": [
+        "bring-postnummer",
         "ssb-klass-fylker"
       ],
       "dimensions": [
@@ -16462,6 +16651,12 @@
       ],
       "joined_with": [
         {
+          "source_id": "bring-postnummer",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
           "source_id": "brreg-enheter-alle",
           "shared_models": [
             "mart_atlas_inventory"
@@ -16499,12 +16694,6 @@
         },
         {
           "source_id": "fhi-alkohol",
-          "shared_models": [
-            "mart_atlas_inventory"
-          ]
-        },
-        {
-          "source_id": "fhi-befolkning",
           "shared_models": [
             "mart_atlas_inventory"
           ]
@@ -16636,6 +16825,12 @@
       ],
       "joined_with": [
         {
+          "source_id": "bring-postnummer",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
           "source_id": "brreg-enheter-alle",
           "shared_models": [
             "mart_atlas_inventory"
@@ -16673,12 +16868,6 @@
         },
         {
           "source_id": "fhi-alkohol",
-          "shared_models": [
-            "mart_atlas_inventory"
-          ]
-        },
-        {
-          "source_id": "fhi-befolkning",
           "shared_models": [
             "mart_atlas_inventory"
           ]
@@ -16810,6 +16999,12 @@
       ],
       "joined_with": [
         {
+          "source_id": "bring-postnummer",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
           "source_id": "brreg-enheter-alle",
           "shared_models": [
             "mart_atlas_inventory"
@@ -16847,12 +17042,6 @@
         },
         {
           "source_id": "fhi-alkohol",
-          "shared_models": [
-            "mart_atlas_inventory"
-          ]
-        },
-        {
-          "source_id": "fhi-befolkning",
           "shared_models": [
             "mart_atlas_inventory"
           ]
@@ -16995,6 +17184,12 @@
       ],
       "joined_with": [
         {
+          "source_id": "bring-postnummer",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
           "source_id": "brreg-enheter-alle",
           "shared_models": [
             "mart_atlas_inventory"
@@ -17032,12 +17227,6 @@
         },
         {
           "source_id": "fhi-alkohol",
-          "shared_models": [
-            "mart_atlas_inventory"
-          ]
-        },
-        {
-          "source_id": "fhi-befolkning",
           "shared_models": [
             "mart_atlas_inventory"
           ]
@@ -17167,6 +17356,12 @@
           "model_name": "mart_activity_catalog",
           "title": "Activity catalogue (cross-NGO)",
           "description_short": "One row per organisation and activity, with its Atlas service category."
+        },
+        {
+          "parent_kind": "model",
+          "model_name": "mart_bring_postnummer",
+          "title": "Postnummer with category (Bring)",
+          "description_short": "Posten Bring's postcode register with category, properly provenanced."
         },
         {
           "parent_kind": "model",
@@ -17759,6 +17954,52 @@
         "homepage": "https://atlas.sovereignsky.no/",
         "logo": "/img/logo.svg"
       }
+    },
+    {
+      "kind": "view",
+      "view_id": "bring_postnummer",
+      "mart_name": "mart_bring_postnummer",
+      "api_v1_name": "bring_postnummer",
+      "title": "Postnummer with category (Bring)",
+      "description_short": "Posten Bring's postcode register with category, properly provenanced.",
+      "description_full": "Posten Bring's postcode register with category, properly provenanced. urb-agents #2098/#2099.\n\nSibling to dim_postnummer (same upstream) — see that relation's own description for the full\nreasoning on why both are served. This one carries kategori and a real meta_sources row with\na visible refresh date; dim_postnummer carries neither. Prefer this relation for new work.",
+      "columns": [
+        {
+          "name": "postnummer",
+          "description": "4-digit postcode, leading zeros significant. Primary key."
+        },
+        {
+          "name": "poststed",
+          "description": "Post office name, verbatim from Bring. Not normalised."
+        },
+        {
+          "name": "kommune_nr",
+          "description": "4-digit kommune code, Bring's own numbering."
+        },
+        {
+          "name": "kommune_navn",
+          "description": "Kommune name as Bring's file carries it. Not the source of truth — dim_kommune is."
+        },
+        {
+          "name": "kategori",
+          "description": "G gateadresse (street addresses), P postboks (post-box only), B both, S service, F flere uses."
+        },
+        {
+          "name": "loaded_at",
+          "description": "When Atlas fetched this row. Bring's file has no Last-Modified header, so there is no publication date to carry — this is a fetch date, not a publication date."
+        }
+      ],
+      "built_from": [
+        {
+          "parent_kind": "model",
+          "model_name": "dim_bring_postnummer",
+          "title": null,
+          "description_short": "Posten Bring's postcode register, typed, including kategori."
+        }
+      ],
+      "sample_query": "https://api-atlas.urbalurba.com/bring_postnummer?limit=5",
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_bring_postnummer",
+      "publisher": null
     },
     {
       "kind": "view",
@@ -18688,7 +18929,7 @@
       "api_v1_name": "dim_postnummer",
       "title": "Postnummer to kommune",
       "description_short": "Norwegian postal codes resolved to a primary kommune, 5 122 rows.",
-      "description_full": "Norwegian postal codes resolved to a primary kommune, 5 122 rows.\n\nNorwegian postal codes resolved to a primary kommune, 5 122 rows — the lookup that turns an\naddress into a kommune_nr without the municipal-merger ambiguity that names carry.\n⚠️ Upstream is Bring's free weekly Postnummerregister, fetched by a seed-refresh script\nrather than an ingested source — so this relation has NO row in meta_sources and NO recorded\nlicence, unlike Atlas's 42 ingested sources. That is a gap in Atlas's records, not a claim\nthe data is unlicensed; a consumer redistributing it should check Bring's own terms rather\nthan infer NLOD from the rest of the catalogue.",
+      "description_full": "Norwegian postal codes resolved to a primary kommune, 5 122 rows.\n\nNorwegian postal codes resolved to a primary kommune, 5 122 rows — the lookup that turns an\naddress into a kommune_nr without the municipal-merger ambiguity that names carry.\n⚠️ Upstream is Bring's free weekly Postnummerregister, fetched by a seed-refresh script\nrather than an ingested source — so this relation has NO row in meta_sources and NO recorded\nlicence, unlike Atlas's ingested sources. That is a gap in Atlas's records, not a claim\nthe data is unlicensed; a consumer redistributing it should check Bring's own terms rather\nthan infer NLOD from the rest of the catalogue.\n🔵 bring_postnummer (added urb-agents #2098/#2099, R2) is the properly-provenanced sibling:\nsame upstream, ingested on a schedule, with a meta_sources row and a category column this\nrelation does not carry. Prefer it for new work; this one stays for the two existing models\nbuilt against its exact shape.",
       "columns": [
         {
           "name": "postnummer",
@@ -24898,6 +25139,12 @@
             ],
             "joined_with": [
               {
+                "source_id": "bring-postnummer",
+                "shared_models": [
+                  "mart_atlas_inventory"
+                ]
+              },
+              {
                 "source_id": "brreg-enheter-alle",
                 "shared_models": [
                   "mart_atlas_inventory"
@@ -24935,12 +25182,6 @@
               },
               {
                 "source_id": "fhi-befolkning",
-                "shared_models": [
-                  "mart_atlas_inventory"
-                ]
-              },
-              {
-                "source_id": "fhi-befolkningsvekst",
                 "shared_models": [
                   "mart_atlas_inventory"
                 ]

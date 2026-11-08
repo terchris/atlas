@@ -59,6 +59,7 @@
 -- depends_on: {{ ref('api_v1_relations') }}
 -- depends_on: {{ ref('lineage') }}
 -- depends_on: {{ ref('mart_activity_catalog') }}
+-- depends_on: {{ ref('mart_bring_postnummer') }}
 -- depends_on: {{ ref('mart_brreg_enhet') }}
 -- depends_on: {{ ref('mart_brreg_underenhet') }}
 -- depends_on: {{ ref('mart_bufdir_indicator_alias') }}
@@ -170,6 +171,7 @@
    seed it reads, and counting itself is circular. #}
 {% set relations = [
   {'relation': 'activity_catalog', 'mart': 'mart_activity_catalog'},
+  {'relation': 'bring_postnummer', 'mart': 'mart_bring_postnummer'},
   {'relation': 'brreg_enhet', 'mart': 'mart_brreg_enhet'},
   {'relation': 'brreg_underenhet', 'mart': 'mart_brreg_underenhet'},
   {'relation': 'bufdir_indicator_alias', 'mart': 'mart_bufdir_indicator_alias'},

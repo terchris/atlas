@@ -1,6 +1,7 @@
 relation_name,mart_name,derives_from_fact,stability
 activity_catalog,mart_activity_catalog,false,curated
 atlas_inventory,mart_atlas_inventory,true,curated
+bring_postnummer,mart_bring_postnummer,false,source
 brreg_enhet,mart_brreg_enhet,false,source
 brreg_underenhet,mart_brreg_underenhet,false,source
 bufdir_indicator_alias,mart_bufdir_indicator_alias,false,curated

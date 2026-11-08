@@ -3,6 +3,7 @@
   "views": [
     "activity_catalog",
     "atlas_inventory",
+    "bring_postnummer",
     "brreg_enhet",
     "brreg_underenhet",
     "bufdir_indicator_alias",

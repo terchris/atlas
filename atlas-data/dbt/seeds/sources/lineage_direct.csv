@@ -2,6 +2,7 @@ model_name,parent_name,parent_kind
 chapter_kommune_coverage,supply__redcross_chapter_kommune_coverage,model
 crosswalk_kommune_name,dim_kommune,model
 dim_activity,supply__redcross_branch_activities,model
+dim_bring_postnummer,bring-postnummer,source
 dim_brreg_enhet,brreg-enheter-alle,source
 dim_brreg_enhet,brreg-frivillige,source
 dim_brreg_enhet,brreg-oppdateringer,source
@@ -112,6 +113,7 @@ int_ngo_chapter_subunits,dim_brreg_enhet,model
 mart_activity_catalog,dim_activity,model
 mart_activity_catalog,fact_chapter_activities,model
 mart_atlas_inventory,mart_activity_catalog,model
+mart_atlas_inventory,mart_bring_postnummer,model
 mart_atlas_inventory,mart_brreg_enhet,model
 mart_atlas_inventory,mart_brreg_underenhet,model
 mart_atlas_inventory,mart_bufdir_indicator_alias,model
@@ -209,6 +211,7 @@ mart_atlas_inventory,mart_supply__redcross_branch_activities,model
 mart_atlas_inventory,mart_supply__redcross_branches,model
 mart_atlas_inventory,mart_supply__redcross_chapter_kommune_coverage,model
 mart_atlas_inventory,mart_unattributed_totals,model
+mart_bring_postnummer,dim_bring_postnummer,model
 mart_brreg_enhet,dim_brreg_enhet,model
 mart_brreg_underenhet,dim_brreg_underenhet,model
 mart_chapter_kommune_coverage,chapter_kommune_coverage,model

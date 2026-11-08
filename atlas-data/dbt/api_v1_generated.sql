@@ -457,6 +457,20 @@ meanings across two endpoints is a defect waiting to be quoted.';
 COMMENT ON COLUMN api_v1.atlas_inventory.runs_succeeded IS 'Ingest attempts that completed with exit code 0. `runs_total -
 runs_succeeded` is the number of failures.';
 
+-- bring_postnummer  ←  marts.mart_bring_postnummer
+CREATE OR REPLACE VIEW api_v1.bring_postnummer AS SELECT * FROM marts.mart_bring_postnummer;
+COMMENT ON VIEW api_v1.bring_postnummer IS 'Posten Bring''s postcode register with category, properly provenanced. urb-agents #2098/#2099.
+
+Sibling to dim_postnummer (same upstream) — see that relation''s own description for the full
+reasoning on why both are served. This one carries kategori and a real meta_sources row with
+a visible refresh date; dim_postnummer carries neither. Prefer this relation for new work.';
+COMMENT ON COLUMN api_v1.bring_postnummer.postnummer IS '4-digit postcode, leading zeros significant. Primary key.';
+COMMENT ON COLUMN api_v1.bring_postnummer.poststed IS 'Post office name, verbatim from Bring. Not normalised.';
+COMMENT ON COLUMN api_v1.bring_postnummer.kommune_nr IS '4-digit kommune code, Bring''s own numbering.';
+COMMENT ON COLUMN api_v1.bring_postnummer.kommune_navn IS 'Kommune name as Bring''s file carries it. Not the source of truth — dim_kommune is.';
+COMMENT ON COLUMN api_v1.bring_postnummer.kategori IS 'G gateadresse (street addresses), P postboks (post-box only), B both, S service, F flere uses.';
+COMMENT ON COLUMN api_v1.bring_postnummer.loaded_at IS 'When Atlas fetched this row. Bring''s file has no Last-Modified header, so there is no publication date to carry — this is a fetch date, not a publication date.';
+
 -- brreg_enhet  ←  marts.mart_brreg_enhet
 CREATE OR REPLACE VIEW api_v1.brreg_enhet AS SELECT * FROM marts.mart_brreg_enhet;
 COMMENT ON VIEW api_v1.brreg_enhet IS 'Every organisation registered in Norway, mirrored from Brønnøysundregistrene''s Enhetsregisteret.
@@ -948,9 +962,13 @@ Norwegian postal codes resolved to a primary kommune, 5 122 rows — the lookup 
 address into a kommune_nr without the municipal-merger ambiguity that names carry.
 ⚠️ Upstream is Bring''s free weekly Postnummerregister, fetched by a seed-refresh script
 rather than an ingested source — so this relation has NO row in meta_sources and NO recorded
-licence, unlike Atlas''s 42 ingested sources. That is a gap in Atlas''s records, not a claim
+licence, unlike Atlas''s ingested sources. That is a gap in Atlas''s records, not a claim
 the data is unlicensed; a consumer redistributing it should check Bring''s own terms rather
-than infer NLOD from the rest of the catalogue.';
+than infer NLOD from the rest of the catalogue.
+🔵 bring_postnummer (added urb-agents #2098/#2099, R2) is the properly-provenanced sibling:
+same upstream, ingested on a schedule, with a meta_sources row and a category column this
+relation does not carry. Prefer it for new work; this one stays for the two existing models
+built against its exact shape.';
 COMMENT ON COLUMN api_v1.dim_postnummer.postnummer IS '4-digit postal code, leading zeros preserved (e.g. ''0150'' Oslo). Text — casting to int loses the padding.';
 COMMENT ON COLUMN api_v1.dim_postnummer.post_office IS 'Post-office name, ALLCAPS as Bring publishes it. Not normalised.';
 COMMENT ON COLUMN api_v1.dim_postnummer.kommune_nr IS '🔴 The PRIMARY kommune for the postnummer, and a simplification. A few postnummer span more than one kommune; this column carries one of them, so a join through it is a good default and not a ground truth. Atlas cannot say which rows are affected — Bring''s register as fetched does not mark them.';

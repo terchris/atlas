@@ -1,0 +1,57 @@
+# Hand-authored. The dimensions: block is hand-authored — editorial
+# semantics the catalogue can't compute. After commit, this file is
+# human-authored — ingest runs do NOT modify it.
+
+source_id: bring-postnummer
+upstream_id: postnummerregister-ansi
+upstream_url: https://www.bring.no/postnummerregister-ansi.txt
+upstream_landing_page: https://www.bring.no/tjenester/adressetjenester/postnummer/postnummertabeller
+upstream_title: "Bring Postnummerregister"
+description: "Posten Bring's postcode register — postnummer, poststed, kommune and the kategori Bring itself assigns (G gateadresse, P postboks, B both, S service, F flere uses). urb-agents #2098/#2099 (R2): served separately from the existing dim_postnummer seed, which carries the same upstream without kategori and without a visible refresh date — see atlas-data/migrations/075_raw_bring_postnummer.sql for the full reasoning. Bring's file sends no Last-Modified header, so there is no publication date to record, only Atlas's own fetch date."
+publisher: "Posten Bring"
+license: NLOD
+license_url: https://data.norge.no/nlod/no/2.0
+periodicity: P3M
+eu_theme: GOVE
+attribution: "Inneholder data under Norsk lisens for offentlige data (NLOD) tilgjengeliggjort av Posten Bring"
+
+tags:
+  provider: bring
+  topic: reference
+  geo: kommune
+  cadence: quarterly
+
+dimensions:
+  - code: postnummer
+    meaning: Four-digit Norwegian postcode, and the table's primary key
+    value_format: 4 digits, leading zeros significant — always text
+    notes: Stable identifier for the postcode; Bring reassigns kommune_nr on a kommune merger rather than retiring the postnummer.
+  - code: poststed
+    meaning: Post office name for this postcode, as Bring publishes it (ALLCAPS)
+    value_format: free text
+    notes: Verbatim from Bring, not normalised to title case or cross-checked against any other place-name source.
+  - code: kommune_nr
+    meaning: Four-digit kommune code the postcode belongs to
+    value_format: 4 digits, leading zeros significant
+    notes: Bring's own kommune numbering, not cross-checked here against dim_kommune at ingest time — the dbt model does that.
+  - code: kommune_navn
+    meaning: Kommune name as Bring's file carries it, kept for provenance
+    value_format: free text
+    notes: Not the source of truth for kommune naming — dim_kommune is. Kept because it is in the upstream row and Atlas does not drop upstream fields.
+  - code: kategori
+    meaning: What kind of addresses this postcode serves
+    value_format: single letter — G, P, B, S or F
+    notes: "G gateadresse (street addresses), P postboks (post-box only), B both, S service (a service address, e.g. a large institution with its own code), F flere (more than one use). A loud error, not a silent default, if a sixth letter ever appears — see index.ts."
+
+lifecycle: beta
+time_coverage:
+  start: null
+  end: null
+keywords:
+  - postnummer
+  - postcode
+  - bring
+  - posten
+  - kommune
+suggested_joins:
+  - ssb-klass-kommuner
