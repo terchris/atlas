@@ -378,6 +378,20 @@ REFERENCE:
                                here already has, not a new risk this PR
                                introduces.
   kartverket_fylke             county boundaries, same method, 15 rows.
+  matrikkel_adresse            Kartverket's national address file, ~2.6M
+                               rows. urb-agents #2098/#2099 (R5). Served
+                               paged through PostgREST (order=adresse_id,
+                               limit/offset), not as a bulk file — the
+                               request's own three lookup patterns
+                               (kommune_nr+adressenavn+nummer+bokstav[+
+                               postnummer], and kommune_nr+gardsnummer+
+                               bruksnummer) are exactly the point-lookup
+                               case a bulk file would make worse, not
+                               better: a consumer wants one address, not
+                               2.6M of them. Two composite btree indexes on
+                               the underlying dimension serve all three
+                               patterns (the narrower one via leftmost-
+                               prefix match on the wider index).
 
 MAPS — THE BULK NATIONAL FILE BELOW IS A SEPARATE THING FROM kartverket_kommune
 ABOVE, NOT A CONTRADICTION OF IT. Full-resolution kommune boundaries as ONE

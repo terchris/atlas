@@ -6,15 +6,15 @@ This section is for **anyone consuming Atlas's public PostgREST API** to build t
 
 <!-- BEGIN holdings (generated) -->
 
-**64 upstream sources** from **12 publishers**, served as **103 read-only relations**.
+**65 upstream sources** from **12 publishers**, served as **104 read-only relations**.
 
 | publisher | sources | broadly |
 |---|---|---|
 | Folkehelseinstituttet | 22 | public health, and the Ungdata youth surveys |
 | Statistisk sentralbyrå | 20 | population, income, families, housing, education, crime |
 | Brønnøysundregistrene | 5 | the company and voluntary-organisation registers |
+| Kartverket | 4 | — |
 | Utdanningsdirektoratet | 4 | — |
-| Kartverket | 3 | — |
 | Arbeids- og velferdsdirektoratet | 3 | — |
 | Barne-, ungdoms- og familiedirektoratet | 2 | child poverty |
 | Posten Bring | 1 | — |
@@ -23,9 +23,9 @@ This section is for **anyone consuming Atlas's public PostgREST API** to build t
 | Lotteri- og stiftelsestilsynet | 1 | — |
 | Norges Røde Kors | 1 | local chapters and their activities |
 
-By EU data theme: **SOCI** 31 (society) · **HEAL** 12 (health) · **GOVE** 11 (government) · **EDUC** 9 (education) · **JUST** 1 (justice).
+By EU data theme: **SOCI** 31 (society) · **GOVE** 12 (government) · **HEAL** 12 (health) · **EDUC** 9 (education) · **JUST** 1 (justice).
 
-Licences: **NLOD** for 57 of 64 — Norwegian public data, free to reuse with attribution. The exceptions are `kartverket-fylke` (CC BY 4.0) and `kartverket-kommune` (CC BY 4.0) and `kartverket-postnummeromrade` (CC BY 4.0) and `nav-aap` (CC BY 4.0) and `nav-helt-ledige` (CC BY 4.0) and `nav-uforetrygd` (CC BY 4.0) and `redcross-branches` (permissive) — Red Cross's own data rather than the state's.
+Licences: **NLOD** for 57 of 65 — Norwegian public data, free to reuse with attribution. The exceptions are `kartverket-fylke` (CC BY 4.0) and `kartverket-kommune` (CC BY 4.0) and `kartverket-matrikkel-adresse` (CC BY 4.0) and `kartverket-postnummeromrade` (CC BY 4.0) and `nav-aap` (CC BY 4.0) and `nav-helt-ledige` (CC BY 4.0) and `nav-uforetrygd` (CC BY 4.0) and `redcross-branches` (permissive) — Red Cross's own data rather than the state's.
 
 ### What you can query
 
@@ -112,6 +112,7 @@ Licences: **NLOD** for 57 of 64 — Norwegian public data, free to reuse with at
 | `kommune_local_chapters` | One row per local chapter resolved to a kommune, with its NGO and category. |
 | `kommune_ngo_summary` | Active voluntary organisations per kommune and ICNPO category. |
 | `kommune_ngo_totals` | One row per kommune: how many active voluntary organisations are registered there. |
+| `matrikkel_adresse` | Kartverket's national address file, one row per address, ~2.6M rows. |
 | `meta_dimensions` | One row per source and coded dimension, explaining what that column's codes mean. |
 | `meta_endpoints` | One row per queryable endpoint, with filterable tags. |
 | `meta_sources` | One row per ingested source: publisher, licence, coverage, freshness and what it feeds. |

@@ -224,6 +224,7 @@ _KLASS_SOURCE_IDS = list(raw_ssb.SSB_KLASS_SOURCES)
 _MONTHLY_SOURCE_IDS = [
     "kartverket-fylke",
     "kartverket-kommune",
+    "kartverket-matrikkel-adresse",
     "kartverket-postnummeromrade",
     "nav-aap",
     "nav-helt-ledige",
@@ -296,7 +297,11 @@ monthly_sources_job = define_asset_job(
         "of every month except July and December, per their own stated cadence; "
         "kartverket-kommune and kartverket-fylke: administrative boundaries change "
         "rarely, polled monthly for freshness rather than because of a stated "
-        "monthly republish cadence). Distinct from klass_refresh and "
+        "monthly republish cadence; kartverket-matrikkel-adresse: Geonorge's own "
+        "metadata names no update frequency for this dataset either, so monthly "
+        "is Atlas's own freshness choice against an address register that in "
+        "practice changes continuously and has no change-feed API Atlas can "
+        "poll instead). Distinct from klass_refresh and "
         "seed_sources_refresh, which are also monthly-polled but for annual- "
         "or irregular-cadence data; this job is for data that is actually "
         "monthly. No dedicated cron schedule — automatic materialisation "

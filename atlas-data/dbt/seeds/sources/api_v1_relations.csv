@@ -80,6 +80,7 @@ kommune_befolkning_alder,mart_kommune_befolkning_alder,false,curated
 kommune_local_chapters,mart_kommune_local_chapters,false,curated
 kommune_ngo_summary,mart_kommune_ngo_summary,false,curated
 kommune_ngo_totals,mart_kommune_ngo_totals,false,curated
+matrikkel_adresse,mart_matrikkel_adresse,false,source
 meta_dimensions,mart_meta_dimensions,false,curated
 meta_endpoints,mart_meta_endpoints,true,curated
 meta_sources,mart_meta_sources,true,curated

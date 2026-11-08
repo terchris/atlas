@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Atlas data ingestion \u2014 per-source TypeScript fetchers writing to raw.* in Postgres.",
+  "description": "Atlas data ingestion — per-source TypeScript fetchers writing to raw.* in Postgres.",
   "scripts": {
     "migrate": "tsx --env-file-if-exists=.env scripts/migrate.ts",
     "bootstrap": "tsx --env-file-if-exists=.env scripts/bootstrap.ts",
@@ -55,6 +55,7 @@
     "ingest:imdi-bosetting": "tsx --env-file-if-exists=.env src/sources/imdi-bosetting/index.ts",
     "ingest:kartverket-fylke": "tsx --env-file-if-exists=.env src/sources/kartverket-fylke/index.ts",
     "ingest:kartverket-kommune": "tsx --env-file-if-exists=.env src/sources/kartverket-kommune/index.ts",
+    "ingest:kartverket-matrikkel-adresse": "tsx --env-file-if-exists=.env src/sources/kartverket-matrikkel-adresse/index.ts",
     "ingest:kartverket-postnummeromrade": "tsx --env-file-if-exists=.env src/sources/kartverket-postnummeromrade/index.ts",
     "ingest:lottstift-momskompensasjon": "tsx --env-file-if-exists=.env src/sources/lottstift-momskompensasjon/index.ts",
     "ingest:nav-aap": "tsx --env-file-if-exists=.env src/sources/nav-aap/index.ts",
@@ -107,6 +108,7 @@
   },
   "dependencies": {
     "@dagster-io/dagster-pipes": "^0.1.0",
+    "@types/yauzl": "^3.4.0",
     "adm-zip": "^0.5.17",
     "cheerio": "^1.0.0-rc.12",
     "crawlee": "^3.16.0",
@@ -115,6 +117,7 @@
     "openapi-fetch": "^0.17.0",
     "postgres": "^3.4.9",
     "ws": "^8.18.0",
-    "xlsx": "^0.18.5"
+    "xlsx": "^0.18.5",
+    "yauzl": "^3.4.0"
   }
 }

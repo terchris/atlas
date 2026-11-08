@@ -11,6 +11,7 @@ dim_chapter,supply__redcross_branches,model
 dim_fylke,ssb-klass-fylker,source
 dim_kartverket_fylke,kartverket-fylke,source
 dim_kartverket_kommune,kartverket-kommune,source
+dim_kartverket_matrikkel_adresse,kartverket-matrikkel-adresse,source
 dim_kartverket_postnummeromrade,kartverket-postnummeromrade,source
 dim_kommune,ssb-klass-kommuner,source
 fact_chapter_activities,dim_activity,model
@@ -195,6 +196,7 @@ mart_atlas_inventory,mart_kommune_befolkning_alder,model
 mart_atlas_inventory,mart_kommune_local_chapters,model
 mart_atlas_inventory,mart_kommune_ngo_summary,model
 mart_atlas_inventory,mart_kommune_ngo_totals,model
+mart_atlas_inventory,mart_matrikkel_adresse,model
 mart_atlas_inventory,mart_meta_dimensions,model
 mart_atlas_inventory,mart_meta_endpoints,model
 mart_atlas_inventory,mart_meta_sources,model
@@ -302,6 +304,7 @@ mart_kommune_local_chapters,fact_chapter_activities,model
 mart_kommune_ngo_summary,dim_brreg_enhet,model
 mart_kommune_ngo_summary,dim_kommune,model
 mart_kommune_ngo_totals,mart_kommune_ngo_summary,model
+mart_matrikkel_adresse,dim_kartverket_matrikkel_adresse,model
 mart_meta_endpoints,mart_meta_sources,model
 mart_meta_sources,fact_kommune_indicators,model
 mart_ngo_chapter_registry_match,int_ngo_chapter_registry_match,model

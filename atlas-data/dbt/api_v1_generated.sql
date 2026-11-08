@@ -257,6 +257,20 @@ REFERENCE:
                                here already has, not a new risk this PR
                                introduces.
   kartverket_fylke             county boundaries, same method, 15 rows.
+  matrikkel_adresse            Kartverket''s national address file, ~2.6M
+                               rows. urb-agents #2098/#2099 (R5). Served
+                               paged through PostgREST (order=adresse_id,
+                               limit/offset), not as a bulk file — the
+                               request''s own three lookup patterns
+                               (kommune_nr+adressenavn+nummer+bokstav[+
+                               postnummer], and kommune_nr+gardsnummer+
+                               bruksnummer) are exactly the point-lookup
+                               case a bulk file would make worse, not
+                               better: a consumer wants one address, not
+                               2.6M of them. Two composite btree indexes on
+                               the underlying dimension serve all three
+                               patterns (the narrower one via leftmost-
+                               prefix match on the wider index).
 
 MAPS — THE BULK NATIONAL FILE BELOW IS A SEPARATE THING FROM kartverket_kommune
 ABOVE, NOT A CONTRADICTION OF IT. Full-resolution kommune boundaries as ONE
@@ -3073,6 +3087,27 @@ COMMENT ON COLUMN api_v1.kommune_ngo_totals.kommune_name IS 'Kommune name in bok
 COMMENT ON COLUMN api_v1.kommune_ngo_totals.active_count IS 'Total active voluntary organisations in this kommune, summed
 across ICNPO categories. Always >= 1; a kommune with none has
 no row.';
+
+-- matrikkel_adresse  ←  marts.mart_matrikkel_adresse
+CREATE OR REPLACE VIEW api_v1.matrikkel_adresse AS SELECT * FROM marts.mart_matrikkel_adresse;
+COMMENT ON VIEW api_v1.matrikkel_adresse IS 'Kartverket''s national address file, one row per address, ~2.6M rows. urb-agents #2098/#2099 (R5).
+
+Two indexes on the underlying dimension serve the three lookup patterns the request names:
+kommune_nr + adressenavn + nummer + bokstav (+ optionally postnummer), and
+kommune_nr + gardsnummer + bruksnummer. Served paged through PostgREST (order=adresse_id,
+limit/offset) — no bulk file, per atlas''s answer on urb-agents #2099.';
+COMMENT ON COLUMN api_v1.matrikkel_adresse.adresse_id IS 'Kartverket''s adresseId, confirmed identical to the CSV''s own lokalid. Primary key.';
+COMMENT ON COLUMN api_v1.matrikkel_adresse.kommune_nr IS '4-digit kommune code.';
+COMMENT ON COLUMN api_v1.matrikkel_adresse.adressetype IS 'vegadresse or matrikkeladresse.';
+COMMENT ON COLUMN api_v1.matrikkel_adresse.adressenavn IS 'Street or place name, for vegadresse rows. Null on matrikkeladresse rows.';
+COMMENT ON COLUMN api_v1.matrikkel_adresse.nummer IS 'House number. Null on matrikkeladresse rows.';
+COMMENT ON COLUMN api_v1.matrikkel_adresse.bokstav IS 'House-number letter suffix, where one exists.';
+COMMENT ON COLUMN api_v1.matrikkel_adresse.gardsnummer IS 'Cadastral "gård" number. Populated on both address types, not matrikkeladresse-exclusive.';
+COMMENT ON COLUMN api_v1.matrikkel_adresse.bruksnummer IS 'Cadastral "bruk" number. Populated on both address types.';
+COMMENT ON COLUMN api_v1.matrikkel_adresse.postnummer IS '4-digit postal code.';
+COMMENT ON COLUMN api_v1.matrikkel_adresse.poststed IS 'Postal place name.';
+COMMENT ON COLUMN api_v1.matrikkel_adresse.point IS 'The address point as GeoJSON, EPSG:4258.';
+COMMENT ON COLUMN api_v1.matrikkel_adresse.oppdateringsdato IS 'When this address record was last updated upstream.';
 
 -- meta_dimensions  ←  marts.mart_meta_dimensions
 CREATE OR REPLACE VIEW api_v1.meta_dimensions AS SELECT * FROM marts.mart_meta_dimensions;

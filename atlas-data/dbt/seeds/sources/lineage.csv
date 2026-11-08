@@ -11,6 +11,7 @@ dim_chapter,redcross-branches
 dim_fylke,ssb-klass-fylker
 dim_kartverket_fylke,kartverket-fylke
 dim_kartverket_kommune,kartverket-kommune
+dim_kartverket_matrikkel_adresse,kartverket-matrikkel-adresse
 dim_kartverket_postnummeromrade,kartverket-postnummeromrade
 dim_kommune,ssb-klass-kommuner
 fact_chapter_activities,redcross-branches
@@ -150,6 +151,7 @@ mart_atlas_inventory,husbanken-bostotte
 mart_atlas_inventory,imdi-bosetting
 mart_atlas_inventory,kartverket-fylke
 mart_atlas_inventory,kartverket-kommune
+mart_atlas_inventory,kartverket-matrikkel-adresse
 mart_atlas_inventory,kartverket-postnummeromrade
 mart_atlas_inventory,lottstift-momskompensasjon
 mart_atlas_inventory,nav-aap
@@ -412,6 +414,7 @@ mart_kommune_ngo_totals,brreg-enheter-alle
 mart_kommune_ngo_totals,brreg-frivillige
 mart_kommune_ngo_totals,brreg-oppdateringer
 mart_kommune_ngo_totals,ssb-klass-kommuner
+mart_matrikkel_adresse,kartverket-matrikkel-adresse
 mart_meta_endpoints,fhi-alkohol
 mart_meta_endpoints,fhi-befolkning
 mart_meta_endpoints,fhi-befolkningsvekst
