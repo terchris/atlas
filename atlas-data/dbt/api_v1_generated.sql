@@ -1945,7 +1945,7 @@ COMMENT ON COLUMN api_v1.indicators__fhi_vgs_gjennomforing.period_end_year IS 'P
 COMMENT ON COLUMN api_v1.indicators__fhi_vgs_gjennomforing.sex IS 'all / male / female, decoded from the publisher''s sex dimension.';
 COMMENT ON COLUMN api_v1.indicators__fhi_vgs_gjennomforing.parents_education IS '🔴 The PARENTS'' education level, not the pupil''s — this table breaks completion down by parental education. Upstream''s UTDANN code; decode through ref_fhi_utdann.';
 COMMENT ON COLUMN api_v1.indicators__fhi_vgs_gjennomforing.parents_education_label_no IS 'Norwegian label for parents_education, joined from ref_fhi_utdann. NULL where the code has no entry there.';
-COMMENT ON COLUMN api_v1.indicators__fhi_vgs_gjennomforing.immigration_category IS 'Immigrant-category code as the publisher emits it. ⚠️ Decode through meta_dimensions for this source_id — ref_fhi_innvkat decodes FHI table 360 only, where the dimension is always ''0'', and will not decode table 932''s ''2'', ''3'' and ''23''.';
+COMMENT ON COLUMN api_v1.indicators__fhi_vgs_gjennomforing.immigration_category IS 'Immigrant-category code as the publisher emits it. ⚠️ Decode through meta_dimensions for this source_id — ref_fhi_innvkat now also carries table 932''s ''2'', ''3'' and ''23'' (added urb-agents #2101 T1), but this column is always ''0'' (table 360''s own value), so it never reaches them.';
 COMMENT ON COLUMN api_v1.indicators__fhi_vgs_gjennomforing.immigration_category_label_no IS 'Norwegian label for immigration_category where one could be joined; NULL where the code has no entry in the reference list.';
 COMMENT ON COLUMN api_v1.indicators__fhi_vgs_gjennomforing.contents_code IS 'The publisher''s code for WHICH measure this row reports. Decode it through meta_dimensions for this source_id.';
 COMMENT ON COLUMN api_v1.indicators__fhi_vgs_gjennomforing.contents_label IS 'Human-readable gloss for contents_code.';
@@ -3435,16 +3435,18 @@ COMMENT ON COLUMN api_v1.ref_brreg_icnpo.sort_order IS 'The publisher''s own dis
 
 -- ref_fhi_innvkat  ←  marts.mart_ref_fhi_innvkat
 CREATE OR REPLACE VIEW api_v1.ref_fhi_innvkat AS SELECT * FROM marts.mart_ref_fhi_innvkat;
-COMMENT ON VIEW api_v1.ref_fhi_innvkat IS 'Decoder for FHI table 360''s INNVKAT dimension, which holds only ''0''. Not for table 932.
+COMMENT ON VIEW api_v1.ref_fhi_innvkat IS 'Decoder for FHI''s INNVKAT dimension, across the two tables that publish it.
 
-🔴 ONE ROW — code ''0'', ''totalt'' — and that is correct. It decodes INNVKAT as it appears
-in FHI table 360 (fhi_vgs_gjennomforing), where the dimension is collapsed and always
-''0''; a relationships test on indicators__fhi_vgs_gjennomforing enforces that.
-⚠️ IT DOES NOT DECODE indicators__fhi_innvkat, which comes from FHI table 932 and holds
-''2'', ''3'' and ''23''. Joining it to that column returns nothing. Those three codes are
-published at /meta_dimensions?source_id=eq.fhi-innvkat&code=eq.INNVKAT (verified
-2026-09-25). Said here because the two names differ by nothing a consumer would notice.';
-COMMENT ON COLUMN api_v1.ref_fhi_innvkat.code IS 'FHI''s INNVKAT code as used by table 360 — ''0'' only.';
+Table 360 (fhi_vgs_gjennomforing) collapses it to always ''0''; table 932
+(indicators__fhi_innvkat) carries the real breakdown.
+
+⚠️ UNTIL 2026-11-08 THIS DECODED TABLE 360 ONLY — ''2'', ''3'' and ''23'' are new (urb-agents
+#2100/#2101 T1), read from table 932''s own json-stat2 response, not translated or
+paraphrased. 🔴 ''23'' IS NOT "immigrants and refugees": it is innvandrere (code 2) PLUS
+norskfødt med innvandrerforeldre (code 3) — generation only, no relationship whatsoever
+to refugee or asylum status. A consumer using ''23'' as a refugee count is using the wrong
+number for that question.';
+COMMENT ON COLUMN api_v1.ref_fhi_innvkat.code IS 'FHI''s INNVKAT code — ''0'' from table 360; ''2'', ''3'', ''23'' from table 932.';
 COMMENT ON COLUMN api_v1.ref_fhi_innvkat.label_no IS 'The Norwegian label, as its publisher writes it. Atlas does not translate or normalise upstream label text.';
 COMMENT ON COLUMN api_v1.ref_fhi_innvkat.label_en IS 'The English label where the publisher provides one. ⚠️ Empty: FHI publishes this label in Norwegian only.';
 COMMENT ON COLUMN api_v1.ref_fhi_innvkat.sort_order IS 'The publisher''s own display order. ⚠️ Sort by this, not by `code` — several of these lists do not sort into their intended sequence alphabetically.';

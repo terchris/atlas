@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-07",
+  "generated_at": "2026-11-08",
   "manifest_schema_id": "https://atlas.sovereignsky.no/schemas/manifest.schema.json",
   "atlas_base_url": "https://atlas.sovereignsky.no",
   "postgrest_base_url": "https://api-atlas.urbalurba.com",
@@ -17481,8 +17481,8 @@
         {
           "parent_kind": "model",
           "model_name": "mart_ref_fhi_innvkat",
-          "title": "FHI immigrant categories (table 360)",
-          "description_short": "Decoder for FHI table 360's INNVKAT dimension, which holds only '0'."
+          "title": "FHI immigrant categories (tables 360 & 932)",
+          "description_short": "Decoder for FHI's INNVKAT dimension, across the two tables that publish it."
         },
         {
           "parent_kind": "model",
@@ -20904,7 +20904,7 @@
         },
         {
           "name": "immigration_category",
-          "description": "Immigrant-category code as the publisher emits it. ⚠️ Decode through meta_dimensions for this source_id — ref_fhi_innvkat decodes FHI table 360 only, where the dimension is always '0', and will not decode table 932's '2', '3' and '23'."
+          "description": "Immigrant-category code as the publisher emits it. ⚠️ Decode through meta_dimensions for this source_id — ref_fhi_innvkat now also carries table 932's '2', '3' and '23' (added urb-agents #2101 T1), but this column is always '0' (table 360's own value), so it never reaches them."
         },
         {
           "name": "immigration_category_label_no",
@@ -23930,13 +23930,13 @@
       "view_id": "ref_fhi_innvkat",
       "mart_name": "mart_ref_fhi_innvkat",
       "api_v1_name": "ref_fhi_innvkat",
-      "title": "FHI immigrant categories (table 360)",
-      "description_short": "Decoder for FHI table 360's INNVKAT dimension, which holds only '0'.",
-      "description_full": "Decoder for FHI table 360's INNVKAT dimension, which holds only '0'. Not for table 932.\n\n🔴 ONE ROW — code '0', 'totalt' — and that is correct. It decodes INNVKAT as it appears\nin FHI table 360 (fhi_vgs_gjennomforing), where the dimension is collapsed and always\n'0'; a relationships test on indicators__fhi_vgs_gjennomforing enforces that.\n⚠️ IT DOES NOT DECODE indicators__fhi_innvkat, which comes from FHI table 932 and holds\n'2', '3' and '23'. Joining it to that column returns nothing. Those three codes are\npublished at /meta_dimensions?source_id=eq.fhi-innvkat&code=eq.INNVKAT (verified\n2026-09-25). Said here because the two names differ by nothing a consumer would notice.",
+      "title": "FHI immigrant categories (tables 360 & 932)",
+      "description_short": "Decoder for FHI's INNVKAT dimension, across the two tables that publish it.",
+      "description_full": "Decoder for FHI's INNVKAT dimension, across the two tables that publish it.\n\nTable 360 (fhi_vgs_gjennomforing) collapses it to always '0'; table 932\n(indicators__fhi_innvkat) carries the real breakdown.\n\n⚠️ UNTIL 2026-11-08 THIS DECODED TABLE 360 ONLY — '2', '3' and '23' are new (urb-agents\n#2100/#2101 T1), read from table 932's own json-stat2 response, not translated or\nparaphrased. 🔴 '23' IS NOT \"immigrants and refugees\": it is innvandrere (code 2) PLUS\nnorskfødt med innvandrerforeldre (code 3) — generation only, no relationship whatsoever\nto refugee or asylum status. A consumer using '23' as a refugee count is using the wrong\nnumber for that question.",
       "columns": [
         {
           "name": "code",
-          "description": "FHI's INNVKAT code as used by table 360 — '0' only."
+          "description": "FHI's INNVKAT code — '0' from table 360; '2', '3', '23' from table 932."
         },
         {
           "name": "label_no",

@@ -109,8 +109,13 @@ seeds:
 
   - name: ref_fhi_innvkat
     description: >-
-      FHI INNVKAT labels for table 360. Single-row seed today; future-proofed for additional immigration
-      categories.
+      FHI INNVKAT labels, covering both tables that use this dimension: table 360, where it is always
+      '0' (totalt — no breakdown), and table 932, where it carries the real breakdown ('2' innvandrere,
+      '3' norskfødt med innvandrerforeldre, '23' the combined total of 2+3). Labels for 2/3/23 are
+      FHI's own, read from table 932's live json-stat2 response 2026-11-08 (urb-agents #2100/#2101
+      T1) — not translated or paraphrased. '23' is NOT "innvandrere og flyktninger": it has no
+      relationship to refugee status at all, only to immigrant generation. That correction was
+      reported back on #2101 rather than silently matching atlas-scraper's assumption.
     columns:
       - name: code
         data_tests: [not_null, unique]
@@ -125,7 +130,7 @@ seeds:
         data_tests:
           - not_null
           - unique
-          - dbt_utils.accepted_range: {min_value: 1, max_value: 1}
+          - dbt_utils.accepted_range: {min_value: 1, max_value: 4}
 
   - name: ref_un_sdg
     description: >-
