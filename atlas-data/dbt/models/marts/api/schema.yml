@@ -3470,6 +3470,49 @@ models:
         description: The same polygon(s) simplified at a 50m tolerance, as GeoJSON, EPSG:4258.
         data_tests: [not_null]
 
+  - name: mart_matrikkel_adresse
+    meta:
+      stability: source
+      title: "National address file (Matrikkelen)"
+    description: |
+      Kartverket's national address file, one row per address, ~2.6M rows. urb-agents #2098/#2099 (R5).
+
+      Two indexes on the underlying dimension serve the three lookup patterns the request names:
+      kommune_nr + adressenavn + nummer + bokstav (+ optionally postnummer), and
+      kommune_nr + gardsnummer + bruksnummer. Served paged through PostgREST (order=adresse_id,
+      limit/offset) — no bulk file, per atlas's answer on urb-agents #2099.
+    columns:
+      - name: adresse_id
+        description: Kartverket's adresseId, confirmed identical to the CSV's own lokalid. Primary key.
+        data_tests: [not_null, unique]
+      - name: kommune_nr
+        description: 4-digit kommune code.
+        data_tests: [not_null]
+      - name: adressetype
+        description: "vegadresse or matrikkeladresse."
+        data_tests: [not_null]
+      - name: adressenavn
+        description: Street or place name, for vegadresse rows. Null on matrikkeladresse rows.
+      - name: nummer
+        description: House number. Null on matrikkeladresse rows.
+      - name: bokstav
+        description: House-number letter suffix, where one exists.
+      - name: gardsnummer
+        description: Cadastral "gård" number. Populated on both address types, not matrikkeladresse-exclusive.
+      - name: bruksnummer
+        description: Cadastral "bruk" number. Populated on both address types.
+      - name: postnummer
+        description: 4-digit postal code.
+        data_tests: [not_null]
+      - name: poststed
+        description: Postal place name.
+        data_tests: [not_null]
+      - name: point
+        description: "The address point as GeoJSON, EPSG:4258."
+        data_tests: [not_null]
+      - name: oppdateringsdato
+        description: When this address record was last updated upstream.
+
   - name: mart_indicators__bufdir_barnefattigdom
     meta:
       title: "Barnefattigdom kommunemonitor"

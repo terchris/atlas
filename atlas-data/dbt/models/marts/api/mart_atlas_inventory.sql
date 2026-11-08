@@ -138,6 +138,7 @@
 -- depends_on: {{ ref('mart_kommune_local_chapters') }}
 -- depends_on: {{ ref('mart_kommune_ngo_summary') }}
 -- depends_on: {{ ref('mart_kommune_ngo_totals') }}
+-- depends_on: {{ ref('mart_matrikkel_adresse') }}
 -- depends_on: {{ ref('mart_meta_dimensions') }}
 -- depends_on: {{ ref('mart_meta_endpoints') }}
 -- depends_on: {{ ref('mart_meta_sources') }}
@@ -253,6 +254,7 @@
   {'relation': 'kommune_local_chapters', 'mart': 'mart_kommune_local_chapters'},
   {'relation': 'kommune_ngo_summary', 'mart': 'mart_kommune_ngo_summary'},
   {'relation': 'kommune_ngo_totals', 'mart': 'mart_kommune_ngo_totals'},
+  {'relation': 'matrikkel_adresse', 'mart': 'mart_matrikkel_adresse'},
   {'relation': 'meta_dimensions', 'mart': 'mart_meta_dimensions'},
   {'relation': 'meta_endpoints', 'mart': 'mart_meta_endpoints'},
   {'relation': 'meta_sources', 'mart': 'mart_meta_sources'},

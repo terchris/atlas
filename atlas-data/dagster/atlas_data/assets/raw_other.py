@@ -21,6 +21,12 @@ See _factory.make_raw_ingest_asset. Currently:
   (atlas-data/ingest/src/lib/geonorge.ts) once this was a real second
   consumer. urb-agents #2098/#2099 (R4) — see
   atlas-data/ingest/src/sources/kartverket-kommune/README.md.
+- kartverket-matrikkel-adresse: same Geonorge order mechanism, CSV format
+  instead of GeoJSON. urb-agents #2098/#2099 (R5). Atlas's largest source by
+  row count (~2.6M) after brreg-enheter-alle — streams the decompressed CSV
+  entry via `yauzl` rather than buffering it the way the other kartverket-*
+  sources do with `adm-zip`, because this one decompresses to ~812 MB. See
+  atlas-data/ingest/src/sources/kartverket-matrikkel-adresse/index.ts.
 - nav-uforetrygd: one xlsx download from NAV's PST302 uføretrygd monthly
   statistics page. Atlas's first monthly-polled source outside SSB/KLASS —
   see atlas-data/ingest/src/sources/nav-uforetrygd/README.md.
@@ -105,6 +111,7 @@ OTHER_SOURCES = [
     "imdi-bosetting",
     "kartverket-fylke",
     "kartverket-kommune",
+    "kartverket-matrikkel-adresse",
     "kartverket-postnummeromrade",
     "lottstift-momskompensasjon",
     "nav-aap",
@@ -140,7 +147,7 @@ assets = [
     # nav-uforetrygd, nav-aap and nav-helt-ledige republish monthly, not
     # weekly — polled to match.
     *make_raw_ingest_assets(
-        ["kartverket-fylke", "kartverket-kommune", "kartverket-postnummeromrade", "nav-aap", "nav-helt-ledige", "nav-uforetrygd"],
+        ["kartverket-fylke", "kartverket-kommune", "kartverket-matrikkel-adresse", "kartverket-postnummeromrade", "nav-aap", "nav-helt-ledige", "nav-uforetrygd"],
         group_name="raw_other",
         automation_condition=cadence.monthly_polled(),
         freshness_policy=cadence.MONTHLY_FRESHNESS,

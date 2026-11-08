@@ -113,6 +113,11 @@ MANIFEST=target/manifest.json
 #                                sub-unit, not the grain. Also, 9999 is SSB's
 #                                sentinel, not Brreg's — this register has no
 #                                reason to emit it at all.
+#   mart_matrikkel_adresse        SAME REASONING AS mart_dim_postnummer / mart_bring_postnummer.
+#                                Grain is one row per address; kommune_nr is an attribute of that
+#                                address, not the grain. 9999 is SSB Klass's sentinel, not
+#                                Kartverket's — Matrikkelen has no "unspecified address" concept, so
+#                                there is no row this filter could ever match.
 #
 # 🔴 SEVEN PER-SOURCE INDICATOR RELATIONS ARE EXEMPT AS A RECORDED DEFECT, NOT
 # AS A JUDGEMENT THAT THEY ARE FINE. This is the one group here whose exemption
@@ -145,7 +150,7 @@ MANIFEST=target/manifest.json
 # changes values in relations that are already published, which is a deploy
 # with its own acceptance checks -- not a side effect of a publish. Raised on
 # urb-agents #1547.
-EXEMPT="mart_dim_kommune mart_unattributed_totals mart_brreg_enhet mart_distrikt_summary mart_kommune_local_chapters mart_dim_postnummer mart_bring_postnummer mart_kartverket_postnummeromrade mart_kartverket_kommune mart_supply__redcross_branches mart_supply__redcross_chapter_kommune_coverage mart_dim_chapter mart_chapter_kommune_coverage mart_fact_chapter_activities mart_indicators__bufdir_barnefattigdom mart_indicators__fhi_bor_alene mart_indicators__fhi_mobbing mart_indicators__fhi_trangbodd mart_indicators__fhi_vgs_gjennomforing mart_indicators__ssb_08764 mart_indicators__ssb_10826 mart_ngo_chapter_registry_match mart_ngo_chapter_subunits mart_brreg_underenhet"
+EXEMPT="mart_dim_kommune mart_unattributed_totals mart_brreg_enhet mart_distrikt_summary mart_kommune_local_chapters mart_dim_postnummer mart_bring_postnummer mart_kartverket_postnummeromrade mart_kartverket_kommune mart_matrikkel_adresse mart_supply__redcross_branches mart_supply__redcross_chapter_kommune_coverage mart_dim_chapter mart_chapter_kommune_coverage mart_fact_chapter_activities mart_indicators__bufdir_barnefattigdom mart_indicators__fhi_bor_alene mart_indicators__fhi_mobbing mart_indicators__fhi_trangbodd mart_indicators__fhi_vgs_gjennomforing mart_indicators__ssb_08764 mart_indicators__ssb_10826 mart_ngo_chapter_registry_match mart_ngo_chapter_subunits mart_brreg_underenhet"
 
 CANDIDATES="$(./.venv/bin/python -c '
 import json, sys

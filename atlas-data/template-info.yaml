@@ -35,15 +35,15 @@ params:
 
 # BEGIN holdings (generated)
 data:
-  sources: 64
+  sources: 65
   publishers: 12
-  public_relations: 103
+  public_relations: 104
   holds: >-
     Norwegian public data at kommune level, joined into one semantic layer:
-    Folkehelseinstituttet (22); Statistisk sentralbyrå (20); Brønnøysundregistrene (5); Utdanningsdirektoratet (4); Kartverket (3); Arbeids- og velferdsdirektoratet (3); Barne-, ungdoms- og familiedirektoratet (2); Posten Bring (1); Husbanken (1); Integrerings- og mangfoldsdirektoratet (1); Lotteri- og stiftelsestilsynet (1); Norges Røde Kors (1).
+    Folkehelseinstituttet (22); Statistisk sentralbyrå (20); Brønnøysundregistrene (5); Kartverket (4); Utdanningsdirektoratet (4); Arbeids- og velferdsdirektoratet (3); Barne-, ungdoms- og familiedirektoratet (2); Posten Bring (1); Husbanken (1); Integrerings- og mangfoldsdirektoratet (1); Lotteri- og stiftelsestilsynet (1); Norges Røde Kors (1).
     Published as read-only PostgREST relations under api_v1. NLOD for
-    57 of 64 — Norwegian public data, free to reuse with
-    attribution. The exceptions are `kartverket-fylke` (CC BY 4.0) and `kartverket-kommune` (CC BY 4.0) and `kartverket-postnummeromrade` (CC BY 4.0) and `nav-aap` (CC BY 4.0) and `nav-helt-ledige` (CC BY 4.0) and `nav-uforetrygd` (CC BY 4.0) and `redcross-branches` (permissive) — Red Cross's own data rather than the state's.
+    57 of 65 — Norwegian public data, free to reuse with
+    attribution. The exceptions are `kartverket-fylke` (CC BY 4.0) and `kartverket-kommune` (CC BY 4.0) and `kartverket-matrikkel-adresse` (CC BY 4.0) and `kartverket-postnummeromrade` (CC BY 4.0) and `nav-aap` (CC BY 4.0) and `nav-helt-ledige` (CC BY 4.0) and `nav-uforetrygd` (CC BY 4.0) and `redcross-branches` (permissive) — Red Cross's own data rather than the state's.
   discover: >-
     GET /meta_endpoints for what is queryable, /meta_sources for every upstream
     with its freshness and a served_as array naming the relations it actually
@@ -441,7 +441,7 @@ operational:
     # UIS surface (imac, urb-agents #793). A figure whose "this is out of date"
     # note is invisible is worse than no figure — the stale number reaches the
     # reader and the correction does not.
-    takes: "~30 minutes on a COLD install: six first-data jobs, 1772 s wall, measured end to end by imac on a factory-reset cluster (urb-agents #1027). ⚠️ SEVEN JOBS SINCE 2026-10-01 (monthly_sources_refresh added for nav-uforetrygd) AND brreg_bootstrap ITSELF GREW 2026-10-04 — brreg-underenheter (~867,024 rows, measured against the live Brreg API) now rides the same job as brreg-enheter-alle. Neither the nav-uforetrygd nor the brreg-underenheter addition has been re-measured on a real cluster; both are expected to add modest wall time (one xlsx parse, one further bulk download+stream of comparable shape to the existing 501 s enheter load) but that is an expectation, not a measurement. ~4.1M rows (pre-2026-10-04 figure; +~867k once brreg_bootstrap's underenheter half has actually run on a real cluster, not yet measured there) across 75 raw BASE TABLEs and 107 marts BASE TABLEs (plus 92 marts views). An earlier figure of ~11 minutes is still in circulation and understates a cold install by nearly 3x: it was imac's measurement of the first FOUR jobs (#507: 11.1 min, 2,906,194 rows) and it predates brreg_bootstrap entirely. The individual jobs vary far more than the total suggests - annual_sources_refresh alone is 474 s and transform_and_publish 484 s - so a run that looks stalled at 8 minutes may be normal. If you need to tell slow from stuck, run the check command rather than waiting: it reports what has been pulled against what has been applied."
+    takes: "~30 minutes on a COLD install: six first-data jobs, 1772 s wall, measured end to end by imac on a factory-reset cluster (urb-agents #1027). ⚠️ SEVEN JOBS SINCE 2026-10-01 (monthly_sources_refresh added for nav-uforetrygd) AND brreg_bootstrap ITSELF GREW 2026-10-04 — brreg-underenheter (~867,024 rows, measured against the live Brreg API) now rides the same job as brreg-enheter-alle. Neither the nav-uforetrygd nor the brreg-underenheter addition has been re-measured on a real cluster; both are expected to add modest wall time (one xlsx parse, one further bulk download+stream of comparable shape to the existing 501 s enheter load) but that is an expectation, not a measurement. ~4.1M rows (pre-2026-10-04 figure; +~867k once brreg_bootstrap's underenheter half has actually run on a real cluster, not yet measured there) across 76 raw BASE TABLEs and 108 marts BASE TABLEs (plus 93 marts views). An earlier figure of ~11 minutes is still in circulation and understates a cold install by nearly 3x: it was imac's measurement of the first FOUR jobs (#507: 11.1 min, 2,906,194 rows) and it predates brreg_bootstrap entirely. The individual jobs vary far more than the total suggests - annual_sources_refresh alone is 474 s and transform_and_publish 484 s - so a run that looks stalled at 8 minutes may be normal. If you need to tell slow from stuck, run the check command rather than waiting: it reports what has been pulled against what has been applied."
 
   # 🔴 first_data ABOVE IS FOR AN EMPTY INSTALL. This is the other case, and it
   # did not exist until 2026-09-22 — `operational:` described a first install
@@ -497,7 +497,7 @@ operational:
     # deciding whether to install and how much disk to give it. Splitting them
     # across two keys was the reason one of them could go missing unnoticed.
     first_load: >-
-      ~4.1M rows across 75 raw BASE TABLEs and 107 marts BASE TABLEs (plus 92
+      ~4.1M rows across 76 raw BASE TABLEs and 108 marts BASE TABLEs (plus 93
       marts views), from 59 sources. That is imac's measured 2,906,194 on a clean install
       (urb-agents #496, #507) plus the 1,173,878-record Enhetsregisteret bulk
       load added in PLAN-001. ⚠️ NOT YET RE-ARITHMETICKED for brreg-underenheter
@@ -515,9 +515,9 @@ operational:
       other AND with the database while no method was written down (urb-agents
       #824): a "table" here is a BASE TABLE, views excluded and counted
       separately. raw = distinct `create table raw.*` across atlas-data/migrations
-      (75, 2026-11-08 — adds kartverket_kommune and kartverket_fylke, urb-agents #2098/#2099 R4). marts = dbt models materialised table or incremental into schema marts,
-      models=85 plus seeds, which are always tables, seeds=22; a further
-      views=92 are materialised as views instead and are the "92 marts views"
+      (76, 2026-11-08 — adds kartverket_matrikkel_adresse, urb-agents #2098/#2099 R5). marts = dbt models materialised table or incremental into schema marts,
+      models=86 plus seeds, which are always tables, seeds=22; a further
+      views=93 are materialised as views instead and are the "93 marts views"
       above.
       ⚠️ THIS SENTENCE HAS CONTRADICTED ITSELF THREE TIMES (#824, #1263, and
       #1353 on 2026-09-21, when it read 81 in the headline, "= 62" in the rule,

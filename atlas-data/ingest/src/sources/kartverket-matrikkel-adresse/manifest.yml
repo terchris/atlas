@@ -1,0 +1,85 @@
+# Hand-authored. The dimensions: block is hand-authored — editorial
+# semantics the catalogue can't compute. After commit, this file is
+# human-authored — ingest runs do NOT modify it.
+
+source_id: kartverket-matrikkel-adresse
+upstream_id: "f7df7a18-b30f-4745-bd64-d0863812350c"
+upstream_url: https://nedlasting.geonorge.no/api/order
+upstream_landing_page: https://kartkatalog.geonorge.no/metadata/uuid/f7df7a18-b30f-4745-bd64-d0863812350c
+upstream_title: "Matrikkelen - Adresse"
+description: "Kartverket's national address file, via Geonorge's order-based download API (same mechanism as the other kartverket-* sources). urb-agents #2098/#2099 (R5). 2,604,785 addresses per the request; 2,604,936 measured 2026-11-08. The CSV distribution, 46 columns — Atlas types the dozen this request asks for; everything else stays in raw.doc."
+publisher: Kartverket
+license: CC BY 4.0
+license_url: https://creativecommons.org/licenses/by/4.0/deed.no
+periodicity: P1M
+eu_theme: GOVE
+attribution: "© Kartverket"
+
+tags:
+  provider: kartverket
+  topic: reference
+  geo: address
+  cadence: monthly
+
+dimensions:
+  - code: adresseId
+    meaning: Kartverket's own address identifier, and the table's primary key
+    value_format: numeric string
+    notes: Confirmed byte-identical to the CSV's lokalid column across a 100,000-row sample, 2026-11-08.
+  - code: kommunenummer
+    meaning: Four-digit kommune code
+    value_format: 4 digits, leading zeros significant — always text
+    notes: Renamed kommune_nr downstream, matching dim_kommune's own convention.
+  - code: adressetype
+    meaning: Which of Kartverket's two address kinds this row is
+    value_format: "one of: vegadresse, matrikkeladresse"
+    notes: "Measured 2026-11-08: 2,570,525 vegadresse, 34,411 matrikkeladresse. gardsnummer/bruksnummer are populated on both kinds, not matrikkeladresse-exclusive."
+  - code: adressenavn
+    meaning: The street or place name, for vegadresse rows
+    value_format: free text
+    notes: Empty on matrikkeladresse rows, which are addressed by gardsnummer/bruksnummer instead.
+  - code: nummer
+    meaning: House number
+    value_format: integer
+    notes: Empty on matrikkeladresse rows.
+  - code: bokstav
+    meaning: House-number letter suffix (e.g. "A")
+    value_format: single letter or absent
+    notes: Empty on matrikkeladresse rows, same as nummer.
+  - code: gardsnummer
+    meaning: Cadastral "gård" number
+    value_format: integer
+    notes: Populated on both address types, not matrikkeladresse-exclusive — measured 2026-11-08.
+  - code: bruksnummer
+    meaning: Cadastral "bruk" number
+    value_format: integer
+    notes: Populated on both address types, same as gardsnummer.
+  - code: postnummer
+    meaning: Four-digit postal code
+    value_format: 4 digits, leading zeros significant — always text
+    notes: Confirmed non-empty on all 2,604,936 rows measured 2026-11-08.
+  - code: poststed
+    meaning: Postal place name
+    value_format: free text
+    notes: Verbatim from Kartverket/Posten, same convention as the other kartverket-* sources.
+  - code: Nord / Øst
+    meaning: Latitude / longitude, EPSG:4258
+    value_format: decimal degrees
+    notes: "Confirmed zero empty values across all 2,604,936 rows measured 2026-11-08. Nord is latitude (Norway spans ~58-71°N), Øst is longitude — not a northing/easting pair in a projected CRS."
+  - code: oppdateringsdato
+    meaning: When this address record was last updated upstream
+    value_format: "Norwegian date-time, DD.MM.YYYY HH:MM:SS[.fff]"
+    notes: "Fractional-second width varies (absent, 2, 3 or 6 digits, all measured 2026-11-08); dbt parses to a timestamp and drops sub-second precision."
+
+lifecycle: beta
+time_coverage:
+  start: null
+  end: null
+keywords:
+  - address
+  - matrikkel
+  - kartverket
+  - geonorge
+suggested_joins:
+  - kartverket-kommune
+  - ssb-klass-kommuner

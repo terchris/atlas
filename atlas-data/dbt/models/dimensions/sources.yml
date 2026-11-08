@@ -134,6 +134,30 @@ sources:
           - name: loaded_at
             description: When Atlas fetched this row — Bring's file has no Last-Modified header.
             data_tests: [not_null]
+      - name: kartverket_matrikkel_adresse
+        description: >-
+          Kartverket's Matrikkelen address file, ~2.6M rows, stored verbatim as jsonb (46 upstream
+          columns; this request's field list uses a dozen). Source for
+          dim_kartverket_matrikkel_adresse. Loaded by
+          atlas-data/ingest/src/sources/kartverket-matrikkel-adresse. urb-agents #2098/#2099 (R5).
+          Not indexed on doc, same reasoning as brreg_enheter_snapshot.
+        loaded_at_field: loaded_at
+        meta:
+          ingest_cadence: monthly
+        freshness:
+          warn_after: {count: 90, period: day}
+          error_after: {count: 400, period: day}
+        columns:
+          - name: adresse_id
+            description: Kartverket's adresseId, confirmed identical to the CSV's own lokalid. Primary key.
+            data_tests: [not_null, unique]
+          - name: doc
+            data_type: jsonb
+            description: Every column of the upstream CSV row, verbatim, keyed by the upstream's own header names.
+            data_tests: [not_null]
+          - name: loaded_at
+            description: When Atlas fetched this row.
+            data_tests: [not_null]
       - name: ssb_klass_kommuner
         description: |
           SSB Klass classification 131 (Kommuner) — full history from 1960.

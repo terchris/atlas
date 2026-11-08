@@ -225,6 +225,45 @@ models:
         description: The same geometry simplified at a 50m tolerance in EPSG:25833 (EUREF89 UTM 33N), reprojected back to EPSG:4258 for storage. See this model's own header for why 50m could not be applied directly in the geographic CRS.
         data_tests: [not_null]
 
+  - name: dim_kartverket_matrikkel_adresse
+    description: |
+      Kartverket's national address file, one row per address, ~2.6M rows. urb-agents #2098/#2099 (R5).
+
+      Typed from doc for the dozen fields the request names; the other ~34 upstream columns (access
+      routes, uuids, extraction timestamps) stay in raw's doc for anyone who needs one. Two composite
+      indexes serve the three lookup patterns the request names — see this model's own header.
+    columns:
+      - name: adresse_id
+        description: Kartverket's adresseId, confirmed identical to the CSV's own lokalid. Primary key.
+        data_tests: [not_null, unique]
+      - name: kommune_nr
+        description: 4-digit kommune code.
+        data_tests: [not_null]
+      - name: adressetype
+        description: "vegadresse or matrikkeladresse. Measured 2026-11-08: 2,570,525 vegadresse, 34,411 matrikkeladresse."
+        data_tests: [not_null]
+      - name: adressenavn
+        description: Street or place name, for vegadresse rows. Null on matrikkeladresse rows.
+      - name: nummer
+        description: House number. Null on matrikkeladresse rows.
+      - name: bokstav
+        description: House-number letter suffix, where one exists.
+      - name: gardsnummer
+        description: Cadastral "gård" number. Populated on both address types, not matrikkeladresse-exclusive.
+      - name: bruksnummer
+        description: Cadastral "bruk" number. Populated on both address types.
+      - name: postnummer
+        description: 4-digit postal code. Confirmed non-null on every row measured 2026-11-08.
+        data_tests: [not_null]
+      - name: poststed
+        description: Postal place name.
+        data_tests: [not_null]
+      - name: geometry
+        description: "The address point, EPSG:4258. Built from the upstream's Nord/Øst (latitude/longitude, not a projected northing/easting), confirmed non-null on every row measured 2026-11-08."
+        data_tests: [not_null]
+      - name: oppdateringsdato
+        description: When this address record was last updated upstream.
+
   - name: crosswalk_kommune_name
     description: |
       Name → kommune_nr lookup for resolving free-text municipality strings

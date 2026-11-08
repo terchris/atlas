@@ -67,7 +67,7 @@
       "description": "Canonical geographic dimensions used as join keys across every\nindicator: kommune and fylke classifications from SSB Klass.\n",
       "emoji": "🗺️",
       "order": 70,
-      "source_count": 6
+      "source_count": 7
     }
   ],
   "publishers": [
@@ -148,7 +148,7 @@
       "logo": "/img/publishers/kartverket.png",
       "feedback_url": "https://www.kartverket.no/om-kartverket/kontakt-oss",
       "notes": "The Norwegian Mapping Authority. Publishes the national geodata\ninfrastructure through Geonorge — administrative boundaries, postcode\nareas, and the Matrikkelen address register — the geometry layer none\nof Atlas's other sources carry.\n",
-      "source_count": 3,
+      "source_count": 4,
       "view_count": 0
     },
     {
@@ -253,6 +253,7 @@
       "related_by_topic": [
         "kartverket-fylke",
         "kartverket-kommune",
+        "kartverket-matrikkel-adresse",
         "kartverket-postnummeromrade",
         "ssb-klass-fylker",
         "ssb-klass-kommuner"
@@ -9621,6 +9622,7 @@
       "related_by_topic": [
         "bring-postnummer",
         "kartverket-kommune",
+        "kartverket-matrikkel-adresse",
         "kartverket-postnummeromrade",
         "ssb-klass-fylker",
         "ssb-klass-kommuner"
@@ -9807,6 +9809,7 @@
       "related_by_topic": [
         "bring-postnummer",
         "kartverket-fylke",
+        "kartverket-matrikkel-adresse",
         "kartverket-postnummeromrade",
         "ssb-klass-fylker",
         "ssb-klass-kommuner"
@@ -9945,6 +9948,229 @@
     },
     {
       "kind": "source",
+      "source_id": "kartverket-matrikkel-adresse",
+      "upstream_id": "f7df7a18-b30f-4745-bd64-d0863812350c",
+      "upstream_url": "https://nedlasting.geonorge.no/api/order",
+      "upstream_landing_page": "https://kartkatalog.geonorge.no/metadata/uuid/f7df7a18-b30f-4745-bd64-d0863812350c",
+      "upstream_title": "Matrikkelen - Adresse",
+      "description": "Kartverket's national address file, via Geonorge's order-based download API (same mechanism as the other kartverket-* sources). urb-agents #2098/#2099 (R5). 2,604,785 addresses per the request; 2,604,936 measured 2026-11-08. The CSV distribution, 46 columns — Atlas types the dozen this request asks for; everything else stays in raw.doc.",
+      "atlas_summary": null,
+      "publisher": {
+        "id": "kartverket",
+        "display_name": "Kartverket",
+        "homepage": "https://www.kartverket.no/",
+        "logo": "/img/publishers/kartverket.png"
+      },
+      "category": {
+        "id": "reference",
+        "name": "Reference geographies",
+        "emoji": "🗺️"
+      },
+      "license": "CC BY 4.0",
+      "license_url": "https://creativecommons.org/licenses/by/4.0/deed.no",
+      "periodicity": "P1M",
+      "eu_theme": "GOVE",
+      "attribution": "© Kartverket",
+      "tags": {
+        "provider": "kartverket",
+        "topic": "reference",
+        "geo": "address",
+        "cadence": "monthly"
+      },
+      "keywords": [
+        "address",
+        "matrikkel",
+        "kartverket",
+        "geonorge"
+      ],
+      "lifecycle": "beta",
+      "time_coverage": {
+        "start": null,
+        "end": null
+      },
+      "methodology_notes": null,
+      "suggested_joins": [
+        "kartverket-kommune",
+        "ssb-klass-kommuner"
+      ],
+      "related_by_topic": [
+        "bring-postnummer",
+        "kartverket-fylke",
+        "kartverket-kommune",
+        "kartverket-postnummeromrade",
+        "ssb-klass-fylker",
+        "ssb-klass-kommuner"
+      ],
+      "dimensions": [
+        {
+          "code": "adresseId",
+          "meaning": "Kartverket's own address identifier, and the table's primary key",
+          "value_format": "numeric string",
+          "notes": "Confirmed byte-identical to the CSV's lokalid column across a 100,000-row sample, 2026-11-08."
+        },
+        {
+          "code": "kommunenummer",
+          "meaning": "Four-digit kommune code",
+          "value_format": "4 digits, leading zeros significant — always text",
+          "notes": "Renamed kommune_nr downstream, matching dim_kommune's own convention."
+        },
+        {
+          "code": "adressetype",
+          "meaning": "Which of Kartverket's two address kinds this row is",
+          "value_format": "one of: vegadresse, matrikkeladresse",
+          "notes": "Measured 2026-11-08: 2,570,525 vegadresse, 34,411 matrikkeladresse. gardsnummer/bruksnummer are populated on both kinds, not matrikkeladresse-exclusive."
+        },
+        {
+          "code": "adressenavn",
+          "meaning": "The street or place name, for vegadresse rows",
+          "value_format": "free text",
+          "notes": "Empty on matrikkeladresse rows, which are addressed by gardsnummer/bruksnummer instead."
+        },
+        {
+          "code": "nummer",
+          "meaning": "House number",
+          "value_format": "integer",
+          "notes": "Empty on matrikkeladresse rows."
+        },
+        {
+          "code": "bokstav",
+          "meaning": "House-number letter suffix (e.g. \"A\")",
+          "value_format": "single letter or absent",
+          "notes": "Empty on matrikkeladresse rows, same as nummer."
+        },
+        {
+          "code": "gardsnummer",
+          "meaning": "Cadastral \"gård\" number",
+          "value_format": "integer",
+          "notes": "Populated on both address types, not matrikkeladresse-exclusive — measured 2026-11-08."
+        },
+        {
+          "code": "bruksnummer",
+          "meaning": "Cadastral \"bruk\" number",
+          "value_format": "integer",
+          "notes": "Populated on both address types, same as gardsnummer."
+        },
+        {
+          "code": "postnummer",
+          "meaning": "Four-digit postal code",
+          "value_format": "4 digits, leading zeros significant — always text",
+          "notes": "Confirmed non-empty on all 2,604,936 rows measured 2026-11-08."
+        },
+        {
+          "code": "poststed",
+          "meaning": "Postal place name",
+          "value_format": "free text",
+          "notes": "Verbatim from Kartverket/Posten, same convention as the other kartverket-* sources."
+        },
+        {
+          "code": "Nord / Øst",
+          "meaning": "Latitude / longitude, EPSG:4258",
+          "value_format": "decimal degrees",
+          "notes": "Confirmed zero empty values across all 2,604,936 rows measured 2026-11-08. Nord is latitude (Norway spans ~58-71°N), Øst is longitude — not a northing/easting pair in a projected CRS."
+        },
+        {
+          "code": "oppdateringsdato",
+          "meaning": "When this address record was last updated upstream",
+          "value_format": "Norwegian date-time, DD.MM.YYYY HH:MM:SS[.fff]",
+          "notes": "Fractional-second width varies (absent, 2, 3 or 6 digits, all measured 2026-11-08); dbt parses to a timestamp and drops sub-second precision."
+        }
+      ],
+      "raw_tables": null,
+      "sample_query": null,
+      "citation": {
+        "text": "Kartverket. (n.d.). Matrikkelen - Adresse. Retrieved from https://kartkatalog.geonorge.no/metadata/uuid/f7df7a18-b30f-4745-bd64-d0863812350c. Available in Atlas at https://atlas.sovereignsky.no/datasets/kartverket-matrikkel-adresse.",
+        "bibtex": "@misc{atlas_kartverket_matrikkel_adresse,\n  author = {Kartverket},\n  title  = {Matrikkelen - Adresse},\n  year   = {n.d.},\n  url    = {https://kartkatalog.geonorge.no/metadata/uuid/f7df7a18-b30f-4745-bd64-d0863812350c},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/kartverket-matrikkel-adresse}\n}"
+      },
+      "feedback_url": "https://www.kartverket.no/om-kartverket/kontakt-oss",
+      "consuming_marts": [
+        {
+          "mart_name": "mart_atlas_inventory",
+          "api_v1_name": "atlas_inventory",
+          "title": null,
+          "description_short": "What Atlas publishes: one row per endpoint with its row count, freshness and origin.",
+          "description_full": "What Atlas publishes: one row per endpoint with its row count, freshness and origin.\n\nWhat Atlas publishes, one row per queryable endpoint: how many records it\nserves, when its data last arrived, and where those rows came from.\nAsked for by Røde Kors — \"validate that all datasets that are ingested has\nan endpoint and it can be queried … count the number of records each\nendpoint has and update the last time it ingested data.\"\n⚠️ THE GRAIN IS PER ENDPOINT, NOT PER SOURCE. meta_sources answers \"what\ndid Atlas ingest\"; this answers \"what can I query, and is there anything\nin it\". One source can feed several endpoints and one endpoint can draw on\nseveral sources, so the two row counts are not comparable and summing\nsources will not reproduce an endpoint's count.\n⚠️ atlas_inventory does not list ITSELF. It is built from the same seed it\nreports on, so counting itself would be circular and the number would be\nwhatever the table held mid-build. 19 endpoints are listed; 20 are\npublished.",
+          "sample_query": "https://api-atlas.urbalurba.com/atlas_inventory?limit=5"
+        },
+        {
+          "mart_name": "mart_matrikkel_adresse",
+          "api_v1_name": "matrikkel_adresse",
+          "title": "National address file (Matrikkelen)",
+          "description_short": "Kartverket's national address file, one row per address, ~2.6M rows.",
+          "description_full": "Kartverket's national address file, one row per address, ~2.6M rows. urb-agents #2098/#2099 (R5).\n\nTwo indexes on the underlying dimension serve the three lookup patterns the request names:\nkommune_nr + adressenavn + nummer + bokstav (+ optionally postnummer), and\nkommune_nr + gardsnummer + bruksnummer. Served paged through PostgREST (order=adresse_id,\nlimit/offset) — no bulk file, per atlas's answer on urb-agents #2099.",
+          "sample_query": "https://api-atlas.urbalurba.com/matrikkel_adresse?limit=5"
+        }
+      ],
+      "consuming_models": [
+        {
+          "name": "dim_kartverket_matrikkel_adresse",
+          "kind": "dim"
+        },
+        {
+          "name": "mart_atlas_inventory",
+          "kind": "mart"
+        },
+        {
+          "name": "mart_matrikkel_adresse",
+          "kind": "mart"
+        }
+      ],
+      "joined_with": [
+        {
+          "source_id": "bring-postnummer",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "brreg-enheter-alle",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "brreg-frivillige",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "brreg-oppdateringer",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "brreg-underenheter",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "bufdir-barnefattigdom",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "bufdir-barnevern",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "fhi-alkohol",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        }
+      ],
+      "last_ingested_at": null,
+      "latest_row_count": null,
+      "total_runs": null,
+      "downstream_model_count": null
+    },
+    {
+      "kind": "source",
       "source_id": "kartverket-postnummeromrade",
       "upstream_id": "462a5297-33ef-438a-82a5-07fff5799be3",
       "upstream_url": "https://nedlasting.geonorge.no/api/order",
@@ -9995,6 +10221,7 @@
         "bring-postnummer",
         "kartverket-fylke",
         "kartverket-kommune",
+        "kartverket-matrikkel-adresse",
         "ssb-klass-fylker",
         "ssb-klass-kommuner"
       ],
@@ -16383,6 +16610,7 @@
         "bring-postnummer",
         "kartverket-fylke",
         "kartverket-kommune",
+        "kartverket-matrikkel-adresse",
         "kartverket-postnummeromrade",
         "ssb-klass-kommuner"
       ],
@@ -16740,6 +16968,7 @@
         "bring-postnummer",
         "kartverket-fylke",
         "kartverket-kommune",
+        "kartverket-matrikkel-adresse",
         "kartverket-postnummeromrade",
         "ssb-klass-fylker"
       ],
@@ -18408,6 +18637,12 @@
           "model_name": "mart_kommune_ngo_totals",
           "title": "Voluntary organisations per kommune, total",
           "description_short": "One row per kommune: how many active voluntary organisations are registered there."
+        },
+        {
+          "parent_kind": "model",
+          "model_name": "mart_matrikkel_adresse",
+          "title": "National address file (Matrikkelen)",
+          "description_short": "Kartverket's national address file, one row per address, ~2.6M rows."
         },
         {
           "parent_kind": "model",
@@ -24550,6 +24785,76 @@
         "homepage": "https://atlas.sovereignsky.no/",
         "logo": "/img/logo.svg"
       }
+    },
+    {
+      "kind": "view",
+      "view_id": "matrikkel_adresse",
+      "mart_name": "mart_matrikkel_adresse",
+      "api_v1_name": "matrikkel_adresse",
+      "title": "National address file (Matrikkelen)",
+      "description_short": "Kartverket's national address file, one row per address, ~2.6M rows.",
+      "description_full": "Kartverket's national address file, one row per address, ~2.6M rows. urb-agents #2098/#2099 (R5).\n\nTwo indexes on the underlying dimension serve the three lookup patterns the request names:\nkommune_nr + adressenavn + nummer + bokstav (+ optionally postnummer), and\nkommune_nr + gardsnummer + bruksnummer. Served paged through PostgREST (order=adresse_id,\nlimit/offset) — no bulk file, per atlas's answer on urb-agents #2099.",
+      "columns": [
+        {
+          "name": "adresse_id",
+          "description": "Kartverket's adresseId, confirmed identical to the CSV's own lokalid. Primary key."
+        },
+        {
+          "name": "kommune_nr",
+          "description": "4-digit kommune code."
+        },
+        {
+          "name": "adressetype",
+          "description": "vegadresse or matrikkeladresse."
+        },
+        {
+          "name": "adressenavn",
+          "description": "Street or place name, for vegadresse rows. Null on matrikkeladresse rows."
+        },
+        {
+          "name": "nummer",
+          "description": "House number. Null on matrikkeladresse rows."
+        },
+        {
+          "name": "bokstav",
+          "description": "House-number letter suffix, where one exists."
+        },
+        {
+          "name": "gardsnummer",
+          "description": "Cadastral \"gård\" number. Populated on both address types, not matrikkeladresse-exclusive."
+        },
+        {
+          "name": "bruksnummer",
+          "description": "Cadastral \"bruk\" number. Populated on both address types."
+        },
+        {
+          "name": "postnummer",
+          "description": "4-digit postal code."
+        },
+        {
+          "name": "poststed",
+          "description": "Postal place name."
+        },
+        {
+          "name": "point",
+          "description": "The address point as GeoJSON, EPSG:4258."
+        },
+        {
+          "name": "oppdateringsdato",
+          "description": "When this address record was last updated upstream."
+        }
+      ],
+      "built_from": [
+        {
+          "parent_kind": "model",
+          "model_name": "dim_kartverket_matrikkel_adresse",
+          "title": null,
+          "description_short": "Kartverket's national address file, one row per address, ~2.6M rows."
+        }
+      ],
+      "sample_query": "https://api-atlas.urbalurba.com/matrikkel_adresse?limit=5",
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_matrikkel_adresse",
+      "publisher": null
     },
     {
       "kind": "view",
