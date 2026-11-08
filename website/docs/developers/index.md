@@ -6,11 +6,11 @@ This section is for **anyone consuming Atlas's public PostgREST API** to build t
 
 <!-- BEGIN holdings (generated) -->
 
-**59 upstream sources** from **10 publishers**, served as **98 read-only relations**.
+**60 upstream sources** from **10 publishers**, served as **99 read-only relations**.
 
 | publisher | sources | broadly |
 |---|---|---|
-| Folkehelseinstituttet | 21 | public health, and the Ungdata youth surveys |
+| Folkehelseinstituttet | 22 | public health, and the Ungdata youth surveys |
 | Statistisk sentralbyrå | 20 | population, income, families, housing, education, crime |
 | Brønnøysundregistrene | 5 | the company and voluntary-organisation registers |
 | Utdanningsdirektoratet | 4 | — |
@@ -21,9 +21,9 @@ This section is for **anyone consuming Atlas's public PostgREST API** to build t
 | Lotteri- og stiftelsestilsynet | 1 | — |
 | Norges Røde Kors | 1 | local chapters and their activities |
 
-By EU data theme: **SOCI** 30 (society) · **HEAL** 12 (health) · **EDUC** 9 (education) · **GOVE** 7 (government) · **JUST** 1 (justice).
+By EU data theme: **SOCI** 31 (society) · **HEAL** 12 (health) · **EDUC** 9 (education) · **GOVE** 7 (government) · **JUST** 1 (justice).
 
-Licences: **NLOD** for 55 of 59 — Norwegian public data, free to reuse with attribution. The exceptions are `nav-aap` (CC BY 4.0) and `nav-helt-ledige` (CC BY 4.0) and `nav-uforetrygd` (CC BY 4.0) and `redcross-branches` (permissive) — Red Cross's own data rather than the state's.
+Licences: **NLOD** for 56 of 60 — Norwegian public data, free to reuse with attribution. The exceptions are `nav-aap` (CC BY 4.0) and `nav-helt-ledige` (CC BY 4.0) and `nav-uforetrygd` (CC BY 4.0) and `redcross-branches` (permissive) — Red Cross's own data rather than the state's.
 
 ### What you can query
 
@@ -53,6 +53,7 @@ Licences: **NLOD** for 55 of 59 — Norwegian public data, free to reuse with at
 | `indicators__fhi_befolkningsvekst` | Per-source indicator data for fhi-befolkningsvekst (Folkehelseinstituttet), at the publisher's own grain. |
 | `indicators__fhi_bor_alene` | Per-source indicator data for fhi-bor-alene (Folkehelseinstituttet), at the publisher's own grain. |
 | `indicators__fhi_depresjon` | Per-source indicator data for fhi-depresjon (Folkehelseinstituttet), at the publisher's own grain. |
+| `indicators__fhi_ensomhet` | Per-source indicator data for fhi-ensomhet (Folkehelseinstituttet), at the publisher's own grain. |
 | `indicators__fhi_fortrolig_venn` | Per-source indicator data for fhi-fortrolig-venn (Folkehelseinstituttet), at the publisher's own grain. |
 | `indicators__fhi_hasj` | Per-source indicator data for fhi-hasj (Folkehelseinstituttet), at the publisher's own grain. |
 | `indicators__fhi_innvandrere` | Per-source indicator data for fhi-innvandrere (Folkehelseinstituttet), at the publisher's own grain. |

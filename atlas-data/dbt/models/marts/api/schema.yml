@@ -4090,6 +4090,58 @@ category_format joined with `__`, so each measure is filter-stable in the catalo
       - name: updated_at
         description: "When Atlas last loaded this row from the upstream."
 
+  - name: mart_indicators__fhi_ensomhet
+    meta:
+      title: "Loneliness among 8th-10th graders (Ungdata)"
+      stability: source
+    description: |
+      Per-source indicator data for fhi-ensomhet (Folkehelseinstituttet), at the publisher's own grain.
+
+      Per-source indicator relation for `fhi-ensomhet` (Folkehelseinstituttet), published at the grain
+      the publisher actually uses rather than flattened into the cross-source views.
+      🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. Decode
+      codes through meta_dimensions filtered to source_id=fhi-ensomhet.
+      🔴 Only MEASURE_TYPE=SMR exists for this table (urb-agents #2100/#2101, T5) — a standardised
+      ratio against the national average. Never a raw percentage, never a count: that distinction
+      is the whole reason this source exists alongside fhi-bor-alene, which IS a count.
+    columns:
+      - name: source_id
+        description: "Atlas source identifier for the upstream table this row came from — the same id used by meta_sources and meta_dimensions."
+      - name: region_code
+        description: "The publisher's own region code, verbatim. It may be a kommune, fylke, bydel or national code depending on what that publisher emits; region_kind says which."
+      - name: kommune_nr
+        description: "4-digit kommune code, derived via region_code_to_kommune_nr. NULL for every region that is not a municipality."
+      - name: region_kind
+        description: "What region_code denotes, via classify_region_code. Joins ref_region_kind."
+      - name: fylke_nr
+        description: "2-digit fylke code where the region is a fylke, else NULL."
+      - name: year
+        description: "First year of the period this row covers."
+      - name: period
+        description: "The publisher's own period code, verbatim (e.g. \"2025_2025\")."
+      - name: period_start_year
+        description: "Parsed first year of the period."
+      - name: period_end_year
+        description: "Parsed last year of the period."
+      - name: sex
+        description: "FHI's KJONN code, verbatim: '0' total, '1' boys, '2' girls."
+      - name: age_group
+        description: "The publisher's age/grade-band dimension, verbatim. Not a parseable numeric age range at this table's grain — see the indicator model's own column note."
+      - name: severity_threshold
+        description: "FHI's NIVA_PLAGET code, verbatim — the loneliness-severity threshold this row reports against."
+      - name: socioeconomic_group
+        description: "FHI's SOES code, verbatim."
+      - name: contents_code
+        description: "The publisher's code for WHICH measure this row reports — SMR only for this table. Decode it through meta_dimensions for this source_id."
+      - name: contents_label
+        description: "Human-readable gloss for contents_code."
+      - name: value
+        description: "The measured value — a standardised ratio (100 = national average). NULL where the publisher suppressed the cell — see status."
+      - name: status
+        description: "The publisher's own suppression or quality marker for this cell, passed through verbatim."
+      - name: updated_at
+        description: "When Atlas last loaded this row from the upstream."
+
   - name: mart_indicators__fhi_depresjon
     meta:
       title: "Depressive symptomer_Ungdata_KH"

@@ -19,7 +19,7 @@
       "description": "Population structure by age, sex, kommune, and bydel. Core denominators\nfor any rate-based analysis. Includes SSB resident counts and FHI\npopulation projections.\n",
       "emoji": "👥",
       "order": 20,
-      "source_count": 12
+      "source_count": 13
     },
     {
       "id": "income",
@@ -108,7 +108,7 @@
       "logo": "/img/publishers/fhi.png",
       "feedback_url": "https://www.fhi.no/skjema/kontakt-folkehelseinstituttet/",
       "notes": "Norwegian Institute of Public Health. Publishes the Folkehelseprofiler\nand the underlying Folkehelsestatistikk via statistikk.fhi.no.\nMost tables use 3-year rolling averages and standardised ratios (SMR)\nto compare kommune-level health outcomes.\n",
-      "source_count": 21,
+      "source_count": 22,
       "view_count": 0
     },
     {
@@ -2118,10 +2118,10 @@
       "related_by_topic": [
         "fhi-befolkningsvekst",
         "fhi-bor-alene",
+        "fhi-ensomhet",
         "fhi-innvandrere",
         "fhi-innvkat",
-        "fhi-prognose",
-        "ssb-06083"
+        "fhi-prognose"
       ],
       "dimensions": [
         {
@@ -2447,10 +2447,10 @@
       "related_by_topic": [
         "fhi-befolkning",
         "fhi-bor-alene",
+        "fhi-ensomhet",
         "fhi-innvandrere",
         "fhi-innvkat",
-        "fhi-prognose",
-        "ssb-06083"
+        "fhi-prognose"
       ],
       "dimensions": [
         {
@@ -2780,10 +2780,10 @@
       "related_by_topic": [
         "fhi-befolkning",
         "fhi-befolkningsvekst",
+        "fhi-ensomhet",
         "fhi-innvandrere",
         "fhi-innvkat",
-        "fhi-prognose",
-        "ssb-06083"
+        "fhi-prognose"
       ],
       "dimensions": [
         {
@@ -3399,6 +3399,200 @@
       "latest_row_count": 39264,
       "total_runs": 5,
       "downstream_model_count": 9
+    },
+    {
+      "kind": "source",
+      "source_id": "fhi-ensomhet",
+      "upstream_id": "348",
+      "upstream_url": "https://statistikk-data.fhi.no/api/open/v1/nokkel/table/348",
+      "upstream_landing_page": "https://statistikk.fhi.no/nokkel/tabell/348",
+      "upstream_title": "Ensomhet_Ungdata_KH",
+      "description": "FHI Folkehelsestatistikk table 348 — loneliness among 8th-10th graders (Ungdata survey, Kommunehelsa), reported as how many feel \"quite a lot or very much bothered\" by loneliness. Per kommune, annual. Only a standardised ratio (SMR) is published for this table — no raw percentage, no count.",
+      "atlas_summary": null,
+      "publisher": {
+        "id": "fhi",
+        "display_name": "Folkehelseinstituttet",
+        "homepage": "https://www.fhi.no/",
+        "logo": "/img/publishers/fhi.png"
+      },
+      "category": {
+        "id": "demographics",
+        "name": "Demographics",
+        "emoji": "👥"
+      },
+      "license": "NLOD",
+      "license_url": "https://data.norge.no/nlod/no/2.0",
+      "periodicity": "P1Y",
+      "eu_theme": "SOCI",
+      "attribution": "Kilde: Folkehelseinstituttet, Folkehelsestatistikk — tabell 348",
+      "tags": {
+        "provider": "fhi",
+        "topic": "demographics",
+        "geo": "kommune",
+        "cadence": "annual"
+      },
+      "keywords": [
+        "loneliness",
+        "ensomhet",
+        "ungdata",
+        "youth",
+        "mental-health",
+        "kommune"
+      ],
+      "lifecycle": "beta",
+      "time_coverage": {
+        "start": 2025,
+        "end": 2025
+      },
+      "methodology_notes": null,
+      "suggested_joins": [
+        "fhi-bor-alene"
+      ],
+      "related_by_topic": [
+        "fhi-befolkning",
+        "fhi-befolkningsvekst",
+        "fhi-bor-alene",
+        "fhi-innvandrere",
+        "fhi-innvkat",
+        "fhi-prognose"
+      ],
+      "dimensions": [
+        {
+          "code": "GEO",
+          "meaning": "Region (mixed kommune / fylke / bydel / nasjon)",
+          "value_format": "1- to 6-character numeric code",
+          "notes": "409 codes total, measured 2026-11-08; 357 are 4-digit kommune codes. ⚠️ Having a row is not having a value: only 100 of those 357 carry a non-null 'total' figure (96 for each of the boys/girls breakdowns) — the rest are suppressed for small sample size, same shape as every other small-sample FHI/Ungdata table."
+        },
+        {
+          "code": "AAR",
+          "meaning": "Year or period",
+          "value_format": "\"YYYY_YYYY\" range string",
+          "notes": "Single-year only in this ingest (bottom 1). National level (GEO=0) has 2012_2012 through 2025_2025; kommune-level coverage for earlier years not checked — only the latest year is pulled."
+        },
+        {
+          "code": "KJONN",
+          "meaning": "Sex",
+          "value_format": "3 codes",
+          "notes": "\"0\" kjønn samlet (total), \"1\" gutter (boys), \"2\" jenter (girls)"
+        },
+        {
+          "code": "ALDER",
+          "meaning": "Age / school grade band",
+          "value_format": "single code at this table's grain",
+          "notes": "Resolves to one value only — \"1_6\" (8-10.trinn, i.e. the Ungdata youth survey' own grade band). Requested as \"all\" rather than hardcoded in case upstream adds a second band."
+        },
+        {
+          "code": "NIVA_PLAGET",
+          "meaning": "Severity threshold for the loneliness question",
+          "value_format": "single code at this table's grain",
+          "notes": "Resolves to one value only — \"ganske_veldigmyeplaget\" (quite a lot or very much bothered). This table does not publish a lower-threshold or multi-level breakdown."
+        },
+        {
+          "code": "SOES",
+          "meaning": "Socioeconomic status breakdown",
+          "value_format": "single code at kommune grain",
+          "notes": "Resolves to \"0\" (samlet / total) at kommune level — a finer SOES breakdown may exist nationally but is not published per kommune (not checked beyond confirming \"0\" is what kommune-level rows carry)."
+        },
+        {
+          "code": "MEASURE_TYPE",
+          "meaning": "Which number",
+          "value_format": "1 usable code",
+          "notes": "Only SMR (standardised ratio vs national average) is published for this table — RATE and TELLER both answer \"not found for datasetId\" on probing. There is no raw percentage and no count; this is a rate-shaped number, never a count, hence T5's instruction to name it clearly as a rate."
+        }
+      ],
+      "raw_tables": null,
+      "sample_query": null,
+      "citation": {
+        "text": "Folkehelseinstituttet. (2025). Ensomhet_Ungdata_KH. Retrieved from https://statistikk.fhi.no/nokkel/tabell/348. Available in Atlas at https://atlas.sovereignsky.no/datasets/fhi-ensomhet.",
+        "bibtex": "@misc{atlas_fhi_ensomhet,\n  author = {Folkehelseinstituttet},\n  title  = {Ensomhet_Ungdata_KH},\n  year   = {2025},\n  url    = {https://statistikk.fhi.no/nokkel/tabell/348},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/fhi-ensomhet}\n}"
+      },
+      "feedback_url": "https://www.fhi.no/skjema/kontakt-folkehelseinstituttet/",
+      "consuming_marts": [
+        {
+          "mart_name": "mart_atlas_inventory",
+          "api_v1_name": "atlas_inventory",
+          "title": null,
+          "description_short": "What Atlas publishes: one row per endpoint with its row count, freshness and origin.",
+          "description_full": "What Atlas publishes: one row per endpoint with its row count, freshness and origin.\n\nWhat Atlas publishes, one row per queryable endpoint: how many records it\nserves, when its data last arrived, and where those rows came from.\nAsked for by Røde Kors — \"validate that all datasets that are ingested has\nan endpoint and it can be queried … count the number of records each\nendpoint has and update the last time it ingested data.\"\n⚠️ THE GRAIN IS PER ENDPOINT, NOT PER SOURCE. meta_sources answers \"what\ndid Atlas ingest\"; this answers \"what can I query, and is there anything\nin it\". One source can feed several endpoints and one endpoint can draw on\nseveral sources, so the two row counts are not comparable and summing\nsources will not reproduce an endpoint's count.\n⚠️ atlas_inventory does not list ITSELF. It is built from the same seed it\nreports on, so counting itself would be circular and the number would be\nwhatever the table held mid-build. 19 endpoints are listed; 20 are\npublished.",
+          "sample_query": "https://api-atlas.urbalurba.com/atlas_inventory?limit=5"
+        },
+        {
+          "mart_name": "mart_indicators__fhi_ensomhet",
+          "api_v1_name": "indicators__fhi_ensomhet",
+          "title": "Loneliness among 8th-10th graders (Ungdata)",
+          "description_short": "Per-source indicator data for fhi-ensomhet (Folkehelseinstituttet), at the publisher's own grain.",
+          "description_full": "Per-source indicator data for fhi-ensomhet (Folkehelseinstituttet), at the publisher's own grain.\n\nPer-source indicator relation for `fhi-ensomhet` (Folkehelseinstituttet), published at the grain\nthe publisher actually uses rather than flattened into the cross-source views.\n🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. Decode\ncodes through meta_dimensions filtered to source_id=fhi-ensomhet.\n🔴 Only MEASURE_TYPE=SMR exists for this table (urb-agents #2100/#2101, T5) — a standardised\nratio against the national average. Never a raw percentage, never a count: that distinction\nis the whole reason this source exists alongside fhi-bor-alene, which IS a count.",
+          "sample_query": "https://api-atlas.urbalurba.com/indicators__fhi_ensomhet?limit=5"
+        }
+      ],
+      "consuming_models": [
+        {
+          "name": "indicators__fhi_ensomhet",
+          "kind": "indicators"
+        },
+        {
+          "name": "mart_atlas_inventory",
+          "kind": "mart"
+        },
+        {
+          "name": "mart_indicators__fhi_ensomhet",
+          "kind": "mart"
+        }
+      ],
+      "joined_with": [
+        {
+          "source_id": "brreg-enheter-alle",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "brreg-frivillige",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "brreg-oppdateringer",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "brreg-underenheter",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "bufdir-barnefattigdom",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "bufdir-barnevern",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "fhi-alkohol",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "fhi-befolkning",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        }
+      ],
+      "last_ingested_at": null,
+      "latest_row_count": null,
+      "total_runs": null,
+      "downstream_model_count": null
     },
     {
       "kind": "source",
@@ -4135,9 +4329,9 @@
         "fhi-befolkning",
         "fhi-befolkningsvekst",
         "fhi-bor-alene",
+        "fhi-ensomhet",
         "fhi-innvkat",
-        "fhi-prognose",
-        "ssb-06083"
+        "fhi-prognose"
       ],
       "dimensions": [
         {
@@ -4465,9 +4659,9 @@
         "fhi-befolkning",
         "fhi-befolkningsvekst",
         "fhi-bor-alene",
+        "fhi-ensomhet",
         "fhi-innvandrere",
-        "fhi-prognose",
-        "ssb-06083"
+        "fhi-prognose"
       ],
       "dimensions": [
         {
@@ -7188,9 +7382,9 @@
         "fhi-befolkning",
         "fhi-befolkningsvekst",
         "fhi-bor-alene",
+        "fhi-ensomhet",
         "fhi-innvandrere",
-        "fhi-innvkat",
-        "ssb-06083"
+        "fhi-innvkat"
       ],
       "dimensions": [
         {
@@ -10293,9 +10487,9 @@
         "fhi-befolkning",
         "fhi-befolkningsvekst",
         "fhi-bor-alene",
+        "fhi-ensomhet",
         "fhi-innvandrere",
-        "fhi-innvkat",
-        "fhi-prognose"
+        "fhi-innvkat"
       ],
       "dimensions": [
         {
@@ -10618,9 +10812,9 @@
         "fhi-befolkning",
         "fhi-befolkningsvekst",
         "fhi-bor-alene",
+        "fhi-ensomhet",
         "fhi-innvandrere",
-        "fhi-innvkat",
-        "fhi-prognose"
+        "fhi-innvkat"
       ],
       "dimensions": [
         {
@@ -11586,9 +11780,9 @@
         "fhi-befolkning",
         "fhi-befolkningsvekst",
         "fhi-bor-alene",
+        "fhi-ensomhet",
         "fhi-innvandrere",
-        "fhi-innvkat",
-        "fhi-prognose"
+        "fhi-innvkat"
       ],
       "dimensions": [
         {
@@ -12433,9 +12627,9 @@
         "fhi-befolkning",
         "fhi-befolkningsvekst",
         "fhi-bor-alene",
+        "fhi-ensomhet",
         "fhi-innvandrere",
-        "fhi-innvkat",
-        "fhi-prognose"
+        "fhi-innvkat"
       ],
       "dimensions": [
         {
@@ -12602,9 +12796,9 @@
         "fhi-befolkning",
         "fhi-befolkningsvekst",
         "fhi-bor-alene",
+        "fhi-ensomhet",
         "fhi-innvandrere",
-        "fhi-innvkat",
-        "fhi-prognose"
+        "fhi-innvkat"
       ],
       "dimensions": [
         {
@@ -14228,9 +14422,9 @@
         "fhi-befolkning",
         "fhi-befolkningsvekst",
         "fhi-bor-alene",
+        "fhi-ensomhet",
         "fhi-innvandrere",
-        "fhi-innvkat",
-        "fhi-prognose"
+        "fhi-innvkat"
       ],
       "dimensions": [
         {
@@ -17108,6 +17302,12 @@
         },
         {
           "parent_kind": "model",
+          "model_name": "mart_indicators__fhi_ensomhet",
+          "title": "Loneliness among 8th-10th graders (Ungdata)",
+          "description_short": "Per-source indicator data for fhi-ensomhet (Folkehelseinstituttet), at the publisher's own grain."
+        },
+        {
+          "parent_kind": "model",
           "model_name": "mart_indicators__fhi_fortrolig_venn",
           "title": "FORTROLIGVENN_Ungdata_KH",
           "description_short": "Per-source indicator data for fhi-fortrolig-venn (Folkehelseinstituttet), at the publisher's own grain."
@@ -19469,6 +19669,100 @@
       ],
       "sample_query": "https://api-atlas.urbalurba.com/indicators__fhi_depresjon?limit=5",
       "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__fhi_depresjon",
+      "publisher": null
+    },
+    {
+      "kind": "view",
+      "view_id": "indicators__fhi_ensomhet",
+      "mart_name": "mart_indicators__fhi_ensomhet",
+      "api_v1_name": "indicators__fhi_ensomhet",
+      "title": "Loneliness among 8th-10th graders (Ungdata)",
+      "description_short": "Per-source indicator data for fhi-ensomhet (Folkehelseinstituttet), at the publisher's own grain.",
+      "description_full": "Per-source indicator data for fhi-ensomhet (Folkehelseinstituttet), at the publisher's own grain.\n\nPer-source indicator relation for `fhi-ensomhet` (Folkehelseinstituttet), published at the grain\nthe publisher actually uses rather than flattened into the cross-source views.\n🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. Decode\ncodes through meta_dimensions filtered to source_id=fhi-ensomhet.\n🔴 Only MEASURE_TYPE=SMR exists for this table (urb-agents #2100/#2101, T5) — a standardised\nratio against the national average. Never a raw percentage, never a count: that distinction\nis the whole reason this source exists alongside fhi-bor-alene, which IS a count.",
+      "columns": [
+        {
+          "name": "source_id",
+          "description": "Atlas source identifier for the upstream table this row came from — the same id used by meta_sources and meta_dimensions."
+        },
+        {
+          "name": "region_code",
+          "description": "The publisher's own region code, verbatim. It may be a kommune, fylke, bydel or national code depending on what that publisher emits; region_kind says which."
+        },
+        {
+          "name": "kommune_nr",
+          "description": "4-digit kommune code, derived via region_code_to_kommune_nr. NULL for every region that is not a municipality."
+        },
+        {
+          "name": "region_kind",
+          "description": "What region_code denotes, via classify_region_code. Joins ref_region_kind."
+        },
+        {
+          "name": "fylke_nr",
+          "description": "2-digit fylke code where the region is a fylke, else NULL."
+        },
+        {
+          "name": "year",
+          "description": "First year of the period this row covers."
+        },
+        {
+          "name": "period",
+          "description": "The publisher's own period code, verbatim (e.g. \"2025_2025\")."
+        },
+        {
+          "name": "period_start_year",
+          "description": "Parsed first year of the period."
+        },
+        {
+          "name": "period_end_year",
+          "description": "Parsed last year of the period."
+        },
+        {
+          "name": "sex",
+          "description": "FHI's KJONN code, verbatim: '0' total, '1' boys, '2' girls."
+        },
+        {
+          "name": "age_group",
+          "description": "The publisher's age/grade-band dimension, verbatim. Not a parseable numeric age range at this table's grain — see the indicator model's own column note."
+        },
+        {
+          "name": "severity_threshold",
+          "description": "FHI's NIVA_PLAGET code, verbatim — the loneliness-severity threshold this row reports against."
+        },
+        {
+          "name": "socioeconomic_group",
+          "description": "FHI's SOES code, verbatim."
+        },
+        {
+          "name": "contents_code",
+          "description": "The publisher's code for WHICH measure this row reports — SMR only for this table. Decode it through meta_dimensions for this source_id."
+        },
+        {
+          "name": "contents_label",
+          "description": "Human-readable gloss for contents_code."
+        },
+        {
+          "name": "value",
+          "description": "The measured value — a standardised ratio (100 = national average). NULL where the publisher suppressed the cell — see status."
+        },
+        {
+          "name": "status",
+          "description": "The publisher's own suppression or quality marker for this cell, passed through verbatim."
+        },
+        {
+          "name": "updated_at",
+          "description": "When Atlas last loaded this row from the upstream."
+        }
+      ],
+      "built_from": [
+        {
+          "parent_kind": "model",
+          "model_name": "indicators__fhi_ensomhet",
+          "title": null,
+          "description_short": "Per-source indicator passthrough for FHI table 348 (loneliness, Ungdata survey, 8th-10th graders)."
+        }
+      ],
+      "sample_query": "https://api-atlas.urbalurba.com/indicators__fhi_ensomhet?limit=5",
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_indicators__fhi_ensomhet",
       "publisher": null
     },
     {
