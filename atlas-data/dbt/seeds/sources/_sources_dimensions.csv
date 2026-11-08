@@ -199,13 +199,13 @@ kartverket-matrikkel-adresse,kommunenummer,Four-digit kommune code,"4 digits, le
 kartverket-matrikkel-adresse,adressetype,Which of Kartverket's two address kinds this row is,"one of: vegadresse, matrikkeladresse","Measured 2026-11-08: 2,570,525 vegadresse, 34,411 matrikkeladresse. gardsnummer/bruksnummer are populated on both kinds, not matrikkeladresse-exclusive."
 kartverket-matrikkel-adresse,adressenavn,"The street or place name, for vegadresse rows",free text,"Empty on matrikkeladresse rows, which are addressed by gardsnummer/bruksnummer instead."
 kartverket-matrikkel-adresse,nummer,House number,integer,Empty on matrikkeladresse rows.
-kartverket-matrikkel-adresse,bokstav,"House-number letter suffix (e.g. ""A"")",single letter or absent,
-kartverket-matrikkel-adresse,gardsnummer,"Cadastral ""gård"" number",integer,
-kartverket-matrikkel-adresse,bruksnummer,"Cadastral ""bruk"" number",integer,
-kartverket-matrikkel-adresse,postnummer,Four-digit postal code,"4 digits, leading zeros significant — always text",
-kartverket-matrikkel-adresse,poststed,Postal place name,free text,
+kartverket-matrikkel-adresse,bokstav,"House-number letter suffix (e.g. ""A"")",single letter or absent,"Empty on matrikkeladresse rows, same as nummer."
+kartverket-matrikkel-adresse,gardsnummer,"Cadastral ""gård"" number",integer,"Populated on both address types, not matrikkeladresse-exclusive — measured 2026-11-08."
+kartverket-matrikkel-adresse,bruksnummer,"Cadastral ""bruk"" number",integer,"Populated on both address types, same as gardsnummer."
+kartverket-matrikkel-adresse,postnummer,Four-digit postal code,"4 digits, leading zeros significant — always text","Confirmed non-empty on all 2,604,936 rows measured 2026-11-08."
+kartverket-matrikkel-adresse,poststed,Postal place name,free text,"Verbatim from Kartverket/Posten, same convention as the other kartverket-* sources."
 kartverket-matrikkel-adresse,Nord / Øst,"Latitude / longitude, EPSG:4258",decimal degrees,"Confirmed zero empty values across all 2,604,936 rows measured 2026-11-08. Nord is latitude (Norway spans ~58-71°N), Øst is longitude — not a northing/easting pair in a projected CRS."
-kartverket-matrikkel-adresse,oppdateringsdato,When this address record was last updated upstream,"Norwegian date-time, DD.MM.YYYY HH:MM:SS[.fff]",
+kartverket-matrikkel-adresse,oppdateringsdato,When this address record was last updated upstream,"Norwegian date-time, DD.MM.YYYY HH:MM:SS[.fff]","Fractional-second width varies (absent, 2, 3 or 6 digits, all measured 2026-11-08); dbt parses to a timestamp and drops sub-second precision."
 kartverket-postnummeromrade,lokalid,"Kartverket's own stable feature-local id (a GUID), and the table's primary key",GUID string,Stable across releases for the same polygon piece per Kartverket's own SOSI convention; not independently re-verified across two releases here.
 kartverket-postnummeromrade,postnummer,Four-digit postcode this area belongs to,"4 digits, leading zeros significant — always text","Not unique in this table — 57 of 3,382 postnummer (measured 2026-11-08) are split across 2-3 disjoint polygon pieces, each its own row/feature. The dbt model unions them into one published row per postnummer."
 kartverket-postnummeromrade,poststed,"Post office name for this postcode, as Kartverket/Posten publish it",free text,"Verbatim, not normalised."
