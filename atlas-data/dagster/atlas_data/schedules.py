@@ -222,6 +222,7 @@ _KLASS_SOURCE_IDS = list(raw_ssb.SSB_KLASS_SOURCES)
 # into one job misrepresents what it runs). First member: nav-uforetrygd,
 # Atlas's first monthly-cadence source outside KLASS/seeds.
 _MONTHLY_SOURCE_IDS = [
+    "kartverket-postnummeromrade",
     "nav-aap",
     "nav-helt-ledige",
     "nav-uforetrygd",
@@ -288,7 +289,10 @@ monthly_sources_job = define_asset_job(
     description=(
         "Sources whose manifest declares periodicity P1M — genuinely monthly "
         "data (nav-uforetrygd: NAV republishes PST302 once a month, early in "
-        "the following month; nav-aap and nav-helt-ledige: same cadence, AAP155/HL060). Distinct from klass_refresh and "
+        "the following month; nav-aap and nav-helt-ledige: same cadence, AAP155/HL060; "
+        "kartverket-postnummeromrade: Kartverket updates postcode boundaries at the end "
+        "of every month except July and December, per their own stated cadence). "
+        "Distinct from klass_refresh and "
         "seed_sources_refresh, which are also monthly-polled but for annual- "
         "or irregular-cadence data; this job is for data that is actually "
         "monthly. No dedicated cron schedule — automatic materialisation "

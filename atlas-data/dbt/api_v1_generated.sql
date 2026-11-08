@@ -217,8 +217,26 @@ REFERENCE:
                                establishment, division) registered under a
                                parent enhet. Bootstrap snapshot only, not yet
                                reconciled against the change feed.
+  bring_postnummer             Posten Bring''s register with kategori
+                               (G/P/B/S/F) — dim_postnummer''s properly
+                               provenanced sibling.
+  kartverket_postnummeromrade  postcode-area polygons, geometry and
+                               geometry_simplified (50 m, see below), one
+                               row per postnummer. urb-agents #2098/#2099.
+                               ⚠️ This is a NARROWER case than the kommune
+                               boundaries excluded below, not a reversal of
+                               that decision: 3,382 point-lookupable rows at
+                               ~7 KB full / ~1 KB simplified each, not one
+                               38 MB bulk file. A consumer filtering to the
+                               one postnummer it needs never touches the
+                               other 3,381; the kommune-boundary exclusion
+                               is about a consumer who has no choice but to
+                               pull the whole country at once. Requested
+                               explicitly, by Terje, served via api_v1 and
+                               not as a static file precisely so point
+                               lookups work (urb-agents #2098).
 
-MAPS — BOUNDARIES ARE NOT IN THIS API, AND THAT IS ON PURPOSE.
+MAPS — BULK NATIONAL BOUNDARIES ARE NOT IN THIS API, AND THAT IS ON PURPOSE.
 Full-resolution kommune boundaries are about 38 MB; serving them here would be
 worse than not having them. A SIMPLIFIED boundary file is published on the
 documentation site instead, keyed so it joins straight onto dim_kommune:
@@ -2759,6 +2777,22 @@ aborted runs) are filtered out upstream.';
 COMMENT ON COLUMN api_v1.ingest_health.last_status IS 'Status of the most recent COMPLETED run. ''ok'' = the scraper
 finished and wrote rows; ''fail'' = it errored or completed
 with the expected output shape missing.';
+
+-- kartverket_postnummeromrade  ←  marts.mart_kartverket_postnummeromrade
+CREATE OR REPLACE VIEW api_v1.kartverket_postnummeromrade AS SELECT * FROM marts.mart_kartverket_postnummeromrade;
+COMMENT ON VIEW api_v1.kartverket_postnummeromrade IS 'Kartverket''s postcode-area polygons, full and simplified, as GeoJSON. urb-agents #2098/#2099.
+
+One row per postnummer. geometry is the full, unsimplified union of the upstream''s polygon
+pieces; geometry_simplified is the same shape at a 50m tolerance (atlas-scraper''s own stated
+tolerance), computed in EPSG:25833 and reprojected back to EPSG:4258 — see
+dim_kartverket_postnummeromrade''s own description for why a real metres tolerance needs a
+projected CRS and cannot be applied directly to a geographic one.';
+COMMENT ON COLUMN api_v1.kartverket_postnummeromrade.postnummer IS '4-digit postcode. Primary key.';
+COMMENT ON COLUMN api_v1.kartverket_postnummeromrade.poststed IS 'Post office name, verbatim from Kartverket/Posten.';
+COMMENT ON COLUMN api_v1.kartverket_postnummeromrade.kommune_nr IS 'Every kommune this postnummer''s area touches, as an array. Measured 2026-11-08: always exactly one element in practice.';
+COMMENT ON COLUMN api_v1.kartverket_postnummeromrade.oppdateringsdato IS 'Latest per-feature update date across this postnummer''s pieces. Null where none carry one.';
+COMMENT ON COLUMN api_v1.kartverket_postnummeromrade.geometry IS 'The full, unsimplified polygon(s) as GeoJSON, EPSG:4258.';
+COMMENT ON COLUMN api_v1.kartverket_postnummeromrade.geometry_simplified IS 'The same polygon(s) simplified at a 50m tolerance, as GeoJSON, EPSG:4258.';
 
 -- kommune_befolkning_alder  ←  marts.mart_kommune_befolkning_alder
 CREATE OR REPLACE VIEW api_v1.kommune_befolkning_alder AS SELECT * FROM marts.mart_kommune_befolkning_alder;

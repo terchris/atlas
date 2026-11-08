@@ -101,6 +101,7 @@
 -- depends_on: {{ ref('mart_indicators__fhi_vgs_gjennomforing') }}
 -- depends_on: {{ ref('mart_indicators__husbanken_bostotte') }}
 -- depends_on: {{ ref('mart_indicators__imdi_bosetting') }}
+-- depends_on: {{ ref('mart_kartverket_postnummeromrade') }}
 -- depends_on: {{ ref('mart_indicators__lottstift_momskompensasjon') }}
 -- depends_on: {{ ref('mart_indicators__nav_aap') }}
 -- depends_on: {{ ref('mart_indicators__nav_helt_ledige') }}
@@ -213,6 +214,7 @@
   {'relation': 'indicators__fhi_vgs_gjennomforing', 'mart': 'mart_indicators__fhi_vgs_gjennomforing'},
   {'relation': 'indicators__husbanken_bostotte', 'mart': 'mart_indicators__husbanken_bostotte'},
   {'relation': 'indicators__imdi_bosetting', 'mart': 'mart_indicators__imdi_bosetting'},
+  {'relation': 'kartverket_postnummeromrade', 'mart': 'mart_kartverket_postnummeromrade'},
   {'relation': 'indicators__lottstift_momskompensasjon', 'mart': 'mart_indicators__lottstift_momskompensasjon'},
   {'relation': 'indicators__nav_aap', 'mart': 'mart_indicators__nav_aap'},
   {'relation': 'indicators__nav_helt_ledige', 'mart': 'mart_indicators__nav_helt_ledige'},
