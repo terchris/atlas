@@ -223,23 +223,47 @@ REFERENCE:
   kartverket_postnummeromrade  postcode-area polygons, geometry and
                                geometry_simplified (50 m, see below), one
                                row per postnummer. urb-agents #2098/#2099.
-                               ⚠️ This is a NARROWER case than the kommune
-                               boundaries excluded below, not a reversal of
-                               that decision: 3,382 point-lookupable rows at
-                               ~7 KB full / ~1 KB simplified each, not one
-                               38 MB bulk file. A consumer filtering to the
-                               one postnummer it needs never touches the
-                               other 3,381; the kommune-boundary exclusion
-                               is about a consumer who has no choice but to
-                               pull the whole country at once. Requested
-                               explicitly, by Terje, served via api_v1 and
-                               not as a static file precisely so point
-                               lookups work (urb-agents #2098).
+                               ⚠️ This is a NARROWER case than the static
+                               boundary file below, not a reversal of that
+                               decision: 3,382 point-lookupable rows at ~7 KB
+                               full / ~1 KB simplified each, not one 38 MB
+                               bulk file. A consumer filtering to the one
+                               postnummer it needs never touches the other
+                               3,381. Requested explicitly, by Terje, served
+                               via api_v1 and not as a static file precisely
+                               so point lookups work (urb-agents #2098).
+  kartverket_kommune           municipality boundaries, geometry and
+                               geometry_simplified, 357 rows. Same reasoning
+                               and method as kartverket_postnummeromrade —
+                               point lookups, not a bulk file. This is the
+                               SAME upstream the static kommuner.geojson file
+                               below also serves, through a DIFFERENT
+                               pipeline (that file does 357 individual
+                               requests to ws.geonorge.no/kommuneinfo and
+                               simplifies to ~33m for a Docusaurus
+                               choropleth; this relation orders the whole
+                               country from Geonorge''s download API and
+                               simplifies to 50m for programmatic point
+                               lookups). Two consumers, two shapes, not a
+                               duplicate maintained twice by accident.
+                               ⚠️ urb-agents #1438 measured the live API
+                               collapsing at three concurrent full-table
+                               scans with no indexes on marts.* — this
+                               relation''s underlying dim table has a unique
+                               btree on kommune_nr, so a point lookup
+                               (?kommune_nr=eq.0301) should use it; fetching
+                               all 357 rows unfiltered has the same
+                               full-scan profile every other large relation
+                               here already has, not a new risk this PR
+                               introduces.
+  kartverket_fylke             county boundaries, same method, 15 rows.
 
-MAPS — BULK NATIONAL BOUNDARIES ARE NOT IN THIS API, AND THAT IS ON PURPOSE.
-Full-resolution kommune boundaries are about 38 MB; serving them here would be
-worse than not having them. A SIMPLIFIED boundary file is published on the
-documentation site instead, keyed so it joins straight onto dim_kommune:
+MAPS — THE BULK NATIONAL FILE BELOW IS A SEPARATE THING FROM kartverket_kommune
+ABOVE, NOT A CONTRADICTION OF IT. Full-resolution kommune boundaries as ONE
+bulk request are about 38 MB; serving that shape here would be worse than not
+having it. A SIMPLIFIED boundary file is published on the documentation site
+instead, for a consumer who wants the whole country in one request, keyed so
+it joins straight onto dim_kommune:
 
   https://atlas.sovereignsky.no/geo/kommuner.geojson
 
@@ -2777,6 +2801,37 @@ aborted runs) are filtered out upstream.';
 COMMENT ON COLUMN api_v1.ingest_health.last_status IS 'Status of the most recent COMPLETED run. ''ok'' = the scraper
 finished and wrote rows; ''fail'' = it errored or completed
 with the expected output shape missing.';
+
+-- kartverket_fylke  ←  marts.mart_kartverket_fylke
+CREATE OR REPLACE VIEW api_v1.kartverket_fylke AS SELECT * FROM marts.mart_kartverket_fylke;
+COMMENT ON VIEW api_v1.kartverket_fylke IS 'Kartverket''s current county boundaries, full and simplified, as GeoJSON.
+
+One row per fylke, 15 rows. Sibling to mart_kartverket_kommune — see that relation''s own
+description for the simplification method and the names array. urb-agents #2098/#2099.';
+COMMENT ON COLUMN api_v1.kartverket_fylke.fylke_nr IS '2-digit fylke code. Primary key.';
+COMMENT ON COLUMN api_v1.kartverket_fylke.fylke_navn IS 'The combined display name, as Kartverket''s own fylkesnavn field carries it.';
+COMMENT ON COLUMN api_v1.kartverket_fylke.names IS 'Every official name: a jsonb array of {navn, rekkefolge, sprak}.';
+COMMENT ON COLUMN api_v1.kartverket_fylke.gyldig_fra IS 'Date this fylke boundary became valid.';
+COMMENT ON COLUMN api_v1.kartverket_fylke.gyldig_til IS 'Date this fylke boundary stopped being valid. Null for every fylke today.';
+COMMENT ON COLUMN api_v1.kartverket_fylke.geometry IS 'The full, unsimplified boundary as GeoJSON, EPSG:4258.';
+COMMENT ON COLUMN api_v1.kartverket_fylke.geometry_simplified IS 'The same boundary simplified at a 50m tolerance, as GeoJSON, EPSG:4258.';
+
+-- kartverket_kommune  ←  marts.mart_kartverket_kommune
+CREATE OR REPLACE VIEW api_v1.kartverket_kommune AS SELECT * FROM marts.mart_kartverket_kommune;
+COMMENT ON VIEW api_v1.kartverket_kommune IS 'Kartverket''s current municipality boundaries, full and simplified, as GeoJSON.
+
+One row per kommune, 357 rows. geometry is the full, unsimplified boundary;
+geometry_simplified is the same shape at a 50m tolerance, computed in EPSG:25833 and
+reprojected back to EPSG:4258 — same method as mart_kartverket_postnummeromrade. names
+carries every official name (Norwegian, and Sami/Kven where official) as a jsonb array,
+not flattened into per-language columns. urb-agents #2098/#2099 (R4).';
+COMMENT ON COLUMN api_v1.kartverket_kommune.kommune_nr IS '4-digit kommune code. Primary key.';
+COMMENT ON COLUMN api_v1.kartverket_kommune.kommune_navn IS 'Kartverket''s own combined display name — already hyphenated across official languages where more than one exists, not just the primary name.';
+COMMENT ON COLUMN api_v1.kartverket_kommune.names IS 'Every official name: a jsonb array of {navn, rekkefolge, sprak}.';
+COMMENT ON COLUMN api_v1.kartverket_kommune.gyldig_fra IS 'Date this kommune boundary became valid.';
+COMMENT ON COLUMN api_v1.kartverket_kommune.gyldig_til IS 'Date this kommune boundary stopped being valid. Null for every kommune today.';
+COMMENT ON COLUMN api_v1.kartverket_kommune.geometry IS 'The full, unsimplified boundary as GeoJSON, EPSG:4258.';
+COMMENT ON COLUMN api_v1.kartverket_kommune.geometry_simplified IS 'The same boundary simplified at a 50m tolerance, as GeoJSON, EPSG:4258.';
 
 -- kartverket_postnummeromrade  ←  marts.mart_kartverket_postnummeromrade
 CREATE OR REPLACE VIEW api_v1.kartverket_postnummeromrade AS SELECT * FROM marts.mart_kartverket_postnummeromrade;

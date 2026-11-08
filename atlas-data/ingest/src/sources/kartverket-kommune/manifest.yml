@@ -1,0 +1,61 @@
+# Hand-authored. The dimensions: block is hand-authored — editorial
+# semantics the catalogue can't compute. After commit, this file is
+# human-authored — ingest runs do NOT modify it.
+
+source_id: kartverket-kommune
+upstream_id: "041f1e6e-bdbc-4091-b48f-8a5990f3cc5b"
+upstream_url: https://nedlasting.geonorge.no/api/order
+upstream_landing_page: https://kartkatalog.geonorge.no/metadata/uuid/041f1e6e-bdbc-4091-b48f-8a5990f3cc5b
+upstream_title: "Administrative enheter kommuner"
+description: "Kartverket's current municipality boundaries, via Geonorge's order-based download API (same mechanism as kartverket-postnummeromrade — no static file URL exists). urb-agents #2098/#2099 (R4). Current state only, unlike dim_kommune's SSB-Klass-based full history — see the raw table's own migration header."
+publisher: Kartverket
+license: CC BY 4.0
+license_url: https://creativecommons.org/licenses/by/4.0/deed.no
+periodicity: P3M
+eu_theme: GOVE
+attribution: "© Kartverket"
+
+tags:
+  provider: kartverket
+  topic: reference
+  geo: kommune
+  cadence: quarterly
+
+dimensions:
+  - code: kommunenummer
+    meaning: Four-digit kommune code, and the table's primary key
+    value_format: 4 digits, leading zeros significant — always text
+    notes: Matches dim_kommune's own kommune_nr convention; join key between the two.
+  - code: kommunenavn
+    meaning: Kartverket's own combined display name
+    value_format: free text
+    notes: "NOT just the primary name: for a kommune with more than one official name this is already the hyphenated combination (e.g. \"Loabák - Lavangen\"), in rekkefolge order — which is not always Norwegian-first (kommune 5518's rekkefolge=1 is Loabák, Sami, checked live 2026-11-08). The individual names are in administrativenhetnavn."
+  - code: administrativenhetnavn
+    meaning: Every official name for this kommune, as an array of {navn, rekkefolge, sprak}
+    value_format: JSON array
+    notes: "22 of 357 kommuner (measured 2026-11-08) carry more than one name — Norwegian plus Sami (sme) and/or Kven (fkv) forms where official."
+  - code: gyldigFra
+    meaning: Date this administrative unit became valid
+    value_format: compact date string, e.g. "20240101"
+    notes: The kommune's most recent boundary-effective date, not its founding date.
+  - code: gyldigTil
+    meaning: Date this administrative unit stopped being valid
+    value_format: compact date string, or absent
+    notes: Null on every one of 357 features measured 2026-11-08 — a whole-country "landsdekkende" order returns current units only.
+  - code: geometry
+    meaning: The municipality boundary, verbatim from the upstream GeoJSON
+    value_format: GeoJSON MultiPolygon, EPSG:4258
+    notes: Full resolution, not simplified — dbt derives a simplified geometry for publication.
+
+lifecycle: beta
+time_coverage:
+  start: null
+  end: null
+keywords:
+  - kommune
+  - administrative-boundary
+  - kartverket
+  - geonorge
+  - geometry
+suggested_joins:
+  - kartverket-postnummeromrade

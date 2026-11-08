@@ -9,6 +9,8 @@ dim_brreg_enhet,brreg-oppdateringer
 dim_brreg_underenhet,brreg-underenheter
 dim_chapter,redcross-branches
 dim_fylke,ssb-klass-fylker
+dim_kartverket_fylke,kartverket-fylke
+dim_kartverket_kommune,kartverket-kommune
 dim_kartverket_postnummeromrade,kartverket-postnummeromrade
 dim_kommune,ssb-klass-kommuner
 fact_chapter_activities,redcross-branches
@@ -146,6 +148,8 @@ mart_atlas_inventory,fhi-trangbodd
 mart_atlas_inventory,fhi-vgs-gjennomforing
 mart_atlas_inventory,husbanken-bostotte
 mart_atlas_inventory,imdi-bosetting
+mart_atlas_inventory,kartverket-fylke
+mart_atlas_inventory,kartverket-kommune
 mart_atlas_inventory,kartverket-postnummeromrade
 mart_atlas_inventory,lottstift-momskompensasjon
 mart_atlas_inventory,nav-aap
@@ -393,6 +397,8 @@ mart_indicators__udir_elevundersokelsen_mobbing,udir-elevundersokelsen-mobbing
 mart_indicators__udir_fravar,udir-fravar
 mart_indicators__udir_gsi,udir-gsi
 mart_indicators__udir_nasjonale_prover,udir-nasjonale-prover
+mart_kartverket_fylke,kartverket-fylke
+mart_kartverket_kommune,kartverket-kommune
 mart_kartverket_postnummeromrade,kartverket-postnummeromrade
 mart_kommune_befolkning_alder,ssb-07459
 mart_kommune_befolkning_alder,ssb-klass-fylker

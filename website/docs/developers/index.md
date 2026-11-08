@@ -6,7 +6,7 @@ This section is for **anyone consuming Atlas's public PostgREST API** to build t
 
 <!-- BEGIN holdings (generated) -->
 
-**62 upstream sources** from **12 publishers**, served as **101 read-only relations**.
+**64 upstream sources** from **12 publishers**, served as **103 read-only relations**.
 
 | publisher | sources | broadly |
 |---|---|---|
@@ -14,18 +14,18 @@ This section is for **anyone consuming Atlas's public PostgREST API** to build t
 | Statistisk sentralbyrå | 20 | population, income, families, housing, education, crime |
 | Brønnøysundregistrene | 5 | the company and voluntary-organisation registers |
 | Utdanningsdirektoratet | 4 | — |
+| Kartverket | 3 | — |
 | Arbeids- og velferdsdirektoratet | 3 | — |
 | Barne-, ungdoms- og familiedirektoratet | 2 | child poverty |
 | Posten Bring | 1 | — |
 | Husbanken | 1 | — |
 | Integrerings- og mangfoldsdirektoratet | 1 | — |
-| Kartverket | 1 | — |
 | Lotteri- og stiftelsestilsynet | 1 | — |
 | Norges Røde Kors | 1 | local chapters and their activities |
 
-By EU data theme: **SOCI** 31 (society) · **HEAL** 12 (health) · **GOVE** 9 (government) · **EDUC** 9 (education) · **JUST** 1 (justice).
+By EU data theme: **SOCI** 31 (society) · **HEAL** 12 (health) · **GOVE** 11 (government) · **EDUC** 9 (education) · **JUST** 1 (justice).
 
-Licences: **NLOD** for 57 of 62 — Norwegian public data, free to reuse with attribution. The exceptions are `kartverket-postnummeromrade` (CC BY 4.0) and `nav-aap` (CC BY 4.0) and `nav-helt-ledige` (CC BY 4.0) and `nav-uforetrygd` (CC BY 4.0) and `redcross-branches` (permissive) — Red Cross's own data rather than the state's.
+Licences: **NLOD** for 57 of 64 — Norwegian public data, free to reuse with attribution. The exceptions are `kartverket-fylke` (CC BY 4.0) and `kartverket-kommune` (CC BY 4.0) and `kartverket-postnummeromrade` (CC BY 4.0) and `nav-aap` (CC BY 4.0) and `nav-helt-ledige` (CC BY 4.0) and `nav-uforetrygd` (CC BY 4.0) and `redcross-branches` (permissive) — Red Cross's own data rather than the state's.
 
 ### What you can query
 
@@ -105,6 +105,8 @@ Licences: **NLOD** for 57 of 62 — Norwegian public data, free to reuse with at
 | `indicators__udir_gsi` | Per-source indicator data for udir-gsi (Utdanningsdirektoratet), at the publisher's own grain. |
 | `indicators__udir_nasjonale_prover` | Per-source indicator data for udir-nasjonale-prover (Utdanningsdirektoratet), at the publisher's own grain. |
 | `ingest_health` | One row per source: its most recent completed ingest run, and whether that run succeeded. |
+| `kartverket_fylke` | Kartverket's current county boundaries, full and simplified, as GeoJSON. |
+| `kartverket_kommune` | Kartverket's current municipality boundaries, full and simplified, as GeoJSON. |
 | `kartverket_postnummeromrade` | Kartverket's postcode-area polygons, full and simplified, as GeoJSON. |
 | `kommune_befolkning_alder` | Population by kommune, year and age band — the denominator layer for rates. |
 | `kommune_local_chapters` | One row per local chapter resolved to a kommune, with its NGO and category. |

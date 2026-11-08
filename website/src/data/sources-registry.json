@@ -67,7 +67,7 @@
       "description": "Canonical geographic dimensions used as join keys across every\nindicator: kommune and fylke classifications from SSB Klass.\n",
       "emoji": "🗺️",
       "order": 70,
-      "source_count": 4
+      "source_count": 6
     }
   ],
   "publishers": [
@@ -148,7 +148,7 @@
       "logo": "/img/publishers/kartverket.png",
       "feedback_url": "https://www.kartverket.no/om-kartverket/kontakt-oss",
       "notes": "The Norwegian Mapping Authority. Publishes the national geodata\ninfrastructure through Geonorge — administrative boundaries, postcode\nareas, and the Matrikkelen address register — the geometry layer none\nof Atlas's other sources carry.\n",
-      "source_count": 1,
+      "source_count": 3,
       "view_count": 0
     },
     {
@@ -251,6 +251,8 @@
         "ssb-klass-kommuner"
       ],
       "related_by_topic": [
+        "kartverket-fylke",
+        "kartverket-kommune",
         "kartverket-postnummeromrade",
         "ssb-klass-fylker",
         "ssb-klass-kommuner"
@@ -9571,6 +9573,378 @@
     },
     {
       "kind": "source",
+      "source_id": "kartverket-fylke",
+      "upstream_id": "6093c8a8-fa80-11e6-bc64-92361f002671",
+      "upstream_url": "https://nedlasting.geonorge.no/api/order",
+      "upstream_landing_page": "https://kartkatalog.geonorge.no/metadata/uuid/6093c8a8-fa80-11e6-bc64-92361f002671",
+      "upstream_title": "Administrative enheter fylker",
+      "description": "Kartverket's current county boundaries, via Geonorge's order-based download API. urb-agents #2098/#2099 (R4). Sibling to kartverket-kommune — see that source's own manifest for the shared shape. Current state only, 15 rows — no SSB-style '99 Uoppgitt' sentinel exists in Kartverket's own administrative geometry.",
+      "atlas_summary": null,
+      "publisher": {
+        "id": "kartverket",
+        "display_name": "Kartverket",
+        "homepage": "https://www.kartverket.no/",
+        "logo": "/img/publishers/kartverket.png"
+      },
+      "category": {
+        "id": "reference",
+        "name": "Reference geographies",
+        "emoji": "🗺️"
+      },
+      "license": "CC BY 4.0",
+      "license_url": "https://creativecommons.org/licenses/by/4.0/deed.no",
+      "periodicity": "P3M",
+      "eu_theme": "GOVE",
+      "attribution": "© Kartverket",
+      "tags": {
+        "provider": "kartverket",
+        "topic": "reference",
+        "geo": "kommune",
+        "cadence": "quarterly"
+      },
+      "keywords": [
+        "fylke",
+        "administrative-boundary",
+        "kartverket",
+        "geonorge",
+        "geometry"
+      ],
+      "lifecycle": "beta",
+      "time_coverage": {
+        "start": null,
+        "end": null
+      },
+      "methodology_notes": null,
+      "suggested_joins": [
+        "kartverket-kommune"
+      ],
+      "related_by_topic": [
+        "bring-postnummer",
+        "kartverket-kommune",
+        "kartverket-postnummeromrade",
+        "ssb-klass-fylker",
+        "ssb-klass-kommuner"
+      ],
+      "dimensions": [
+        {
+          "code": "fylkesnummer",
+          "meaning": "Two-digit fylke code, and the table's primary key",
+          "value_format": "2 digits, leading zeros significant — always text",
+          "notes": "Matches dim_fylke's own fylke_nr convention; join key between the two."
+        },
+        {
+          "code": "fylkesnavn",
+          "meaning": "The combined display name, as Kartverket's own fylkesnavn field carries it",
+          "value_format": "free text",
+          "notes": "May already be a hyphenated multi-language form, e.g. \"Troms - Romsa - Tromssa\" — distinct from the administrativenhetnavn array's individual entries."
+        },
+        {
+          "code": "administrativenhetnavn",
+          "meaning": "Every official name for this fylke, as an array of {navn, rekkefolge, sprak}",
+          "value_format": "JSON array",
+          "notes": "Several fylker (measured 2026-11-08) carry Norwegian plus Sami (sme) and/or Kven (fkv) forms where official."
+        },
+        {
+          "code": "gyldigFra",
+          "meaning": "Date this administrative unit became valid",
+          "value_format": "compact date string, e.g. \"20251013\"",
+          "notes": "The fylke's most recent boundary-effective date, not its founding date."
+        },
+        {
+          "code": "gyldigTil",
+          "meaning": "Date this administrative unit stopped being valid",
+          "value_format": "compact date string, or absent",
+          "notes": "Null on every one of 15 features measured 2026-11-08 — a whole-country \"landsdekkende\" order returns current units only."
+        },
+        {
+          "code": "geometry",
+          "meaning": "The county boundary, verbatim from the upstream GeoJSON",
+          "value_format": "GeoJSON MultiPolygon, EPSG:4258",
+          "notes": "Full resolution, not simplified — dbt derives a simplified geometry for publication."
+        }
+      ],
+      "raw_tables": null,
+      "sample_query": null,
+      "citation": {
+        "text": "Kartverket. (n.d.). Administrative enheter fylker. Retrieved from https://kartkatalog.geonorge.no/metadata/uuid/6093c8a8-fa80-11e6-bc64-92361f002671. Available in Atlas at https://atlas.sovereignsky.no/datasets/kartverket-fylke.",
+        "bibtex": "@misc{atlas_kartverket_fylke,\n  author = {Kartverket},\n  title  = {Administrative enheter fylker},\n  year   = {n.d.},\n  url    = {https://kartkatalog.geonorge.no/metadata/uuid/6093c8a8-fa80-11e6-bc64-92361f002671},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/kartverket-fylke}\n}"
+      },
+      "feedback_url": "https://www.kartverket.no/om-kartverket/kontakt-oss",
+      "consuming_marts": [
+        {
+          "mart_name": "mart_atlas_inventory",
+          "api_v1_name": "atlas_inventory",
+          "title": null,
+          "description_short": "What Atlas publishes: one row per endpoint with its row count, freshness and origin.",
+          "description_full": "What Atlas publishes: one row per endpoint with its row count, freshness and origin.\n\nWhat Atlas publishes, one row per queryable endpoint: how many records it\nserves, when its data last arrived, and where those rows came from.\nAsked for by Røde Kors — \"validate that all datasets that are ingested has\nan endpoint and it can be queried … count the number of records each\nendpoint has and update the last time it ingested data.\"\n⚠️ THE GRAIN IS PER ENDPOINT, NOT PER SOURCE. meta_sources answers \"what\ndid Atlas ingest\"; this answers \"what can I query, and is there anything\nin it\". One source can feed several endpoints and one endpoint can draw on\nseveral sources, so the two row counts are not comparable and summing\nsources will not reproduce an endpoint's count.\n⚠️ atlas_inventory does not list ITSELF. It is built from the same seed it\nreports on, so counting itself would be circular and the number would be\nwhatever the table held mid-build. 19 endpoints are listed; 20 are\npublished.",
+          "sample_query": "https://api-atlas.urbalurba.com/atlas_inventory?limit=5"
+        },
+        {
+          "mart_name": "mart_kartverket_fylke",
+          "api_v1_name": "kartverket_fylke",
+          "title": "County boundaries (full + simplified)",
+          "description_short": "Kartverket's current county boundaries, full and simplified, as GeoJSON.",
+          "description_full": "Kartverket's current county boundaries, full and simplified, as GeoJSON.\n\nOne row per fylke, 15 rows. Sibling to mart_kartverket_kommune — see that relation's own\ndescription for the simplification method and the names array. urb-agents #2098/#2099.",
+          "sample_query": "https://api-atlas.urbalurba.com/kartverket_fylke?limit=5"
+        }
+      ],
+      "consuming_models": [
+        {
+          "name": "dim_kartverket_fylke",
+          "kind": "dim"
+        },
+        {
+          "name": "mart_atlas_inventory",
+          "kind": "mart"
+        },
+        {
+          "name": "mart_kartverket_fylke",
+          "kind": "mart"
+        }
+      ],
+      "joined_with": [
+        {
+          "source_id": "bring-postnummer",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "brreg-enheter-alle",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "brreg-frivillige",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "brreg-oppdateringer",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "brreg-underenheter",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "bufdir-barnefattigdom",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "bufdir-barnevern",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "fhi-alkohol",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        }
+      ],
+      "last_ingested_at": null,
+      "latest_row_count": null,
+      "total_runs": null,
+      "downstream_model_count": null
+    },
+    {
+      "kind": "source",
+      "source_id": "kartverket-kommune",
+      "upstream_id": "041f1e6e-bdbc-4091-b48f-8a5990f3cc5b",
+      "upstream_url": "https://nedlasting.geonorge.no/api/order",
+      "upstream_landing_page": "https://kartkatalog.geonorge.no/metadata/uuid/041f1e6e-bdbc-4091-b48f-8a5990f3cc5b",
+      "upstream_title": "Administrative enheter kommuner",
+      "description": "Kartverket's current municipality boundaries, via Geonorge's order-based download API (same mechanism as kartverket-postnummeromrade — no static file URL exists). urb-agents #2098/#2099 (R4). Current state only, unlike dim_kommune's SSB-Klass-based full history — see the raw table's own migration header.",
+      "atlas_summary": null,
+      "publisher": {
+        "id": "kartverket",
+        "display_name": "Kartverket",
+        "homepage": "https://www.kartverket.no/",
+        "logo": "/img/publishers/kartverket.png"
+      },
+      "category": {
+        "id": "reference",
+        "name": "Reference geographies",
+        "emoji": "🗺️"
+      },
+      "license": "CC BY 4.0",
+      "license_url": "https://creativecommons.org/licenses/by/4.0/deed.no",
+      "periodicity": "P3M",
+      "eu_theme": "GOVE",
+      "attribution": "© Kartverket",
+      "tags": {
+        "provider": "kartverket",
+        "topic": "reference",
+        "geo": "kommune",
+        "cadence": "quarterly"
+      },
+      "keywords": [
+        "kommune",
+        "administrative-boundary",
+        "kartverket",
+        "geonorge",
+        "geometry"
+      ],
+      "lifecycle": "beta",
+      "time_coverage": {
+        "start": null,
+        "end": null
+      },
+      "methodology_notes": null,
+      "suggested_joins": [
+        "kartverket-postnummeromrade"
+      ],
+      "related_by_topic": [
+        "bring-postnummer",
+        "kartverket-fylke",
+        "kartverket-postnummeromrade",
+        "ssb-klass-fylker",
+        "ssb-klass-kommuner"
+      ],
+      "dimensions": [
+        {
+          "code": "kommunenummer",
+          "meaning": "Four-digit kommune code, and the table's primary key",
+          "value_format": "4 digits, leading zeros significant — always text",
+          "notes": "Matches dim_kommune's own kommune_nr convention; join key between the two."
+        },
+        {
+          "code": "kommunenavn",
+          "meaning": "Kartverket's own combined display name",
+          "value_format": "free text",
+          "notes": "NOT just the primary name: for a kommune with more than one official name this is already the hyphenated combination (e.g. \"Loabák - Lavangen\"), in rekkefolge order — which is not always Norwegian-first (kommune 5518's rekkefolge=1 is Loabák, Sami, checked live 2026-11-08). The individual names are in administrativenhetnavn."
+        },
+        {
+          "code": "administrativenhetnavn",
+          "meaning": "Every official name for this kommune, as an array of {navn, rekkefolge, sprak}",
+          "value_format": "JSON array",
+          "notes": "22 of 357 kommuner (measured 2026-11-08) carry more than one name — Norwegian plus Sami (sme) and/or Kven (fkv) forms where official."
+        },
+        {
+          "code": "gyldigFra",
+          "meaning": "Date this administrative unit became valid",
+          "value_format": "compact date string, e.g. \"20240101\"",
+          "notes": "The kommune's most recent boundary-effective date, not its founding date."
+        },
+        {
+          "code": "gyldigTil",
+          "meaning": "Date this administrative unit stopped being valid",
+          "value_format": "compact date string, or absent",
+          "notes": "Null on every one of 357 features measured 2026-11-08 — a whole-country \"landsdekkende\" order returns current units only."
+        },
+        {
+          "code": "geometry",
+          "meaning": "The municipality boundary, verbatim from the upstream GeoJSON",
+          "value_format": "GeoJSON MultiPolygon, EPSG:4258",
+          "notes": "Full resolution, not simplified — dbt derives a simplified geometry for publication."
+        }
+      ],
+      "raw_tables": null,
+      "sample_query": null,
+      "citation": {
+        "text": "Kartverket. (n.d.). Administrative enheter kommuner. Retrieved from https://kartkatalog.geonorge.no/metadata/uuid/041f1e6e-bdbc-4091-b48f-8a5990f3cc5b. Available in Atlas at https://atlas.sovereignsky.no/datasets/kartverket-kommune.",
+        "bibtex": "@misc{atlas_kartverket_kommune,\n  author = {Kartverket},\n  title  = {Administrative enheter kommuner},\n  year   = {n.d.},\n  url    = {https://kartkatalog.geonorge.no/metadata/uuid/041f1e6e-bdbc-4091-b48f-8a5990f3cc5b},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/kartverket-kommune}\n}"
+      },
+      "feedback_url": "https://www.kartverket.no/om-kartverket/kontakt-oss",
+      "consuming_marts": [
+        {
+          "mart_name": "mart_atlas_inventory",
+          "api_v1_name": "atlas_inventory",
+          "title": null,
+          "description_short": "What Atlas publishes: one row per endpoint with its row count, freshness and origin.",
+          "description_full": "What Atlas publishes: one row per endpoint with its row count, freshness and origin.\n\nWhat Atlas publishes, one row per queryable endpoint: how many records it\nserves, when its data last arrived, and where those rows came from.\nAsked for by Røde Kors — \"validate that all datasets that are ingested has\nan endpoint and it can be queried … count the number of records each\nendpoint has and update the last time it ingested data.\"\n⚠️ THE GRAIN IS PER ENDPOINT, NOT PER SOURCE. meta_sources answers \"what\ndid Atlas ingest\"; this answers \"what can I query, and is there anything\nin it\". One source can feed several endpoints and one endpoint can draw on\nseveral sources, so the two row counts are not comparable and summing\nsources will not reproduce an endpoint's count.\n⚠️ atlas_inventory does not list ITSELF. It is built from the same seed it\nreports on, so counting itself would be circular and the number would be\nwhatever the table held mid-build. 19 endpoints are listed; 20 are\npublished.",
+          "sample_query": "https://api-atlas.urbalurba.com/atlas_inventory?limit=5"
+        },
+        {
+          "mart_name": "mart_kartverket_kommune",
+          "api_v1_name": "kartverket_kommune",
+          "title": "Municipality boundaries (full + simplified)",
+          "description_short": "Kartverket's current municipality boundaries, full and simplified, as GeoJSON.",
+          "description_full": "Kartverket's current municipality boundaries, full and simplified, as GeoJSON.\n\nOne row per kommune, 357 rows. geometry is the full, unsimplified boundary;\ngeometry_simplified is the same shape at a 50m tolerance, computed in EPSG:25833 and\nreprojected back to EPSG:4258 — same method as mart_kartverket_postnummeromrade. names\ncarries every official name (Norwegian, and Sami/Kven where official) as a jsonb array,\nnot flattened into per-language columns. urb-agents #2098/#2099 (R4).",
+          "sample_query": "https://api-atlas.urbalurba.com/kartverket_kommune?limit=5"
+        }
+      ],
+      "consuming_models": [
+        {
+          "name": "dim_kartverket_kommune",
+          "kind": "dim"
+        },
+        {
+          "name": "mart_atlas_inventory",
+          "kind": "mart"
+        },
+        {
+          "name": "mart_kartverket_kommune",
+          "kind": "mart"
+        }
+      ],
+      "joined_with": [
+        {
+          "source_id": "bring-postnummer",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "brreg-enheter-alle",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "brreg-frivillige",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "brreg-oppdateringer",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "brreg-underenheter",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "bufdir-barnefattigdom",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "bufdir-barnevern",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "fhi-alkohol",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        }
+      ],
+      "last_ingested_at": null,
+      "latest_row_count": null,
+      "total_runs": null,
+      "downstream_model_count": null
+    },
+    {
+      "kind": "source",
       "source_id": "kartverket-postnummeromrade",
       "upstream_id": "462a5297-33ef-438a-82a5-07fff5799be3",
       "upstream_url": "https://nedlasting.geonorge.no/api/order",
@@ -9619,6 +9993,8 @@
       ],
       "related_by_topic": [
         "bring-postnummer",
+        "kartverket-fylke",
+        "kartverket-kommune",
         "ssb-klass-fylker",
         "ssb-klass-kommuner"
       ],
@@ -16005,6 +16381,8 @@
       ],
       "related_by_topic": [
         "bring-postnummer",
+        "kartverket-fylke",
+        "kartverket-kommune",
         "kartverket-postnummeromrade",
         "ssb-klass-kommuner"
       ],
@@ -16360,6 +16738,8 @@
       ],
       "related_by_topic": [
         "bring-postnummer",
+        "kartverket-fylke",
+        "kartverket-kommune",
         "kartverket-postnummeromrade",
         "ssb-klass-fylker"
       ],
@@ -17986,6 +18366,18 @@
           "model_name": "mart_ingest_health",
           "title": "Ingest health",
           "description_short": "One row per source: its most recent completed ingest run, and whether that run succeeded."
+        },
+        {
+          "parent_kind": "model",
+          "model_name": "mart_kartverket_fylke",
+          "title": "County boundaries (full + simplified)",
+          "description_short": "Kartverket's current county boundaries, full and simplified, as GeoJSON."
+        },
+        {
+          "parent_kind": "model",
+          "model_name": "mart_kartverket_kommune",
+          "title": "Municipality boundaries (full + simplified)",
+          "description_short": "Kartverket's current municipality boundaries, full and simplified, as GeoJSON."
         },
         {
           "parent_kind": "model",
@@ -23747,6 +24139,106 @@
         "homepage": "https://atlas.sovereignsky.no/",
         "logo": "/img/logo.svg"
       }
+    },
+    {
+      "kind": "view",
+      "view_id": "kartverket_fylke",
+      "mart_name": "mart_kartverket_fylke",
+      "api_v1_name": "kartverket_fylke",
+      "title": "County boundaries (full + simplified)",
+      "description_short": "Kartverket's current county boundaries, full and simplified, as GeoJSON.",
+      "description_full": "Kartverket's current county boundaries, full and simplified, as GeoJSON.\n\nOne row per fylke, 15 rows. Sibling to mart_kartverket_kommune — see that relation's own\ndescription for the simplification method and the names array. urb-agents #2098/#2099.",
+      "columns": [
+        {
+          "name": "fylke_nr",
+          "description": "2-digit fylke code. Primary key."
+        },
+        {
+          "name": "fylke_navn",
+          "description": "The combined display name, as Kartverket's own fylkesnavn field carries it."
+        },
+        {
+          "name": "names",
+          "description": "Every official name: a jsonb array of {navn, rekkefolge, sprak}."
+        },
+        {
+          "name": "gyldig_fra",
+          "description": "Date this fylke boundary became valid."
+        },
+        {
+          "name": "gyldig_til",
+          "description": "Date this fylke boundary stopped being valid. Null for every fylke today."
+        },
+        {
+          "name": "geometry",
+          "description": "The full, unsimplified boundary as GeoJSON, EPSG:4258."
+        },
+        {
+          "name": "geometry_simplified",
+          "description": "The same boundary simplified at a 50m tolerance, as GeoJSON, EPSG:4258."
+        }
+      ],
+      "built_from": [
+        {
+          "parent_kind": "model",
+          "model_name": "dim_kartverket_fylke",
+          "title": null,
+          "description_short": "Kartverket's current county boundaries, typed."
+        }
+      ],
+      "sample_query": "https://api-atlas.urbalurba.com/kartverket_fylke?limit=5",
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_kartverket_fylke",
+      "publisher": null
+    },
+    {
+      "kind": "view",
+      "view_id": "kartverket_kommune",
+      "mart_name": "mart_kartverket_kommune",
+      "api_v1_name": "kartverket_kommune",
+      "title": "Municipality boundaries (full + simplified)",
+      "description_short": "Kartverket's current municipality boundaries, full and simplified, as GeoJSON.",
+      "description_full": "Kartverket's current municipality boundaries, full and simplified, as GeoJSON.\n\nOne row per kommune, 357 rows. geometry is the full, unsimplified boundary;\ngeometry_simplified is the same shape at a 50m tolerance, computed in EPSG:25833 and\nreprojected back to EPSG:4258 — same method as mart_kartverket_postnummeromrade. names\ncarries every official name (Norwegian, and Sami/Kven where official) as a jsonb array,\nnot flattened into per-language columns. urb-agents #2098/#2099 (R4).",
+      "columns": [
+        {
+          "name": "kommune_nr",
+          "description": "4-digit kommune code. Primary key."
+        },
+        {
+          "name": "kommune_navn",
+          "description": "Kartverket's own combined display name — already hyphenated across official languages where more than one exists, not just the primary name."
+        },
+        {
+          "name": "names",
+          "description": "Every official name: a jsonb array of {navn, rekkefolge, sprak}."
+        },
+        {
+          "name": "gyldig_fra",
+          "description": "Date this kommune boundary became valid."
+        },
+        {
+          "name": "gyldig_til",
+          "description": "Date this kommune boundary stopped being valid. Null for every kommune today."
+        },
+        {
+          "name": "geometry",
+          "description": "The full, unsimplified boundary as GeoJSON, EPSG:4258."
+        },
+        {
+          "name": "geometry_simplified",
+          "description": "The same boundary simplified at a 50m tolerance, as GeoJSON, EPSG:4258."
+        }
+      ],
+      "built_from": [
+        {
+          "parent_kind": "model",
+          "model_name": "dim_kartverket_kommune",
+          "title": null,
+          "description_short": "Kartverket's current municipality boundaries, typed."
+        }
+      ],
+      "sample_query": "https://api-atlas.urbalurba.com/kartverket_kommune?limit=5",
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_kartverket_kommune",
+      "publisher": null
     },
     {
       "kind": "view",

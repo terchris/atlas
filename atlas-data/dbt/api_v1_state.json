@@ -75,6 +75,8 @@
     "indicators__udir_gsi",
     "indicators__udir_nasjonale_prover",
     "ingest_health",
+    "kartverket_fylke",
+    "kartverket_kommune",
     "kartverket_postnummeromrade",
     "kommune_befolkning_alder",
     "kommune_local_chapters",

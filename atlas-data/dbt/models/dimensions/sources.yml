@@ -3,6 +3,68 @@ sources:
   - name: raw
     schema: raw
     tables:
+      - name: kartverket_kommune
+        description: |
+          Kartverket's current municipality boundaries, verbatim, one row per kommune.
+          Source for dim_kartverket_kommune. Populated by
+          atlas-data/ingest/src/sources/kartverket-kommune. urb-agents #2098/#2099 (R4).
+        loaded_at_field: loaded_at
+        meta:
+          ingest_cadence: monthly
+        freshness:
+          warn_after: {count: 120, period: day}
+          error_after: {count: 360, period: day}
+        columns:
+          - name: kommune_nr
+            description: 4-digit kommune code. Primary key.
+            data_tests: [not_null, unique]
+          - name: kommune_navn
+            description: The primary (rekkefolge=1) name, always Norwegian in the measured snapshot.
+            data_tests: [not_null]
+          - name: names
+            description: Every official name as a jsonb array of {navn, rekkefolge, sprak}.
+            data_tests: [not_null]
+          - name: gyldig_fra
+            description: Date this kommune boundary became valid.
+          - name: gyldig_til
+            description: Date this kommune boundary stopped being valid. Null in every row of a whole-country pull.
+          - name: geometry
+            description: The boundary, verbatim, EPSG:4258, full resolution.
+            data_tests: [not_null]
+          - name: loaded_at
+            description: When Atlas fetched this row.
+            data_tests: [not_null]
+      - name: kartverket_fylke
+        description: |
+          Kartverket's current county boundaries, verbatim, one row per fylke.
+          Source for dim_kartverket_fylke. Populated by
+          atlas-data/ingest/src/sources/kartverket-fylke. urb-agents #2098/#2099 (R4).
+        loaded_at_field: loaded_at
+        meta:
+          ingest_cadence: monthly
+        freshness:
+          warn_after: {count: 120, period: day}
+          error_after: {count: 360, period: day}
+        columns:
+          - name: fylke_nr
+            description: 2-digit fylke code. Primary key.
+            data_tests: [not_null, unique]
+          - name: fylke_navn
+            description: The combined display name, as Kartverket's own fylkesnavn field carries it.
+            data_tests: [not_null]
+          - name: names
+            description: Every official name as a jsonb array of {navn, rekkefolge, sprak}.
+            data_tests: [not_null]
+          - name: gyldig_fra
+            description: Date this fylke boundary became valid.
+          - name: gyldig_til
+            description: Date this fylke boundary stopped being valid. Null in every row of a whole-country pull.
+          - name: geometry
+            description: The boundary, verbatim, EPSG:4258, full resolution.
+            data_tests: [not_null]
+          - name: loaded_at
+            description: When Atlas fetched this row.
+            data_tests: [not_null]
       - name: kartverket_postnummeromrade
         description: |
           Kartverket's Postnummerområder, verbatim, one row per upstream GeoJSON

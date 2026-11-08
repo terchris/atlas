@@ -1,0 +1,61 @@
+# Hand-authored. The dimensions: block is hand-authored — editorial
+# semantics the catalogue can't compute. After commit, this file is
+# human-authored — ingest runs do NOT modify it.
+
+source_id: kartverket-fylke
+upstream_id: "6093c8a8-fa80-11e6-bc64-92361f002671"
+upstream_url: https://nedlasting.geonorge.no/api/order
+upstream_landing_page: https://kartkatalog.geonorge.no/metadata/uuid/6093c8a8-fa80-11e6-bc64-92361f002671
+upstream_title: "Administrative enheter fylker"
+description: "Kartverket's current county boundaries, via Geonorge's order-based download API. urb-agents #2098/#2099 (R4). Sibling to kartverket-kommune — see that source's own manifest for the shared shape. Current state only, 15 rows — no SSB-style '99 Uoppgitt' sentinel exists in Kartverket's own administrative geometry."
+publisher: Kartverket
+license: CC BY 4.0
+license_url: https://creativecommons.org/licenses/by/4.0/deed.no
+periodicity: P3M
+eu_theme: GOVE
+attribution: "© Kartverket"
+
+tags:
+  provider: kartverket
+  topic: reference
+  geo: kommune
+  cadence: quarterly
+
+dimensions:
+  - code: fylkesnummer
+    meaning: Two-digit fylke code, and the table's primary key
+    value_format: 2 digits, leading zeros significant — always text
+    notes: Matches dim_fylke's own fylke_nr convention; join key between the two.
+  - code: fylkesnavn
+    meaning: The combined display name, as Kartverket's own fylkesnavn field carries it
+    value_format: free text
+    notes: "May already be a hyphenated multi-language form, e.g. \"Troms - Romsa - Tromssa\" — distinct from the administrativenhetnavn array's individual entries."
+  - code: administrativenhetnavn
+    meaning: Every official name for this fylke, as an array of {navn, rekkefolge, sprak}
+    value_format: JSON array
+    notes: "Several fylker (measured 2026-11-08) carry Norwegian plus Sami (sme) and/or Kven (fkv) forms where official."
+  - code: gyldigFra
+    meaning: Date this administrative unit became valid
+    value_format: compact date string, e.g. "20251013"
+    notes: The fylke's most recent boundary-effective date, not its founding date.
+  - code: gyldigTil
+    meaning: Date this administrative unit stopped being valid
+    value_format: compact date string, or absent
+    notes: Null on every one of 15 features measured 2026-11-08 — a whole-country "landsdekkende" order returns current units only.
+  - code: geometry
+    meaning: The county boundary, verbatim from the upstream GeoJSON
+    value_format: GeoJSON MultiPolygon, EPSG:4258
+    notes: Full resolution, not simplified — dbt derives a simplified geometry for publication.
+
+lifecycle: beta
+time_coverage:
+  start: null
+  end: null
+keywords:
+  - fylke
+  - administrative-boundary
+  - kartverket
+  - geonorge
+  - geometry
+suggested_joins:
+  - kartverket-kommune
