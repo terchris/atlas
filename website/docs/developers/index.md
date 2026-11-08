@@ -25,7 +25,7 @@ This section is for **anyone consuming Atlas's public PostgREST API** to build t
 
 By EU data theme: **SOCI** 31 (society) · **GOVE** 12 (government) · **HEAL** 12 (health) · **EDUC** 9 (education) · **JUST** 1 (justice).
 
-Licences: **NLOD** for 57 of 65 — Norwegian public data, free to reuse with attribution. The exceptions are `kartverket-fylke` (CC BY 4.0) and `kartverket-kommune` (CC BY 4.0) and `kartverket-matrikkel-adresse` (CC BY 4.0) and `kartverket-postnummeromrade` (CC BY 4.0) and `nav-aap` (CC BY 4.0) and `nav-helt-ledige` (CC BY 4.0) and `nav-uforetrygd` (CC BY 4.0) and `redcross-branches` (permissive) — Red Cross's own data rather than the state's.
+Licences: **NLOD** for 37 of 65 — Norwegian public data, free to reuse with attribution. The exceptions are `kartverket-fylke` (CC BY 4.0) and `kartverket-kommune` (CC BY 4.0) and `kartverket-matrikkel-adresse` (CC BY 4.0) and `kartverket-postnummeromrade` (CC BY 4.0) and `nav-aap` (CC BY 4.0) and `nav-helt-ledige` (CC BY 4.0) and `nav-uforetrygd` (CC BY 4.0) and `redcross-branches` (permissive) and `ssb-06083` (CC BY 4.0) and `ssb-06913` (CC BY 4.0) and `ssb-06944` (CC BY 4.0) and `ssb-06947` (CC BY 4.0) and `ssb-07459` (CC BY 4.0) and `ssb-08764` (CC BY 4.0) and `ssb-09429` (CC BY 4.0) and `ssb-10501` (CC BY 4.0) and `ssb-10826` (CC BY 4.0) and `ssb-12063` (CC BY 4.0) and `ssb-12131` (CC BY 4.0) and `ssb-12132` (CC BY 4.0) and `ssb-12292` (CC BY 4.0) and `ssb-12451` (CC BY 4.0) and `ssb-12891` (CC BY 4.0) and `ssb-12944` (CC BY 4.0) and `ssb-13995` (CC BY 4.0) and `ssb-crime-tables` (CC BY 4.0) and `ssb-klass-fylker` (CC BY 4.0) and `ssb-klass-kommuner` (CC BY 4.0) — Red Cross's own data rather than the state's.
 
 ### What you can query
 

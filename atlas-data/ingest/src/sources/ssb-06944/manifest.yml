@@ -9,8 +9,8 @@ upstream_landing_page: https://www.ssb.no/statbank/table/06944
 upstream_title: "06944: Inntekt for husholdninger, etter husholdningstype. Antall og median. Delområder (K) (B) 2005-2024"
 description: "SSB statistikkbanktabell 06944 — Inntekt for husholdninger, etter husholdningstype. Median household income, income-tax, and household count per region × household type × year."
 publisher: Statistisk sentralbyrå
-license: NLOD
-license_url: https://data.norge.no/nlod/no/2.0
+license: CC BY 4.0
+license_url: https://www.ssb.no/en/diverse/lisens
 periodicity: P1Y
 eu_theme: SOCI
 attribution: "Kilde: Statistisk sentralbyrå, tabell 06944"

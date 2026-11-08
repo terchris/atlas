@@ -9,8 +9,8 @@ upstream_landing_page: https://www.ssb.no/statbank/table/08764
 upstream_title: "08764: Personer under 18 år i husholdninger med lavinntekt (EU- og OECD-skala). Antall og prosent (K) (B) 2005-2024"
 description: "Ingestion module for SSB statistikkbanktabell 08764 — Personer under 18 år i husholdninger med lavinntekt (EU- og OECD-skala)."
 publisher: Statistisk sentralbyrå
-license: NLOD
-license_url: https://data.norge.no/nlod/no/2.0
+license: CC BY 4.0
+license_url: https://www.ssb.no/en/diverse/lisens
 periodicity: P1Y
 eu_theme: SOCI
 attribution: "Kilde: Statistisk sentralbyrå, tabell 08764"

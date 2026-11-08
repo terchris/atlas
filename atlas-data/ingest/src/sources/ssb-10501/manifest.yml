@@ -9,8 +9,8 @@ upstream_landing_page: https://www.ssb.no/statbank/table/10501
 upstream_title: "10501: Personer, etter jentenavn og guttenavn 2013-2025"
 description: "Persons by first name, per year — 2,152 first names used by 200 or more persons in Norway at year-end, 2013-2025. NOT an exhaustive name list: a name held by fewer than 200 people never appears. Added as a reference list for identifying Norwegian first names in free text."
 publisher: Statistisk sentralbyrå
-license: NLOD
-license_url: https://data.norge.no/nlod/no/2.0
+license: CC BY 4.0
+license_url: https://www.ssb.no/en/diverse/lisens
 periodicity: P1Y
 eu_theme: SOCI
 attribution: "Kilde: Statistisk sentralbyrå, tabell 10501"
