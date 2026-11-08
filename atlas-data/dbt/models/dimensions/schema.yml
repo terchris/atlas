@@ -133,6 +133,66 @@ models:
         description: When Atlas fetched this row — Bring's file has no Last-Modified header, so there is no publication date to carry.
         data_tests: [not_null]
 
+  - name: dim_kartverket_kommune
+    description: |
+      Kartverket's current municipality boundaries, typed. urb-agents #2098/#2099 (R4).
+
+      Carries both the full and a simplified geometry — see this model's own header for the
+      simplification method (reproject to EPSG:25833 for a real metres tolerance, simplify at
+      50m, reproject back to 4258). Current state only: dim_kommune (SSB Klass-based) is the one
+      with history.
+    columns:
+      - name: kommune_nr
+        description: 4-digit kommune code. Primary key.
+        data_tests:
+          - not_null
+          - unique
+      - name: kommune_navn
+        description: "Kartverket's own combined display name — NOT just the primary name. Already hyphenated across official languages where more than one exists (e.g. \"Loabák - Lavangen\"), in rekkefolge order, which is not always Norwegian-first."
+        data_tests: [not_null]
+      - name: names
+        description: Every official name as a jsonb array of {navn, rekkefolge, sprak} — Sami and/or Kven forms for 22 of 357 kommuner (measured 2026-11-08).
+        data_tests: [not_null]
+      - name: gyldig_fra
+        description: Date this kommune boundary became valid.
+      - name: gyldig_til
+        description: Date this kommune boundary stopped being valid. Null in every row measured 2026-11-08 — a whole-country pull returns current units only.
+      - name: geometry_full
+        description: The unsimplified boundary, EPSG:4258, stored as MultiPolygon.
+        data_tests: [not_null]
+      - name: geometry_simplified
+        description: The same boundary simplified at a 50m tolerance in EPSG:25833, reprojected back to EPSG:4258.
+        data_tests: [not_null]
+
+  - name: dim_kartverket_fylke
+    description: |
+      Kartverket's current county boundaries, typed. urb-agents #2098/#2099 (R4).
+
+      Sibling to dim_kartverket_kommune — see that model's own description for the simplification
+      method. 15 rows — no SSB-style '99 Uoppgitt' sentinel exists in Kartverket's own geometry.
+    columns:
+      - name: fylke_nr
+        description: 2-digit fylke code. Primary key.
+        data_tests:
+          - not_null
+          - unique
+      - name: fylke_navn
+        description: The combined display name, as Kartverket's own fylkesnavn field carries it.
+        data_tests: [not_null]
+      - name: names
+        description: Every official name as a jsonb array of {navn, rekkefolge, sprak}.
+        data_tests: [not_null]
+      - name: gyldig_fra
+        description: Date this fylke boundary became valid.
+      - name: gyldig_til
+        description: Date this fylke boundary stopped being valid. Null in every row measured 2026-11-08.
+      - name: geometry_full
+        description: The unsimplified boundary, EPSG:4258, stored as MultiPolygon.
+        data_tests: [not_null]
+      - name: geometry_simplified
+        description: The same boundary simplified at a 50m tolerance in EPSG:25833, reprojected back to EPSG:4258.
+        data_tests: [not_null]
+
   - name: dim_kartverket_postnummeromrade
     description: |
       Kartverket's postcode-area polygons, one row per postnummer. urb-agents #2098/#2099 (R3).

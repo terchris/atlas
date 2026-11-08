@@ -3376,6 +3376,69 @@ models:
         description: When Atlas fetched this row. Bring's file has no Last-Modified header, so there is no publication date to carry — this is a fetch date, not a publication date.
         data_tests: [not_null]
 
+  - name: mart_kartverket_kommune
+    meta:
+      stability: source
+      title: "Municipality boundaries (full + simplified)"
+    description: |
+      Kartverket's current municipality boundaries, full and simplified, as GeoJSON.
+
+      One row per kommune, 357 rows. geometry is the full, unsimplified boundary;
+      geometry_simplified is the same shape at a 50m tolerance, computed in EPSG:25833 and
+      reprojected back to EPSG:4258 — same method as mart_kartverket_postnummeromrade. names
+      carries every official name (Norwegian, and Sami/Kven where official) as a jsonb array,
+      not flattened into per-language columns. urb-agents #2098/#2099 (R4).
+    columns:
+      - name: kommune_nr
+        description: 4-digit kommune code. Primary key.
+        data_tests: [not_null, unique]
+      - name: kommune_navn
+        description: "Kartverket's own combined display name — already hyphenated across official languages where more than one exists, not just the primary name."
+        data_tests: [not_null]
+      - name: names
+        description: "Every official name: a jsonb array of {navn, rekkefolge, sprak}."
+        data_tests: [not_null]
+      - name: gyldig_fra
+        description: Date this kommune boundary became valid.
+      - name: gyldig_til
+        description: Date this kommune boundary stopped being valid. Null for every kommune today.
+      - name: geometry
+        description: The full, unsimplified boundary as GeoJSON, EPSG:4258.
+        data_tests: [not_null]
+      - name: geometry_simplified
+        description: The same boundary simplified at a 50m tolerance, as GeoJSON, EPSG:4258.
+        data_tests: [not_null]
+
+  - name: mart_kartverket_fylke
+    meta:
+      stability: source
+      title: "County boundaries (full + simplified)"
+    description: |
+      Kartverket's current county boundaries, full and simplified, as GeoJSON.
+
+      One row per fylke, 15 rows. Sibling to mart_kartverket_kommune — see that relation's own
+      description for the simplification method and the names array. urb-agents #2098/#2099.
+    columns:
+      - name: fylke_nr
+        description: 2-digit fylke code. Primary key.
+        data_tests: [not_null, unique]
+      - name: fylke_navn
+        description: The combined display name, as Kartverket's own fylkesnavn field carries it.
+        data_tests: [not_null]
+      - name: names
+        description: "Every official name: a jsonb array of {navn, rekkefolge, sprak}."
+        data_tests: [not_null]
+      - name: gyldig_fra
+        description: Date this fylke boundary became valid.
+      - name: gyldig_til
+        description: Date this fylke boundary stopped being valid. Null for every fylke today.
+      - name: geometry
+        description: The full, unsimplified boundary as GeoJSON, EPSG:4258.
+        data_tests: [not_null]
+      - name: geometry_simplified
+        description: The same boundary simplified at a 50m tolerance, as GeoJSON, EPSG:4258.
+        data_tests: [not_null]
+
   - name: mart_kartverket_postnummeromrade
     meta:
       stability: source

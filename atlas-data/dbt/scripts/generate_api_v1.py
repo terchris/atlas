@@ -344,23 +344,47 @@ REFERENCE:
   kartverket_postnummeromrade  postcode-area polygons, geometry and
                                geometry_simplified (50 m, see below), one
                                row per postnummer. urb-agents #2098/#2099.
-                               ⚠️ This is a NARROWER case than the kommune
-                               boundaries excluded below, not a reversal of
-                               that decision: 3,382 point-lookupable rows at
-                               ~7 KB full / ~1 KB simplified each, not one
-                               38 MB bulk file. A consumer filtering to the
-                               one postnummer it needs never touches the
-                               other 3,381; the kommune-boundary exclusion
-                               is about a consumer who has no choice but to
-                               pull the whole country at once. Requested
-                               explicitly, by Terje, served via api_v1 and
-                               not as a static file precisely so point
-                               lookups work (urb-agents #2098).
+                               ⚠️ This is a NARROWER case than the static
+                               boundary file below, not a reversal of that
+                               decision: 3,382 point-lookupable rows at ~7 KB
+                               full / ~1 KB simplified each, not one 38 MB
+                               bulk file. A consumer filtering to the one
+                               postnummer it needs never touches the other
+                               3,381. Requested explicitly, by Terje, served
+                               via api_v1 and not as a static file precisely
+                               so point lookups work (urb-agents #2098).
+  kartverket_kommune           municipality boundaries, geometry and
+                               geometry_simplified, 357 rows. Same reasoning
+                               and method as kartverket_postnummeromrade —
+                               point lookups, not a bulk file. This is the
+                               SAME upstream the static kommuner.geojson file
+                               below also serves, through a DIFFERENT
+                               pipeline (that file does 357 individual
+                               requests to ws.geonorge.no/kommuneinfo and
+                               simplifies to ~33m for a Docusaurus
+                               choropleth; this relation orders the whole
+                               country from Geonorge's download API and
+                               simplifies to 50m for programmatic point
+                               lookups). Two consumers, two shapes, not a
+                               duplicate maintained twice by accident.
+                               ⚠️ urb-agents #1438 measured the live API
+                               collapsing at three concurrent full-table
+                               scans with no indexes on marts.* — this
+                               relation's underlying dim table has a unique
+                               btree on kommune_nr, so a point lookup
+                               (?kommune_nr=eq.0301) should use it; fetching
+                               all 357 rows unfiltered has the same
+                               full-scan profile every other large relation
+                               here already has, not a new risk this PR
+                               introduces.
+  kartverket_fylke             county boundaries, same method, 15 rows.
 
-MAPS — BULK NATIONAL BOUNDARIES ARE NOT IN THIS API, AND THAT IS ON PURPOSE.
-Full-resolution kommune boundaries are about 38 MB; serving them here would be
-worse than not having them. A SIMPLIFIED boundary file is published on the
-documentation site instead, keyed so it joins straight onto dim_kommune:
+MAPS — THE BULK NATIONAL FILE BELOW IS A SEPARATE THING FROM kartverket_kommune
+ABOVE, NOT A CONTRADICTION OF IT. Full-resolution kommune boundaries as ONE
+bulk request are about 38 MB; serving that shape here would be worse than not
+having it. A SIMPLIFIED boundary file is published on the documentation site
+instead, for a consumer who wants the whole country in one request, keyed so
+it joins straight onto dim_kommune:
 
   {site}/geo/kommuner.geojson
 

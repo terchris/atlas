@@ -12,6 +12,15 @@ See _factory.make_raw_ingest_asset. Currently:
 - bufdir-barnevern: zip download from Bufdir's child welfare surface. Same
   delivery mechanism as the sibling above, different internal workbook shape
   — see atlas-data/ingest/src/sources/bufdir-barnevern/README.md.
+- kartverket-postnummeromrade: Atlas's first real PostGIS source. Geonorge's
+  order-based download API, not a static file — see
+  atlas-data/ingest/src/sources/kartverket-postnummeromrade/README.md.
+  urb-agents #2098/#2099 (R3).
+- kartverket-kommune / kartverket-fylke: same Geonorge order mechanism as
+  kartverket-postnummeromrade, factored into a shared TypeScript helper
+  (atlas-data/ingest/src/lib/geonorge.ts) once this was a real second
+  consumer. urb-agents #2098/#2099 (R4) — see
+  atlas-data/ingest/src/sources/kartverket-kommune/README.md.
 - nav-uforetrygd: one xlsx download from NAV's PST302 uføretrygd monthly
   statistics page. Atlas's first monthly-polled source outside SSB/KLASS —
   see atlas-data/ingest/src/sources/nav-uforetrygd/README.md.
@@ -94,6 +103,8 @@ OTHER_SOURCES = [
     "bufdir-barnevern",
     "husbanken-bostotte",
     "imdi-bosetting",
+    "kartverket-fylke",
+    "kartverket-kommune",
     "kartverket-postnummeromrade",
     "lottstift-momskompensasjon",
     "nav-aap",
@@ -129,7 +140,7 @@ assets = [
     # nav-uforetrygd, nav-aap and nav-helt-ledige republish monthly, not
     # weekly — polled to match.
     *make_raw_ingest_assets(
-        ["kartverket-postnummeromrade", "nav-aap", "nav-helt-ledige", "nav-uforetrygd"],
+        ["kartverket-fylke", "kartverket-kommune", "kartverket-postnummeromrade", "nav-aap", "nav-helt-ledige", "nav-uforetrygd"],
         group_name="raw_other",
         automation_condition=cadence.monthly_polled(),
         freshness_policy=cadence.MONTHLY_FRESHNESS,
