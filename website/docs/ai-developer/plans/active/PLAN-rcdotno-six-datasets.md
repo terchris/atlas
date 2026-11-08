@@ -9,7 +9,8 @@ mdx:
 > - [WORKFLOW.md](../../WORKFLOW.md) - The implementation process
 > - [PLANS.md](../../PLANS.md) - Plan structure and best practices
 
-## Status: Active, started 2026-11-08. R1 in progress.
+## Status: Active, started 2026-11-08. R1 merged (#569); deploy requested (urb-agents #2102), not
+yet verified by imac. R2–R6 not started.
 
 **Goal**: `atlas-scraper` (`terchris/atlas-scraper`, building API v2 for the new rodekors.no)
 currently fetches six datasets directly from their upstreams instead of through Atlas, because
@@ -76,37 +77,31 @@ any phase could ship first.
 **Upstream**: `data.brreg.no/enhetsregisteret/api/underenheter/lastned` (full gzipped JSON
 download, same shape as `brreg-enheter-alle`'s `/enheter/lastned`). **Licence**: NLOD 2.0.
 
-### Tasks
+### Outcome
 
-- [ ] 1.1 New ingest source `atlas-data/ingest/src/sources/brreg-underenheter-alle/` — manifest.yml
-      (mirror `brreg-enheter-alle`'s: source_id, upstream_url, licence, dimensions for
-      `organisasjonsnummer`/`overordnet_enhet`/`doc`/`snapshot_file_date`/`loaded_at`), index.ts,
-      parse.ts, README.md, tests. Stream-parse the same way (depth-aware scanner, not
-      newline-delimited) — reuse `atlas-data/ingest/src/lib/brreg/client.ts` and `schema.ts`'s
-      existing `Underenhet` types rather than re-deriving them.
-- [ ] 1.2 New migration: `raw.brreg_underenheter_snapshot` — `organisasjonsnummer` PK,
-      `overordnet_enhet`, `doc` jsonb, `snapshot_file_date`, `loaded_at`. Same shape as
-      `052_raw_brreg_enheter_snapshot.sql`, no GIN index on `doc` (same measured-cost reasoning as
-      the parent table).
-- [ ] 1.3 New dagster asset in `atlas_data/assets/raw_brreg.py` (or a sibling module) for the
-      underenheter bulk load, wired into `schedules.py` alongside the existing Brreg assets.
-- [ ] 1.4 dbt dimension model `dim_brreg_underenhet` (typed columns: `organisasjonsnummer`,
-      `navn`, `overordnet_enhet`, `organisasjonsform_kode`, `naeringskode1_kode`,
-      `antall_ansatte`, `oppstartsdato`, `nedleggelsesdato`, `kommune_nr`, `beliggenhetsadresse`,
-      `postadresse` — each address as the spec's `adresse`/`postnummer`/`poststed`/
-      `kommunenummer`/`land`/`landkode`), FK-style relationship test against
-      `dim_brreg_enhet.organisasjonsnummer` via `overordnet_enhet` (materialize as a table if that
-      test is expensive the way `dim_brreg_enhet`'s own self-join was).
-- [ ] 1.5 `mart_brreg_underenhet` → `api_v1` (lookups: by `organisasjonsnummer`; all sub-units of
-      one `overordnet_enhet` — index/filter accordingly).
-- [ ] 1.6 `meta_sources` entry: upstream URL, NLOD 2.0 + Brønnøysundregistrene attribution line,
-      daily refresh.
-- [ ] 1.7 Tests: row count vs the upstream `/lastned` file's count that day; 5 rows field-by-field
-      against the live API; CI gates this repo already runs (`check-every-source-is-served.sh`,
-      `check-raw-read-only`, osmosis docs coverage).
-- [ ] 1.8 PR, deploy request naming the relation and an expected row count (per this repo's
-      "deploy is not successful until the data arrives" rule), imac verification, report back on
-      #2099.
+**Tasks 1.1–1.3 turned out to already exist** — PR #557 (2026-10-05) had already ingested the
+bootstrap snapshot and its own change feed, which my initial plan missed on a stale checkout (see
+the scope correction posted to #2099, 2026-11-08). Only 1.4–1.8 were real work.
+
+- [x] 1.4 dbt dimension model `dim_brreg_underenhet` — typed columns per the spec. Reads the
+      bootstrap snapshot directly (no reconciliation against the change feed, same simpler choice
+      `int_ngo_chapter_subunits.sql` made first — a stated gap, not silently accepted staleness).
+      No relationship test against `dim_brreg_enhet` — not measured against the full ~867k-row
+      population, so not asserted.
+- [x] 1.5 `mart_brreg_underenhet` → `api_v1.brreg_underenhet`. Scoped to the fields the request
+      asked for, not every upstream key the way `mart_brreg_enhet` publishes its register in full
+      (that "publish everything" choice was Terje's explicit ruling for the Enhet register
+      specifically, not inherited here).
+- [x] 1.6 `meta_sources` entry already existed from PR #557 (the raw source's own manifest).
+- [x] 1.7 Tests: real verification against a throwaway Postgres (migrated + seeded + full 167-model
+      dbt build), not_null/unique schema tests, both lookup patterns queried through
+      `api_v1.brreg_underenhet` with known-good/known-bad rows. All local CI gates this change
+      touches run green (listed in PR #569's body) — three failed on the first pass
+      (`check-kommune-marts-exclude-sentinels.sh`, `check-inventory-depends-on.sh`,
+      `check-lineage-is-current.sh`/catalogue drift) and were fixed, not worked around.
+- [x] 1.8 PR #569 merged. Deploy requested: urb-agents #2102, naming `api_v1.brreg_underenhet` and
+      an expected ~867,024 rows. **Not yet verified by imac** — this phase isn't done until that
+      comes back.
 
 ## Phase R2: Posten Bring's postcode register with categories (`bring_postnummer`)
 
