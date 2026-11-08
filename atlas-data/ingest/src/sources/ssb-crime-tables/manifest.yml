@@ -7,8 +7,8 @@ upstream_landing_page: https://www.ssb.no/statbank/table/08487
 upstream_title: "SSB lovbruddsstatistikk (08484, 08487, 09405, 09406) — anmeldte og etterforskede lovbrudd"
 description: "SSB PxWeb bundle: reported offences (08484 national detail, 08487 by place of offence / two-year averages), investigated offences with police disposition (09405), investigated counts and clearance rate (09406)."
 publisher: Statistisk sentralbyrå
-license: NLOD
-license_url: https://data.norge.no/nlod/no/2.0
+license: CC BY 4.0
+license_url: https://www.ssb.no/en/diverse/lisens
 periodicity: P1Y
 eu_theme: JUST
 attribution: "Kilde: Statistisk sentralbyrå, tabeller 08484, 08487, 09405 og 09406"

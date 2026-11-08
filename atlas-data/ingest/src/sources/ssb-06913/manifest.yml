@@ -9,8 +9,8 @@ upstream_landing_page: https://www.ssb.no/statbank/table/06913
 upstream_title: "06913: Endringer i kommuner, fylker og hele landets befolkning (K) 1951-2026"
 description: "SSB statistikkbanktabell 06913 — Folkemengde 1. januar og endringer i kalenderåret (folketilvekst, fødsler, dødsfall, inn- og utflyttinger)."
 publisher: Statistisk sentralbyrå
-license: NLOD
-license_url: https://data.norge.no/nlod/no/2.0
+license: CC BY 4.0
+license_url: https://www.ssb.no/en/diverse/lisens
 periodicity: P1Y
 eu_theme: SOCI
 attribution: "Kilde: Statistisk sentralbyrå, tabell 06913"

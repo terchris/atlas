@@ -9,8 +9,8 @@ upstream_landing_page: https://www.ssb.no/statbank/table/06083
 upstream_title: "06083: Familier, etter familietype (K) (B) 2005-2025"
 description: "SSB statistikkbanktabell 06083 — Familier, etter familietype. Family counts by type per region and year."
 publisher: Statistisk sentralbyrå
-license: NLOD
-license_url: https://data.norge.no/nlod/no/2.0
+license: CC BY 4.0
+license_url: https://www.ssb.no/en/diverse/lisens
 periodicity: P1Y
 eu_theme: SOCI
 attribution: "Kilde: Statistisk sentralbyrå, tabell 06083"

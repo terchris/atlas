@@ -19,8 +19,8 @@ description: |
   year-over-year deltas, deferred, see PLAN-013 [Q2]), `Kjonn=0` (Begge kjønn total, not the
   sex-split), full `Tid` history (105 quarters, 2000K2-2026K2).
 publisher: Statistisk sentralbyrå
-license: NLOD
-license_url: https://data.norge.no/nlod/no/2.0
+license: CC BY 4.0
+license_url: https://www.ssb.no/en/diverse/lisens
 periodicity: P1Y
 eu_theme: SOCI
 attribution: "Kilde: Statistisk sentralbyrå, tabell 12451"

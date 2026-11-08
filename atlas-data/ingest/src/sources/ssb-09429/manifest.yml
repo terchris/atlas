@@ -9,8 +9,8 @@ upstream_landing_page: https://www.ssb.no/statbank/table/09429
 upstream_title: "09429: Utdanningsnivå, etter kommune og kjønn (K) 1970-2024"
 description: "SSB statistikkbanktabell 09429 — Utdanningsnivå, etter kommune og kjønn. Educational attainment distribution per kommune × education level × sex × year."
 publisher: Statistisk sentralbyrå
-license: NLOD
-license_url: https://data.norge.no/nlod/no/2.0
+license: CC BY 4.0
+license_url: https://www.ssb.no/en/diverse/lisens
 periodicity: P1Y
 eu_theme: EDUC
 attribution: "Kilde: Statistisk sentralbyrå, tabell 09429"

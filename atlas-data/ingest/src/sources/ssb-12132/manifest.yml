@@ -9,8 +9,8 @@ upstream_landing_page: https://www.ssb.no/statbank/table/12132
 upstream_title: "12132: Utgifter som inngår i stønadssatsene for økonomisk sosialhjelp (K) 2015-2024"
 description: "SSB KOSTRA 12132 — Utgifter som inngår i stønadssatsene for økonomisk sosialhjelp. Per-kommune rules showing whether child benefit / children's own income / cash-for-childcare are counted as income when calculating welfare payments. Structural-disadvantage proxy."
 publisher: Statistisk sentralbyrå
-license: NLOD
-license_url: https://data.norge.no/nlod/no/2.0
+license: CC BY 4.0
+license_url: https://www.ssb.no/en/diverse/lisens
 periodicity: P1Y
 eu_theme: SOCI
 attribution: "Kilde: Statistisk sentralbyrå, tabell 12132"

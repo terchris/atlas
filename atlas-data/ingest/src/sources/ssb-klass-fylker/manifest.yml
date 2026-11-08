@@ -9,8 +9,8 @@ upstream_landing_page: https://www.ssb.no/klass/klassifikasjoner/104
 upstream_title: "Standard for fylkesinndeling"
 description: "SSB Klass classification 104 — Fylker. The canonical active-fylker list. Feeds dim_fylke."
 publisher: Statistisk sentralbyrå
-license: NLOD
-license_url: https://data.norge.no/nlod/no/2.0
+license: CC BY 4.0
+license_url: https://www.ssb.no/en/diverse/lisens
 periodicity: irregular
 eu_theme: GOVE
 attribution: "Kilde: Statistisk sentralbyrå, Klass (classification 104)"
