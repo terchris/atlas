@@ -115,7 +115,7 @@ Licences: **NLOD** for 55 of 59 — Norwegian public data, free to reuse with at
 | `ref_activity_family` | The 10 families Atlas's service-category vocabulary groups into. |
 | `ref_atlas_service_category` | Atlas's own cross-NGO service vocabulary, 38 categories, built from real search demand. |
 | `ref_brreg_icnpo` | Decoder for the ICNPO category codes in kommune_ngo_summary: 14 groups and 32 subgroups. |
-| `ref_fhi_innvkat` | Decoder for FHI table 360's INNVKAT dimension, which holds only '0'. |
+| `ref_fhi_innvkat` | Decoder for FHI's INNVKAT dimension, across the two tables that publish it. |
 | `ref_fhi_utdann` | Decoder for FHI's education-level codes; in vgs_gjennomforing this is the parents' education. |
 | `ref_region_kind` | Decoder for region_kind: what a region code denotes, and whether it is a real kommune. |
 | `ref_ssb_family_type` | Decoder for SSB's family-type codes. |

@@ -1552,7 +1552,7 @@ models:
         data_tests: [not_null]
         data_type: text
       - name: immigration_category
-        description: "Immigrant-category code as the publisher emits it. ⚠️ Decode through meta_dimensions for this source_id — ref_fhi_innvkat decodes FHI table 360 only, where the dimension is always '0', and will not decode table 932's '2', '3' and '23'."
+        description: "Immigrant-category code as the publisher emits it. ⚠️ Decode through meta_dimensions for this source_id — ref_fhi_innvkat now also carries table 932's '2', '3' and '23' (added urb-agents #2101 T1), but this column is always '0' (table 360's own value), so it never reaches them."
         data_tests:
           - not_null
           - relationships: {to: ref('ref_fhi_innvkat'), field: code}
