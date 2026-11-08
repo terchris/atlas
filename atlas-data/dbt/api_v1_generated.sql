@@ -271,6 +271,25 @@ REFERENCE:
                                the underlying dimension serve all three
                                patterns (the narrower one via leftmost-
                                prefix match on the wider index).
+  ssb_klass_kommune            SSB Klass 131''s full code history, with
+                               Klass''s own version id(s) per code period
+                               (an array — a code period and a Klass
+                               version don''t line up 1:1). urb-agents
+                               #2098/#2099 (R6). "With Sami forms" needed no
+                               separate fetch: SSB has no Sami-language
+                               option for this classification at all
+                               (confirmed live, HTTP 400) — the combined
+                               form is already inside the ordinary name
+                               field, 29 of 358 active kommuner.
+  ssb_klass_fylke              Same, classification 104.
+  ssb_klass_endring            SSB Klass''s correspondence log for both
+                               classifications, with the kind of change
+                               (renamed/renumbered/merged/split/border, plus
+                               two real compound cases Klass''s own data
+                               produces) derived — Klass gives no such
+                               field. atlas-scraper maps old CRM
+                               municipality numbers through old_code/
+                               new_code here.
 
 MAPS — THE BULK NATIONAL FILE BELOW IS A SEPARATE THING FROM kartverket_kommune
 ABOVE, NOT A CONTRADICTION OF IT. Full-resolution kommune boundaries as ONE
@@ -3748,6 +3767,49 @@ indistinguishable from a source nobody ever added. `undeclared` and
 `unknown_cadence` are kept apart: one is a source nobody finished
 adding, the other a cadence somebody invented, and they need different
 fixes.';
+
+-- ssb_klass_endring  ←  marts.mart_ssb_klass_endring
+CREATE OR REPLACE VIEW api_v1.ssb_klass_endring AS SELECT * FROM marts.mart_ssb_klass_endring;
+COMMENT ON VIEW api_v1.ssb_klass_endring IS 'SSB Klass''s correspondence log for kommune and fylke codes, with the kind of change derived.
+urb-agents #2098/#2099 (R6).
+
+"The kind" is not a Klass field — derived from the shape of same-date transitions, validated
+against the live data (1,285 kommune + 31 fylke transitions since 1950) before being written.
+split_and_merged and renamed_and_renumbered are real, measured categories beyond the request''s
+own five values, not a catch-all — see dim_ssb_klass_endring''s own header for the full
+distribution and worked examples. atlas-scraper maps old CRM municipality numbers through
+old_code/new_code here.';
+COMMENT ON COLUMN api_v1.ssb_klass_endring.classification_id IS '131 (Kommuner) or 104 (Fylker).';
+COMMENT ON COLUMN api_v1.ssb_klass_endring.old_code IS 'The code before this transition.';
+COMMENT ON COLUMN api_v1.ssb_klass_endring.new_code IS 'The code after this transition.';
+COMMENT ON COLUMN api_v1.ssb_klass_endring.change_occurred IS 'Date this transition took effect.';
+COMMENT ON COLUMN api_v1.ssb_klass_endring.kind IS 'renamed, renumbered, merged, split, border, split_and_merged, or renamed_and_renumbered.';
+
+-- ssb_klass_fylke  ←  marts.mart_ssb_klass_fylke
+CREATE OR REPLACE VIEW api_v1.ssb_klass_fylke AS SELECT * FROM marts.mart_ssb_klass_fylke;
+COMMENT ON VIEW api_v1.ssb_klass_fylke IS 'SSB Klass classification 104''s full code history.
+
+Sibling to mart_ssb_klass_kommune — see that relation''s own description. urb-agents
+#2098/#2099 (R6).';
+COMMENT ON COLUMN api_v1.ssb_klass_fylke.code IS '2-digit fylke code.';
+COMMENT ON COLUMN api_v1.ssb_klass_fylke.name IS 'Fylke name, verbatim from Klass.';
+COMMENT ON COLUMN api_v1.ssb_klass_fylke.valid_from IS 'Start of this code period.';
+COMMENT ON COLUMN api_v1.ssb_klass_fylke.valid_to IS 'End of this code period. Null if still current.';
+COMMENT ON COLUMN api_v1.ssb_klass_fylke.klass_version_id IS 'Every Klass classification version id whose own date range overlaps this code period, as an array.';
+
+-- ssb_klass_kommune  ←  marts.mart_ssb_klass_kommune
+CREATE OR REPLACE VIEW api_v1.ssb_klass_kommune AS SELECT * FROM marts.mart_ssb_klass_kommune;
+COMMENT ON VIEW api_v1.ssb_klass_kommune IS 'SSB Klass classification 131''s full code history. urb-agents #2098/#2099 (R6).
+
+"With Sami forms" needs no separate fetch — name already carries the combined form where
+Klass publishes one; see dim_ssb_klass_kommune''s own header for why SSB has no Sami-language
+option for this classification at all. klass_version_id is an array because a code''s
+validity window does not line up 1:1 with a classification version''s.';
+COMMENT ON COLUMN api_v1.ssb_klass_kommune.code IS '4-digit kommune code.';
+COMMENT ON COLUMN api_v1.ssb_klass_kommune.name IS 'Kommune name, verbatim from Klass.';
+COMMENT ON COLUMN api_v1.ssb_klass_kommune.valid_from IS 'Start of this code period.';
+COMMENT ON COLUMN api_v1.ssb_klass_kommune.valid_to IS 'End of this code period. Null if still current.';
+COMMENT ON COLUMN api_v1.ssb_klass_kommune.klass_version_id IS 'Every Klass classification version id whose own date range overlaps this code period, as an array.';
 
 -- supply__redcross_branch_activities  ←  marts.mart_supply__redcross_branch_activities
 CREATE OR REPLACE VIEW api_v1.supply__redcross_branch_activities AS SELECT * FROM marts.mart_supply__redcross_branch_activities;

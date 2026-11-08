@@ -264,6 +264,89 @@ models:
       - name: oppdateringsdato
         description: When this address record was last updated upstream.
 
+  - name: dim_ssb_klass_kommune
+    description: |
+      SSB Klass classification 131's full code history, typed, with the KLASS version id(s) each
+      period falls inside. urb-agents #2098/#2099 (R6).
+
+      "With Sami forms" needs no separate fetch — SSB has no `language=sme` option for this
+      classification at all (confirmed live, HTTP 400). The combined Norwegian/Sami names the
+      request means are already inside the ordinary `name` field, same mechanism as
+      dim_kartverket_kommune's kommune_navn. See this model's own header for the measurement.
+    columns:
+      - name: code
+        description: 4-digit kommune code.
+        data_tests: [not_null]
+      - name: name
+        description: "Kommune name, verbatim from Klass — already combined with a Sami/Kven form where one is official (e.g. \"Aarborte - Hattfjelldal\"), 29 of 358 active kommuner measured 2026-11-08."
+        data_tests: [not_null]
+      - name: valid_from
+        description: Start of this code period.
+        data_tests: [not_null]
+      - name: valid_to
+        description: End of this code period. Null if still current.
+      - name: klass_version_id
+        description: "Every Klass classification version id whose own date range overlaps this code period, as an array — a one-to-many join, not a single value, because a code's own validity window does not line up 1:1 with a classification version's."
+        data_tests: [not_null]
+
+  - name: dim_ssb_klass_fylke
+    description: |
+      SSB Klass classification 104's full code history, typed, with the KLASS version id(s) each
+      period falls inside. Sibling to dim_ssb_klass_kommune — see that model's own header.
+    columns:
+      - name: code
+        description: 2-digit fylke code.
+        data_tests: [not_null]
+      - name: name
+        description: "Fylke name, verbatim from Klass — already combined with a Sami/Kven form where one is official, 16 of 56 active+historical codes measured 2026-11-08."
+        data_tests: [not_null]
+      - name: valid_from
+        description: Start of this code period.
+        data_tests: [not_null]
+      - name: valid_to
+        description: End of this code period. Null if still current.
+      - name: klass_version_id
+        description: Every Klass classification version id whose own date range overlaps this code period, as an array.
+        data_tests: [not_null]
+
+  - name: dim_ssb_klass_endring
+    description: |
+      SSB Klass's correspondence log for classifications 131 (Kommuner) and 104 (Fylker), with the
+      kind of change derived. urb-agents #2098/#2099 (R6).
+
+      "The kind" (renamed/renumbered/merged/split/border) is not a field Klass provides — derived
+      from the shape of same-date transitions, validated against the live data before being
+      written as SQL. Two values beyond the request's own five are real, measured categories, not
+      a catch-all: split_and_merged (15.2% of all transitions — one kommune splitting while part of
+      it merges into a different one, on the same date) and renamed_and_renumbered (code AND name
+      both changed with no fan-out). See this model's own header for the full measured distribution
+      and worked examples.
+    columns:
+      - name: classification_id
+        description: "131 (Kommuner) or 104 (Fylker)."
+        data_tests: [not_null]
+      - name: old_code
+        description: The code before this transition.
+        data_tests: [not_null]
+      - name: old_name
+        data_tests: [not_null]
+      - name: old_short_name
+      - name: new_code
+        description: The code after this transition.
+        data_tests: [not_null]
+      - name: new_name
+        data_tests: [not_null]
+      - name: new_short_name
+      - name: change_occurred
+        description: Date this transition took effect.
+        data_tests: [not_null]
+      - name: kind
+        description: "Derived classification of this transition: renamed, renumbered, merged, split, border, split_and_merged, or renamed_and_renumbered."
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ["renamed", "renumbered", "merged", "split", "border", "split_and_merged", "renamed_and_renumbered"]
+
   - name: crosswalk_kommune_name
     description: |
       Name → kommune_nr lookup for resolving free-text municipality strings

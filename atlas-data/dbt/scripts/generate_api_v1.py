@@ -392,6 +392,25 @@ REFERENCE:
                                the underlying dimension serve all three
                                patterns (the narrower one via leftmost-
                                prefix match on the wider index).
+  ssb_klass_kommune            SSB Klass 131's full code history, with
+                               Klass's own version id(s) per code period
+                               (an array — a code period and a Klass
+                               version don't line up 1:1). urb-agents
+                               #2098/#2099 (R6). "With Sami forms" needed no
+                               separate fetch: SSB has no Sami-language
+                               option for this classification at all
+                               (confirmed live, HTTP 400) — the combined
+                               form is already inside the ordinary name
+                               field, 29 of 358 active kommuner.
+  ssb_klass_fylke              Same, classification 104.
+  ssb_klass_endring            SSB Klass's correspondence log for both
+                               classifications, with the kind of change
+                               (renamed/renumbered/merged/split/border, plus
+                               two real compound cases Klass's own data
+                               produces) derived — Klass gives no such
+                               field. atlas-scraper maps old CRM
+                               municipality numbers through old_code/
+                               new_code here.
 
 MAPS — THE BULK NATIONAL FILE BELOW IS A SEPARATE THING FROM kartverket_kommune
 ABOVE, NOT A CONTRADICTION OF IT. Full-resolution kommune boundaries as ONE

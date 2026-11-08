@@ -67,7 +67,7 @@
       "description": "Canonical geographic dimensions used as join keys across every\nindicator: kommune and fylke classifications from SSB Klass.\n",
       "emoji": "🗺️",
       "order": 70,
-      "source_count": 7
+      "source_count": 8
     }
   ],
   "publishers": [
@@ -188,7 +188,7 @@
       "logo": "/img/publishers/ssb.svg",
       "feedback_url": "https://www.ssb.no/omssb/kontakt-oss",
       "notes": "Norway's national statistics office. Maintains the StatBank\n(statistikkbanken) — the canonical source of demographic, economic,\nand social indicators at kommune, fylke, and national resolution.\nData released under NLOD; tables identified by numeric IDs preserved\nwith leading zeros (e.g. table 07459).\n",
-      "source_count": 20,
+      "source_count": 21,
       "view_count": 0
     },
     {
@@ -255,8 +255,8 @@
         "kartverket-kommune",
         "kartverket-matrikkel-adresse",
         "kartverket-postnummeromrade",
-        "ssb-klass-fylker",
-        "ssb-klass-kommuner"
+        "ssb-klass-endring",
+        "ssb-klass-fylker"
       ],
       "dimensions": [
         {
@@ -9624,8 +9624,8 @@
         "kartverket-kommune",
         "kartverket-matrikkel-adresse",
         "kartverket-postnummeromrade",
-        "ssb-klass-fylker",
-        "ssb-klass-kommuner"
+        "ssb-klass-endring",
+        "ssb-klass-fylker"
       ],
       "dimensions": [
         {
@@ -9811,8 +9811,8 @@
         "kartverket-fylke",
         "kartverket-matrikkel-adresse",
         "kartverket-postnummeromrade",
-        "ssb-klass-fylker",
-        "ssb-klass-kommuner"
+        "ssb-klass-endring",
+        "ssb-klass-fylker"
       ],
       "dimensions": [
         {
@@ -9998,8 +9998,8 @@
         "kartverket-fylke",
         "kartverket-kommune",
         "kartverket-postnummeromrade",
-        "ssb-klass-fylker",
-        "ssb-klass-kommuner"
+        "ssb-klass-endring",
+        "ssb-klass-fylker"
       ],
       "dimensions": [
         {
@@ -10222,8 +10222,8 @@
         "kartverket-fylke",
         "kartverket-kommune",
         "kartverket-matrikkel-adresse",
-        "ssb-klass-fylker",
-        "ssb-klass-kommuner"
+        "ssb-klass-endring",
+        "ssb-klass-fylker"
       ],
       "dimensions": [
         {
@@ -16562,6 +16562,183 @@
     },
     {
       "kind": "source",
+      "source_id": "ssb-klass-endring",
+      "upstream_id": "131,104",
+      "upstream_url": "https://data.ssb.no/api/klass/v1/classifications/131/changes.json",
+      "upstream_landing_page": "https://www.ssb.no/klass/klassifikasjoner/131",
+      "upstream_title": "SSB Klass correspondence tables, classifications 131 og 104",
+      "description": "SSB Klass's correspondence/change log for kommune (131) and fylke (104) codes — every old-code -> new-code transition Klass recorded, with the date it took effect. Sibling to ssb-klass-kommuner/ssb-klass-fylker, which cover each code's own validity window, not the transitions between codes. urb-agents #2098/#2099 (R6).",
+      "atlas_summary": null,
+      "publisher": {
+        "id": "ssb",
+        "display_name": "Statistisk sentralbyrå",
+        "homepage": "https://www.ssb.no/",
+        "logo": "/img/publishers/ssb.svg"
+      },
+      "category": {
+        "id": "reference",
+        "name": "Reference geographies",
+        "emoji": "🗺️"
+      },
+      "license": "CC BY 4.0",
+      "license_url": "https://www.ssb.no/en/diverse/lisens",
+      "periodicity": "irregular",
+      "eu_theme": "GOVE",
+      "attribution": "Kilde: Statistisk sentralbyrå, Klass (classifications 131 og 104)",
+      "tags": {
+        "provider": "ssb",
+        "topic": "reference",
+        "geo": "kommune",
+        "cadence": "irregular"
+      },
+      "keywords": [
+        "kommune",
+        "fylke",
+        "geography",
+        "reference",
+        "klass",
+        "history"
+      ],
+      "lifecycle": "beta",
+      "time_coverage": {
+        "start": null,
+        "end": null
+      },
+      "methodology_notes": null,
+      "suggested_joins": [
+        "ssb-klass-kommuner",
+        "ssb-klass-fylker"
+      ],
+      "related_by_topic": [
+        "bring-postnummer",
+        "kartverket-fylke",
+        "kartverket-kommune",
+        "kartverket-matrikkel-adresse",
+        "kartverket-postnummeromrade",
+        "ssb-klass-fylker"
+      ],
+      "dimensions": [
+        {
+          "code": "classification_id",
+          "meaning": "Which Klass classification this transition belongs to",
+          "value_format": "one of: 131 (kommuner), 104 (fylker)",
+          "notes": "Kept as one relation rather than two, since atlas-scraper maps old CRM numbers through both the same way."
+        },
+        {
+          "code": "oldCode / newCode",
+          "meaning": "The code before and after this transition",
+          "value_format": "4-digit (kommune) or 2-digit (fylke) numeric string",
+          "notes": "A code can appear as oldCode in more than one row on the same date (a split) or as newCode in more than one row on the same date (a merger) — 199 of 1,285 kommune transitions measured 2026-11-08 are both at once (a boundary reorganisation, e.g. part of one kommune splitting off to merge into a different one)."
+        },
+        {
+          "code": "oldName / newName",
+          "meaning": "The name before and after this transition",
+          "value_format": "free text",
+          "notes": "Can be identical to each other even when the code also stayed the same — Klass still records these as a dated event (a boundary-only adjustment with no renumbering or rename)."
+        },
+        {
+          "code": "changeOccurred",
+          "meaning": "Date this transition took effect",
+          "value_format": "ISO date",
+          "notes": "Earliest measured 2026-11-08 is 1955-01-01; requested from 1950-01-01 but Klass's own change log starts where the first recorded transition does, not at the request's own floor."
+        }
+      ],
+      "raw_tables": null,
+      "sample_query": null,
+      "citation": {
+        "text": "Statistisk sentralbyrå. (n.d.). SSB Klass correspondence tables, classifications 131 og 104. Retrieved from https://www.ssb.no/klass/klassifikasjoner/131. Available in Atlas at https://atlas.sovereignsky.no/datasets/ssb-klass-endring.",
+        "bibtex": "@misc{atlas_ssb_klass_endring,\n  author = {Statistisk sentralbyrå},\n  title  = {SSB Klass correspondence tables, classifications 131 og 104},\n  year   = {n.d.},\n  url    = {https://www.ssb.no/klass/klassifikasjoner/131},\n  note   = {Available in Atlas at https://atlas.sovereignsky.no/datasets/ssb-klass-endring}\n}"
+      },
+      "feedback_url": "https://www.ssb.no/omssb/kontakt-oss",
+      "consuming_marts": [
+        {
+          "mart_name": "mart_atlas_inventory",
+          "api_v1_name": "atlas_inventory",
+          "title": null,
+          "description_short": "What Atlas publishes: one row per endpoint with its row count, freshness and origin.",
+          "description_full": "What Atlas publishes: one row per endpoint with its row count, freshness and origin.\n\nWhat Atlas publishes, one row per queryable endpoint: how many records it\nserves, when its data last arrived, and where those rows came from.\nAsked for by Røde Kors — \"validate that all datasets that are ingested has\nan endpoint and it can be queried … count the number of records each\nendpoint has and update the last time it ingested data.\"\n⚠️ THE GRAIN IS PER ENDPOINT, NOT PER SOURCE. meta_sources answers \"what\ndid Atlas ingest\"; this answers \"what can I query, and is there anything\nin it\". One source can feed several endpoints and one endpoint can draw on\nseveral sources, so the two row counts are not comparable and summing\nsources will not reproduce an endpoint's count.\n⚠️ atlas_inventory does not list ITSELF. It is built from the same seed it\nreports on, so counting itself would be circular and the number would be\nwhatever the table held mid-build. 19 endpoints are listed; 20 are\npublished.",
+          "sample_query": "https://api-atlas.urbalurba.com/atlas_inventory?limit=5"
+        },
+        {
+          "mart_name": "mart_ssb_klass_endring",
+          "api_v1_name": "ssb_klass_endring",
+          "title": "Kommune and fylke code changes (SSB Klass)",
+          "description_short": "SSB Klass's correspondence log for kommune and fylke codes, with the kind of change derived.",
+          "description_full": "SSB Klass's correspondence log for kommune and fylke codes, with the kind of change derived.\nurb-agents #2098/#2099 (R6).\n\n\"The kind\" is not a Klass field — derived from the shape of same-date transitions, validated\nagainst the live data (1,285 kommune + 31 fylke transitions since 1950) before being written.\nsplit_and_merged and renamed_and_renumbered are real, measured categories beyond the request's\nown five values, not a catch-all — see dim_ssb_klass_endring's own header for the full\ndistribution and worked examples. atlas-scraper maps old CRM municipality numbers through\nold_code/new_code here.",
+          "sample_query": "https://api-atlas.urbalurba.com/ssb_klass_endring?limit=5"
+        }
+      ],
+      "consuming_models": [
+        {
+          "name": "dim_ssb_klass_endring",
+          "kind": "dim"
+        },
+        {
+          "name": "mart_atlas_inventory",
+          "kind": "mart"
+        },
+        {
+          "name": "mart_ssb_klass_endring",
+          "kind": "mart"
+        }
+      ],
+      "joined_with": [
+        {
+          "source_id": "bring-postnummer",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "brreg-enheter-alle",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "brreg-frivillige",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "brreg-oppdateringer",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "brreg-underenheter",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "bufdir-barnefattigdom",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "bufdir-barnevern",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        },
+        {
+          "source_id": "fhi-alkohol",
+          "shared_models": [
+            "mart_atlas_inventory"
+          ]
+        }
+      ],
+      "last_ingested_at": null,
+      "latest_row_count": null,
+      "total_runs": null,
+      "downstream_model_count": null
+    },
+    {
+      "kind": "source",
       "source_id": "ssb-klass-fylker",
       "upstream_id": "104",
       "upstream_url": "https://www.ssb.no/klass/klassifikasjoner/104",
@@ -16612,7 +16789,7 @@
         "kartverket-kommune",
         "kartverket-matrikkel-adresse",
         "kartverket-postnummeromrade",
-        "ssb-klass-kommuner"
+        "ssb-klass-endring"
       ],
       "dimensions": [
         {
@@ -16735,6 +16912,14 @@
           "sample_query": "https://api-atlas.urbalurba.com/meta_sources?limit=5"
         },
         {
+          "mart_name": "mart_ssb_klass_fylke",
+          "api_v1_name": "ssb_klass_fylke",
+          "title": "Fylke history (SSB Klass)",
+          "description_short": "SSB Klass classification 104's full code history.",
+          "description_full": "SSB Klass classification 104's full code history.\n\nSibling to mart_ssb_klass_kommune — see that relation's own description. urb-agents\n#2098/#2099 (R6).",
+          "sample_query": "https://api-atlas.urbalurba.com/ssb_klass_fylke?limit=5"
+        },
+        {
           "mart_name": "mart_unattributed_totals",
           "api_v1_name": "unattributed_totals",
           "title": null,
@@ -16746,6 +16931,10 @@
       "consuming_models": [
         {
           "name": "dim_fylke",
+          "kind": "dim"
+        },
+        {
+          "name": "dim_ssb_klass_fylke",
           "kind": "dim"
         },
         {
@@ -16790,6 +16979,10 @@
         },
         {
           "name": "mart_meta_sources",
+          "kind": "mart"
+        },
+        {
+          "name": "mart_ssb_klass_fylke",
           "kind": "mart"
         },
         {
@@ -16970,7 +17163,7 @@
         "kartverket-kommune",
         "kartverket-matrikkel-adresse",
         "kartverket-postnummeromrade",
-        "ssb-klass-fylker"
+        "ssb-klass-endring"
       ],
       "dimensions": [
         {
@@ -17123,6 +17316,14 @@
           "sample_query": "https://api-atlas.urbalurba.com/meta_sources?limit=5"
         },
         {
+          "mart_name": "mart_ssb_klass_kommune",
+          "api_v1_name": "ssb_klass_kommune",
+          "title": "Kommune history (SSB Klass)",
+          "description_short": "SSB Klass classification 131's full code history.",
+          "description_full": "SSB Klass classification 131's full code history. urb-agents #2098/#2099 (R6).\n\n\"With Sami forms\" needs no separate fetch — name already carries the combined form where\nKlass publishes one; see dim_ssb_klass_kommune's own header for why SSB has no Sami-language\noption for this classification at all. klass_version_id is an array because a code's\nvalidity window does not line up 1:1 with a classification version's.",
+          "sample_query": "https://api-atlas.urbalurba.com/ssb_klass_kommune?limit=5"
+        },
+        {
           "mart_name": "mart_unattributed_totals",
           "api_v1_name": "unattributed_totals",
           "title": null,
@@ -17138,6 +17339,10 @@
         },
         {
           "name": "dim_kommune",
+          "kind": "dim"
+        },
+        {
+          "name": "dim_ssb_klass_kommune",
           "kind": "dim"
         },
         {
@@ -17198,6 +17403,10 @@
         },
         {
           "name": "mart_meta_sources",
+          "kind": "mart"
+        },
+        {
+          "name": "mart_ssb_klass_kommune",
           "kind": "mart"
         },
         {
@@ -18751,6 +18960,24 @@
           "model_name": "mart_source_freshness",
           "title": "Source freshness",
           "description_short": "One row per raw source declaring a loaded_at_field: whether it is inside its own declared cadence."
+        },
+        {
+          "parent_kind": "model",
+          "model_name": "mart_ssb_klass_endring",
+          "title": "Kommune and fylke code changes (SSB Klass)",
+          "description_short": "SSB Klass's correspondence log for kommune and fylke codes, with the kind of change derived."
+        },
+        {
+          "parent_kind": "model",
+          "model_name": "mart_ssb_klass_fylke",
+          "title": "Fylke history (SSB Klass)",
+          "description_short": "SSB Klass classification 104's full code history."
+        },
+        {
+          "parent_kind": "model",
+          "model_name": "mart_ssb_klass_kommune",
+          "title": "Kommune history (SSB Klass)",
+          "description_short": "SSB Klass classification 131's full code history."
         },
         {
           "parent_kind": "model",
@@ -25792,6 +26019,140 @@
         "homepage": "https://atlas.sovereignsky.no/",
         "logo": "/img/logo.svg"
       }
+    },
+    {
+      "kind": "view",
+      "view_id": "ssb_klass_endring",
+      "mart_name": "mart_ssb_klass_endring",
+      "api_v1_name": "ssb_klass_endring",
+      "title": "Kommune and fylke code changes (SSB Klass)",
+      "description_short": "SSB Klass's correspondence log for kommune and fylke codes, with the kind of change derived.",
+      "description_full": "SSB Klass's correspondence log for kommune and fylke codes, with the kind of change derived.\nurb-agents #2098/#2099 (R6).\n\n\"The kind\" is not a Klass field — derived from the shape of same-date transitions, validated\nagainst the live data (1,285 kommune + 31 fylke transitions since 1950) before being written.\nsplit_and_merged and renamed_and_renumbered are real, measured categories beyond the request's\nown five values, not a catch-all — see dim_ssb_klass_endring's own header for the full\ndistribution and worked examples. atlas-scraper maps old CRM municipality numbers through\nold_code/new_code here.",
+      "columns": [
+        {
+          "name": "classification_id",
+          "description": "131 (Kommuner) or 104 (Fylker)."
+        },
+        {
+          "name": "old_code",
+          "description": "The code before this transition."
+        },
+        {
+          "name": "old_name",
+          "description": ""
+        },
+        {
+          "name": "new_code",
+          "description": "The code after this transition."
+        },
+        {
+          "name": "new_name",
+          "description": ""
+        },
+        {
+          "name": "change_occurred",
+          "description": "Date this transition took effect."
+        },
+        {
+          "name": "kind",
+          "description": "renamed, renumbered, merged, split, border, split_and_merged, or renamed_and_renumbered."
+        }
+      ],
+      "built_from": [
+        {
+          "parent_kind": "model",
+          "model_name": "dim_ssb_klass_endring",
+          "title": null,
+          "description_short": "SSB Klass's correspondence log for classifications 131 (Kommuner) and 104 (Fylker), with the kind of change derived."
+        }
+      ],
+      "sample_query": "https://api-atlas.urbalurba.com/ssb_klass_endring?limit=5",
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_ssb_klass_endring",
+      "publisher": null
+    },
+    {
+      "kind": "view",
+      "view_id": "ssb_klass_fylke",
+      "mart_name": "mart_ssb_klass_fylke",
+      "api_v1_name": "ssb_klass_fylke",
+      "title": "Fylke history (SSB Klass)",
+      "description_short": "SSB Klass classification 104's full code history.",
+      "description_full": "SSB Klass classification 104's full code history.\n\nSibling to mart_ssb_klass_kommune — see that relation's own description. urb-agents\n#2098/#2099 (R6).",
+      "columns": [
+        {
+          "name": "code",
+          "description": "2-digit fylke code."
+        },
+        {
+          "name": "name",
+          "description": "Fylke name, verbatim from Klass."
+        },
+        {
+          "name": "valid_from",
+          "description": "Start of this code period."
+        },
+        {
+          "name": "valid_to",
+          "description": "End of this code period. Null if still current."
+        },
+        {
+          "name": "klass_version_id",
+          "description": "Every Klass classification version id whose own date range overlaps this code period, as an array."
+        }
+      ],
+      "built_from": [
+        {
+          "parent_kind": "model",
+          "model_name": "dim_ssb_klass_fylke",
+          "title": null,
+          "description_short": "SSB Klass classification 104's full code history, typed, with the KLASS version id(s) each period falls inside."
+        }
+      ],
+      "sample_query": "https://api-atlas.urbalurba.com/ssb_klass_fylke?limit=5",
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_ssb_klass_fylke",
+      "publisher": null
+    },
+    {
+      "kind": "view",
+      "view_id": "ssb_klass_kommune",
+      "mart_name": "mart_ssb_klass_kommune",
+      "api_v1_name": "ssb_klass_kommune",
+      "title": "Kommune history (SSB Klass)",
+      "description_short": "SSB Klass classification 131's full code history.",
+      "description_full": "SSB Klass classification 131's full code history. urb-agents #2098/#2099 (R6).\n\n\"With Sami forms\" needs no separate fetch — name already carries the combined form where\nKlass publishes one; see dim_ssb_klass_kommune's own header for why SSB has no Sami-language\noption for this classification at all. klass_version_id is an array because a code's\nvalidity window does not line up 1:1 with a classification version's.",
+      "columns": [
+        {
+          "name": "code",
+          "description": "4-digit kommune code."
+        },
+        {
+          "name": "name",
+          "description": "Kommune name, verbatim from Klass."
+        },
+        {
+          "name": "valid_from",
+          "description": "Start of this code period."
+        },
+        {
+          "name": "valid_to",
+          "description": "End of this code period. Null if still current."
+        },
+        {
+          "name": "klass_version_id",
+          "description": "Every Klass classification version id whose own date range overlaps this code period, as an array."
+        }
+      ],
+      "built_from": [
+        {
+          "parent_kind": "model",
+          "model_name": "dim_ssb_klass_kommune",
+          "title": null,
+          "description_short": "SSB Klass classification 131's full code history, typed, with the KLASS version id(s) each period falls inside."
+        }
+      ],
+      "sample_query": "https://api-atlas.urbalurba.com/ssb_klass_kommune?limit=5",
+      "lineage_url": "pathname:///lineage/#!/model/model.atlas.mart_ssb_klass_kommune",
+      "publisher": null
     },
     {
       "kind": "view",

@@ -37,6 +37,7 @@ SSB_SOURCES = [
 
 # KLASS reference tables — code-list ingest from SSB's KLASS endpoints.
 SSB_KLASS_SOURCES = [
+    "ssb-klass-endring",
     "ssb-klass-fylker",
     "ssb-klass-kommuner",
 ]

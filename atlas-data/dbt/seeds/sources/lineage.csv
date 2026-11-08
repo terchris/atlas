@@ -14,6 +14,9 @@ dim_kartverket_kommune,kartverket-kommune
 dim_kartverket_matrikkel_adresse,kartverket-matrikkel-adresse
 dim_kartverket_postnummeromrade,kartverket-postnummeromrade
 dim_kommune,ssb-klass-kommuner
+dim_ssb_klass_endring,ssb-klass-endring
+dim_ssb_klass_fylke,ssb-klass-fylker
+dim_ssb_klass_kommune,ssb-klass-kommuner
 fact_chapter_activities,redcross-branches
 fact_kommune_indicators,fhi-alkohol
 fact_kommune_indicators,fhi-befolkning
@@ -176,6 +179,7 @@ mart_atlas_inventory,ssb-12891
 mart_atlas_inventory,ssb-12944
 mart_atlas_inventory,ssb-13995
 mart_atlas_inventory,ssb-crime-tables
+mart_atlas_inventory,ssb-klass-endring
 mart_atlas_inventory,ssb-klass-fylker
 mart_atlas_inventory,ssb-klass-kommuner
 mart_atlas_inventory,udir-elevundersokelsen-mobbing
@@ -496,6 +500,9 @@ mart_ngo_chapter_subunits,brreg-oppdateringer
 mart_ngo_chapter_subunits,brreg-underenheter
 mart_ngo_index,redcross-branches
 mart_ngo_overview,redcross-branches
+mart_ssb_klass_endring,ssb-klass-endring
+mart_ssb_klass_fylke,ssb-klass-fylker
+mart_ssb_klass_kommune,ssb-klass-kommuner
 mart_supply__redcross_branch_activities,redcross-branches
 mart_supply__redcross_branches,redcross-branches
 mart_supply__redcross_chapter_kommune_coverage,redcross-branches
