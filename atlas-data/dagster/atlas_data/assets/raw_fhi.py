@@ -15,6 +15,7 @@ FHI_SOURCES = [
     "fhi-befolkningsvekst",
     "fhi-bor-alene",
     "fhi-depresjon",
+    "fhi-ensomhet",
     "fhi-fortrolig-venn",
     "fhi-hasj",
     "fhi-innvandrere",

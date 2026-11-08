@@ -147,13 +147,13 @@ SUPPLY — voluntary-sector presence:
   distrikt_summary             chapters by district.
   kommune_local_chapters       chapters resolved to a kommune.
 
-PER-SOURCE INDICATOR RELATIONS — 54 of them, one per upstream table, at the
+PER-SOURCE INDICATOR RELATIONS — 55 of them, one per upstream table, at the
 grain the publisher actually uses. The cross-source views above impose ONE
 shape on every source; these keep the source''s own dimensions, so a breakdown
 those views flatten away (a sex, an age band, a household or family type, a
 parental-education split) is only answerable here.
 
-🔴 ALL 54 ARE stability:source. THE COLUMN SET FOLLOWS THE PUBLISHER, NOT
+🔴 ALL 55 ARE stability:source. THE COLUMN SET FOLLOWS THE PUBLISHER, NOT
 ATLAS. If SSB, FHI or Bufdir adds, renames or drops a dimension, these change
 with it — that is the deliberate trade for getting the real grain. Filter
 `meta_endpoints?tags=cs.{stability:curated}` for the relations whose shape
@@ -164,10 +164,11 @@ same source_id, and through the ref_* lists above where one exists.
 
   bufdir (2):
     indicators__bufdir_barnefattigdom indicators__bufdir_barnevern
-  fhi (21):
+  fhi (22):
     indicators__fhi_alkohol indicators__fhi_befolkning
     indicators__fhi_befolkningsvekst indicators__fhi_bor_alene
-    indicators__fhi_depresjon indicators__fhi_fortrolig_venn
+    indicators__fhi_depresjon indicators__fhi_ensomhet
+    indicators__fhi_fortrolig_venn
     indicators__fhi_hasj indicators__fhi_innvandrere
     indicators__fhi_innvkat indicators__fhi_kpr_1aar
     indicators__fhi_livskvalitet indicators__fhi_mediebruk_some
@@ -1480,6 +1481,36 @@ COMMENT ON COLUMN api_v1.indicators__fhi_depresjon.contents_label IS 'Human-read
 COMMENT ON COLUMN api_v1.indicators__fhi_depresjon.value IS 'The measured value. NULL where FHI suppressed the cell.';
 COMMENT ON COLUMN api_v1.indicators__fhi_depresjon.status IS 'FHI suppression marker.';
 COMMENT ON COLUMN api_v1.indicators__fhi_depresjon.updated_at IS 'When the raw row was loaded.';
+
+-- indicators__fhi_ensomhet  ←  marts.mart_indicators__fhi_ensomhet
+CREATE OR REPLACE VIEW api_v1.indicators__fhi_ensomhet AS SELECT * FROM marts.mart_indicators__fhi_ensomhet;
+COMMENT ON VIEW api_v1.indicators__fhi_ensomhet IS 'Per-source indicator data for fhi-ensomhet (Folkehelseinstituttet), at the publisher''s own grain.
+
+Per-source indicator relation for `fhi-ensomhet` (Folkehelseinstituttet), published at the grain
+the publisher actually uses rather than flattened into the cross-source views.
+🔴 stability:source — the column set here follows Folkehelseinstituttet, not Atlas. Decode
+codes through meta_dimensions filtered to source_id=fhi-ensomhet.
+🔴 Only MEASURE_TYPE=SMR exists for this table (urb-agents #2100/#2101, T5) — a standardised
+ratio against the national average. Never a raw percentage, never a count: that distinction
+is the whole reason this source exists alongside fhi-bor-alene, which IS a count.';
+COMMENT ON COLUMN api_v1.indicators__fhi_ensomhet.source_id IS 'Atlas source identifier for the upstream table this row came from — the same id used by meta_sources and meta_dimensions.';
+COMMENT ON COLUMN api_v1.indicators__fhi_ensomhet.region_code IS 'The publisher''s own region code, verbatim. It may be a kommune, fylke, bydel or national code depending on what that publisher emits; region_kind says which.';
+COMMENT ON COLUMN api_v1.indicators__fhi_ensomhet.kommune_nr IS '4-digit kommune code, derived via region_code_to_kommune_nr. NULL for every region that is not a municipality.';
+COMMENT ON COLUMN api_v1.indicators__fhi_ensomhet.region_kind IS 'What region_code denotes, via classify_region_code. Joins ref_region_kind.';
+COMMENT ON COLUMN api_v1.indicators__fhi_ensomhet.fylke_nr IS '2-digit fylke code where the region is a fylke, else NULL.';
+COMMENT ON COLUMN api_v1.indicators__fhi_ensomhet.year IS 'First year of the period this row covers.';
+COMMENT ON COLUMN api_v1.indicators__fhi_ensomhet.period IS 'The publisher''s own period code, verbatim (e.g. "2025_2025").';
+COMMENT ON COLUMN api_v1.indicators__fhi_ensomhet.period_start_year IS 'Parsed first year of the period.';
+COMMENT ON COLUMN api_v1.indicators__fhi_ensomhet.period_end_year IS 'Parsed last year of the period.';
+COMMENT ON COLUMN api_v1.indicators__fhi_ensomhet.sex IS 'FHI''s KJONN code, verbatim: ''0'' total, ''1'' boys, ''2'' girls.';
+COMMENT ON COLUMN api_v1.indicators__fhi_ensomhet.age_group IS 'The publisher''s age/grade-band dimension, verbatim. Not a parseable numeric age range at this table''s grain — see the indicator model''s own column note.';
+COMMENT ON COLUMN api_v1.indicators__fhi_ensomhet.severity_threshold IS 'FHI''s NIVA_PLAGET code, verbatim — the loneliness-severity threshold this row reports against.';
+COMMENT ON COLUMN api_v1.indicators__fhi_ensomhet.socioeconomic_group IS 'FHI''s SOES code, verbatim.';
+COMMENT ON COLUMN api_v1.indicators__fhi_ensomhet.contents_code IS 'The publisher''s code for WHICH measure this row reports — SMR only for this table. Decode it through meta_dimensions for this source_id.';
+COMMENT ON COLUMN api_v1.indicators__fhi_ensomhet.contents_label IS 'Human-readable gloss for contents_code.';
+COMMENT ON COLUMN api_v1.indicators__fhi_ensomhet.value IS 'The measured value — a standardised ratio (100 = national average). NULL where the publisher suppressed the cell — see status.';
+COMMENT ON COLUMN api_v1.indicators__fhi_ensomhet.status IS 'The publisher''s own suppression or quality marker for this cell, passed through verbatim.';
+COMMENT ON COLUMN api_v1.indicators__fhi_ensomhet.updated_at IS 'When Atlas last loaded this row from the upstream.';
 
 -- indicators__fhi_fortrolig_venn  ←  marts.mart_indicators__fhi_fortrolig_venn
 CREATE OR REPLACE VIEW api_v1.indicators__fhi_fortrolig_venn AS SELECT * FROM marts.mart_indicators__fhi_fortrolig_venn;

@@ -53,6 +53,7 @@ indicators__fhi_befolkning,fhi-befolkning
 indicators__fhi_befolkningsvekst,fhi-befolkningsvekst
 indicators__fhi_bor_alene,fhi-bor-alene
 indicators__fhi_depresjon,fhi-depresjon
+indicators__fhi_ensomhet,fhi-ensomhet
 indicators__fhi_fortrolig_venn,fhi-fortrolig-venn
 indicators__fhi_hasj,fhi-hasj
 indicators__fhi_innvandrere,fhi-innvandrere
@@ -123,6 +124,7 @@ mart_atlas_inventory,fhi-befolkning
 mart_atlas_inventory,fhi-befolkningsvekst
 mart_atlas_inventory,fhi-bor-alene
 mart_atlas_inventory,fhi-depresjon
+mart_atlas_inventory,fhi-ensomhet
 mart_atlas_inventory,fhi-fortrolig-venn
 mart_atlas_inventory,fhi-hasj
 mart_atlas_inventory,fhi-innvandrere
@@ -334,6 +336,7 @@ mart_indicators__fhi_befolkning,fhi-befolkning
 mart_indicators__fhi_befolkningsvekst,fhi-befolkningsvekst
 mart_indicators__fhi_bor_alene,fhi-bor-alene
 mart_indicators__fhi_depresjon,fhi-depresjon
+mart_indicators__fhi_ensomhet,fhi-ensomhet
 mart_indicators__fhi_fortrolig_venn,fhi-fortrolig-venn
 mart_indicators__fhi_hasj,fhi-hasj
 mart_indicators__fhi_innvandrere,fhi-innvandrere

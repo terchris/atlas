@@ -1795,6 +1795,123 @@ models:
             - age_group
             - contents_code
 
+  - name: indicators__fhi_ensomhet
+    description: |
+      Per-source indicator passthrough for FHI table 348 (loneliness, Ungdata survey, 8th-10th
+      graders). Renames FHI dimensions to Atlas canonical names. urb-agents #2100/#2101 (T5).
+
+      ⚠️ Only MEASURE_TYPE=SMR exists for this table — never a raw percentage, never a count.
+      age_group, severity_threshold and socioeconomic_group each resolve to exactly one value at
+      this table's grain (measured 2026-11-08); carried as columns rather than assumed constant in
+      case upstream adds more.
+    columns:
+      - name: source_id
+        description: "Atlas source identifier for the upstream table this row came from — the same id used by meta_sources and meta_dimensions."
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: [fhi-ensomhet]
+        data_type: text
+      - name: region_code
+        description: "The publisher's own region code, verbatim. It may be a kommune, fylke, bydel or national code depending on what that publisher emits; region_kind says which."
+        data_tests: [not_null]
+        data_type: text
+      - name: kommune_nr
+        description: "4-digit kommune code, derived via region_code_to_kommune_nr. NULL for every region that is not a municipality."
+        data_tests:
+          - relationships:
+              to: ref('dim_kommune')
+              field: kommune_nr
+              config:
+                severity: warn
+        data_type: text
+      - name: region_kind
+        description: "What region_code denotes, via classify_region_code. Joins ref_region_kind."
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('ref_region_kind')
+              field: region_kind
+        data_type: text
+      - name: fylke_nr
+        description: "2-digit fylke code where the region is a fylke, else NULL."
+        data_tests:
+          - relationships:
+              to: ref('dim_fylke')
+              field: fylke_nr
+        data_type: text
+      - name: year
+        description: "First year of the period this row covers."
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 2000
+              max_value: 2050
+        data_type: integer
+      - name: period
+        description: "The publisher's own period code, verbatim (e.g. \"2025_2025\")."
+        data_tests: [not_null]
+        data_type: text
+      - name: period_start_year
+        description: "Parsed first year of the period."
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
+        data_type: integer
+      - name: period_end_year
+        description: "Parsed last year of the period."
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range: {min_value: 2000, max_value: 2050}
+        data_type: integer
+      - name: sex
+        description: "FHI's KJONN code, verbatim: '0' total, '1' boys, '2' girls."
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ["0", "1", "2"]
+        data_type: text
+      - name: age_group
+        description: "The publisher's age/grade-band dimension, verbatim. NOT a parseable numeric age range at this table's grain (it is a Ungdata grade-band code, '1_6' meaning 8th-10th grade) — unlike fhi-bor-alene's age_group, this one has no age_group_min/age_group_max columns, because parsing it as a numeric range would be wrong."
+        data_tests: [not_null]
+        data_type: text
+      - name: severity_threshold
+        description: "FHI's NIVA_PLAGET code, verbatim — the loneliness-severity threshold this row reports against. One value at this table's grain: 'ganske_veldigmyeplaget' (quite a lot or very much bothered)."
+        data_tests: [not_null]
+        data_type: text
+      - name: socioeconomic_group
+        description: "FHI's SOES code, verbatim. One value at kommune grain: '0' (samlet / total)."
+        data_tests: [not_null]
+        data_type: text
+      - name: contents_code
+        description: "The publisher's code for WHICH measure this row reports. Decode it through meta_dimensions for this source_id."
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: [SMR]
+        data_type: text
+      - name: contents_label
+        description: "Human-readable gloss for contents_code."
+        data_type: text
+      - name: value
+        description: "The measured value — a standardised ratio (100 = national average), never a raw percentage and never a count. NULL where the publisher suppressed the cell."
+        data_type: numeric
+      - name: status
+        description: "The publisher's own suppression or quality marker for this cell, passed through verbatim."
+        data_type: text
+      - name: updated_at
+        description: "When Atlas last loaded this row from the upstream."
+        data_tests: [not_null]
+        data_type: timestamp with time zone
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - source_id
+            - region_code
+            - period
+            - sex
+            - contents_code
+
   - name: indicators__ssb_12944
     description: |
       Per-source indicator passthrough for SSB 12944. One row per (region_code,

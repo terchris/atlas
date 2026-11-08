@@ -81,6 +81,7 @@
 -- depends_on: {{ ref('mart_indicators__fhi_befolkningsvekst') }}
 -- depends_on: {{ ref('mart_indicators__fhi_bor_alene') }}
 -- depends_on: {{ ref('mart_indicators__fhi_depresjon') }}
+-- depends_on: {{ ref('mart_indicators__fhi_ensomhet') }}
 -- depends_on: {{ ref('mart_indicators__fhi_fortrolig_venn') }}
 -- depends_on: {{ ref('mart_indicators__fhi_hasj') }}
 -- depends_on: {{ ref('mart_indicators__fhi_innvandrere') }}
@@ -191,6 +192,7 @@
   {'relation': 'indicators__fhi_befolkningsvekst', 'mart': 'mart_indicators__fhi_befolkningsvekst'},
   {'relation': 'indicators__fhi_bor_alene', 'mart': 'mart_indicators__fhi_bor_alene'},
   {'relation': 'indicators__fhi_depresjon', 'mart': 'mart_indicators__fhi_depresjon'},
+  {'relation': 'indicators__fhi_ensomhet', 'mart': 'mart_indicators__fhi_ensomhet'},
   {'relation': 'indicators__fhi_fortrolig_venn', 'mart': 'mart_indicators__fhi_fortrolig_venn'},
   {'relation': 'indicators__fhi_hasj', 'mart': 'mart_indicators__fhi_hasj'},
   {'relation': 'indicators__fhi_innvandrere', 'mart': 'mart_indicators__fhi_innvandrere'},

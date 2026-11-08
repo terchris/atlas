@@ -1407,6 +1407,42 @@ sources:
             data_type: text
           - name: loaded_at
             data_type: timestamp with time zone
+      - name: fhi_ensomhet
+        description: |
+          FHI Folkehelsestatistikk table 348 (Ensomhet_Ungdata_KH) — loneliness among
+          8th-10th graders. Region x AAR x KJONN x ALDER x NIVA_PLAGET x SOES x
+          MEASURE_TYPE. Only MEASURE_TYPE=SMR exists for this table. Populated by
+          atlas-data/ingest/src/sources/fhi-ensomhet. urb-agents #2100/#2101 (T5).
+        loaded_at_field: loaded_at
+        meta:
+          ingest_cadence: weekly
+        freshness:
+          warn_after: {count: 400, period: day}
+          error_after: {count: 800, period: day}
+        columns:
+          - name: geo_code
+            data_tests: [not_null]
+          - name: aar_code
+            data_tests: [not_null]
+          - name: kjonn_code
+            data_tests: [not_null]
+          - name: alder_code
+            data_tests: [not_null]
+          - name: niva_plaget_code
+            data_tests: [not_null]
+          - name: soes_code
+            data_tests: [not_null]
+          - name: measure_type
+            data_tests:
+              - not_null
+              - accepted_values:
+                  values: [SMR]
+          - name: value
+            data_type: numeric
+          - name: status
+            data_type: text
+          - name: loaded_at
+            data_type: timestamp with time zone
       - name: bufdir_barnefattigdom
         description: |
           Bufdir Barnefattigdom kommunemonitor — annual indicator time series from

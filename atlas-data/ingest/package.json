@@ -33,6 +33,7 @@
     "ingest:fhi-befolkningsvekst": "tsx --env-file-if-exists=.env src/sources/fhi-befolkningsvekst/index.ts",
     "ingest:fhi-bor-alene": "tsx --env-file-if-exists=.env src/sources/fhi-bor-alene/index.ts",
     "ingest:fhi-depresjon": "tsx --env-file-if-exists=.env src/sources/fhi-depresjon/index.ts",
+    "ingest:fhi-ensomhet": "tsx --env-file-if-exists=.env src/sources/fhi-ensomhet/index.ts",
     "ingest:fhi-fortrolig-venn": "tsx --env-file-if-exists=.env src/sources/fhi-fortrolig-venn/index.ts",
     "ingest:fhi-hasj": "tsx --env-file-if-exists=.env src/sources/fhi-hasj/index.ts",
     "ingest:fhi-innvandrere": "tsx --env-file-if-exists=.env src/sources/fhi-innvandrere/index.ts",
